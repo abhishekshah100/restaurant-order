@@ -1,0 +1,46 @@
+.otp {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.otp input {
+  height: 58px;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  border-radius: var(--r);
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
+  font: 700 22px/28px var(--f-ui);
+  color: var(--ink);
+  padding: 0;
+  outline: none;
+  caret-color: var(--brand-600);
+}
+.otp input.filled {
+  border-color: var(--ink);
+}
+.otp input:focus,
+.otp input:focus-visible {
+  border-color: var(--brand-600);
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+.error input,
+.error input.filled {
+  border-color: var(--error);
+  background: var(--error-tint);
+  color: var(--error);
+}
+.otp input:disabled {
+  background: var(--sand);
+  color: var(--ink-3);
+}
+@media (min-width: 1024px) {
+  .otp {
+    grid-template-columns: repeat(6, minmax(0, 64px));
+    gap: 12px;
+  }
+  .otp input {
+    height: 64px;
+  }
+}

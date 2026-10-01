@@ -1,0 +1,18 @@
+.pill {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--sand);
+  color: var(--ink);
+  font: 700 13px/18px var(--f-ui);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex: none;
+}
+.lg {
+  height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+}

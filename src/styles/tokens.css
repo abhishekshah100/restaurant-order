@@ -1,0 +1,54 @@
+/* The Olive Table — QR Ordering design tokens v1 (ported from olive-core.css :root) */
+:root {
+  /* Colour — 3 core colours + controlled neutrals */
+  --bg: #f7f2ea; /* Ivory — app background */
+  --surface: #fffcf7; /* Raised surfaces, inputs, sheets */
+  --sand: #efe7db; /* Subtle fills, skeletons, pills */
+  --line: #e6dccd; /* Hairlines */
+  --line-strong: #cdbfac; /* Control borders */
+  --ink: #2a1b16; /* Espresso — primary text */
+  --ink-2: #5e4b42; /* Secondary text (7.3:1 on ivory) */
+  --ink-3: #76625a; /* Tertiary/caption text (4.9:1 on ivory) */
+  --brand: #c95c3d; /* Terracotta — brand, decoration, large text */
+  --brand-600: #b04e2f; /* Action fills + small text links (5.3:1 with white) */
+  --brand-700: #8f3e24; /* Pressed / hover */
+  --brand-tint: #f4ded3; /* Selected fill */
+  --brand-tint-2: #faeee7; /* Soft selected fill */
+  --veg: #2a6f45;
+  --nonveg: #94341b;
+  --success: #2a6f45;
+  --success-tint: #e2eee5;
+  --error: #a3261a;
+  --error-tint: #f7e0da;
+  --warn: #7d5200;
+  --warn-tint: #f5e8cc;
+  --on-dark: #f7f2ea;
+  --on-dark-2: #cdbfb4;
+  --brand-on-dark: #f0a68e;
+  --disabled-ink: #706259; /* Disabled button text on sand (4.8:1; design #9A8A80 is 2.7:1) */
+  --scrim: rgba(42, 27, 22, 0.5);
+
+  /* Type — families come from next/font (src/fonts) */
+  --f-display:
+    var(--font-newsreader), var(--font-newsreader-ext), Georgia, 'Times New Roman', serif;
+  --f-ui:
+    var(--font-manrope), var(--font-manrope-ext), 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* Radius */
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+
+  /* Elevation — only two levels */
+  --sh-1: 0 1px 2px rgba(42, 27, 22, 0.06), 0 4px 12px rgba(42, 27, 22, 0.06);
+  --sh-2: 0 12px 32px rgba(42, 27, 22, 0.18);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--brand-600);
+
+  /* Layout */
+  --wrap-max: 1360px;
+  --shell-max: 1440px;
+  --header-h: 76px;
+  --nav-h: 68px;
+}

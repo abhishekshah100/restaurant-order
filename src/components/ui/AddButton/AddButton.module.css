@@ -1,0 +1,38 @@
+.add {
+  position: relative;
+  height: 40px;
+  min-width: 84px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--brand-600);
+  background: var(--surface);
+  color: var(--brand-600);
+  font: 800 14px/20px var(--f-ui);
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: var(--sh-1);
+  flex: none;
+}
+/* Hit area extends to 48px */
+.add::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.add:hover {
+  background: var(--brand-tint-2);
+}
+.disabled,
+.disabled:hover {
+  border-color: var(--line-strong);
+  color: var(--ink-3);
+  background: var(--sand);
+  box-shadow: none;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: default;
+}

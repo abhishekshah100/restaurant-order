@@ -1,0 +1,57 @@
+.tag {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font: 800 10.5px/22px var(--f-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex: none;
+}
+.tag > span[aria-hidden] {
+  width: 12px;
+  height: 12px;
+}
+.chef {
+  background: var(--brand-tint);
+  color: var(--brand-700);
+}
+.new {
+  background: var(--ink);
+  color: var(--on-dark);
+}
+.pop,
+.out {
+  background: var(--sand);
+  color: var(--ink-2);
+}
+.ok {
+  background: var(--success-tint);
+  color: var(--success);
+}
+.warn {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+.err {
+  background: var(--error-tint);
+  color: var(--error);
+}
+/* Quiet inline label, e.g. "🔥 Medium spicy" */
+.plain {
+  height: auto;
+  padding: 0;
+  font: 600 12px/16px var(--f-ui);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
+  gap: 6px;
+}
+.plain > span[aria-hidden] {
+  width: 16px;
+  height: 16px;
+  color: var(--brand-600);
+}

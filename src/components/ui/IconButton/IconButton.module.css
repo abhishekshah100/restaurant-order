@@ -1,0 +1,44 @@
+.btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--ink);
+  flex: none;
+  text-decoration: none;
+  position: relative;
+}
+.btn:hover {
+  background: var(--sand);
+}
+.raised {
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+.raised:hover {
+  background: var(--surface);
+}
+.soft {
+  background: var(--sand);
+}
+.soft:hover {
+  background: var(--line);
+}
+/* Compact visual size (e.g. search clear); the hit area stays 44px */
+.sm {
+  width: 36px;
+  height: 36px;
+}
+.sm::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.btn:disabled {
+  color: var(--ink-3);
+  cursor: not-allowed;
+}

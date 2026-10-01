@@ -1,0 +1,148 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 80;
+  animation: fade-in 0.18s ease-out;
+}
+.dialog {
+  position: fixed;
+  z-index: 81;
+  background: var(--surface);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  max-height: calc(100dvh - 24px);
+}
+.body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.title {
+  font: 700 17px/24px var(--f-ui);
+  margin: 0;
+}
+.titleDisplay {
+  font: 500 28px/34px var(--f-display);
+  letter-spacing: -0.005em;
+}
+.foot {
+  flex: none;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-top: 16px;
+}
+.grabber {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  margin: 0 auto 14px;
+  flex: none;
+}
+
+/* Bottom sheet */
+.sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 24px 24px 0 0;
+  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+  animation: slide-up 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Centered modal */
+.modal {
+  left: 50%;
+  top: 96px;
+  transform: translateX(-50%);
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100dvh - 128px);
+  border-radius: 24px;
+  box-shadow: var(--sh-2);
+  padding: 28px 32px 32px;
+  animation: pop-in 0.2s ease-out;
+}
+.modal .grabber {
+  display: none;
+}
+
+/* Right slide-over panel (tablet cart) */
+.panel {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 100vw);
+  max-height: none;
+  box-shadow: var(--sh-2);
+  padding: 24px 24px 24px;
+  animation: slide-left 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.panel .grabber {
+  display: none;
+}
+
+/* Adaptive: sheet below 1024px, modal from 1024px */
+.adaptive {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 24px 24px 0 0;
+  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+  animation: slide-up 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (min-width: 1024px) {
+  .adaptive {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 96px;
+    transform: translateX(-50%);
+    width: 600px;
+    max-height: calc(100dvh - 128px);
+    border-radius: 24px;
+    box-shadow: var(--sh-2);
+    padding: 28px 32px 32px;
+    animation: pop-in 0.2s ease-out;
+  }
+  .adaptive .grabber {
+    display: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes slide-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@keyframes slide-left {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    margin-top: 12px;
+  }
+}

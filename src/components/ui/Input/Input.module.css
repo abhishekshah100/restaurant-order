@@ -1,0 +1,71 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.label {
+  font: 700 14px/20px var(--f-ui);
+  color: var(--ink);
+}
+.optional {
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.input {
+  height: 52px;
+  width: 100%;
+  border-radius: var(--r);
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
+  padding: 0 16px;
+  font: 500 16px/22px var(--f-ui);
+  color: var(--ink);
+  outline: none;
+  display: flex;
+  align-items: center;
+  appearance: none;
+}
+.input::placeholder {
+  color: var(--ink-3);
+}
+.input:focus,
+.input:focus-visible {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--brand-tint);
+}
+.error,
+.error:focus,
+.error:focus-visible {
+  border-color: var(--error);
+  box-shadow: 0 0 0 3px var(--error-tint);
+}
+.input:disabled {
+  background: var(--sand);
+  color: var(--ink-3);
+  border-color: var(--line);
+}
+textarea.input {
+  height: 88px;
+  padding: 14px 16px;
+  resize: none;
+  font-size: 16px;
+}
+.hint {
+  font: 500 13px/18px var(--f-ui);
+  color: var(--ink-2);
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.err {
+  font: 600 13px/18px var(--f-ui);
+  color: var(--error);
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.err > span[aria-hidden] {
+  margin-top: 1px;
+}

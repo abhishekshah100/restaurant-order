@@ -1,0 +1,61 @@
+.qty {
+  height: 40px;
+  min-width: 96px;
+  border-radius: 10px;
+  background: var(--brand-600);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  box-shadow: var(--sh-1);
+}
+.qty button {
+  position: relative;
+  width: 36px;
+  height: 40px;
+  border: 0;
+  background: none;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+}
+/* Hit area extends to 44 × 48 */
+.qty button::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.qty button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.n {
+  min-width: 24px;
+  text-align: center;
+  font: 800 15px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+.outline {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1.5px solid var(--line-strong);
+  box-shadow: none;
+}
+.outline button {
+  color: var(--brand-600);
+}
+.outline button:disabled {
+  color: var(--ink-3);
+}
+.lg {
+  height: 52px;
+  min-width: 128px;
+  border-radius: var(--r);
+}
+.lg button {
+  width: 44px;
+  height: 52px;
+}

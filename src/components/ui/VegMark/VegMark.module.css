@@ -1,0 +1,49 @@
+/* FSSAI-style mark — the shape differs (dot vs triangle), never colour alone */
+.vm {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  background: var(--surface);
+}
+.veg {
+  color: var(--veg);
+}
+.nv {
+  color: var(--nonveg);
+}
+.veg::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.nv::after {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 4.5px solid transparent;
+  border-right: 4.5px solid transparent;
+  border-bottom: 7.5px solid currentColor;
+  margin-top: -1px;
+}
+.labelled {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 12px/16px var(--f-ui);
+}
+.labelled.veg,
+.labelled.nv {
+  background: none;
+  border: 0;
+  width: auto;
+  height: auto;
+}
+.labelled::after {
+  display: none;
+}

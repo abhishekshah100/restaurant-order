@@ -1,0 +1,90 @@
+.btn {
+  height: 52px;
+  padding: 0 20px;
+  border-radius: var(--r);
+  font: 700 15px/20px var(--f-ui);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+  flex: none;
+  letter-spacing: 0.005em;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.block {
+  width: 100%;
+  flex: 1 1 auto;
+}
+.primary {
+  background: var(--brand-600);
+  color: #fff;
+}
+.primary:hover {
+  background: var(--brand-700);
+}
+.primary:active {
+  background: var(--brand-700);
+}
+.secondary {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.secondary:hover {
+  border-color: var(--ink);
+}
+.ghost {
+  background: transparent;
+  color: var(--brand-600);
+  padding: 0 12px;
+}
+.ghost:hover {
+  background: var(--brand-tint-2);
+}
+.dark {
+  background: var(--ink);
+  color: var(--on-dark);
+}
+.dark:hover {
+  background: #3d2a23;
+}
+.sm {
+  height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+.ghost.sm {
+  padding: 0 10px;
+}
+/* Disabled — a sand fill whatever the variant */
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  background: var(--sand);
+  color: var(--disabled-ink);
+  border-color: transparent;
+  cursor: not-allowed;
+}
+/* Loading keeps the brand fill so the button doesn't look disabled */
+.btn.loading,
+.btn.loading:disabled {
+  background: var(--brand-600);
+  color: #fff;
+  cursor: progress;
+}
+.meta {
+  font-weight: 600;
+  opacity: 0.92;
+  font-variant-numeric: tabular-nums;
+}
+.sep {
+  width: 1px;
+  height: 18px;
+  background: currentColor;
+  opacity: 0.35;
+}

@@ -1,0 +1,13 @@
+.phone {
+  display: flex;
+  gap: 8px;
+}
+.cc {
+  width: 76px;
+  flex: none;
+  justify-content: center;
+  font-weight: 700;
+  gap: 4px;
+  background: var(--surface);
+  color: var(--ink);
+}

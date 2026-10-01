@@ -1,0 +1,28 @@
+.spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: ot-spin 0.8s linear infinite;
+  flex: none;
+}
+.brand {
+  border-color: var(--brand-tint);
+  border-top-color: var(--brand-600);
+}
+.lg {
+  width: 56px;
+  height: 56px;
+  border-width: 4px;
+}
+@keyframes ot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
