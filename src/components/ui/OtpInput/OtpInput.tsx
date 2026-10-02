@@ -81,6 +81,18 @@ export function OtpInput({
     commit(next, Math.min(start + digits.length, length - 1));
   };
 
+  /** Typing, mobile keyboards and SMS autofill all arrive here. */
+  const onInput = (index: number, current: string, raw: string) => {
+    const digits = onlyDigits(raw);
+    // A whole code (autofill / paste via keyboard) replaces everything.
+    if (digits.length >= length) {
+      commit(digits.slice(0, length), length - 1);
+      return;
+    }
+    // Typing into a filled box: keep only the new character.
+    writeAt(index, current && digits.length > 1 ? digits.replace(current, '') : digits);
+  };
+
   const onKeyDown = (index: number) => (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Backspace') {
       event.preventDefault();
@@ -149,9 +161,7 @@ export function OtpInput({
               value={digit}
               disabled={disabled}
               autoFocus={autoFocus && index === 0}
-              onChange={(event) =>
-                writeAt(index, event.target.value.replace(digit, '') || event.target.value)
-              }
+              onChange={(event) => onInput(index, digit, event.target.value)}
               onKeyDown={onKeyDown(index)}
               onPaste={onPaste(index)}
               onFocus={onFocus(index)}

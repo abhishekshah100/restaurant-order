@@ -14,8 +14,10 @@ export type DialogPresentation = 'sheet' | 'modal' | 'adaptive' | 'panel';
 export interface DialogProps {
   open: boolean;
   onClose: () => void;
-  /** Accessible title, shown in the header unless `hideTitle`. */
+  /** Accessible title, shown in the header unless `hideTitle` or `labelledBy`. */
   title: ReactNode;
+  /** Id of a heading inside `children` that names the dialog; skips the built-in header. */
+  labelledBy?: string;
   hideTitle?: boolean;
   /** Serif display title (modal headings) instead of the UI title. */
   displayTitle?: boolean;
@@ -37,6 +39,7 @@ export function Dialog({
   open,
   onClose,
   title,
+  labelledBy,
   hideTitle,
   displayTitle,
   description,
@@ -81,13 +84,13 @@ export function Dialog({
         className={cx(styles.dialog, styles[presentation], className)}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={titleId}
+        aria-labelledby={labelledBy ?? titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
       >
         <span className={styles.grabber} aria-hidden="true" />
         <div className={styles.body}>
-          {(!hideTitle || showClose) && (
+          {!labelledBy && (!hideTitle || showClose) && (
             <div className={styles.head}>
               <h2
                 id={titleId}
@@ -101,7 +104,7 @@ export function Dialog({
               {showClose && <IconButton icon="x" label="Close" variant="soft" onClick={onClose} />}
             </div>
           )}
-          {hideTitle && !showClose && (
+          {!labelledBy && hideTitle && !showClose && (
             <h2 id={titleId} className="visually-hidden">
               {title}
             </h2>

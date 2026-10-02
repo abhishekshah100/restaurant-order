@@ -1,0 +1,366 @@
+/* Shared checkout layout (09–11 · w09–w11) */
+.main {
+  padding: 32px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  flex: 1;
+}
+.main > .stack:only-child {
+  min-height: 100%;
+}
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.title {
+  font: 500 28px/34px var(--f-display);
+  letter-spacing: -0.005em;
+  margin: 0;
+  text-wrap: balance;
+}
+.backLink {
+  font: 700 14px/20px var(--f-ui);
+  color: var(--brand-600);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  align-self: flex-start;
+  border-radius: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.mobileFoot {
+  margin-top: auto;
+  padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.desktopFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.desktopFoot > a,
+.desktopFoot > button {
+  min-width: 220px;
+}
+.fine {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+/* Mobile only: let the step fill the screen so actions sit at the bottom.
+   From 1024px the Columns grid takes over. */
+@media (max-width: 1023.98px) {
+  .body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+.well {
+  background: var(--sand);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.price {
+  font: 700 15px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Summary panel */
+.summary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: sticky;
+  top: calc(var(--header-h) + 24px);
+}
+.summaryHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.editLink {
+  font: 700 13px/20px var(--f-ui);
+  color: var(--brand-600);
+  text-decoration: none;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+}
+.hr {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 0;
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .main,
+  .mobileFoot {
+    width: 100%;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+@media (min-width: 1024px) {
+  .main {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 40px 48px;
+    flex: none;
+  }
+  .title {
+    font-size: 34px;
+    line-height: 40px;
+  }
+  .fine {
+    justify-content: flex-start;
+    text-align: left;
+    gap: 8px;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  .main {
+    padding: 32px 36px;
+  }
+  .summary {
+    padding: 28px;
+  }
+}
+
+/* Details form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+/* A step's content when the actions live inside the <form> */
+.stack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.formFoot {
+  margin-top: auto;
+  padding: 12px 0 calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 1024px) {
+  .form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+/* OTP step */
+.ink {
+  color: var(--ink);
+}
+.inlineLink {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--brand-600);
+}
+.changeLink {
+  min-height: 32px;
+}
+.otp {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.resendRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.resendLinks {
+  display: flex;
+  gap: 16px;
+}
+.textBtn {
+  font: 700 14px/20px var(--f-ui);
+  color: var(--brand-600);
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  border-radius: 6px;
+}
+.timer {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.resendInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.resendInline .resendLinks {
+  gap: 20px;
+}
+.demo {
+  font: 600 12px/16px var(--f-ui);
+  color: var(--ink-3);
+  border-top: 1px dashed var(--line-strong);
+  padding-top: 8px;
+  margin-top: 10px;
+  align-self: flex-start;
+}
+@media (min-width: 1024px) {
+  .otp {
+    max-width: 460px;
+  }
+}
+
+/* Payment step */
+.payCard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.payCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.methods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.method {
+  min-height: 84px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  width: 100%;
+  font: 600 15px/20px var(--f-ui);
+}
+.method:hover {
+  border-color: var(--line-strong);
+}
+.methodOn,
+.methodOn:hover {
+  border-color: var(--brand-600);
+  background: var(--brand-tint-2);
+}
+.radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  flex: none;
+  background: var(--surface);
+  margin-top: 2px;
+}
+.methodOn .radio {
+  border: 7px solid var(--brand-600);
+}
+.methodBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.methodTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.methodSub {
+  font: 500 13px/18px var(--f-ui);
+  color: var(--ink-2);
+}
+.methodIcon {
+  color: var(--ink-2);
+}
+.methodTopRow {
+  display: contents;
+}
+.desktopTag {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .methods {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .method {
+    min-height: 150px;
+    padding: 22px;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .methodTopRow {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .radio {
+    margin-top: 0;
+  }
+  .methodTitleText {
+    font: 700 17px/24px var(--f-ui);
+  }
+  .methodSub {
+    line-height: 19px;
+  }
+  .mobileTag {
+    display: none;
+  }
+  .desktopTag {
+    display: inline-flex;
+  }
+}

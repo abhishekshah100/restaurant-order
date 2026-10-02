@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { cx } from '@/lib/cx';
 import { Icon, type IconName } from '../Icon';
 import { VegMark } from '../VegMark/VegMark';
@@ -17,8 +17,13 @@ interface BaseProps {
 }
 
 export interface ChipProps extends BaseProps {
-  /** Toggle state; renders aria-pressed. Omit for a plain action chip. */
+  /** Toggle state; renders aria-pressed (or aria-checked with role="radio"). */
   pressed?: boolean;
+  /** Single-choice chip inside a radiogroup. */
+  role?: 'radio';
+  tabIndex?: number;
+  onKeyDown?: (event: KeyboardEvent<HTMLButtonElement>) => void;
+  id?: string;
   onClick?: () => void;
   href?: undefined;
   'aria-label'?: string;
@@ -60,9 +65,14 @@ export function Chip(props: ChipProps | ChipLinkProps) {
   }
   return (
     <button
+      id={props.id}
       type="button"
       className={classes}
-      aria-pressed={props.pressed}
+      role={props.role}
+      tabIndex={props.tabIndex}
+      onKeyDown={props.onKeyDown}
+      aria-checked={props.role === 'radio' ? Boolean(props.pressed) : undefined}
+      aria-pressed={props.role === 'radio' ? undefined : props.pressed}
       onClick={props.onClick}
       aria-label={props['aria-label']}
       aria-haspopup={props['aria-haspopup']}

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
+// Run `npm run build` first: the tests serve the static export in out/.
 
 export default defineConfig({
   testDir: './tests/e2e',

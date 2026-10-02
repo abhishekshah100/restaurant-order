@@ -175,3 +175,22 @@ ol {
     scroll-behavior: auto;
   }
 }
+
+/* Responsive visibility — mobile layout below 1024px, web layout from 1024px.
+   `html` raises specificity so these win over a component's own display rule. */
+@media (max-width: 1023.98px) {
+  html .hide-mobile {
+    display: none;
+  }
+}
+@media (min-width: 1024px) {
+  html .hide-desktop {
+    display: none;
+  }
+}
+
+/* Temporary Phase 4 placeholder pages */
+.coming-soon {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}

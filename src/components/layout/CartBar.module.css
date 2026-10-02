@@ -1,0 +1,62 @@
+.bar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
+  height: 60px;
+  border-radius: var(--r-lg);
+  background: var(--brand-600);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px 0 18px;
+  text-decoration: none;
+  box-shadow: var(--sh-2);
+  z-index: 31;
+  animation: rise 0.2s ease-out;
+}
+.bar:hover {
+  background: var(--brand-700);
+}
+.noNav {
+  bottom: calc(20px + env(safe-area-inset-bottom));
+}
+.ct {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ct b {
+  font: 800 15px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+.ct span {
+  font: 600 12px/16px var(--f-ui);
+  opacity: 0.9;
+}
+.go {
+  font: 800 15px/20px var(--f-ui);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Room under the page so the bar never covers the last row */
+.spacer {
+  height: 84px;
+}
+@media (min-width: 768px) {
+  .bar {
+    left: 50%;
+    right: auto;
+    width: min(560px, calc(100vw - 48px));
+    transform: translateX(-50%);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}

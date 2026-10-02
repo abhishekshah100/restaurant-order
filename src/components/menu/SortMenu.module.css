@@ -1,0 +1,43 @@
+.root {
+  position: relative;
+  flex: none;
+}
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 35;
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh-2);
+  padding: 6px;
+  margin: 0;
+  list-style: none;
+}
+.end {
+  left: auto;
+  right: 0;
+}
+.option {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font: 600 14px/20px var(--f-ui);
+  color: var(--ink);
+  cursor: pointer;
+  outline: none;
+}
+.option:hover,
+.active {
+  background: var(--bg);
+}
+.selected {
+  color: var(--brand-700);
+  font-weight: 700;
+}

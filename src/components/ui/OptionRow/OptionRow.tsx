@@ -50,6 +50,7 @@ export function OptionRow({
         {sub && <span className={styles.sub}>{sub}</span>}
       </span>
       {price !== undefined && <span className={styles.p}>{price}</span>}
+      {type === 'radio' && <span className={cx(styles.check, styles.badge)} aria-hidden="true" />}
     </button>
   );
 }
@@ -70,6 +71,12 @@ interface OptionGroupBase {
   choices: OptionChoice[];
   /** Visual heading level for the title. */
   titleClassName?: string;
+  /** list (default) · grid: 2 columns from 1024px · grid2: always 2 columns. */
+  layout?: 'list' | 'grid' | 'grid2';
+  /** Radios render as stacked tiles below 1024px (quick-add portions). */
+  tilesOnMobile?: boolean;
+  /** Heading element for the title (default h3). */
+  headingAs?: 'h2' | 'h3';
   id: string;
 }
 
@@ -89,8 +96,23 @@ export interface CheckboxGroupProps extends OptionGroupBase {
 
 /** Titled group of OptionRows with radiogroup keyboard support (arrows move + select). */
 export function OptionGroup(props: RadioGroupProps | CheckboxGroupProps) {
-  const { title, hint, choices, id, titleClassName = 't-h3' } = props;
+  const {
+    title,
+    hint,
+    choices,
+    id,
+    titleClassName = 't-h3',
+    layout = 'list',
+    tilesOnMobile,
+    headingAs: Heading = 'h3',
+  } = props;
   const titleId = `${id}-title`;
+  const listClass = cx(
+    styles.opts,
+    layout === 'grid' && styles.grid,
+    layout === 'grid2' && styles.grid2,
+    tilesOnMobile && styles.tilesMobile,
+  );
 
   if (props.type === 'radio') {
     const enabled = choices.filter((c) => !c.disabled);
@@ -105,12 +127,12 @@ export function OptionGroup(props: RadioGroupProps | CheckboxGroupProps) {
     return (
       <div>
         <div className={styles.head}>
-          <h3 id={titleId} className={titleClassName}>
+          <Heading id={titleId} className={titleClassName}>
             {title}
-          </h3>
+          </Heading>
           {hint && <span className={styles.req}>{hint}</span>}
         </div>
-        <div className={styles.opts} role="radiogroup" aria-labelledby={titleId}>
+        <div className={listClass} role="radiogroup" aria-labelledby={titleId}>
           {choices.map((choice) => (
             <OptionRow
               key={choice.id}
@@ -144,12 +166,12 @@ export function OptionGroup(props: RadioGroupProps | CheckboxGroupProps) {
   return (
     <div>
       <div className={styles.head}>
-        <h3 id={titleId} className={titleClassName}>
+        <Heading id={titleId} className={titleClassName}>
           {title}
-        </h3>
+        </Heading>
         {hint && <span className={styles.req}>{hint}</span>}
       </div>
-      <div className={styles.opts} role="group" aria-labelledby={titleId}>
+      <div className={listClass} role="group" aria-labelledby={titleId}>
         {choices.map((choice) => {
           const checked = value.includes(choice.id);
           return (

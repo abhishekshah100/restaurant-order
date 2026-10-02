@@ -1,0 +1,97 @@
+/* Feature card — mobile rail (.fcard 236px) and desktop grid (.pick) */
+.card {
+  width: 236px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  scroll-snap-align: start;
+}
+.media {
+  position: relative;
+  display: block;
+  border-radius: var(--r-lg);
+}
+.img {
+  width: 100%;
+  height: 168px;
+  border-radius: var(--r-lg);
+  object-fit: cover;
+  display: block;
+  background: var(--sand);
+}
+.tag {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+}
+.control {
+  position: relative;
+  align-self: flex-end;
+  margin: -34px 10px 0 auto;
+}
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: -4px;
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.name {
+  font: 700 16px/22px var(--f-ui);
+  margin: 0;
+}
+.link {
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 4px;
+}
+.link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+}
+.link:focus-visible {
+  box-shadow: none;
+}
+.link:focus-visible::after {
+  box-shadow: var(--focus);
+}
+.desc {
+  font: 500 13px/19px var(--f-ui);
+  color: var(--ink-2);
+  margin: 0;
+}
+.price {
+  font: 700 15px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 1024px) {
+  .card {
+    width: auto;
+  }
+  .img {
+    height: 190px;
+  }
+  .tag {
+    left: 12px;
+    top: 12px;
+  }
+  /* w02: ADD sits on the image's bottom edge (right 12, bottom −16) */
+  .control {
+    position: absolute;
+    top: 166px;
+    right: 12px;
+    margin: 0;
+  }
+  .text {
+    margin-top: 0;
+    padding-top: 4px;
+  }
+}

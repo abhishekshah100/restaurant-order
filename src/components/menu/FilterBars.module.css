@@ -1,0 +1,22 @@
+.row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -20px;
+  padding: 2px 20px;
+}
+.row::-webkit-scrollbar {
+  display: none;
+}
+.desktopActions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+.activeRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}

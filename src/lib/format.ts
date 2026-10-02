@@ -38,3 +38,32 @@ export function formatMobile(digits: string): string {
 export function pluralize(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`;
 }
+
+const timeFmt = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+  timeZone: 'Asia/Kolkata',
+});
+const dateFmt = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'Asia/Kolkata',
+});
+
+/** "7:42 PM" (restaurant time, IST). */
+export function formatTime(iso: string | Date): string {
+  return timeFmt.format(typeof iso === 'string' ? new Date(iso) : iso);
+}
+
+/** "12 Sep 2026". */
+export function formatDate(iso: string | Date): string {
+  return dateFmt.format(typeof iso === 'string' ? new Date(iso) : iso);
+}
+
+/** "0:24" countdown. */
+export function formatCountdown(seconds: number): string {
+  const s = Math.max(0, Math.ceil(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}

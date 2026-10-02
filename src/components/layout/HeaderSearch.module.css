@@ -1,0 +1,39 @@
+.root {
+  position: relative;
+}
+.field {
+  height: 46px;
+  background: var(--bg);
+}
+.open .field {
+  background: var(--surface);
+}
+.spinner {
+  margin-right: 10px;
+}
+.dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 58px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--sh-2);
+  z-index: 45;
+  padding: 24px;
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+}
+.scrim {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: var(--header-h);
+  background: var(--scrim);
+  z-index: 39;
+  border: 0;
+  padding: 0;
+  cursor: default;
+}

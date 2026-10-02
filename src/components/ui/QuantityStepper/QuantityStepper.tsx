@@ -1,10 +1,11 @@
 'use client';
 
+import { MAX_QUANTITY } from '@/lib/constants';
 import { cx } from '@/lib/cx';
 import { Icon } from '../Icon';
 import styles from './QuantityStepper.module.css';
 
-export const MAX_QUANTITY = 20;
+export { MAX_QUANTITY };
 
 export interface QuantityStepperProps {
   value: number;

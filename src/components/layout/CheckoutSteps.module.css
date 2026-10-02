@@ -1,0 +1,89 @@
+/* Mobile segmented progress (3 steps) */
+.mobile {
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.seg i {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  display: block;
+}
+.seg i.done {
+  background: var(--success);
+}
+.seg i.cur {
+  background: var(--brand-600);
+}
+.labels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  font: 700 11px/14px var(--f-ui);
+  color: var(--ink-3);
+}
+.labels .on {
+  color: var(--ink);
+}
+
+/* Desktop horizontal steps (4 steps, in the header) */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 14px/20px var(--f-ui);
+  color: var(--ink-3);
+}
+.d {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line-strong);
+  font: 800 13px/1 var(--f-ui);
+  background: var(--surface);
+}
+.stepDone,
+.stepCur {
+  color: var(--ink);
+}
+.stepDone .d {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+.stepCur .d {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--brand-tint);
+}
+.line {
+  width: 56px;
+  height: 2px;
+  background: var(--line-strong);
+}
+.lineDone {
+  background: var(--success);
+}
+@media (max-width: 1279.98px) {
+  .line {
+    width: 28px;
+  }
+}

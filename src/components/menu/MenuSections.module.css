@@ -1,0 +1,102 @@
+/* Chef's picks */
+.picks {
+  padding: 28px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.picksHead {
+  padding: 0 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.picksTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rail {
+  display: flex;
+  gap: 16px;
+  padding: 0 20px 4px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 20px;
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+}
+
+/* Category section */
+.section {
+  padding: 28px 20px 0;
+}
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.seeAll {
+  font: 700 14px/20px var(--f-ui);
+  color: var(--brand-600);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  border-radius: 8px;
+}
+.divider {
+  height: 8px;
+  background: var(--sand);
+  margin-top: 8px;
+}
+.empty {
+  padding: 16px 0 8px;
+}
+
+@media (min-width: 768px) {
+  .rail {
+    gap: 20px;
+  }
+}
+@media (min-width: 1024px) {
+  .picks {
+    padding: 0;
+    gap: 18px;
+  }
+  .picksHead {
+    padding: 0;
+  }
+  .picksTitle {
+    gap: 4px;
+  }
+  .picksTitle h2 {
+    font: 500 28px/34px var(--f-display);
+    letter-spacing: -0.005em;
+  }
+  .rail {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    padding: 0;
+    overflow: visible;
+  }
+  .section {
+    padding: 0;
+  }
+  .sectionHead {
+    align-items: flex-end;
+  }
+  .divider {
+    display: none;
+  }
+}

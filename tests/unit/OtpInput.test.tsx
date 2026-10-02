@@ -77,6 +77,12 @@ describe('OtpInput', () => {
     expect(screen.getByTestId('value')).toHaveTextContent('654321');
   });
 
+  it('replaces an existing code when a full code is autofilled again', () => {
+    render(<Controlled initial="111111" />);
+    fireEvent.change(boxes()[0], { target: { value: '123456' } });
+    expect(screen.getByTestId('value')).toHaveTextContent('123456');
+  });
+
   it('Backspace clears and steps back', async () => {
     const user = userEvent.setup();
     render(<Controlled initial="123" />);

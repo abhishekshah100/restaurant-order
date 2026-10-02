@@ -1,0 +1,56 @@
+.panel {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.sticky {
+  position: sticky;
+  top: var(--header-h);
+  max-height: calc(100dvh - var(--header-h));
+  display: flex;
+  flex-direction: column;
+}
+.head {
+  padding: 28px 28px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.body {
+  padding: 0 28px;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 0 1 auto;
+}
+.foot {
+  padding: 20px 28px 28px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.note {
+  padding: 16px 0;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+}
+.note > span[aria-hidden] {
+  margin-top: 2px;
+}
+.empty {
+  padding: 0 28px 24px;
+}
+/* Inside the tablet slide-over the dialog supplies padding */
+.inDialog .head,
+.inDialog .body,
+.inDialog .foot,
+.inDialog .empty {
+  padding-left: 0;
+  padding-right: 0;
+}
+.inDialog .head {
+  padding-top: 0;
+}

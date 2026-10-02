@@ -1,0 +1,146 @@
+/* Mobile: image | info, then qty + price, then links (08). */
+.ci {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'img info info'
+    'img qty price'
+    'img links links';
+  column-gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.ci:last-child {
+  border-bottom: 0;
+}
+.media {
+  grid-area: img;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--sand);
+  color: var(--ink-3);
+  display: grid;
+  place-items: center;
+}
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.info {
+  grid-area: info;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.name {
+  font: 700 15px/20px var(--f-ui);
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.opts {
+  font: 500 13px/18px var(--f-ui);
+  color: var(--ink-2);
+  margin: 0;
+}
+.note {
+  font: 500 13px/18px var(--f-ui);
+  color: var(--ink-2);
+  margin: 0;
+  font-style: italic;
+}
+.qty {
+  grid-area: qty;
+  margin-top: 12px;
+  justify-self: start;
+}
+.price {
+  grid-area: price;
+  margin-top: 12px;
+  align-self: center;
+  font: 700 15px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.links {
+  grid-area: links;
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+}
+.link {
+  font: 700 13px/20px var(--f-ui);
+  color: var(--brand-600);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  background: none;
+  border: 0;
+  padding: 0;
+  border-radius: 6px;
+  position: relative;
+}
+.link::before {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
+}
+.remove {
+  color: var(--ink-2);
+}
+/* On mobile, "−" at 1 already removes the line, so Remove only shows above 1 (08). */
+@media (max-width: 1023.98px) {
+  .single .remove {
+    display: none;
+  }
+}
+
+/* Desktop cart page: image | info + links | qty | price (w08). */
+@media (min-width: 1024px) {
+  .page {
+    grid-template-columns: 80px minmax(0, 1fr) auto 80px;
+    grid-template-areas:
+      'img info qty price'
+      'img links qty price';
+    grid-template-rows: auto 1fr;
+    column-gap: 18px;
+    padding: 22px 0;
+    align-items: center;
+  }
+  .page .media {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+  }
+  .page .name {
+    font-size: 16px;
+  }
+  .page .qty,
+  .page .price {
+    margin-top: 0;
+  }
+  .page .links {
+    align-self: start;
+  }
+}
+
+/* Compact desktop side panel (w02): 56px image, no links. */
+.panel {
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+}
+.panel .media {
+  width: 56px;
+  height: 56px;
+}
+.panel .media > span {
+  width: 20px;
+  height: 20px;
+}

@@ -1,0 +1,127 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.recent {
+  gap: 4px;
+}
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.clear {
+  font: 700 13px/20px var(--f-ui);
+  color: var(--brand-600);
+  background: none;
+  border: 0;
+  padding: 0 4px;
+  min-height: 44px;
+  border-radius: 8px;
+}
+.row {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--ink);
+}
+.rowLink {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font: 700 15px/20px var(--f-ui);
+  color: var(--ink);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  border-radius: 8px;
+}
+.rowLink > span[aria-hidden] {
+  color: var(--ink-3);
+}
+.rowText {
+  flex: 1;
+  min-width: 0;
+}
+.arrow {
+  display: none;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.cat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  text-decoration: none;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cat:hover {
+  border-color: var(--line-strong);
+}
+.catName {
+  font: 700 15px/24px var(--f-ui);
+}
+.empty {
+  color: var(--ink-3);
+  font: 500 13px/18px var(--f-ui);
+}
+
+/* Desktop dropdown density (w04) */
+.compact {
+  gap: 22px;
+}
+.compact .recent {
+  gap: 2px;
+}
+.compact .section {
+  gap: 12px;
+}
+.compact .clear {
+  min-height: 32px;
+}
+.compact .row {
+  min-height: 44px;
+}
+.compact .rowLink {
+  font-weight: 600;
+}
+.compact .arrow {
+  display: inline-block;
+}
+.compact .cats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.compact .cat {
+  background: var(--sand);
+  border: 0;
+  border-radius: var(--r);
+  padding: 12px 14px;
+  gap: 0;
+}
+.compact .catName {
+  font: 700 13px/18px var(--f-ui);
+}

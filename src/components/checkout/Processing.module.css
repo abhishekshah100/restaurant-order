@@ -1,0 +1,296 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56px 24px 0;
+  gap: 28px;
+}
+.compact {
+  padding-top: 24px;
+  gap: 12px;
+}
+.cancelled {
+  padding-top: 56px;
+  gap: 12px;
+}
+.spinWrap {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--brand-tint-2);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.lede {
+  max-width: 310px;
+}
+.ink {
+  color: var(--ink);
+}
+.amountCard {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+.amountRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.amountCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.amount {
+  font: 500 30px/36px var(--f-display);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.hr {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 0;
+}
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font: 600 13px/18px var(--f-ui);
+}
+.stepOk > span[aria-hidden] {
+  color: var(--success);
+}
+.stepCur {
+  font-weight: 700;
+}
+.stepTodo {
+  color: var(--ink-3);
+}
+.circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  flex: none;
+}
+.timeLeft {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.foot {
+  padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.footStack {
+  align-items: stretch;
+  gap: 10px;
+  margin-top: auto;
+}
+.secure {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.proto {
+  display: flex;
+  gap: 16px;
+  border-top: 1px dashed var(--line-strong);
+  padding-top: 4px;
+}
+.protoLink {
+  font: 700 12px/16px var(--f-ui);
+  color: var(--ink-3);
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  min-height: 28px;
+  border-radius: 6px;
+}
+.savedCard {
+  margin-top: 12px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.savedHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.savedText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hint {
+  font: 500 13px/18px var(--f-ui);
+  color: var(--ink-2);
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  text-align: left;
+}
+.hint > span[aria-hidden] {
+  margin-top: 1px;
+}
+.well {
+  margin-top: 12px;
+  width: 100%;
+  background: var(--sand);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.price {
+  font: 700 15px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+.desktopOnly {
+  display: none;
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .card,
+  .foot {
+    width: 100%;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .body {
+    align-items: center;
+    padding: 72px 40px;
+  }
+  .card,
+  .compact,
+  .cancelled {
+    flex: none;
+    width: 100%;
+    max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 48px 56px;
+    gap: 14px;
+  }
+  .processing {
+    gap: 18px;
+  }
+  .lede {
+    max-width: 460px;
+  }
+  .amountCard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 12px;
+    padding: 24px;
+    border-radius: 16px;
+    background: var(--bg);
+    border: 0;
+  }
+  .amountCard .hr {
+    display: none;
+  }
+  .amountRow {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .steps {
+    gap: 14px;
+  }
+  .step {
+    gap: 10px;
+  }
+  .savedCard {
+    margin-top: 8px;
+    border: 0;
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .savedCard .hr {
+    display: none;
+  }
+  .well {
+    margin-top: 8px;
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 16px 20px;
+  }
+  .hintOutside {
+    align-self: flex-start;
+  }
+  .actions {
+    flex-direction: row;
+    margin-top: 12px;
+  }
+  .actions > * {
+    flex: 1;
+  }
+  .desktopOnly {
+    display: flex;
+  }
+  .proto {
+    gap: 20px;
+    padding-top: 6px;
+  }
+}
+.grow {
+  flex: 1;
+}
+.emptyHeader {
+  padding: 0;
+}

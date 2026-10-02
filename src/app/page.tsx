@@ -1,12 +1,11 @@
-import Link from 'next/link';
+import type { Metadata } from 'next';
+import { Welcome } from '@/components/home/Welcome';
 
-// Placeholder until Phase 2 builds the welcome screen.
-export default function Home() {
-  return (
-    <main id="main" className="t-body">
-      <p>
-        The Olive Table — <Link href="/styleguide/">component styleguide</Link>
-      </p>
-    </main>
-  );
+export const metadata: Metadata = {
+  title: { absolute: 'The Olive Table — Welcome' },
+  description: 'Browse the menu and order directly from your table. No app to download.',
+};
+
+export default function WelcomePage() {
+  return <Welcome />;
 }

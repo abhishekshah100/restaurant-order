@@ -9,6 +9,8 @@ export interface EmptyStateProps {
   title: ReactNode;
   /** Heading level for the title. */
   as?: 'h1' | 'h2';
+  /** Title style (default t-h1). */
+  titleClassName?: string;
   children?: ReactNode;
   actions?: ReactNode;
   className?: string;
@@ -19,6 +21,7 @@ export function EmptyState({
   tone = 'brand',
   title,
   as: Heading = 'h2',
+  titleClassName = 't-h1',
   children,
   actions,
   className,
@@ -28,7 +31,7 @@ export function EmptyState({
       <div className={cx(styles.art, tone !== 'brand' && styles[tone])}>
         <Icon name={icon} size="xl" />
       </div>
-      <Heading className="t-h1">{title}</Heading>
+      <Heading className={titleClassName}>{title}</Heading>
       {children && <div className={cx('t-body c2', styles.body)}>{children}</div>}
       {actions && <div className={styles.actions}>{actions}</div>}
     </div>

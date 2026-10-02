@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { AppProviders } from '@/context/AppProviders';
 import { fontVariables } from '@/fonts';
 import '@/styles/globals.css';
 
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        {children}
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
