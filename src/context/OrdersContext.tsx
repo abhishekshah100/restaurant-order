@@ -108,14 +108,10 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
 
   const markPaid = useCallback(
     (orderIds: readonly string[], method: BillPaymentMethod) => {
-      const { orders, marked } = markOrdersPaid(
-        merge(readPlaced(), placedRef.current),
-        orderIds,
-        {
-          detail: method === 'upi' ? t('payment.methodUpi') : t('payment.methodCard'),
-          transactionRef: MOCK_TRANSACTION_REF,
-        },
-      );
+      const { orders, marked } = markOrdersPaid(merge(readPlaced(), placedRef.current), orderIds, {
+        detail: method === 'upi' ? t('payment.methodUpi') : t('payment.methodCard'),
+        transactionRef: MOCK_TRANSACTION_REF,
+      });
       if (marked.length > 0) {
         writeJSON(STORAGE_KEYS.orders, orders);
         update(orders);

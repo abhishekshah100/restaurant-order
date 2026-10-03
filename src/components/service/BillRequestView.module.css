@@ -51,6 +51,12 @@
   flex: none;
 }
 
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .foot {
   position: sticky;
   bottom: 0;

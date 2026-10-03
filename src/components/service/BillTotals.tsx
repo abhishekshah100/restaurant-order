@@ -12,11 +12,20 @@ interface BillTotalsProps {
   layout?: 'list' | 'tiles';
   /** Show the paid amount as a deduction (request page) or as a plain amount (confirmation). */
   signed?: boolean;
+  /** Only the balance row: everything listed is due (the pay page). List layout only. */
+  balanceOnly?: boolean;
   className?: string;
 }
 
 /** Total · already paid · balance due. */
-export function BillTotals({ bill, scope, layout = 'list', signed, className }: BillTotalsProps) {
+export function BillTotals({
+  bill,
+  scope,
+  layout = 'list',
+  signed,
+  balanceOnly,
+  className,
+}: BillTotalsProps) {
   const t = useContent('service');
   const totalLabel = scope === 'mine' ? t('billTotals.mine') : t('billTotals.table');
   const paid = signed ? `− ${formatINR(bill.paid)}` : formatINR(bill.paid);
@@ -42,11 +51,13 @@ export function BillTotals({ bill, scope, layout = 'list', signed, className }: 
 
   return (
     <dl className={cx(styles.list, className)}>
-      <div className={styles.row}>
-        <dt>{totalLabel}</dt>
-        <dd>{formatINR(bill.total)}</dd>
-      </div>
-      {bill.paid > 0 && (
+      {!balanceOnly && (
+        <div className={styles.row}>
+          <dt>{totalLabel}</dt>
+          <dd>{formatINR(bill.total)}</dd>
+        </div>
+      )}
+      {!balanceOnly && bill.paid > 0 && (
         <div className={styles.row}>
           <dt>{t('billTotals.paid')}</dt>
           <dd className={styles.ok}>{paid}</dd>

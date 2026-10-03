@@ -31,7 +31,7 @@ export function PayBillProcessing({ payment, table, ...foot }: ProcessingProps) 
   });
   return (
     <div className={styles.statusPage}>
-      <SiteHeader variant="payment" />
+      <SiteHeader variant="payment" subtitle={t('payBill.title')} />
       <MobileHeader variant="pill-center" />
       <main id="main" className={styles.statusBody}>
         <section className={styles.processing} aria-busy="true" aria-labelledby="pay-status">
@@ -140,7 +140,7 @@ export function PayBillFailed({ payment, table, onRetry, onChangeMethod }: Faile
   );
   return (
     <div className={styles.statusPage}>
-      <SiteHeader variant="payment" />
+      <SiteHeader variant="payment" subtitle={t('payBill.title')} />
       <MobileHeader variant="pill-end" />
       <main id="main" className={cx(styles.statusBody, styles.grow)}>
         <section className={styles.failed} role="alert">
@@ -198,11 +198,7 @@ export function PayBillPaid({ receipt, table }: PaidProps) {
           </div>
           <div className={styles.receiptRow}>
             <dt>{t('payBill.paid.orders')}</dt>
-            <dd>
-              {receipt.orders
-                .map((o) => t('billOrders.orderRef', { id: o.id }))
-                .join(', ')}
-            </dd>
+            <dd>{receipt.orders.map((o) => t('billOrders.orderRef', { id: o.id })).join(', ')}</dd>
           </div>
         </dl>
       }

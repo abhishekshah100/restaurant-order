@@ -20,9 +20,15 @@ async function scanAndAdd(page: Page, dish: string) {
   await page.goto('/?table=12');
   await expect(tableLabel(page, 12)).toBeVisible();
   await page.goto('/menu/starters/');
-  await page.getByRole('button', { name: `Add ${dish}` }).click();
-  // Wait until the cart has registered the item (it's saved to the device right after).
-  await expect(page.getByRole('group', { name: `Quantity of ${dish}` }).first()).toBeVisible();
+  // Wait until the cart has registered the item (it's saved to the device right after). On a
+  // busy machine the first tap can land before the page has hydrated, so tap again if needed.
+  const stepper = page.getByRole('group', { name: `Quantity of ${dish}` }).first();
+  await expect(async () => {
+    if (!(await stepper.isVisible())) {
+      await page.getByRole('button', { name: `Add ${dish}` }).click({ timeout: 2000 });
+    }
+    await expect(stepper).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 15_000 });
 }
 
 /** Cart lines have a quantity stepper named after the dish. */

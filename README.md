@@ -44,20 +44,20 @@ Both are read at build time (`next build`), like every `NEXT_PUBLIC_` variable. 
 
 Every route is prerendered at build time. Dynamic routes list their pages with `generateStaticParams` (`dynamicParams = false`), so only the menu's dishes and categories and the order IDs in `public/api/orders.json` (history plus the `newOrderIds` pool) exist.
 
-| Route                                                                                | Screen                                                                                               |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `/`                                                                                  | Welcome and table confirmation; the closed / paused / offline screen when ordering is unavailable    |
-| `/menu`                                                                              | Menu home                                                                                            |
-| `/menu/[category]`                                                                   | Category                                                                                             |
-| `/dish/[slug]`                                                                       | Food detail (`?edit=<line key>` edits a cart line)                                                   |
-| `/search`                                                                            | Search (`?q=`)                                                                                       |
-| `/cart`                                                                              | Cart and empty cart                                                                                  |
-| `/checkout/details`, `/checkout/verify`, `/checkout/payment`, `/checkout/processing` | Checkout steps. Show the restaurant-state screen instead while ordering is closed, paused or offline |
-| `/order/[id]/confirmed`                                                              | Order confirmation                                                                                   |
-| `/order/[id]`, `/order/[id]/track`                                                   | Order details and live tracking                                                                      |
-| `/orders`                                                                            | My orders                                                                                            |
-| `/help`, `/help/bill`, `/help/bill-requested`, `/help/waiter-requested`              | Service: help, request the bill, request confirmations                                               |
-| `/styleguide`                                                                        | Design-system board                                                                                  |
+| Route                                                                                     | Screen                                                                                               |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `/`                                                                                       | Welcome and table confirmation; the closed / paused / offline screen when ordering is unavailable    |
+| `/menu`                                                                                   | Menu home                                                                                            |
+| `/menu/[category]`                                                                        | Category                                                                                             |
+| `/dish/[slug]`                                                                            | Food detail (`?edit=<line key>` edits a cart line)                                                   |
+| `/search`                                                                                 | Search (`?q=`)                                                                                       |
+| `/cart`                                                                                   | Cart and empty cart                                                                                  |
+| `/checkout/details`, `/checkout/verify`, `/checkout/payment`, `/checkout/processing`      | Checkout steps. Show the restaurant-state screen instead while ordering is closed, paused or offline |
+| `/order/[id]/confirmed`                                                                   | Order confirmation                                                                                   |
+| `/order/[id]`, `/order/[id]/track`                                                        | Order details and live tracking                                                                      |
+| `/orders`                                                                                 | My orders                                                                                            |
+| `/help`, `/help/bill`, `/help/bill/pay`, `/help/bill-requested`, `/help/waiter-requested` | Service: help, request the bill, pay my own bill, request confirmations                              |
+| `/styleguide`                                                                             | Design-system board                                                                                  |
 
 ## Preview parameters
 
@@ -76,7 +76,7 @@ A `?status` preview is kept in sessionStorage, so it stays on while you browse i
 
 ### QR link
 
-Each table's QR code opens `/?table=12&qr=<token>`. `table` is the table number; `qr` is reserved for a signed table token (so guests can't just edit the number) and is passed on with the session but not checked yet. Every guest who scans gets their own **guest session** at that table, so several people at one table can order separately: their own cart, checkout, waiter and bill requests, and "Just my orders" on the bill. Re-scanning the same table (or refreshing) keeps the session; scanning another table, or coming back after `TABLE_SESSION_HOURS` (6), starts a new one. A link without `?table` reuses the current session, or starts one at the restaurant's `defaultTable`. See "Guest sessions" in [PROJECT_GUIDE.md](PROJECT_GUIDE.md).
+Each table's QR code opens `/?table=12&qr=<token>`. `table` is the table number; `qr` is reserved for a signed table token (so guests can't just edit the number) and is passed on with the session but not checked yet. Every guest who scans gets their own **guest session** at that table, so several people at one table can order separately: their own cart, checkout, waiter and bill requests, and "Just my orders" on the bill, which they can pay in the app (**Pay ₹X now** → `/help/bill/pay`) while the rest of the table pays separately. Re-scanning the same table (or refreshing) keeps the session; scanning another table, or coming back after `TABLE_SESSION_HOURS` (6), starts a new one. A link without `?table` reuses the current session, or starts one at the restaurant's `defaultTable`. See "Guest sessions" in [PROJECT_GUIDE.md](PROJECT_GUIDE.md).
 
 ## Testing
 
@@ -86,7 +86,7 @@ npm run build
 npm run test:e2e         # Playwright at 390px (mobile) and 1280px (desktop)
 ```
 
-The end-to-end tests serve `out/` on port 4173 and use the installed Google Chrome. On CI, set `PW_CHANNEL=chromium` (and run `npx playwright install chromium`). Specs live in `tests/e2e/`: the happy path (menu, food detail, cart, checkout, confirmation), failed payment and quick-add, orders and tracking, service requests, guest sessions (`sessions.spec.ts`: two guests at one table) and the restaurant states (`states.spec.ts`).
+The end-to-end tests serve `out/` on port 4173 and use the installed Google Chrome. On CI, set `PW_CHANNEL=chromium` (and run `npx playwright install chromium`). Specs live in `tests/e2e/`: the happy path (menu, food detail, cart, checkout, confirmation), failed payment and quick-add, orders and tracking, service requests, guest sessions (`sessions.spec.ts`: two guests at one table), separate bills (`separate-bills.spec.ts`: two guests at one table pay their own bills, one at checkout and one later from the bill page) and the restaurant states (`states.spec.ts`).
 
 ## Deploying
 

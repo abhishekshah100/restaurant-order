@@ -22,7 +22,8 @@ import styles from './PayBillView.module.css';
 
 type Phase =
   | { step: 'choose'; returning?: boolean }
-  | { step: 'processing' | 'failed'; payment: BillPayment }
+  | { step: 'processing'; payment: BillPayment }
+  | { step: 'failed'; payment: BillPayment }
   | { step: 'paid'; receipt: PaidBill };
 
 /**
@@ -32,8 +33,7 @@ type Phase =
  */
 export function PayBillView() {
   const t = useContent('service');
-  const { table, sessionId, bill, hydrated, startPayment, completePayment, settled } =
-    usePayBill();
+  const { table, sessionId, bill, hydrated, startPayment, completePayment, settled } = usePayBill();
   const { state, retry } = useOrderingAvailability();
   const offline = state === 'offline';
   const [method, setMethod] = useState<BillPaymentMethod>('upi');
@@ -175,7 +175,8 @@ function PayForm({
   const { paymentPartner } = useRestaurant();
   const methodsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (focusMethod) methodsRef.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
+    if (focusMethod)
+      methodsRef.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
   }, [focusMethod]);
   // The payable orders as a bill of their own: total = balance due = the amount to pay.
   const due = billFor(payable, 'mine', sessionId);
@@ -244,7 +245,12 @@ function PayForm({
             })}
           </h2>
           <BillOrderList orders={payable} sessionId={sessionId} />
-          <BillTotals bill={due} scope="mine" className={cx(styles.cardTotals, 'hide-desktop')} />
+          <BillTotals
+            bill={due}
+            scope="mine"
+            balanceOnly
+            className={cx(styles.cardTotals, 'hide-desktop')}
+          />
         </section>
 
         <div ref={methodsRef} className={styles.methods}>
@@ -267,7 +273,7 @@ function PayForm({
         <h2 id="pay-summary" className="t-h2">
           {t('shared.billSummary')}
         </h2>
-        <BillTotals bill={due} scope="mine" />
+        <BillTotals bill={due} scope="mine" balanceOnly />
         {payButton}
         {secured}
         <p className={styles.hint}>

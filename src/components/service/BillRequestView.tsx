@@ -10,7 +10,7 @@ import { Banner, Button, EmptyState, Icon, OptionGroup, Skeleton } from '@/compo
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
 import { formatINR, formatTime } from '@/lib/format';
-import { SERVICE_PATHS, billFor, firstName } from '@/lib/service';
+import { PAY_BILL_PATH, SERVICE_PATHS, billFor, firstName } from '@/lib/service';
 import type { BillScope } from '@/types/service';
 import { BillOrderList } from './BillOrderList';
 import { BillTotals } from './BillTotals';
@@ -78,14 +78,31 @@ export function BillRequestView() {
     );
   }
 
-  const confirm = pending ? (
-    <Button href={SERVICE_PATHS.bill} block iconStart="receipt">
-      {t('billRequest.viewRequest')}
-    </Button>
-  ) : (
-    <Button block iconStart="receipt" onClick={() => sendBillRequest(scope, bill.balance)}>
-      {t('billRequest.confirm')}
-    </Button>
+  // Only "Just my orders" can be paid in the app; the whole table's bill comes from the server.
+  const canPay = scope === 'mine' && bill.payableTotal > 0;
+  const requestVariant = canPay ? 'secondary' : 'primary';
+  const confirm = (
+    <div className={styles.actions}>
+      {canPay && (
+        <Button href={PAY_BILL_PATH} block iconStart="lock">
+          {t('shared.payNow', { amount: formatINR(bill.payableTotal) })}
+        </Button>
+      )}
+      {pending ? (
+        <Button href={SERVICE_PATHS.bill} variant={requestVariant} block iconStart="receipt">
+          {t('billRequest.viewRequest')}
+        </Button>
+      ) : (
+        <Button
+          variant={requestVariant}
+          block
+          iconStart="receipt"
+          onClick={() => sendBillRequest(scope, bill.balance)}
+        >
+          {t('billRequest.confirm')}
+        </Button>
+      )}
+    </div>
   );
   const mineIds = mine.orders.map((o) => `#${o.id}`).join(', ');
   const mineName = firstName(mine.orders[0]?.customerName ?? '');

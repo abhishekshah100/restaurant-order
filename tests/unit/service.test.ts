@@ -7,6 +7,7 @@ import {
   cleanNote,
   firstName,
   isServiceRequests,
+  payableOrders,
   latestOwnOrder,
   latestRequest,
   liveRequests,
@@ -166,6 +167,52 @@ describe('table orders and bill', () => {
       'A3',
       'A1',
     ]);
+  });
+
+  it('can pay only the guest session’s own unpaid orders, and only for "mine"', () => {
+    // Placed in this session and still unpaid (pay at the counter).
+    const mineUnpaid = order({
+      id: 'A8',
+      total: 272,
+      placedBy: 'you',
+      sessionId: SESSION,
+      placedAt: '2026-10-03T19:58:00+05:30',
+      payment: { method: 'counter', status: 'unpaid' },
+    });
+    const theirs = order({
+      id: 'A9',
+      total: 200,
+      placedBy: 'you',
+      sessionId: 'guest-2',
+      payment: { method: 'counter', status: 'unpaid' },
+    });
+    const list = tableOrders([a, b, c, mineUnpaid, theirs], 12, NOW);
+    // A2 is the guest's (order history) but not on this device; A1 is already paid.
+    expect(payableOrders(list, SESSION).map((o) => o.id)).toEqual(['A8']);
+    expect(payableOrders(list, undefined)).toEqual([]);
+    expect(billFor(list, 'mine', SESSION)).toMatchObject({ balance: 590, payableTotal: 272 });
+    expect(billFor(list, 'mine', SESSION).payable.map((o) => o.id)).toEqual(['A8']);
+    expect(billFor(list, 'table', SESSION)).toMatchObject({ payable: [], payableTotal: 0 });
+  });
+
+  it('shows the bill as paid once the payable orders are paid', () => {
+    const mineUnpaid = order({
+      id: 'A8',
+      total: 272,
+      placedBy: 'you',
+      sessionId: SESSION,
+      payment: { method: 'counter', status: 'unpaid' },
+    });
+    const before = billFor([a, mineUnpaid], 'mine', SESSION);
+    expect(before).toMatchObject({ total: 1696, paid: 1424, balance: 272, payableTotal: 272 });
+    const paid = { ...mineUnpaid, payment: { method: 'online' as const, status: 'paid' as const } };
+    expect(billFor([a, paid], 'mine', SESSION)).toMatchObject({
+      total: 1696,
+      paid: 1696,
+      balance: 0,
+      payable: [],
+      payableTotal: 0,
+    });
   });
 
   it('merges device orders over the mock history without duplicates', () => {

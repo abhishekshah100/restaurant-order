@@ -5,7 +5,8 @@ import { Button } from '@/components/ui';
 import { useContent, useHelpTopics } from '@/api/hooks';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
-import { billFor } from '@/lib/service';
+import { formatINR } from '@/lib/format';
+import { PAY_BILL_PATH, billFor } from '@/lib/service';
 import { BillTotals } from './BillTotals';
 import { HelpTopicDialog } from './HelpTopicDialog';
 import { NoRequest, RequestLoading, RequestStatus } from './RequestStatus';
@@ -35,6 +36,8 @@ export function BillRequested() {
   }
 
   const bill = billFor(orders, request.scope, sessionId);
+  // As drawn in 21 · w21, but only for "Just my orders": the server brings the whole table's bill.
+  const canPay = bill.payableTotal > 0;
 
   return (
     <>
@@ -62,11 +65,20 @@ export function BillRequested() {
         }
         actions={(layout) => (
           <>
-            <Button href="/menu/" block={layout === 'mobile'}>
+            {canPay && (
+              <Button href={PAY_BILL_PATH} block={layout === 'mobile'} iconStart="lock">
+                {t('shared.payNow', { amount: formatINR(bill.payableTotal) })}
+              </Button>
+            )}
+            <Button
+              href="/menu/"
+              variant={canPay ? 'secondary' : 'primary'}
+              block={layout === 'mobile'}
+            >
               {t('billRequested.payServer')}
             </Button>
             <Button
-              variant="secondary"
+              variant={canPay ? 'ghost' : 'secondary'}
               block={layout === 'mobile'}
               iconStart="card"
               onClick={() => setHelpOpen(true)}

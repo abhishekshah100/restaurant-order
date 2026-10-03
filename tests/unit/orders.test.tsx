@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { OrdersProvider, useOrders } from '@/context/OrdersContext';
 import { defaultConfig, lineKey, unitPrice } from '@/lib/cartLine';
-import { buildOrder, isOrder, isOwnOrder } from '@/lib/orders';
+import { buildOrder, isOrder, isOwnOrder, markOrdersPaid } from '@/lib/orders';
 import { STORAGE_KEYS } from '@/lib/storage';
 import type { CartLine } from '@/types/cart';
 import type { Dish } from '@/types/menu';
@@ -103,6 +103,29 @@ describe('isOwnOrder', () => {
   });
 });
 
+describe('markOrdersPaid', () => {
+  const unpaid = buildOrder({ ...input, id: 'A105' }, menu, labels)!;
+  const paid = buildOrder({ ...input, id: 'A106', method: 'online' }, menu, labels)!;
+  const other = buildOrder({ ...input, id: 'A107' }, menu, labels)!;
+  const payment = { detail: 'Card', transactionRef: '•••• 4821' };
+
+  it('marks only the listed unpaid orders as paid online', () => {
+    const { orders, marked } = markOrdersPaid([unpaid, paid, other], ['A105', 'A106'], payment);
+    expect(marked.map((o) => o.id)).toEqual(['A105']);
+    expect(orders[0].payment).toEqual({ method: 'online', status: 'paid', ...payment });
+    // Already paid and unlisted orders are left exactly as they were.
+    expect(orders[1]).toBe(paid);
+    expect(orders[2]).toBe(other);
+  });
+
+  it('changes nothing when paying twice', () => {
+    const first = markOrdersPaid([unpaid], ['A105'], payment);
+    const second = markOrdersPaid(first.orders, ['A105'], payment);
+    expect(second.marked).toEqual([]);
+    expect(second.orders).toEqual(first.orders);
+  });
+});
+
 const wrapper = ({ children }: { children: ReactNode }) => (
   <ApiTestProvider>
     <OrdersProvider>{children}</OrdersProvider>
@@ -142,5 +165,29 @@ describe('OrdersProvider', () => {
       expect(result.current.placeOrder({ ...input, lines: [] })).toBeNull();
     });
     expect(result.current.placed).toEqual([]);
+  });
+
+  it('marks orders paid, saves them and ignores a repeat', () => {
+    const { result } = renderHook(() => useOrders(), { wrapper });
+    let id = '';
+    act(() => {
+      id = result.current.placeOrder(input)?.id ?? '';
+    });
+    let marked: ReturnType<typeof result.current.markPaid> = [];
+    act(() => {
+      marked = result.current.markPaid([id], 'upi');
+    });
+    expect(marked.map((o) => o.id)).toEqual([id]);
+    expect(result.current.placed[0].payment).toMatchObject({
+      method: 'online',
+      status: 'paid',
+      detail: 'UPI',
+    });
+    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.orders) ?? '[]');
+    expect(stored[0].payment.status).toBe('paid');
+    act(() => {
+      expect(result.current.markPaid([id], 'card')).toEqual([]);
+    });
+    expect(result.current.placed[0].payment.detail).toBe('UPI');
   });
 });

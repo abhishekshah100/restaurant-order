@@ -23,11 +23,19 @@ export interface SiteHeaderProps {
   step?: CheckoutStep;
   /** Show the cart button (pages without the cart panel). */
   showCart?: boolean;
+  /** Line under the brand in the checkout and payment variants (default "Checkout"). */
+  subtitle?: string;
   className?: string;
 }
 
 /** Desktop header (≥1024px). Hidden below 1024px; MobileHeader takes over. */
-export function SiteHeader({ variant = 'default', step, showCart, className }: SiteHeaderProps) {
+export function SiteHeader({
+  variant = 'default',
+  step,
+  showCart,
+  subtitle,
+  className,
+}: SiteHeaderProps) {
   const t = useContent('common');
   const restaurant = useRestaurant();
   const pathname = usePathname();
@@ -50,7 +58,7 @@ export function SiteHeader({ variant = 'default', step, showCart, className }: S
                 !isCheckout && status.tone === 'warn' && styles.subWarn,
               )}
             >
-              {isCheckout ? t('header.checkout') : status.text}
+              {isCheckout ? (subtitle ?? t('header.checkout')) : status.text}
             </span>
           </span>
         </Link>

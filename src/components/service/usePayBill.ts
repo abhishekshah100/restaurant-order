@@ -31,8 +31,9 @@ interface PayBill {
   /** The payment for everything payable right now. */
   startPayment: (method: BillPaymentMethod) => BillPayment;
   /**
-   * Records a successful payment. Ignored while one is being recorded or once one has been
-   * (a double tap pays once); null if none of the orders were still unpaid (paid elsewhere).
+   * Records a successful payment. Once one is recorded, later calls (a double tap) record
+   * nothing and return the same result. Null if none of the orders were still unpaid (paid
+   * in another tab).
    */
   completePayment: (payment: BillPayment) => PaidBill | null;
   /** True once a payment has been recorded: keep the buttons disabled. */
@@ -44,7 +45,7 @@ export function usePayBill(): PayBill {
   const { table, sessionId, orders, hydrated } = useTableOrders();
   const { markPaid } = useOrders();
   const { requests, cancelRequest } = useServiceRequest();
-  const inFlight = useRef(false);
+  const receiptRef = useRef<PaidBill | null>(null);
   const [settled, setSettled] = useState(false);
   const bill = useMemo(() => billFor(orders, 'mine', sessionId), [orders, sessionId]);
   const pendingScope = requests.bill?.scope;
@@ -60,21 +61,19 @@ export function usePayBill(): PayBill {
 
   const completePayment = useCallback(
     (payment: BillPayment): PaidBill | null => {
-      if (inFlight.current) return null;
-      inFlight.current = true;
+      if (receiptRef.current) return receiptRef.current;
       const paid = markPaid(payment.orderIds, payment.method);
-      if (paid.length === 0) {
-        inFlight.current = false;
-        return null;
-      }
+      if (paid.length === 0) return null;
       // A "Just my orders" bill request is settled now; a whole-table one still stands for the others.
       if (pendingScope === 'mine') cancelRequest('bill');
-      setSettled(true);
-      return {
+      const receipt: PaidBill = {
         orders: paid,
         amount: paid.reduce((sum, o) => sum + o.total, 0),
         method: payment.method,
       };
+      receiptRef.current = receipt;
+      setSettled(true);
+      return receipt;
     },
     [markPaid, pendingScope, cancelRequest],
   );

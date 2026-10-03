@@ -38,7 +38,12 @@ export function RequestStatus({
             <Icon name={icon} />
           </div>
           <div className={styles.text} role="status">
-            <h1 id="request-title" className="t-h1" ref={titleRef} tabIndex={titleRef ? -1 : undefined}>
+            <h1
+              id="request-title"
+              className="t-h1"
+              ref={titleRef}
+              tabIndex={titleRef ? -1 : undefined}
+            >
               {title}
             </h1>
             <p className={cx('t-body c2', styles.lede)}>{lede}</p>

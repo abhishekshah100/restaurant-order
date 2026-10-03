@@ -25,6 +25,9 @@
 }
 .foot {
   composes: foot from './BillRequestView.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .aside {
   composes: aside from './BillRequestView.module.css';
@@ -52,12 +55,6 @@
 .fine {
   composes: fine from '@/components/checkout/Checkout.module.css';
 }
-.foot {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 @media (min-width: 1024px) {
   .intro {
     gap: 10px;
