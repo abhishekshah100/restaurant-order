@@ -201,13 +201,12 @@ export function markOrdersPaid(
 /* ---------- Order lists ---------- */
 
 /**
- * Whether the current guest session placed the order. Orders carry the session that placed
- * them; older ones without a session fall back to `placedBy`.
+ * Whether the current guest session placed the order: the basis of "Just my orders" and
+ * separate bills at a shared table. Only orders stamped with this session count — orders
+ * from other guests, earlier visits or the drawn history (no session) belong to the table.
  */
-export const isOwnOrder = (
-  order: Pick<Order, 'placedBy' | 'sessionId'>,
-  sessionId: string | undefined,
-) => (order.sessionId ? order.sessionId === sessionId : order.placedBy === 'you');
+export const isOwnOrder = (order: Pick<Order, 'sessionId'>, sessionId: string | undefined) =>
+  Boolean(sessionId) && order.sessionId === sessionId;
 
 /** Every known order: placed on this device plus the order history, without duplicates. */
 export function allOrders(placed: readonly Order[], history: readonly Order[]): Order[] {

@@ -33,7 +33,7 @@ export interface Order {
   id: string;
   table: number;
   customerName: string;
-  /** Who placed it, relative to this device's guest (see lib/orders › isOwnOrder). */
+  /** Drawn history only: "you" marks this device's past visits on My orders. Ownership on bills uses `sessionId` (lib/orders › isOwnOrder). */
   placedBy: 'you' | 'other';
   /** The guest session that placed it; missing on orders from before sessions. */
   sessionId?: string;

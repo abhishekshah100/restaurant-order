@@ -6,9 +6,8 @@ import { expect, test, type Browser, type Page, type TestInfo } from '@playwrigh
  * Each browser context is a separate phone. Runs at a mobile (390px) and a desktop (1280px)
  * viewport — see playwright.config.ts.
  *
- * Table 12 also has the drawn mock orders (#A104 paid and #A097 unpaid, both "yours", and
- * Rohan's #A101), which every phone sees: they come from GET /orders, not from this device,
- * so they can't be paid in the app and #A097's ₹318 stays due on "Just my orders".
+ * Table 12 also has the drawn mock orders (#A104, #A097, #A101) from GET /orders. They carry no
+ * guest session, so they're on the whole table's bill but never on one guest's own bill.
  * Order IDs come from a pool per device, so both phones may get #A105: don't compare IDs.
  */
 
@@ -92,7 +91,7 @@ test('two guests at one table pay separate bills', async ({ browser }, testInfo)
   await openMyBill(rohan);
   await expect(billRow(rohan, '₹272')).toContainText('Unpaid');
   await expect(billRow(rohan, '₹303')).toHaveCount(0);
-  await expect(balanceDue(rohan)).toContainText('₹590'); // ₹272 + the drawn #A097's ₹318
+  await expect(balanceDue(rohan)).toContainText('₹272');
 
   // The whole table's bill can't be paid in the app.
   await rohan.getByRole('radio', { name: /Whole table/ }).click();
@@ -119,7 +118,7 @@ test('two guests at one table pay separate bills', async ({ browser }, testInfo)
   // His bill now shows the order paid and nothing more to pay in the app.
   await openMyBill(rohan);
   await expectPaid(billRow(rohan, '₹272'));
-  await expect(balanceDue(rohan)).toContainText('₹318');
+  await expect(balanceDue(rohan)).toContainText('₹0');
   await expect(payNow(rohan)).toHaveCount(0);
   await rohan.goto('/help/bill/pay/');
   await expect(rohan.getByRole('heading', { level: 1, name: 'Nothing to pay' })).toBeVisible();

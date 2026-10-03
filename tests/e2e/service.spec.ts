@@ -3,7 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * Service: help page, request a waiter (with duplicate guard and cancel), request the bill.
  * Runs at a mobile (390px) and a desktop (1280px) viewport — see playwright.config.ts.
- * Table 12 has the mock orders #A104, #A097 (yours) and #A101 (Rohan) today.
+ * Table 12 has the mock orders #A104, #A097 and #A101 today. They belong to the table, not to
+ * this fresh guest session, so "my order" links lead to My orders until the guest orders.
  */
 
 const visible = (page: Page, role: Parameters<Page['getByRole']>[0], name: string | RegExp) =>
@@ -63,10 +64,8 @@ test('request a waiter, see it pending, then cancel it', async ({ page }) => {
   await expect(
     page.getByRole('status').filter({ hasText: 'Request sent to the team at Table 12' }),
   ).toBeVisible();
-  await expect(visible(page, 'link', 'View my order')).toHaveAttribute(
-    'href',
-    '/order/A104/track/',
-  );
+  // This guest hasn't ordered yet, so there's no order of theirs to link to.
+  await expect(page.getByRole('link', { name: 'View my order' })).toHaveCount(0);
 
   // A second request while one is pending shows the existing one.
   await page.goto('/help/');
@@ -80,26 +79,24 @@ test('request a waiter, see it pending, then cancel it', async ({ page }) => {
   await expect(page.getByRole('status').filter({ hasText: 'Request cancelled' })).toBeVisible();
 });
 
-test('request the bill for just my orders', async ({ page }) => {
+test('request the bill for the whole table', async ({ page }) => {
   await page.goto('/help/');
   await visible(page, 'button', /Request (the )?bill/).click();
   await expect(page).toHaveURL(/\/help\/bill\/$/);
 
+  // A guest who hasn't ordered yet has no bill of their own; the table's bill is available.
   await expect(visible(page, 'heading', 'Table 12 · 3 orders')).toBeVisible();
   await expect(page.getByRole('radio', { name: /Whole table/ })).toHaveAttribute(
     'aria-checked',
     'true',
   );
+  await expect(page.getByRole('radio', { name: /Just my orders/ })).toBeDisabled();
   await expect(balanceDue(page)).toContainText('₹1,074');
-
-  await page.getByRole('radio', { name: /Just my orders/ }).click();
-  await expect(visible(page, 'heading', 'Table 12 · 2 orders')).toBeVisible();
-  await expect(balanceDue(page)).toContainText('₹318');
 
   await visible(page, 'button', 'Confirm bill request').click();
   await expect(page).toHaveURL(/\/help\/bill-requested\/$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Bill requested' })).toBeVisible();
-  await expect(balanceDue(page)).toContainText('₹318');
+  await expect(balanceDue(page)).toContainText('₹1,074');
 
   // The bill page now points to the pending request instead of asking again.
   await page.goto('/help/bill/');
@@ -115,7 +112,7 @@ test('more help topics open in a dialog', async ({ page }) => {
   );
   await expect(page.getByRole('link', { name: /Problem with my order/ })).toHaveAttribute(
     'href',
-    '/order/A104/',
+    '/orders/',
   );
   await page.getByRole('button', { name: /Allergens & FAQs/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Allergens & FAQs' });

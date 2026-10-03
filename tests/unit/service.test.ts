@@ -109,7 +109,7 @@ describe('table orders and bill', () => {
     sessionId: SESSION,
     payment: { method: 'online', status: 'paid' },
   });
-  // From the order history: no session, so `placedBy` decides.
+  // From the order history: no session, so it's the table's, not this guest's.
   const b = order({
     id: 'A2',
     total: 318,
@@ -141,8 +141,9 @@ describe('table orders and bill', () => {
       paid: 1424,
       balance: 1074,
     });
-    expect(billFor(list, 'table', SESSION).orders.map((o) => o.id)).toEqual(['A1', 'A2', 'A3']);
-    expect(billFor(list, 'mine', SESSION)).toMatchObject({ total: 1742, paid: 1424, balance: 318 });
+    // The guest's own orders first, then the rest of the table (newest first).
+    expect(billFor(list, 'table', SESSION).orders.map((o) => o.id)).toEqual(['A1', 'A3', 'A2']);
+    expect(billFor(list, 'mine', SESSION)).toMatchObject({ total: 1424, paid: 1424, balance: 0 });
   });
 
   it('scopes "mine" to the guest session', () => {
@@ -158,14 +159,15 @@ describe('table orders and bill', () => {
     const list = tableOrders([a, b, c, d], 12, NOW);
     expect(latestOwnOrder(list, 12, NOW, SESSION)?.id).toBe('A1');
     expect(latestOwnOrder(list, 12, NOW, 'guest-2')?.id).toBe('A7');
-    expect(billFor(list, 'mine', SESSION).orders.map((o) => o.id)).toEqual(['A1', 'A2']);
-    expect(billFor(list, 'mine', 'guest-2').orders.map((o) => o.id)).toEqual(['A7', 'A2']);
+    // Each guest's bill holds only their own session's orders, never the shared history.
+    expect(billFor(list, 'mine', SESSION).orders.map((o) => o.id)).toEqual(['A1']);
+    expect(billFor(list, 'mine', 'guest-2').orders.map((o) => o.id)).toEqual(['A7']);
     // The whole table lists the guest's own orders first.
     expect(billFor(list, 'table', 'guest-2').orders.map((o) => o.id)).toEqual([
       'A7',
-      'A2',
       'A3',
       'A1',
+      'A2',
     ]);
   });
 
@@ -187,10 +189,10 @@ describe('table orders and bill', () => {
       payment: { method: 'counter', status: 'unpaid' },
     });
     const list = tableOrders([a, b, c, mineUnpaid, theirs], 12, NOW);
-    // A2 is the guest's (order history) but not on this device; A1 is already paid.
+    // A2 is the table's history and A9 another guest's; A1 is already paid.
     expect(payableOrders(list, SESSION).map((o) => o.id)).toEqual(['A8']);
     expect(payableOrders(list, undefined)).toEqual([]);
-    expect(billFor(list, 'mine', SESSION)).toMatchObject({ balance: 590, payableTotal: 272 });
+    expect(billFor(list, 'mine', SESSION)).toMatchObject({ balance: 272, payableTotal: 272 });
     expect(billFor(list, 'mine', SESSION).payable.map((o) => o.id)).toEqual(['A8']);
     expect(billFor(list, 'table', SESSION)).toMatchObject({ payable: [], payableTotal: 0 });
   });

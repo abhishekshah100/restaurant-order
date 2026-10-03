@@ -91,15 +91,12 @@ describe('isOwnOrder', () => {
     expect(isOwnOrder(order, undefined)).toBe(false);
   });
 
-  it('falls back to placedBy for orders without a session', () => {
+  it("never counts orders without a session as anyone's own", () => {
     const { sessionId: _sessionId, ...legacy } = order;
-    expect(isOwnOrder(legacy, 'guest-2')).toBe(true);
-    expect(isOwnOrder({ ...legacy, placedBy: 'other' }, 'guest-2')).toBe(false);
-    // The drawn history has no sessions: its "you" orders are this guest's.
+    expect(isOwnOrder({ ...legacy, sessionId: undefined }, 'guest-2')).toBe(false);
+    // The drawn history has no sessions, so it belongs to the table, not to any one guest.
     expect(mockOrders.some((o) => o.sessionId)).toBe(false);
-    expect(mockOrders.filter((o) => isOwnOrder(o, 'guest-2'))).toEqual(
-      mockOrders.filter((o) => o.placedBy === 'you'),
-    );
+    expect(mockOrders.filter((o) => isOwnOrder(o, 'guest-2'))).toEqual([]);
   });
 });
 
