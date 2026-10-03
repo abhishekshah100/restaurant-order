@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
-import { ComingSoon } from '@/components/layout/ComingSoon';
+import { getContent } from '@/api/server';
+import { HelpView } from '@/components/service/HelpView';
 
-export const metadata: Metadata = { title: 'Service and help' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getContent('service');
+  return { title: t('meta.help') };
+}
 
 export default function HelpPage() {
-  return <ComingSoon title="How can we help?" />;
+  return <HelpView />;
 }

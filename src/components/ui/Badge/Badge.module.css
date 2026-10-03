@@ -3,7 +3,7 @@
   height: 18px;
   border-radius: 9px;
   background: var(--brand-600);
-  color: #fff;
+  color: var(--on-brand);
   font: 800 11px/18px var(--f-ui);
   text-align: center;
   padding: 0 5px;

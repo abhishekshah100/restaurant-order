@@ -1,19 +1,36 @@
 /* The Olive Table — QR Ordering design tokens v1 (ported from olive-core.css :root) */
+
+/*
+ * Breakpoints — custom properties can't be used inside @media, so follow this convention:
+ *   360px   small phones          (max-width: 359.98px)
+ *   768px   tablet                (min-width: 768px) / (max-width: 767.98px)
+ *   1024px  web layout            (min-width: 1024px) / mobile layout (max-width: 1023.98px)
+ *   1280px  wide web              (min-width: 1280px) / (max-width: 1279.98px)
+ * min-width uses the bare value; max-width uses the value minus .02px (…98) so ranges never overlap.
+ * Short-viewport tweaks use max-height on top of these; `.hide-mobile` / `.hide-desktop` split at 1024px.
+ */
+
 :root {
   /* Colour — 3 core colours + controlled neutrals */
-  --bg: #f7f2ea; /* Ivory — app background */
-  --surface: #fffcf7; /* Raised surfaces, inputs, sheets */
-  --sand: #efe7db; /* Subtle fills, skeletons, pills */
-  --line: #e6dccd; /* Hairlines */
-  --line-strong: #cdbfac; /* Control borders */
+  --bg: #f3e8d8; /* Warm cream — app background (was #F7F2EA; deepened so surfaces stand out) */
+  --surface: #fffdf9; /* Raised surfaces, inputs, sheets — near white so cards stand out */
+  --sand: #eadcc7; /* Subtle fills, skeletons, pills */
+  --line: #e3d3bd; /* Hairlines */
+  --line-strong: #c9b59b; /* Control borders */
   --ink: #2a1b16; /* Espresso — primary text */
   --ink-2: #5e4b42; /* Secondary text (7.3:1 on ivory) */
-  --ink-3: #76625a; /* Tertiary/caption text (4.9:1 on ivory) */
+  --ink-3: #6a564e; /* Tertiary/caption text (5.7:1 on bg, 5.1:1 on sand) */
+  --ink-hover: #3d2a23; /* Hover fill for dark (ink) buttons */
   --brand: #c95c3d; /* Terracotta — brand, decoration, large text */
-  --brand-600: #b04e2f; /* Action fills + small text links (5.3:1 with white) */
+  --brand-550: #b85232; /* First stop of the "New" tag gradient */
+  --brand-600: #a6492b; /* Action fills + small text links (5.8:1 with white, 4.8:1 on bg) */
   --brand-700: #8f3e24; /* Pressed / hover */
   --brand-tint: #f4ded3; /* Selected fill */
   --brand-tint-2: #faeee7; /* Soft selected fill */
+  --gold-tint: #fbecc6; /* "Bestseller" tag gradient start */
+  --gold-tint-2: #f4dc9e; /* "Bestseller" tag gradient end */
+  --gold: #b07a10; /* "Bestseller" tag icon */
+  --gold-ink: #5f3f00; /* "Bestseller" tag text (6.5:1 on the gold) */
   --veg: #2a6f45;
   --nonveg: #94341b;
   --success: #2a6f45;
@@ -22,11 +39,32 @@
   --error-tint: #f7e0da;
   --warn: #7d5200;
   --warn-tint: #f5e8cc;
+  --white: #fff; /* Pure white — highlights, light-on-photo text */
+  --on-brand: var(--white); /* Text, icons and ticks on brand/ink/dark fills */
+  --on-brand-soft: #ffd9c7; /* Tinted icon on a brand fill ("New" tag) */
   --on-dark: #f7f2ea;
-  --on-dark-2: #cdbfb4;
   --brand-on-dark: #f0a68e;
-  --disabled-ink: #706259; /* Disabled button text on sand (4.8:1; design #9A8A80 is 2.7:1) */
-  --scrim: rgba(42, 27, 22, 0.5);
+  --success-on-dark: #9bd3ae; /* Success accent on dark surfaces (toast) */
+  --disabled-ink: #655650; /* Disabled button text on sand (5.2:1; design #9A8A80 is 2.7:1) */
+  --scrim: var(--ink-a50);
+
+  /* Ink alpha scale — --ink (#2a1b16) at fixed opacities, for shadows, overlays and gradients */
+  --ink-a04: rgba(42, 27, 22, 0.04);
+  --ink-a05: rgba(42, 27, 22, 0.05);
+  --ink-a06: rgba(42, 27, 22, 0.06);
+  --ink-a18: rgba(42, 27, 22, 0.18);
+  --ink-a20: rgba(42, 27, 22, 0.2);
+  --ink-a22: rgba(42, 27, 22, 0.22);
+  --ink-a25: rgba(42, 27, 22, 0.25);
+  --ink-a30: rgba(42, 27, 22, 0.3);
+  --ink-a32: rgba(42, 27, 22, 0.32);
+  --ink-a35: rgba(42, 27, 22, 0.35);
+  --ink-a40: rgba(42, 27, 22, 0.4);
+  --ink-a45: rgba(42, 27, 22, 0.45);
+  --ink-a50: rgba(42, 27, 22, 0.5);
+  --ink-a55: rgba(42, 27, 22, 0.55);
+  --ink-a62: rgba(42, 27, 22, 0.62);
+  --ink-a80: rgba(42, 27, 22, 0.8);
 
   /* Type — families come from next/font (src/fonts) */
   --f-display:
@@ -34,17 +72,69 @@
   --f-ui:
     var(--font-manrope), var(--font-manrope-ext), 'Segoe UI', system-ui, -apple-system, sans-serif;
 
-  /* Radius */
-  --r-sm: 8px;
-  --r: 12px;
-  --r-lg: 16px;
-  --r-xl: 24px;
-  --r-pill: 999px;
+  /* Type shorthands — exact values already repeated across modules; use as `font: var(--font-label)`.
+     Not a new scale: one-off sizes stay literal. The .t-* classes in globals.css use these too. */
+  --font-display: 500 36px/42px var(--f-display); /* .t-display */
+  --font-h1: 500 28px/34px var(--f-display); /* .t-h1 */
+  --font-h2: 500 22px/28px var(--f-display); /* .t-h2 */
+  --font-price-lg: 500 30px/36px var(--f-display); /* .t-price-lg, totals */
+  --font-h3: 700 17px/24px var(--f-ui); /* .t-h3 */
+  --font-body: 500 15px/22px var(--f-ui); /* .t-body */
+  --font-price: 700 15px/20px var(--f-ui); /* Prices, strong 15px rows */
+  --font-label: 700 14px/20px var(--f-ui); /* Links, buttons, list labels */
+  --font-small: 500 13px/18px var(--f-ui); /* .t-small */
+  --font-small-strong: 600 13px/18px var(--f-ui);
+  --font-meta: 600 12px/16px var(--f-ui); /* Secondary meta lines */
+  --font-meta-strong: 700 12px/16px var(--f-ui);
+  --font-caption: 700 11px/16px var(--f-ui); /* .t-caption (add its letter-spacing/uppercase) */
 
-  /* Elevation — only two levels */
-  --sh-1: 0 1px 2px rgba(42, 27, 22, 0.06), 0 4px 12px rgba(42, 27, 22, 0.06);
-  --sh-2: 0 12px 32px rgba(42, 27, 22, 0.18);
+  /* Radius — 8/12/16/24 are the core steps; the rest name sizes already in use */
+  --r-3xs: 3px; /* Progress segments, tiny marks */
+  --r-2xs: 4px; /* Inline link focus shapes */
+  --r-xs: 6px; /* Tags, checkboxes */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r: 12px;
+  --r-tile: 14px; /* Wells, tiles, OTP boxes */
+  --r-lg: 16px;
+  --r-card: 18px; /* Dish cards, dropdowns */
+  --r-panel: 20px; /* Summary / aside panels, home cards */
+  --r-xl: 24px;
+  --r-sheet: 24px 24px 0 0; /* Bottom sheets: rounded top corners only */
+  --r-pill: 999px;
+  --r-round: 50%; /* Circles */
+
+  /* Elevation — two shared levels plus named one-offs that repeat */
+  --sh-1: 0 1px 2px var(--ink-a06), 0 4px 12px var(--ink-a06);
+  --sh-2: 0 12px 32px var(--ink-a18);
+  --sh-2-up: 0 -12px 32px var(--ink-a18); /* --sh-2 cast upwards, for bottom sheets */
   --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--brand-600);
+  --focus-inset: inset 0 0 0 2px var(--brand-600); /* Focus ring inside clipped strips (tabs, nav) */
+  --halo: 0 0 0 3px var(--brand-tint); /* Focused text field */
+  --halo-lg: 0 0 0 4px var(--brand-tint); /* OTP box focus, current checkout step */
+
+  /* Motion */
+  --dur-fast: 0.15s; /* Colour / border / hover feedback */
+  --dur-base: 0.2s; /* Shadows, fades, small moves */
+  --dur-enter: 0.24s; /* Sheets, panels and lightbox entering */
+  --dur-slow: 0.35s; /* Image zoom on hover */
+  --ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1); /* Decelerating entrance */
+
+  /* Stacking — named layers; keep the order. Local stacking inside a component
+     (z-index 1 / 2 above a sibling) stays literal. */
+  --z-sticky-inline: 5; /* Sticky bar inside a scrolling column (desktop dish actionbar) */
+  --z-actionbar: 20; /* Fixed bottom action bars (dish detail, cart) */
+  --z-nav: 30; /* Mobile sticky header, bottom nav */
+  --z-cartbar: 31; /* Floating cart bar, above the bottom nav */
+  --z-popover: 35; /* In-page menus (sort) */
+  --z-header-scrim: 39; /* Scrim below the desktop header while search is open */
+  --z-header: 40; /* Desktop site header */
+  --z-header-popover: 45; /* Header search dropdown */
+  --z-dialog-scrim: 80;
+  --z-dialog: 81;
+  --z-lightbox: 90;
+  --z-toast: 95; /* Toasts stay readable above every overlay, lightbox included */
+  --z-skip-link: 100;
 
   /* Check mark mask used by checkboxes */
   --m-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke-width='3' d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");

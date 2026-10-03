@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useCheckout } from '@/context/CheckoutContext';
 import { useCart } from './useCart';
 
-export type GuardStep = 'details' | 'verify' | 'pay';
+type GuardStep = 'details' | 'verify' | 'pay';
 
 /**
  * Sends the guest back to the right step if they land mid-checkout:

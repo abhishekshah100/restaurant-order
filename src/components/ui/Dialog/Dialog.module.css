@@ -2,27 +2,35 @@
   position: fixed;
   inset: 0;
   background: var(--scrim);
-  z-index: 80;
+  z-index: var(--z-dialog-scrim);
   animation: fade-in 0.18s ease-out;
+  transition: opacity var(--dur-base) ease;
 }
+
+/* Layout: fixed header (drag zone) · scrolling body · fixed footer */
 .dialog {
+  --pad-x: 20px;
   position: fixed;
-  z-index: 81;
+  z-index: var(--z-dialog);
   background: var(--surface);
   color: var(--ink);
   display: flex;
   flex-direction: column;
   outline: none;
   max-height: calc(100dvh - 24px);
+  overflow: hidden;
 }
-.body {
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  min-height: 0;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
+.dragZone {
+  flex: none;
+  padding: 10px var(--pad-x) 0;
+  position: relative;
+  z-index: 2;
+  background: var(--surface);
+  transition: box-shadow var(--dur-base) ease;
+}
+.head,
+.headCustom {
+  padding-bottom: 14px;
 }
 .head {
   display: flex;
@@ -31,95 +39,225 @@
   gap: 12px;
 }
 .title {
-  font: 700 17px/24px var(--f-ui);
+  font: var(--font-h3);
   margin: 0;
 }
-.titleDisplay {
-  font: 500 28px/34px var(--f-display);
-  letter-spacing: -0.005em;
-}
-.foot {
-  flex: none;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding-top: 16px;
-}
 .grabber {
+  display: block;
   width: 40px;
   height: 4px;
   border-radius: 2px;
   background: var(--line-strong);
-  margin: 0 auto 14px;
-  flex: none;
+  margin: 0 auto 12px;
 }
 
-/* Bottom sheet */
-.sheet {
+.bodyWrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 2px var(--pad-x) 20px;
+}
+/* Fade where more options continue below */
+.fade {
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  border-radius: 24px 24px 0 0;
-  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
-  animation: slide-up 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  height: 36px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 0%, transparent),
+    var(--surface)
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-base) ease;
+}
+
+.foot {
+  flex: none;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px var(--pad-x) calc(14px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid transparent;
+  transition:
+    box-shadow var(--dur-base) ease,
+    border-color var(--dur-base) ease;
+}
+
+/* Scroll hints */
+.dialog[data-scrolled='true'] .dragZone {
+  box-shadow:
+    0 1px 0 var(--line),
+    0 8px 14px -12px var(--ink-a35);
+}
+.dialog[data-more='true'] .fade {
+  opacity: 1;
+}
+.dialog[data-more='true'] .foot {
+  border-top-color: var(--line);
+  box-shadow: 0 -10px 18px -14px var(--ink-a35);
+}
+
+/* Bottom sheet (and adaptive below 1024px) */
+.sheet,
+.adaptive {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Never full screen: a sliver of the page stays visible above */
+  max-height: 88dvh;
+  border-radius: var(--r-sheet);
+  box-shadow: var(--sh-2-up);
+  animation: slide-up var(--dur-enter) var(--ease-emphasized);
+}
+.sheet .dragZone {
+  touch-action: none;
+  cursor: grab;
 }
 
 /* Centered modal */
 .modal {
+  --pad-x: 32px;
   left: 50%;
   top: 96px;
   transform: translateX(-50%);
   width: min(600px, calc(100vw - 32px));
   max-height: calc(100dvh - 128px);
-  border-radius: 24px;
+  border-radius: var(--r-xl);
   box-shadow: var(--sh-2);
-  padding: 28px 32px 32px;
-  animation: pop-in 0.2s ease-out;
+  animation: pop-in var(--dur-base) ease-out;
 }
 .modal .grabber {
   display: none;
 }
+.modal .dragZone {
+  padding-top: 28px;
+}
+.modal .foot {
+  padding-bottom: 28px;
+}
 
 /* Right slide-over panel (tablet cart) */
 .panel {
+  --pad-x: 24px;
   top: 0;
   right: 0;
   bottom: 0;
   width: min(420px, 100vw);
   max-height: none;
   box-shadow: var(--sh-2);
-  padding: 24px 24px 24px;
-  animation: slide-left 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: slide-left var(--dur-enter) var(--ease-emphasized);
 }
 .panel .grabber {
   display: none;
 }
+.panel .dragZone {
+  padding-top: 20px;
+}
 
-/* Adaptive: sheet below 1024px, modal from 1024px */
-.adaptive {
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 24px 24px 0 0;
-  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
-  animation: slide-up 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+/* Adaptive: sheet below 1024px (shares .sheet above), modal from 1024px */
+@media (max-width: 1023.98px) {
+  .adaptive .dragZone {
+    touch-action: none;
+    cursor: grab;
+  }
 }
 @media (min-width: 1024px) {
   .adaptive {
+    --pad-x: 32px;
     left: 50%;
     right: auto;
     bottom: auto;
-    top: 96px;
-    transform: translateX(-50%);
+    /* Centred in the window so short laptop screens still fit it */
+    top: 50%;
+    transform: translate(-50%, -50%);
     width: 600px;
-    max-height: calc(100dvh - 128px);
-    border-radius: 24px;
+    max-height: calc(100dvh - 48px);
+    border-radius: var(--r-xl);
     box-shadow: var(--sh-2);
-    padding: 28px 32px 32px;
-    animation: pop-in 0.2s ease-out;
+    animation: pop-in var(--dur-base) ease-out;
   }
   .adaptive .grabber {
     display: none;
+  }
+  .adaptive .dragZone {
+    padding-top: 26px;
+  }
+  .adaptive .foot {
+    padding-bottom: 24px;
+  }
+}
+/* Short laptop windows */
+@media (min-width: 1024px) and (max-height: 800px) {
+  .adaptive {
+    --pad-x: 28px;
+  }
+  .adaptive .dragZone {
+    padding-top: 18px;
+  }
+  .adaptive .head,
+  .adaptive .headCustom {
+    padding-bottom: 10px;
+  }
+  .adaptive .content {
+    gap: 14px;
+    padding-bottom: 12px;
+  }
+  .adaptive .foot {
+    padding-top: 10px;
+    padding-bottom: 18px;
+  }
+}
+
+/* Short phones: tighter rhythm and a taller sheet so content fits without scrolling */
+@media (max-width: 1023.98px) and (max-height: 720px) {
+  .sheet,
+  .adaptive {
+    max-height: calc(100dvh - 40px);
+  }
+  .dragZone {
+    padding-top: 8px;
+  }
+  .grabber {
+    margin-bottom: 8px;
+  }
+  .head,
+  .headCustom {
+    padding-bottom: 10px;
+  }
+  .content {
+    gap: 12px;
+    padding-bottom: 10px;
+  }
+  .foot {
+    padding-top: 8px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Very short phone windows: the sheet may use nearly all of the height */
+@media (max-width: 1023.98px) and (max-height: 540px) {
+  .sheet,
+  .adaptive {
+    max-height: calc(100dvh - 20px);
   }
 }
 

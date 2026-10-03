@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_CART, cartReducer, isCartState } from '@/lib/cartReducer';
+import { EMPTY_CART, cartReducer, parseCart } from '@/lib/cartReducer';
 import { lineKey } from '@/lib/cartLine';
 import type { CartState, LineConfig } from '@/types/cart';
 
@@ -10,6 +10,7 @@ const pasta = (over: Partial<LineConfig> = {}): LineConfig => ({
   options: {},
   instructions: ['Less cheese'],
   note: '',
+  removals: [],
   ...over,
 });
 
@@ -67,14 +68,10 @@ describe('cartReducer', () => {
     expect(s.lines).toHaveLength(0);
   });
 
-  it('updates, increments and decrements quantity; 0 removes the line', () => {
+  it('updates quantity; 0 removes the line', () => {
     let s = add(EMPTY_CART, pasta());
     const key = s.lines[0].key;
     s = cartReducer(s, { type: 'setQuantity', key, quantity: 4 });
-    expect(s.lines[0].quantity).toBe(4);
-    s = cartReducer(s, { type: 'increment', key });
-    expect(s.lines[0].quantity).toBe(5);
-    s = cartReducer(s, { type: 'decrement', key });
     expect(s.lines[0].quantity).toBe(4);
     s = cartReducer(s, { type: 'setQuantity', key, quantity: 0 });
     expect(s.lines).toHaveLength(0);
@@ -138,11 +135,33 @@ describe('cartReducer', () => {
   });
 });
 
-describe('isCartState', () => {
+describe('parseCart', () => {
+  const saved = () => add(EMPTY_CART, pasta());
+
   it('accepts a valid cart and rejects junk', () => {
-    expect(isCartState(add(EMPTY_CART, pasta()))).toBe(true);
-    expect(isCartState(null)).toBe(false);
-    expect(isCartState({ lines: [{ key: 1 }], kitchenNote: '' })).toBe(false);
-    expect(isCartState({ lines: 'x', kitchenNote: '' })).toBe(false);
+    expect(parseCart(saved())).toEqual(saved());
+    expect(parseCart(null)).toBeNull();
+    expect(parseCart({ lines: 'x', kitchenNote: '' })).toBeNull();
+    expect(parseCart({ lines: [], kitchenNote: 3 })).toBeNull();
+  });
+
+  it('drops malformed lines and keeps the rest', () => {
+    const [good] = saved().lines;
+    const bad = [
+      { key: 1 },
+      null,
+      'line',
+      { ...good, options: null },
+      { ...good, options: ['x'] },
+      { ...good, removals: 'onion' },
+      { ...good, addOnIds: [1] },
+      { ...good, quantity: Number.NaN },
+      { ...good, quantity: -1 },
+      { ...good, quantity: 0 },
+      { ...good, quantity: 1.5 },
+      { ...good, quantity: 999 },
+    ];
+    const parsed = parseCart({ kitchenNote: '', lines: [...bad, good] });
+    expect(parsed?.lines).toEqual([good]);
   });
 });

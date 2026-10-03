@@ -1,3 +1,6 @@
+'use client';
+
+import { useRef, type FocusEvent } from 'react';
 import { Icon } from '../Icon';
 import styles from './Toast.module.css';
 
@@ -43,12 +46,46 @@ export function Toast({ toast, onDismiss }: ToastProps) {
 export interface ToastRegionProps {
   toasts: ToastData[];
   onDismiss: (id: number) => void;
+  /** Called while the pointer or keyboard focus is on a toast, so its timer can wait. */
+  onPause?: () => void;
+  onResume?: () => void;
 }
 
-/** Polite live region; always in the DOM so announcements are reliable. */
-export function ToastRegion({ toasts, onDismiss }: ToastRegionProps) {
+/**
+ * Polite live region; always in the DOM so announcements are reliable.
+ * Hovering or focusing a toast pauses its timer (WCAG 2.2.1).
+ */
+export function ToastRegion({ toasts, onDismiss, onPause, onResume }: ToastRegionProps) {
+  const hovered = useRef(false);
+  const focused = useRef(false);
+  const release = () => {
+    if (!hovered.current && !focused.current) onResume?.();
+  };
+
   return (
-    <div className={styles.region} role="status" aria-live="polite" aria-atomic="false">
+    <div
+      className={styles.region}
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+      onPointerEnter={() => {
+        hovered.current = true;
+        onPause?.();
+      }}
+      onPointerLeave={() => {
+        hovered.current = false;
+        release();
+      }}
+      onFocus={() => {
+        focused.current = true;
+        onPause?.();
+      }}
+      onBlur={(event: FocusEvent<HTMLDivElement>) => {
+        if (event.currentTarget.contains(event.relatedTarget)) return;
+        focused.current = false;
+        release();
+      }}
+    >
       {toasts.map((toast) => (
         <Toast key={toast.id} toast={toast} onDismiss={onDismiss} />
       ))}

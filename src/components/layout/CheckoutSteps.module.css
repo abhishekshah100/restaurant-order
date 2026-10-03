@@ -12,7 +12,7 @@
 }
 .seg i {
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--r-3xs);
   background: var(--line);
   display: block;
 }
@@ -46,13 +46,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font: 700 14px/20px var(--f-ui);
+  font: var(--font-label);
   color: var(--ink-3);
 }
 .d {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   display: grid;
   place-items: center;
   border: 2px solid var(--line-strong);
@@ -66,13 +66,13 @@
 .stepDone .d {
   background: var(--success);
   border-color: var(--success);
-  color: #fff;
+  color: var(--on-brand);
 }
 .stepCur .d {
   background: var(--brand-600);
   border-color: var(--brand-600);
-  color: #fff;
-  box-shadow: 0 0 0 4px var(--brand-tint);
+  color: var(--on-brand);
+  box-shadow: var(--halo-lg);
 }
 .line {
   width: 56px;

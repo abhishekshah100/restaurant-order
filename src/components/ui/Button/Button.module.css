@@ -2,7 +2,7 @@
   height: 52px;
   padding: 0 20px;
   border-radius: var(--r);
-  font: 700 15px/20px var(--f-ui);
+  font: var(--font-price);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -13,8 +13,8 @@
   flex: none;
   letter-spacing: 0.005em;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
 }
 .block {
   width: 100%;
@@ -22,10 +22,7 @@
 }
 .primary {
   background: var(--brand-600);
-  color: #fff;
-}
-.primary:hover {
-  background: var(--brand-700);
+  color: var(--on-brand);
 }
 .primary:active {
   background: var(--brand-700);
@@ -35,32 +32,38 @@
   border-color: var(--line-strong);
   color: var(--ink);
 }
-.secondary:hover {
-  border-color: var(--ink);
-}
 .ghost {
   background: transparent;
   color: var(--brand-600);
   padding: 0 12px;
 }
-.ghost:hover {
-  background: var(--brand-tint-2);
-}
 .dark {
   background: var(--ink);
   color: var(--on-dark);
-}
-.dark:hover {
-  background: #3d2a23;
 }
 .sm {
   height: 40px;
   padding: 0 14px;
   font-size: 14px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
 }
 .ghost.sm {
   padding: 0 10px;
+}
+/* Before the disabled / loading rules so those still win on hover */
+@media (hover: hover) {
+  .primary:hover {
+    background: var(--brand-700);
+  }
+  .secondary:hover {
+    border-color: var(--ink);
+  }
+  .ghost:hover {
+    background: var(--brand-tint-2);
+  }
+  .dark:hover {
+    background: var(--ink-hover);
+  }
 }
 /* Disabled — a sand fill whatever the variant */
 .btn:disabled,
@@ -74,7 +77,7 @@
 .btn.loading,
 .btn.loading:disabled {
   background: var(--brand-600);
-  color: #fff;
+  color: var(--on-brand);
   cursor: progress;
 }
 .meta {

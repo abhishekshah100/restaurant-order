@@ -45,10 +45,11 @@ export function removeKey(key: string, kind: StorageKind = 'local'): void {
 }
 
 export const STORAGE_KEYS = {
-  cart: 'olive.cart.v1',
-  table: 'olive.table.v1',
-  recentSearches: 'olive.recent-searches.v1',
+  cart: 'olive.cart.v2',
+  session: 'olive.session.v1',
   checkout: 'olive.checkout.v1',
   orders: 'olive.orders.v1',
   justPlaced: 'olive.just-placed.v1',
+  service: 'olive.service.v1',
+  statusPreview: 'olive.status-preview.v1',
 } as const;

@@ -17,6 +17,46 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // No hard-coded copy in components: every user-visible or screen-reader string comes from
+    // the content API (public/api/content/*.json via useContent / getContent).
+    files: ['src/**/*.tsx'],
+    ignores: ['src/app/styleguide/**'], // internal design board with demo content
+    rules: {
+      'react/jsx-no-literals': [
+        'error',
+        {
+          noStrings: true,
+          ignoreProps: true,
+          allowedStrings: [
+            '·',
+            '×',
+            '—',
+            '–',
+            '…',
+            '₹',
+            '/',
+            '+',
+            '−',
+            '-',
+            '%',
+            ':',
+            '(',
+            ')',
+            '|',
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'JSXAttribute[name.name=/^(aria-label|aria-description|title|alt|placeholder|label|hint|error|backLabel|description)$/] > Literal[value=/\\S/]',
+          message: 'Text props must come from content (useContent / getContent), not a literal.',
+        },
+      ],
+    },
+  },
   globalIgnores([
     '.next/**',
     'out/**',

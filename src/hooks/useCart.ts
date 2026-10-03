@@ -1,4 +1,7 @@
-'use client';
-
-export { useCartContext as useCart } from '@/context/CartContext';
-export type { CartContextValue } from '@/context/CartContext';
+export {
+  useCartContext as useCart,
+  useCartActions,
+  useDishLines,
+  useDishQuantity,
+} from '@/context/CartContext';
+export type { CartActions, CartContextValue } from '@/context/CartContext';

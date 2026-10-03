@@ -4,7 +4,7 @@
   gap: 8px;
 }
 .label {
-  font: 700 14px/20px var(--f-ui);
+  font: var(--font-label);
   color: var(--ink);
 }
 .optional {
@@ -31,7 +31,7 @@
 .input:focus,
 .input:focus-visible {
   border-color: var(--ink);
-  box-shadow: 0 0 0 3px var(--brand-tint);
+  box-shadow: var(--halo);
 }
 .error,
 .error:focus,
@@ -51,7 +51,7 @@ textarea.input {
   font-size: 16px;
 }
 .hint {
-  font: 500 13px/18px var(--f-ui);
+  font: var(--font-small);
   color: var(--ink-2);
   margin: 0;
   display: flex;
@@ -59,7 +59,7 @@ textarea.input {
   align-items: flex-start;
 }
 .err {
-  font: 600 13px/18px var(--f-ui);
+  font: var(--font-small-strong);
   color: var(--error);
   margin: 0;
   display: flex;
@@ -68,4 +68,24 @@ textarea.input {
 }
 .err > span[aria-hidden] {
   margin-top: 1px;
+}
+
+/* Leading icon inside the field */
+.withIcon {
+  position: relative;
+  display: block;
+}
+.withIcon > span[aria-hidden] {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.withIcon > input {
+  padding-left: 44px;
+}
+.withIcon:focus-within > span[aria-hidden] {
+  color: var(--brand-600);
 }

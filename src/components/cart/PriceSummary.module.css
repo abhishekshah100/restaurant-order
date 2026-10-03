@@ -29,10 +29,6 @@
   padding-top: 14px;
   border-top: 1px dashed var(--line-strong);
 }
-.totalOnly {
-  border-top: 0;
-  padding-top: 0;
-}
 .tight {
   padding-top: 10px;
 }
@@ -41,7 +37,7 @@
   margin: 0;
 }
 .amt {
-  font: 500 30px/36px var(--f-display);
+  font: var(--font-price-lg);
   font-variant-numeric: lining-nums tabular-nums;
   margin: 0;
 }

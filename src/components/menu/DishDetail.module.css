@@ -1,14 +1,12 @@
 /* Mobile hero (06) */
 .hero {
   position: relative;
-  height: 300px;
+  /* About a third of the screen — the name, price and options show straight away */
+  height: clamp(200px, 32dvh, 260px);
   flex: none;
 }
 .heroImg {
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
-  display: block;
+  composes: cover from '@/styles/patterns.module.css';
 }
 .heroBar {
   position: absolute;
@@ -36,7 +34,7 @@
   position: relative;
 }
 .overlap {
-  border-radius: 24px 24px 0 0;
+  border-radius: var(--r-sheet);
   margin-top: -24px;
 }
 .intro {
@@ -50,7 +48,7 @@
   align-items: center;
 }
 .title {
-  font: 500 28px/34px var(--f-display);
+  font: var(--font-h1);
   letter-spacing: -0.005em;
   margin: 0;
   text-wrap: balance;
@@ -63,27 +61,44 @@
   font: 600 13px/16px var(--f-ui);
   color: var(--ink-3);
 }
-.metaItem {
-  display: inline-flex;
+.chips {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  align-items: center;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
 }
-.dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: currentColor;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font: var(--font-meta);
+  color: var(--ink-2);
+}
+.chip > span[aria-hidden] {
+  width: 14px;
+  height: 14px;
+  color: var(--brand-600);
+}
+.from {
+  font: var(--font-small-strong);
+  color: var(--ink-3);
+  margin-right: 6px;
+  vertical-align: 4px;
 }
 .price {
-  font: 500 30px/36px var(--f-display);
+  margin: 4px 0 0;
+  font: var(--font-price-lg);
   font-variant-numeric: lining-nums tabular-nums;
-  margin-top: 4px;
 }
 .hr {
-  height: 1px;
-  background: var(--line);
-  border: 0;
-  margin: 0;
+  composes: hr from '@/styles/patterns.module.css';
 }
 .actionbar {
   position: fixed;
@@ -96,7 +111,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  z-index: 20;
+  z-index: var(--z-actionbar);
 }
 
 /* Desktop left column (w06) */
@@ -110,14 +125,19 @@
 }
 .bigImg {
   width: 100%;
-  height: 520px;
-  border-radius: 24px;
+  height: auto;
+  /* 4:3, but never taller than the window allows next to the options */
+  aspect-ratio: 4 / 3;
+  max-height: calc(100dvh - var(--header-h) - 220px);
+  min-height: 240px;
+  border-radius: 22px;
   object-fit: cover;
   display: block;
+  box-shadow: 0 18px 40px -28px var(--ink-a55);
 }
 .placeholder {
-  height: 360px;
-  border-radius: 24px;
+  height: 220px;
+  border-radius: var(--r-xl);
   background: var(--sand);
   color: var(--ink-3);
   display: grid;
@@ -140,7 +160,7 @@
 .fact {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -157,9 +177,8 @@
     margin-right: auto;
     width: 100%;
   }
-  .heroImg,
   .hero {
-    height: 380px;
+    height: clamp(240px, 34dvh, 340px);
   }
 }
 
@@ -177,18 +196,104 @@
     gap: 12px;
   }
   .title {
-    font: 500 44px/50px var(--f-display);
+    font: 500 38px/44px var(--f-display);
     letter-spacing: -0.01em;
   }
   .desc {
-    font-size: 16px;
-    line-height: 25px;
+    font-size: 15.5px;
+    line-height: 24px;
   }
+  /* Add to cart stays within reach at the bottom of the options column */
   .actionbar {
-    position: static;
+    position: sticky;
+    bottom: 16px;
+    z-index: var(--z-sticky-inline);
+    margin-bottom: 40px;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: var(--r-lg);
+    padding: 14px;
+    box-shadow: 0 14px 30px -18px var(--ink-a45);
   }
+
+  /* Narrower photo column (≈ 40 / 60) */
+  .layout.layout {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 48px;
+    max-width: 1200px;
+  }
+  /* Photo + facts stick while the options scroll */
+  .leftSticky {
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .left {
+    align-self: stretch;
+  }
+  .facts {
+    gap: 10px;
+  }
+  .fact {
+    padding: 12px 14px;
+    border-radius: var(--r-tile);
+  }
+  .factValue {
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  .layout.layout {
+    gap: 32px;
+  }
+  .title {
+    font-size: 32px;
+    line-height: 38px;
+  }
+}
+
+/* Tap the photo to open it full size */
+.zoomBtn {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  border-radius: inherit;
+}
+.zoomBtn:focus-visible {
+  box-shadow: var(--focus);
+}
+.zoomHint {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--ink-a62);
+  color: var(--white);
+  font: var(--font-meta-strong);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  transition: background-color var(--dur-fast) ease;
+}
+@media (hover: hover) {
+  .zoomBtn:hover .zoomHint {
+    background: var(--ink-a80);
+  }
+}
+/* Mobile: sit above the curved content sheet that overlaps the photo */
+.zoomHintMobile {
+  bottom: 36px;
 }

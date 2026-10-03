@@ -33,7 +33,6 @@ export interface ButtonLinkProps extends BaseProps {
   disabled?: boolean;
   onClick?: () => void;
   'aria-label'?: string;
-  replace?: boolean;
 }
 
 function Content({ loading, iconStart, iconEnd, meta, children, size }: BaseProps) {
@@ -65,7 +64,7 @@ export function Button(props: ButtonProps | ButtonLinkProps) {
   );
 
   if (props.href !== undefined) {
-    const { href, disabled, onClick, replace } = props;
+    const { href, disabled, onClick } = props;
     if (disabled) {
       return (
         <span className={classes} aria-disabled="true" role="link">
@@ -74,13 +73,7 @@ export function Button(props: ButtonProps | ButtonLinkProps) {
       );
     }
     return (
-      <Link
-        href={href}
-        className={classes}
-        onClick={onClick}
-        replace={replace}
-        aria-label={props['aria-label']}
-      >
+      <Link href={href} className={classes} onClick={onClick} aria-label={props['aria-label']}>
         <Content {...props} />
       </Link>
     );

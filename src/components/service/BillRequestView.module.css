@@ -1,0 +1,111 @@
+/* Request the bill (20 · w20) */
+.main {
+  padding: 8px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.loading {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 0 64px;
+}
+
+/* The radiogroup has a visually hidden title; cancel its spacing */
+.scope {
+  margin-top: -12px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 4px 20px 20px;
+}
+.cardTitle {
+  padding: 16px 0 4px;
+}
+.cardTotals {
+  margin-top: 8px;
+}
+
+.hint {
+  font: var(--font-small);
+  color: var(--ink-2);
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.hintIcon {
+  margin-top: 1px;
+  flex: none;
+}
+
+.foot {
+  position: sticky;
+  bottom: 0;
+  margin: auto -20px 0;
+  padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, var(--bg) 18px);
+}
+
+@media (max-width: 1023.98px) {
+  .cols {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .main {
+    flex: 1;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .main {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cols {
+    padding-top: 28px;
+  }
+  .main {
+    padding: 0;
+  }
+  .scope [role='radio'] {
+    min-height: 76px;
+  }
+  .card {
+    padding: 0;
+    border-radius: var(--r-panel);
+    overflow: hidden;
+  }
+  .cardTitle {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .aside {
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    margin-top: 42px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+}

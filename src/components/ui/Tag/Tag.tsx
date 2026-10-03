@@ -3,11 +3,12 @@ import { cx } from '@/lib/cx';
 import { Icon, type IconName } from '../Icon';
 import styles from './Tag.module.css';
 
-export type TagVariant = 'chef' | 'new' | 'pop' | 'out' | 'ok' | 'warn' | 'err' | 'plain';
+export type TagVariant = 'chef' | 'new' | 'best' | 'pop' | 'out' | 'ok' | 'warn' | 'err' | 'plain';
 
 const DEFAULT_ICON: Partial<Record<TagVariant, IconName>> = {
   chef: 'chef',
   new: 'sparkle',
+  best: 'star',
   ok: 'check',
 };
 

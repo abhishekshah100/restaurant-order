@@ -32,6 +32,14 @@ test('order a dish and pay online', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: 'Truffle Mushroom Pasta' }),
   ).toBeVisible();
+  // The photo opens full size in a pop-up and closes with Esc.
+  await page
+    .getByRole('button', { name: 'View photo of Truffle Mushroom Pasta' })
+    .filter({ visible: true })
+    .click();
+  await expect(page.getByRole('dialog', { name: 'Photo: Truffle Mushroom Pasta' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Photo: Truffle Mushroom Pasta' })).toBeHidden();
   await page.getByRole('radio', { name: /Large/ }).click();
   await page.getByRole('checkbox', { name: /Extra parmesan/ }).click();
   await page.getByRole('button', { name: 'Less cheese' }).click();
@@ -57,7 +65,7 @@ test('order a dish and pay online', async ({ page }) => {
 
   // OTP — a wrong code first, then the mock code
   await expect(page).toHaveURL(/\/checkout\/verify\/$/);
-  await expect(page.getByText('+91 98765 43210').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByText('98765 43210').filter({ visible: true }).first()).toBeVisible();
   await page.getByLabel('Digit 1 of 6').fill('111111');
   await page.getByRole('button', { name: 'Verify & continue' }).filter({ visible: true }).click();
   await expect(page.getByRole('alert').filter({ hasText: '2 attempts left' })).toBeVisible();
@@ -91,6 +99,9 @@ test('order a dish and pay online', async ({ page }) => {
 test('a failed payment keeps the cart', async ({ page }) => {
   await page.goto('/menu/');
   await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
+  // Wait until the cart has registered the item (it's saved to the device right after).
+  await expect(page.getByRole('status').filter({ hasText: 'Dahi Kebab added' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Quantity of Dahi Kebab' }).first()).toBeVisible();
   await page.goto('/checkout/details/');
   await page.getByLabel('Full name').fill('Ananya Rao');
   await page.getByLabel('Mobile number').fill('9876543210');

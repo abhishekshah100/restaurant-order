@@ -1,40 +1,45 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { memo } from 'react';
 import { Tag, VegMark } from '@/components/ui';
+import { useContent } from '@/api/hooks';
 import { formatINR } from '@/lib/format';
-import { dishImage, isSpicy } from '@/lib/menu';
+import { dishImage, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import { AddControl } from './AddControl';
+import { TAG_VARIANT, firstHighlight, tagLabel, type DishHighlight } from './dishTag';
 import styles from './DishCard.module.css';
 
 export interface DishCardProps {
   dish: Dish;
   /** Load eagerly (above the fold). */
   priority?: boolean;
+  /** Inside "Chef's picks" the chef's-pick tag says nothing new, so it's hidden. */
+  hideChefTag?: boolean;
 }
 
-/** Shorter line for cards: "Wild mushrooms, truffle oil, aged parmesan". */
-const SHORT_DESC: Record<string, string> = {
-  'truffle-mushroom-pasta': 'Wild mushrooms, truffle oil, aged parmesan',
-  'chilli-garlic-prawns': 'Burnt garlic, Kashmiri chilli butter',
-  'wood-fired-margherita': 'San Marzano tomato, fior di latte, basil',
-};
+const CARD_ORDER: readonly DishHighlight[] = ['new', 'spicy', 'bestseller', 'chef'];
+const CARD_ORDER_NO_CHEF = CARD_ORDER.filter((h) => h !== 'chef');
 
-function CardTag({ dish }: { dish: Dish }) {
-  if (dish.tags.includes('chef')) return <Tag variant="chef">Chef&apos;s pick</Tag>;
-  if (dish.tags.includes('new')) return <Tag variant="new">New</Tag>;
-  if (isSpicy(dish))
+function CardTag({ dish, hideChefTag }: { dish: Dish; hideChefTag?: boolean }) {
+  const t = useContent('menu');
+  const highlight = firstHighlight(dish, hideChefTag ? CARD_ORDER_NO_CHEF : CARD_ORDER);
+  if (!highlight) return null;
+  if (highlight === 'spicy')
     return (
       <Tag variant="pop" icon="flame">
-        Spicy
+        {t('filters.spicy')}
       </Tag>
     );
-  if (dish.tags.includes('bestseller')) return <Tag variant="pop">Bestseller</Tag>;
-  return null;
+  return <Tag variant={TAG_VARIANT[highlight]}>{tagLabel(t, highlight)}</Tag>;
 }
 
-/** Chef's picks card: photo, tag, ADD, name, price. */
-export function DishCard({ dish, priority }: DishCardProps) {
+/**
+ * Feature card (chef's picks): a white card with the photo on top, then name,
+ * one-line description, and a price row with a compact ADD / stepper.
+ * The whole card opens the dish; the ADD control stays separately operable.
+ */
+export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: DishCardProps) {
   const image = dishImage(dish, 'card');
   return (
     <li className={styles.card}>
@@ -46,16 +51,15 @@ export function DishCard({ dish, priority }: DishCardProps) {
             alt={image.alt}
             width={image.width}
             height={image.height}
-            sizes="(min-width: 1024px) 300px, 236px"
+            sizes="(min-width: 1024px) 300px, 70vw"
             priority={priority}
           />
         )}
         <span className={styles.tag}>
-          <CardTag dish={dish} />
+          <CardTag dish={dish} hideChefTag={hideChefTag} />
         </span>
       </div>
-      <AddControl dish={dish} className={styles.control} hideNote />
-      <div className={styles.text}>
+      <div className={styles.body}>
         <div className={styles.top}>
           <VegMark veg={dish.veg} />
           <h3 className={styles.name}>
@@ -64,9 +68,12 @@ export function DishCard({ dish, priority }: DishCardProps) {
             </Link>
           </h3>
         </div>
-        <p className={`${styles.desc} hide-mobile`}>{SHORT_DESC[dish.slug] ?? dish.description}</p>
-        <span className={styles.price}>{formatINR(dish.price)}</span>
+        <p className={styles.desc}>{dish.cardDescription ?? dish.description}</p>
+        <div className={styles.foot}>
+          <span className={styles.price}>{formatINR(startingPrice(dish))}</span>
+          <AddControl dish={dish} className={styles.control} size="sm" customisableHint />
+        </div>
       </div>
     </li>
   );
-}
+});

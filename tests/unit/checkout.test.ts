@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { checkOtp, displayPhone, validateDetails, wrongCodeMessage } from '@/lib/checkout';
+import { checkOtp, displayPhone, validateDetails, wrongCodeError } from '@/lib/checkout';
 
 describe('validateDetails', () => {
   it('requires a name and a 10-digit Indian mobile', () => {
     expect(validateDetails('', '')).toEqual({
-      name: 'Please enter your name',
-      phone: 'Enter a 10-digit mobile number',
+      name: 'nameRequired',
+      phone: 'phoneLength',
     });
-    expect(validateDetails('Ananya Rao', '98765432')).toEqual({
-      phone: 'Enter a 10-digit mobile number',
+    expect(validateDetails('A', '98765432')).toEqual({
+      name: 'nameTooShort',
+      phone: 'phoneLength',
     });
-    expect(validateDetails('Ananya Rao', '1234567890').phone).toMatch(/start with 6, 7, 8 or 9/);
+    expect(validateDetails('Ananya Rao', '1234567890').phone).toBe('phonePrefix');
     expect(validateDetails('Ananya Rao', '9876543210')).toEqual({});
   });
 });
@@ -21,12 +22,10 @@ describe('OTP', () => {
     expect(checkOtp('482719')).toBe('wrong');
     expect(checkOtp('123')).toBe('incomplete');
   });
-  it('words the attempts left like the design', () => {
-    expect(wrongCodeMessage(2)).toBe(
-      "That code doesn't match. Check the SMS and try again — 2 attempts left.",
-    );
-    expect(wrongCodeMessage(1)).toMatch(/1 attempt left/);
-    expect(wrongCodeMessage(0)).toMatch(/no attempts left/);
+  it('locks once no attempts are left', () => {
+    expect(wrongCodeError(2)).toBe('wrong');
+    expect(wrongCodeError(1)).toBe('wrong');
+    expect(wrongCodeError(0)).toBe('locked');
   });
-  it('formats the phone', () => expect(displayPhone('9876543210')).toBe('+91 98765 43210'));
+  it('formats the phone', () => expect(displayPhone('9876543210')).toBe('98765 43210'));
 });

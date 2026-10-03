@@ -1,5 +1,5 @@
 import type { CartAction, CartLine, CartState } from '@/types/cart';
-import { MAX_QUANTITY } from './constants';
+import { KITCHEN_NOTE_MAX, MAX_QUANTITY } from './constants';
 import { lineKey } from './cartLine';
 
 export const EMPTY_CART: CartState = { lines: [], kitchenNote: '' };
@@ -28,14 +28,6 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
     }
     case 'setQuantity':
       return withQuantity(state, action.key, action.quantity);
-    case 'increment': {
-      const line = state.lines.find((l) => l.key === action.key);
-      return line ? withQuantity(state, action.key, line.quantity + 1) : state;
-    }
-    case 'decrement': {
-      const line = state.lines.find((l) => l.key === action.key);
-      return line ? withQuantity(state, action.key, line.quantity - 1) : state;
-    }
     case 'remove':
       return { ...state, lines: state.lines.filter((l) => l.key !== action.key) };
     case 'restore': {
@@ -68,7 +60,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       return { ...state, lines };
     }
     case 'setKitchenNote':
-      return { ...state, kitchenNote: action.note.slice(0, 120) };
+      return { ...state, kitchenNote: action.note.slice(0, KITCHEN_NOTE_MAX) };
     case 'clear':
       return EMPTY_CART;
     case 'hydrate':
@@ -78,24 +70,42 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
   }
 }
 
-/** Runtime guard for persisted carts. */
-export function isCartState(value: unknown): value is CartState {
-  if (!value || typeof value !== 'object') return false;
-  const v = value as Partial<CartState>;
+const isStringArray = (v: unknown): v is string[] =>
+  Array.isArray(v) && v.every((x) => typeof x === 'string');
+
+const isStringRecord = (v: unknown): v is Record<string, string> =>
+  typeof v === 'object' &&
+  v !== null &&
+  !Array.isArray(v) &&
+  Object.values(v).every((x) => typeof x === 'string');
+
+/** Runtime guard for one persisted cart line. */
+function isCartLine(value: unknown): value is CartLine {
+  if (typeof value !== 'object' || value === null) return false;
+  const l = value as Record<string, unknown>;
   return (
-    typeof v.kitchenNote === 'string' &&
-    Array.isArray(v.lines) &&
-    v.lines.every(
-      (l) =>
-        l &&
-        typeof l.key === 'string' &&
-        typeof l.dishSlug === 'string' &&
-        typeof l.quantity === 'number' &&
-        typeof l.unitPrice === 'number' &&
-        Array.isArray(l.addOnIds) &&
-        Array.isArray(l.instructions) &&
-        typeof l.note === 'string' &&
-        typeof l.options === 'object',
-    )
+    typeof l.key === 'string' &&
+    typeof l.dishSlug === 'string' &&
+    (l.variantId === undefined || typeof l.variantId === 'string') &&
+    typeof l.quantity === 'number' &&
+    Number.isInteger(l.quantity) &&
+    l.quantity >= 1 &&
+    l.quantity <= MAX_QUANTITY &&
+    typeof l.unitPrice === 'number' &&
+    Number.isFinite(l.unitPrice) &&
+    isStringArray(l.addOnIds) &&
+    isStringArray(l.instructions) &&
+    isStringArray(l.removals) &&
+    typeof l.note === 'string' &&
+    isStringRecord(l.options)
   );
+}
+
+/** Reads a persisted cart. Malformed lines are dropped rather than rejecting the whole cart. */
+export function parseCart(value: unknown): CartState | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const v = value as Record<string, unknown>;
+  if (typeof v.kitchenNote !== 'string' || !Array.isArray(v.lines)) return null;
+  const lines = v.lines.filter(isCartLine);
+  return { kitchenNote: v.kitchenNote.slice(0, KITCHEN_NOTE_MAX), lines };
 }

@@ -1,12 +1,20 @@
 'use client';
 
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
+import { useContent } from '@/api/hooks';
+import { DESKTOP_QUERY } from '@/hooks/useMediaQuery';
 import { cx } from '@/lib/cx';
-import { useFocusTrap } from '@/hooks/useFocusTrap';
-import { useHydrated } from '@/hooks/useHydrated';
-import { useScrollLock } from '@/hooks/useScrollLock';
 import { IconButton } from '../IconButton/IconButton';
+import { useOverlay } from './useOverlay';
 import styles from './Dialog.module.css';
 
 export type DialogPresentation = 'sheet' | 'modal' | 'adaptive' | 'panel';
@@ -16,69 +24,144 @@ export interface DialogProps {
   onClose: () => void;
   /** Accessible title, shown in the header unless `hideTitle` or `labelledBy`. */
   title: ReactNode;
-  /** Id of a heading inside `children` that names the dialog; skips the built-in header. */
+  /** Id of a heading inside `header` that names the dialog; replaces the built-in header. */
   labelledBy?: string;
+  /** Custom header that stays fixed above the scrolling content (use with `labelledBy`). */
+  header?: ReactNode;
   hideTitle?: boolean;
-  /** Serif display title (modal headings) instead of the UI title. */
-  displayTitle?: boolean;
   description?: ReactNode;
   /** sheet (mobile), modal (desktop), adaptive (sheet → modal at 1024px), panel (slide-over). */
   presentation?: DialogPresentation;
-  showClose?: boolean;
-  /** Sticky footer, e.g. the "Add to cart" row. */
+  /** Fixed footer, e.g. the "Add to cart" row. */
   footer?: ReactNode;
   children: ReactNode;
   className?: string;
 }
 
+/** Drag distance (px) or flick speed (px/ms) that closes a sheet. */
+const CLOSE_DISTANCE = 110;
+const CLOSE_VELOCITY = 0.6;
+/** Lets the swipe-away transition finish before closing. */
+const SWIPE_CLOSE_MS = 180;
+
 /**
  * Accessible dialog: portal, focus trap, Esc and scrim to close, body scroll lock,
  * focus restored to the trigger on close.
+ *
+ * The header and footer stay put while only the middle scrolls. Scroll hints
+ * (a hairline under the header, a fade and lifted footer when there's more
+ * below) show where content continues. As a bottom sheet it can be swiped down
+ * to close from the grab handle or header.
  */
 export function Dialog({
   open,
   onClose,
   title,
   labelledBy,
+  header,
   hideTitle,
-  displayTitle,
   description,
   presentation = 'adaptive',
-  showClose = true,
   footer,
   children,
   className,
 }: DialogProps) {
-  const hydrated = useHydrated();
+  const t = useContent('common');
   const ref = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const swipeTimer = useRef<number | undefined>(undefined);
   const titleId = useId();
   const descId = useId();
-  const onCloseRef = useRef(onClose);
+  const { visible, close } = useOverlay(ref, open, onClose);
+  const drag = useRef<{
+    id: number;
+    startY: number;
+    t: number;
+    dy: number;
+    active: boolean;
+  } | null>(null);
 
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
+  useEffect(() => () => window.clearTimeout(swipeTimer.current), []);
 
-  useFocusTrap(ref, open && hydrated);
-  useScrollLock(open);
+  /* ---------- Scroll hints ---------- */
+  const updateScrollHints = useCallback(() => {
+    const body = bodyRef.current;
+    const el = ref.current;
+    if (!body || !el) return;
+    el.dataset.scrolled = String(body.scrollTop > 2);
+    el.dataset.more = String(body.scrollTop + body.clientHeight < body.scrollHeight - 2);
+  }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        onCloseRef.current();
-      }
+  useLayoutEffect(() => {
+    if (!visible) return;
+    const body = bodyRef.current;
+    if (!body) return;
+    updateScrollHints();
+    const observer = new ResizeObserver(updateScrollHints);
+    observer.observe(body);
+    if (body.firstElementChild) observer.observe(body.firstElementChild);
+    return () => observer.disconnect();
+  }, [visible, updateScrollHints]);
+
+  /* ---------- Swipe down to close (bottom sheets only) ---------- */
+  const isSheetNow = () =>
+    presentation === 'sheet' ||
+    (presentation === 'adaptive' && !window.matchMedia(DESKTOP_QUERY).matches);
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || !isSheetNow()) return;
+    if ((event.target as HTMLElement).closest('button, a, input, textarea, select')) return;
+    drag.current = {
+      id: event.pointerId,
+      startY: event.clientY,
+      t: performance.now(),
+      dy: 0,
+      active: false,
     };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open]);
+  };
 
-  if (!open || !hydrated) return null;
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    const el = ref.current;
+    if (!d || !el || event.pointerId !== d.id) return;
+    const dy = event.clientY - d.startY;
+    if (!d.active) {
+      if (dy < 6) return;
+      d.active = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      el.style.transition = 'none';
+      el.style.animation = 'none';
+    }
+    d.dy = Math.max(0, dy);
+    el.style.transform = `translateY(${d.dy}px)`;
+    if (scrimRef.current) {
+      scrimRef.current.style.opacity = String(Math.max(0.2, 1 - d.dy / (el.offsetHeight || 1)));
+    }
+  };
+
+  const endDrag = () => {
+    const d = drag.current;
+    const el = ref.current;
+    drag.current = null;
+    if (!d?.active || !el) return;
+    const velocity = d.dy / Math.max(1, performance.now() - d.t);
+    el.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    if (d.dy > CLOSE_DISTANCE || velocity > CLOSE_VELOCITY) {
+      el.style.transform = 'translateY(100%)';
+      window.clearTimeout(swipeTimer.current);
+      swipeTimer.current = window.setTimeout(close, SWIPE_CLOSE_MS);
+    } else {
+      el.style.transform = '';
+      if (scrimRef.current) scrimRef.current.style.opacity = '';
+    }
+  };
+
+  if (!visible) return null;
 
   return createPortal(
     <>
-      <div className={styles.scrim} onClick={onClose} aria-hidden="true" />
+      <div ref={scrimRef} className={styles.scrim} onClick={onClose} aria-hidden="true" />
       <div
         ref={ref}
         className={cx(styles.dialog, styles[presentation], className)}
@@ -88,33 +171,37 @@ export function Dialog({
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
       >
-        <span className={styles.grabber} aria-hidden="true" />
-        <div className={styles.body}>
-          {!labelledBy && (!hideTitle || showClose) && (
+        <div
+          className={styles.dragZone}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+        >
+          <span className={styles.grabber} aria-hidden="true" />
+          {labelledBy ? (
+            header && <div className={styles.headCustom}>{header}</div>
+          ) : (
             <div className={styles.head}>
-              <h2
-                id={titleId}
-                className={cx(
-                  hideTitle ? 'visually-hidden' : styles.title,
-                  displayTitle && styles.titleDisplay,
-                )}
-              >
+              <h2 id={titleId} className={hideTitle ? 'visually-hidden' : styles.title}>
                 {title}
               </h2>
-              {showClose && <IconButton icon="x" label="Close" variant="soft" onClick={onClose} />}
+              <IconButton icon="x" label={t('dialog.close')} variant="soft" onClick={onClose} />
             </div>
           )}
-          {!labelledBy && hideTitle && !showClose && (
-            <h2 id={titleId} className="visually-hidden">
-              {title}
-            </h2>
-          )}
-          {description && (
-            <div id={descId} className="t-body c2">
-              {description}
+        </div>
+        <div className={styles.bodyWrap}>
+          <div ref={bodyRef} className={styles.body} onScroll={updateScrollHints}>
+            <div className={styles.content}>
+              {description && (
+                <div id={descId} className="t-body c2">
+                  {description}
+                </div>
+              )}
+              {children}
             </div>
-          )}
-          {children}
+          </div>
+          <span className={styles.fade} aria-hidden="true" />
         </div>
         {footer && <div className={styles.foot}>{footer}</div>}
       </div>

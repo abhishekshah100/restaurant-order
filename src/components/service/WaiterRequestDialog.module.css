@@ -1,0 +1,105 @@
+/* Header (18 · w18): title + table line, soft close button */
+.head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: -6px;
+}
+.headText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.title {
+  font: var(--font-h2);
+  margin: 0;
+}
+.lede {
+  font: var(--font-small);
+  margin: 0;
+}
+.strong {
+  color: var(--ink);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Reason tiles: 2 × 2 on mobile, 4 across on desktop */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.tile {
+  min-height: 96px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 15px/20px var(--f-ui);
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+.tileIcon {
+  color: var(--brand-600);
+}
+.on {
+  border-color: var(--brand-600);
+  background: var(--brand-tint-2);
+}
+.tile:active {
+  background: var(--brand-tint-2);
+}
+@media (hover: hover) {
+  .tile:hover {
+    border-color: var(--line-strong);
+  }
+  .on:hover {
+    border-color: var(--brand-600);
+  }
+}
+
+.send {
+  flex: 2;
+}
+
+@media (min-width: 1024px) {
+  .head {
+    gap: 16px;
+    margin-top: 0;
+  }
+  .title {
+    font: var(--font-h1);
+  }
+  .lede {
+    font: var(--font-body);
+  }
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .tile {
+    min-height: 104px;
+    padding: 14px 8px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 14px;
+  }
+  .cancel {
+    flex: 1;
+  }
+}

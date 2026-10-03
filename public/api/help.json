@@ -1,0 +1,48 @@
+{
+  "payment": {
+    "id": "payment",
+    "title": "Payment help",
+    "intro": "Answers to the most common payment questions. Your server can help with anything else.",
+    "sections": [
+      {
+        "heading": "My payment failed",
+        "body": "If money left your account but the order didn’t go through, it’s returned automatically within 5–7 working days. You can try again or choose to pay at the counter."
+      },
+      {
+        "heading": "Refunds",
+        "body": "When an item paid online is cancelled, we refund it to the original payment method. The order shows “Refund started” until it reaches you."
+      },
+      {
+        "heading": "Paying the balance",
+        "body": "Request the bill and your server will bring it to the table. You can pay by card, UPI or cash."
+      },
+      {
+        "heading": "Invoices",
+        "body": "Ask your server for a GST invoice when you request the bill."
+      }
+    ]
+  },
+  "faqs": {
+    "id": "faqs",
+    "title": "Allergens & FAQs",
+    "intro": "Good to know while you’re with us.",
+    "sections": [
+      {
+        "heading": "Allergens and ingredients",
+        "body": "Each dish page lists its main ingredients and dietary tags. Tell your server about any allergy before you order — the kitchen can adjust most dishes."
+      },
+      {
+        "heading": "Wi-Fi",
+        "body": "Join “[NETWORK NAME]”. Your server will share the password."
+      },
+      {
+        "heading": "Timings",
+        "body": "Lunch 12:00 PM – 3:30 PM · Dinner 7:00 PM – 11:00 PM. The kitchen takes last orders at 10:30 PM."
+      },
+      {
+        "heading": "Where to find us",
+        "body": "[RESTAURANT ADDRESS]"
+      }
+    ]
+  }
+}

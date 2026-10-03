@@ -1,43 +1,72 @@
+/* Filter / choice chip — compact pill; active state uses the brand terracotta,
+   the same active colour as tabs, option rows, the sidebar and the bottom nav. */
 .chip {
-  height: 40px;
-  padding: 0 14px;
+  height: 34px;
+  padding: 0 13px;
   border-radius: var(--r-pill);
   border: 1px solid var(--line-strong);
   background: var(--surface);
   color: var(--ink);
-  font: 600 14px/20px var(--f-ui);
+  font: var(--font-small-strong);
+  letter-spacing: 0.005em;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   white-space: nowrap;
   flex: none;
   text-decoration: none;
   position: relative;
+  box-shadow: 0 1px 1px var(--ink-a04);
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
 }
-/* 44px hit area on a 40px chip */
+/* Keep a 44px touch target on the 34px chip */
 .chip::before {
   content: '';
   position: absolute;
-  inset: -2px 0;
+  inset: -5px 0;
 }
-.chip:hover {
-  border-color: var(--ink-2);
+.chip > span[aria-hidden] {
+  width: 14px;
+  height: 14px;
 }
+.chip:focus-visible {
+  box-shadow: var(--focus);
+}
+.chip:active {
+  transform: translateY(0.5px);
+}
+
 .on {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--on-dark);
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: var(--on-brand);
+  box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--brand-700) 55%, transparent);
 }
-.on:hover {
-  border-color: var(--ink);
+@media (hover: hover) {
+  .chip:hover {
+    border-color: var(--brand);
+    color: var(--brand-700);
+    background: var(--brand-tint-2);
+  }
+  .on:hover {
+    background: var(--brand-700);
+    border-color: var(--brand-700);
+    color: var(--on-brand);
+  }
 }
+
 .count {
   font-weight: 800;
-  font-size: 12px;
-  opacity: 0.75;
+  font-size: 11px;
+  opacity: 0.8;
 }
-.lg {
-  height: 44px;
-  padding: 0 16px;
-  font-size: 15px;
+
+@media (prefers-reduced-motion: reduce) {
+  .chip:active {
+    transform: none;
+  }
 }

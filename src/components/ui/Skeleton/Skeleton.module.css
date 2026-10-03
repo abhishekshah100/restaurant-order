@@ -1,9 +1,14 @@
 .sk {
   display: block;
-  background: linear-gradient(90deg, var(--sand) 0%, #f5eee4 50%, var(--sand) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--sand) 0%,
+    color-mix(in srgb, var(--sand), var(--white) 45%) 50%,
+    var(--sand) 100%
+  );
   background-size: 200% 100%;
   animation: ot-sk 1.4s ease-in-out infinite;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
 }
 .line {
   height: 14px;
@@ -12,7 +17,7 @@
   height: 20px;
 }
 .circle {
-  border-radius: 50%;
+  border-radius: var(--r-round);
 }
 .block {
   border-radius: var(--r);
@@ -23,10 +28,5 @@
   }
   100% {
     background-position: -100% 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .sk {
-    animation: none;
   }
 }

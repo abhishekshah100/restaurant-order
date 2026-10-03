@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "menuDescription": "Chef's picks, starters, mains, pizza, breads, desserts and drinks — order from your table.",
+    "searchDescription": "Search dishes and drinks at The Olive Table.",
+    "categoryDescription": "{name} — {description}."
+  },
+  "nav": {
+    "menu": "Menu",
+    "search": "Search",
+    "backToMenu": "Back to menu",
+    "backToFullMenu": "Back to full menu",
+    "breadcrumb": "Breadcrumb",
+    "categories": "Categories",
+    "menuSections": "Menu sections"
+  },
+  "filters": {
+    "label": "Filters",
+    "filterAndSort": "Filter and sort",
+    "quickFilters": "Quick filters",
+    "dietary": "Dietary",
+    "all": "All",
+    "veg": "Veg",
+    "nonVeg": "Non-veg",
+    "vegOnly": "Veg only",
+    "nonVegOnly": "Non-veg only",
+    "chefsPicks": "Chef's picks",
+    "spicy": "Spicy",
+    "under": "Under {price}",
+    "remove": "Remove filter: {label}",
+    "summary": {
+      "veg": {
+        "one": "Showing {count} vegetarian dish",
+        "other": "Showing {count} vegetarian dishes"
+      },
+      "nonveg": {
+        "one": "Showing {count} non-vegetarian dish",
+        "other": "Showing {count} non-vegetarian dishes"
+      },
+      "mixed": {
+        "one": "Showing {count} of {total} dishes",
+        "other": "Showing {count} of {total} dishes"
+      }
+    }
+  },
+  "sort": {
+    "recommended": "Recommended",
+    "price-asc": "Price: low to high",
+    "price-desc": "Price: high to low",
+    "best-match": "Best match",
+    "price": "Price",
+    "sortBy": "Sort by",
+    "current": "Sort: {label}"
+  },
+  "sidebar": {
+    "allergyTitle": "Allergies?",
+    "allergyNote": "Each dish lists its allergens. Your server can help too.",
+    "refineResults": "Refine results",
+    "foundIn": "Found in"
+  },
+  "home": {
+    "picksSubtitle": "Tonight's favourites from our kitchen",
+    "noPicks": "No chef's picks match these filters.",
+    "seeAll": "See all {count}",
+    "noDishes": "No dishes match these filters."
+  },
+  "category": {
+    "dishesHeading": "Dishes",
+    "noMatch": "No {category} match these filters."
+  },
+  "dish": {
+    "tags": {
+      "chef": "Chef's pick",
+      "new": "New",
+      "bestseller": "Bestseller"
+    },
+    "spice": {
+      "medium": "Medium spicy",
+      "hot": "Hot"
+    },
+    "meal": "Meal",
+    "mealSave": "Meal · Save {savings}",
+    "customisable": "Customisable",
+    "inCart": "In cart",
+    "vegetarian": "Vegetarian",
+    "nonVegetarian": "Non-vegetarian",
+    "more": "more",
+    "less": "less",
+    "showFullDescription": "Show full description of {dish}",
+    "showLessDescription": "Show less of {dish} description"
+  },
+  "availability": {
+    "soldOut": "Sold out",
+    "backAt": "Back {time}",
+    "unavailableToday": "Unavailable today",
+    "closed": "Closed",
+    "soldOutNow": "Sold out right now.",
+    "soldOutBackAt": "Sold out right now — back {time}.",
+    "unavailableTodayNote": "Unavailable today. Your server can suggest something similar."
+  },
+  "detail": {
+    "viewPhoto": "View photo",
+    "viewPhotoOf": "View photo of {dish}",
+    "facts": "Dish details",
+    "prepTime": "Prep time",
+    "serves": "Serves",
+    "servesPeople": {
+      "one": "{count} person",
+      "other": "{count} people"
+    },
+    "servesChip": "Serves {count}",
+    "allergens": "Allergens",
+    "noAllergens": "None listed",
+    "from": "from",
+    "addToCart": "Add to cart",
+    "updateItem": "Update item",
+    "unavailable": "Unavailable",
+    "closedNow": "Closed now"
+  },
+  "allergens": {
+    "dairy": "dairy",
+    "gluten": "gluten",
+    "nuts": "nuts",
+    "shellfish": "shellfish",
+    "egg": "egg",
+    "soy": "soy",
+    "sesame": "sesame"
+  },
+  "options": {
+    "chooseOption": "Choose an option",
+    "required": "Required",
+    "chooseOne": "Choose 1",
+    "included": "Included",
+    "addOns": "Add-ons",
+    "optional": "Optional",
+    "optionalUpTo": "Optional · up to {max}",
+    "leaveOut": "Leave out",
+    "without": "No {item}",
+    "instructions": "Special instructions",
+    "quickInstructions": "Quick instructions",
+    "notePlaceholder": "Anything else? e.g. sauce on the side",
+    "allergyHint": "For allergies, please also tell your server."
+  },
+  "quickAdd": {
+    "close": "Close"
+  },
+  "search": {
+    "heading": "Search the menu",
+    "back": "Back",
+    "close": "Close search",
+    "searching": "Searching",
+    "filterResults": "Filter results",
+    "allResults": "All results",
+    "allCount": "All {count}",
+    "dishCount": {
+      "one": "{count} dish",
+      "other": "{count} dishes"
+    },
+    "match": "{dishes} match <b>“{term}”</b>",
+    "resultsFor": "{dishes} for “{term}”",
+    "resultsLabel": "Search results",
+    "emptyTitle": "No dishes found",
+    "emptyBody": "We couldn't find anything for “{term}”. Try searching for something else, or browse a category.",
+    "clear": "Clear search",
+    "suggestions": {
+      "trending": "Trending tonight",
+      "popular": "Popular at The Olive Table",
+      "browse": "Browse by category"
+    }
+  }
+}

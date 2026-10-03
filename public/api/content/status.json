@@ -1,0 +1,37 @@
+{
+  "line": {
+    "open": "Open · until {time}",
+    "closed": "Closed now",
+    "paused": "Ordering paused"
+  },
+  "banner": {
+    "offlineMobile": "You're offline. Reconnecting…",
+    "offlineDesktop": "You're offline. Reconnecting automatically…",
+    "paused": "Online ordering is paused for about {minutes} minutes while the kitchen catches up. Your cart is saved.",
+    "closed": "We're closed right now. Ordering opens again at {time} — you can still browse the menu."
+  },
+  "closed": {
+    "title": "We're closed right now",
+    "lede": "Ordering opens again at <b>{time} today</b> — {opensIn}. You can still browse the menu.",
+    "browse": "Browse the menu",
+    "call": "Call restaurant",
+    "hoursLabel": "Opening hours",
+    "lastOrderMobile": "Last kitchen order",
+    "lastOrderDesktop": "Last order"
+  },
+  "paused": {
+    "title": "Our kitchen needs a moment",
+    "ledeMobile": "We're very busy and have paused phone ordering for about <b>{minutes} minutes</b>. Your cart is saved.",
+    "ledeDesktop": "We're very busy right now. Want to order straight away? A waiter can take your order at the table.",
+    "callWaiter": "Call a waiter",
+    "keepBrowsing": "Keep browsing",
+    "note": "Want to order now? A waiter can take your order at the table."
+  },
+  "offline": {
+    "title": "No internet connection",
+    "ledeMobile": "Check your mobile data or connect to the restaurant Wi-Fi. Your cart is saved on this phone.",
+    "ledeDesktop": "Check your connection or join the restaurant Wi-Fi. Your cart is saved on this device.",
+    "retry": "Try again",
+    "wifi": "Wi-Fi: <b>{wifi}</b> · Ask staff for the password"
+  }
+}

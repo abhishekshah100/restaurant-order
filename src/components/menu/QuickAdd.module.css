@@ -3,25 +3,49 @@
   gap: 12px;
   align-items: flex-start;
 }
+.thumb {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: var(--r);
+  object-fit: cover;
+  background: var(--sand);
+}
 .headText {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  padding-top: 2px;
+}
+.desc {
+  font-size: 13px;
+  line-height: 18px;
+}
+/* Compact footer: 48px controls (44px on short screens) */
+.foot .stepper[role='group'] {
+  height: 48px;
+  min-width: 120px;
+}
+.foot .stepper[role='group'] button {
+  height: 48px;
+}
+.foot .cta {
+  height: 48px;
 }
 .meta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font: 700 12px/16px var(--f-ui);
+  font: 700 11.5px/16px var(--f-ui);
   color: var(--veg);
 }
 .metaNv {
   color: var(--nonveg);
 }
 .title {
-  font: 500 22px/28px var(--f-display);
+  font: 500 21px/26px var(--f-display);
   margin: 0;
 }
 .foot {
@@ -35,11 +59,31 @@
     gap: 16px;
   }
   .title {
-    font: 500 28px/34px var(--f-display);
+    font: 500 25px/30px var(--f-display);
     letter-spacing: -0.005em;
   }
-  .foot {
-    border-top: 1px solid var(--line);
-    padding-top: 16px;
+}
+/* Short screens: one-line description, smaller title and 44px controls */
+@media (max-width: 1023.98px) and (max-height: 720px), (min-width: 1024px) and (max-height: 800px) {
+  .title {
+    font-size: 19px;
+    line-height: 24px;
+  }
+  .desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .foot .stepper[role='group'],
+  .foot .stepper[role='group'] button,
+  .foot .cta {
+    height: 44px;
+  }
+}
+/* Very short windows: the description gives way so the choices fit */
+@media (max-height: 540px) {
+  .desc {
+    display: none;
   }
 }

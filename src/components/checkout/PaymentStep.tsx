@@ -2,64 +2,41 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, type FormEvent, type KeyboardEvent } from 'react';
+import type { FormEvent } from 'react';
 import { PriceSummary } from '@/components/cart/PriceSummary';
-import { Button, Icon, Tag } from '@/components/ui';
-import { restaurant } from '@/data/restaurant';
+import { Button, Icon } from '@/components/ui';
+import { useContent, useRestaurant } from '@/api/hooks';
 import { useCheckout } from '@/context/CheckoutContext';
 import { useCart } from '@/hooks/useCart';
 import { useCheckoutGuard } from '@/hooks/useCheckoutGuard';
-import { usePlaceOrder } from '@/hooks/usePlaceOrder';
+import { usePlaceOrderState } from '@/hooks/usePlaceOrder';
 import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
-import { formatINR, pluralize } from '@/lib/format';
+import { formatINR } from '@/lib/format';
 import type { PaymentMethod } from '@/types/order';
 import { CheckoutFrame } from './CheckoutFrame';
 import { OrderSummaryPanel } from './OrderSummaryPanel';
+import { PaymentMethods, type PaymentMethodOption } from './PaymentMethods';
 import styles from './Checkout.module.css';
-
-const METHODS: {
-  id: PaymentMethod;
-  title: string;
-  mobileSub: string;
-  desktopSub: string;
-  icon: 'mobile' | 'cash';
-  fastest?: boolean;
-}[] = [
-  {
-    id: 'online',
-    title: 'Pay online now',
-    mobileSub: 'UPI, debit / credit card or netbanking. Kitchen starts right away.',
-    desktopSub: 'UPI, debit / credit card or netbanking',
-    icon: 'mobile',
-    fastest: true,
-  },
-  {
-    id: 'counter',
-    title: 'Pay at the counter',
-    mobileSub: 'Cash, card or UPI when you leave. Your order is still sent now.',
-    desktopSub: 'Cash, card or UPI when you leave',
-    icon: 'cash',
-  },
-];
 
 /** Step 3 — pay online or at the counter (11 · w11). */
 export function PaymentStep() {
   const ready = useCheckoutGuard('pay');
   const { session } = useCheckout();
   const table = useTable();
+  const t = useContent('checkout');
   return (
     <CheckoutFrame
       step="pay"
       backHref="/checkout/verify/"
-      backLabel="Back"
+      backLabel={t('frame.back')}
       ready={ready}
       aside={
         <OrderSummaryPanel
           variant="combined"
-          totalLabel="Amount payable"
+          totalLabel={t('payment.amountPayable')}
           editable={false}
-          footnote={`${session.name} · Table ${table}`}
+          footnote={t('lines.nameTable', { name: session.name, table })}
         />
       }
     >
@@ -69,16 +46,19 @@ export function PaymentStep() {
 }
 
 function PaymentForm() {
+  const restaurant = useRestaurant();
   const router = useRouter();
   const table = useTable();
-  const { lines, bill } = useCart();
+  const { bill } = useCart();
   const { session, setMethod, startPayment } = useCheckout();
-  const placeOrder = usePlaceOrder();
-  const groupRef = useRef<HTMLDivElement>(null);
+  const { placeOrder, placing } = usePlaceOrderState();
+  const t = useContent('checkout');
+  const cartText = useContent('cart');
   const method = session.method;
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
+    if (placing) return;
     if (method === 'online') {
       startPayment();
       router.push('/checkout/processing/');
@@ -87,100 +67,80 @@ function PaymentForm() {
     }
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
-    event.preventDefault();
-    const next = method === 'online' ? 'counter' : 'online';
-    setMethod(next);
-    groupRef.current?.querySelector<HTMLButtonElement>(`[data-method="${next}"]`)?.focus();
-  };
+  const methods: PaymentMethodOption<PaymentMethod>[] = [
+    {
+      id: 'online',
+      title: t('payment.methods.online.title'),
+      mobileSub: t('payment.methods.online.mobileSub'),
+      desktopSub: t('payment.methods.online.desktopSub'),
+      icon: 'mobile',
+      tag: t('payment.fastest'),
+    },
+    {
+      id: 'counter',
+      title: t('payment.methods.counter.title'),
+      mobileSub: t('payment.methods.counter.mobileSub'),
+      desktopSub: t('payment.methods.counter.mobileSub'),
+      icon: 'cash',
+    },
+  ];
 
+  const total = formatINR(bill.total);
   const payLabel =
-    method === 'online' ? `Pay ${formatINR(bill.total)}` : `Place order · ${formatINR(bill.total)}`;
-  const secured = `Secured by ${restaurant.paymentPartner} · Card details are never stored`;
+    method === 'online' ? t('payment.payOnline', { total }) : t('payment.placeOrder', { total });
+  const payIcon = method === 'online' ? 'lock' : undefined;
+  const secured = t('payment.secured', { partner: restaurant.paymentPartner });
 
   return (
     <form className={styles.stack} onSubmit={onSubmit} noValidate>
       <div className={styles.intro}>
         <Link href="/checkout/verify/" className={cx(styles.backLink, 'hide-mobile')}>
           <Icon name="back" size="xs" />
-          Back
+          {t('frame.back')}
         </Link>
-        <h1 className={styles.title}>How would you like to pay?</h1>
-        <p className="t-body c2 hide-mobile">
-          Either way, your order goes to the kitchen as soon as you confirm.
-        </p>
+        <h1 className={styles.title}>{t('payment.title')}</h1>
+        <p className="t-body c2 hide-mobile">{t('payment.intro')}</p>
       </div>
 
-      <section className={cx(styles.payCard, 'hide-desktop')} aria-label="Order summary">
+      <section className={cx(styles.payCard, 'hide-desktop')} aria-label={t('summary.title')}>
         <div className={styles.payCardHead}>
           <span className="t-small c2">
-            {restaurant.name} · Table {table}
+            {t('lines.restaurantTable', { restaurant: restaurant.name, table })}
           </span>
-          <span className="t-small c2">{pluralize(lines.length, 'item')}</span>
+          <span className="t-small c2">{cartText.plural('itemCount', bill.itemCount)}</span>
         </div>
-        <PriceSummary bill={bill} variant="compact" totalLabel="Amount payable" tight />
+        <PriceSummary
+          bill={bill}
+          variant="combined"
+          totalLabel={t('payment.amountPayable')}
+          tight
+        />
       </section>
 
-      <div ref={groupRef} className={styles.methods} role="radiogroup" aria-label="Payment method">
-        {METHODS.map((m) => {
-          const on = method === m.id;
-          return (
-            <button
-              key={m.id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              tabIndex={on ? 0 : -1}
-              data-method={m.id}
-              className={cx(styles.method, on && styles.methodOn)}
-              onClick={() => setMethod(m.id)}
-              onKeyDown={onKeyDown}
-            >
-              <span className={styles.methodTopRow}>
-                <span className={styles.radio} aria-hidden="true" />
-                {m.fastest && (
-                  <span className={styles.desktopTag}>
-                    <Tag variant="ok" icon={null}>
-                      Fastest
-                    </Tag>
-                  </span>
-                )}
-              </span>
-              <span className={styles.methodBody}>
-                <span className={styles.methodTitle}>
-                  <span className={styles.methodTitleText}>{m.title}</span>
-                  {m.fastest && (
-                    <span className={styles.mobileTag}>
-                      <Tag variant="ok" icon={null}>
-                        Fastest
-                      </Tag>
-                    </span>
-                  )}
-                </span>
-                <span className={styles.methodSub}>
-                  <span className="hide-desktop">{m.mobileSub}</span>
-                  <span className="hide-mobile">{m.desktopSub}</span>
-                </span>
-              </span>
-              <Icon name={m.icon} className={styles.methodIcon} />
-            </button>
-          );
-        })}
-      </div>
+      <PaymentMethods
+        label={t('payment.methodsLabel')}
+        methods={methods}
+        value={method}
+        onChange={setMethod}
+      />
+
+      <p className={cx(styles.payNote, 'hide-desktop')}>
+        <Icon name="checkc" size="xs" />
+        {t('payment.intro')}
+      </p>
 
       <div className={cx(styles.desktopFoot, 'hide-mobile')}>
         <p className={cx('t-small c3', styles.fine)}>
           <Icon name="shield" size="xs" />
           {secured}
         </p>
-        <Button type="submit" iconStart={method === 'online' ? 'lock' : undefined}>
+        <Button type="submit" iconStart={payIcon} loading={placing}>
           {payLabel}
         </Button>
       </div>
 
       <div className={cx(styles.formFoot, 'hide-desktop')}>
-        <Button type="submit" block iconStart={method === 'online' ? 'lock' : undefined}>
+        <Button type="submit" block iconStart={payIcon} loading={placing}>
           {payLabel}
         </Button>
         <p className={cx('t-small c3', styles.fine)}>

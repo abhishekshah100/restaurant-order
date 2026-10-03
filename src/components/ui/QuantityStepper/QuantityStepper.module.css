@@ -1,17 +1,20 @@
 .qty {
   height: 40px;
   min-width: 96px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
   background: var(--brand-600);
-  color: #fff;
+  color: var(--on-brand);
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   flex: none;
   box-shadow: var(--sh-1);
 }
+.step {
+  composes: hitArea from '@/styles/patterns.module.css';
+}
+/* Hit area extends to 44 × 48 (.hitArea, default inset) */
 .qty button {
-  position: relative;
   width: 36px;
   height: 40px;
   border: 0;
@@ -20,13 +23,7 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border-radius: 10px;
-}
-/* Hit area extends to 44 × 48 */
-.qty button::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
+  border-radius: var(--r-md);
 }
 .qty button:disabled {
   opacity: 0.45;
@@ -58,4 +55,25 @@
 .lg button {
   width: 44px;
   height: 52px;
+}
+
+/* Compact stepper (feature cards) */
+.sm {
+  height: 32px;
+  min-width: 88px;
+  border-radius: var(--r-pill);
+  box-shadow: none;
+}
+.sm button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  --hit-inset: -6px -2px;
+}
+.sm button > span[aria-hidden] {
+  width: 16px;
+  height: 16px;
+}
+.sm .n {
+  font-size: 14px;
 }

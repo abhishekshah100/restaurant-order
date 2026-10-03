@@ -5,7 +5,6 @@ import {
   formatMobile,
   formatPaise,
   formatSignedPaise,
-  pluralize,
 } from '@/lib/format';
 
 describe('formatINR', () => {
@@ -32,8 +31,8 @@ describe('formatPaise', () => {
 
 describe('formatAddOnPrice', () => {
   it('labels free add-ons', () => {
-    expect(formatAddOnPrice(0)).toBe('Free');
-    expect(formatAddOnPrice(40)).toBe('+₹40');
+    expect(formatAddOnPrice(0, 'Free')).toBe('Free');
+    expect(formatAddOnPrice(40, 'Free')).toBe('+₹40');
   });
 });
 
@@ -45,12 +44,5 @@ describe('formatMobile', () => {
   });
   it('strips non-digits and caps at 10', () => {
     expect(formatMobile('98765-432101')).toBe('98765 43210');
-  });
-});
-
-describe('pluralize', () => {
-  it('handles one and many', () => {
-    expect(pluralize(1, 'item')).toBe('1 item');
-    expect(pluralize(3, 'item')).toBe('3 items');
   });
 });

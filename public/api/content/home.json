@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "title": "The Olive Table — Welcome",
+    "description": "Browse the menu and order directly from your table."
+  },
+  "welcome": {
+    "openUntil": "Restaurant open until {time}",
+    "staffOnCall": "Staff on call at your table",
+    "eyebrow": "Welcome to",
+    "lede": "Browse our menu and order directly from your table.",
+    "tableCard": "Your table",
+    "seatedAt": "You're seated at",
+    "tableNumber": "Table {table}",
+    "viewMenu": "View menu",
+    "images": {
+      "hero": "Truffle mushroom pasta at The Olive Table",
+      "pasta": "Truffle Mushroom Pasta",
+      "prawns": "Chilli Garlic Prawns",
+      "pizza": "Wood-fired Margherita"
+    }
+  }
+}

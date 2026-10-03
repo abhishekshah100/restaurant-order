@@ -1,9 +1,9 @@
 import { Tag, VegMark } from '@/components/ui';
-import { getCategory, unavailableTag } from '@/lib/menu';
+import { formatINR } from '@/lib/format';
+import { useContent, useMenu } from '@/api/hooks';
 import type { Dish } from '@/types/menu';
+import { TAG_VARIANT, firstHighlight, tagLabel, unavailableTag } from './dishTag';
 import styles from './DishRow.module.css';
-
-const SPICE_TEXT = { medium: 'Medium spicy', hot: 'Hot' } as const;
 
 export interface DishTagsProps {
   dish: Dish;
@@ -13,31 +13,36 @@ export interface DishTagsProps {
 
 /** Veg mark plus the single most important label for a dish row. */
 export function DishTags({ dish, showCategory }: DishTagsProps) {
+  const menu = useMenu();
+  const t = useContent('menu');
   if (showCategory) {
     return (
       <span className={styles.metaRow}>
         <VegMark veg={dish.veg} />
-        {getCategory(dish.categoryId)?.name}
+        {menu.getCategory(dish.categoryId)?.name}
       </span>
     );
   }
-  const out = unavailableTag(dish);
-  const tag = dish.tags[0];
+  const out = unavailableTag(t, dish);
+  // The dish's own first tag wins; otherwise its spice level.
+  const highlight = firstHighlight(dish, [...dish.tags.slice(0, 1), 'spicy']);
   return (
     <div className={styles.top}>
       <VegMark veg={dish.veg} />
       {out ? (
         <Tag variant="out">{out}</Tag>
-      ) : tag === 'chef' ? (
-        <Tag variant="chef">Chef&apos;s pick</Tag>
-      ) : tag === 'new' ? (
-        <Tag variant="new">New</Tag>
-      ) : tag === 'bestseller' ? (
-        <Tag variant="pop">Bestseller</Tag>
-      ) : dish.spice === 'medium' || dish.spice === 'hot' ? (
-        <Tag variant="plain" icon="flame">
-          {SPICE_TEXT[dish.spice]}
+      ) : dish.combo ? (
+        <Tag variant="ok" icon={null}>
+          {dish.combo.savings
+            ? t('dish.mealSave', { savings: formatINR(dish.combo.savings) })
+            : t('dish.meal')}
         </Tag>
+      ) : highlight === 'spicy' ? (
+        <Tag variant="plain" icon="flame">
+          {(dish.spice === 'medium' || dish.spice === 'hot') && t(`dish.spice.${dish.spice}`)}
+        </Tag>
+      ) : highlight ? (
+        <Tag variant={TAG_VARIANT[highlight]}>{tagLabel(t, highlight)}</Tag>
       ) : null}
     </div>
   );

@@ -50,6 +50,10 @@ export const ICON_NAMES = [
   'pin',
   'cloche',
   'olive',
+  'instagram',
+  'facebook',
+  'youtube',
+  'xbrand',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

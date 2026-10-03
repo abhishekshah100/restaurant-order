@@ -1,0 +1,323 @@
+/* ---- Mobile (15): header, items, bill, payment, actions in one column ---- */
+.layout {
+  flex: 1;
+  width: 100%;
+  padding: 8px 20px calc(32px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.col,
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+/* Header */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.title {
+  font: var(--font-h1);
+  margin: 0;
+  font-variant-numeric: lining-nums;
+}
+.meta {
+  font: var(--font-small);
+  color: var(--ink-2);
+  margin: 0;
+}
+.track {
+  align-self: flex-start;
+}
+
+/* Items */
+.items {
+  padding: 4px 20px;
+}
+.itemsTitle {
+  font: var(--font-h3);
+  margin: 0;
+  padding: 16px 0 4px;
+}
+.thead {
+  display: none;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    'body price'
+    'body qty';
+  column-gap: 14px;
+  row-gap: 2px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.body {
+  grid-area: body;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.name {
+  font: var(--font-price);
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.opts,
+.note {
+  font: var(--font-small);
+  color: var(--ink-2);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.note {
+  font-style: italic;
+}
+.price {
+  grid-area: price;
+  font: var(--font-price);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.qty {
+  grid-area: qty;
+  align-self: start;
+  font: var(--font-small);
+  color: var(--ink-3);
+  text-align: right;
+}
+.kitchenNote {
+  margin: 0;
+  padding: 14px 0 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font: var(--font-small);
+  font-style: italic;
+  color: var(--ink-2);
+}
+.kitchenNote > span {
+  font-style: normal;
+}
+
+/* Bill */
+.bill {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Payment */
+.payment {
+  padding: 4px 20px 6px;
+}
+.paymentTitle {
+  padding: 16px 0 6px;
+}
+.rows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  font: 500 14px/20px var(--f-ui);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.rows > div:last-child {
+  padding-bottom: 16px;
+}
+.rows dt,
+.rows dd {
+  margin: 0;
+}
+.rows dd {
+  color: var(--ink);
+  font-weight: 600;
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rows > .rowCenter {
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .layout {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+/* ---- Web (w15): header + item table | bill, payment, actions ---- */
+@media (min-width: 1024px) {
+  .layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 40px 72px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 40px;
+    align-items: start;
+  }
+  .aside {
+    margin-top: 42px;
+    gap: 16px;
+  }
+  .card {
+    border-radius: var(--r-panel);
+  }
+  .head {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .headText {
+    gap: 6px;
+  }
+  .titleRow {
+    justify-content: flex-start;
+    gap: 14px;
+  }
+  .title {
+    font: var(--font-display);
+  }
+  .meta {
+    font: var(--font-body);
+  }
+  .track {
+    align-self: auto;
+    flex: none;
+  }
+
+  .items {
+    padding: 4px 32px;
+  }
+  .itemsTitle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .thead,
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 80px 100px;
+    grid-template-rows: auto;
+    grid-template-areas: 'body qty price';
+    gap: 16px;
+  }
+  .thead {
+    padding: 18px 0 12px;
+    border-bottom: 1px solid var(--line);
+    font: var(--font-caption);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .thead > :nth-child(2) {
+    text-align: center;
+  }
+  .thead > :last-child {
+    text-align: right;
+  }
+  .row {
+    padding: 18px 0;
+    align-items: start;
+  }
+  .opts {
+    display: block;
+  }
+  .opts > span + span::before {
+    content: ' · ';
+  }
+  .qty {
+    font: var(--font-price);
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .bill {
+    padding: 28px;
+  }
+  .payment {
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .paymentTitle {
+    padding: 0;
+  }
+  .rows {
+    gap: 10px;
+  }
+  .rows > div,
+  .rows > div:last-child {
+    padding: 0;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 32px;
+    padding: 28px 28px 64px;
+  }
+}
+
+@media print {
+  .track,
+  .actions {
+    display: none;
+  }
+}

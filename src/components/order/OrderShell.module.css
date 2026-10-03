@@ -1,0 +1,29 @@
+.loading,
+.missing {
+  flex: 1;
+  width: 100%;
+}
+.loadingBody {
+  padding: 8px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.missing {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 0 48px;
+}
+
+@media (min-width: 1024px) {
+  .loadingBody {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 72px 40px;
+  }
+  .missing {
+    justify-content: flex-start;
+    padding: 72px 40px;
+  }
+}

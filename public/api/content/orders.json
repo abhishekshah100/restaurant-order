@@ -1,0 +1,177 @@
+{
+  "meta": {
+    "orderPlaced": "Order #{id} placed"
+  },
+  "shared": {
+    "myOrders": "My orders",
+    "orderNumber": "Order #{id}",
+    "orderRef": "#{id}",
+    "table": "Table {table}",
+    "tableLabel": "Table",
+    "browseMenu": "Browse menu",
+    "backToMenu": "Back to menu",
+    "loadingOrder": "Loading order",
+    "orderProgress": "Order progress",
+    "orderStatus": "Order status",
+    "minutes": "{minutes} min",
+    "quoted": "“{text}”",
+    "itemCount": {
+      "one": "{count} item",
+      "other": "{count} items"
+    },
+    "orderCount": {
+      "one": "{count} order",
+      "other": "{count} orders"
+    },
+    "status": "Status"
+  },
+  "shell": {
+    "backToOrders": "Back to my orders",
+    "notFound": {
+      "title": "Order not found",
+      "body": "We couldn't find order #{id} on this device. Orders placed on another phone or browser show up there.",
+      "bodyShort": "We couldn't find order #{id} on this device."
+    }
+  },
+  "steps": {
+    "received": "Received",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "served": "Served"
+  },
+  "itemStatus": {
+    "queued": "In queue"
+  },
+  "stepper": {
+    "stateSuffix": ", {state}",
+    "state": {
+      "done": "done",
+      "current": "in progress",
+      "next": "up next",
+      "upcoming": "coming up"
+    }
+  },
+  "timeline": {
+    "title": "Timeline",
+    "label": "Order timeline",
+    "state": {
+      "done": "Done",
+      "cancel": "Cancelled"
+    }
+  },
+  "payment": {
+    "title": "Payment",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "paidOnline": "Paid online",
+    "paidAtCounter": "Paid at counter",
+    "paymentPending": "Payment pending",
+    "payAtCounter": "Pay at counter",
+    "payingAtCounter": "Paying at the counter",
+    "refunded": "Refunded",
+    "refundStarted": "Refund started",
+    "methodUpi": "UPI",
+    "methodCard": "Card"
+  },
+  "totals": {
+    "total": "Total",
+    "totalPaid": "Total paid",
+    "toPayAtCounter": "To pay at counter"
+  },
+  "actions": {
+    "callWaiter": "Call waiter",
+    "requestBill": "Request bill",
+    "getHelp": "Get help",
+    "help": "Help"
+  },
+  "tracking": {
+    "heading": "Tracking order #{id}",
+    "statusAnnouncement": "Order status: {status}",
+    "upNext": "Up next",
+    "atTable": "At Table {table}",
+    "readyBy": "~{time}",
+    "inAbout": "In about {estimate}",
+    "live": "Live · updated just now",
+    "updated": "Updated {time}",
+    "yourItems": "Your items",
+    "detailsLabel": "Order #{id} details",
+    "details": "Details",
+    "meta": "Table {table} · Placed {time} · {payment}",
+    "hero": {
+      "readyLabel": "Your food is",
+      "readyBody": "Your dishes were ready at {time}. They're on their way to Table {table}.",
+      "servedLabel": "Enjoy your meal",
+      "servedBody": "Everything reached Table {table} at {time}. Need anything else? Call a waiter or ask for the bill.",
+      "etaLabel": "Ready in about",
+      "estimateLabel": "Usually ready in",
+      "preparingBody": "The chef started on your dishes at {time}. We'll bring them to Table {table}.",
+      "receivedBody": "The kitchen has your order and will start on it shortly. We'll bring it to Table {table}."
+    }
+  },
+  "confirmed": {
+    "placed": "Order placed",
+    "lede": "Your order has been received and sent to the kitchen.",
+    "summary": "Order summary",
+    "readyIn": "Ready in",
+    "trackOrder": "Track order",
+    "orderMore": "Order something else",
+    "byline": "{restaurant} · Placed at {time} by {name}"
+  },
+  "cancelled": {
+    "title": "The kitchen had to cancel this order",
+    "sorry": "We’re sorry about that.",
+    "orderReceived": "Order received",
+    "cancelledByRestaurant": "Cancelled by restaurant",
+    "chooseAnother": "Choose another dish",
+    "contactRestaurant": "Contact restaurant",
+    "items": "Items",
+    "refund": {
+      "toUpi": "your UPI account",
+      "toYou": "you",
+      "started": "Refund of {amount} started to {to}. It usually arrives in 3–5 working days.",
+      "done": "{amount} was refunded to {to}.",
+      "notCharged": "You haven’t been charged for this order."
+    }
+  },
+  "details": {
+    "title": "Order details",
+    "heading": "<hidden>Order </hidden>#{id}",
+    "meta": "{restaurant} · Table {table} · {day}, {time} · {name}",
+    "today": "Today",
+    "viewTimeline": "View timeline",
+    "trackLive": "Track live",
+    "trackLiveEta": "Track live · ~{minutes} min",
+    "items": "Items ({count})",
+    "columns": {
+      "item": "Item",
+      "qty": "Qty",
+      "price": "Price"
+    },
+    "quantity": "Quantity ",
+    "kitchenNote": "Note for the kitchen",
+    "bill": "Bill",
+    "method": "Method",
+    "transactionId": "Transaction ID",
+    "refund": "Refund",
+    "invoice": "Get invoice",
+    "reportIssue": "Report issue"
+  },
+  "list": {
+    "statusEta": "{status} · {minutes} min",
+    "thisVisit": "This visit · Today",
+    "atTable": " at Table {table}",
+    "earlier": "Earlier visits",
+    "loading": "Loading orders",
+    "columns": {
+      "order": "Order",
+      "placed": "Placed",
+      "amount": "Amount"
+    },
+    "empty": {
+      "title": "No orders yet",
+      "body": "Orders you place from this device will show up here, so you can follow them live."
+    },
+    "lede": "Orders placed from this device at {restaurant}",
+    "newOrder": "New order"
+  }
+}

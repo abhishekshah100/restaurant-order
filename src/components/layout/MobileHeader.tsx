@@ -2,10 +2,10 @@
 
 import type { ReactNode } from 'react';
 import { Icon, IconButton, TablePill } from '@/components/ui';
-import { restaurant } from '@/data/restaurant';
+import { useContent, useRestaurant } from '@/api/hooks';
+import { useStatusLine } from '@/hooks/useRestaurantStatus';
 import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
-import { statusLine } from './SiteHeader';
 import styles from './MobileHeader.module.css';
 
 interface Common {
@@ -40,19 +40,12 @@ export type MobileHeaderProps = RestaurantHeaderProps | TopbarHeaderProps | Pill
 
 /** Mobile / tablet header (<1024px). Hidden from 1024px, where SiteHeader takes over. */
 export function MobileHeader(props: MobileHeaderProps) {
+  const t = useContent('common');
+  const restaurant = useRestaurant();
   const table = useTable();
 
   if (props.variant === 'restaurant') {
-    return (
-      <header className={cx(styles.rhead, 'hide-desktop', props.className)}>
-        <Icon name="olive" />
-        <div className={styles.rheadText}>
-          <p className={styles.rheadName}>{restaurant.name}</p>
-          <span className={styles.rheadSub}>{statusLine()}</span>
-        </div>
-        <TablePill table={table} />
-      </header>
-    );
+    return <RestaurantHeader table={table} className={props.className} />;
   }
 
   if (props.variant !== 'topbar') {
@@ -77,7 +70,7 @@ export function MobileHeader(props: MobileHeaderProps) {
     title,
     titleAs = 'h1',
     backHref,
-    backLabel = 'Back',
+    backLabel = t('header.back'),
     onBack,
     actions,
     children,
@@ -96,6 +89,30 @@ export function MobileHeader(props: MobileHeaderProps) {
         ))}
       {actions}
       {!hideTable && <TablePill table={table} />}
+    </header>
+  );
+}
+
+/** Brand, live status line and table pill (menu home and the restaurant-state screens). */
+function RestaurantHeader({ table, className }: { table: number; className?: string }) {
+  const restaurant = useRestaurant();
+  const status = useStatusLine();
+  return (
+    <header className={cx(styles.rhead, 'hide-desktop', className)}>
+      <Icon name="olive" />
+      <div className={styles.rheadText}>
+        <p className={styles.rheadName}>{restaurant.name}</p>
+        <span
+          className={cx(
+            styles.rheadSub,
+            status.tone === 'error' && styles.subError,
+            status.tone === 'warn' && styles.subWarn,
+          )}
+        >
+          {status.text}
+        </span>
+      </div>
+      <TablePill table={table} />
     </header>
   );
 }

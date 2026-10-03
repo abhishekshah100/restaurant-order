@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DishDetail } from '@/components/menu/DishDetail';
-import { dishes } from '@/data/menu';
-import { getDish } from '@/lib/menu';
+import { getMenuServer } from '@/api/server';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -10,12 +9,12 @@ interface Props {
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return dishes.map((d) => ({ slug: d.slug }));
+export async function generateStaticParams() {
+  return (await getMenuServer()).dishes.map((d) => ({ slug: d.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const dish = getDish((await params).slug);
+  const dish = (await getMenuServer()).getDish((await params).slug);
   if (!dish) return {};
   return {
     title: dish.name,
@@ -25,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DishPage({ params }: Props) {
-  const dish = getDish((await params).slug);
+  const dish = (await getMenuServer()).getDish((await params).slug);
   if (!dish) notFound();
   return <DishDetail dish={dish} />;
 }

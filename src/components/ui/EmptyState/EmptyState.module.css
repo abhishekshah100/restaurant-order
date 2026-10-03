@@ -9,7 +9,7 @@
 .art {
   width: 112px;
   height: 112px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--brand-tint-2);
   color: var(--brand-600);
   display: grid;

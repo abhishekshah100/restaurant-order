@@ -1,11 +1,10 @@
 'use client';
 
+import { useContent } from '@/api/hooks';
 import { MAX_QUANTITY } from '@/lib/constants';
 import { cx } from '@/lib/cx';
 import { Icon } from '../Icon';
 import styles from './QuantityStepper.module.css';
-
-export { MAX_QUANTITY };
 
 export interface QuantityStepperProps {
   value: number;
@@ -14,7 +13,7 @@ export interface QuantityStepperProps {
   min?: number;
   max?: number;
   variant?: 'filled' | 'outline';
-  size?: 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
   /** Used in button labels: "Remove one Paneer Tikka". */
   itemName?: string;
   className?: string;
@@ -30,7 +29,7 @@ export function QuantityStepper({
   itemName,
   className,
 }: QuantityStepperProps) {
-  const suffix = itemName ? ` ${itemName}` : '';
+  const t = useContent('common');
   const canDecrement = value > min;
   const canIncrement = value < max;
 
@@ -40,14 +39,18 @@ export function QuantityStepper({
         styles.qty,
         variant === 'outline' && styles.outline,
         size === 'lg' && styles.lg,
+        size === 'sm' && styles.sm,
         className,
       )}
       role="group"
-      aria-label={itemName ? `Quantity of ${itemName}` : 'Quantity'}
+      aria-label={itemName ? t('quantity.labelFor', { item: itemName }) : t('quantity.label')}
     >
       <button
         type="button"
-        aria-label={`Remove one${suffix}`}
+        className={styles.step}
+        aria-label={
+          itemName ? t('quantity.removeOneFor', { item: itemName }) : t('quantity.removeOne')
+        }
         disabled={!canDecrement}
         onClick={() => canDecrement && onChange(value - 1)}
       >
@@ -58,7 +61,8 @@ export function QuantityStepper({
       </output>
       <button
         type="button"
-        aria-label={`Add one${suffix}`}
+        className={styles.step}
+        aria-label={itemName ? t('quantity.addOneFor', { item: itemName }) : t('quantity.addOne')}
         disabled={!canIncrement}
         onClick={() => canIncrement && onChange(value + 1)}
       >

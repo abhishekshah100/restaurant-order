@@ -3,7 +3,7 @@
   left: 16px;
   right: 16px;
   bottom: calc(160px + env(safe-area-inset-bottom));
-  z-index: 90;
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -21,26 +21,26 @@
   box-shadow: var(--sh-2);
   pointer-events: auto;
   min-height: 52px;
-  animation: toast-in 0.2s ease-out;
+  animation: toast-in var(--dur-base) ease-out;
 }
 .msg {
   flex: 1;
   min-width: 0;
 }
 .ok {
-  color: #9bd3ae;
+  color: var(--success-on-dark);
 }
 .warn {
   color: var(--brand-on-dark);
 }
 .action {
-  font: 700 14px/20px var(--f-ui);
+  font: var(--font-label);
   color: var(--brand-on-dark);
   background: none;
   border: 0;
   padding: 0 8px;
   min-height: 44px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
 }
 .action:focus-visible {
   box-shadow: 0 0 0 2px var(--brand-on-dark);

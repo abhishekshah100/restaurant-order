@@ -3,29 +3,36 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useContent } from '@/api/hooks';
 import { SearchField, Spinner } from '@/components/ui';
 import { SearchSuggestions } from '@/components/menu/SearchSuggestions';
 import { useSearch } from '@/context/SearchContext';
 import { useHydrated } from '@/hooks/useHydrated';
-import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { cx } from '@/lib/cx';
 import styles from './HeaderSearch.module.css';
 
 /**
  * Desktop header search. Focus on an empty box opens suggestions over a scrim (w04);
- * typing jumps to /search and results update as you type (w05).
+ * typing jumps to /search and results update as you type (w05). The suggestions are a
+ * plain region of links after the field (Tab reaches them), not a combobox popup.
  */
 export function HeaderSearch() {
+  const t = useContent('common');
   const router = useRouter();
   const pathname = usePathname();
   const hydrated = useHydrated();
   const { query, setQuery, pending } = useSearch();
-  const { add } = useRecentSearches();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const onSearchPage = pathname.startsWith('/search');
   const showDropdown = open && query.trim() === '';
+  // Set once a push to /search is under way, so typing doesn't stack history entries.
+  const navigating = useRef(false);
+
+  useEffect(() => {
+    navigating.current = false;
+  }, [pathname]);
 
   useEffect(() => {
     if (!showDropdown) return;
@@ -37,12 +44,13 @@ export function HeaderSearch() {
   }, [showDropdown]);
 
   const goToSearch = () => {
-    if (!onSearchPage) router.push('/search/');
+    if (onSearchPage || navigating.current) return;
+    navigating.current = true;
+    router.push('/search/');
   };
 
   const pick = (term: string) => {
     setQuery(term);
-    add(term);
     setOpen(false);
     goToSearch();
   };
@@ -56,15 +64,13 @@ export function HeaderSearch() {
         value={query}
         showEscHint={showDropdown}
         trailing={pending ? <Spinner tone="brand" className={styles.spinner} /> : undefined}
-        aria-expanded={showDropdown}
-        aria-controls="header-search-suggestions"
+        aria-controls={showDropdown ? 'header-search-suggestions' : undefined}
         onFocus={() => setOpen(true)}
         onChange={(value) => {
           setQuery(value);
           if (value.trim()) goToSearch();
         }}
-        onSubmit={(value) => {
-          add(value);
+        onSubmit={() => {
           setOpen(false);
           goToSearch();
         }}
@@ -77,7 +83,7 @@ export function HeaderSearch() {
         <div
           id="header-search-suggestions"
           className={styles.dropdown}
-          aria-label="Search suggestions"
+          aria-label={t('search.suggestions')}
           role="region"
         >
           <SearchSuggestions compact onPick={pick} onNavigate={() => setOpen(false)} />

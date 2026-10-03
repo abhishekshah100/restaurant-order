@@ -1,8 +1,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
 import { formatMobile } from '@/lib/format';
+import { Icon } from '../Icon';
 import { Field, describedBy } from '../Input/Field';
 import inputStyles from '../Input/Input.module.css';
 import styles from './PhoneInput.module.css';
@@ -16,44 +18,51 @@ export interface PhoneInputProps {
   onBlur?: () => void;
   hint?: ReactNode;
   error?: ReactNode;
-  disabled?: boolean;
-  autoFocus?: boolean;
+  /** Show the fixed "+91" country-code box (off for now at checkout). */
+  showCountryCode?: boolean;
+  /** Show a phone icon inside the field. */
+  withIcon?: boolean;
 }
 
 /** Indian mobile number (+91). Stores digits only, shows them as "98765 43210". */
 export function PhoneInput({
   id,
-  label = 'Mobile number',
+  label,
   value,
   onChange,
   onBlur,
   hint,
   error,
-  disabled,
-  autoFocus,
+  showCountryCode = true,
+  withIcon,
 }: PhoneInputProps) {
+  const t = useContent('common');
   return (
-    <Field id={id} label={label} hint={hint} error={error}>
+    <Field id={id} label={label ?? t('phone.label')} hint={hint} error={error}>
       <div className={styles.phone}>
-        <span className={cx(inputStyles.input, styles.cc)} aria-label="Country code +91">
-          +91
+        {showCountryCode && (
+          <span className={cx(inputStyles.input, styles.cc)}>
+            <span className="visually-hidden">{t('phone.countryCodeLabel')}</span>
+            {t('phone.countryCode')}
+          </span>
+        )}
+        <span className={cx(styles.inputWrap, withIcon && inputStyles.withIcon)}>
+          {withIcon && <Icon name="mobile" size="sm" />}
+          <input
+            id={id}
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            placeholder={showCountryCode ? t('phone.placeholder') : t('phone.placeholderNoCode')}
+            maxLength={11}
+            value={formatMobile(value)}
+            onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, 10))}
+            onBlur={onBlur}
+            className={cx(inputStyles.input, Boolean(error) && inputStyles.error)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy(id, hint, error)}
+          />
         </span>
-        <input
-          id={id}
-          type="tel"
-          inputMode="numeric"
-          autoComplete="tel-national"
-          placeholder="10-digit number"
-          maxLength={11}
-          value={formatMobile(value)}
-          onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, 10))}
-          onBlur={onBlur}
-          disabled={disabled}
-          autoFocus={autoFocus}
-          className={cx(inputStyles.input, Boolean(error) && inputStyles.error)}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy(id, hint, error)}
-        />
       </div>
     </Field>
   );

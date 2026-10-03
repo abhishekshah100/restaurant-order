@@ -6,7 +6,7 @@
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  z-index: 35;
+  z-index: var(--z-popover);
   min-width: 220px;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -27,17 +27,25 @@
   justify-content: space-between;
   gap: 12px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   font: 600 14px/20px var(--f-ui);
   color: var(--ink);
   cursor: pointer;
   outline: none;
 }
-.option:hover,
 .active {
   background: var(--bg);
+}
+@media (hover: hover) {
+  .option:hover {
+    background: var(--bg);
+  }
 }
 .selected {
   color: var(--brand-700);
   font-weight: 700;
+}
+/* Wrapper that only listens for keys in the sort sheet; adds no box of its own */
+.contents {
+  display: contents;
 }

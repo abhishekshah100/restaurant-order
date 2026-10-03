@@ -1,0 +1,60 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-lightbox);
+  background: rgba(20, 13, 10, 0.88);
+  display: grid;
+  place-items: center;
+  padding: 64px 16px 32px;
+  animation: fade var(--dur-base) ease-out;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.figure {
+  margin: 0;
+  max-width: min(1100px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  animation: zoom var(--dur-enter) var(--ease-emphasized);
+}
+.img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100dvh - 150px);
+  object-fit: contain;
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+.caption {
+  font: 500 20px/26px var(--f-display);
+  color: var(--on-dark);
+  text-align: center;
+}
+.close {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  background: rgba(255, 253, 249, 0.14);
+  color: var(--white);
+}
+@media (hover: hover) {
+  .close:hover {
+    background: rgba(255, 253, 249, 0.26);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes zoom {
+  from {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+}

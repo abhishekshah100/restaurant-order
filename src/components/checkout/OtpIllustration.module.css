@@ -1,0 +1,64 @@
+.art {
+  display: block;
+  width: 136px;
+  height: auto;
+  overflow: visible;
+}
+.glow {
+  fill: var(--brand-tint-2);
+}
+.glowInner {
+  fill: var(--brand-tint);
+  opacity: 0.55;
+}
+.dot {
+  fill: var(--brand);
+  opacity: 0.55;
+}
+.dotSoft {
+  fill: var(--gold-tint-2);
+}
+.spark {
+  fill: var(--gold);
+  opacity: 0.7;
+}
+.shadow {
+  fill: var(--ink-a18);
+}
+.phone {
+  fill: var(--surface);
+  stroke: var(--brand-600);
+  stroke-width: 3;
+}
+.screen {
+  fill: var(--brand-tint-2);
+}
+.speaker {
+  fill: var(--brand-600);
+  opacity: 0.45;
+}
+.code {
+  font: 800 13px var(--f-ui);
+  letter-spacing: 0.06em;
+  fill: var(--brand-600);
+}
+.digits {
+  fill: var(--brand-600);
+  opacity: 0.6;
+}
+.bubble {
+  fill: var(--brand-600);
+  filter: drop-shadow(0 4px 6px var(--ink-a18));
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  animation: pop var(--dur-enter) var(--ease-emphasized) 0.15s both;
+}
+.bubbleDots {
+  fill: var(--on-brand);
+}
+@keyframes pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}

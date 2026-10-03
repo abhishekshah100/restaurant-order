@@ -1,0 +1,71 @@
+.list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font: 500 14px/20px var(--f-ui);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.row dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+.row .ok,
+.tile .ok {
+  color: var(--success);
+}
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding-top: 14px;
+  margin-top: 4px;
+  border-top: 1px dashed var(--line-strong);
+}
+.total dt {
+  font: 700 16px/22px var(--f-ui);
+}
+.total dd {
+  margin: 0;
+  font: var(--font-price-lg);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Three tiles (w21) */
+.tiles {
+  margin: 0;
+  width: 100%;
+  padding: 20px 24px;
+  border-radius: var(--r-lg);
+  background: var(--bg);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  text-align: left;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tile dt {
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.tile dd {
+  margin: 0;
+  font: 700 17px/24px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+.tile .tileBalance {
+  font: 500 26px/30px var(--f-display);
+  font-variant-numeric: lining-nums tabular-nums;
+}

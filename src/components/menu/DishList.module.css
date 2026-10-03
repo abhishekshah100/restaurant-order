@@ -1,26 +1,18 @@
+/* Dish cards: 1 column on phones, 2 on tablet, 1 on narrow desktop, 2 on wide desktop */
 .list {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 14px;
 }
-.list > li:last-child {
-  border-bottom: 0;
-}
-/* Tablet and desktop: two columns (items2) */
 @media (min-width: 768px) {
   .list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 40px;
-  }
-  .list > li:last-child {
-    border-bottom: 1px solid var(--line);
-  }
-  .list > li:nth-last-child(-n + 2):nth-child(odd),
-  .list > li:nth-last-child(1) {
-    border-bottom: 0;
+    gap: 16px;
   }
 }
-@media (min-width: 768px) and (max-width: 1023.98px) {
+@media (min-width: 1024px) and (max-width: 1279.98px) {
   .list {
-    column-gap: 28px;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

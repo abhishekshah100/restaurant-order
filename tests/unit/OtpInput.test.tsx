@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OtpInput } from '@/components/ui';
+import { ApiTestProvider } from '../apiState';
+
+/** The UI kit reads its copy (labels) from the content cache. */
+const render = (ui: ReactElement) => rtlRender(ui, { wrapper: ApiTestProvider });
 
 function Controlled({
   onComplete,

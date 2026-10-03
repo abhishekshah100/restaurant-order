@@ -18,16 +18,14 @@
   gap: 2px;
 }
 .rail {
+  composes: noScrollbar from '@/styles/patterns.module.css';
   display: flex;
-  gap: 16px;
-  padding: 0 20px 4px;
+  gap: 14px;
+  /* room for card shadows inside the scroll area */
+  padding: 2px 20px 14px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-padding: 0 20px;
-  scrollbar-width: none;
-}
-.rail::-webkit-scrollbar {
-  display: none;
 }
 .chips {
   display: flex;
@@ -38,6 +36,10 @@
 .section {
   padding: 28px 20px 0;
 }
+.section + .divider + .section,
+.divider + .section {
+  padding-top: 24px;
+}
 .sectionHead {
   display: flex;
   align-items: baseline;
@@ -45,19 +47,11 @@
   gap: 12px;
 }
 .seeAll {
-  font: 700 14px/20px var(--f-ui);
-  color: var(--brand-600);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 44px;
-  border-radius: 8px;
+  composes: textLink from '@/styles/patterns.module.css';
 }
+/* Cards carry their own separation, so sections just get more air */
 .divider {
   height: 8px;
-  background: var(--sand);
-  margin-top: 8px;
 }
 .empty {
   padding: 16px 0 8px;
@@ -80,15 +74,15 @@
     gap: 4px;
   }
   .picksTitle h2 {
-    font: 500 28px/34px var(--f-display);
+    font: var(--font-h1);
     letter-spacing: -0.005em;
   }
+  /* Narrow desktop keeps a rail that bleeds to the column edges */
   .rail {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
-    padding: 0;
-    overflow: visible;
+    gap: 16px;
+    margin: 0 -28px;
+    padding: 2px 28px 14px;
+    scroll-padding: 0 28px;
   }
   .section {
     padding: 0;
@@ -98,5 +92,17 @@
   }
   .divider {
     display: none;
+  }
+}
+
+/* Wide desktop: chef's picks as a 3-up grid (w02) */
+@media (min-width: 1280px) {
+  .rail {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    margin: 0;
+    padding: 2px 0 6px;
+    overflow: visible;
   }
 }

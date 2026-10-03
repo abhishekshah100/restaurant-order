@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import type { KeyboardEvent, ReactNode, Ref } from 'react';
+import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
 import { Icon } from '../Icon';
 import { IconButton } from '../IconButton/IconButton';
 import styles from './SearchField.module.css';
-
-export const SEARCH_PLACEHOLDER = 'Search dishes, drinks…';
 
 export interface SearchFieldProps {
   value: string;
@@ -23,7 +22,7 @@ export interface SearchFieldProps {
   id?: string;
   className?: string;
   ref?: Ref<HTMLInputElement>;
-  'aria-expanded'?: boolean;
+  /** Id of a suggestions region the field drives. */
   'aria-controls'?: string;
 }
 
@@ -39,9 +38,9 @@ export function SearchField({
   id = 'search',
   className,
   ref,
-  'aria-expanded': ariaExpanded,
   'aria-controls': ariaControls,
 }: SearchFieldProps) {
+  const t = useContent('common');
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') onSubmit?.(value);
     if (event.key === 'Escape') onEscape?.();
@@ -50,7 +49,7 @@ export function SearchField({
     <div className={cx(styles.search, className)} role="search">
       <Icon name="search" size="sm" />
       <label htmlFor={id} className="visually-hidden">
-        Search dishes and drinks
+        {t('search.label')}
       </label>
       <input
         ref={ref}
@@ -58,13 +57,10 @@ export function SearchField({
         type="search"
         enterKeyHint="search"
         autoComplete="off"
-        placeholder={SEARCH_PLACEHOLDER}
+        placeholder={t('search.placeholder')}
         value={value}
         autoFocus={autoFocus}
-        role={ariaExpanded !== undefined ? 'combobox' : undefined}
-        aria-expanded={ariaExpanded}
         aria-controls={ariaControls}
-        aria-autocomplete={ariaExpanded !== undefined ? 'list' : undefined}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={onKeyDown}
         onFocus={onFocus}
@@ -73,15 +69,15 @@ export function SearchField({
         (value ? (
           <IconButton
             icon="xc"
-            label="Clear search"
+            label={t('search.clear')}
             size="sm"
             onClick={() => onChange('')}
-            className="c3"
+            className={styles.clear}
           />
         ) : (
           showEscHint && (
             <span className={styles.kbd} aria-hidden="true">
-              Esc
+              {t('search.escHint')}
             </span>
           )
         ))}
@@ -96,10 +92,11 @@ export interface SearchLinkProps {
 
 /** Read-only search bar that opens the search route. */
 export function SearchLink({ href = '/search/', className }: SearchLinkProps) {
+  const t = useContent('common');
   return (
-    <Link href={href} className={cx(styles.search, className)} aria-label="Search the menu">
+    <Link href={href} className={cx(styles.search, className)} aria-label={t('search.openLabel')}>
       <Icon name="search" size="sm" />
-      <span className={styles.ph}>{SEARCH_PLACEHOLDER}</span>
+      <span className={styles.ph}>{t('search.placeholder')}</span>
     </Link>
   );
 }

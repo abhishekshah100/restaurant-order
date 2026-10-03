@@ -1,0 +1,6 @@
+.page {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 72px 16px;
+}

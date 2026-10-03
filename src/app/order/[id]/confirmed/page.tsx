@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { OrderConfirmed } from '@/components/order/OrderConfirmed';
-import { ALL_ORDER_IDS } from '@/data/orders';
+import { getContent, getOrderIdsServer } from '@/api/server';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -8,12 +8,13 @@ interface Props {
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return ALL_ORDER_IDS.map((id) => ({ id }));
+export async function generateStaticParams() {
+  return (await getOrderIdsServer()).map((id) => ({ id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  return { title: `Order #${(await params).id} placed` };
+  const t = await getContent('orders');
+  return { title: t('meta.orderPlaced', { id: (await params).id }) };
 }
 
 export default async function OrderConfirmedPage({ params }: Props) {

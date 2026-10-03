@@ -1,32 +1,47 @@
 .page {
-  min-height: 100dvh;
+  /* One screen, no scrolling: the photo area flexes, the content and CTA never move off-screen. */
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  overflow: hidden;
 }
 
 /* Mobile hero (01) */
 .hero {
   position: relative;
-  height: 340px;
-  flex: none;
+  /* 340px as drawn; shrinks on short phones, grows a little on tall ones */
+  flex: 1 1 340px;
+  min-height: 120px;
+  max-height: max(340px, 52dvh);
+  background: var(--bg);
+  isolation: isolate;
 }
 .heroImg {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 340px;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 .heroShade {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(42, 27, 22, 0.55) 0%,
-    rgba(42, 27, 22, 0) 38%,
-    rgba(247, 242, 234, 0) 70%,
-    #f7f2ea 100%
-  );
+  /* 2px past the bottom so no hairline of photo shows below the fade */
+  inset: 0 0 -2px;
+  background:
+    /* Top: darken behind the brand mark */
+    linear-gradient(180deg, var(--ink-a55) 0%, rgba(42, 27, 22, 0) 34%),
+    /* Bottom: long, eased fade into the ivory background — no visible edge */
+    linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--bg) 0%, transparent) 40%,
+        color-mix(in srgb, var(--bg) 18%, transparent) 52%,
+        color-mix(in srgb, var(--bg) 50%, transparent) 66%,
+        color-mix(in srgb, var(--bg) 82%, transparent) 80%,
+        color-mix(in srgb, var(--bg) 96%, transparent) 90%,
+        var(--bg) 100%
+      );
 }
 .heroBrand {
   position: absolute;
@@ -72,7 +87,7 @@
   letter-spacing: 0.24em;
 }
 .gallery {
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -83,7 +98,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 20px;
+  border-radius: var(--r-panel);
   display: block;
   min-height: 0;
 }
@@ -98,11 +113,14 @@
 }
 
 /* Content */
+.page {
+  --welcome-pad: 24px;
+}
 .main {
-  flex: 1;
+  flex: none;
   display: flex;
   flex-direction: column;
-  padding: 0 24px;
+  padding: 0 var(--welcome-pad);
   margin-top: -36px;
   position: relative;
   gap: 24px;
@@ -114,58 +132,215 @@
   align-items: center;
   text-align: center;
 }
-.lede {
-  max-width: 300px;
+/* "Welcome to" + name read as one heading */
+.heading {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.title {
+  display: block;
+}
+
+/* Eyebrow: terracotta small caps between fine rules that fade out */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font: var(--font-meta-strong);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--brand-600);
+  /* letter-spacing adds trailing space after the last letter; balance it */
+  padding-left: 0.28em;
+}
+.eyebrow::before,
+.eyebrow::after {
+  content: '';
+  width: 36px;
+  height: 1px;
+  flex: none;
+  border-radius: 1px;
+}
+.eyebrow::before {
+  background: linear-gradient(90deg, transparent, var(--brand-600));
+}
+.eyebrow::after {
+  background: linear-gradient(90deg, var(--brand-600), transparent);
+}
+
+/* Mobile: the intro stays on one line; the size follows the screen width
+   (the sentence is ~24× its font size wide) and never exceeds 15px. */
+.intro .lede {
+  white-space: nowrap;
+  font-size: clamp(11.5px, calc((100vw - 2 * var(--welcome-pad)) / 24.4), 15px);
+  line-height: 1.45;
 }
 .card {
-  background: var(--surface);
+  /* A table "ticket": details | perforation | location stub */
+  --notch: 18px;
+  container: ticket / inline-size;
+  position: relative;
+  display: grid;
+  /* Details and stub share the width (≈60/40) but never shrink below their content */
+  grid-template-columns: minmax(min-content, 1.5fr) auto minmax(min-content, 1fr);
+  align-items: stretch;
+  background:
+    radial-gradient(
+      120% 140% at 0% 0%,
+      color-mix(in srgb, var(--brand-tint-2) 90%, transparent) 0%,
+      transparent 55%
+    ),
+    var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 20px;
+  border-radius: var(--r-panel);
+  box-shadow:
+    0 1px 2px var(--ink-a04),
+    0 10px 28px -12px rgba(143, 62, 36, 0.22);
+}
+.cardMain {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
+  padding: 18px 16px 18px 18px;
+  min-width: 0;
 }
 .cardIcon {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: var(--brand-tint-2);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(145deg, var(--brand-tint-2), var(--brand-tint));
   color: var(--brand-600);
   display: grid;
   place-items: center;
   flex: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-600) 12%, transparent);
 }
 .cardIcon > span {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
 }
 .cardText {
-  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
+.cardLabel {
+  font: var(--font-caption);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
 .tableNo {
   font: 500 30px/34px var(--f-display);
+  white-space: nowrap;
+}
+
+/* Perforated tear line with a notch cut into the top and bottom edge */
+.perforation {
+  position: relative;
+  width: 1px;
+  margin: 14px 0;
+  background: repeating-linear-gradient(180deg, var(--line-strong) 0 4px, transparent 4px 8px);
+}
+.perforation::before,
+.perforation::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: var(--notch);
+  height: var(--notch);
+  margin-left: calc(var(--notch) / -2);
+  border-radius: var(--r-round);
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+/* Show only the half of each circle that bites into the card */
+.perforation::before {
+  top: calc(-14px - var(--notch) / 2 - 1px);
+  clip-path: inset(50% 0 0 0);
+}
+.perforation::after {
+  bottom: calc(-14px - var(--notch) / 2 - 1px);
+  clip-path: inset(0 0 50% 0);
+}
+
+.cardStub {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 16px 18px 16px 16px;
+  min-width: 0;
+}
+.stubIcon {
+  color: var(--brand-600);
+}
+.stubText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font: 500 12px/16px var(--f-ui);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.stubPrimary {
+  font: 700 13px/18px var(--f-ui);
+  color: var(--ink);
+}
+
+/* The ticket adapts to its own width, so it never collides on narrow phones */
+@container ticket (max-width: 330px) {
+  .cardMain {
+    gap: 10px;
+    padding-right: 10px;
+  }
+  .cardIcon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--r);
+  }
+  .cardIcon > span {
+    width: 22px;
+    height: 22px;
+  }
+  .cardLabel {
+    letter-spacing: 0.08em;
+  }
+  .tableNo {
+    font-size: 26px;
+    line-height: 30px;
+  }
+  .cardStub {
+    padding-left: 12px;
+    padding-right: 14px;
+  }
+}
+@container ticket (max-width: 290px) {
+  .cardIcon {
+    display: none;
+  }
 }
 .statusRow {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
+  gap: 8px 16px;
 }
 .actions {
-  padding: 12px 24px 28px;
+  margin-top: auto;
+  padding: 12px 24px calc(28px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 14px;
   flex: none;
-}
-.note {
-  text-align: center;
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  align-items: center;
 }
 .footRow {
   display: flex;
@@ -180,7 +355,60 @@
   align-items: center;
 }
 
+/* Short phones (e.g. 360×640, 375×667): tighter spacing so everything fits */
+@media (max-width: 1023.98px) and (max-height: 700px) {
+  .main {
+    gap: 16px;
+    margin-top: -20px;
+  }
+  .intro {
+    gap: 4px;
+  }
+  .title {
+    font-size: 32px;
+    line-height: 38px;
+  }
+  .cardMain {
+    padding: 12px 12px 12px 14px;
+    gap: 12px;
+  }
+  .cardStub {
+    padding: 12px 14px 12px 12px;
+  }
+  .cardIcon {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+  }
+  .cardIcon > span {
+    width: 24px;
+    height: 24px;
+  }
+  .tableNo {
+    font-size: 26px;
+    line-height: 30px;
+  }
+  .actions {
+    gap: 10px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Smallest phones: slightly narrower margins so the intro line stays readable */
+@media (max-width: 359.98px) {
+  .page {
+    --welcome-pad: 16px;
+  }
+  .actions {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 @media (min-width: 768px) and (max-width: 1023.98px) {
+  .intro .lede {
+    font-size: 15px;
+  }
   .main,
   .actions {
     width: 100%;
@@ -193,7 +421,6 @@
 @media (min-width: 1024px) {
   .page {
     flex-direction: row;
-    min-height: 100dvh;
   }
   .main {
     flex: 0 0 560px;
@@ -201,48 +428,77 @@
     justify-content: center;
     padding: 64px 72px;
     gap: 32px;
+    overflow-y: auto;
   }
   .intro {
     align-items: flex-start;
     text-align: left;
-    gap: 12px;
+    gap: 16px;
+  }
+  .heading {
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .eyebrow {
+    font-size: 13px;
+    padding-left: 0;
+  }
+  .eyebrow::before {
+    width: 48px;
+    background: var(--brand-600);
+  }
+  .eyebrow::after {
+    display: none;
   }
   .title {
     font-size: 52px;
     line-height: 56px;
   }
-  .lede {
-    max-width: none;
+  .intro .lede {
+    white-space: normal;
     font-size: 17px;
     line-height: 26px;
   }
   .card {
-    padding: 24px;
+    --notch: 22px;
+    border-radius: 22px;
+  }
+  .cardMain {
+    padding: 24px 20px 24px 24px;
     gap: 18px;
+  }
+  .cardStub {
+    padding: 22px 26px 22px 22px;
+    gap: 8px;
   }
   .cardIcon {
     width: 72px;
     height: 72px;
-    border-radius: 18px;
+    border-radius: var(--r-card);
   }
   .cardIcon > span {
     width: 34px;
     height: 34px;
   }
+  .stubText {
+    font-size: 13px;
+    line-height: 18px;
+  }
+  .stubPrimary {
+    font-size: 14px;
+    line-height: 20px;
+  }
   .tableNo {
     font: 500 34px/40px var(--f-display);
   }
+  /* Desktop keeps the content as one vertically centred block */
   .actions {
+    margin-top: 0;
     padding: 0;
   }
   .actions a {
     height: 56px;
     font-size: 16px;
-  }
-  .note {
-    justify-content: flex-start;
-    text-align: left;
-    gap: 8px;
   }
 }
 @media (min-width: 1024px) and (max-width: 1279.98px) {
@@ -252,5 +508,75 @@
   }
   .panel {
     padding: 40px;
+  }
+}
+
+/* Shorter laptop screens (1280×720, 1366×768): tighten so the page still fits */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .panel {
+    padding: 36px 48px;
+    gap: 28px;
+  }
+  .tagline {
+    font-size: 26px;
+    line-height: 32px;
+  }
+  .main {
+    padding: 40px 64px;
+    gap: 24px;
+  }
+  .title {
+    font-size: 44px;
+    line-height: 48px;
+  }
+  .cardMain {
+    padding: 18px 16px 18px 20px;
+  }
+  .cardStub {
+    padding: 18px 20px 18px 18px;
+  }
+  .cardIcon {
+    width: 60px;
+    height: 60px;
+  }
+  .footRow {
+    padding-top: 18px;
+  }
+}
+
+/* Very short mobile windows (under ~600px tall): compact everything further */
+@media (max-width: 1023.98px) and (max-height: 600px) {
+  .main {
+    gap: 12px;
+    margin-top: -12px;
+  }
+  .title {
+    font-size: 28px;
+    line-height: 32px;
+  }
+  .cardMain,
+  .cardStub {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .heroBrand {
+    top: 16px;
+  }
+  .actions {
+    padding-top: 10px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+}
+
+/* Landscape phones and tiny windows: fall back to normal scrolling rather than clipping */
+@media (max-height: 459.98px) {
+  .page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .hero {
+    flex-basis: 220px;
   }
 }

@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -12,7 +13,7 @@ import {
 import { ToastRegion, type ToastData } from '@/components/ui';
 import { TOAST_MS } from '@/lib/constants';
 
-export interface ShowToastOptions {
+interface ShowToastOptions {
   tone?: ToastData['tone'];
   actionLabel?: string;
   onAction?: () => void;
@@ -25,17 +26,35 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+/** Time a paused toast stays up after the pointer and focus leave it, at least. */
+const RESUME_MIN_MS = 2000;
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const nextId = useRef(1);
-  const timers = useRef(new Map<number, number>());
+  // One toast at a time, so one timer. While the guest hovers or focuses the toast
+  // the timer is paused (WCAG 2.2.1) and the time left is kept in `remaining`.
+  const timer = useRef<number | undefined>(undefined);
+  const deadline = useRef(0);
+  const remaining = useRef<number | null>(null);
+  const currentId = useRef<number | null>(null);
 
   const dismiss = useCallback((id: number) => {
     setToasts((list) => list.filter((t) => t.id !== id));
-    const timer = timers.current.get(id);
-    if (timer) window.clearTimeout(timer);
-    timers.current.delete(id);
+    if (currentId.current !== id) return;
+    window.clearTimeout(timer.current);
+    currentId.current = null;
+    remaining.current = null;
   }, []);
+
+  const schedule = useCallback(
+    (id: number, ms: number) => {
+      window.clearTimeout(timer.current);
+      deadline.current = Date.now() + ms;
+      timer.current = window.setTimeout(() => dismiss(id), ms);
+    },
+    [dismiss],
+  );
 
   const showToast = useCallback(
     (message: string, options: ShowToastOptions = {}) => {
@@ -47,24 +66,37 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         actionLabel: options.actionLabel,
         onAction: options.onAction,
       };
-      // One toast at a time keeps the bottom of the screen clear (newest wins).
+      // Newest wins: it replaces any toast on screen and keeps the bottom clear.
       setToasts([toast]);
-      timers.current.forEach((t) => window.clearTimeout(t));
-      timers.current.clear();
-      timers.current.set(
-        id,
-        window.setTimeout(() => dismiss(id), options.duration ?? TOAST_MS),
-      );
+      currentId.current = id;
+      const duration = options.duration ?? TOAST_MS;
+      if (remaining.current !== null) remaining.current = duration;
+      else schedule(id, duration);
     },
-    [dismiss],
+    [schedule],
   );
+
+  const pause = useCallback(() => {
+    if (currentId.current === null || remaining.current !== null) return;
+    window.clearTimeout(timer.current);
+    remaining.current = Math.max(0, deadline.current - Date.now());
+  }, []);
+
+  const resume = useCallback(() => {
+    if (currentId.current === null || remaining.current === null) return;
+    const left = Math.max(remaining.current, RESUME_MIN_MS);
+    remaining.current = null;
+    schedule(currentId.current, left);
+  }, [schedule]);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const value = useMemo(() => ({ showToast }), [showToast]);
 
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <ToastRegion toasts={toasts} onDismiss={dismiss} />
+      <ToastRegion toasts={toasts} onDismiss={dismiss} onPause={pause} onResume={resume} />
     </ToastContext.Provider>
   );
 }

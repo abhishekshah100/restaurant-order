@@ -1,0 +1,111 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.title {
+  margin: 0;
+  font: var(--font-caption);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+/* Mini menu card: image tile · name · price + round "+" */
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 6px 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  min-width: 0;
+  box-shadow: 0 6px 16px -14px var(--ink-a45);
+}
+.media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 64px;
+  border-radius: 11px;
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--brand-tint-2), var(--brand-tint));
+}
+.img {
+  composes: cover from '@/styles/patterns.module.css';
+}
+.initial {
+  font: 500 26px/1 var(--f-display);
+  color: var(--brand-700);
+}
+.mark {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: rgba(255, 253, 249, 0.94);
+  box-shadow: 0 1px 2px var(--ink-a20);
+}
+.mark > span {
+  width: 13px;
+  height: 13px;
+}
+.name {
+  composes: clamp from '@/styles/patterns.module.css';
+  padding: 0 4px;
+  font: 700 12.5px/16px var(--f-ui);
+  color: var(--ink);
+  min-height: 32px;
+}
+.foot {
+  margin-top: auto;
+  padding: 0 2px 0 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.price {
+  font: 800 13px/18px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+/* Once added, the stepper takes the full width under the price */
+.control:has([role='group']) {
+  flex-basis: 100%;
+}
+.control [role='group'] {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 359.98px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .item:nth-child(3) {
+    display: none;
+  }
+}
+@media (min-width: 768px) {
+  .media {
+    height: 80px;
+  }
+  .item {
+    padding: 8px 8px 10px;
+  }
+  .control:has([role='group']) {
+    flex-basis: auto;
+  }
+  .control [role='group'] {
+    width: auto;
+  }
+}

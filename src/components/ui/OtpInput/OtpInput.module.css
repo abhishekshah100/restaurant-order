@@ -1,29 +1,38 @@
 .otp {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 .otp input {
-  height: 58px;
+  height: 52px;
   width: 100%;
   min-width: 0;
   text-align: center;
-  border-radius: var(--r);
+  border-radius: var(--r-tile);
   border: 1.5px solid var(--line-strong);
   background: var(--surface);
-  font: 700 22px/28px var(--f-ui);
+  font: 700 22px/26px var(--f-ui);
   color: var(--ink);
   padding: 0;
   outline: none;
   caret-color: var(--brand-600);
+  box-shadow: 0 2px 6px -4px var(--ink-a25);
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
 }
+/* Filled digits: soft terracotta tint */
 .otp input.filled {
-  border-color: var(--ink);
+  border-color: var(--brand-600);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
 }
 .otp input:focus,
 .otp input:focus-visible {
   border-color: var(--brand-600);
-  box-shadow: 0 0 0 3px var(--brand-tint);
+  background: var(--surface);
+  box-shadow: var(--halo-lg);
 }
 .error input,
 .error input.filled {
@@ -41,6 +50,6 @@
     gap: 12px;
   }
   .otp input {
-    height: 64px;
+    height: 60px;
   }
 }

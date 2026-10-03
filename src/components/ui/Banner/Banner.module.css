@@ -4,7 +4,7 @@
   align-items: flex-start;
   padding: 12px 14px;
   border-radius: var(--r);
-  font: 600 13px/18px var(--f-ui);
+  font: var(--font-small-strong);
 }
 .banner > span[aria-hidden] {
   margin-top: -1px;

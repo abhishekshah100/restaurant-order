@@ -1,3 +1,6 @@
+'use client';
+
+import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
 import styles from './VegMark.module.css';
 
@@ -11,7 +14,8 @@ export interface VegMarkProps {
 }
 
 export function VegMark({ veg, showLabel, decorative, className }: VegMarkProps) {
-  const text = veg ? 'Vegetarian' : 'Non-vegetarian';
+  const t = useContent('common');
+  const text = veg ? t('veg.veg') : t('veg.nonVeg');
   const mark = (
     <span
       className={cx(styles.vm, veg ? styles.veg : styles.nv, !showLabel && className)}

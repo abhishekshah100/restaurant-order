@@ -42,8 +42,3 @@ export interface ColumnsProps {
 export function Columns({ children, even, className }: ColumnsProps) {
   return <div className={cx(styles.cols, even && styles.even, className)}>{children}</div>;
 }
-
-/** Desktop: content centred under the header (status cards). Mobile: normal flow. */
-export function Centered({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cx(styles.centered, className)}>{children}</div>;
-}

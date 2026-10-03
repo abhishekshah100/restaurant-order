@@ -1,62 +1,82 @@
-import { categories, chefsPicks, dishes } from '@/data/menu';
-import type { Category, CategoryId, Dish, DishImage } from '@/types/menu';
-import { formatINR } from './format';
+import type { Category, CategoryId, Dish, DishImage, MenuData } from '@/types/menu';
 
-export function getCategory(id: string): Category | undefined {
-  return categories.find((c) => c.id === id);
+/** The menu from GET /menu, with lookups. Build one with createMenuCatalog. */
+export interface MenuCatalog extends MenuData {
+  getCategory(id: string): Category | undefined;
+  getDish(slug: string): Dish | undefined;
+  dishesIn(categoryId: CategoryId): Dish[];
+  categoryCount(categoryId: CategoryId): number;
+  /** "8 dishes" / "14 drinks": the count with the category's unit word from the API. */
+  categoryCountLabel(category: Category): string;
+  /** The chef's picks, in rail order. */
+  featuredDishes(): Dish[];
+  /** Each query word must appear in the dish name, description or category. Plurals are forgiven. */
+  searchDishes(query: string, list?: readonly Dish[]): Dish[];
 }
 
-export function getDish(slug: string): Dish | undefined {
-  return dishes.find((d) => d.slug === slug);
-}
+const catalogs = new WeakMap<MenuData, MenuCatalog>();
 
-export function dishesIn(categoryId: CategoryId): Dish[] {
-  return dishes.filter((d) => d.categoryId === categoryId);
-}
+/** The catalog for a menu response. Built once per response object, so lookups stay cheap. */
+export function createMenuCatalog(data: MenuData): MenuCatalog {
+  const cached = catalogs.get(data);
+  if (cached) return cached;
 
-export function categoryCount(categoryId: CategoryId): number {
-  return dishesIn(categoryId).length;
-}
+  const categoriesById = new Map<string, Category>(data.categories.map((c) => [c.id, c]));
+  const dishesBySlug = new Map(data.dishes.map((d) => [d.slug, d]));
+  const getCategory = (id: string) => categoriesById.get(id);
+  const getDish = (slug: string) => dishesBySlug.get(slug);
+  const dishesIn = (categoryId: CategoryId) =>
+    data.dishes.filter((d) => d.categoryId === categoryId);
+  const categoryCount = (categoryId: CategoryId) => dishesIn(categoryId).length;
 
-/** "8 dishes" / "14 drinks". */
-export function categoryCountLabel(category: Category): string {
-  return `${categoryCount(category.id)} ${category.unit}`;
+  const catalog: MenuCatalog = {
+    ...data,
+    getCategory,
+    getDish,
+    dishesIn,
+    categoryCount,
+    categoryCountLabel: (category) => `${categoryCount(category.id)} ${category.unit}`,
+    featuredDishes: () =>
+      data.chefsPicks.map((slug) => getDish(slug)).filter((d): d is Dish => d !== undefined),
+    searchDishes: (query, list = data.dishes) =>
+      searchDishes(query, list, (id) => getCategory(id)?.name ?? ''),
+  };
+  catalogs.set(data, catalog);
+  return catalog;
 }
-
-export const featuredDishes = (): Dish[] =>
-  chefsPicks.map((slug) => getDish(slug)).filter((d): d is Dish => d !== undefined);
 
 export const isAvailable = (dish: Dish) => dish.availability.status === 'available';
 
-/** Needs a choice before adding (variants, option groups or add-ons). */
+/** Something to choose: more than one size, an option group or add-ons. A single size alone isn't a choice. */
 export const isCustomisable = (dish: Dish) =>
-  Boolean(dish.variants?.length || dish.optionGroups?.length || dish.addOns?.length);
+  Boolean(
+    (dish.variants?.length ?? 0) > 1 ||
+    dish.optionGroups?.length ||
+    dish.addOns?.length ||
+    dish.removables?.length,
+  );
+
+/** "From" price shown on menu cards: the cheapest available size, or the dish price. */
+export function startingPrice(dish: Dish): number {
+  const prices = (dish.variants ?? []).filter((v) => v.available !== false).map((v) => v.price);
+  return prices.length ? Math.min(...prices) : dish.price;
+}
 
 export const isSpicy = (dish: Dish) => dish.spice === 'medium' || dish.spice === 'hot';
 
-/** Text for a disabled ADD button, or undefined when the dish can be ordered. */
-export function unavailableLabel(dish: Dish): string | undefined {
-  const a = dish.availability;
-  if (a.status === 'sold-out') return a.backAt ? `Back ${a.backAt}` : 'Sold out';
-  if (a.status === 'unavailable-today') return 'Sold out';
-  return undefined;
-}
+/**
+ * Why a dish can't be ordered right now, or undefined when it can. Components turn this into
+ * copy (menu content: availability.*): "Sold out", "Back 8 PM", "Unavailable today".
+ */
+export type UnavailableReason =
+  { kind: 'sold-out' } | { kind: 'back-at'; time: string } | { kind: 'unavailable-today' };
 
-/** Tag text shown for an unavailable dish. */
-export function unavailableTag(dish: Dish): string | undefined {
+export function unavailableReason(dish: Dish): UnavailableReason | undefined {
   const a = dish.availability;
-  if (a.status === 'sold-out') return 'Sold out';
-  if (a.status === 'unavailable-today') return 'Unavailable today';
+  if (a.status === 'sold-out')
+    return a.backAt ? { kind: 'back-at', time: a.backAt } : { kind: 'sold-out' };
+  if (a.status === 'unavailable-today') return { kind: 'unavailable-today' };
   return undefined;
-}
-
-/** Price line: "₹329" plus "Half · ₹549 Full" style secondary text for 2-variant portions. */
-export function variantSummary(dish: Dish): string | undefined {
-  // Only piece-count portions get the secondary price line (Paneer Tikka, 02).
-  if (dish.variants?.length !== 2 || !dish.variants[0].name.includes(' · ')) return undefined;
-  const [a, b] = dish.variants;
-  const short = (name: string) => name.split(' · ')[0];
-  return `${short(a.name)} · ${formatINR(b.price)} ${short(b.name)}`;
 }
 
 export function dishImage(dish: Dish, kind: 'hero' | 'card' | 'thumb'): DishImage | undefined {
@@ -81,13 +101,6 @@ export const DEFAULT_FILTERS: MenuFilters = {
   spicy: false,
   chefs: false,
   under400: false,
-};
-
-export const SORT_LABEL: Record<SortKey, string> = {
-  recommended: 'Recommended',
-  'price-asc': 'Price: low to high',
-  'price-desc': 'Price: high to low',
-  'best-match': 'Best match',
 };
 
 export const PRICE_LIMIT = 400;
@@ -118,13 +131,17 @@ export function sortDishes(list: readonly Dish[], sort: SortKey): Dish[] {
   return [...list].sort((a, b) => avail(a) - avail(b) || byKey[sort](a, b));
 }
 
-/** "Showing 7 vegetarian dishes" / "Showing 7 of 12 dishes". */
-export function filterSummary(f: MenuFilters, shown: number, total: number): string {
-  if (f.diet === 'veg' && !f.spicy && !f.chefs && !f.under400)
-    return `Showing ${shown} vegetarian ${shown === 1 ? 'dish' : 'dishes'}`;
-  if (f.diet === 'nonveg' && !f.spicy && !f.chefs && !f.under400)
-    return `Showing ${shown} non-vegetarian ${shown === 1 ? 'dish' : 'dishes'}`;
-  return `Showing ${shown} of ${total} dishes`;
+/**
+ * Which result summary fits the filters (menu content: filters.summary.*): "Showing 7 vegetarian
+ * dishes" for veg alone, "non-vegetarian" for non-veg alone, else "Showing 7 of 12 dishes".
+ */
+export type FilterSummaryKind = 'veg' | 'nonveg' | 'mixed';
+
+export function filterSummaryKind(f: MenuFilters): FilterSummaryKind {
+  const dietOnly = !f.spicy && !f.chefs && !f.under400;
+  if (dietOnly && f.diet === 'veg') return 'veg';
+  if (dietOnly && f.diet === 'nonveg') return 'nonveg';
+  return 'mixed';
 }
 
 /* ---------- Search ---------- */
@@ -140,19 +157,25 @@ function tokens(query: string): string[] {
   return normalise(query).split(/\s+/).filter(Boolean);
 }
 
-/** Each query word must appear in the dish name, description or category. Plurals are forgiven. */
-export function searchDishes(query: string, list: readonly Dish[] = dishes): Dish[] {
+/** Forgives a plural: "kebabs" → "kebab". Words of three letters or fewer are left alone. */
+const stem = (word: string) => (word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word);
+
+function searchDishes(
+  query: string,
+  list: readonly Dish[],
+  categoryName: (id: CategoryId) => string,
+): Dish[] {
   const words = tokens(query);
   if (words.length === 0) return [];
   const scored = list
     .map((dish) => {
       const name = normalise(dish.name);
-      const hay = `${name} ${normalise(dish.description)} ${normalise(getCategory(dish.categoryId)?.name ?? '')}`;
+      const hay = `${name} ${normalise(dish.description)} ${normalise(categoryName(dish.categoryId))}`;
       let score = 0;
       for (const word of words) {
-        const stem = word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word;
-        if (name.includes(word) || name.includes(stem)) score += 2;
-        else if (hay.includes(word) || hay.includes(stem)) score += 1;
+        const base = stem(word);
+        if (name.includes(word) || name.includes(base)) score += 2;
+        else if (hay.includes(word) || hay.includes(base)) score += 1;
         else return null;
       }
       return { dish, score };
@@ -162,14 +185,14 @@ export function searchDishes(query: string, list: readonly Dish[] = dishes): Dis
   return scored.sort((a, b) => b.score - a.score).map((r) => r.dish);
 }
 
-export interface TextPart {
+interface TextPart {
   text: string;
   match: boolean;
 }
 
 /** Splits `text` into matched / unmatched parts for highlighting the query words. */
 export function highlight(text: string, query: string): TextPart[] {
-  const words = tokens(query).map((w) => (w.length > 3 && w.endsWith('s') ? w.slice(0, -1) : w));
+  const words = tokens(query).map(stem);
   if (words.length === 0) return [{ text, match: false }];
   const escaped = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const re = new RegExp(`(${escaped.join('|')})`, 'gi');

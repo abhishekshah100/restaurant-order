@@ -1,10 +1,28 @@
+/* Menu dish card (rows under Starters, Mains…, category and search lists) */
 .item {
   position: relative;
   display: flex;
-  gap: 16px;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--line);
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 14px 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
   color: inherit;
+  box-shadow:
+    0 1px 2px var(--ink-a04),
+    0 6px 16px -10px var(--ink-a18);
+  transition:
+    box-shadow var(--dur-base) ease,
+    transform var(--dur-base) ease,
+    border-color var(--dur-base) ease;
+}
+.main {
+  /* Grows so the price row sits at the bottom when cards share a grid row */
+  flex: 1;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
 }
 .body {
   flex: 1;
@@ -25,7 +43,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  font: 600 12px/16px var(--f-ui);
+  font: var(--font-meta);
   color: var(--ink-3);
 }
 .name {
@@ -33,17 +51,17 @@
   margin: 0;
   color: var(--ink);
 }
-/* The whole row opens the dish; controls sit above this overlay. */
+/* The whole card opens the dish; the ADD control sits above this overlay */
 .link {
   color: inherit;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: var(--r-2xs);
 }
 .link::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: var(--r);
+  border-radius: var(--r-lg);
 }
 .link:focus-visible {
   box-shadow: none;
@@ -55,62 +73,86 @@
   font-weight: 800;
   background: var(--brand-tint);
   color: inherit;
-  border-radius: 3px;
+  border-radius: var(--r-3xs);
   padding: 0 2px;
-}
-.price {
-  font: 700 15px/20px var(--f-ui);
-  font-variant-numeric: tabular-nums;
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-  flex-wrap: wrap;
-}
-.priceAlt {
-  font: 600 13px/18px var(--f-ui);
-  color: var(--ink-3);
 }
 .desc {
   font: 500 13px/19px var(--f-ui);
   color: var(--ink-2);
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 .prep {
   display: flex;
   align-items: center;
   gap: 6px;
-  font: 600 12px/16px var(--f-ui);
+  font: var(--font-meta);
   color: var(--ink-3);
 }
-.media {
-  width: 116px;
+.thumb {
+  width: 88px;
+  height: 88px;
   flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.img {
-  width: 116px;
-  height: 108px;
   border-radius: var(--r);
-  object-fit: cover;
-  display: block;
+  overflow: hidden;
   background: var(--sand);
 }
-.media .control {
-  margin-top: -20px;
+.img {
+  composes: cover from '@/styles/patterns.module.css';
+  transition: transform var(--dur-slow) ease;
 }
-.act {
-  flex: none;
+
+/* Bottom row: prices + note on the left, ADD always bottom-right */
+.foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+}
+.priceBlock {
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  /* centre the price on the 32px ADD pill */
+  padding-top: 6px;
+}
+.price {
+  font: var(--font-price);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 6px;
+}
+.note {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding-top: 2px;
+  gap: 5px;
+  font: 600 11.5px/16px var(--f-ui);
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note > span[aria-hidden] {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+.noteInCart {
+  color: var(--brand-700);
+}
+.control {
+  position: relative;
+  z-index: 1;
+  flex: none;
+}
+
+/* Sold out / unavailable: still visible, clearly muted */
+.out {
+  background: color-mix(in srgb, var(--surface) 60%, var(--bg));
+  box-shadow: none;
 }
 .out .name {
   color: var(--ink-2);
@@ -121,4 +163,36 @@
 .out .img {
   filter: grayscale(1);
   opacity: 0.55;
+}
+
+@media (hover: hover) {
+  .item:not(.out):hover {
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 2px var(--ink-a05),
+      0 12px 24px -14px var(--ink-a30);
+  }
+  .item:not(.out):hover .img {
+    transform: scale(1.04);
+  }
+}
+@media (min-width: 1024px) {
+  .item {
+    padding: 16px 16px 14px 18px;
+  }
+  .thumb {
+    width: 96px;
+    height: 96px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .img {
+    transition: none;
+  }
+  .item:not(.out):hover,
+  .item:not(.out):hover .img {
+    transform: none;
+  }
 }

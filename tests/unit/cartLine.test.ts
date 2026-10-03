@@ -7,14 +7,17 @@ import {
   describeOptionsShort,
   isValidConfig,
   lineKey,
-  summaryName,
+  shortVariant,
   unitPrice,
 } from '@/lib/cartLine';
-import { getDish } from '@/lib/menu';
 import type { CartLine, LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
+import { testMenu, testLineLabels } from '../apiState';
 
-const dish = (slug: string) => getDish(slug) as Dish;
+const lineLabels = testLineLabels();
+
+const menu = testMenu();
+const dish = (slug: string) => menu.getDish(slug) as Dish;
 const asLine = (config: LineConfig, quantity = 1): CartLine => ({
   ...config,
   key: lineKey(config),
@@ -69,28 +72,37 @@ describe('isValidConfig', () => {
 
 describe('descriptions match the design copy', () => {
   it('cart lines (08)', () => {
-    expect(describeOptions(dish('paneer-tikka'), paneer)).toBe(
+    expect(describeOptions(dish('paneer-tikka'), paneer, lineLabels)).toBe(
       'Full · 10 pcs, Medium spicy, Extra mint chutney',
     );
-    expect(describeOptions(dish('truffle-mushroom-pasta'), pasta)).toBe(
+    expect(describeOptions(dish('truffle-mushroom-pasta'), pasta, lineLabels)).toBe(
       'Regular · Extra parmesan (+₹40)',
     );
-    expect(describeOptions(dish('iced-hazelnut-latte'), latte)).toBe('Regular · Oat milk');
+    expect(describeOptions(dish('iced-hazelnut-latte'), latte, lineLabels)).toBe(
+      'Regular · Oat milk',
+    );
     expect(describeInstructions(pasta)).toBe('“Less cheese”');
   });
   it('desktop cart panel (w02)', () => {
-    expect(describeOptionsShort(dish('paneer-tikka'), paneer)).toBe(
+    expect(describeOptionsShort(dish('paneer-tikka'), paneer, lineLabels)).toBe(
       'Full · Medium spicy · Extra mint chutney',
     );
   });
   it('menu row notes (02 / 03)', () => {
-    expect(describeInMenu(dish('paneer-tikka'), [asLine(paneer)])).toBe('Full · Customised');
+    expect(describeInMenu(dish('paneer-tikka'), [asLine(paneer)], lineLabels)).toBe(
+      'Full · Customised',
+    );
     expect(
-      describeInMenu(dish('truffle-mushroom-pasta'), [asLine({ ...pasta, instructions: [] })]),
+      describeInMenu(
+        dish('truffle-mushroom-pasta'),
+        [asLine({ ...pasta, instructions: [] })],
+        lineLabels,
+      ),
     ).toBe('Regular · +1 add-on');
   });
-  it('order summary names (w09)', () => {
-    expect(summaryName(dish('paneer-tikka'), paneer)).toBe('Paneer Tikka (Full)');
-    expect(summaryName(dish('truffle-mushroom-pasta'), pasta)).toBe('Truffle Mushroom Pasta');
+  it('short size names drop the piece count', () => {
+    expect(shortVariant(dish('paneer-tikka'), paneer)).toBe('Full');
+    expect(shortVariant(dish('truffle-mushroom-pasta'), pasta)).toBe('Regular');
+    expect(shortVariant(dish('dahi-kebab'), { variantId: undefined })).toBeUndefined();
   });
 });

@@ -1,0 +1,227 @@
+/* ---- Mobile (16): captioned lists, the active order as a highlighted card ---- */
+.mobileTitle {
+  font: var(--font-h1);
+  margin: 0 0 0 12px;
+  flex: 1;
+  min-width: 0;
+}
+.page {
+  flex: 1;
+  width: 100%;
+  padding: 8px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+}
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+.panelTitle {
+  font: var(--font-caption);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 0;
+  transition:
+    background-color var(--dur-fast),
+    border-color var(--dur-fast),
+    box-shadow var(--dur-base);
+}
+.list > li:last-child .row {
+  border-bottom: 0;
+}
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.id {
+  font: var(--font-price);
+}
+.sub {
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.when {
+  color: var(--ink-3);
+}
+.clamp {
+  composes: clamp from '@/styles/patterns.module.css';
+  --lines: 1;
+}
+
+/* Order still being made: raised card with a brand outline */
+.list > li > .active {
+  padding: 16px;
+  margin-bottom: 4px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--brand-600);
+  border-radius: var(--r-lg);
+}
+.active .main {
+  gap: 4px;
+}
+.active .id {
+  font: var(--font-h3);
+}
+@media (hover: hover) {
+  .list > li > .active:hover {
+    box-shadow: var(--sh-1);
+  }
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.empty {
+  padding-top: 48px;
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .page {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+/* ---- Web (w16): page head, table panels ---- */
+@media (min-width: 1024px) {
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 40px 64px;
+    gap: 28px;
+  }
+  .pageHead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .headText {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    overflow: hidden;
+  }
+  .panelHead {
+    margin: 0;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .thisVisit .panelHead {
+    background: var(--brand-tint-2);
+  }
+  .panelTitle {
+    font: var(--font-h3);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--ink);
+  }
+
+  .row,
+  .list > li > .active {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1.4fr) 1fr 1fr 140px 32px;
+    gap: 20px;
+    align-items: center;
+    margin: 0;
+    padding: 16px 20px;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .row:focus-visible {
+    box-shadow: var(--focus-inset);
+  }
+  .active .main {
+    gap: 2px;
+  }
+  .id,
+  .active .id {
+    font: var(--font-price);
+  }
+  .amount {
+    display: flex;
+    flex-direction: column;
+    font: var(--font-small);
+  }
+  .amount b {
+    font: var(--font-price);
+  }
+  .chev {
+    color: var(--ink-3);
+  }
+  .thead {
+    padding: 12px 20px;
+    font: var(--font-caption);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .empty {
+    padding-top: 32px;
+  }
+}
+@media (min-width: 1024px) and (hover: hover) {
+  .list .row:hover {
+    background: var(--bg);
+    box-shadow: none;
+  }
+  .list .row:hover .chev {
+    color: var(--brand-600);
+  }
+}
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  .page {
+    padding: 32px 28px 64px;
+  }
+  .row,
+  .list > li > .active {
+    grid-template-columns: 64px minmax(0, 1.4fr) 1fr 1fr 150px 24px;
+    gap: 16px;
+  }
+}

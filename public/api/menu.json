@@ -1,0 +1,1592 @@
+{
+  "categories": [
+    {
+      "id": "starters",
+      "name": "Starters",
+      "description": "Tandoor-fired kebabs and small plates to share",
+      "unit": "dishes"
+    },
+    {
+      "id": "mains",
+      "name": "Mains",
+      "description": "Slow-cooked curries, fresh pasta and wood-fired pizza",
+      "unit": "dishes"
+    },
+    {
+      "id": "meals",
+      "name": "Meals",
+      "description": "Thalis and set meals — choose each part, save on the whole",
+      "unit": "dishes"
+    },
+    {
+      "id": "pizza",
+      "name": "Pizza",
+      "description": "Hand-stretched sourdough from the wood-fired oven",
+      "unit": "dishes"
+    },
+    {
+      "id": "breads-rice",
+      "name": "Breads & Rice",
+      "description": "Breads from the tandoor, biryanis and steamed rice",
+      "unit": "dishes"
+    },
+    {
+      "id": "desserts",
+      "name": "Desserts",
+      "description": "Indian sweets and Mediterranean classics",
+      "unit": "dishes"
+    },
+    {
+      "id": "beverages",
+      "name": "Beverages",
+      "description": "Coffee, chai, lassi and house mocktails",
+      "unit": "drinks"
+    }
+  ],
+  "dishes": [
+    {
+      "tags": ["bestseller"],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "paneer-tikka",
+      "name": "Paneer Tikka",
+      "description": "Charred cottage cheese, hung-curd marinade, peppers and onion, mint chutney.",
+      "longDescription": "Charred cottage cheese, hung-curd marinade, peppers and onion. Served with mint chutney.",
+      "veg": true,
+      "price": 329,
+      "variantLabel": "Portion",
+      "variants": [
+        {
+          "id": "half",
+          "name": "Half · 6 pcs",
+          "price": 329
+        },
+        {
+          "id": "full",
+          "name": "Full · 10 pcs",
+          "price": 549
+        }
+      ],
+      "optionGroups": [
+        {
+          "id": "spice",
+          "name": "Spice level",
+          "choices": ["Mild", "Medium", "Hot"]
+        }
+      ],
+      "addOns": [
+        {
+          "id": "extra-paneer",
+          "name": "Extra paneer (4 pcs)",
+          "price": 90
+        },
+        {
+          "id": "mint-chutney",
+          "name": "Extra mint chutney",
+          "price": 0
+        },
+        {
+          "id": "mirchi-chutney",
+          "name": "Extra Mirchi chutney",
+          "price": 0
+        }
+      ],
+      "prepTime": "15–18 min",
+      "serves": 2,
+      "categoryId": "starters",
+      "rank": 0
+    },
+    {
+      "tags": [],
+      "allergens": ["shellfish", "dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "chilli-garlic-prawns",
+      "name": "Chilli Garlic Prawns",
+      "description": "Tiger prawns tossed in burnt garlic, Kashmiri chilli butter and spring onion.",
+      "cardDescription": "Burnt garlic, Kashmiri chilli butter",
+      "veg": false,
+      "price": 449,
+      "spice": "medium",
+      "prepTime": "12–15 min",
+      "serves": 1,
+      "image": {
+        "src": "/images/prawns.jpg",
+        "alt": "Chilli Garlic Prawns",
+        "width": 240,
+        "height": 228
+      },
+      "thumb": {
+        "src": "/images/prawns.jpg",
+        "alt": "Chilli Garlic Prawns",
+        "width": 240,
+        "height": 228
+      },
+      "featured": true,
+      "categoryId": "starters",
+      "rank": 1
+    },
+    {
+      "tags": ["new"],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "dahi-kebab",
+      "name": "Dahi Kebab",
+      "description": "Crisp hung-curd patties with green chilli and cardamom, beetroot chutney.",
+      "veg": true,
+      "price": 289,
+      "prepTime": "12–15 min",
+      "serves": 2,
+      "categoryId": "starters",
+      "rank": 2
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "hara-bhara-kebab",
+      "name": "Hara Bhara Kebab",
+      "description": "Spinach, peas and potato patties with mint yoghurt.",
+      "veg": true,
+      "price": 259,
+      "prepTime": "12–15 min",
+      "serves": 2,
+      "categoryId": "starters",
+      "rank": 3
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "sold-out",
+        "backAt": "8 PM"
+      },
+      "slug": "chicken-malai-tikka",
+      "name": "Chicken Malai Tikka",
+      "description": "Cream-and-cheese marinated chicken from the tandoor.",
+      "veg": false,
+      "price": 389,
+      "prepTime": "18–20 min",
+      "serves": 2,
+      "categoryId": "starters",
+      "rank": 4
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "tandoori-broccoli",
+      "name": "Tandoori Broccoli",
+      "description": "Cheese-and-cashew marinated florets, chaat masala.",
+      "veg": true,
+      "price": 299,
+      "prepTime": "12–15 min",
+      "serves": 2,
+      "categoryId": "starters",
+      "rank": 5
+    },
+    {
+      "tags": [],
+      "allergens": ["egg"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "amritsari-fish-tikka",
+      "name": "Amritsari Fish Tikka",
+      "description": "Gram-flour battered river sole with ajwain and lemon.",
+      "veg": false,
+      "price": 399,
+      "spice": "mild",
+      "prepTime": "12–15 min",
+      "serves": 2,
+      "categoryId": "starters",
+      "rank": 6
+    },
+    {
+      "tags": [],
+      "allergens": ["gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "crispy-corn-chaat",
+      "name": "Crispy Corn Chaat",
+      "description": "Fried sweetcorn tossed with onion, tomato, lime and chaat masala.",
+      "veg": true,
+      "price": 249,
+      "prepTime": "8–10 min",
+      "serves": 2,
+      "categoryId": "starters",
+      "rank": 7
+    },
+    {
+      "tags": ["chef"],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "truffle-mushroom-pasta",
+      "name": "Truffle Mushroom Pasta",
+      "description": "Spaghetti, wild mushrooms, truffle oil, aged parmesan and fresh herbs.",
+      "cardDescription": "Wild mushrooms, truffle oil, aged parmesan",
+      "longDescription": "Spaghetti tossed with wild mushrooms, a splash of white truffle oil, aged parmesan and fresh garden herbs.",
+      "veg": true,
+      "price": 369,
+      "variantLabel": "Choose a size",
+      "variants": [
+        {
+          "id": "regular",
+          "name": "Regular",
+          "description": "Perfect for one",
+          "price": 369
+        },
+        {
+          "id": "large",
+          "name": "Large",
+          "description": "Good for sharing",
+          "price": 469
+        }
+      ],
+      "addOns": [
+        {
+          "id": "parmesan",
+          "name": "Extra parmesan",
+          "price": 40
+        },
+        {
+          "id": "grilled-mushrooms",
+          "name": "Grilled mushrooms",
+          "price": 60
+        },
+        {
+          "id": "garlic-bread",
+          "name": "Garlic bread (2 pcs)",
+          "price": 80
+        },
+        {
+          "id": "chilli-flakes",
+          "name": "Chilli flakes",
+          "price": 0
+        }
+      ],
+      "maxAddOns": 3,
+      "removables": [
+        {
+          "id": "garlic",
+          "name": "Garlic"
+        },
+        {
+          "id": "parmesan",
+          "name": "Parmesan"
+        }
+      ],
+      "quickInstructions": ["Less cheese", "Extra hot", "Jain"],
+      "prepTime": "15–18 min",
+      "serves": 1,
+      "image": {
+        "src": "/images/pasta-hero.jpg",
+        "alt": "Truffle Mushroom Pasta in a stoneware bowl",
+        "width": 780,
+        "height": 540
+      },
+      "thumb": {
+        "src": "/images/pasta-square.jpg",
+        "alt": "Truffle Mushroom Pasta",
+        "width": 240,
+        "height": 240
+      },
+      "featured": true,
+      "categoryId": "mains",
+      "rank": 0
+    },
+    {
+      "tags": ["bestseller"],
+      "allergens": ["dairy", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "old-delhi-butter-chicken",
+      "name": "Old Delhi Butter Chicken",
+      "description": "Tandoori chicken simmered in a velvety tomato, butter and fenugreek gravy.",
+      "veg": false,
+      "price": 449,
+      "spice": "mild",
+      "removables": [
+        {
+          "id": "onion",
+          "name": "Onion"
+        },
+        {
+          "id": "garlic",
+          "name": "Garlic"
+        },
+        {
+          "id": "cream",
+          "name": "Cream"
+        }
+      ],
+      "prepTime": "15–18 min",
+      "serves": 1,
+      "categoryId": "mains",
+      "rank": 1
+    },
+    {
+      "tags": ["new"],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "wood-fired-margherita",
+      "name": "Wood-fired Margherita",
+      "description": "San Marzano tomato, fior di latte, basil and cold-pressed olive oil.",
+      "cardDescription": "San Marzano tomato, fior di latte, basil",
+      "veg": true,
+      "price": 279,
+      "variantLabel": "Choose a size",
+      "variants": [
+        {
+          "id": "regular",
+          "name": "10\"",
+          "description": "Perfect for one",
+          "price": 279
+        },
+        {
+          "id": "large",
+          "name": "13\"",
+          "description": "Good for sharing",
+          "price": 399
+        }
+      ],
+      "optionGroups": [
+        {
+          "id": "crust",
+          "name": "Base",
+          "choices": [
+            {
+              "name": "Classic sourdough"
+            },
+            {
+              "name": "Thin & crispy"
+            },
+            {
+              "name": "Gluten-free",
+              "price": 80,
+              "availableFor": ["regular"]
+            }
+          ]
+        }
+      ],
+      "addOns": [
+        {
+          "id": "burrata",
+          "name": "Burrata",
+          "price": 120,
+          "priceByVariant": {
+            "large": 160
+          }
+        },
+        {
+          "id": "olives",
+          "name": "Kalamata olives",
+          "price": 40,
+          "priceByVariant": {
+            "large": 60
+          }
+        },
+        {
+          "id": "jalapenos",
+          "name": "Jalapeños",
+          "price": 30
+        },
+        {
+          "id": "chilli-oil",
+          "name": "Chilli oil",
+          "price": 0
+        }
+      ],
+      "maxAddOns": 3,
+      "removables": [
+        {
+          "id": "basil",
+          "name": "Basil"
+        },
+        {
+          "id": "garlic",
+          "name": "Garlic"
+        }
+      ],
+      "quickInstructions": ["Well done", "Less cheese", "Jain"],
+      "prepTime": "12–15 min",
+      "serves": 1,
+      "image": {
+        "src": "/images/pizza-wide.jpg",
+        "alt": "Wood-fired Margherita",
+        "width": 462,
+        "height": 300
+      },
+      "thumb": {
+        "src": "/images/pizza-square.jpg",
+        "alt": "Wood-fired Margherita",
+        "width": 240,
+        "height": 240
+      },
+      "featured": true,
+      "categoryId": "mains",
+      "rank": 2
+    },
+    {
+      "tags": ["bestseller"],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "dal-makhani",
+      "name": "Dal Makhani",
+      "description": "Black lentils slow-cooked overnight with butter and cream.",
+      "veg": true,
+      "price": 299,
+      "prepTime": "10–12 min",
+      "serves": 2,
+      "categoryId": "mains",
+      "rank": 3
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "paneer-lababdar",
+      "name": "Paneer Lababdar",
+      "description": "Paneer in a rich onion-tomato gravy with cashew and kasuri methi.",
+      "veg": true,
+      "price": 379,
+      "variantLabel": "Portion",
+      "variants": [
+        {
+          "id": "regular",
+          "name": "Regular",
+          "description": "Serves 1–2",
+          "price": 379
+        },
+        {
+          "id": "large",
+          "name": "Large",
+          "description": "Serves 3–4",
+          "price": 579
+        }
+      ],
+      "optionGroups": [
+        {
+          "id": "spice",
+          "name": "Spice level",
+          "choices": ["Medium", "Mild", "Hot"]
+        }
+      ],
+      "removables": [
+        {
+          "id": "onion",
+          "name": "Onion"
+        },
+        {
+          "id": "garlic",
+          "name": "Garlic"
+        },
+        {
+          "id": "cashew",
+          "name": "Cashew"
+        }
+      ],
+      "spice": "medium",
+      "prepTime": "15–18 min",
+      "serves": 2,
+      "categoryId": "mains",
+      "rank": 4
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "palak-paneer",
+      "name": "Palak Paneer",
+      "description": "Fresh spinach purée, garlic tempering, soft paneer cubes.",
+      "veg": true,
+      "price": 349,
+      "prepTime": "12–15 min",
+      "serves": 2,
+      "categoryId": "mains",
+      "rank": 5
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "malai-kofta",
+      "name": "Malai Kofta",
+      "description": "Potato and cottage-cheese dumplings in a mild saffron and cashew gravy.",
+      "veg": true,
+      "price": 359,
+      "prepTime": "15–18 min",
+      "serves": 2,
+      "categoryId": "mains",
+      "rank": 6
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "unavailable-today"
+      },
+      "slug": "wild-mushroom-risotto",
+      "name": "Wild Mushroom Risotto",
+      "description": "Arborio rice, porcini stock, mascarpone and thyme.",
+      "veg": true,
+      "price": 419,
+      "prepTime": "20–22 min",
+      "serves": 1,
+      "categoryId": "mains",
+      "rank": 7
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "lamb-rogan-josh",
+      "name": "Lamb Rogan Josh",
+      "description": "Kashmiri lamb curry with ratan jot, fennel and dried ginger.",
+      "veg": false,
+      "price": 519,
+      "spice": "medium",
+      "prepTime": "15–18 min",
+      "serves": 1,
+      "categoryId": "mains",
+      "rank": 8
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "goan-fish-curry",
+      "name": "Goan Fish Curry",
+      "description": "Kingfish in a tangy coconut, kokum and red chilli curry.",
+      "veg": false,
+      "price": 489,
+      "spice": "hot",
+      "prepTime": "15–18 min",
+      "serves": 1,
+      "categoryId": "mains",
+      "rank": 9
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "chettinad-curry",
+      "name": "Chettinad Curry",
+      "description": "Peppery Chettinad masala with curry leaves and roasted coconut. Choose your protein.",
+      "veg": false,
+      "price": 429,
+      "optionGroups": [
+        {
+          "id": "protein",
+          "name": "Choose your protein",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Chicken"
+            },
+            {
+              "name": "Lamb",
+              "price": 90
+            },
+            {
+              "name": "Prawn",
+              "price": 120
+            }
+          ]
+        }
+      ],
+      "removables": [
+        {
+          "id": "onion",
+          "name": "Onion"
+        },
+        {
+          "id": "garlic",
+          "name": "Garlic"
+        },
+        {
+          "id": "coconut",
+          "name": "Coconut"
+        }
+      ],
+      "spice": "hot",
+      "prepTime": "15–18 min",
+      "serves": 1,
+      "categoryId": "mains",
+      "rank": 10
+    },
+    {
+      "tags": [],
+      "allergens": ["shellfish", "gluten", "dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "prawn-linguine",
+      "name": "Prawn Linguine",
+      "description": "Linguine, garlic prawns, cherry tomato, chilli and lemon butter.",
+      "veg": false,
+      "price": 499,
+      "prepTime": "15–18 min",
+      "serves": 1,
+      "categoryId": "mains",
+      "rank": 11
+    },
+    {
+      "tags": ["bestseller"],
+      "allergens": ["dairy", "gluten", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "veg-thali",
+      "name": "Veg Thali",
+      "description": "A full meal: curry, bread, rice, dessert and a drink, your way.",
+      "veg": true,
+      "price": 449,
+      "combo": {
+        "savings": 140,
+        "includes": "Curry · Bread · Rice · Dessert · Drink"
+      },
+      "optionGroups": [
+        {
+          "id": "curry",
+          "name": "Choose your curry",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Dal Makhani"
+            },
+            {
+              "name": "Palak Paneer"
+            },
+            {
+              "name": "Paneer Lababdar",
+              "price": 40
+            }
+          ]
+        },
+        {
+          "id": "bread",
+          "name": "Choose your bread",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Butter Naan"
+            },
+            {
+              "name": "Tandoori Roti"
+            },
+            {
+              "name": "Garlic Naan",
+              "price": 20
+            }
+          ]
+        },
+        {
+          "id": "rice",
+          "name": "Choose your rice",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Jeera Rice"
+            },
+            {
+              "name": "Steamed Rice"
+            }
+          ]
+        },
+        {
+          "id": "dessert",
+          "name": "Choose your dessert",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Gulab Jamun"
+            },
+            {
+              "name": "Kulfi Falooda",
+              "price": 50
+            }
+          ]
+        },
+        {
+          "id": "drink",
+          "name": "Choose your drink",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Masala Chai"
+            },
+            {
+              "name": "Masala Chaas"
+            },
+            {
+              "name": "Mango Lassi",
+              "price": 40
+            }
+          ]
+        }
+      ],
+      "prepTime": "18–22 min",
+      "serves": 1,
+      "categoryId": "meals",
+      "rank": 0
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "non-veg-thali",
+      "name": "Non-veg Thali",
+      "description": "Chicken or lamb curry with bread, rice and a drink.",
+      "veg": false,
+      "price": 549,
+      "combo": {
+        "savings": 160,
+        "includes": "Curry · Bread · Rice · Drink"
+      },
+      "optionGroups": [
+        {
+          "id": "curry",
+          "name": "Choose your curry",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Old Delhi Butter Chicken"
+            },
+            {
+              "name": "Chettinad Chicken"
+            },
+            {
+              "name": "Lamb Rogan Josh",
+              "price": 90
+            }
+          ]
+        },
+        {
+          "id": "bread",
+          "name": "Choose your bread",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Butter Naan"
+            },
+            {
+              "name": "Tandoori Roti"
+            },
+            {
+              "name": "Garlic Naan",
+              "price": 20
+            }
+          ]
+        },
+        {
+          "id": "rice",
+          "name": "Choose your rice",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Jeera Rice"
+            },
+            {
+              "name": "Steamed Rice"
+            }
+          ]
+        },
+        {
+          "id": "drink",
+          "name": "Choose your drink",
+          "showInSummary": true,
+          "choices": [
+            {
+              "name": "Masala Chai"
+            },
+            {
+              "name": "Masala Chaas"
+            },
+            {
+              "name": "Mango Lassi",
+              "price": 40
+            }
+          ]
+        }
+      ],
+      "removables": [
+        {
+          "id": "onion",
+          "name": "Onion"
+        },
+        {
+          "id": "garlic",
+          "name": "Garlic"
+        }
+      ],
+      "prepTime": "18–22 min",
+      "serves": 1,
+      "categoryId": "meals",
+      "rank": 1
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "burrata-basil-pizza",
+      "name": "Burrata & Basil",
+      "description": "Tomato, torn burrata, basil pesto and cracked pepper.",
+      "veg": true,
+      "price": 449,
+      "prepTime": "12–15 min",
+      "serves": 1,
+      "categoryId": "pizza",
+      "rank": 0
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "quattro-formaggi",
+      "name": "Quattro Formaggi",
+      "description": "Mozzarella, gorgonzola, parmesan and smoked scamorza.",
+      "veg": true,
+      "price": 429,
+      "prepTime": "12–15 min",
+      "serves": 1,
+      "categoryId": "pizza",
+      "rank": 1
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "roasted-veg-olive",
+      "name": "Roasted Veg & Olive",
+      "description": "Charred peppers, courgette, red onion and Kalamata olives.",
+      "veg": true,
+      "price": 389,
+      "prepTime": "12–15 min",
+      "serves": 1,
+      "categoryId": "pizza",
+      "rank": 2
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "mushroom-truffle-pizza",
+      "name": "Mushroom & Truffle",
+      "description": "Wild mushrooms, fior di latte, thyme and white truffle oil.",
+      "veg": true,
+      "price": 469,
+      "prepTime": "12–15 min",
+      "serves": 1,
+      "categoryId": "pizza",
+      "rank": 3
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "chicken-pesto-pizza",
+      "name": "Chicken Pesto",
+      "description": "Basil pesto, roast chicken, sun-dried tomato and rocket.",
+      "veg": false,
+      "price": 459,
+      "prepTime": "12–15 min",
+      "serves": 1,
+      "categoryId": "pizza",
+      "rank": 4
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "spicy-lamb-pizza",
+      "name": "Spicy Lamb",
+      "description": "Harissa lamb, red onion, mint yoghurt and pickled chilli.",
+      "veg": false,
+      "price": 489,
+      "spice": "hot",
+      "prepTime": "12–15 min",
+      "serves": 1,
+      "categoryId": "pizza",
+      "rank": 5
+    },
+    {
+      "tags": [],
+      "allergens": ["gluten", "dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "garlic-naan",
+      "name": "Garlic Naan",
+      "description": "Tandoor-baked naan with garlic, coriander and butter.",
+      "veg": true,
+      "price": 89,
+      "prepTime": "6–8 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 0
+    },
+    {
+      "tags": [],
+      "allergens": ["gluten", "dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "paneer-kulcha",
+      "name": "Paneer Kulcha",
+      "description": "Tandoor-baked bread stuffed with spiced paneer and coriander.",
+      "veg": true,
+      "price": 119,
+      "prepTime": "8–10 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 1
+    },
+    {
+      "tags": [],
+      "allergens": ["gluten", "dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "butter-naan",
+      "name": "Butter Naan",
+      "description": "Soft leavened bread brushed with butter.",
+      "veg": true,
+      "price": 79,
+      "prepTime": "6–8 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 2
+    },
+    {
+      "tags": [],
+      "allergens": ["gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "tandoori-roti",
+      "name": "Tandoori Roti",
+      "description": "Whole-wheat flatbread from the clay oven.",
+      "veg": true,
+      "price": 49,
+      "prepTime": "5–6 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 3
+    },
+    {
+      "tags": [],
+      "allergens": ["gluten", "dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "laccha-paratha",
+      "name": "Laccha Paratha",
+      "description": "Flaky layered whole-wheat paratha.",
+      "veg": true,
+      "price": 89,
+      "prepTime": "6–8 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 4
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "veg-dum-biryani",
+      "name": "Veg Dum Biryani",
+      "description": "Basmati and seasonal vegetables sealed and slow-cooked with saffron.",
+      "veg": true,
+      "price": 349,
+      "prepTime": "18–20 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 5
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "chicken-dum-biryani",
+      "name": "Chicken Dum Biryani",
+      "description": "Hyderabadi-style biryani with marinated chicken, mint and fried onion.",
+      "veg": false,
+      "price": 249,
+      "variantLabel": "Portion",
+      "variants": [
+        {
+          "id": "quarter",
+          "name": "Quarter · 1 pc",
+          "price": 249
+        },
+        {
+          "id": "half",
+          "name": "Half · 2 pcs",
+          "price": 429
+        },
+        {
+          "id": "full",
+          "name": "Full · 4 pcs",
+          "price": 749
+        }
+      ],
+      "addOns": [
+        {
+          "id": "raita",
+          "name": "Burani raita",
+          "price": 49
+        },
+        {
+          "id": "salan",
+          "name": "Mirchi ka salan",
+          "price": 0
+        }
+      ],
+      "removables": [
+        {
+          "id": "fried-onion",
+          "name": "Fried onion"
+        },
+        {
+          "id": "egg",
+          "name": "Egg"
+        }
+      ],
+      "spice": "medium",
+      "prepTime": "18–20 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 6
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "jeera-rice",
+      "name": "Jeera Rice",
+      "description": "Basmati tempered with cumin and ghee.",
+      "veg": true,
+      "price": 179,
+      "prepTime": "8–10 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 7
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "steamed-rice",
+      "name": "Steamed Rice",
+      "description": "Plain long-grain basmati.",
+      "veg": true,
+      "price": 149,
+      "prepTime": "5–6 min",
+      "serves": 1,
+      "categoryId": "breads-rice",
+      "rank": 8
+    },
+    {
+      "tags": ["bestseller"],
+      "allergens": ["dairy", "gluten", "egg"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "tiramisu",
+      "name": "Tiramisu",
+      "description": "Espresso-soaked savoiardi, mascarpone cream and cocoa.",
+      "veg": true,
+      "price": 299,
+      "prepTime": "5 min",
+      "serves": 1,
+      "categoryId": "desserts",
+      "rank": 0
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "gulab-jamun",
+      "name": "Gulab Jamun",
+      "description": "Warm milk dumplings in cardamom and rose syrup.",
+      "veg": true,
+      "price": 99,
+      "variantLabel": "Portion",
+      "variants": [
+        {
+          "id": "two",
+          "name": "2 pcs",
+          "price": 99
+        },
+        {
+          "id": "four",
+          "name": "4 pcs",
+          "price": 179
+        },
+        {
+          "id": "six",
+          "name": "6 pcs",
+          "price": 249
+        },
+        {
+          "id": "eight",
+          "name": "8 pcs",
+          "price": 319
+        }
+      ],
+      "prepTime": "5 min",
+      "serves": 1,
+      "categoryId": "desserts",
+      "rank": 1
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "kulfi-falooda",
+      "name": "Kulfi Falooda",
+      "description": "Pistachio kulfi, rose syrup, vermicelli and basil seeds.",
+      "veg": true,
+      "price": 229,
+      "prepTime": "5 min",
+      "serves": 1,
+      "categoryId": "desserts",
+      "rank": 2
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "gluten", "egg"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "baked-cheesecake",
+      "name": "Baked Cheesecake",
+      "description": "New York-style cheesecake with seasonal berry compote.",
+      "veg": true,
+      "price": 319,
+      "prepTime": "5 min",
+      "serves": 1,
+      "categoryId": "desserts",
+      "rank": 3
+    },
+    {
+      "tags": ["new"],
+      "allergens": ["dairy", "gluten", "egg"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "chocolate-fondant",
+      "name": "Chocolate Fondant",
+      "description": "Molten dark chocolate cake with vanilla bean ice cream.",
+      "veg": true,
+      "price": 339,
+      "prepTime": "12–14 min",
+      "serves": 1,
+      "categoryId": "desserts",
+      "rank": 4
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy", "nuts"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "iced-hazelnut-latte",
+      "name": "Iced Hazelnut Latte",
+      "description": "Double espresso, hazelnut and cold milk over ice.",
+      "veg": true,
+      "price": 199,
+      "variantLabel": "Choose a size",
+      "variants": [
+        {
+          "id": "regular",
+          "name": "Regular",
+          "description": "350 ml",
+          "price": 199
+        },
+        {
+          "id": "medium",
+          "name": "Medium",
+          "description": "500 ml",
+          "price": 220
+        },
+        {
+          "id": "large",
+          "name": "Large",
+          "description": "600 ml",
+          "price": 239
+        }
+      ],
+      "optionGroups": [
+        {
+          "id": "milk",
+          "name": "Milk",
+          "choices": [
+            {
+              "name": "Dairy"
+            },
+            {
+              "name": "Oat milk"
+            },
+            {
+              "name": "Almond milk",
+              "price": 30
+            }
+          ]
+        }
+      ],
+      "addOns": [
+        {
+          "id": "extra-shot",
+          "name": "Extra espresso shot",
+          "price": 40,
+          "availableFor": ["medium", "large"]
+        },
+        {
+          "id": "whipped-cream",
+          "name": "Whipped cream",
+          "price": 30
+        }
+      ],
+      "prepTime": "4–5 min",
+      "serves": 1,
+      "image": {
+        "src": "/images/latte.jpg",
+        "alt": "Iced Hazelnut Latte",
+        "width": 200,
+        "height": 248
+      },
+      "thumb": {
+        "src": "/images/latte.jpg",
+        "alt": "Iced Hazelnut Latte",
+        "width": 200,
+        "height": 248
+      },
+      "categoryId": "beverages",
+      "rank": 0
+    },
+    {
+      "tags": ["bestseller"],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "cold-coffee",
+      "name": "Cold Coffee",
+      "description": "Blended coffee, milk and a scoop of vanilla ice cream.",
+      "veg": true,
+      "price": 179,
+      "prepTime": "4–5 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 1
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "cappuccino",
+      "name": "Cappuccino",
+      "description": "Double espresso with steamed, foamed milk.",
+      "veg": true,
+      "price": 169,
+      "prepTime": "3–4 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 2
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "filter-coffee",
+      "name": "Filter Coffee",
+      "description": "South Indian decoction with frothed milk and jaggery.",
+      "veg": true,
+      "price": 119,
+      "prepTime": "3–4 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 3
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "masala-chai",
+      "name": "Masala Chai",
+      "description": "Assam tea brewed with ginger, cardamom and milk.",
+      "veg": true,
+      "price": 99,
+      "prepTime": "4–5 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 4
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "mango-lassi",
+      "name": "Mango Lassi",
+      "description": "Alphonso mango, yoghurt and a pinch of cardamom.",
+      "veg": true,
+      "price": 159,
+      "variantLabel": "Choose a size",
+      "variants": [
+        {
+          "id": "regular",
+          "name": "Regular · 350 ml",
+          "price": 159
+        }
+      ],
+      "optionGroups": [
+        {
+          "id": "sugar",
+          "name": "Sweetness",
+          "choices": ["Regular", "Less sugar", "No sugar"]
+        }
+      ],
+      "prepTime": "3–4 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 5
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "sweet-lassi",
+      "name": "Sweet Lassi",
+      "description": "Churned yoghurt with sugar and rose water.",
+      "veg": true,
+      "price": 139,
+      "prepTime": "3–4 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 6
+    },
+    {
+      "tags": [],
+      "allergens": ["dairy"],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "masala-chaas",
+      "name": "Masala Chaas",
+      "description": "Spiced buttermilk with roasted cumin and mint.",
+      "veg": true,
+      "price": 99,
+      "prepTime": "2–3 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 7
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "virgin-mojito",
+      "name": "Virgin Mojito",
+      "description": "Mocktail of muddled mint, lime and soda.",
+      "veg": true,
+      "price": 199,
+      "prepTime": "3–4 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 8
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "watermelon-cooler",
+      "name": "Watermelon Cooler",
+      "description": "Mocktail of fresh watermelon, basil and black salt.",
+      "veg": true,
+      "price": 189,
+      "prepTime": "3–4 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 9
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "kokum-spritzer",
+      "name": "Kokum Spritzer",
+      "description": "Mocktail of kokum, ginger and sparkling water.",
+      "veg": true,
+      "price": 189,
+      "prepTime": "3–4 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 10
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "fresh-lime-soda",
+      "name": "Fresh Lime Soda",
+      "description": "Sweet, salted or mixed.",
+      "veg": true,
+      "price": 129,
+      "optionGroups": [
+        {
+          "id": "style",
+          "name": "Style",
+          "choices": ["Sweet", "Salted", "Mixed"]
+        }
+      ],
+      "prepTime": "2–3 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 11
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "fresh-orange-juice",
+      "name": "Fresh Orange Juice",
+      "description": "Pressed to order.",
+      "veg": true,
+      "price": 179,
+      "prepTime": "3–4 min",
+      "serves": 1,
+      "categoryId": "beverages",
+      "rank": 12
+    },
+    {
+      "tags": [],
+      "allergens": [],
+      "availability": {
+        "status": "available"
+      },
+      "slug": "mineral-water",
+      "name": "Mineral Water",
+      "description": "1 litre, chilled or room temperature.",
+      "veg": true,
+      "price": 49,
+      "prepTime": "1 min",
+      "serves": 2,
+      "categoryId": "beverages",
+      "rank": 13
+    }
+  ],
+  "chefsPicks": ["truffle-mushroom-pasta", "chilli-garlic-prawns", "wood-fired-margherita"],
+  "popularSearches": [
+    "Butter chicken",
+    "Truffle pasta",
+    "Garlic naan",
+    "Biryani",
+    "Tiramisu",
+    "Mocktails"
+  ],
+  "cartSuggestions": [
+    "mango-lassi",
+    "masala-chai",
+    "gulab-jamun",
+    "tiramisu",
+    "virgin-mojito",
+    "cold-coffee"
+  ],
+  "trendingTonight": [
+    "truffle-mushroom-pasta",
+    "chilli-garlic-prawns",
+    "wood-fired-margherita",
+    "iced-hazelnut-latte"
+  ],
+  "popularAtTable": [
+    {
+      "slug": "truffle-mushroom-pasta",
+      "label": "Truffle Pasta"
+    },
+    {
+      "slug": "wood-fired-margherita",
+      "label": "Margherita"
+    },
+    {
+      "slug": "chilli-garlic-prawns",
+      "label": "Garlic Prawns"
+    }
+  ]
+}

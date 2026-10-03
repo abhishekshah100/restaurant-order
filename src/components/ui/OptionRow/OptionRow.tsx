@@ -1,6 +1,7 @@
 'use client';
 
 import type { KeyboardEvent, ReactNode } from 'react';
+import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
 import styles from './OptionRow.module.css';
 
@@ -44,13 +45,21 @@ export function OptionRow({
       onClick={() => !disabled && onChange()}
       onKeyDown={onKeyDown}
     >
-      <span className={type === 'radio' ? styles.radio : styles.check} aria-hidden="true" />
+      <span
+        className={type === 'radio' ? styles.radio : cx(styles.check, checked && styles.checkOn)}
+        aria-hidden="true"
+      />
       <span className={styles.grow}>
         <span>{label}</span>
         {sub && <span className={styles.sub}>{sub}</span>}
       </span>
       {price !== undefined && <span className={styles.p}>{price}</span>}
-      {type === 'radio' && <span className={cx(styles.check, styles.badge)} aria-hidden="true" />}
+      {type === 'radio' && (
+        <span
+          className={cx(styles.check, checked && styles.checkOn, styles.badge)}
+          aria-hidden="true"
+        />
+      )}
     </button>
   );
 }
@@ -71,8 +80,8 @@ interface OptionGroupBase {
   choices: OptionChoice[];
   /** Visual heading level for the title. */
   titleClassName?: string;
-  /** list (default) · grid: 2 columns from 1024px · grid2: always 2 columns. */
-  layout?: 'list' | 'grid' | 'grid2';
+  /** list (default) · grid: 2 columns from 1024px. */
+  layout?: 'list' | 'grid';
   /** Radios render as stacked tiles below 1024px (quick-add portions). */
   tilesOnMobile?: boolean;
   /** Heading element for the title (default h3). */
@@ -96,6 +105,7 @@ export interface CheckboxGroupProps extends OptionGroupBase {
 
 /** Titled group of OptionRows with radiogroup keyboard support (arrows move + select). */
 export function OptionGroup(props: RadioGroupProps | CheckboxGroupProps) {
+  const t = useContent('common');
   const {
     title,
     hint,
@@ -110,7 +120,6 @@ export function OptionGroup(props: RadioGroupProps | CheckboxGroupProps) {
   const listClass = cx(
     styles.opts,
     layout === 'grid' && styles.grid,
-    layout === 'grid2' && styles.grid2,
     tilesOnMobile && styles.tilesMobile,
   );
 
@@ -132,7 +141,12 @@ export function OptionGroup(props: RadioGroupProps | CheckboxGroupProps) {
           </Heading>
           {hint && <span className={styles.req}>{hint}</span>}
         </div>
-        <div className={listClass} role="radiogroup" aria-labelledby={titleId}>
+        <div
+          className={listClass}
+          role="radiogroup"
+          aria-labelledby={titleId}
+          data-count={choices.length >= 4 ? 'many' : choices.length}
+        >
           {choices.map((choice) => (
             <OptionRow
               key={choice.id}
@@ -171,7 +185,12 @@ export function OptionGroup(props: RadioGroupProps | CheckboxGroupProps) {
         </Heading>
         {hint && <span className={styles.req}>{hint}</span>}
       </div>
-      <div className={listClass} role="group" aria-labelledby={titleId}>
+      <div
+        className={listClass}
+        role="group"
+        aria-labelledby={titleId}
+        data-count={choices.length >= 4 ? 'many' : choices.length}
+      >
         {choices.map((choice) => {
           const checked = value.includes(choice.id);
           return (
@@ -183,7 +202,10 @@ export function OptionGroup(props: RadioGroupProps | CheckboxGroupProps) {
                 onChange(checked ? value.filter((v) => v !== choice.id) : [...value, choice.id])
               }
               label={choice.label}
-              sub={choice.sub ?? (!checked && atLimit ? `Up to ${max} add-ons` : undefined)}
+              sub={
+                choice.sub ??
+                (!checked && atLimit ? t('options.addOnLimit', { max: max ?? 0 }) : undefined)
+              }
               price={choice.price}
               disabled={choice.disabled || (!checked && atLimit)}
             />

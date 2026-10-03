@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
-import { ComingSoon } from '@/components/layout/ComingSoon';
+import { getContent } from '@/api/server';
+import { MyOrders } from '@/components/order/MyOrders';
 
-export const metadata: Metadata = { title: 'My orders' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getContent('orders');
+  return { title: t('shared.myOrders') };
+}
 
 export default function OrdersPage() {
-  return <ComingSoon title="My orders" />;
+  return <MyOrders />;
 }

@@ -1,22 +1,17 @@
 'use client';
 
+import { useMemo } from 'react';
 import { IconButton, Tabs } from '@/components/ui';
 import { CartBar } from '@/components/layout/CartBar';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MenuShell } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { OrderingBanner } from '@/components/status/OrderingBanner';
 import { CartPanel } from '@/components/cart/CartPanel';
-import { categories } from '@/data/menu';
+import { useContent, useMenu } from '@/api/hooks';
 import { useFilters } from '@/context/FiltersContext';
 import { cx } from '@/lib/cx';
-import {
-  applyFilters,
-  categoryCountLabel,
-  dishesIn,
-  filterSummary,
-  hasActiveFilters,
-  sortDishes,
-} from '@/lib/menu';
+import { applyFilters, filterSummaryKind, hasActiveFilters, sortDishes } from '@/lib/menu';
 import type { Category } from '@/types/menu';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CategorySidebar } from './CategorySidebar';
@@ -24,31 +19,38 @@ import { DishList } from './DishList';
 import { ActiveFilterRow, CategoryDesktopActions, CategoryFilterChips } from './FilterBars';
 import styles from './MenuViews.module.css';
 
-const TABS = categories.map((c) => ({ id: c.id, label: c.name, href: `/menu/${c.id}/` }));
-
 /** Category view (03 · w03). */
 export function CategoryView({ category }: { category: Category }) {
   const { filters, sort } = useFilters();
-  const all = dishesIn(category.id);
-  const shown = sortDishes(applyFilters(all, filters), sort);
+  const menu = useMenu();
+  const t = useContent('menu');
+  const tabs = useMemo(
+    () => menu.categories.map((c) => ({ id: c.id, label: c.name, href: `/menu/${c.id}/` })),
+    [menu],
+  );
+  const all = useMemo(() => menu.dishesIn(category.id), [menu, category.id]);
+  const shown = useMemo(() => sortDishes(applyFilters(all, filters), sort), [all, filters, sort]);
   const active = hasActiveFilters(filters);
-  const summary = filterSummary(filters, shown.length, all.length);
-  const count = categoryCountLabel(category);
+  const summary = t.plural(`filters.summary.${filterSummaryKind(filters)}`, shown.length, {
+    total: all.length,
+  });
+  const count = menu.categoryCountLabel(category);
 
   return (
     <>
       <SiteHeader />
       <MobileHeader
         variant="topbar"
-        title="Menu"
+        title={t('nav.menu')}
         titleAs="p"
         backHref="/menu/"
-        backLabel="Back to menu"
-        actions={<IconButton icon="search" label="Search" href="/search/" />}
+        backLabel={t('nav.backToMenu')}
+        actions={<IconButton icon="search" label={t('nav.search')} href="/search/" />}
       />
-      <Tabs className="hide-desktop" label="Categories" value={category.id} items={TABS} />
+      <OrderingBanner />
+      <Tabs className="hide-desktop" label={t('nav.categories')} value={category.id} items={tabs} />
       <MenuShell sidebar={<CategorySidebar active={category.id} />} cart={<CartPanel />} tight>
-        <Breadcrumbs items={[{ label: 'Menu', href: '/menu/' }, { label: category.name }]} />
+        <Breadcrumbs items={[{ label: t('nav.menu'), href: '/menu/' }, { label: category.name }]} />
         <div className={styles.catHead}>
           <div className={styles.pageHead}>
             <div className={styles.titleBlock}>
@@ -72,11 +74,13 @@ export function CategoryView({ category }: { category: Category }) {
         </div>
         {shown.length > 0 ? (
           <div className={styles.list}>
+            {/* Keeps the outline h1 → h2 → h3 (dish names) for screen-reader navigation. */}
+            <h2 className="visually-hidden">{t('category.dishesHeading')}</h2>
             <DishList dishes={shown} label={category.name} showPrepTime />
           </div>
         ) : (
           <p className={cx('t-body c2', styles.empty)}>
-            No {category.name.toLowerCase()} match these filters.
+            {t('category.noMatch', { category: category.name.toLowerCase() })}
           </p>
         )}
       </MenuShell>

@@ -28,7 +28,7 @@
 .spinWrap {
   width: 112px;
   height: 112px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--brand-tint-2);
   display: grid;
   place-items: center;
@@ -62,20 +62,12 @@
   justify-content: space-between;
   align-items: baseline;
 }
-.amountCol {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 .amount {
-  font: 500 30px/36px var(--f-display);
+  font: var(--font-price-lg);
   font-variant-numeric: lining-nums tabular-nums;
 }
 .hr {
-  height: 1px;
-  background: var(--line);
-  border: 0;
-  margin: 0;
+  composes: hr from '@/styles/patterns.module.css';
 }
 .steps {
   display: flex;
@@ -86,7 +78,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  font: 600 13px/18px var(--f-ui);
+  font: var(--font-small-strong);
 }
 .stepOk > span[aria-hidden] {
   color: var(--success);
@@ -100,7 +92,7 @@
 .circle {
   width: 20px;
   height: 20px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   border: 2px solid var(--line-strong);
   flex: none;
 }
@@ -132,13 +124,13 @@
   padding-top: 4px;
 }
 .protoLink {
-  font: 700 12px/16px var(--f-ui);
+  font: var(--font-meta-strong);
   color: var(--ink-3);
   background: none;
   border: 0;
   padding: 0 2px;
   min-height: 28px;
-  border-radius: 6px;
+  border-radius: var(--r-xs);
 }
 .savedCard {
   margin-top: 12px;
@@ -164,7 +156,7 @@
   gap: 2px;
 }
 .hint {
-  font: 500 13px/18px var(--f-ui);
+  font: var(--font-small);
   color: var(--ink-2);
   display: flex;
   gap: 6px;
@@ -185,7 +177,7 @@
   align-items: center;
 }
 .price {
-  font: 700 15px/20px var(--f-ui);
+  font: var(--font-price);
   font-variant-numeric: tabular-nums;
 }
 .actions {
@@ -221,7 +213,7 @@
     max-width: 640px;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 24px;
+    border-radius: var(--r-xl);
     padding: 48px 56px;
     gap: 14px;
   }
@@ -237,7 +229,7 @@
     gap: 24px;
     margin-top: 12px;
     padding: 24px;
-    border-radius: 16px;
+    border-radius: var(--r-lg);
     background: var(--bg);
     border: 0;
   }
@@ -258,7 +250,7 @@
     margin-top: 8px;
     border: 0;
     background: var(--bg);
-    border-radius: 16px;
+    border-radius: var(--r-lg);
     padding: 18px 20px;
   }
   .savedCard .hr {
@@ -267,7 +259,7 @@
   .well {
     margin-top: 8px;
     background: var(--bg);
-    border-radius: 16px;
+    border-radius: var(--r-lg);
     padding: 16px 20px;
   }
   .hintOutside {

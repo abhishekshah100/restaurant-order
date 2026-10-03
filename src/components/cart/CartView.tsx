@@ -1,37 +1,54 @@
 'use client';
 
 import Link from 'next/link';
-import { Banner, Button, Icon, Input, Skeleton } from '@/components/ui';
+import { useContent, useRestaurant } from '@/api/hooks';
+import { Button, Icon, Skeleton } from '@/components/ui';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Columns } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { OrderingBanner } from '@/components/status/OrderingBanner';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
 import { useCart } from '@/hooks/useCart';
-import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
-import { formatINR, pluralize } from '@/lib/format';
+import { formatINR } from '@/lib/format';
 import { CartLineItem } from './CartLineItem';
 import { EmptyCart } from './EmptyCart';
+import { CartSuggestions } from './CartSuggestions';
+import { KitchenNote } from './KitchenNote';
 import { PriceSummary } from './PriceSummary';
 import styles from './CartView.module.css';
 
 /** Cart (08 · w08) and empty cart (s06 · ws06). */
 export function CartView() {
   const { lines, bill, kitchenNote, setKitchenNote, hydrated } = useCart();
-  const table = useTable();
+  const t = useContent('cart');
+  const { prepTime } = useRestaurant();
 
-  const header = (
+  // The empty state brings its own h1 ("Your cart is empty"), so the top bar title steps down.
+  const renderHeader = (empty = false) => (
     <>
       <SiteHeader />
-      <MobileHeader variant="topbar" title="Your cart" backHref="/menu/" backLabel="Back to menu" />
+      <MobileHeader
+        variant="topbar"
+        title={t('meta.title')}
+        titleAs={empty ? 'p' : undefined}
+        backHref="/menu/"
+        backLabel={t('header.backLabel')}
+      />
+      <OrderingBanner />
     </>
   );
 
   if (!hydrated) {
     return (
       <>
-        {header}
-        <main id="main" className={styles.loading} aria-busy="true" aria-label="Loading your cart">
+        {renderHeader()}
+        <main
+          id="main"
+          className={styles.loading}
+          aria-busy="true"
+          aria-label={t('header.loading')}
+        >
           <Skeleton shape="block" height={64} />
           <Skeleton shape="block" height={88} />
           <Skeleton shape="block" height={88} />
@@ -43,7 +60,7 @@ export function CartView() {
   if (lines.length === 0) {
     return (
       <>
-        {header}
+        {renderHeader(true)}
         <main id="main">
           <EmptyCart />
         </main>
@@ -53,84 +70,81 @@ export function CartView() {
 
   const checkout = (
     <Button href="/checkout/details/" block iconEnd="arrow">
-      Checkout
+      {t('page.checkout')}
     </Button>
   );
 
   return (
     <>
-      {header}
+      {renderHeader()}
       <Columns>
         <main id="main" className={styles.main}>
-          <Breadcrumbs items={[{ label: 'Menu', href: '/menu/' }, { label: 'Cart' }]} />
+          <Breadcrumbs
+            items={[
+              { label: t('breadcrumbs.menu'), href: '/menu/' },
+              { label: t('breadcrumbs.cart') },
+            ]}
+          />
           <div className={cx(styles.pageHead, 'hide-mobile')}>
-            <h1 className="t-display">Your cart</h1>
+            <h1 className="t-display">{t('meta.title')}</h1>
             <Button href="/menu/" variant="secondary" size="sm" iconStart="plus">
-              Add more items
+              {t('page.addMoreItems')}
             </Button>
           </div>
-          <Banner tone="info" icon="user">
-            <span className="hide-desktop">
-              This cart is on your phone only. Others at Table {table} can order separately — the
-              bill can be combined later.
-            </span>
-            <span className="hide-mobile">
-              This cart is on your device only. Others at Table {table} order separately — the bill
-              can be combined later.
-            </span>
-          </Banner>
           <section aria-labelledby="cart-items">
             <div className={cx(styles.itemsHead, 'hide-desktop')}>
               <h2 id="cart-items" className="t-h2">
-                {pluralize(lines.length, 'item')}
+                {t.plural('itemCount', bill.itemCount)}
               </h2>
               <Link href="/menu/" className={styles.addMore}>
                 <Icon name="plus" size="xs" />
-                Add more
+                {t('page.addMore')}
               </Link>
             </div>
-            <ul className={styles.panel} aria-label="Items in cart">
+            <ul className={styles.panel} aria-label={t('page.itemsLabel')}>
               {lines.map((line) => (
-                <CartLineItem key={line.key} line={line} showEach />
+                <CartLineItem key={line.key} line={line} />
               ))}
             </ul>
           </section>
-          <Input
-            id="kitchen-note"
-            label="Note for the kitchen"
-            placeholder="e.g. Serve starters first"
-            maxLength={120}
-            value={kitchenNote}
-            onChange={(e) => setKitchenNote(e.target.value)}
-          />
+          <CartSuggestions />
+          <KitchenNote value={kitchenNote} onChange={setKitchenNote} />
           <section className={cx(styles.bill, 'hide-desktop')} aria-labelledby="bill-m">
             <h2 id="bill-m" className="t-h3">
-              Bill summary
+              {t('page.billSummary')}
             </h2>
             <PriceSummary bill={bill} variant="split" />
           </section>
-          <p className={cx('t-small c3', styles.fine, 'hide-desktop')}>
-            Prices include no hidden charges. Tipping is optional.
-          </p>
+          <p className={cx('t-small c3', styles.fine, 'hide-desktop')}>{t('page.fineMobile')}</p>
         </main>
 
         <aside className={cx(styles.aside, 'hide-mobile')} aria-labelledby="bill-d">
           <h2 id="bill-d" className="t-h2">
-            Bill summary
+            {t('page.billSummary')}
           </h2>
           <PriceSummary bill={bill} variant="split" showCount />
+          <p className={cx('t-small', styles.eta)}>
+            <Icon name="clock" size="xs" />
+            {t('page.eta', { time: prepTime })}
+          </p>
           {checkout}
           <p className={cx('t-small c3', styles.lockNote)}>
             <Icon name="lock" size="xs" />
-            No hidden charges · Tipping is optional
+            {t('page.fineDesktop')}
           </p>
         </aside>
       </Columns>
 
       <div className={cx(styles.actionbar, 'hide-desktop')}>
+        <p className={styles.etaBar}>
+          <span className={styles.etaPill}>
+            <Icon name="clock" size="xs" />
+            {t('page.etaAfterOrder', { time: prepTime })}
+          </span>
+        </p>
         <div className={styles.total}>
           <span className={styles.totalAmt}>{formatINR(bill.total)}</span>
-          <span className="t-small c3">Total incl. taxes</span>
+          <span className="t-small c3">{t('page.totalLabel')}</span>
         </div>
         {checkout}
       </div>

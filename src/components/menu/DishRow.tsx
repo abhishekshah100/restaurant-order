@@ -1,13 +1,24 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { memo } from 'react';
 import { Icon } from '@/components/ui';
+import { useContent } from '@/api/hooks';
+import { useDishLines } from '@/hooks/useCart';
+import { useCartLineLabels } from '@/hooks/useCartLineLabels';
+import { describeInMenu } from '@/lib/cartLine';
 import { cx } from '@/lib/cx';
 import { formatINR } from '@/lib/format';
-import { dishImage, highlight, isAvailable, variantSummary } from '@/lib/menu';
+import { dishImage, highlight, isAvailable, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import { AddControl } from './AddControl';
 import { DishTags } from './DishTags';
+import { ExpandableText } from './ExpandableText';
 import styles from './DishRow.module.css';
+
+/** The thumbnail repeats the dish name next to it, so screen readers skip it. */
+const DECORATIVE = '';
 
 export interface DishRowProps {
   dish: Dish;
@@ -17,79 +28,88 @@ export interface DishRowProps {
   showPrepTime?: boolean;
   /** Search result layout: category instead of tag, "In cart" note. */
   searchResult?: boolean;
-  /** Heading level for the dish name. */
-  headingAs?: 'h3' | 'h4';
 }
 
-/** Menu list row (.item). The whole row links to the dish; ADD / stepper stays separately operable. */
-export function DishRow({
+/**
+ * Menu dish card: tags, name, description and an optional photo on top;
+ * prices, a short note and the ADD / stepper in a fixed bottom-right spot.
+ * The whole card opens the dish; ADD stays separately operable.
+ */
+export const DishRow = memo(function DishRow({
   dish,
   query,
   showPrepTime,
   searchResult,
-  headingAs: Heading = 'h3',
 }: DishRowProps) {
+  const lines = useDishLines(dish.slug);
+  const t = useContent('menu');
+  const lineLabels = useCartLineLabels();
   const thumb = dishImage(dish, 'thumb');
-  const alt = variantSummary(dish);
   const available = isAvailable(dish);
+
+  // Once the dish is in the cart, a short note says which version was added.
+  const inCartNote =
+    lines.length > 0
+      ? searchResult
+        ? t('dish.inCart')
+        : (describeInMenu(dish, lines, lineLabels) ?? t('dish.inCart'))
+      : null;
 
   return (
     <li className={cx(styles.item, !available && styles.out)}>
-      <div className={styles.body}>
-        <DishTags dish={dish} showCategory={searchResult} />
-        <Heading className={styles.name}>
-          <Link href={`/dish/${dish.slug}/`} className={styles.link}>
-            {query
-              ? highlight(dish.name, query).map((part, i) =>
-                  part.match ? (
-                    <mark key={i} className={styles.mark}>
-                      {part.text}
-                    </mark>
-                  ) : (
-                    <span key={i}>{part.text}</span>
-                  ),
-                )
-              : dish.name}
-          </Link>
-        </Heading>
-        <span className={styles.price}>
-          {formatINR(dish.price)}
-          {alt && <span className={styles.priceAlt}>{alt}</span>}
-        </span>
-        <p className={styles.desc}>{dish.description}</p>
-        {showPrepTime && dish.image && dish.prepTime && (
-          <span className={styles.prep}>
-            <Icon name="clock" size="xs" />
-            {dish.prepTime}
-          </span>
+      <div className={styles.main}>
+        <div className={styles.body}>
+          <DishTags dish={dish} showCategory={searchResult} />
+          <h3 className={styles.name}>
+            <Link href={`/dish/${dish.slug}/`} className={styles.link}>
+              {query
+                ? highlight(dish.name, query).map((part, i) =>
+                    part.match ? (
+                      <mark key={i} className={styles.mark}>
+                        {part.text}
+                      </mark>
+                    ) : (
+                      <span key={i}>{part.text}</span>
+                    ),
+                  )
+                : dish.name}
+            </Link>
+          </h3>
+          <ExpandableText className={styles.desc} text={dish.description} itemName={dish.name} />
+          {showPrepTime && dish.image && dish.prepTime && (
+            <span className={styles.prep}>
+              <Icon name="clock" size="xs" />
+              {dish.prepTime}
+            </span>
+          )}
+        </div>
+        {thumb && (
+          <div className={styles.thumb}>
+            <Image
+              className={styles.img}
+              src={thumb.src}
+              alt={DECORATIVE}
+              width={thumb.width}
+              height={thumb.height}
+              sizes="96px"
+            />
+          </div>
         )}
       </div>
-      {thumb ? (
-        <div className={styles.media}>
-          <Image
-            className={styles.img}
-            src={thumb.src}
-            alt=""
-            width={thumb.width}
-            height={thumb.height}
-            sizes="116px"
-          />
-          <AddControl
-            dish={dish}
-            className={styles.control}
-            inCartNote={searchResult ? 'In cart' : undefined}
-            showCustomisable={!searchResult}
-          />
+
+      <div className={styles.foot}>
+        <div className={styles.priceBlock}>
+          {/* Starting price; sizes and add-ons are chosen in the pop-up */}
+          <span className={styles.price}>{formatINR(startingPrice(dish))}</span>
+          {inCartNote && (
+            <span className={cx(styles.note, styles.noteInCart)}>
+              <Icon name="bag" size="xs" />
+              {inCartNote}
+            </span>
+          )}
         </div>
-      ) : (
-        <div className={styles.act}>
-          <AddControl
-            dish={dish}
-            inCartNote={searchResult ? 'In cart' : undefined}
-            showCustomisable={!searchResult}
-          />
-        </div>
-      )}
+        <AddControl dish={dish} className={styles.control} size="sm" customisableHint />
+      </div>
     </li>
   );
-}
+});

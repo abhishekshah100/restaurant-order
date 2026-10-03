@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { CategoryView } from '@/components/menu/CategoryView';
-import { categories } from '@/data/menu';
-import { getCategory } from '@/lib/menu';
+import { getContent, getMenuServer } from '@/api/server';
 
 interface Props {
   params: Promise<{ category: string }>;
@@ -10,19 +9,25 @@ interface Props {
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return categories.map((c) => ({ category: c.id }));
+export async function generateStaticParams() {
+  return (await getMenuServer()).categories.map((c) => ({ category: c.id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const category = getCategory((await params).category);
-  return category
-    ? { title: category.name, description: `${category.name} — ${category.description}.` }
-    : {};
+  const category = (await getMenuServer()).getCategory((await params).category);
+  if (!category) return {};
+  const t = await getContent('menu');
+  return {
+    title: category.name,
+    description: t('meta.categoryDescription', {
+      name: category.name,
+      description: category.description,
+    }),
+  };
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const category = getCategory((await params).category);
+  const category = (await getMenuServer()).getCategory((await params).category);
   if (!category) notFound();
   return <CategoryView category={category} />;
 }

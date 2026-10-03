@@ -1,13 +1,5 @@
 .row {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  margin: 0 -20px;
-  padding: 2px 20px;
-}
-.row::-webkit-scrollbar {
-  display: none;
+  composes: chipRail from '@/styles/patterns.module.css';
 }
 .desktopActions {
   display: flex;

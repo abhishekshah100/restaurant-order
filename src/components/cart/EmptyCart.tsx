@@ -1,33 +1,35 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button, EmptyState } from '@/components/ui';
-import { popularAtTable } from '@/data/menu';
 import { cx } from '@/lib/cx';
 import { formatINR } from '@/lib/format';
-import { dishImage, getDish } from '@/lib/menu';
+import { useContent, useMenu } from '@/api/hooks';
+import { dishImage } from '@/lib/menu';
 import styles from './CartView.module.css';
 
 /** Empty cart with popular suggestions (s06 · ws06). */
 export function EmptyCart() {
+  const { popularAtTable, getDish } = useMenu();
+  const t = useContent('cart');
   return (
     <div className={styles.emptyWrap}>
       <EmptyState
         className={styles.emptyCard}
         icon="bag"
-        title="Your cart is empty"
+        title={t('empty.title')}
         as="h1"
         titleClassName={styles.emptyTitle}
         actions={
           <Button href="/menu/" className={styles.emptyBtn}>
-            Browse the menu
+            {t('empty.browse')}
           </Button>
         }
       >
-        Dishes you add will appear here. Nothing is sent to the kitchen until you check out.
+        {t('empty.body')}
       </EmptyState>
       <section className={styles.popular} aria-labelledby="popular-title">
         <h2 id="popular-title" className="t-caption c3">
-          Popular at your table tonight
+          {t('empty.popular')}
         </h2>
         <div className={styles.popularGrid}>
           {popularAtTable.map((item, i) => {
@@ -42,7 +44,7 @@ export function EmptyCart() {
               >
                 <Image
                   src={thumb.src}
-                  alt=""
+                  alt={''}
                   width={thumb.width}
                   height={thumb.height}
                   sizes="52px"

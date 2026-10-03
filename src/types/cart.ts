@@ -7,6 +7,8 @@ export interface LineConfig {
   addOnIds: string[];
   /** Selected choice per option group, e.g. { spice: 'Medium' }. */
   options: Record<string, string>;
+  /** Removable ingredient ids the guest asked to leave out. */
+  removals: string[];
   /** Quick-instruction chips plus free text. */
   instructions: string[];
   note: string;
@@ -28,8 +30,6 @@ export interface CartState {
 export type CartAction =
   | { type: 'add'; config: LineConfig; unitPrice: Rupees; quantity: number }
   | { type: 'setQuantity'; key: string; quantity: number }
-  | { type: 'increment'; key: string }
-  | { type: 'decrement'; key: string }
   | { type: 'remove'; key: string }
   | { type: 'restore'; line: CartLine; index: number }
   | { type: 'edit'; key: string; config: LineConfig; unitPrice: Rupees; quantity: number }

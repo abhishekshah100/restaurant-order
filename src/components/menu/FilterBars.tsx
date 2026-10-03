@@ -1,78 +1,76 @@
 'use client';
 
 import { Chip } from '@/components/ui';
+import { useContent } from '@/api/hooks';
 import { useFilters } from '@/context/FiltersContext';
 import { cx } from '@/lib/cx';
-import { PRICE_LIMIT, type Diet } from '@/lib/menu';
+import { PRICE_LIMIT, hasActiveFilters } from '@/lib/menu';
 import { formatINR } from '@/lib/format';
 import { SortMenu } from './SortMenu';
+import { useFilterActions } from './useFilterActions';
 import styles from './FilterBars.module.css';
 
 /** Mobile menu-home chips: All · Veg · Non-veg · Chef's picks · Spicy (02). */
 export function MenuFilterChips() {
-  const { filters, setFilters, reset } = useFilters();
-  const none = filters.diet === 'all' && !filters.chefs && !filters.spicy && !filters.under400;
-  const diet = (d: Diet) => setFilters((f) => ({ ...f, diet: f.diet === d ? 'all' : d }));
+  const { filters, reset } = useFilters();
+  const { toggleDiet, toggleFlag } = useFilterActions();
+  const none = !hasActiveFilters(filters);
+  const t = useContent('menu');
   return (
-    <div className={cx(styles.row, 'hide-desktop')} role="group" aria-label="Filters">
+    <div className={cx(styles.row, 'hide-desktop')} role="group" aria-label={t('filters.label')}>
       <Chip pressed={none} onClick={reset}>
-        All
+        {t('filters.all')}
       </Chip>
-      <Chip veg pressed={filters.diet === 'veg'} onClick={() => diet('veg')}>
-        Veg
+      <Chip veg pressed={filters.diet === 'veg'} onClick={() => toggleDiet('veg')}>
+        {t('filters.veg')}
       </Chip>
-      <Chip veg={false} pressed={filters.diet === 'nonveg'} onClick={() => diet('nonveg')}>
-        Non-veg
+      <Chip veg={false} pressed={filters.diet === 'nonveg'} onClick={() => toggleDiet('nonveg')}>
+        {t('filters.nonVeg')}
       </Chip>
-      <Chip
-        iconStart="chef"
-        pressed={filters.chefs}
-        onClick={() => setFilters((f) => ({ ...f, chefs: !f.chefs }))}
-      >
-        Chef&apos;s picks
+      <Chip iconStart="chef" pressed={filters.chefs} onClick={() => toggleFlag('chefs')}>
+        {t('filters.chefsPicks')}
       </Chip>
-      <Chip
-        iconStart="flame"
-        pressed={filters.spicy}
-        onClick={() => setFilters((f) => ({ ...f, spicy: !f.spicy }))}
-      >
-        Spicy
+      <Chip iconStart="flame" pressed={filters.spicy} onClick={() => toggleFlag('spicy')}>
+        {t('filters.spicy')}
       </Chip>
     </div>
   );
 }
 
-const under = `Under ${formatINR(PRICE_LIMIT)}`;
-
 /** Mobile category chips: Sort · Veg · Non-veg · Under ₹400 (03). */
 export function CategoryFilterChips() {
-  const { filters, setFilters, sort, setSort } = useFilters();
-  const diet = (d: Diet) => setFilters((f) => ({ ...f, diet: f.diet === d ? 'all' : d }));
+  const { filters, sort, setSort } = useFilters();
+  const { toggleDiet, toggleFlag } = useFilterActions();
+  const t = useContent('menu');
   return (
-    <div className={cx(styles.row, 'hide-desktop')} role="group" aria-label="Filter and sort">
+    <div
+      className={cx(styles.row, 'hide-desktop')}
+      role="group"
+      aria-label={t('filters.filterAndSort')}
+    >
       <SortMenu value={sort} onChange={setSort} presentation="sheet" />
       <Chip
         veg
         pressed={filters.diet === 'veg'}
         iconEnd={filters.diet === 'veg' ? 'x' : undefined}
-        onClick={() => diet('veg')}
+        onClick={() => toggleDiet('veg')}
       >
-        Veg
+        {t('filters.veg')}
       </Chip>
       <Chip
         veg={false}
         pressed={filters.diet === 'nonveg'}
         iconEnd={filters.diet === 'nonveg' ? 'x' : undefined}
-        onClick={() => diet('nonveg')}
+        onClick={() => toggleDiet('nonveg')}
       >
-        Non-veg
+        {t('filters.nonVeg')}
       </Chip>
       <Chip
         pressed={filters.under400}
         iconEnd={filters.under400 ? 'x' : undefined}
-        onClick={() => setFilters((f) => ({ ...f, under400: !f.under400 }))}
+        onClick={() => toggleFlag('under400')}
       >
-        {under}
+        {t('filters.under', { price: formatINR(PRICE_LIMIT) })}
       </Chip>
     </div>
   );
@@ -80,16 +78,18 @@ export function CategoryFilterChips() {
 
 /** Desktop category controls beside the title: Sort · Under ₹400 (w03). */
 export function CategoryDesktopActions() {
-  const { filters, setFilters, sort, setSort } = useFilters();
+  const { filters, sort, setSort } = useFilters();
+  const { toggleFlag } = useFilterActions();
+  const t = useContent('menu');
   return (
     <div className={cx(styles.desktopActions, 'hide-mobile')}>
       <SortMenu value={sort} onChange={setSort} alignEnd />
       <Chip
         pressed={filters.under400}
         iconEnd={filters.under400 ? 'x' : undefined}
-        onClick={() => setFilters((f) => ({ ...f, under400: !f.under400 }))}
+        onClick={() => toggleFlag('under400')}
       >
-        {under}
+        {t('filters.under', { price: formatINR(PRICE_LIMIT) })}
       </Chip>
     </div>
   );
@@ -98,22 +98,24 @@ export function CategoryDesktopActions() {
 /** Desktop "Veg only ×" chip for the active sidebar filter, plus the result count (w03). */
 export function ActiveFilterRow({ summary }: { summary: string }) {
   const { filters, setFilters } = useFilters();
+  const { setDiet } = useFilterActions();
+  const t = useContent('menu');
   const chips = [
     filters.diet === 'veg' && {
       key: 'veg',
-      label: 'Veg only',
+      label: t('filters.vegOnly'),
       veg: true,
-      clear: () => setFilters((f) => ({ ...f, diet: 'all' })),
+      clear: () => setDiet('all'),
     },
     filters.diet === 'nonveg' && {
       key: 'nv',
-      label: 'Non-veg only',
+      label: t('filters.nonVegOnly'),
       veg: false,
-      clear: () => setFilters((f) => ({ ...f, diet: 'all' })),
+      clear: () => setDiet('all'),
     },
     filters.spicy && {
       key: 'spicy',
-      label: 'Spicy',
+      label: t('filters.spicy'),
       veg: undefined,
       clear: () => setFilters((f) => ({ ...f, spicy: false })),
     },
@@ -128,7 +130,7 @@ export function ActiveFilterRow({ summary }: { summary: string }) {
           pressed
           iconEnd="x"
           onClick={c.clear}
-          aria-label={`Remove filter: ${c.label}`}
+          aria-label={t('filters.remove', { label: c.label })}
         >
           {c.label}
         </Chip>

@@ -1,0 +1,152 @@
+/* OTP step (10 · w10 · s07 · ws07): one centred column on every screen size */
+.verify {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.column {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 0 0 calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+/* Sizes and gaps scale with the window height (dvh), so the step fits without scrolling */
+.art {
+  width: clamp(72px, 15dvh, 124px);
+  margin-bottom: clamp(4px, 1.4dvh, 12px);
+}
+.title {
+  font: 500 24px/30px var(--f-display);
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+.sub {
+  font: 500 14px/20px var(--f-ui);
+  color: var(--ink-2);
+  margin: 6px 0 0;
+}
+.phone {
+  display: block;
+  margin-top: 2px;
+  font: 700 16px/22px var(--f-ui);
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.code {
+  width: 100%;
+  margin-top: clamp(14px, 3dvh, 28px);
+}
+/* Error: icon stays beside the text; the block itself is centred under the code */
+.code [role='alert'] {
+  width: fit-content;
+  max-width: 340px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+/* Resend: a quiet countdown, then two text actions */
+.resend {
+  margin-top: clamp(2px, 1dvh, 10px);
+  min-height: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 8px;
+  font: var(--font-small);
+}
+.timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.timer b {
+  color: var(--ink);
+}
+.muted {
+  color: var(--ink-2);
+}
+.sep {
+  color: var(--ink-3);
+}
+.textBtn {
+  font: var(--font-label);
+  color: var(--brand-600);
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  border-radius: var(--r-xs);
+}
+@media (hover: hover) {
+  .textBtn:hover {
+    color: var(--brand-700);
+  }
+}
+
+/* Verify & continue sits right under the code, so it stays above the keyboard */
+.column > button[type='submit'] {
+  margin-top: clamp(4px, 1.2dvh, 12px);
+}
+.change {
+  composes: textLink from '@/styles/patterns.module.css';
+  margin-top: 4px;
+  gap: 6px;
+}
+.trust {
+  margin: 8px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--font-small);
+  color: var(--ink-3);
+}
+
+/* Short windows: drop the reassurance line first */
+@media (max-height: 720px) {
+  .trust {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .back {
+    align-self: flex-start;
+  }
+  .column {
+    max-width: 440px;
+    padding: 0 0 8px;
+  }
+  .title {
+    font-size: 28px;
+    line-height: 34px;
+  }
+  .sub {
+    font-size: 15px;
+    line-height: 22px;
+  }
+}
+/* Short laptop windows: a smaller illustration and tighter gaps keep it on one screen */
+@media (min-width: 1024px) and (max-height: 800px) {
+  .art {
+    width: clamp(56px, 9dvh, 96px);
+    margin-bottom: 4px;
+  }
+  .code {
+    margin-top: 16px;
+  }
+  .resend {
+    margin-top: 2px;
+  }
+}

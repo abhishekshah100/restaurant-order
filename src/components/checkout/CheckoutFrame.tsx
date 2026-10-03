@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useContent } from '@/api/hooks';
 import { Skeleton } from '@/components/ui';
 import { CheckoutProgress, type CheckoutStep } from '@/components/layout/CheckoutSteps';
 import { MobileHeader } from '@/components/layout/MobileHeader';
@@ -16,11 +17,9 @@ export interface CheckoutFrameProps {
   ready: boolean;
   children: ReactNode;
   aside: ReactNode;
-  /** Bottom actions on mobile when they aren't part of a form inside `children`. */
-  mobileFoot?: ReactNode;
 }
 
-/** Checkout page frame: header + progress, main panel, summary aside, mobile footer. */
+/** Checkout page frame: header + progress, main panel and summary aside. */
 export function CheckoutFrame({
   step,
   backHref,
@@ -28,26 +27,28 @@ export function CheckoutFrame({
   ready,
   children,
   aside,
-  mobileFoot,
 }: CheckoutFrameProps) {
+  const t = useContent('checkout');
   return (
     <div className={styles.page}>
       <SiteHeader variant="checkout" step={step} />
-      <MobileHeader variant="topbar" title="Checkout" backHref={backHref} backLabel={backLabel} />
+      <MobileHeader
+        variant="topbar"
+        title={t('frame.title')}
+        backHref={backHref}
+        backLabel={backLabel}
+      />
       <CheckoutProgress current={step} />
       {ready ? (
-        <>
-          <Columns className={styles.body}>
-            <main id="main" className={styles.main}>
-              {children}
-            </main>
-            {aside}
-          </Columns>
-          {mobileFoot && <div className={`${styles.mobileFoot} hide-desktop`}>{mobileFoot}</div>}
-        </>
+        <Columns className={styles.body}>
+          <main id="main" className={styles.main}>
+            {children}
+          </main>
+          {aside}
+        </Columns>
       ) : (
         <Columns className={styles.body}>
-          <main id="main" className={styles.main} aria-busy="true" aria-label="Loading checkout">
+          <main id="main" className={styles.main} aria-busy="true" aria-label={t('frame.loading')}>
             <Skeleton shape="title" width="70%" />
             <Skeleton shape="block" height={52} />
             <Skeleton shape="block" height={52} />

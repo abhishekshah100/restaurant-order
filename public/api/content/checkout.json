@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "details": {
+      "title": "Your details",
+      "description": "Enter your name and mobile number to place your order."
+    },
+    "verify": {
+      "title": "Verify your number",
+      "description": "Enter the 6-digit code we sent by SMS."
+    },
+    "payment": {
+      "title": "Payment",
+      "description": "Pay online now or at the counter."
+    },
+    "processing": {
+      "title": "Confirming payment",
+      "description": "Approve the payment request in your UPI app."
+    }
+  },
+  "frame": {
+    "title": "Checkout",
+    "loading": "Loading checkout",
+    "back": "Back",
+    "backToCart": "Back to cart"
+  },
+  "lines": {
+    "restaurantTable": "{restaurant} · Table {table}",
+    "itemsTable": "{items} · Table {table}",
+    "nameTable": "{name} · Table {table}",
+    "nameRestaurantTable": "{name} · {restaurant} · Table {table}"
+  },
+  "summary": {
+    "title": "Order summary",
+    "edit": "Edit",
+    "quantity": "{count} × ",
+    "eta": "Ready in about {time}"
+  },
+  "details": {
+    "title": "Who's ordering?",
+    "nameLabel": "Full name",
+    "phoneHint": "For order updates and verification. We'll send a 6-digit code by SMS.",
+    "orderRowSub": "Incl. taxes · tap to review",
+    "trustLabel": "About your details",
+    "trust": {
+      "secure": "Secure checkout",
+      "noAccount": "No account needed",
+      "numberUse": "Number used only for this order"
+    },
+    "submit": "Send OTP",
+    "errors": {
+      "nameRequired": "Please enter your name",
+      "nameTooShort": "Enter your full name",
+      "phoneLength": "Enter a 10-digit mobile number",
+      "phonePrefix": "Indian mobile numbers start with 6, 7, 8 or 9"
+    }
+  },
+  "verify": {
+    "illustrationCode": "OTP",
+    "sentTo": "We've sent a 6-digit code by SMS to<b>+91 {phone}</b>",
+    "didntGetIt": "Didn't get it?",
+    "resendSms": "Resend SMS",
+    "getCall": "Get a call",
+    "resendIn": "Resend code in <b>{time}</b>",
+    "canResendNow": "You can request a new code now.",
+    "canResendIn": "You can request a new code in {seconds} seconds.",
+    "submit": "Verify & continue",
+    "changeNumber": "Change mobile number",
+    "trust": "Your number is only used for this order.",
+    "toast": {
+      "resent": "New code sent to {phone}",
+      "call": "You'll get a call on {phone} with the code shortly"
+    },
+    "errors": {
+      "incomplete": "Enter all 6 digits of the code.",
+      "wrong": {
+        "one": "That code doesn't match. Check the SMS and try again — {count} attempt left.",
+        "other": "That code doesn't match. Check the SMS and try again — {count} attempts left."
+      },
+      "locked": "That code doesn't match and there are no attempts left. Request a new code."
+    }
+  },
+  "payment": {
+    "title": "How would you like to pay?",
+    "intro": "Either way, it goes to the kitchen as soon as you confirm.",
+    "amountPayable": "Amount payable",
+    "methodsLabel": "Payment method",
+    "fastest": "Fastest",
+    "methods": {
+      "online": {
+        "title": "Pay online now",
+        "mobileSub": "UPI, card or netbanking",
+        "desktopSub": "UPI, debit / credit card or netbanking"
+      },
+      "counter": {
+        "title": "Pay at the counter",
+        "mobileSub": "Cash, card or UPI when you leave"
+      }
+    },
+    "payOnline": "Pay {total}",
+    "placeOrder": "Place order · {total}",
+    "secured": "Secured by {partner} · Card details are never stored",
+    "placeError": "Couldn't place the order on this device. Please ask a waiter."
+  },
+  "processing": {
+    "loading": "Loading payment",
+    "title": "Confirming your payment",
+    "ledeMobile": "Approve the request in your UPI app. Please don't close this page or press back.",
+    "ledeDesktop": "Approve the request in your UPI app or bank page. Please don't close or refresh this tab.",
+    "amount": "Amount",
+    "progressLabel": "Payment progress",
+    "requestSent": "Payment request sent",
+    "waitingMobile": "Waiting for your approval",
+    "waitingDesktop": "Waiting for approval",
+    "timeLeft": " left",
+    "sendingMobile": "Sending order to the kitchen",
+    "sendingDesktop": "Sending to the kitchen",
+    "secure": "Encrypted payment · Secured by {partner}",
+    "cancel": "Cancel payment",
+    "protoSuccess": "Prototype: success",
+    "protoFailure": "Prototype: failure"
+  },
+  "failed": {
+    "title": "Payment didn't go through",
+    "body": "The UPI request expired before it was approved. <b>No money was taken.</b>",
+    "saved": "Your order is saved",
+    "summaryTotal": "{summary} · {total}",
+    "notSent": "Not sent yet",
+    "refundHint": "If any amount was debited, it's refunded automatically within 5–7 working days.",
+    "retry": "Retry {total}",
+    "changeMethod": "Change payment method",
+    "backToOrder": "Back to order"
+  },
+  "cancelled": {
+    "title": "Payment cancelled",
+    "body": "You cancelled the payment, so nothing was charged. Your cart is just as you left it.",
+    "tryAgain": "Try paying again",
+    "payAtCounterInstead": "Pay at the counter instead"
+  }
+}

@@ -6,10 +6,12 @@
   position: relative;
   z-index: 1;
 }
-.note {
-  font: 600 11px/14px var(--f-ui);
+
+/* "Customisable" under the ADD pill */
+.hint {
+  font: 600 10.5px/14px var(--f-ui);
+  letter-spacing: 0.02em;
   color: var(--ink-3);
-  margin-top: 6px;
-  text-align: center;
   white-space: nowrap;
+  margin-top: 1px;
 }

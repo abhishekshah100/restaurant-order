@@ -11,3 +11,9 @@
   background: var(--surface);
   color: var(--ink);
 }
+
+.inputWrap {
+  flex: 1;
+  min-width: 0;
+  display: block;
+}

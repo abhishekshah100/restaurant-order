@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import type { LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
 import { defaultConfig, isValidConfig, unitPrice } from '@/lib/cartLine';
-import { MAX_QUANTITY } from '@/lib/constants';
+import { normaliseConfig } from '@/lib/options';
+import { ITEM_NOTE_MAX, MAX_QUANTITY } from '@/lib/constants';
 
 export interface DishConfigState {
   config: LineConfig;
@@ -17,6 +18,8 @@ export interface DishConfigState {
   setAddOns: (ids: string[]) => void;
   setOption: (groupId: string, choice: string) => void;
   toggleInstruction: (text: string) => void;
+  /** Leave an ingredient out / put it back ("No onion"). */
+  toggleRemoval: (id: string) => void;
   setNote: (note: string) => void;
   setQuantity: (n: number) => void;
 }
@@ -26,7 +29,9 @@ export function useDishConfig(
   dish: Dish,
   initial?: { config: LineConfig; quantity: number },
 ): DishConfigState {
-  const [config, setConfig] = useState<LineConfig>(() => initial?.config ?? defaultConfig(dish));
+  const [config, setConfig] = useState<LineConfig>(() =>
+    initial ? normaliseConfig(dish, initial.config) : defaultConfig(dish),
+  );
   const [quantity, setQty] = useState(initial?.quantity ?? 1);
 
   return useMemo(() => {
@@ -37,7 +42,8 @@ export function useDishConfig(
       unitPrice: unit,
       total: unit * quantity,
       valid: isValidConfig(dish, config),
-      setVariant: (variantId) => setConfig((c) => ({ ...c, variantId })),
+      // Changing size re-checks which add-ons and choices that size offers.
+      setVariant: (variantId) => setConfig((c) => normaliseConfig(dish, { ...c, variantId })),
       setAddOns: (ids) =>
         setConfig((c) => ({
           ...c,
@@ -52,7 +58,14 @@ export function useDishConfig(
             ? c.instructions.filter((t) => t !== text)
             : [...c.instructions, text],
         })),
-      setNote: (note) => setConfig((c) => ({ ...c, note: note.slice(0, 140) })),
+      toggleRemoval: (id) =>
+        setConfig((c) => ({
+          ...c,
+          removals: c.removals.includes(id)
+            ? c.removals.filter((r) => r !== id)
+            : [...c.removals, id],
+        })),
+      setNote: (note) => setConfig((c) => ({ ...c, note: note.slice(0, ITEM_NOTE_MAX) })),
       setQuantity: (n) => setQty(Math.max(1, Math.min(MAX_QUANTITY, n))),
     };
   }, [dish, config, quantity]);

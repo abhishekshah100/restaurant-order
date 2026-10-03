@@ -1,6 +1,7 @@
 /* The Olive Table — base styles (ported from olive-core.css). Component styles live in CSS Modules. */
 @import './tokens.css';
 
+/* ---------- Reset & base elements ---------- */
 *,
 *::before,
 *::after {
@@ -28,19 +29,6 @@ body {
 
 body.is-scroll-locked {
   overflow: hidden;
-}
-
-:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-
-/* Windows high-contrast: keep a real outline where box-shadows are dropped */
-@media (forced-colors: active) {
-  :focus-visible {
-    outline: 2px solid CanvasText;
-    outline-offset: 2px;
-  }
 }
 
 button,
@@ -78,47 +66,63 @@ ol {
   list-style: none;
 }
 
-/* Typography */
+/* ---------- Focus ---------- */
+/* Default ring. Specificity (0,1,0): a module rule that sets box-shadow/outline on a focusable
+   element wins over this, so such components must add their own :focus-visible rule. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+/* Windows high-contrast drops box-shadows (and modules set `outline: none` on fields),
+   so force a real outline on anything focused by keyboard and on focused text fields. */
+@media (forced-colors: active) {
+  :focus-visible,
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid CanvasText !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* ---------- Typography ---------- */
 .t-display {
-  font: 500 36px/42px var(--f-display);
+  font: var(--font-display);
   letter-spacing: -0.01em;
   margin: 0;
   text-wrap: balance;
 }
 .t-h1 {
-  font: 500 28px/34px var(--f-display);
+  font: var(--font-h1);
   letter-spacing: -0.005em;
   margin: 0;
   text-wrap: balance;
 }
 .t-h2 {
-  font: 500 22px/28px var(--f-display);
+  font: var(--font-h2);
   margin: 0;
 }
 .t-h3 {
-  font: 700 17px/24px var(--f-ui);
+  font: var(--font-h3);
   margin: 0;
 }
 .t-body {
-  font: 500 15px/22px var(--f-ui);
+  font: var(--font-body);
   margin: 0;
 }
 .t-small {
-  font: 500 13px/18px var(--f-ui);
+  font: var(--font-small);
   margin: 0;
 }
 .t-caption {
-  font: 700 11px/16px var(--f-ui);
+  font: var(--font-caption);
   letter-spacing: 0.09em;
   text-transform: uppercase;
   margin: 0;
 }
-.t-price {
-  font: 700 15px/20px var(--f-ui);
-  font-variant-numeric: tabular-nums;
-}
 .t-price-lg {
-  font: 500 30px/36px var(--f-display);
+  font: var(--font-price-lg);
   font-variant-numeric: lining-nums tabular-nums;
 }
 .c2 {
@@ -127,16 +131,8 @@ ol {
 .c3 {
   color: var(--ink-3);
 }
-.cb {
-  color: var(--brand-600);
-}
-.strike {
-  text-decoration: line-through;
-  color: var(--ink-3);
-  font-weight: 600;
-}
 
-/* Accessibility helpers */
+/* ---------- Accessibility helpers ---------- */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -144,7 +140,7 @@ ol {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
@@ -153,30 +149,32 @@ ol {
   position: absolute;
   left: 12px;
   top: -60px;
-  z-index: 100;
+  z-index: var(--z-skip-link);
   padding: 10px 16px;
   border-radius: var(--r);
   background: var(--ink);
   color: var(--on-dark);
-  font: 700 14px/20px var(--f-ui);
+  font: var(--font-label);
   text-decoration: none;
 }
 .skip-link:focus {
   top: 12px;
 }
 
+/* Reduced motion: `!important` so it beats module animation/transition rules. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms;
-    animation-iteration-count: 1;
-    transition-duration: 0.01ms;
-    scroll-behavior: auto;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-/* Responsive visibility — mobile layout below 1024px, web layout from 1024px.
+/* ---------- Responsive visibility ----------
+   Mobile layout below 1024px, web layout from 1024px.
    `html` raises specificity so these win over a component's own display rule. */
 @media (max-width: 1023.98px) {
   html .hide-mobile {
@@ -187,10 +185,4 @@ ol {
   html .hide-desktop {
     display: none;
   }
-}
-
-/* Temporary Phase 4 placeholder pages */
-.coming-soon {
-  padding-top: 72px;
-  padding-bottom: 72px;
 }

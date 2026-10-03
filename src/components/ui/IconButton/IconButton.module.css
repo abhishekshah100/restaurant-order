@@ -12,33 +12,34 @@
   text-decoration: none;
   position: relative;
 }
-.btn:hover {
-  background: var(--sand);
-}
 .raised {
   background: var(--surface);
   box-shadow: var(--sh-1);
 }
-.raised:hover {
-  background: var(--surface);
+.raised:focus-visible {
+  box-shadow: var(--focus);
 }
 .soft {
   background: var(--sand);
 }
-.soft:hover {
-  background: var(--line);
-}
 /* Compact visual size (e.g. search clear); the hit area stays 44px */
 .sm {
+  composes: hitArea from '@/styles/patterns.module.css';
   width: 36px;
   height: 36px;
-}
-.sm::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
 }
 .btn:disabled {
   color: var(--ink-3);
   cursor: not-allowed;
+}
+@media (hover: hover) {
+  .btn:hover {
+    background: var(--sand);
+  }
+  .raised:hover {
+    background: var(--surface);
+  }
+  .soft:hover {
+    background: var(--line);
+  }
 }

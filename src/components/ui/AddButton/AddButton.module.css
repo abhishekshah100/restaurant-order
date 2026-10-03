@@ -1,9 +1,9 @@
 .add {
-  position: relative;
+  composes: hitArea from '@/styles/patterns.module.css';
   height: 40px;
   min-width: 84px;
   padding: 0 16px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
   border: 1.5px solid var(--brand-600);
   background: var(--surface);
   color: var(--brand-600);
@@ -16,17 +16,11 @@
   box-shadow: var(--sh-1);
   flex: none;
 }
-/* Hit area extends to 48px */
-.add::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
+/* Hit area extends to 48px (.hitArea, default inset) */
+.add:focus-visible {
+  box-shadow: var(--focus);
 }
-.add:hover {
-  background: var(--brand-tint-2);
-}
-.disabled,
-.disabled:hover {
+.disabled {
   border-color: var(--line-strong);
   color: var(--ink-3);
   background: var(--sand);
@@ -35,4 +29,51 @@
   font-weight: 700;
   font-size: 13px;
   cursor: default;
+}
+
+/* Compact pill (feature cards) — 32px tall, 44px hit area */
+.sm {
+  height: 32px;
+  min-width: 68px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  gap: 4px;
+  box-shadow: none;
+  border-width: 1.5px;
+  --hit-inset: -6px -4px;
+}
+.sm > span[aria-hidden] {
+  width: 14px;
+  height: 14px;
+}
+.sm.disabled {
+  font-size: 12px;
+}
+
+/* Round "+" (suggestion tiles) — 32px, 44px hit area */
+.icon {
+  width: 32px;
+  height: 32px;
+  min-width: 0;
+  padding: 0;
+  border-radius: var(--r-round);
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: var(--on-brand);
+  box-shadow: 0 3px 8px -3px color-mix(in srgb, var(--brand-700) 60%, transparent);
+  --hit-inset: -6px;
+}
+
+@media (hover: hover) {
+  .add:hover {
+    background: var(--brand-tint-2);
+  }
+  .disabled:hover {
+    background: var(--sand);
+  }
+  .icon:hover {
+    background: var(--brand-700);
+  }
 }

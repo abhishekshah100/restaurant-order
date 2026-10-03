@@ -2,7 +2,7 @@
 
 import { Button, EmptyState, Icon, Skeleton, Tag } from '@/components/ui';
 import { SiteHeader } from '@/components/layout/SiteHeader';
-import { restaurant } from '@/data/restaurant';
+import { useContent, useOrderHistory, useRestaurant } from '@/api/hooks';
 import { useOrders } from '@/context/OrdersContext';
 import { useFinishPlacedOrder } from '@/hooks/usePlaceOrder';
 import { cx } from '@/lib/cx';
@@ -12,26 +12,35 @@ import type { Order } from '@/types/order';
 import styles from './OrderConfirmed.module.css';
 
 function PaymentTag({ order }: { order: Order }) {
+  const t = useContent('orders');
   return order.payment.method === 'online' ? (
-    <Tag variant="ok">Paid online</Tag>
+    <Tag variant="ok">{t('payment.paidOnline')}</Tag>
   ) : (
     <Tag variant="warn" icon={null}>
-      Pay at counter
+      {t('payment.payAtCounter')}
     </Tag>
   );
 }
 
 /** Order placed (13 · w13). */
 export function OrderConfirmed({ id }: { id: string }) {
+  const restaurant = useRestaurant();
+  const t = useContent('orders');
   const { placed, hydrated } = useOrders();
+  const history = useOrderHistory();
   useFinishPlacedOrder(id);
-  const order = hydrated ? findOrder(id, placed) : undefined;
+  const order = hydrated ? findOrder(id, placed, history) : undefined;
 
   if (!hydrated) {
     return (
       <div className={styles.page}>
         <SiteHeader />
-        <main id="main" className={styles.loading} aria-busy="true" aria-label="Loading order">
+        <main
+          id="main"
+          className={styles.loading}
+          aria-busy="true"
+          aria-label={t('shared.loadingOrder')}
+        >
           <Skeleton shape="circle" width={112} height={112} />
           <Skeleton shape="title" width={220} />
           <Skeleton shape="block" width="100%" height={240} />
@@ -49,10 +58,10 @@ export function OrderConfirmed({ id }: { id: string }) {
             icon="receipt"
             tone="neutral"
             as="h1"
-            title="Order not found"
-            actions={<Button href="/menu/">Back to menu</Button>}
+            title={t('shell.notFound.title')}
+            actions={<Button href="/menu/">{t('shared.backToMenu')}</Button>}
           >
-            We couldn&apos;t find order #{id} on this device.
+            {t('shell.notFound.bodyShort', { id })}
           </EmptyState>
         </main>
       </div>
@@ -60,7 +69,7 @@ export function OrderConfirmed({ id }: { id: string }) {
   }
 
   const placedAt = formatTime(order.placedAt);
-  const estimate = order.estimate ?? '18–22 min';
+  const estimate = order.estimate ?? restaurant.prepTime;
   const trackHref = `/order/${order.id}/track/`;
 
   return (
@@ -71,58 +80,28 @@ export function OrderConfirmed({ id }: { id: string }) {
           <Icon name="check" />
         </div>
         <div className={styles.head} role="status">
-          <p className={cx('t-caption', styles.placed)}>Order placed</p>
-          <h1 className={styles.title}>Order #{order.id}</h1>
-          <p className={cx('t-body c2', styles.lede)}>
-            Your order has been received and sent to the kitchen.
-          </p>
+          <p className={cx('t-caption', styles.placed)}>{t('confirmed.placed')}</p>
+          <h1 className={styles.title}>{t('shared.orderNumber', { id: order.id })}</h1>
+          <p className={cx('t-body c2', styles.lede)}>{t('confirmed.lede')}</p>
         </div>
 
-        <dl className={styles.card} aria-label="Order summary">
-          <div className={styles.row}>
-            <dt>Restaurant</dt>
-            <dd>{restaurant.name}</dd>
-          </div>
-          <div className={styles.row}>
-            <dt>Table</dt>
-            <dd>Table {order.table}</dd>
-          </div>
-          <div className={styles.row}>
-            <dt>Payment</dt>
-            <dd>
-              <PaymentTag order={order} />
-            </dd>
-          </div>
-          <div className={styles.row}>
-            <dt>Total</dt>
-            <dd className={styles.big}>{formatINR(order.total)}</dd>
-          </div>
-          <div className={styles.row}>
-            <dt>Estimated time</dt>
-            <dd>
-              <Icon name="clock" size="xs" />
-              {estimate}
-            </dd>
-          </div>
-        </dl>
-
-        <dl className={styles.wells}>
+        <dl className={styles.wells} aria-label={t('confirmed.summary')}>
           <div className={styles.well}>
-            <dt className="t-caption c3">Table</dt>
-            <dd>Table {order.table}</dd>
+            <dt className="t-caption c3">{t('shared.tableLabel')}</dt>
+            <dd>{t('shared.table', { table: order.table })}</dd>
           </div>
           <div className={styles.well}>
-            <dt className="t-caption c3">Total</dt>
+            <dt className="t-caption c3">{t('totals.total')}</dt>
             <dd>{formatINR(order.total)}</dd>
           </div>
           <div className={styles.well}>
-            <dt className="t-caption c3">Payment</dt>
+            <dt className="t-caption c3">{t('payment.title')}</dt>
             <dd>
               <PaymentTag order={order} />
             </dd>
           </div>
           <div className={styles.well}>
-            <dt className="t-caption c3">Ready in</dt>
+            <dt className="t-caption c3">{t('confirmed.readyIn')}</dt>
             <dd>{estimate}</dd>
           </div>
         </dl>
@@ -134,34 +113,38 @@ export function OrderConfirmed({ id }: { id: string }) {
             <i />
             <i />
           </div>
-          <ol className={styles.segLabels} aria-label="Order progress">
+          <ol className={styles.segLabels} aria-label={t('shared.orderProgress')}>
             <li className={styles.on} aria-current="step">
-              Received
+              {t('steps.received')}
             </li>
-            <li>Preparing</li>
-            <li>Ready</li>
-            <li>Served</li>
+            <li>{t('steps.preparing')}</li>
+            <li>{t('steps.ready')}</li>
+            <li>{t('steps.served')}</li>
           </ol>
         </div>
 
         <div className={styles.desktopActions}>
           <Button href={trackHref} iconEnd="arrow">
-            Track order
+            {t('confirmed.trackOrder')}
           </Button>
           <Button href="/menu/" variant="secondary">
-            Order something else
+            {t('confirmed.orderMore')}
           </Button>
         </div>
         <p className={cx('t-small c3', styles.byline)}>
-          {restaurant.name} · Placed at {placedAt} by {order.customerName}
+          {t('confirmed.byline', {
+            restaurant: restaurant.name,
+            time: placedAt,
+            name: order.customerName,
+          })}
         </p>
       </main>
       <div className={styles.foot}>
         <Button href={trackHref} block iconEnd="arrow">
-          Track order
+          {t('confirmed.trackOrder')}
         </Button>
         <Button href="/menu/" block variant="secondary">
-          Order something else
+          {t('confirmed.orderMore')}
         </Button>
       </div>
     </div>

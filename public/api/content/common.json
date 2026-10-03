@@ -1,0 +1,102 @@
+{
+  "meta": {
+    "title": "The Olive Table — Order from your table",
+    "titleTemplate": "%s · The Olive Table",
+    "description": "Browse the menu and order directly from your table at The Olive Table. Seasonal Indian and Mediterranean plates, cooked to order.",
+    "applicationName": "The Olive Table"
+  },
+  "skipLink": "Skip to content",
+  "itemCount": { "one": "{count} item", "other": "{count} items" },
+  "orderStatus": {
+    "received": "Received",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "served": "Served",
+    "cancelled": "Cancelled"
+  },
+  "price": { "free": "Free" },
+  "nav": {
+    "label": "Primary",
+    "menu": "Menu",
+    "orders": "My orders",
+    "service": "Service"
+  },
+  "header": {
+    "back": "Back",
+    "checkout": "Checkout",
+    "secure": "Secure",
+    "securePayment": "Secure payment"
+  },
+  "cart": {
+    "label": "Cart",
+    "emptyLabel": "Cart, empty",
+    "summaryLabel": "Cart, {items}, {total} rupees"
+  },
+  "cartBar": {
+    "label": "View cart, {items}, {total} rupees plus taxes",
+    "taxes": "Plus taxes",
+    "viewCart": "View cart"
+  },
+  "checkoutSteps": {
+    "label": "Checkout progress",
+    "numbered": "{n} · {step}",
+    "done": "Done:",
+    "details": "Details",
+    "verify": "Verify",
+    "pay": "Pay"
+  },
+  "table": {
+    "number": "Table {table}",
+    "unknown": "Table —"
+  },
+  "search": {
+    "label": "Search dishes and drinks",
+    "placeholder": "Search dishes, drinks…",
+    "clear": "Clear search",
+    "escHint": "Esc",
+    "openLabel": "Search the menu",
+    "suggestions": "Search suggestions"
+  },
+  "addButton": {
+    "text": "ADD",
+    "label": "Add {item}"
+  },
+  "quantity": {
+    "label": "Quantity",
+    "labelFor": "Quantity of {item}",
+    "removeOne": "Remove one",
+    "removeOneFor": "Remove one {item}",
+    "addOne": "Add one",
+    "addOneFor": "Add one {item}"
+  },
+  "veg": {
+    "veg": "Vegetarian",
+    "nonVeg": "Non-vegetarian"
+  },
+  "dialog": { "close": "Close" },
+  "lightbox": {
+    "label": "Photo",
+    "labelWithCaption": "Photo: {caption}",
+    "close": "Close photo"
+  },
+  "field": { "optional": " (optional)" },
+  "options": { "addOnLimit": "Up to {max} add-ons" },
+  "otp": {
+    "label": "One-time code",
+    "digit": "Digit {n} of {total}"
+  },
+  "phone": {
+    "label": "Mobile number",
+    "countryCodeLabel": "Country code ",
+    "countryCode": "+91",
+    "placeholder": "10-digit number",
+    "placeholderNoCode": "10-digit mobile number"
+  },
+  "error": {
+    "documentTitle": "Something went wrong · The Olive Table",
+    "title": "Something went wrong",
+    "body": "Your cart is safe. Try again, or head back to the menu.",
+    "retry": "Try again",
+    "backToMenu": "Back to menu"
+  }
+}

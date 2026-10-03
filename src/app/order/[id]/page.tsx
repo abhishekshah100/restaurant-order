@@ -1,15 +1,22 @@
 import type { Metadata } from 'next';
-import { ComingSoon } from '@/components/layout/ComingSoon';
-import { ALL_ORDER_IDS } from '@/data/orders';
+import { OrderDetails } from '@/components/order/OrderDetails';
+import { getContent, getOrderIdsServer } from '@/api/server';
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return ALL_ORDER_IDS.map((id) => ({ id }));
+export async function generateStaticParams() {
+  return (await getOrderIdsServer()).map((id) => ({ id }));
 }
 
-export const metadata: Metadata = { title: 'Order details' };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const t = await getContent('orders');
+  return { title: t('shared.orderNumber', { id: (await params).id }) };
+}
 
-export default function Page() {
-  return <ComingSoon title="Order details" />;
+export default async function OrderDetailsPage({ params }: Props) {
+  return <OrderDetails id={(await params).id} />;
 }

@@ -1,11 +1,11 @@
 import type { Rupees } from '@/types/menu';
 
 /** GST on restaurant food: 5%, split equally as CGST 2.5% + SGST 2.5%. */
-export const CGST_RATE = 0.025;
-export const SGST_RATE = 0.025;
-export const GST_RATE = CGST_RATE + SGST_RATE;
+const CGST_RATE = 0.025;
+const SGST_RATE = 0.025;
+const GST_RATE = CGST_RATE + SGST_RATE;
 
-export interface PriceLine {
+interface PriceLine {
   unitPrice: Rupees;
   quantity: number;
 }
@@ -32,7 +32,7 @@ export function taxPaise(amountPaise: number, rate: number): number {
   return Math.floor((amountPaise * bps + 5000) / 10000);
 }
 
-export function lineTotal(line: PriceLine): Rupees {
+function lineTotal(line: PriceLine): Rupees {
   return line.unitPrice * line.quantity;
 }
 

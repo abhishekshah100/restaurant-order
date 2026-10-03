@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
 import { cx } from '@/lib/cx';
+import { Icon, type IconName } from '../Icon';
 import { Field, describedBy } from './Field';
 import styles from './Input.module.css';
 
@@ -11,6 +12,8 @@ interface FieldBits {
   error?: ReactNode;
   hideLabel?: boolean;
   className?: string;
+  /** Icon shown inside the field on the left. */
+  icon?: IconName;
 }
 
 export interface InputProps
@@ -24,6 +27,7 @@ export function Input({
   error,
   hideLabel,
   className,
+  icon,
   ...rest
 }: InputProps) {
   return (
@@ -36,13 +40,26 @@ export function Input({
       hideLabel={hideLabel}
       className={className}
     >
-      <input
-        {...rest}
-        id={id}
-        className={cx(styles.input, Boolean(error) && styles.error)}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
-      />
+      {icon ? (
+        <span className={styles.withIcon}>
+          <Icon name={icon} size="sm" />
+          <input
+            {...rest}
+            id={id}
+            className={cx(styles.input, Boolean(error) && styles.error)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy(id, hint, error)}
+          />
+        </span>
+      ) : (
+        <input
+          {...rest}
+          id={id}
+          className={cx(styles.input, Boolean(error) && styles.error)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy(id, hint, error)}
+        />
+      )}
     </Field>
   );
 }

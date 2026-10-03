@@ -1,71 +1,55 @@
 'use client';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import {
-  Banner,
-  Button,
-  Icon,
-  IconButton,
-  QuantityStepper,
-  TablePill,
-  Tag,
-  VegMark,
-} from '@/components/ui';
+import { useState } from 'react';
+import { Banner, Button, Lightbox, QuantityStepper } from '@/components/ui';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Columns } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
-import { useCart } from '@/hooks/useCart';
+import { OrderingBanner } from '@/components/status/OrderingBanner';
+import { useContent } from '@/api/hooks';
+import { useCartActions, useDishLines } from '@/hooks/useCart';
 import { useDishConfig } from '@/hooks/useDishConfig';
 import { useQueryParam } from '@/hooks/useQueryParam';
+import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
 import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
 import { formatINR } from '@/lib/format';
-import { getCategory, unavailableLabel } from '@/lib/menu';
+import { unavailableReason } from '@/lib/menu';
 import type { CartLine } from '@/types/cart';
-import type { Allergen, Dish } from '@/types/menu';
-import { Breadcrumbs } from './Breadcrumbs';
+import type { Dish } from '@/types/menu';
+import { DishHero, DishIntro, DishMediaColumn } from './DishDetailParts';
 import { DishOptionsForm } from './DishOptionsForm';
+import { unavailableLabel, type MenuText } from './dishTag';
 import styles from './DishDetail.module.css';
-
-const ALLERGEN: Record<Allergen, string> = {
-  dairy: 'dairy',
-  gluten: 'gluten',
-  nuts: 'nuts',
-  shellfish: 'shellfish',
-  egg: 'egg',
-  soy: 'soy',
-  sesame: 'sesame',
-};
-
-const allergenText = (dish: Dish) => dish.allergens.map((a) => ALLERGEN[a]).join(', ');
-const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
  * Food detail (06 · w06). `?edit=<line key>` edits an existing cart line.
  * The edit key is read after mount so the page can be prerendered.
  */
 export function DishDetail({ dish }: { dish: Dish }) {
-  const { lines, hydrated } = useCart();
+  const lines = useDishLines(dish.slug);
   const editKey = useQueryParam('edit');
 
-  const editing = editKey && hydrated ? lines.find((l) => l.key === editKey) : undefined;
+  const editing = editKey ? lines.find((l) => l.key === editKey) : undefined;
   return <DishDetailForm key={editing?.key ?? 'new'} dish={dish} editing={editing} />;
 }
 
 function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
   const router = useRouter();
   const table = useTable();
-  const { addItem, editLine } = useCart();
+  const t = useContent('menu');
+  const { addItem, editLine } = useCartActions();
+  const [photoOpen, setPhotoOpen] = useState(false);
   const state = useDishConfig(
     dish,
     editing ? { config: editing, quantity: editing.quantity } : undefined,
   );
-  const category = getCategory(dish.categoryId);
   const hero = dish.image;
-  const unavailable = unavailableLabel(dish);
-  const isChef = dish.tags.includes('chef');
-  const allergens = allergenText(dish);
+  const unavailable = unavailableLabel(t, dish);
+  // Closed: the menu is read-only, but existing cart lines can still be edited.
+  const closed = !useOrderingAvailability().canAdd && !editing;
+  const openPhoto = () => setPhotoOpen(true);
 
   const back = () => {
     if (window.history.length > 1) router.back();
@@ -73,7 +57,7 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
   };
 
   const submit = () => {
-    if (!state.valid || unavailable) return;
+    if (!state.valid || unavailable || closed) return;
     if (editing) {
       editLine(editing.key, dish, state.config, state.quantity);
       router.push('/cart/');
@@ -83,138 +67,27 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
     }
   };
 
-  const vegLabel = (
-    <span className={styles.meta}>
-      <VegMark veg={dish.veg} showLabel />
-    </span>
-  );
-
   return (
     <>
       <SiteHeader showCart />
 
       {hero ? (
-        <div className={cx(styles.hero, 'hide-desktop')}>
-          <Image
-            className={styles.heroImg}
-            src={hero.src}
-            alt={hero.alt}
-            width={hero.width}
-            height={hero.height}
-            sizes="100vw"
-            priority
-          />
-          <div className={styles.heroBar}>
-            <IconButton icon="back" label="Back to menu" variant="raised" onClick={back} />
-            <TablePill table={table} className={styles.heroPill} />
-          </div>
-        </div>
+        <DishHero dish={dish} hero={hero} table={table} onBack={back} onZoom={openPhoto} />
       ) : (
-        <MobileHeader variant="topbar" onBack={back} backLabel="Back to menu" />
+        <MobileHeader variant="topbar" onBack={back} backLabel={t('nav.backToMenu')} />
       )}
 
-      <Columns even>
-        <div className={cx(styles.left, 'hide-mobile')}>
-          <Breadcrumbs
-            items={[
-              { label: 'Menu', href: '/menu/' },
-              { label: category?.name ?? '', href: `/menu/${dish.categoryId}/` },
-              { label: dish.name },
-            ]}
-          />
-          <div className={styles.media}>
-            {hero ? (
-              <Image
-                className={styles.bigImg}
-                src={hero.src}
-                alt={hero.alt}
-                width={hero.width}
-                height={hero.height}
-                sizes="50vw"
-                priority
-              />
-            ) : (
-              <div className={styles.placeholder}>
-                <Icon name="cutlery" size="xl" />
-              </div>
-            )}
-            {isChef && (
-              <span className={styles.bigTag}>
-                <Tag variant="chef">Chef&apos;s pick</Tag>
-              </span>
-            )}
-          </div>
-          <div className={styles.facts}>
-            {dish.prepTime && (
-              <div className={styles.fact}>
-                <span className="t-caption c3">Prep time</span>
-                <span className={styles.factValue}>{dish.prepTime}</span>
-              </div>
-            )}
-            {dish.serves && (
-              <div className={styles.fact}>
-                <span className="t-caption c3">Serves</span>
-                <span className={styles.factValue}>
-                  {dish.serves} {dish.serves === 1 ? 'person' : 'people'}
-                </span>
-              </div>
-            )}
-            <div className={styles.fact}>
-              <span className="t-caption c3">Allergens</span>
-              <span className={styles.factValue}>
-                {allergens ? capitalise(allergens) : 'None listed'}
-              </span>
-            </div>
-          </div>
-        </div>
+      <Columns even className={styles.layout}>
+        <DishMediaColumn dish={dish} onZoom={openPhoto} />
 
         <main id="main" className={cx(styles.main, hero && styles.overlap)}>
-          <section className={styles.intro} aria-labelledby="dish-title">
-            <div className={styles.tagRow}>
-              {vegLabel}
-              {isChef && (
-                <span className="hide-desktop">
-                  <Tag variant="chef">Chef&apos;s pick</Tag>
-                </span>
-              )}
-            </div>
-            <h1 id="dish-title" className={styles.title}>
-              {dish.name}
-            </h1>
-            <p className={cx('t-body c2', styles.desc)}>
-              {dish.longDescription ?? dish.description}
-            </p>
-            <div className={cx(styles.meta, 'hide-desktop')}>
-              {dish.prepTime && (
-                <span className={styles.metaItem}>
-                  <Icon name="clock" size="xs" />
-                  {dish.prepTime}
-                </span>
-              )}
-              {dish.serves && (
-                <>
-                  <span className={styles.dot} aria-hidden="true" />
-                  <span>Serves {dish.serves}</span>
-                </>
-              )}
-              {allergens && (
-                <>
-                  <span className={styles.dot} aria-hidden="true" />
-                  <span>Contains {allergens}</span>
-                </>
-              )}
-            </div>
-            <span className={styles.price}>
-              <span className="hide-mobile">{dish.variants?.length ? 'from ' : ''}</span>
-              {formatINR(dish.price)}
-            </span>
-          </section>
+          <DishIntro dish={dish} />
+
+          <OrderingBanner inline />
 
           {unavailable && (
             <Banner tone="warn" icon="clock">
-              {dish.availability.status === 'unavailable-today'
-                ? 'Unavailable today. Your server can suggest something similar.'
-                : `Sold out right now${unavailable.startsWith('Back') ? ` — ${unavailable.toLowerCase()}` : ''}.`}
+              {unavailableNote(t, dish)}
             </Banner>
           )}
 
@@ -239,13 +112,39 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
               block
               meta={formatINR(state.total)}
               onClick={submit}
-              disabled={!state.valid || Boolean(unavailable)}
+              disabled={!state.valid || Boolean(unavailable) || closed}
             >
-              {unavailable ? 'Unavailable' : editing ? 'Update item' : 'Add to cart'}
+              {unavailable
+                ? t('detail.unavailable')
+                : closed
+                  ? t('detail.closedNow')
+                  : editing
+                    ? t('detail.updateItem')
+                    : t('detail.addToCart')}
             </Button>
           </div>
         </main>
       </Columns>
+      {hero && (
+        <Lightbox
+          open={photoOpen}
+          onClose={() => setPhotoOpen(false)}
+          src={hero.src}
+          alt={hero.alt}
+          width={hero.width}
+          height={hero.height}
+          caption={dish.name}
+        />
+      )}
     </>
   );
+}
+
+/** The banner under an unavailable dish: "Sold out right now — back 8 pm." */
+function unavailableNote(t: MenuText, dish: Dish): string {
+  const reason = unavailableReason(dish);
+  if (reason?.kind === 'unavailable-today') return t('availability.unavailableTodayNote');
+  if (reason?.kind === 'back-at')
+    return t('availability.soldOutBackAt', { time: reason.time.toLowerCase() });
+  return t('availability.soldOutNow');
 }

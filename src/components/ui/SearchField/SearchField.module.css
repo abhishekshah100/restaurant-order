@@ -11,9 +11,13 @@
   text-decoration: none;
   width: 100%;
 }
+/* Muted clear button; scoped under .search so it outranks IconButton's own colour. */
+.search .clear {
+  color: var(--ink-3);
+}
 .search:focus-within {
   border-color: var(--ink);
-  box-shadow: 0 0 0 3px var(--brand-tint);
+  box-shadow: var(--halo);
 }
 a.search:focus-visible {
   box-shadow: var(--focus);
@@ -44,10 +48,10 @@ a.search:focus-visible {
   color: var(--ink-3);
 }
 .kbd {
-  font: 700 12px/16px var(--f-ui);
+  font: var(--font-meta-strong);
   color: var(--ink-3);
   border: 1px solid var(--line-strong);
-  border-radius: 6px;
+  border-radius: var(--r-xs);
   padding: 2px 6px;
   margin-right: 8px;
 }

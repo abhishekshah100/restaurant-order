@@ -15,12 +15,12 @@ import { CartBar } from '@/components/layout/CartBar';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MenuShell } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { OrderingBanner } from '@/components/status/OrderingBanner';
 import { CartPanel } from '@/components/cart/CartPanel';
-import { categories } from '@/data/menu';
+import { useContent, useMenu } from '@/api/hooks';
 import { useSearch } from '@/context/SearchContext';
-import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { cx } from '@/lib/cx';
-import { searchDishes, sortDishes, type SortKey } from '@/lib/menu';
+import { sortDishes, type SortKey } from '@/lib/menu';
 import type { CategoryId } from '@/types/menu';
 import { CategorySidebar, SearchSidebar } from './CategorySidebar';
 import { DishList } from './DishList';
@@ -33,54 +33,62 @@ const EMPTY_CATS: CategoryId[] = ['starters', 'mains', 'desserts', 'beverages'];
 /** Search: suggestions, loading, results, no results (04 · 05 · s04 · s05 · w04–ws05). */
 export function SearchView() {
   const router = useRouter();
+  const menu = useMenu();
+  const t = useContent('menu');
   const { query, setQuery, debouncedQuery, pending } = useSearch();
-  const { add } = useRecentSearches();
   const [sort, setSort] = useState<SortKey>('best-match');
   const [cat, setCat] = useState<CategoryId | 'all'>('all');
-  const synced = useRef(false);
+  // The ?q= of a deep link, held until the box (and its debounce) has picked it up.
+  const seed = useRef<{ q: string; applied: boolean } | null | undefined>(undefined);
 
   // Seed the box from ?q= once, then mirror the debounced query back into the URL.
   useEffect(() => {
-    if (synced.current) return;
-    synced.current = true;
-    const q = new URLSearchParams(window.location.search).get('q');
-    if (q) setQuery(q);
-  }, [setQuery]);
-
-  useEffect(() => {
-    if (!synced.current) return;
+    if (seed.current === undefined) {
+      const q = new URLSearchParams(window.location.search).get('q');
+      seed.current = q ? { q, applied: false } : null;
+      if (q) setQuery(q);
+    }
+    const held = seed.current;
+    if (held) {
+      if (query === held.q) held.applied = true;
+      // Never write the URL before the seeded term has reached the results.
+      if (!held.applied || (query === held.q && debouncedQuery !== held.q)) return;
+      seed.current = null;
+    }
+    if (query !== debouncedQuery) return;
     const q = debouncedQuery.trim();
     const current = new URLSearchParams(window.location.search).get('q') ?? '';
     if (q === current) return;
     router.replace(q ? `/search/?q=${encodeURIComponent(q)}` : '/search/', { scroll: false });
-  }, [debouncedQuery, router]);
+  }, [query, debouncedQuery, router, setQuery]);
 
   const term = debouncedQuery.trim();
-  const results = useMemo(() => searchDishes(term), [term]);
+  const results = useMemo(() => menu.searchDishes(term), [menu, term]);
   const counts = useMemo(() => {
-    const byCat = categories
+    const byCat = menu.categories
       .map((c) => ({
         id: c.id,
         label: c.name,
         count: results.filter((d) => d.categoryId === c.id).length,
       }))
       .filter((c) => c.count > 0);
-    return [{ id: 'all' as const, label: 'All results', count: results.length }, ...byCat];
-  }, [results]);
+    return [{ id: 'all' as const, label: t('search.allResults'), count: results.length }, ...byCat];
+  }, [menu, results, t]);
   const activeCat = counts.some((c) => c.id === cat) ? cat : 'all';
-  const shown = sortDishes(
-    activeCat === 'all' ? results : results.filter((d) => d.categoryId === activeCat),
-    sort === 'best-match' ? 'best-match' : sort,
+  const shown = useMemo(
+    () =>
+      sortDishes(
+        activeCat === 'all' ? results : results.filter((d) => d.categoryId === activeCat),
+        sort,
+      ),
+    [results, activeCat, sort],
   );
 
   const state: 'suggest' | 'loading' | 'results' | 'empty' =
     query.trim() === '' ? 'suggest' : pending ? 'loading' : results.length ? 'results' : 'empty';
 
-  const pick = (t: string) => {
-    setQuery(t);
-    add(t);
-  };
-  const plural = shown.length === 1 ? 'dish' : 'dishes';
+  const pick = (term: string) => setQuery(term);
+  const dishes = t.plural('search.dishCount', shown.length);
 
   return (
     <>
@@ -88,7 +96,7 @@ export function SearchView() {
       <MobileHeader variant="topbar" hideTable className={styles.bar}>
         <IconButton
           icon="back"
-          label={query ? 'Back' : 'Close search'}
+          label={query ? t('search.back') : t('search.close')}
           onClick={() => (query ? setQuery('') : router.push('/menu/'))}
         />
         <SearchField
@@ -96,11 +104,11 @@ export function SearchView() {
           className={styles.field}
           value={query}
           onChange={setQuery}
-          onSubmit={(v) => add(v)}
           autoFocus={!query}
           trailing={pending ? <Spinner tone="brand" /> : undefined}
         />
       </MobileHeader>
+      <OrderingBanner />
 
       <MenuShell
         tight
@@ -116,7 +124,7 @@ export function SearchView() {
         }
         cart={<CartPanel />}
       >
-        <h1 className="visually-hidden">Search the menu</h1>
+        <h1 className="visually-hidden">{t('search.heading')}</h1>
 
         {state === 'suggest' && (
           <div className={styles.suggest}>
@@ -125,7 +133,7 @@ export function SearchView() {
         )}
 
         {state === 'loading' && (
-          <div className={styles.skeleton} aria-label="Searching">
+          <div className={styles.skeleton} aria-label={t('search.searching')}>
             <Skeleton width={140} height={14} className={styles.skTitle} />
             <div className={styles.skGrid}>
               {[180, 150, 200, 160].map((w, i) => (
@@ -152,20 +160,24 @@ export function SearchView() {
             <div
               className={cx(styles.chips, 'hide-desktop')}
               role="group"
-              aria-label="Filter results"
+              aria-label={t('search.filterResults')}
             >
               {counts.map((c) => (
                 <Chip key={c.id} pressed={activeCat === c.id} onClick={() => setCat(c.id)}>
-                  {c.id === 'all' ? `All ${c.count}` : c.label}
+                  {c.id === 'all' ? t('search.allCount', { count: c.count }) : c.label}
                 </Chip>
               ))}
             </div>
             <p className="t-small c2 hide-desktop" aria-live="polite">
-              {shown.length} {plural} match <b className={styles.q}>“{term}”</b>
+              {t.rich(
+                'search.match',
+                { b: (chunks) => <b className={styles.q}>{chunks}</b> },
+                { dishes, term },
+              )}
             </p>
             <div className={cx(styles.head, 'hide-mobile')}>
               <h2 className="t-h1" aria-live="polite">
-                {shown.length} {plural} for “{term}”
+                {t('search.resultsFor', { dishes, term })}
               </h2>
               <SortMenu
                 value={sort}
@@ -177,13 +189,8 @@ export function SearchView() {
           </div>
         )}
         {state === 'results' && (
-          <div
-            className={styles.list}
-            onClickCapture={(e) => {
-              if ((e.target as HTMLElement).closest('a')) add(term);
-            }}
-          >
-            <DishList dishes={shown} label="Search results" query={term} searchResult />
+          <div className={styles.list}>
+            <DishList dishes={shown} label={t('search.resultsLabel')} query={term} searchResult />
           </div>
         )}
 
@@ -192,14 +199,14 @@ export function SearchView() {
             <EmptyState
               icon="search"
               tone="neutral"
-              title="No dishes found"
+              title={t('search.emptyTitle')}
               titleClassName={styles.emptyTitle}
               actions={
                 <>
                   <div className={styles.emptyChips}>
                     {EMPTY_CATS.map((id) => (
                       <Chip key={id} href={`/menu/${id}/`}>
-                        {categories.find((c) => c.id === id)?.name}
+                        {menu.getCategory(id)?.name}
                       </Chip>
                     ))}
                   </div>
@@ -208,13 +215,12 @@ export function SearchView() {
                     className={styles.clearBtn}
                     onClick={() => setQuery('')}
                   >
-                    Clear search
+                    {t('search.clear')}
                   </Button>
                 </>
               }
             >
-              We couldn&apos;t find anything for “{term}”. Try searching for something else, or
-              browse a category.
+              {t('search.emptyBody', { term })}
             </EmptyState>
           </div>
         )}

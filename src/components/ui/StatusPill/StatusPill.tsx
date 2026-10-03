@@ -1,15 +1,16 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
 import type { OrderStatus } from '@/types/order';
 import styles from './StatusPill.module.css';
 
-export const STATUS_LABEL: Record<OrderStatus, string> = {
-  received: 'Received',
-  preparing: 'Preparing',
-  ready: 'Ready',
-  served: 'Served',
-  cancelled: 'Cancelled',
-};
+/** Order status words from the API: `const statusLabel = useStatusLabel(); statusLabel('ready')`. */
+export function useStatusLabel(): (status: OrderStatus) => string {
+  const t = useContent('common');
+  return (status) => t(`orderStatus.${status}`);
+}
 
 export interface StatusPillProps {
   status: OrderStatus;
@@ -19,9 +20,10 @@ export interface StatusPillProps {
 }
 
 export function StatusPill({ status, children, className }: StatusPillProps) {
+  const statusLabel = useStatusLabel();
   return (
     <span className={cx(styles.status, styles[status], className)}>
-      {children ?? STATUS_LABEL[status]}
+      {children ?? statusLabel(status)}
     </span>
   );
 }

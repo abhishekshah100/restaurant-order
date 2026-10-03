@@ -1,0 +1,21 @@
+.thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  flex: none;
+  background: var(--sand);
+  color: var(--ink-3);
+  display: grid;
+  place-items: center;
+}
+.img {
+  composes: cover from '@/styles/patterns.module.css';
+}
+.initialTile {
+  background: linear-gradient(145deg, var(--brand-tint-2), var(--brand-tint));
+}
+.initial {
+  font: 500 24px/1 var(--f-display);
+  color: var(--brand-700);
+}

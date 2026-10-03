@@ -1,0 +1,31 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.name {
+  flex: 1;
+  min-width: 0;
+  font: var(--font-small-strong);
+}
+.row .pill {
+  height: 24px;
+}
+
+@media (min-width: 1024px) {
+  .row {
+    padding: 12px 0;
+  }
+}

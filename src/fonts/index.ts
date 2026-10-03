@@ -7,6 +7,9 @@ import localFont from 'next/font/local';
  * with their original unicode-range and chained in --f-ui / --f-display (tokens.css).
  * Only the last subset of each chain carries the metric-adjusted fallback, so a
  * glyph missing from latin falls through to latin-ext before any system font.
+ *
+ * Weights: Manrope 400–800 (400 = UA default for form controls). Newsreader ships 500 only —
+ * every --f-display use is weight 500; add a face here before using another display weight.
  */
 // next/font needs literal arguments, so the unicode-range strings are repeated inline.
 
@@ -52,11 +55,7 @@ export const manropeExt = localFont({
 });
 
 export const newsreader = localFont({
-  src: [
-    { path: './newsreader-latin-400-normal.woff2', weight: '400', style: 'normal' },
-    { path: './newsreader-latin-500-normal.woff2', weight: '500', style: 'normal' },
-    { path: './newsreader-latin-600-normal.woff2', weight: '600', style: 'normal' },
-  ],
+  src: [{ path: './newsreader-latin-500-normal.woff2', weight: '500', style: 'normal' }],
   declarations: [
     {
       prop: 'unicode-range',
@@ -70,11 +69,7 @@ export const newsreader = localFont({
 });
 
 export const newsreaderExt = localFont({
-  src: [
-    { path: './newsreader-latin-ext-400-normal.woff2', weight: '400', style: 'normal' },
-    { path: './newsreader-latin-ext-500-normal.woff2', weight: '500', style: 'normal' },
-    { path: './newsreader-latin-ext-600-normal.woff2', weight: '600', style: 'normal' },
-  ],
+  src: [{ path: './newsreader-latin-ext-500-normal.woff2', weight: '500', style: 'normal' }],
   declarations: [
     {
       prop: 'unicode-range',

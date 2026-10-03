@@ -1,0 +1,79 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cols {
+  display: none;
+}
+/* Mobile: "#A104 · You / 7:42 PM" on the left, amount over status on the right */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'id amount'
+    'by status';
+  column-gap: 16px;
+  row-gap: 4px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font: 500 14px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+.id {
+  grid-area: id;
+  align-self: end;
+  font-weight: 600;
+}
+.by {
+  grid-area: by;
+  align-self: start;
+  font: var(--font-small);
+  color: var(--ink-3);
+}
+.amount {
+  grid-area: amount;
+  font-weight: 600;
+  text-align: right;
+}
+.status {
+  grid-area: status;
+  justify-self: end;
+}
+.end {
+  text-align: right;
+}
+
+@media (min-width: 1024px) {
+  .cols,
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 120px 100px;
+    grid-template-areas: none;
+    gap: 16px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .row {
+    padding: 16px 24px;
+    align-items: center;
+  }
+  .row:last-child {
+    border-bottom: 0;
+  }
+  .id,
+  .by,
+  .amount,
+  .status {
+    grid-area: auto;
+  }
+  .by {
+    color: var(--ink-2);
+  }
+}
+@media (max-width: 1023.98px) {
+  .row:last-child {
+    border-bottom: 0;
+  }
+}

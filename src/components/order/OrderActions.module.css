@@ -1,0 +1,58 @@
+/* Mobile: pinned action bar */
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-actionbar);
+  padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Web: three tiles under the progress card */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.tile {
+  min-height: 60px;
+  padding: 18px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  color: var(--ink);
+  text-decoration: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast),
+    box-shadow var(--dur-base),
+    transform var(--dur-fast);
+}
+.tile > span[aria-hidden] {
+  color: var(--brand-600);
+}
+.tileLabel {
+  font: 700 15px/24px var(--f-ui);
+}
+.tile:focus-visible {
+  box-shadow: var(--focus);
+}
+.tile:active {
+  transform: scale(0.99);
+}
+@media (hover: hover) {
+  .tile:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--sh-1);
+  }
+}

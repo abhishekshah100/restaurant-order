@@ -1,0 +1,195 @@
+{
+  "meta": {
+    "help": "Service and help",
+    "waiterRequested": "Waiter requested"
+  },
+  "shared": {
+    "callAWaiter": "Call a waiter",
+    "requestBill": "Request bill",
+    "requestTheBill": "Request the bill",
+    "billRequested": "Bill requested",
+    "billSummary": "Bill summary",
+    "requestedAt": "Requested {time}",
+    "backToMenu": "Back to menu",
+    "browseMenu": "Browse menu",
+    "cancel": "Cancel",
+    "quoted": "“{text}”",
+    "orderCount": {
+      "one": "{count} order",
+      "other": "{count} orders"
+    },
+    "payNow": "Pay {amount} now"
+  },
+  "help": {
+    "title": "How can we help?",
+    "lede": "Our team is on the floor. Requests go straight to the staff looking after Table {table}.",
+    "waiter": {
+      "subMobile": "To your table",
+      "subDesktop": "Water, cutlery, or anything else at your table"
+    },
+    "bill": {
+      "subMobile": "To Table {table}",
+      "subDesktop": "For your orders or the whole table"
+    },
+    "more": {
+      "title": "More help",
+      "call": "Call the restaurant",
+      "problem": "Problem with my order",
+      "problemSub": "Missing, wrong or late item",
+      "payment": "Payment help",
+      "paymentSub": "Failed payment, refunds, invoices",
+      "faqs": "Allergens & FAQs",
+      "faqsSub": "Ingredients, Wi-Fi, timings"
+    }
+  },
+  "hours": {
+    "openToday": "Open today {hours}",
+    "lastOrdersAt": "Kitchen takes last orders at {time}",
+    "title": "Opening hours",
+    "lastKitchenOrder": "Last kitchen order"
+  },
+  "social": {
+    "titleMobile": "Follow us",
+    "titleDesktop": "Follow {restaurant}",
+    "sub": "New dishes, specials and events, first.",
+    "linkLabel": "{network} (opens in a new tab)"
+  },
+  "waiterDialog": {
+    "title": "Need assistance?",
+    "lede": "A team member will come to <b>Table {table}</b>.",
+    "close": "Close",
+    "send": "Send request",
+    "noteLabel": "Add a note",
+    "notePlaceholder": "e.g. A high chair, please",
+    "reasonsLabel": "What do you need?",
+    "reasons": {
+      "waiter": "Call waiter",
+      "water": "Need water",
+      "cutlery": "Need cutlery",
+      "other": "Something else"
+    },
+    "sentToast": "Request sent to the team at Table {table}"
+  },
+  "waiterRequested": {
+    "noneTitle": "No open request",
+    "noneBody": "There's no waiter request for Table {table} right now.",
+    "cancelledToast": "Request cancelled",
+    "title": "Someone's on the way",
+    "lede": "We've let the team know. A member of staff will be at Table {table} shortly.",
+    "summary": "<b>{reason}</b> · Requested {time}",
+    "cancelRequest": "Cancel request",
+    "viewOrder": "View my order"
+  },
+  "requestStatus": {
+    "loading": "Loading request"
+  },
+  "billRequest": {
+    "service": "Service",
+    "backToService": "Back to Service",
+    "loading": "Loading bill",
+    "emptyTitle": "Nothing to bill yet",
+    "emptyBody": "Orders placed at Table {table} today will show up here.",
+    "view": "View",
+    "viewRequest": "View bill request",
+    "confirm": "Confirm bill request",
+    "heading": "Table {table} · {orders}",
+    "pending": "You asked for the bill at {time}. Your server is on the way.",
+    "scopeTitle": "Which bill?",
+    "mine": "Just my orders",
+    "mineNone": "No orders from you yet",
+    "table": "Whole table",
+    "tableSub": "All {orders} placed at Table {table}",
+    "hint": "Your server will bring the printed bill. You can pay by card, UPI or cash."
+  },
+  "billRequested": {
+    "noneTitle": "No bill request",
+    "noneBody": "You haven't asked for the bill at Table {table} yet.",
+    "lede": "Your server is preparing the bill for Table {table} and will bring it over in a few minutes.",
+    "payServer": "I'll pay the server",
+    "paymentOptions": "Payment options"
+  },
+  "billTotals": {
+    "mine": "Your total",
+    "table": "Table total",
+    "paid": "Already paid",
+    "balance": "Balance due"
+  },
+  "billOrders": {
+    "you": "You",
+    "orderRef": "#{id}",
+    "columns": {
+      "order": "Order",
+      "placedBy": "Placed by",
+      "amount": "Amount",
+      "status": "Status"
+    },
+    "paid": "Paid",
+    "unpaid": "Unpaid"
+  },
+  "payBill": {
+    "title": "Pay my bill",
+    "description": "Pay for your own orders at your table by UPI or card.",
+    "loading": "Loading your bill",
+    "backToBill": "Back to bill",
+    "heading": "Pay your bill",
+    "intro": "Just your orders. Everyone else at Table {table} pays for their own.",
+    "ordersHeading": "Your unpaid orders · {orders}",
+    "methodsLabel": "Payment method",
+    "methods": {
+      "upi": {
+        "title": "UPI",
+        "mobileSub": "GPay, PhonePe, Paytm or any UPI app",
+        "desktopSub": "Approve in GPay, PhonePe, Paytm or any UPI app"
+      },
+      "card": {
+        "title": "Debit or credit card",
+        "mobileSub": "Visa, Mastercard or RuPay",
+        "desktopSub": "Visa, Mastercard, RuPay or American Express"
+      }
+    },
+    "pay": "Pay {amount}",
+    "secured": "Secured by {partner} · Card details are never stored",
+    "hint": "Only orders placed on this phone can be paid here. Your server can settle anything else.",
+    "offline": "You're offline. Reconnect to pay your bill.",
+    "tryAgain": "Try again",
+    "emptyTitle": "Nothing to pay",
+    "emptyBody": "Your orders at Table {table} placed on this phone are all paid. Your server can help with anything else.",
+    "processing": {
+      "title": "Confirming your payment",
+      "lede": {
+        "upi": "Approve the request in your UPI app. Please don't close this page.",
+        "card": "Complete the payment on your bank's page. Please don't close this page."
+      },
+      "amount": "Amount",
+      "summary": "{orders} · Table {table}",
+      "progressLabel": "Payment progress",
+      "requestSent": "Payment request sent",
+      "waiting": "Waiting for approval",
+      "settling": "Marking your orders as paid",
+      "secure": "Encrypted payment · Secured by {partner}",
+      "cancel": "Cancel payment",
+      "protoSuccess": "Prototype: success",
+      "protoFailure": "Prototype: failure"
+    },
+    "failed": {
+      "title": "Payment didn't go through",
+      "body": "No money was taken and your orders are still unpaid. Try again, or pay your server.",
+      "retry": "Try again · {amount}",
+      "changeMethod": "Change payment method"
+    },
+    "paid": {
+      "title": "Bill paid",
+      "lede": "Thank you! Your server can see that these orders at Table {table} are paid.",
+      "summaryLabel": "Payment summary",
+      "amount": "Amount paid",
+      "method": "Paid with",
+      "orders": "Orders",
+      "viewOrders": "View my orders"
+    },
+    "methodNames": {
+      "upi": "UPI",
+      "card": "Card"
+    },
+    "viewBill": "View my bill"
+  }
+}

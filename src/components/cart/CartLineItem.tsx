@@ -2,43 +2,56 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Icon, QuantityStepper, VegMark } from '@/components/ui';
+import { QuantityStepper, VegMark } from '@/components/ui';
 import { useQuickAdd } from '@/context/QuickAddContext';
-import { useCart } from '@/hooks/useCart';
+import { useCartActions } from '@/hooks/useCart';
 import { describeInstructions, describeOptions, describeOptionsShort } from '@/lib/cartLine';
 import { cx } from '@/lib/cx';
 import { formatINR } from '@/lib/format';
-import { dishImage, getDish, isCustomisable } from '@/lib/menu';
+import { useContent, useMenu } from '@/api/hooks';
+import { dishImage, isCustomisable } from '@/lib/menu';
 import type { CartLine } from '@/types/cart';
+import { useCartLineLabels } from '@/hooks/useCartLineLabels';
 import styles from './CartLineItem.module.css';
 
 export interface CartLineItemProps {
   line: CartLine;
   /** page: cart page row · panel: compact desktop side panel. */
   variant?: 'page' | 'panel';
-  /** Show "₹199 each" after the options when quantity > 1 (desktop cart). */
-  showEach?: boolean;
 }
 
-export function CartLineItem({ line, variant = 'page', showEach }: CartLineItemProps) {
-  const { setQuantity, removeLine } = useCart();
+export function CartLineItem({ line, variant = 'page' }: CartLineItemProps) {
+  const { setQuantity, removeLine } = useCartActions();
   const { openQuickAdd } = useQuickAdd();
-  const dish = getDish(line.dishSlug);
+  const menu = useMenu();
+  const t = useContent('cart');
+  const labels = useCartLineLabels();
+  const dish = menu.getDish(line.dishSlug);
   if (!dish) return null;
 
   const thumb = dishImage(dish, 'thumb');
   const options =
-    variant === 'panel' ? describeOptionsShort(dish, line) : describeOptions(dish, line);
+    variant === 'panel'
+      ? describeOptionsShort(dish, line, labels)
+      : describeOptions(dish, line, labels);
   const instructions = describeInstructions(line);
   const editable = isCustomisable(dish);
 
   return (
-    <li className={cx(styles.ci, styles[variant], line.quantity === 1 && styles.single)}>
-      <div className={styles.media}>
+    <li className={cx(styles.ci, styles[variant])}>
+      <div className={cx(styles.media, !thumb && styles.mediaInitial)} aria-hidden="true">
         {thumb ? (
-          <Image src={thumb.src} alt="" width={thumb.width} height={thumb.height} sizes="80px" />
+          <Image
+            className={styles.img}
+            src={thumb.src}
+            alt={''}
+            width={thumb.width}
+            height={thumb.height}
+            sizes="80px"
+          />
         ) : (
-          <Icon name="cutlery" />
+          // No photo: a soft tile with the dish's initial instead of an empty placeholder
+          <span className={styles.initial}>{dish.name.charAt(0)}</span>
         )}
       </div>
       <div className={styles.info}>
@@ -46,25 +59,26 @@ export function CartLineItem({ line, variant = 'page', showEach }: CartLineItemP
           <VegMark veg={dish.veg} />
           {dish.name}
         </p>
-        {options && (
-          <p className={styles.opts}>
-            {options}
-            {showEach && line.quantity > 1 && (
-              <span className="hide-mobile"> · {formatINR(line.unitPrice)} each</span>
-            )}
-          </p>
-        )}
+        {options && <p className={styles.opts}>{options}</p>}
         {instructions && variant === 'page' && <p className={styles.note}>{instructions}</p>}
       </div>
       <QuantityStepper
         className={styles.qty}
-        variant="outline"
+        variant={variant === 'page' ? 'filled' : 'outline'}
+        size={variant === 'page' ? 'sm' : 'md'}
         value={line.quantity}
         min={0}
         onChange={(q) => setQuantity(line.key, q)}
         itemName={dish.name}
       />
-      <span className={styles.price}>{formatINR(line.unitPrice * line.quantity)}</span>
+      <span className={styles.price}>
+        {formatINR(line.unitPrice * line.quantity)}
+        {variant === 'page' && line.quantity > 1 && (
+          <span className={styles.each}>
+            {t('line.each', { price: formatINR(line.unitPrice) })}
+          </span>
+        )}
+      </span>
       {variant === 'page' && (
         <div className={styles.links}>
           {editable &&
@@ -72,30 +86,28 @@ export function CartLineItem({ line, variant = 'page', showEach }: CartLineItemP
               <Link
                 className={styles.link}
                 href={`/dish/${dish.slug}/?edit=${encodeURIComponent(line.key)}`}
-                aria-label={`Edit ${dish.name}`}
+                aria-label={t('line.editLabel', { dish: dish.name })}
               >
-                <Icon name="pencil" size="xs" />
-                Edit
+                {t('line.edit')}
               </Link>
             ) : (
               <button
                 type="button"
                 className={styles.link}
-                aria-label={`Edit ${dish.name}`}
+                aria-label={t('line.editLabel', { dish: dish.name })}
                 onClick={() => openQuickAdd(dish, line.key)}
               >
-                <Icon name="pencil" size="xs" />
-                Edit
+                {t('line.edit')}
               </button>
             ))}
+          {editable && <span className={styles.linkSep} aria-hidden="true" />}
           <button
             type="button"
             className={cx(styles.link, styles.remove)}
-            aria-label={`Remove ${dish.name}`}
+            aria-label={t('line.removeLabel', { dish: dish.name })}
             onClick={() => removeLine(line.key)}
           >
-            <Icon name="trash" size="xs" />
-            Remove
+            {t('line.remove')}
           </button>
         </div>
       )}

@@ -1,61 +1,75 @@
-/* Feature card — mobile rail (.fcard 236px) and desktop grid (.pick) */
+/* Feature card — white card, photo on top, details below.
+   Mobile/tablet: horizontal rail (~70% of the screen wide). Desktop: 3-up grid. */
 .card {
-  width: 236px;
+  position: relative;
   flex: none;
+  width: clamp(220px, 70vw, 280px);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
   scroll-snap-align: start;
+  box-shadow:
+    0 1px 2px var(--ink-a05),
+    0 8px 20px -12px var(--ink-a22);
+  transition:
+    box-shadow var(--dur-base) ease,
+    transform var(--dur-base) ease;
 }
 .media {
   position: relative;
-  display: block;
-  border-radius: var(--r-lg);
+  aspect-ratio: 16 / 10;
+  background: var(--sand);
+  overflow: hidden;
 }
 .img {
-  width: 100%;
-  height: 168px;
-  border-radius: var(--r-lg);
-  object-fit: cover;
-  display: block;
-  background: var(--sand);
+  composes: cover from '@/styles/patterns.module.css';
+  transition: transform var(--dur-slow) ease;
 }
 .tag {
   position: absolute;
   left: 10px;
   top: 10px;
 }
-.control {
-  position: relative;
-  align-self: flex-end;
-  margin: -34px 10px 0 auto;
+.tag:empty {
+  display: none;
 }
-.text {
+.body {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: -4px;
+  padding: 12px 14px 14px;
+  min-width: 0;
 }
 .top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  min-width: 0;
 }
+.top > span:first-child {
+  margin-top: 2.5px;
+}
+/* Names wrap to two lines at most — never cut mid-word on a narrow card */
 .name {
-  font: 700 16px/22px var(--f-ui);
+  composes: clamp from '@/styles/patterns.module.css';
+  font: 700 15px/21px var(--f-ui);
   margin: 0;
+  min-width: 0;
 }
 .link {
   color: var(--ink);
   text-decoration: none;
-  border-radius: 4px;
 }
+/* Whole card is the link; the ADD control sits above this overlay */
 .link::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-card);
 }
 .link:focus-visible {
   box-shadow: none;
@@ -64,34 +78,80 @@
   box-shadow: var(--focus);
 }
 .desc {
-  font: 500 13px/19px var(--f-ui);
+  font: 500 12.5px/18px var(--f-ui);
   color: var(--ink-2);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.foot {
+  margin-top: auto;
+  padding-top: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
 .price {
-  font: 700 15px/20px var(--f-ui);
+  font: var(--font-price);
   font-variant-numeric: tabular-nums;
+  /* centre the price on the 32px ADD pill */
+  padding-top: 6px;
 }
-@media (min-width: 1024px) {
+.control {
+  position: relative;
+  z-index: 1;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    box-shadow:
+      0 1px 2px var(--ink-a06),
+      0 14px 28px -14px var(--ink-a32);
+    transform: translateY(-2px);
+  }
+  .card:hover .img {
+    transform: scale(1.03);
+  }
+}
+
+/* 1024–1279px: the centre column is narrow, so picks stay a swipeable rail */
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  .card {
+    width: 236px;
+  }
+}
+@media (min-width: 1280px) {
   .card {
     width: auto;
   }
-  .img {
-    height: 190px;
-  }
+}
+@media (min-width: 1024px) {
   .tag {
     left: 12px;
     top: 12px;
   }
-  /* w02: ADD sits on the image's bottom edge (right 12, bottom −16) */
-  .control {
-    position: absolute;
-    top: 166px;
-    right: 12px;
-    margin: 0;
+  .body {
+    padding: 14px 16px 16px;
   }
-  .text {
-    margin-top: 0;
-    padding-top: 4px;
+  .name {
+    font-size: 16px;
+    line-height: 22px;
+  }
+  .desc {
+    font-size: 13px;
+    line-height: 19px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .img {
+    transition: none;
+  }
+  .card:hover,
+  .card:hover .img {
+    transform: none;
   }
 }

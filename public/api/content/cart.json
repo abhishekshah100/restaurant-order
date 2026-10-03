@@ -1,0 +1,88 @@
+{
+  "meta": {
+    "title": "Your cart",
+    "description": "Review your order, add a note for the kitchen and check out."
+  },
+  "itemCount": {
+    "one": "{count} item",
+    "other": "{count} items"
+  },
+  "header": {
+    "backLabel": "Back to menu",
+    "loading": "Loading your cart"
+  },
+  "breadcrumbs": {
+    "menu": "Menu",
+    "cart": "Cart"
+  },
+  "page": {
+    "addMoreItems": "Add more items",
+    "addMore": "Add more",
+    "itemsLabel": "Items in cart",
+    "billSummary": "Bill summary",
+    "fineMobile": "Prices include no hidden charges. Tipping is optional.",
+    "fineDesktop": "No hidden charges · Tipping is optional",
+    "eta": "Ready in about {time}",
+    "etaAfterOrder": "Ready in about {time} after you order",
+    "totalLabel": "Total incl. taxes",
+    "checkout": "Checkout"
+  },
+  "line": {
+    "each": "{price} each",
+    "edit": "Edit",
+    "editLabel": "Edit {dish}",
+    "remove": "Remove",
+    "removeLabel": "Remove {dish}"
+  },
+  "lineLabels": {
+    "mediumSpicy": "Medium spicy",
+    "removal": "No {name}",
+    "versions": "{count} versions",
+    "meal": "Meal",
+    "customised": "Customised",
+    "addOns": {
+      "one": "+{count} add-on",
+      "other": "+{count} add-ons"
+    }
+  },
+  "panel": {
+    "title": "Your order",
+    "table": "Table {table}",
+    "tableWithCount": "Table {table} · {items}",
+    "sharedNote": "This cart is yours. Others at Table {table} order separately.",
+    "review": "Review & checkout"
+  },
+  "empty": {
+    "title": "Your cart is empty",
+    "body": "Dishes you add will appear here. Nothing is sent to the kitchen until you check out.",
+    "browse": "Browse the menu",
+    "popular": "Popular at your table tonight"
+  },
+  "suggestions": {
+    "title": "Goes well with your order"
+  },
+  "kitchenNote": {
+    "add": "Add a note for the kitchen",
+    "addHint": "e.g. serve starters first · optional",
+    "label": "Note for the kitchen",
+    "placeholder": "e.g. Serve starters first"
+  },
+  "priceSummary": {
+    "itemTotal": "Item total",
+    "itemTotalWithCount": "Item total ({count})",
+    "cgst": "CGST (2.5%)",
+    "sgst": "SGST (2.5%)",
+    "serviceCharge": "Service charge",
+    "notAdded": "Not added",
+    "roundOff": "Round off",
+    "gstCombined": "CGST + SGST (5%)",
+    "gstAndRoundOff": "GST 5% + round off",
+    "toPay": "To pay"
+  },
+  "toast": {
+    "added": "{dish} added",
+    "removed": "{dish} removed",
+    "unknownItem": "Item",
+    "undo": "Undo"
+  }
+}

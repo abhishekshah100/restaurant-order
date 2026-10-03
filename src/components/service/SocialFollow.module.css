@@ -1,0 +1,111 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 18px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.title {
+  font: var(--font-price);
+  margin: 0;
+}
+.sub {
+  font: var(--font-small);
+  color: var(--ink-2);
+  margin: 0;
+}
+.links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border-radius: var(--r);
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.link:focus-visible {
+  box-shadow: var(--focus);
+}
+.icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-round);
+  display: grid;
+  place-items: center;
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    transform var(--dur-fast) ease;
+}
+.link:active .icon {
+  transform: scale(0.94);
+}
+.label {
+  font: var(--font-meta);
+}
+@media (hover: hover) {
+  .link:hover .icon {
+    background: var(--brand-600);
+    color: var(--on-brand);
+  }
+  .link:hover .label {
+    color: var(--ink);
+  }
+}
+
+/* Mobile and tablet: one row inside the hours card — "Follow us" beside four round icons */
+@media (max-width: 1023.98px) {
+  .card {
+    border: 0;
+    border-radius: 0;
+    padding: 12px 16px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .sub,
+  .label {
+    display: none;
+  }
+  .links {
+    display: flex;
+    gap: 8px;
+  }
+  .link {
+    padding: 0;
+    border-radius: var(--r-round);
+  }
+  .icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    padding: 24px;
+    gap: 18px;
+  }
+  .title {
+    font: var(--font-h3);
+  }
+}

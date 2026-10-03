@@ -1,35 +1,29 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import {
-  AddButton,
   Badge,
   Banner,
   Button,
-  Chip,
-  Dialog,
   EmptyState,
   ICON_NAMES,
   Icon,
-  IconButton,
-  Input,
-  OptionGroup,
-  OtpInput,
-  PhoneInput,
-  QuantityStepper,
-  SearchField,
-  SearchLink,
   Skeleton,
   StatusPill,
   TablePill,
-  Tabs,
   Tag,
-  Textarea,
   Toast,
   VegMark,
-  type DialogPresentation,
 } from '@/components/ui';
-import { formatAddOnPrice, formatINR } from '@/lib/format';
+import { Section } from './Section';
+import {
+  ButtonsSection,
+  DialogsSection,
+  InputsSection,
+  OptionsSection,
+  QuantitySection,
+  SearchSection,
+} from './StyleguideControls';
 import styles from './styleguide.module.css';
 
 const COLOR_TOKENS = [
@@ -67,40 +61,10 @@ const TYPE_SCALE = [
   ['t-price-lg', '₹1,424'],
 ] as const;
 
-const PORTIONS = [
-  { id: 'half', label: 'Half · 6 pcs', price: formatINR(329) },
-  { id: 'full', label: 'Full · 10 pcs', price: formatINR(549) },
-  {
-    id: 'family',
-    label: 'Family · 16 pcs',
-    sub: 'Unavailable',
-    price: formatINR(849),
-    disabled: true,
-  },
-];
+const noop = () => {};
 
-const ADD_ONS = [
-  { id: 'cheese', label: 'Extra cheese', price: formatAddOnPrice(50) },
-  { id: 'paneer', label: 'Extra paneer', price: formatAddOnPrice(90) },
-  { id: 'mint', label: 'Mint chutney', price: formatAddOnPrice(0) },
-];
-
+/** Design-system board (ds01 / ds02). Interactive sections live in StyleguideControls. */
 export function Styleguide() {
-  const [query, setQuery] = useState('paneer');
-  const [diet, setDiet] = useState<'all' | 'veg' | 'nonveg'>('all');
-  const [tab, setTab] = useState('recommended');
-  const [qty, setQty] = useState(2);
-  const [qtyOutline, setQtyOutline] = useState(1);
-  const [portion, setPortion] = useState<string | undefined>('half');
-  const [addOns, setAddOns] = useState<string[]>(['cheese']);
-  const [name, setName] = useState('Ananya Rao');
-  const [phone, setPhone] = useState('98765432');
-  const [otp, setOtp] = useState('48');
-  const [otpError, setOtpError] = useState('482719');
-  const [loading, setLoading] = useState(false);
-  const [dialog, setDialog] = useState<DialogPresentation | null>(null);
-  const [assist, setAssist] = useState<string | undefined>('waiter');
-
   return (
     <main id="main" className={styles.page}>
       <header className={styles.header}>
@@ -113,10 +77,7 @@ export function Styleguide() {
       </header>
 
       <div className={styles.grid}>
-        <section className={`${styles.card} ${styles.wide}`} aria-labelledby="sg-colour">
-          <h2 id="sg-colour" className={styles.cardTitle}>
-            Colour tokens
-          </h2>
+        <Section id="sg-colour" title="Colour tokens" wide>
           <div className={styles.swatches}>
             {COLOR_TOKENS.map((token) => (
               <div key={token} className={styles.swatch}>
@@ -128,12 +89,9 @@ export function Styleguide() {
               </div>
             ))}
           </div>
-        </section>
+        </Section>
 
-        <section className={styles.card} aria-labelledby="sg-type">
-          <h2 id="sg-type" className={styles.cardTitle}>
-            Type
-          </h2>
+        <Section id="sg-type" title="Type">
           <div className={styles.types}>
             {TYPE_SCALE.map(([cls, label]) => (
               <p key={cls} className={cls}>
@@ -141,140 +99,13 @@ export function Styleguide() {
               </p>
             ))}
           </div>
-        </section>
+        </Section>
 
-        <section className={styles.card} aria-labelledby="sg-buttons">
-          <h2 id="sg-buttons" className={styles.cardTitle}>
-            Buttons · Button / IconButton
-          </h2>
-          <div className={styles.btnGrid}>
-            <Button>Primary</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="dark">Dark</Button>
-            <Button disabled>Disabled</Button>
-            <Button
-              loading={loading}
-              onClick={() => {
-                setLoading(true);
-                window.setTimeout(() => setLoading(false), 1500);
-              }}
-            >
-              {loading ? 'Placing order' : 'Place order'}
-            </Button>
-            <Button size="sm">Small · 40</Button>
-            <Button size="sm" variant="secondary" iconStart="pencil">
-              Edit
-            </Button>
-            <Button size="sm" variant="ghost" iconEnd="chev">
-              See all 12
-            </Button>
-          </div>
-          <div className={styles.row}>
-            <Button block meta={formatINR(409)}>
-              Add to cart
-            </Button>
-            <IconButton icon="back" label="Back" variant="raised" />
-            <IconButton icon="x" label="Close" variant="soft" />
-            <IconButton icon="bell" label="Service" />
-          </div>
-          <p className="t-small c3">
-            Height 52 (primary actions), 40 (inline). Icon buttons 44 × 44. One primary per screen.
-          </p>
-        </section>
+        <ButtonsSection />
+        <InputsSection />
+        <SearchSection />
 
-        <section className={styles.card} aria-labelledby="sg-inputs">
-          <h2 id="sg-inputs" className={styles.cardTitle}>
-            Inputs · Input / PhoneInput / OtpInput
-          </h2>
-          <div className={styles.twoCol}>
-            <Input id="sg-name-empty" label="Default" placeholder="Enter your full name" />
-            <Input
-              id="sg-name"
-              label="Filled"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-            />
-            <Input id="sg-disabled" label="Disabled" value="Table 12" disabled readOnly />
-            <Input
-              id="sg-error"
-              label="Error"
-              defaultValue=""
-              placeholder="Enter your full name"
-              error="Please enter your name"
-            />
-          </div>
-          <PhoneInput
-            id="sg-phone"
-            label="Mobile number · error"
-            value={phone}
-            onChange={setPhone}
-            error={phone.length === 10 ? undefined : 'Enter a 10-digit mobile number'}
-          />
-          <div className={styles.twoCol}>
-            <OtpInput id="sg-otp" label="OTP · active" value={otp} onChange={setOtp} />
-            <OtpInput
-              id="sg-otp-err"
-              label="OTP · error"
-              value={otpError}
-              onChange={setOtpError}
-              error="That code doesn't match."
-            />
-          </div>
-          <Textarea
-            id="sg-note"
-            label="Note for the kitchen"
-            optional
-            placeholder="e.g. Less oil, no onion"
-          />
-        </section>
-
-        <section className={styles.card} aria-labelledby="sg-search">
-          <h2 id="sg-search" className={styles.cardTitle}>
-            Search · Chips · Tabs
-          </h2>
-          <SearchLink href="#sg-search" />
-          <SearchField id="sg-search-input" value={query} onChange={setQuery} />
-          <div className={styles.row}>
-            <Chip pressed={diet === 'all'} onClick={() => setDiet('all')}>
-              All
-            </Chip>
-            <Chip veg pressed={diet === 'veg'} onClick={() => setDiet('veg')}>
-              Veg
-            </Chip>
-            <Chip
-              veg={false}
-              pressed={diet === 'nonveg'}
-              iconEnd={diet === 'nonveg' ? 'x' : undefined}
-              onClick={() => setDiet(diet === 'nonveg' ? 'all' : 'nonveg')}
-            >
-              Non-veg
-            </Chip>
-            <Chip iconStart="sort" iconEnd="chevd" aria-haspopup="listbox">
-              Recommended
-            </Chip>
-            <Chip>Under ₹400</Chip>
-            <Chip count={8}>Starters</Chip>
-          </div>
-          <Tabs
-            label="Example tabs"
-            flush
-            value={tab}
-            onChange={setTab}
-            items={[
-              { id: 'recommended', label: 'Recommended' },
-              { id: 'starters', label: 'Starters' },
-              { id: 'mains', label: 'Mains' },
-              { id: 'desserts', label: 'Desserts' },
-            ]}
-          />
-        </section>
-
-        <section className={styles.card} aria-labelledby="sg-tags">
-          <h2 id="sg-tags" className={styles.cardTitle}>
-            Tags · Status · Dietary marks
-          </h2>
+        <Section id="sg-tags" title="Tags · Status · Dietary marks">
           <div className={styles.row}>
             <Tag variant="chef">Chef&apos;s pick</Tag>
             <Tag variant="new">New</Tag>
@@ -302,74 +133,19 @@ export function Styleguide() {
             <TablePill table={12} />
             <Badge count={3} label="3 items in cart" />
           </div>
-        </section>
+        </Section>
 
-        <section className={styles.card} aria-labelledby="sg-qty">
-          <h2 id="sg-qty" className={styles.cardTitle}>
-            Add &amp; quantity · AddButton / QuantityStepper
-          </h2>
-          <div className={styles.row}>
-            <AddButton itemName="Dahi Kebab" onClick={() => setQty(1)} />
-            <QuantityStepper value={qty} onChange={setQty} min={0} itemName="Dahi Kebab" />
-            <QuantityStepper
-              value={qtyOutline}
-              onChange={setQtyOutline}
-              variant="outline"
-              itemName="Truffle Mushroom Pasta"
-            />
-            <QuantityStepper
-              value={qtyOutline}
-              onChange={setQtyOutline}
-              variant="outline"
-              size="lg"
-            />
-            <AddButton itemName="Chicken Malai Tikka" unavailableLabel="Sold out" />
-            <AddButton itemName="Chicken Malai Tikka" unavailableLabel="Back 8 PM" />
-          </div>
-          <p className="t-small c3">
-            ADD turns into the stepper in place once an item is in the cart. At 1, “−” removes the
-            item and shows an Undo toast. Hit area extends to 48 px.
-          </p>
-        </section>
+        <QuantitySection />
+        <OptionsSection />
 
-        <section className={styles.card} aria-labelledby="sg-opts">
-          <h2 id="sg-opts" className={styles.cardTitle}>
-            Variant (radio) · Add-on (checkbox) · OptionGroup
-          </h2>
-          <div className={styles.twoCol}>
-            <OptionGroup
-              id="sg-portion"
-              type="radio"
-              title="Portion"
-              hint="Required"
-              value={portion}
-              onChange={setPortion}
-              choices={PORTIONS}
-            />
-            <OptionGroup
-              id="sg-addons"
-              type="checkbox"
-              title="Add-ons"
-              hint="Optional · up to 2"
-              max={2}
-              value={addOns}
-              onChange={setAddOns}
-              choices={ADD_ONS}
-            />
-          </div>
-        </section>
-
-        <section className={styles.card} aria-labelledby="sg-feedback">
-          <h2 id="sg-feedback" className={styles.cardTitle}>
-            Feedback · Toast / Banner / Skeleton
-          </h2>
+        <Section id="sg-feedback" title="Feedback · Toast / Banner / Skeleton">
           <Toast
             toast={{ id: 1, message: 'Paneer Tikka added', actionLabel: 'Undo' }}
-            onDismiss={() => {}}
+            onDismiss={noop}
           />
           <Toast
             toast={{ id: 2, message: "Couldn't update cart", tone: 'error', actionLabel: 'Retry' }}
-            onDismiss={() => {}}
+            onDismiss={noop}
           />
           <Banner tone="info">Info — shared table, combined bills</Banner>
           <Banner tone="warn">Warning — ordering paused for 15 min</Banner>
@@ -382,63 +158,11 @@ export function Styleguide() {
               <Skeleton width="90%" />
             </div>
           </div>
-        </section>
+        </Section>
 
-        <section className={styles.card} aria-labelledby="sg-dialogs">
-          <h2 id="sg-dialogs" className={styles.cardTitle}>
-            Dialogs · Sheet / Modal / Adaptive / Slide-over
-          </h2>
-          <div className={styles.row}>
-            <Button size="sm" variant="secondary" onClick={() => setDialog('sheet')}>
-              Bottom sheet
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => setDialog('modal')}>
-              Modal
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => setDialog('adaptive')}>
-              Adaptive
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => setDialog('panel')}>
-              Slide-over
-            </Button>
-          </div>
-          <p className="t-small c3">
-            Focus is trapped inside, Esc or the scrim closes, page scroll is locked and focus
-            returns to the trigger.
-          </p>
-          <Dialog
-            open={dialog !== null}
-            onClose={() => setDialog(null)}
-            presentation={dialog ?? 'adaptive'}
-            title="Need assistance?"
-            description="A team member will come to Table 12."
-            footer={
-              <Button block onClick={() => setDialog(null)}>
-                Send request
-              </Button>
-            }
-          >
-            <OptionGroup
-              id="sg-assist"
-              type="radio"
-              title="Request type"
-              titleClassName="visually-hidden"
-              value={assist}
-              onChange={setAssist}
-              choices={[
-                { id: 'waiter', label: 'Call waiter' },
-                { id: 'water', label: 'Need water' },
-                { id: 'cutlery', label: 'Need cutlery' },
-                { id: 'other', label: 'Something else' },
-              ]}
-            />
-          </Dialog>
-        </section>
+        <DialogsSection />
 
-        <section className={styles.card} aria-labelledby="sg-empty">
-          <h2 id="sg-empty" className={styles.cardTitle}>
-            Empty state · EmptyState
-          </h2>
+        <Section id="sg-empty" title="Empty state · EmptyState">
           <EmptyState
             icon="bag"
             title="Your cart is empty"
@@ -450,12 +174,9 @@ export function Styleguide() {
           >
             Dishes you add will appear here. Nothing is sent to the kitchen until you check out.
           </EmptyState>
-        </section>
+        </Section>
 
-        <section className={`${styles.card} ${styles.wide}`} aria-labelledby="sg-icons">
-          <h2 id="sg-icons" className={styles.cardTitle}>
-            Icons · {ICON_NAMES.length} · 24px grid, 1.8 stroke
-          </h2>
+        <Section id="sg-icons" title={`Icons · ${ICON_NAMES.length} · 24px grid, 1.8 stroke`} wide>
           <div className={styles.icons}>
             {ICON_NAMES.map((name) => (
               <div key={name} className={styles.iconCell}>
@@ -464,7 +185,7 @@ export function Styleguide() {
               </div>
             ))}
           </div>
-        </section>
+        </Section>
       </div>
     </main>
   );

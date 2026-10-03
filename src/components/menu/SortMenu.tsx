@@ -2,8 +2,9 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { Chip, Icon, OptionGroup, Sheet } from '@/components/ui';
+import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
-import { SORT_LABEL, type SortKey } from '@/lib/menu';
+import type { SortKey } from '@/lib/menu';
 import styles from './SortMenu.module.css';
 
 export interface SortMenuProps {
@@ -29,6 +30,11 @@ export function SortMenu({
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const listId = useId();
+  const t = useContent('menu');
+  const label = (sort: SortKey) => t(`sort.${sort}`);
+  // In the sheet, arrow keys move the radio selection (and apply it) but keep the sheet open;
+  // only an explicit pick (click, Enter or Space) closes it.
+  const arrowKey = useRef(false);
 
   useEffect(() => {
     if (!open || presentation === 'sheet') return;
@@ -72,28 +78,39 @@ export function SortMenu({
         iconEnd="chevd"
         aria-haspopup={presentation === 'sheet' ? 'dialog' : 'listbox'}
         aria-expanded={open}
-        aria-label={`Sort: ${SORT_LABEL[value]}`}
+        aria-label={t('sort.current', { label: label(value) })}
         onClick={() => {
           setActive(Math.max(0, options.indexOf(value)));
           setOpen((o) => !o);
         }}
       >
-        {value === 'recommended' || value === 'best-match' ? SORT_LABEL[value] : 'Price'}
+        {value === 'recommended' || value === 'best-match' ? label(value) : t('sort.price')}
       </Chip>
       {presentation === 'sheet' && (
-        <Sheet open={open} onClose={() => setOpen(false)} title="Sort by">
-          <OptionGroup
-            id={`${listId}-sheet`}
-            type="radio"
-            title="Sort by"
-            titleClassName="visually-hidden"
-            value={value}
-            onChange={(id) => {
-              onChange(id as SortKey);
-              setOpen(false);
+        <Sheet open={open} onClose={() => setOpen(false)} title={t('sort.sortBy')}>
+          <div
+            className={styles.contents}
+            onKeyDownCapture={(e) => {
+              arrowKey.current = e.key.startsWith('Arrow');
             }}
-            choices={options.map((opt) => ({ id: opt, label: SORT_LABEL[opt] }))}
-          />
+            onClickCapture={() => {
+              arrowKey.current = false;
+            }}
+          >
+            <OptionGroup
+              id={`${listId}-sheet`}
+              type="radio"
+              title={t('sort.sortBy')}
+              titleClassName="visually-hidden"
+              value={value}
+              onChange={(id) => {
+                onChange(id as SortKey);
+                if (!arrowKey.current) setOpen(false);
+                arrowKey.current = false;
+              }}
+              choices={options.map((opt) => ({ id: opt, label: label(opt) }))}
+            />
+          </div>
         </Sheet>
       )}
       {open && presentation === 'popover' && (
@@ -103,7 +120,7 @@ export function SortMenu({
           className={cx(styles.menu, alignEnd && styles.end)}
           role="listbox"
           tabIndex={-1}
-          aria-label="Sort by"
+          aria-label={t('sort.sortBy')}
           aria-activedescendant={`${listId}-${options[active]}`}
           onKeyDown={onKeyDown}
         >
@@ -121,7 +138,7 @@ export function SortMenu({
               onClick={() => choose(opt)}
               onPointerEnter={() => setActive(i)}
             >
-              {SORT_LABEL[opt]}
+              {label(opt)}
               {opt === value && <Icon name="check" size="xs" />}
             </li>
           ))}

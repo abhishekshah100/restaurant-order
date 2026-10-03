@@ -1,0 +1,202 @@
+/* Pay my bill: the form follows the bill page (20 · w20), the payment states follow
+   checkout processing (12 · w12, s08 · ws08) and the paid state the request pages (21 · w21). */
+
+/* ---- Form ---- */
+.cols {
+  composes: cols from './BillRequestView.module.css';
+}
+.main {
+  composes: main from './BillRequestView.module.css';
+}
+.loading {
+  composes: loading from './BillRequestView.module.css';
+}
+.empty {
+  composes: empty from './BillRequestView.module.css';
+}
+.card {
+  composes: card from './BillRequestView.module.css';
+}
+.cardTitle {
+  composes: cardTitle from './BillRequestView.module.css';
+}
+.cardTotals {
+  composes: cardTotals from './BillRequestView.module.css';
+}
+.foot {
+  composes: foot from './BillRequestView.module.css';
+}
+.aside {
+  composes: aside from './BillRequestView.module.css';
+}
+.hint {
+  composes: hint from './BillRequestView.module.css';
+}
+.hintIcon {
+  composes: hintIcon from './BillRequestView.module.css';
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.methodsTitle {
+  margin: 0;
+}
+.fine {
+  composes: fine from '@/components/checkout/Checkout.module.css';
+}
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 1024px) {
+  .intro {
+    gap: 10px;
+  }
+}
+
+/* ---- Processing, failed ---- */
+.statusPage {
+  composes: page from '@/components/checkout/Processing.module.css';
+}
+.statusBody {
+  composes: body from '@/components/checkout/Processing.module.css';
+}
+.grow {
+  composes: grow from '@/components/checkout/Processing.module.css';
+}
+.processing {
+  composes: card processing from '@/components/checkout/Processing.module.css';
+}
+.failed {
+  composes: card compact from '@/components/checkout/Processing.module.css';
+}
+.spinWrap {
+  composes: spinWrap from '@/components/checkout/Processing.module.css';
+}
+.statusText {
+  composes: text from '@/components/checkout/Processing.module.css';
+}
+.statusLede {
+  composes: lede from '@/components/checkout/Processing.module.css';
+}
+.amountCard {
+  composes: amountCard from '@/components/checkout/Processing.module.css';
+}
+.amountRow {
+  composes: amountRow from '@/components/checkout/Processing.module.css';
+}
+.amount {
+  composes: amount from '@/components/checkout/Processing.module.css';
+}
+.hr {
+  composes: hr from '@/components/checkout/Processing.module.css';
+}
+.steps {
+  composes: steps from '@/components/checkout/Processing.module.css';
+}
+.step {
+  composes: step from '@/components/checkout/Processing.module.css';
+}
+.stepOk {
+  composes: stepOk from '@/components/checkout/Processing.module.css';
+}
+.stepCur {
+  composes: stepCur from '@/components/checkout/Processing.module.css';
+}
+.stepTodo {
+  composes: stepTodo from '@/components/checkout/Processing.module.css';
+}
+.circle {
+  composes: circle from '@/components/checkout/Processing.module.css';
+}
+.statusFoot {
+  composes: foot from '@/components/checkout/Processing.module.css';
+}
+.footStack {
+  composes: footStack from '@/components/checkout/Processing.module.css';
+}
+.secure {
+  composes: secure from '@/components/checkout/Processing.module.css';
+}
+.proto {
+  composes: proto from '@/components/checkout/Processing.module.css';
+}
+.protoLink {
+  composes: protoLink from '@/components/checkout/Processing.module.css';
+}
+.emptyHeader {
+  composes: emptyHeader from '@/components/checkout/Processing.module.css';
+}
+.well {
+  composes: well from '@/components/checkout/Processing.module.css';
+}
+.price {
+  composes: price from '@/components/checkout/Processing.module.css';
+}
+.inlineActions {
+  composes: actions from '@/components/checkout/Processing.module.css';
+}
+.focusTitle {
+  border-radius: var(--r-xs);
+}
+
+/* ---- Paid ---- */
+.receipt {
+  width: 100%;
+  margin: 12px 0 0;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  text-align: left;
+}
+.receiptRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  font: 500 14px/20px var(--f-ui);
+  color: var(--ink-2);
+}
+.receiptRow dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.receiptRow:first-child {
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--line-strong);
+}
+.receiptRow:first-child dt {
+  font: 700 16px/22px var(--f-ui);
+  color: var(--ink);
+}
+.receiptRow .receiptAmount {
+  font: var(--font-price-lg);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+@media (min-width: 1024px) {
+  .receipt {
+    margin-top: 8px;
+    padding: 20px 24px;
+    background: var(--bg);
+    border: 0;
+  }
+}

@@ -1,7 +1,8 @@
 /** All prices are integer rupees. */
 export type Rupees = number;
 
-export type CategoryId = 'starters' | 'mains' | 'pizza' | 'breads-rice' | 'desserts' | 'beverages';
+export type CategoryId =
+  'starters' | 'mains' | 'meals' | 'pizza' | 'breads-rice' | 'desserts' | 'beverages';
 
 export interface Category {
   id: CategoryId;
@@ -13,9 +14,9 @@ export interface Category {
   unit: 'dishes' | 'drinks';
 }
 
-export type DishTag = 'chef' | 'new' | 'bestseller';
+type DishTag = 'chef' | 'new' | 'bestseller';
 
-export type SpiceLevel = 'mild' | 'medium' | 'hot';
+type SpiceLevel = 'mild' | 'medium' | 'hot';
 
 export type Allergen = 'dairy' | 'gluten' | 'nuts' | 'shellfish' | 'egg' | 'soy' | 'sesame';
 
@@ -33,16 +34,51 @@ export interface AddOn {
   name: string;
   /** 0 = free. */
   price: Rupees;
+  /** Only offered with these variant ids (e.g. an extra shot on Large only). Omit = every size. */
+  availableFor?: string[];
+  /** Size-specific price, keyed by variant id; falls back to `price`. */
+  priceByVariant?: Record<string, Rupees>;
+}
+
+/** One choice in a single-select group. A plain string is shorthand for a free choice. */
+export interface ChoiceSpec {
+  name: string;
+  /** Extra cost of picking this choice (0 / omitted = included). */
+  price?: Rupees;
+  /** Only offered with these variant ids. Omit = every size. */
+  availableFor?: string[];
 }
 
 export interface OptionGroup {
   id: string;
   name: string;
-  /** Choices are single-select; the first is the default. */
-  choices: string[];
+  /** Single-select; the first available choice is the default. */
+  choices: (string | ChoiceSpec)[];
+  /** Only shown with these variant ids. Omit = every size. */
+  availableFor?: string[];
+  /**
+   * Always list the chosen value in cart / order summaries (combo slots, protein).
+   * Otherwise only non-default choices are listed (e.g. "Medium spicy").
+   */
+  showInSummary?: boolean;
 }
 
-export type Availability =
+/** An ingredient the guest can leave out ("No onion", "No garlic"). Always free. */
+export interface Removable {
+  id: string;
+  /** Ingredient name — shown as "No <name>". */
+  name: string;
+}
+
+/** Meal / combo details: the slots themselves are option groups. */
+interface ComboInfo {
+  /** Saving versus ordering the parts separately, for the "Save ₹X" badge. */
+  savings?: Rupees;
+  /** One-line contents, e.g. "Curry · Bread · Rice · Dessert · Drink". */
+  includes: string;
+}
+
+type Availability =
   | { status: 'available' }
   | { status: 'sold-out'; backAt?: string }
   | { status: 'unavailable-today' };
@@ -59,6 +95,8 @@ export interface Dish {
   name: string;
   /** Short line used on cards and rows. */
   description: string;
+  /** Even shorter line for the chef's-pick cards; falls back to `description`. */
+  cardDescription?: string;
   /** Longer copy for the food-detail page. */
   longDescription?: string;
   categoryId: CategoryId;
@@ -70,8 +108,12 @@ export interface Dish {
   variantLabel?: string;
   addOns?: AddOn[];
   maxAddOns?: number;
-  /** Extra single-choice groups such as spice level. */
+  /** Extra single-choice groups such as spice level, protein or combo slots. */
   optionGroups?: OptionGroup[];
+  /** Ingredients that can be left out ("No onion"). */
+  removables?: Removable[];
+  /** Set for meals / combos. */
+  combo?: ComboInfo;
   /** Quick-instruction chips on the detail screen. */
   quickInstructions?: string[];
   tags: DishTag[];
@@ -89,4 +131,27 @@ export interface Dish {
   featured?: boolean;
   /** Ranking for "Recommended" sort; lower is first. */
   rank: number;
+}
+
+/** A labelled dish shortcut, e.g. the empty-cart suggestions. */
+export interface DishLink {
+  slug: string;
+  label: string;
+}
+
+/** Everything GET /menu returns: the categories, every dish and the curated dish lists. */
+export interface MenuData {
+  categories: Category[];
+  /** Every dish, in menu order (each category's list order is its "Recommended" rank). */
+  dishes: Dish[];
+  /** Chef's picks rail, in the order drawn (02 / w02). */
+  chefsPicks: string[];
+  /** Search suggestions shown under "Popular at The Olive Table". */
+  popularSearches: string[];
+  /** "Goes well with your order" on the cart: drinks and desserts, in order of preference. */
+  cartSuggestions: string[];
+  /** "Trending tonight" strip on the search screen (dishes with photos). */
+  trendingTonight: string[];
+  /** Suggestions on the empty-cart screen. */
+  popularAtTable: DishLink[];
 }

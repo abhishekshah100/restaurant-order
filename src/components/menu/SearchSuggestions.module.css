@@ -1,127 +1,320 @@
+/* Search suggestions — same sections on mobile (screen) and desktop (dropdown / page) */
 .root {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 26px;
 }
 .section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  min-width: 0;
 }
-.recent {
-  gap: 4px;
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--font-caption);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0;
 }
-.headRow {
+.headingIcon {
+  color: var(--brand-600);
+}
+
+/* Trending tonight — swipeable cards; every card has the same shape so prices line up */
+.trending {
+  composes: noScrollbar from '@/styles/patterns.module.css';
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 0 -20px;
+  padding: 2px 20px 10px;
+  scroll-padding: 0 20px;
+}
+.trend {
+  flex: none;
+  width: 150px;
+  display: flex;
+  scroll-snap-align: start;
+}
+.trendLink {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 6px 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  text-decoration: none;
+  color: var(--ink);
+  box-shadow:
+    0 1px 2px var(--ink-a04),
+    0 8px 18px -14px var(--ink-a40);
+  transition:
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+.trendLink:focus-visible {
+  box-shadow: var(--focus);
+}
+.trendImg {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--sand);
+}
+.trendPhoto {
+  composes: cover from '@/styles/patterns.module.css';
+  transition: transform 0.3s ease;
+}
+/* Veg / non-veg mark as a small white badge on the photo */
+.trendMark {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-xs);
+  background: rgba(255, 253, 249, 0.94);
+  box-shadow: 0 1px 3px var(--ink-a25);
+}
+.trendMark > span {
+  width: 14px;
+  height: 14px;
+}
+.trendText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 4px;
+  min-width: 0;
+}
+/* Names always take two lines, so the price row sits at the same height on every card */
+.trendName {
+  composes: clamp from '@/styles/patterns.module.css';
+  font: 700 13px/17px var(--f-ui);
+  min-height: 34px;
+}
+.trendFoot {
+  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
 }
-.clear {
-  font: 700 13px/20px var(--f-ui);
+.trendPrice {
+  font: 800 14px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.trendGo {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-round);
+  display: grid;
+  place-items: center;
+  background: var(--brand-tint-2);
   color: var(--brand-600);
-  background: none;
-  border: 0;
-  padding: 0 4px;
-  min-height: 44px;
-  border-radius: 8px;
+  flex: none;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
 }
-.row {
-  min-height: 52px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--ink);
+.trendGo > span {
+  width: 14px;
+  height: 14px;
 }
-.rowLink {
-  flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font: 700 15px/20px var(--f-ui);
-  color: var(--ink);
-  text-decoration: none;
-  background: none;
-  border: 0;
-  padding: 0;
-  text-align: left;
-  border-radius: 8px;
-}
-.rowLink > span[aria-hidden] {
-  color: var(--ink-3);
-}
-.rowText {
-  flex: 1;
-  min-width: 0;
-}
-.arrow {
-  display: none;
-}
+
+/* Popular searches */
 .chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Browse by category — icon tiles */
 .cats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 .cat {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 14px 16px;
-  text-decoration: none;
-  color: var(--ink);
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 12px 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color var(--dur-fast) ease;
 }
-.cat:hover {
-  border-color: var(--line-strong);
+.catIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-round);
+  display: grid;
+  place-items: center;
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+  margin-bottom: 2px;
 }
 .catName {
-  font: 700 15px/24px var(--f-ui);
+  font: 700 12.5px/16px var(--f-ui);
 }
-.empty {
+.catCount {
+  font: 500 11px/14px var(--f-ui);
   color: var(--ink-3);
-  font: 500 13px/18px var(--f-ui);
 }
 
-/* Desktop dropdown density (w04) */
+@media (hover: hover) {
+  .trendLink:hover,
+  .cat:hover {
+    border-color: var(--line-strong);
+  }
+  .trendLink:hover .trendPhoto {
+    transform: scale(1.04);
+  }
+  .trendLink:hover .trendGo {
+    background: var(--brand-600);
+    color: var(--on-brand);
+  }
+}
+
+/* Phones from 360px: four compact tiles per row (7 categories → 4 + 3) */
+@media (min-width: 360px) {
+  .cats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .cat {
+    padding: 10px 4px 8px;
+    border-radius: var(--r);
+  }
+  .catIcon {
+    width: 34px;
+    height: 34px;
+  }
+  .catName {
+    font-size: 12px;
+    line-height: 15px;
+  }
+}
+
+@media (min-width: 768px) {
+  .cats {
+    gap: 8px;
+  }
+  .cat {
+    padding: 12px 6px 10px;
+  }
+  .trending {
+    margin: 0;
+    padding: 2px 0 8px;
+  }
+  .trend {
+    width: 168px;
+  }
+  .cats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Desktop dropdown: 2×2 trending grid, 4-column categories, no horizontal scroll */
 .compact {
-  gap: 22px;
+  gap: 20px;
 }
-.compact .recent {
+.compact .trending {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+.compact .trend {
+  width: auto;
+}
+.compact .trendLink {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+  padding: 6px 8px 6px 6px;
+  border-radius: var(--r);
+  box-shadow: none;
+}
+.compact .trendLink:focus-visible {
+  box-shadow: var(--focus);
+}
+.compact .trendImg {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  aspect-ratio: auto;
+  border-radius: var(--r-md);
+}
+.compact .trendMark {
+  left: 3px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+.compact .trendMark > span {
+  width: 12px;
+  height: 12px;
+}
+/* Name at the top, price row at the bottom, both aligned to the photo */
+.compact .trendText {
   gap: 2px;
+  padding: 1px 0;
 }
-.compact .section {
-  gap: 12px;
-}
-.compact .clear {
+.compact .trendName {
+  font-size: 12.5px;
+  line-height: 16px;
   min-height: 32px;
 }
-.compact .row {
-  min-height: 44px;
+.compact .trendPrice {
+  font-size: 13px;
+  line-height: 18px;
 }
-.compact .rowLink {
-  font-weight: 600;
-}
-.compact .arrow {
-  display: inline-block;
+.compact .trendGo {
+  width: 22px;
+  height: 22px;
 }
 .compact .cats {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .compact .cat {
-  background: var(--sand);
-  border: 0;
-  border-radius: var(--r);
-  padding: 12px 14px;
-  gap: 0;
+  padding: 10px 4px 8px;
 }
-.compact .catName {
-  font: 700 13px/18px var(--f-ui);
+.compact .catIcon {
+  width: 34px;
+  height: 34px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trendLink,
+  .trendGo,
+  .trendPhoto,
+  .cat {
+    transition: none;
+  }
+  .trendLink:hover .trendPhoto {
+    transform: none;
+  }
 }

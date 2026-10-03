@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { SearchView } from '@/components/menu/SearchView';
+import { getContent } from '@/api/server';
 
-export const metadata: Metadata = {
-  title: 'Search',
-  description: 'Search dishes and drinks at The Olive Table.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getContent('menu');
+  return { title: t('nav.search'), description: t('meta.searchDescription') };
+}
 
 export default function SearchPage() {
   return <SearchView />;

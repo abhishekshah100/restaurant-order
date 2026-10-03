@@ -10,6 +10,25 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  /* Desktop: never taller than the window under the header; scrolls on its own if longer */
+  max-height: calc(100dvh - var(--header-h) - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* room so focus rings and the scrollbar don't clip the items */
+  margin: 0 -8px 0 -6px;
+  padding: 2px 8px 16px 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.sticky::-webkit-scrollbar {
+  width: 6px;
+}
+.sticky::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--r-3xs);
+}
+.sticky::-webkit-scrollbar-track {
+  background: transparent;
 }
 .cats {
   display: flex;
@@ -19,7 +38,7 @@
 .cat {
   height: 44px;
   padding: 0 14px;
-  border-radius: 10px;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,27 +46,28 @@
   color: var(--ink);
   font: 600 15px/20px var(--f-ui);
 }
-.cat:hover {
-  background: var(--sand);
-}
 .n {
-  font: 600 13px/18px var(--f-ui);
+  font: var(--font-small-strong);
   color: var(--ink-3);
 }
-.on,
-.on:hover {
+.on {
   background: var(--brand-tint-2);
   color: var(--brand-700);
   font-weight: 700;
+}
+@media (hover: hover) {
+  .cat:hover {
+    background: var(--sand);
+  }
+  .on:hover {
+    background: var(--brand-tint-2);
+  }
 }
 .on .n {
   color: var(--brand-700);
 }
 .hr {
-  height: 1px;
-  background: var(--line);
-  border: 0;
-  margin: 0;
+  composes: hr from '@/styles/patterns.module.css';
 }
 .diet {
   display: flex;
@@ -69,30 +89,8 @@
   background: none;
   width: 100%;
   text-align: left;
-  font: 700 14px/20px var(--f-ui);
-  border-radius: 10px;
-}
-.box {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: 2px solid var(--line-strong);
-  flex: none;
-  background: var(--surface);
-  display: grid;
-  place-items: center;
-}
-.checkOn .box {
-  background: var(--brand-600);
-  border-color: var(--brand-600);
-}
-.checkOn .box::after {
-  content: '';
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  -webkit-mask: var(--m-check) center / contain no-repeat;
-  mask: var(--m-check) center / contain no-repeat;
+  font: var(--font-label);
+  border-radius: var(--r-md);
 }
 .flame {
   color: var(--brand);
@@ -106,14 +104,7 @@
   gap: 4px;
 }
 .back {
-  font: 700 14px/20px var(--f-ui);
-  color: var(--brand-600);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 44px;
-  border-radius: 8px;
+  composes: textLink from '@/styles/patterns.module.css';
 }
 .foundIn {
   padding-left: 4px;
@@ -126,4 +117,10 @@ button.cat {
 }
 button.cat.on {
   background: var(--brand-tint-2);
+}
+.box {
+  composes: checkbox from '@/styles/patterns.module.css';
+}
+.boxOn {
+  composes: checkboxOn from '@/styles/patterns.module.css';
 }

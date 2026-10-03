@@ -1,0 +1,42 @@
+.root {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+}
+.text {
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.expanded {
+  display: block;
+}
+.expanded .text {
+  white-space: normal;
+  overflow: visible;
+}
+/* Sits above the card's full-size link overlay so it stays separately tappable */
+.toggle {
+  composes: hitArea from '@/styles/patterns.module.css';
+  /* 44px-tall hit area without changing the line */
+  --hit-inset: -13px -8px;
+  z-index: 1;
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  margin-left: 2px;
+  font: 700 12.5px/18px var(--f-ui);
+  color: var(--brand-600);
+  cursor: pointer;
+  border-radius: var(--r-2xs);
+}
+@media (hover: hover) {
+  .toggle:hover {
+    text-decoration: underline;
+  }
+}

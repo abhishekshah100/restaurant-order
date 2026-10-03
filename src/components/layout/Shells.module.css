@@ -87,18 +87,3 @@
     gap: 40px;
   }
 }
-
-/* Centered status card on desktop (w12, ws06, ws08, w13) */
-.centered {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-@media (min-width: 1024px) {
-  .centered {
-    align-items: center;
-    justify-content: flex-start;
-    padding: 72px 40px;
-    gap: 40px;
-  }
-}

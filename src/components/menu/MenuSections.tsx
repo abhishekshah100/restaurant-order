@@ -1,52 +1,59 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo } from 'react';
 import { Chip, Icon } from '@/components/ui';
 import { useFilters } from '@/context/FiltersContext';
 import { cx } from '@/lib/cx';
-import { applyFilters, categoryCountLabel, dishesIn, featuredDishes, sortDishes } from '@/lib/menu';
+import { useContent, useMenu } from '@/api/hooks';
+import { applyFilters, sortDishes } from '@/lib/menu';
 import type { Category } from '@/types/menu';
 import { DishCard } from './DishCard';
 import { DishList } from './DishList';
+import { useFilterActions } from './useFilterActions';
 import styles from './MenuSections.module.css';
 
 /** "Chef's picks" — horizontal rail on mobile, 3-up grid on desktop with diet chips. */
 export function PicksSection() {
-  const { filters, setFilters } = useFilters();
-  const picks = applyFilters(featuredDishes(), filters);
-  const setDiet = (diet: typeof filters.diet) => setFilters((f) => ({ ...f, diet }));
+  const { filters } = useFilters();
+  const { setDiet } = useFilterActions();
+  const menu = useMenu();
+  const t = useContent('menu');
+  const picks = useMemo(() => applyFilters(menu.featuredDishes(), filters), [menu, filters]);
 
   return (
     <section id="picks" className={styles.picks} aria-labelledby="picks-title">
       <div className={styles.picksHead}>
         <div className={styles.picksTitle}>
           <h2 id="picks-title" className="t-h2">
-            Chef&apos;s picks
+            {t('filters.chefsPicks')}
           </h2>
-          <p className="t-small c2">Tonight&apos;s favourites from our kitchen</p>
+          <p className="t-small c2">{t('home.picksSubtitle')}</p>
         </div>
-        <div className={cx(styles.chips, 'hide-mobile')} role="group" aria-label="Quick filters">
+        <div
+          className={cx(styles.chips, 'hide-mobile')}
+          role="group"
+          aria-label={t('filters.quickFilters')}
+        >
           <Chip pressed={filters.diet === 'all'} onClick={() => setDiet('all')}>
-            All
+            {t('filters.all')}
           </Chip>
           <Chip veg pressed={filters.diet === 'veg'} onClick={() => setDiet('veg')}>
-            Veg
+            {t('filters.veg')}
           </Chip>
           <Chip veg={false} pressed={filters.diet === 'nonveg'} onClick={() => setDiet('nonveg')}>
-            Non-veg
+            {t('filters.nonVeg')}
           </Chip>
         </div>
       </div>
       {picks.length > 0 ? (
         <ul className={styles.rail}>
           {picks.map((dish, i) => (
-            <DishCard key={dish.slug} dish={dish} priority={i < 2} />
+            <DishCard key={dish.slug} dish={dish} priority={i < 2} hideChefTag />
           ))}
         </ul>
       ) : (
-        <p className={cx('t-small c3', styles.picksHead)}>
-          No chef&apos;s picks match these filters.
-        </p>
+        <p className={cx('t-small c3', styles.picksHead)}>{t('home.noPicks')}</p>
       )}
     </section>
   );
@@ -63,8 +70,14 @@ export interface CategorySectionProps {
 /** A category block on the menu home: heading, count or "See all", dish list. */
 export function CategorySection({ category, preview, divider }: CategorySectionProps) {
   const { filters } = useFilters();
-  const all = sortDishes(applyFilters(dishesIn(category.id), filters), 'recommended');
-  const shown = preview ? all.slice(0, preview) : all;
+  const menu = useMenu();
+  const t = useContent('menu');
+  const total = useMemo(() => menu.dishesIn(category.id), [menu, category.id]);
+  const all = useMemo(
+    () => sortDishes(applyFilters(total, filters), 'recommended'),
+    [total, filters],
+  );
+  const shown = useMemo(() => (preview ? all.slice(0, preview) : all), [all, preview]);
   const titleId = `sec-${category.id}`;
   const truncated = preview !== undefined && all.length > shown.length;
 
@@ -78,17 +91,17 @@ export function CategorySection({ category, preview, divider }: CategorySectionP
           </h2>
           {truncated ? (
             <Link href={`/menu/${category.id}/`} className={styles.seeAll}>
-              See all {dishesIn(category.id).length}
+              {t('home.seeAll', { count: total.length })}
               <Icon name="chev" size="xs" />
             </Link>
           ) : (
-            <span className="t-small c3">{categoryCountLabel(category)}</span>
+            <span className="t-small c3">{menu.categoryCountLabel(category)}</span>
           )}
         </div>
         {shown.length > 0 ? (
           <DishList dishes={shown} label={category.name} />
         ) : (
-          <p className={cx('t-small c3', styles.empty)}>No dishes match these filters.</p>
+          <p className={cx('t-small c3', styles.empty)}>{t('home.noDishes')}</p>
         )}
       </section>
     </>

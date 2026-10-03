@@ -1,0 +1,17 @@
+.row {
+  padding: 4px 20px 12px;
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .row {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+}
+@media (min-width: 1024px) {
+  .row {
+    width: 100%;
+    max-width: var(--wrap-max);
+    margin: 0 auto;
+    padding: 20px 40px 0;
+  }
+}

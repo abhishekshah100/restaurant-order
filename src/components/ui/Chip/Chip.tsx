@@ -12,7 +12,6 @@ interface BaseProps {
   iconStart?: IconName;
   iconEnd?: IconName;
   count?: number;
-  size?: 'md' | 'lg';
   className?: string;
 }
 
@@ -50,12 +49,7 @@ function Inner({ veg, iconStart, iconEnd, count, children }: BaseProps) {
 }
 
 export function Chip(props: ChipProps | ChipLinkProps) {
-  const classes = cx(
-    styles.chip,
-    props.pressed && styles.on,
-    props.size === 'lg' && styles.lg,
-    props.className,
-  );
+  const classes = cx(styles.chip, props.pressed && styles.on, props.className);
   if (props.href !== undefined) {
     return (
       <Link href={props.href} className={classes} onClick={props.onClick}>

@@ -1,4 +1,8 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { useContent } from '@/api/hooks';
+import { cx } from '@/lib/cx';
 import { Icon } from '../Icon';
 import styles from './Input.module.css';
 
@@ -17,8 +21,8 @@ export interface FieldProps {
   className?: string;
 }
 
-export const hintId = (id: string) => `${id}-hint`;
-export const errorId = (id: string) => `${id}-error`;
+const hintId = (id: string) => `${id}-hint`;
+const errorId = (id: string) => `${id}-error`;
 
 export function describedBy(id: string, hint?: ReactNode, error?: ReactNode): string | undefined {
   const ids = [hint ? hintId(id) : null, error ? errorId(id) : null].filter(Boolean);
@@ -37,16 +41,17 @@ export function Field({
   children,
   className,
 }: FieldProps) {
+  const t = useContent('common');
   const LabelTag = labelAs;
   return (
-    <div className={[styles.field, className].filter(Boolean).join(' ')}>
+    <div className={cx(styles.field, className)}>
       <LabelTag
         id={labelId}
         className={hideLabel ? 'visually-hidden' : styles.label}
         htmlFor={labelAs === 'label' ? id : undefined}
       >
         {label}
-        {optional && <span className={styles.optional}> (optional)</span>}
+        {optional && <span className={styles.optional}>{t('field.optional')}</span>}
       </LabelTag>
       {children}
       {error ? (

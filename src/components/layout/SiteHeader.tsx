@@ -3,16 +3,19 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon, TablePill } from '@/components/ui';
-import { restaurant } from '@/data/restaurant';
+import { useContent, useRestaurant } from '@/api/hooks';
 import { useCart } from '@/hooks/useCart';
+import { useStatusLine } from '@/hooks/useRestaurantStatus';
 import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
 import { formatINR } from '@/lib/format';
 import { HeaderSearch } from './HeaderSearch';
 import { CheckoutStepsBar, type CheckoutStep } from './CheckoutSteps';
+import { NAV_ITEMS, isNavActive } from './navItems';
 import styles from './SiteHeader.module.css';
 
-export type SiteHeaderVariant = 'default' | 'checkout' | 'payment';
+/** minimal: brand and table pill only (restaurant closed / offline, ws01 · ws03). */
+export type SiteHeaderVariant = 'default' | 'minimal' | 'checkout' | 'payment';
 
 export interface SiteHeaderProps {
   variant?: SiteHeaderVariant;
@@ -23,24 +26,15 @@ export interface SiteHeaderProps {
   className?: string;
 }
 
-const NAV = [
-  { href: '/menu/', label: 'Menu', icon: 'menu', match: ['/menu', '/dish', '/search', '/cart'] },
-  { href: '/orders/', label: 'My orders', icon: 'list', match: ['/orders', '/order/'] },
-  { href: '/help/', label: 'Service', icon: 'bell', match: ['/help'] },
-] as const;
-
-export function statusLine(): string {
-  if (restaurant.status === 'closed') return 'Closed now';
-  if (restaurant.status === 'paused') return 'Ordering paused';
-  return `Open · until ${restaurant.closesAt}`;
-}
-
 /** Desktop header (≥1024px). Hidden below 1024px; MobileHeader takes over. */
 export function SiteHeader({ variant = 'default', step, showCart, className }: SiteHeaderProps) {
+  const t = useContent('common');
+  const restaurant = useRestaurant();
   const pathname = usePathname();
   const table = useTable();
   const { count, bill, hydrated } = useCart();
-  const isCheckout = variant !== 'default';
+  const status = useStatusLine();
+  const isCheckout = variant === 'checkout' || variant === 'payment';
 
   return (
     <header className={cx(styles.wh, 'hide-mobile', className)}>
@@ -49,7 +43,15 @@ export function SiteHeader({ variant = 'default', step, showCart, className }: S
           <Icon name="olive" />
           <span>
             <span className={styles.brandName}>{restaurant.name}</span>
-            <span className={styles.brandSub}>{isCheckout ? 'Checkout' : statusLine()}</span>
+            <span
+              className={cx(
+                styles.brandSub,
+                !isCheckout && status.tone === 'error' && styles.subError,
+                !isCheckout && status.tone === 'warn' && styles.subWarn,
+              )}
+            >
+              {isCheckout ? t('header.checkout') : status.text}
+            </span>
           </span>
         </Link>
 
@@ -58,9 +60,9 @@ export function SiteHeader({ variant = 'default', step, showCart, className }: S
             <div className={styles.searchSlot}>
               <HeaderSearch />
             </div>
-            <nav className={styles.nav} aria-label="Primary">
-              {NAV.map((item) => {
-                const on = item.match.some((m) => pathname.startsWith(m));
+            <nav className={styles.nav} aria-label={t('nav.label')}>
+              {NAV_ITEMS.map((item) => {
+                const on = isNavActive(item, pathname);
                 return (
                   <Link
                     key={item.href}
@@ -69,7 +71,7 @@ export function SiteHeader({ variant = 'default', step, showCart, className }: S
                     aria-current={on ? 'page' : undefined}
                   >
                     <Icon name={item.icon} size="sm" />
-                    {item.label}
+                    {t(`nav.${item.id}`)}
                   </Link>
                 );
               })}
@@ -83,11 +85,11 @@ export function SiteHeader({ variant = 'default', step, showCart, className }: S
         {isCheckout && (
           <span className={styles.secure}>
             <Icon name="lock" size="sm" />
-            {variant === 'payment' ? 'Secure payment' : 'Secure'}
+            {variant === 'payment' ? t('header.securePayment') : t('header.secure')}
           </span>
         )}
 
-        <TablePill table={table} />
+        <TablePill table={table} className={variant === 'minimal' ? styles.pushEnd : undefined} />
 
         {showCart && (
           <Link
@@ -95,12 +97,15 @@ export function SiteHeader({ variant = 'default', step, showCart, className }: S
             className={cx(styles.cart, (!hydrated || count === 0) && styles.cartEmpty)}
             aria-label={
               hydrated && count > 0
-                ? `Cart, ${count} ${count === 1 ? 'item' : 'items'}, ${bill.itemTotal} rupees`
-                : 'Cart, empty'
+                ? t('cart.summaryLabel', {
+                    items: t.plural('itemCount', count),
+                    total: bill.itemTotal,
+                  })
+                : t('cart.emptyLabel')
             }
           >
             <Icon name="bag" size="sm" />
-            {hydrated && count > 0 ? `${count} · ${formatINR(bill.itemTotal)}` : 'Cart'}
+            {hydrated && count > 0 ? `${count} · ${formatINR(bill.itemTotal)}` : t('cart.label')}
           </Link>
         )}
       </div>

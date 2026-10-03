@@ -15,15 +15,7 @@
   gap: 12px;
 }
 .chips {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  margin: 0 -20px;
-  padding: 2px 20px;
-}
-.chips::-webkit-scrollbar {
-  display: none;
+  composes: chipRail from '@/styles/patterns.module.css';
 }
 .q {
   color: var(--ink);
@@ -73,11 +65,6 @@
   flex-direction: column;
   gap: 10px;
 }
-.skSide {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
 @media (min-width: 768px) {
   .skGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -110,11 +97,11 @@
 }
 
 .emptyTitle {
-  font: 500 22px/28px var(--f-display);
+  font: var(--font-h2);
 }
 @media (min-width: 1024px) {
   .emptyTitle {
-    font: 500 28px/34px var(--f-display);
+    font: var(--font-h1);
     letter-spacing: -0.005em;
   }
 }

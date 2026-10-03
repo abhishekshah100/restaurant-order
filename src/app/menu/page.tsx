@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { MenuHome } from '@/components/menu/MenuHome';
+import { getContent } from '@/api/server';
 
-export const metadata: Metadata = {
-  title: 'Menu',
-  description:
-    "Chef's picks, starters, mains, pizza, breads, desserts and drinks — order from your table.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getContent('menu');
+  return { title: t('nav.menu'), description: t('meta.menuDescription') };
+}
 
 export default function MenuPage() {
   return <MenuHome />;

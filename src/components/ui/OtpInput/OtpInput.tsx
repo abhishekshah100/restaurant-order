@@ -8,6 +8,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
 import { Field, describedBy } from '../Input/Field';
 import styles from './OtpInput.module.css';
@@ -15,6 +16,8 @@ import styles from './OtpInput.module.css';
 export interface OtpInputProps {
   id: string;
   label?: ReactNode;
+  /** Keep the label for screen readers only (e.g. when a heading already says it). */
+  hideLabel?: boolean;
   /** Digits entered so far (contiguous, 0–length characters). */
   value: string;
   onChange: (value: string) => void;
@@ -35,7 +38,8 @@ const onlyDigits = (text: string) => text.replace(/\D/g, '');
  */
 export function OtpInput({
   id,
-  label = 'One-time code',
+  label,
+  hideLabel,
   value,
   onChange,
   onComplete,
@@ -45,6 +49,7 @@ export function OtpInput({
   disabled,
   autoFocus,
 }: OtpInputProps) {
+  const t = useContent('common');
   const refs = useRef<Array<HTMLInputElement | null>>([]);
   // Latest value, updated synchronously on commit so focus handlers fired
   // before the next render don't see a stale prop.
@@ -134,7 +139,15 @@ export function OtpInput({
   };
 
   return (
-    <Field id={id} label={label} labelAs="span" labelId={labelId} hint={hint} error={error}>
+    <Field
+      id={id}
+      label={label ?? t('otp.label')}
+      hideLabel={hideLabel}
+      labelAs="span"
+      labelId={labelId}
+      hint={hint}
+      error={error}
+    >
       <div
         className={cx(styles.otp, Boolean(error) && styles.error)}
         role="group"
@@ -156,7 +169,7 @@ export function OtpInput({
               pattern="[0-9]*"
               autoComplete={index === 0 ? 'one-time-code' : 'off'}
               maxLength={index === 0 ? length : 1}
-              aria-label={`Digit ${index + 1} of ${length}`}
+              aria-label={t('otp.digit', { n: index + 1, total: length })}
               aria-invalid={error ? true : undefined}
               value={digit}
               disabled={disabled}

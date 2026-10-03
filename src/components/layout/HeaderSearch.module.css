@@ -18,9 +18,9 @@
   top: 58px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--r-card);
   box-shadow: var(--sh-2);
-  z-index: 45;
+  z-index: var(--z-header-popover);
   padding: 24px;
   max-height: calc(100dvh - 120px);
   overflow-y: auto;
@@ -32,7 +32,7 @@
   bottom: 0;
   top: var(--header-h);
   background: var(--scrim);
-  z-index: 39;
+  z-index: var(--z-header-scrim);
   border: 0;
   padding: 0;
   cursor: default;

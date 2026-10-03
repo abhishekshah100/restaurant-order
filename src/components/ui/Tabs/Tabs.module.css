@@ -1,43 +1,119 @@
-.tabs {
-  display: flex;
-  gap: 24px;
-  padding: 0 20px;
+/* Wrapper carries the hairline so the edge fades don't erase it */
+.wrap {
+  position: relative;
   border-bottom: 1px solid var(--line);
-  overflow-x: auto;
   flex: none;
-  scrollbar-width: none;
-  scroll-padding: 0 20px;
+  min-width: 0;
 }
-.tabs::-webkit-scrollbar {
-  display: none;
+
+.tabs {
+  composes: noScrollbar from '@/styles/patterns.module.css';
+  --fade-l: 0px;
+  --fade-r: 0px;
+  position: relative;
+  display: flex;
+  gap: 22px;
+  padding: 0 20px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding: 0 20px;
+  /* Fade the edges only where the strip can scroll further */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--fade-l),
+    #000 calc(100% - var(--fade-r)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--fade-l),
+    #000 calc(100% - var(--fade-r)),
+    transparent 100%
+  );
+}
+.tabs[data-more-left='true'] {
+  --fade-l: 28px;
+}
+.tabs[data-more-right='true'] {
+  --fade-r: 48px;
+}
+/* Before measuring (prerender), assume more to the right on narrow screens */
+.tabs:not([data-ready]) {
+  --fade-r: 48px;
+}
+@media (min-width: 768px) {
+  .tabs:not([data-ready]) {
+    --fade-r: 0px;
+  }
 }
 .flush {
   padding: 0;
+  scroll-padding: 0;
 }
+
 .tab {
-  height: 48px;
+  position: relative;
+  height: 46px;
   display: inline-flex;
   align-items: center;
-  font: 700 15px/20px var(--f-ui);
+  font: 500 14px/20px var(--f-ui);
+  letter-spacing: 0.005em;
   color: var(--ink-3);
   border: 0;
-  border-bottom: 2px solid transparent;
   background: none;
-  padding: 0;
+  padding: 0 2px;
   white-space: nowrap;
   text-decoration: none;
-  margin-bottom: -1px;
   flex: none;
+  transition: color var(--dur-fast) ease;
 }
-.tab:hover {
-  color: var(--ink-2);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--ink);
+  }
 }
 .tab:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--brand-600);
-  border-radius: 4px 4px 0 0;
+  box-shadow: var(--focus-inset);
+  border-radius: var(--r-xs);
 }
-.on,
-.on:hover {
+.on {
   color: var(--ink);
-  border-bottom-color: var(--brand-600);
+  font-weight: 700;
+}
+
+/* Sliding indicator (positioned by JS under the active tab) */
+.indicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 0;
+  border-radius: var(--r-3xs) var(--r-3xs) 0 0;
+  background: var(--brand-600);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.28s var(--ease-emphasized),
+    width 0.28s var(--ease-emphasized),
+    opacity var(--dur-fast) ease;
+}
+.tabs[data-ready] .indicator {
+  opacity: 1;
+}
+
+/* Fallback underline before the indicator is measured (prerendered HTML) */
+.on::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 0;
+  height: 3px;
+  border-radius: var(--r-3xs) var(--r-3xs) 0 0;
+  background: var(--brand-600);
+}
+.tabs[data-ready] .on::after {
+  display: none;
 }

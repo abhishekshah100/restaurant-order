@@ -1,0 +1,105 @@
+/*
+ * Shared CSS patterns — value-identical copies of blocks that were duplicated across modules.
+ *
+ * Use from any CSS Module with `composes` (the `@/` alias resolves under both Turbopack and webpack):
+ *   .name {
+ *     composes: clamp from '@/styles/patterns.module.css';
+ *     --lines: 1;
+ *   }
+ * Rules:
+ * - `composes` only works in a rule with a single local class selector (no `.a .b`, `.a img`,
+ *   `.a:hover`, and not inside @media). Put the class on the element itself in TSX if the
+ *   original targeted a descendant (e.g. `.media img`).
+ * - The pattern class is emitted before the composing module, so the module's own declarations
+ *   win ties — override any value locally, or use the custom property knobs below.
+ * - Patterns read tokens from tokens.css; keep these blocks value-identical when editing.
+ */
+
+/* Multi-line truncation. Knob: --lines (default 2). */
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: var(--lines, 2);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Scrollable without a visible scrollbar (tabs, rails, chip rows). */
+.noScrollbar {
+  scrollbar-width: none;
+}
+.noScrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Horizontal chip row that bleeds to the 20px page gutter (SearchView .chips, FilterBars .row). */
+.chipRail {
+  composes: noScrollbar;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 0 -20px;
+  padding: 2px 20px;
+}
+
+/* 1px hairline divider (usually on an <hr> or an empty div). */
+.hr {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+  margin: 0;
+}
+
+/* Brand-coloured text link with a 44px-tall hit area ("See all", "Back", "Add more"). */
+.textLink {
+  font: var(--font-label);
+  color: var(--brand-600);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  border-radius: var(--r-sm);
+}
+
+/* Enlarges a small control's hit area to ≥44px without changing its layout.
+   Knob: --hit-inset (default -4px; e.g. `-6px -4px`). The host is the positioning context. */
+.hitArea {
+  position: relative;
+}
+.hitArea::before {
+  content: '';
+  position: absolute;
+  inset: var(--hit-inset, -4px);
+}
+
+/* 22px checkbox square. Add .checkboxOn (alongside .checkbox) when checked. */
+.checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-xs);
+  border: 2px solid var(--line-strong);
+  flex: none;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+}
+.checkboxOn {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+}
+.checkboxOn::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: var(--on-brand);
+  -webkit-mask: var(--m-check) center / contain no-repeat;
+  mask: var(--m-check) center / contain no-repeat;
+}
+
+/* Image that fills its box and crops (put on the <img>; the parent sets size/radius/overflow). */
+.cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

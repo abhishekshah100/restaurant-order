@@ -17,9 +17,6 @@
   text-align: left;
   width: 100%;
 }
-.opt:hover {
-  border-color: var(--line-strong);
-}
 .grow {
   flex: 1;
   min-width: 0;
@@ -33,29 +30,38 @@
   color: var(--ink-3);
 }
 .p {
-  font: 700 14px/20px var(--f-ui);
+  font: var(--font-label);
   font-variant-numeric: tabular-nums;
   color: var(--ink-2);
 }
-.on,
-.on:hover {
+.on {
   border-color: var(--brand-600);
   background: var(--brand-tint-2);
 }
 .on .p {
   color: var(--ink);
 }
-.disabled,
-.disabled:hover {
+.disabled {
   color: var(--ink-3);
   background: var(--bg);
   border-color: var(--line);
   cursor: not-allowed;
 }
+@media (hover: hover) {
+  .opt:hover {
+    border-color: var(--line-strong);
+  }
+  .on:hover {
+    border-color: var(--brand-600);
+  }
+  .disabled:hover {
+    border-color: var(--line);
+  }
+}
 .radio {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   border: 2px solid var(--line-strong);
   flex: none;
   background: var(--surface);
@@ -63,27 +69,12 @@
 .on > .radio {
   border: 7px solid var(--brand-600);
 }
+/* Checkbox square; the TSX adds .checkOn when checked */
 .check {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: 2px solid var(--line-strong);
-  flex: none;
-  background: var(--surface);
-  display: grid;
-  place-items: center;
+  composes: checkbox from '@/styles/patterns.module.css';
 }
-.on > .check {
-  background: var(--brand-600);
-  border-color: var(--brand-600);
-}
-.on > .check::after {
-  content: '';
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  -webkit-mask: var(--m-check) center / contain no-repeat;
-  mask: var(--m-check) center / contain no-repeat;
+.checkOn {
+  composes: checkboxOn from '@/styles/patterns.module.css';
 }
 .head {
   display: flex;
@@ -93,32 +84,19 @@
   margin-bottom: 12px;
 }
 .req {
-  font: 700 11px/16px var(--f-ui);
+  font: var(--font-caption);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.group {
-  border: 0;
-  margin: 0;
-  padding: 0;
-  min-width: 0;
-}
-
 /* Layouts */
-.grid2 {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
 @media (min-width: 1024px) {
   .grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
-  .grid > [role='radio'],
-  .grid2 > [role='radio'] {
+  .grid > [role='radio'] {
     min-height: 64px;
   }
 }
@@ -155,6 +133,68 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    border-radius: 50%;
+    border-radius: var(--r-round);
+  }
+}
+
+@media (max-width: 1023.98px) and (max-height: 720px) {
+  .tilesMobile > .opt {
+    min-height: 60px;
+    padding: 10px 14px;
+  }
+  .opt {
+    min-height: 50px;
+  }
+}
+
+/* Grids adapt to the number of choices (1 · 2 · 3 · 4+), so Quarter/Half/Full never breaks:
+   1 → full width, 2 → two up, 3 → three up, 4+ → two-column grid. */
+@media (max-width: 1023.98px) {
+  .tilesMobile[data-count='1'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tilesMobile[data-count='3'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  /* Three narrow tiles: let the label wrap and keep the tick clear of it */
+  .tilesMobile[data-count='3'] > .opt {
+    padding: 10px 12px;
+  }
+  .tilesMobile[data-count='3'] > .opt .grow {
+    padding-right: 18px;
+  }
+  .tilesMobile[data-count='3'] .on > .badge {
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+  }
+}
+@media (min-width: 1024px) {
+  .grid[data-count='1'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .grid[role='radiogroup'][data-count='3'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  /* Three across on desktop: stack label over price so nothing is squeezed */
+  .grid[role='radiogroup'][data-count='3'] > .opt {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: center;
+    align-content: center;
+    padding: 10px 14px;
+  }
+  .grid[role='radiogroup'][data-count='3'] > .opt > .radio {
+    grid-row: 1 / span 2;
+  }
+  .grid[role='radiogroup'][data-count='3'] > .opt > .grow {
+    padding: 0;
+  }
+  .grid[role='radiogroup'][data-count='3'] > .opt > .p {
+    grid-column: 2;
   }
 }
