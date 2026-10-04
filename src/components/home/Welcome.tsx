@@ -1,21 +1,63 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button, Icon, StatusPill } from '@/components/ui';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent } from '@/api/hooks';
+import { MODE_ICON } from '@/components/start/ModeOptions';
+import { useVisit } from '@/context/GuestSessionContext';
 import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
+import { BrandPanel } from './BrandPanel';
 import styles from './Welcome.module.css';
 
-/** Welcome / table confirmation (01 · w01). Wrapped in OrderingGate by the page. */
+/** The ticket card for takeaway and delivery: what the guest is ordering, and from where. */
+function ModeCard({ mode }: { mode: 'takeaway' | 'delivery' }) {
+  const branch = useBranch();
+  const { deliveryArea } = useVisit();
+  const t = useContent('home');
+  let place = t('welcome.modeCard.pickupAt');
+  if (mode === 'delivery') {
+    place = deliveryArea
+      ? t('welcome.modeCard.deliveringTo', { area: deliveryArea })
+      : t('welcome.modeCard.chooseArea');
+  }
+  return (
+    <section className={styles.card} aria-label={t('welcome.modeCard.label')}>
+      <div className={styles.cardMain}>
+        <div className={styles.cardIcon}>
+          <Icon name={MODE_ICON[mode]} />
+        </div>
+        <div className={styles.cardText}>
+          <span className={styles.cardLabel}>{t('welcome.modeCard.orderingFor')}</span>
+          <span className={styles.tableNo}>{t(`welcome.modeCard.${mode}`)}</span>
+        </div>
+      </div>
+      <span className={styles.perforation} aria-hidden="true" />
+      <div className={styles.cardStub}>
+        <Icon name="pin" size="sm" className={styles.stubIcon} />
+        <span className={styles.stubText}>
+          <span className={styles.stubPrimary}>{branch.shortName}</span>
+          <span>{place}</span>
+          <Link href="/start/" className={styles.change}>
+            {t('welcome.modeCard.change')}
+          </Link>
+        </span>
+      </div>
+    </section>
+  );
+}
+
+/** Welcome / table confirmation (01 · w01); for takeaway and delivery, what's being ordered. Wrapped in OrderingGate by the page. */
 export function Welcome() {
-  const restaurant = useRestaurant();
+  const branch = useBranch();
+  const { mode } = useVisit();
   const table = useTable();
   const t = useContent('home');
 
   // Only shown while ordering is open: OrderingGate swaps in the closed / paused / offline screen.
   const kitchen = (
-    <StatusPill status="served">{t('welcome.openUntil', { time: restaurant.closesAt })}</StatusPill>
+    <StatusPill status="served">{t('welcome.openUntil', { time: branch.closesAt })}</StatusPill>
   );
 
   const staffOnCall = (
@@ -40,52 +82,28 @@ export function Welcome() {
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.heroBrand}>
           <Icon name="olive" />
-          <span className={cx('t-caption', styles.heroCaption)}>{restaurant.name}</span>
+          <span className={cx('t-caption', styles.heroCaption)}>{branch.name}</span>
         </div>
       </div>
 
-      <div className={cx(styles.panel, 'hide-mobile')}>
-        <div className={styles.panelBrand}>
-          <Icon name="olive" />
-          <span className={cx('t-caption', styles.panelCaption)}>{restaurant.name}</span>
-        </div>
-        <div className={styles.gallery}>
-          <Image
-            className={styles.galleryTall}
-            src="/images/pasta-hero.jpg"
-            alt={t('welcome.images.pasta')}
-            width={780}
-            height={540}
-            sizes="30vw"
-            priority
-          />
-          <Image
-            src="/images/prawns.jpg"
-            alt={t('welcome.images.prawns')}
-            width={240}
-            height={228}
-            sizes="25vw"
-          />
-          <Image
-            src="/images/pizza-wide.jpg"
-            alt={t('welcome.images.pizza')}
-            width={462}
-            height={300}
-            sizes="25vw"
-          />
-        </div>
-        <p className={styles.tagline}>{restaurant.tagline}</p>
-      </div>
+      <BrandPanel caption={branch.name} />
 
       <main id="main" className={styles.main}>
         <div className={styles.intro}>
           <h1 className={styles.heading}>
             <span className={styles.eyebrow}>{t('welcome.eyebrow')}</span>{' '}
-            <span className={cx('t-display', styles.title)}>{restaurant.name}</span>
+            <span className={cx('t-display', styles.title)}>{branch.name}</span>
           </h1>
-          <p className={cx('t-body c2', styles.lede)}>{t('welcome.lede')}</p>
+          <p className={cx('t-body c2', styles.lede)}>
+            {mode === 'dineIn'
+              ? t('welcome.lede')
+              : t(`welcome.modeCard.lede.${mode}`, { branch: branch.shortName })}
+          </p>
         </div>
 
+        {mode !== 'dineIn' ? (
+          <ModeCard mode={mode} />
+        ) : (
         <section className={styles.card} aria-label={t('welcome.tableCard')}>
           <div className={styles.cardMain}>
             <div className={styles.cardIcon}>
@@ -100,7 +118,7 @@ export function Welcome() {
           <div className={styles.cardStub}>
             <Icon name="pin" size="sm" className={styles.stubIcon} />
             <span className={styles.stubText}>
-              {restaurant.tableLocation.split(' · ').map((part, i) => (
+              {branch.tableLocation.split(' · ').map((part, i) => (
                 <span key={part} className={i === 0 ? styles.stubPrimary : undefined}>
                   {part}
                   {/* Keep the original "Ground floor · Garden side" for screen readers */}
@@ -110,10 +128,11 @@ export function Welcome() {
             </span>
           </div>
         </section>
+        )}
 
         <div className={cx(styles.statusRow, 'hide-desktop')}>
           {kitchen}
-          {staffOnCall}
+          {mode === 'dineIn' && staffOnCall}
         </div>
 
         <div className={cx(styles.actions, 'hide-mobile')}>
@@ -124,7 +143,7 @@ export function Welcome() {
 
         <div className={cx(styles.footRow, 'hide-mobile')}>
           {kitchen}
-          {staffOnCall}
+          {mode === 'dineIn' && staffOnCall}
         </div>
       </main>
 

@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
-import { Icon, IconButton, TablePill, Tag, VegMark } from '@/components/ui';
+import { Icon, IconButton, Tag, VegMark } from '@/components/ui';
+import { VisitPill } from '@/components/layout/VisitPill';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
-import { useContent, useMenu } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { startingPrice } from '@/lib/menu';
 import type { Allergen, Dish, DishImage } from '@/types/menu';
 import { Breadcrumbs } from './Breadcrumbs';
@@ -18,17 +18,15 @@ function allergenText(t: MenuText, dish: Dish): string {
 
 const isChef = (dish: Dish) => dish.tags.includes('chef');
 
-/** Mobile photo with the back button and table pill on top (06). */
+/** Mobile photo with the back button and table (or order mode) pill on top (06). */
 export function DishHero({
   dish,
   hero,
-  table,
   onBack,
   onZoom,
 }: {
   dish: Dish;
   hero: DishImage;
-  table: number;
   onBack: () => void;
   onZoom: () => void;
 }) {
@@ -57,7 +55,7 @@ export function DishHero({
       </button>
       <div className={styles.heroBar}>
         <IconButton icon="back" label={t('nav.backToMenu')} variant="raised" onClick={onBack} />
-        <TablePill table={table} className={styles.heroPill} />
+        <VisitPill className={styles.heroPill} />
       </div>
     </div>
   );
@@ -138,6 +136,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 /** Veg mark, name, description, mobile detail chips and the starting price. */
 export function DishIntro({ dish }: { dish: Dish }) {
   const t = useContent('menu');
+  const { money } = useRegion();
   const allergens = allergenText(t, dish);
   return (
     <section className={styles.intro} aria-labelledby="dish-title">
@@ -179,7 +178,7 @@ export function DishIntro({ dish }: { dish: Dish }) {
         {(dish.variants?.length ?? 0) > 1 && (
           <span className={styles.from}>{t('detail.from')}</span>
         )}
-        {formatINR(startingPrice(dish))}
+        {money.format(startingPrice(dish))}
       </p>
     </section>
   );

@@ -3,73 +3,86 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useContent } from '@/api/hooks';
+import { useCreateOrder } from '@/api/mutations';
 import { useCheckout } from '@/context/CheckoutContext';
 import { useGuestSession } from '@/context/GuestSessionContext';
-import { useOrders } from '@/context/OrdersContext';
 import { useToast } from '@/context/ToastContext';
+import { orderLine } from '@/lib/cartLine';
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage';
-import type { PaymentMethod } from '@/types/order';
+import type { FulfilmentRequest } from '@/api/contracts';
+import type { PaymentMethodId } from '@/types/branch';
 import { useCart } from './useCart';
-import { useTable } from './useTable';
+import { useFulfilmentRequest } from './useFulfilment';
+import { useOrderRejected } from './useOrderRejected';
 
 /**
- * Places the order from the current cart and opens the confirmation. Only called
- * on success — a failed or cancelled payment never touches the cart.
+ * Places the order from the current cart (POST /orders) and opens the confirmation. Only
+ * called on success — a failed or cancelled payment never touches the cart. An online method
+ * passes the succeeded payment's id.
  *
- * Calls are ignored while an order is being placed (a double tap places one
- * order) and when the cart is empty. `placing` stays true until the confirmation
- * page takes over, so a submit button can stay disabled.
+ * Calls are ignored while an order is being placed (a double tap places one order) and when
+ * the cart is empty. `placing` stays true until the confirmation page takes over, so a submit
+ * button can stay disabled.
  *
  * The cart and checkout session are cleared by the confirmation page (see
  * useFinishPlacedOrder); clearing here would trip the checkout guard's
  * "empty cart → /cart" redirect before navigation completes.
  */
 export function usePlaceOrderState(): {
-  placeOrder: (method: PaymentMethod) => void;
+  placeOrder: (method: PaymentMethodId, paymentId?: string) => void;
   placing: boolean;
 } {
   const router = useRouter();
-  const table = useTable();
   const sessionId = useGuestSession()?.id;
   const { lines, kitchenNote } = useCart();
   const { session } = useCheckout();
-  const { placeOrder: place } = useOrders();
+  const fulfilment = useFulfilmentRequest();
+  const { mutateAsync: createOrder } = useCreateOrder();
   const { showToast } = useToast();
+  const rejected = useOrderRejected();
   const t = useContent('checkout');
   const inFlight = useRef(false);
   const [placing, setPlacing] = useState(false);
 
-  const placeOrder = useCallback(
-    (method: PaymentMethod) => {
-      if (inFlight.current || lines.length === 0 || !sessionId) return;
-      inFlight.current = true;
-      setPlacing(true);
-      const order = place({
-        lines,
-        table,
-        sessionId,
-        customerName: session.name,
-        method,
-        kitchenNote,
-      });
-      if (!order) {
+  const place = useCallback(
+    async (
+      sessionId: string,
+      fulfilment: FulfilmentRequest,
+      method: PaymentMethodId,
+      paymentId?: string,
+    ) => {
+      try {
+        const order = await createOrder({
+          sessionId,
+          customerName: session.name,
+          method,
+          kitchenNote,
+          lines: lines.map(orderLine),
+          fulfilment,
+          ...(paymentId ? { paymentId } : {}),
+        });
+        writeJSON(STORAGE_KEYS.justPlaced, order.id, 'session');
+        router.replace(`/order/${order.id}/confirmed/`);
+      } catch (error) {
         inFlight.current = false;
         setPlacing(false);
-        showToast(t('payment.placeError'), { tone: 'error' });
-        return;
+        if (!rejected(error)) showToast(t('payment.placeError'), { tone: 'error' });
       }
-      writeJSON(STORAGE_KEYS.justPlaced, order.id, 'session');
-      router.replace(`/order/${order.id}/confirmed/`);
     },
-    [lines, table, sessionId, session.name, kitchenNote, place, router, showToast, t],
+    [lines, session.name, kitchenNote, createOrder, router, showToast, rejected, t],
+  );
+
+  const placeOrder = useCallback(
+    (method: PaymentMethodId, paymentId?: string) => {
+      if (inFlight.current || lines.length === 0 || !sessionId || !fulfilment) return;
+      inFlight.current = true;
+      setPlacing(true);
+      void place(sessionId, fulfilment, method, paymentId);
+    },
+    [lines.length, sessionId, fulfilment, place],
   );
 
   return useMemo(() => ({ placeOrder, placing }), [placeOrder, placing]);
-}
-
-/** `usePlaceOrderState().placeOrder` on its own. */
-export function usePlaceOrder(): (method: PaymentMethod) => void {
-  return usePlaceOrderState().placeOrder;
 }
 
 const isString = (v: unknown): v is string => typeof v === 'string';

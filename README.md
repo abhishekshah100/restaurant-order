@@ -1,9 +1,10 @@
 # The Olive Table: QR ordering web app
 
-Guests scan the QR code on their table (`/?table=12`), browse the menu, build a cart and check out with their name, mobile number and an OTP. They pay online or at the counter, then follow their order, call a waiter or ask for the bill, all from their phone.
+Guests scan the QR code on their table (`/?table=12`, or `/?branch=ktm-thamel&table=5` at the Kathmandu branch), browse that branch's menu, build a cart and check out with their name, mobile number and an OTP. They pay online or at the counter, then follow their order, call a waiter or ask for the bill, all from their phone.
 
 - **Stack:** Next.js 16 (App Router), React 19, TypeScript, CSS Modules. No UI framework, no Tailwind.
-- **Output:** a fully static site (`out/`). There is no server and no backend yet. All data is fetched through an API layer (`src/api`, TanStack Query) from dummy JSON endpoints in `public/api/`, and all other state lives in the browser (localStorage and sessionStorage).
+- **Output:** a fully static site (`out/`). There is no server and no backend yet. All data is fetched through an API layer (`src/api`, TanStack Query): reference data from dummy JSON endpoints in `public/api/`, and everything the backend will own (guest sessions, OTP, orders, payments, waiter and bill requests) from an in-browser **mock server** (`src/api/mock`) that answers exactly as the backend will. Switching to the real backend is an environment change; see [Data and the API](#data-and-the-api).
+- **Branches and regions:** India (Bengaluru, default) and Nepal (Thamel, Kathmandu). Currency, locale, time zone, taxes (GST vs service charge + VAT), mobile numbers, payment methods and dietary marks all come from `public/api/branches.json`; see [PROJECT_GUIDE.md › Branches and regions](PROJECT_GUIDE.md#branches-and-regions).
 - **Design source of truth:** `../the-olive-table-ui` (`screens/*.html`, `png/*.png`). Mobile layout below 1024px, web layout from 1024px.
 
 For the architecture, conventions, state, pricing and accessibility rules, read [PROJECT_GUIDE.md](PROJECT_GUIDE.md).
@@ -31,18 +32,23 @@ npm run dev        # http://localhost:3000 (the design-system board is at /style
 
 ## Data and the API
 
-Every piece of data (restaurant profile and status, menu, order history, help topics, screen copy) comes from an endpoint. Until the backend exists, the endpoints are the JSON files in `public/api/`, served by the static site as `/api/restaurant.json`, `/api/menu.json`, `/api/orders.json`, `/api/help.json` and `/api/content/<area>.json`. Edit those files to change the dummy data.
+Every piece of data comes from an endpoint, read with a TanStack query hook and written with a mutation hook (`src/api`); components never touch storage or `fetch` for server data.
 
-| Environment variable       | Default | Use                                                                        |
-| -------------------------- | ------- | -------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_API_BASE_URL` | `/api`  | Base URL of the API. Set it to the backend's URL.                          |
-| `NEXT_PUBLIC_API_SUFFIX`   | `.json` | Appended to every endpoint path. Set it to an empty string for a real API. |
+- **Reference data** (the brand, each branch's details, status and region rules, each branch's menu, help topics, screen copy): until the backend exists, the JSON files in `public/api/`, served by the static site as `/api/restaurant.json`, `/api/branches.json`, `/api/branches/<id>/menu.json`, `/api/help.json` and `/api/content/<area>.json`. Edit those files to change the dummy data.
+- **Server-owned data** (`POST /sessions`, `POST /otp`, `POST /otp/verify`, `POST /orders`, `GET /orders/:id`, `GET /sessions/:id/orders`, `GET /tables/:branch/:table/orders`, `POST /payments`, `POST`/`DELETE /service-requests`, `GET /sessions/:id/service-requests`): answered by the mock server in `src/api/mock`, which keeps its tables in the browser's storage, applies the backend's rules (OTP code and attempts, order numbering, pricing with the branch's taxes, the kitchen's progress, payments, request expiry) and seeds itself from `public/api/orders.json` (the drawn order history and the order-number pool). Every request and response is typed in `src/api/contracts.ts`, the backend contract (also summarised in [PROJECT_GUIDE.md › Backend contract](PROJECT_GUIDE.md#backend-contract)).
 
-Both are read at build time (`next build`), like every `NEXT_PUBLIC_` variable. See [PROJECT_GUIDE.md › Data](PROJECT_GUIDE.md#data) for the query keys, hooks and what else changes with a real backend.
+| Environment variable              | Default   | Use                                                                                                  |
+| --------------------------------- | --------- | ---------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_BASE_URL`        | `/api`    | Base URL of the API. Set it to the backend's URL.                                                    |
+| `NEXT_PUBLIC_API_SUFFIX`          | `.json`   | Appended to every endpoint path. Set it to an empty string for a real API.                           |
+| `NEXT_PUBLIC_API_MOCK`            | on        | Set to `false` to send every request to the backend instead of the in-browser mock server.           |
+| `NEXT_PUBLIC_API_MOCK_LATENCY_MS` | `200-400` | The mock server's response time: a range (each endpoint gets a fixed delay within it) or one number. |
+
+All are read at build time (`next build`), like every `NEXT_PUBLIC_` variable. See [PROJECT_GUIDE.md › Data](PROJECT_GUIDE.md#data) for the query keys, hooks and what else changes with a real backend.
 
 ## Routes
 
-Every route is prerendered at build time. Dynamic routes list their pages with `generateStaticParams` (`dynamicParams = false`), so only the menu's dishes and categories and the order IDs in `public/api/orders.json` (history plus the `newOrderIds` pool) exist.
+Every route is prerendered at build time. Dynamic routes list their pages with `generateStaticParams` (`dynamicParams = false`), so only the dishes and categories on any branch's menu and the order IDs in `public/api/orders.json` (history plus the `newOrderIds` pool) exist.
 
 | Route                                                                                     | Screen                                                                                               |
 | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -63,20 +69,20 @@ Every route is prerendered at build time. Dynamic routes list their pages with `
 
 The prototype's states can be opened directly, for demos, reviews and tests:
 
-| Parameter                                           | Where                  | Effect                                                                                                           |
-| --------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `?table=NN&qr=TOKEN`                                | Any page (the QR link) | Starts a guest session at table NN (1–`MAX_TABLE`); see [QR link](#qr-link). `&qr=` is optional for now.         |
-| `?status=closed`                                    | Any page               | Restaurant closed: the welcome page shows the closed screen, the menu is read-only and checkout is blocked.      |
-| `?status=paused`                                    | Any page               | Ordering paused: banner on the menu and cart, the cart still works, checkout shows "Our kitchen needs a moment". |
-| `?status=offline`                                   | Any page               | Simulates a lost connection (banner, checkout blocked). **Try again** ends it.                                   |
-| `?status=open`                                      | Any page               | Ends a `?status` preview.                                                                                        |
-| `?state=payment-failed`, `?state=payment-cancelled` | `/checkout/processing` | Payment failed / cancelled outcomes.                                                                             |
+| Parameter                                           | Where                  | Effect                                                                                                                                                                                                          |
+| --------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `?branch=ID&table=NN&qr=TOKEN`                      | Any page (the QR link) | Starts a guest session at the branch's table NN (within its `tables` range); see [QR link](#qr-link). `branch` (default `blr-indiranagar`) and `&qr=` are optional. Try `?branch=ktm-thamel&table=5` for Nepal. |
+| `?status=closed`                                    | Any page               | Restaurant closed: the welcome page shows the closed screen, the menu is read-only and checkout is blocked.                                                                                                     |
+| `?status=paused`                                    | Any page               | Ordering paused: banner on the menu and cart, the cart still works, checkout shows "Our kitchen needs a moment".                                                                                                |
+| `?status=offline`                                   | Any page               | Simulates a lost connection (banner, checkout blocked). **Try again** ends it.                                                                                                                                  |
+| `?status=open`                                      | Any page               | Ends a `?status` preview.                                                                                                                                                                                       |
+| `?state=payment-failed`, `?state=payment-cancelled` | `/checkout/processing` | Payment failed / cancelled outcomes.                                                                                                                                                                            |
 
-A `?status` preview is kept in sessionStorage, so it stays on while you browse in that tab. Without one, the status comes from `status` in GET /restaurant (`public/api/restaurant.json`), and the offline state follows the browser's real connection (`navigator.onLine` and the `online` / `offline` events).
+A `?status` preview is kept in sessionStorage, so it stays on while you browse in that tab. Without one, the status comes from the branch's `status` in GET /branches (`public/api/branches.json`), and the offline state follows the browser's real connection (`navigator.onLine` and the `online` / `offline` events).
 
 ### QR link
 
-Each table's QR code opens `/?table=12&qr=<token>`. `table` is the table number; `qr` is reserved for a signed table token (so guests can't just edit the number) and is passed on with the session but not checked yet. Every guest who scans gets their own **guest session** at that table, so several people at one table can order separately: their own cart, checkout, waiter and bill requests, and "Just my orders" on the bill, which they can pay in the app (**Pay ₹X now** → `/help/bill/pay`) while the rest of the table pays separately. Re-scanning the same table (or refreshing) keeps the session; scanning another table, or coming back after `TABLE_SESSION_HOURS` (6), starts a new one. A link without `?table` reuses the current session, or starts one at the restaurant's `defaultTable`. See "Guest sessions" in [PROJECT_GUIDE.md](PROJECT_GUIDE.md).
+Each table's QR code opens `/?branch=<id>&table=12&qr=<token>`. `branch` is the branch id (optional: the brand's default branch, also used for an unknown id); `table` is the table number; `qr` is reserved for a signed table token (so guests can't just edit the number) and is passed on with the session but not checked yet. Every guest who scans gets their own **guest session** at that table, so several people at one table can order separately: their own cart, checkout, waiter and bill requests, and "Just my orders" on the bill, which they can pay in the app (**Pay ₹X now** → `/help/bill/pay`) while the rest of the table pays separately. Re-scanning the same table (or refreshing) keeps the session; scanning another table or another branch, or coming back after the session expires (6 hours: `TABLE_SESSION_HOURS` in the mock server, the backend's rule), starts a new one. A link without `?table` reuses the current session (or, with only `?branch`, one at that branch), or starts one at the branch's `defaultTable`. See "Guest sessions" in [PROJECT_GUIDE.md](PROJECT_GUIDE.md).
 
 ## Testing
 
@@ -86,7 +92,7 @@ npm run build
 npm run test:e2e         # Playwright at 390px (mobile) and 1280px (desktop)
 ```
 
-The end-to-end tests serve `out/` on port 4173 and use the installed Google Chrome. On CI, set `PW_CHANNEL=chromium` (and run `npx playwright install chromium`). Specs live in `tests/e2e/`: the happy path (menu, food detail, cart, checkout, confirmation), failed payment and quick-add, orders and tracking, service requests, guest sessions (`sessions.spec.ts`: two guests at one table), separate bills (`separate-bills.spec.ts`: two guests at one table pay their own bills, one at checkout and one later from the bill page) and the restaurant states (`states.spec.ts`).
+The end-to-end tests serve `out/` on port 4173 and use the installed Google Chrome. On CI, set `PW_CHANNEL=chromium` (and run `npx playwright install chromium`). Specs live in `tests/e2e/`: the happy path (menu, food detail, cart, checkout, confirmation), failed payment and quick-add, orders and tracking, service requests, guest sessions (`sessions.spec.ts`: two guests at one table), separate bills (`separate-bills.spec.ts`: two guests at one table pay their own bills, one at checkout and one later from the bill page), the restaurant states (`states.spec.ts`) and branches (`branches.spec.ts`: the Nepal branch's रू prices, service charge + VAT, +977 numbers, eSewa / Khalti / Fonepay, Kathmandu time, and paying a Nepal bill with Khalti with the help and bill copy naming Nepal's ways to pay). The unit tests include every mock-server endpoint (`mockServer.test.ts`) and a check that the transport goes to `fetch` when `NEXT_PUBLIC_API_MOCK=false`.
 
 ## Deploying
 
@@ -101,24 +107,26 @@ The end-to-end tests serve `out/` on port 4173 and use the installed Google Chro
 
 This is a front-end prototype. Before real guests use it:
 
-| Mock                        | Where                                                                                                                                                                       | Replace with                                                                                            |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| OTP (always `123456`)       | `MOCK_OTP` in `src/lib/constants.ts`, `lib/checkout.ts`                                                                                                                     | An SMS OTP service, verified on a server, with rate limiting.                                           |
-| Payment                     | `/checkout/processing` ("Prototype: success / failure" links, 4:32 timer)                                                                                                   | The payment partner's checkout or UPI intent flow, with server-side confirmation and webhooks.          |
-| Order IDs                   | Pre-rendered pool `A105`–`A124` (`newOrderIds` in `public/api/orders.json`)                                                                                                 | IDs from the order API, and order pages that fetch by ID (a static export can only serve IDs it built). |
-| Orders, tracking, requests  | localStorage / sessionStorage on the guest's device                                                                                                                         | An order and service-request API, with live status updates (polling, SSE or WebSockets).                |
-| Table token, guest sessions | `?table=NN` trusted as-is (`&qr=` is kept but not checked); sessions made in the browser (`src/api/session.ts`)                                                             | `POST /sessions` with a signed, expiring table token checked by the server, so tables can't be guessed. |
-| Restaurant status and hours | `status`, hours and `pausedForMinutes` in `public/api/restaurant.json`                                                                                                      | A live status from the restaurant system. Remove or protect the `?status` preview.                      |
-| Menu and prices             | `public/api/menu.json` (dishes not in the designs pad the design's counts)                                                                                                  | The restaurant's menu and stock feed; prices must be re-checked by the server when an order is placed.  |
-| Placeholders                | `[RESTAURANT PHONE]`, `tel:+910000000000`, `[RESTAURANT ADDRESS]`, `[NETWORK NAME]`, `[PAYMENT PARTNER]`, social links in `restaurant.social` (platform home pages for now) | The restaurant's real details.                                                                          |
+| Mock                        | Where                                                                                                                                                                                                       | Replace with                                                                                            |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| The backend itself          | The mock server in `src/api/mock` (sessions, OTP, orders, payments, service requests), its tables in the guest's browser storage                                                                            | The real API behind `src/api/contracts.ts`; build with `NEXT_PUBLIC_API_MOCK=false`.                    |
+| OTP (always `123456`)       | `MOCK_OTP` and the attempt / resend rules in `src/api/mock/rules.ts`                                                                                                                                        | An SMS OTP service, verified on a server, with rate limiting.                                           |
+| Payment                     | `/checkout/processing` and Pay my bill ("Prototype: success / failure" links call the mock-only `POST /payments/:id/simulate`; 4:32 window)                                                                 | The payment partner's checkout or UPI intent flow, with server-side confirmation and webhooks.          |
+| Order IDs                   | Pre-rendered pool `A105`–`A124` (`newOrderIds` in `public/api/orders.json`), handed out per device by the mock server                                                                                       | IDs from the order API, and order pages that fetch by ID (a static export can only serve IDs it built). |
+| Order tracking              | The mock kitchen (`src/api/mock/kitchen.ts`) moves orders along by time; the app polls `GET /orders/:id` every 30 s                                                                                         | Live status from the kitchen (polling as now, or SSE / WebSockets).                                     |
+| Table token, guest sessions | `?table=NN` trusted as-is (`&qr=` is kept but not checked by the mock's `POST /sessions`)                                                                                                                   | `POST /sessions` with a signed, expiring table token checked by the server, so tables can't be guessed. |
+| Restaurant status and hours | `status`, hours and `pausedForMinutes` per branch in `public/api/branches.json`                                                                                                                             | A live status from the restaurant system. Remove or protect the `?status` preview.                      |
+| Menu and prices             | `public/api/branches/<id>/menu.json` (dishes not in the designs pad the design's counts; Nepal prices ≈ India × 1.6)                                                                                        | The restaurant's menu and stock feed; prices must be re-checked by the server when an order is placed.  |
+| Placeholders                | `[RESTAURANT PHONE]`, `tel:+910000000000`, `[RESTAURANT ADDRESS]`, `[NETWORK NAME]`, `[PAYMENT PARTNER]` (per branch in `branches.json`), social links in `restaurant.social` (platform home pages for now) | The restaurant's real details.                                                                          |
 
 ## Project layout
 
 ```
-src/api/          Data access: endpoint config, fetch client, TanStack Query queries and hooks, adapters, build-time helpers
+src/api/          Data access: backend contract, transport (fetch or mock), typed endpoints, TanStack Query queries,
+                  hooks and mutations, adapters, build-time helpers; mock/ is the in-browser mock server
 src/app/          Routes: thin server pages that set metadata and render one view
 src/components/   ui/ (design system), layout/, home/, menu/, cart/, checkout/, order/, service/, status/
-src/context/      Client state providers (guest session and table, cart, orders, checkout, service requests…)
+src/context/      Client state providers (guest session and table, cart, checkout, service requests…)
 src/hooks/        Client hooks (useCart, useTable, useOrderingAvailability, useOnlineStatus…)
 src/lib/          Pure logic: pricing, formatting, cart lines, menu queries, checkout, orders, restaurant status
 src/styles/       tokens.css, globals.css, patterns.module.css

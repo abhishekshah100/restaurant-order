@@ -3,22 +3,24 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button, Icon } from '@/components/ui';
-import { useContent } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { useToast } from '@/context/ToastContext';
 import { cx } from '@/lib/cx';
-import { formatTime } from '@/lib/format';
 import { NoRequest, RequestLoading, RequestStatus } from './RequestStatus';
-import { useTableOrders } from './useTableOrders';
+import { useTableVisit } from './useTableVisit';
 import styles from './Summary.module.css';
+import { useDineInOnly } from '@/hooks/useDineInOnly';
 
 /** Waiter requested (19 · w19). */
 export function WaiterRequested() {
+  useDineInOnly();
   const router = useRouter();
   const { showToast } = useToast();
   const t = useContent('service');
+  const { clock } = useRegion();
   const { requests, cancelRequest, hydrated } = useServiceRequest();
-  const { table, latest } = useTableOrders();
+  const { table, latest } = useTableVisit();
   const [leaving, setLeaving] = useState(false);
   const request = requests.waiter;
 
@@ -59,7 +61,7 @@ export function WaiterRequested() {
                 { b: (c) => <b>{c}</b> },
                 {
                   reason: t(`waiterDialog.reasons.${request.reason}`),
-                  time: formatTime(request.requestedAt),
+                  time: clock.time(request.requestedAt),
                 },
               )}
             </span>

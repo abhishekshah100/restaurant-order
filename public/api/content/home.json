@@ -17,6 +17,80 @@
       "pasta": "Truffle Mushroom Pasta",
       "prawns": "Chilli Garlic Prawns",
       "pizza": "Wood-fired Margherita"
+    },
+    "modeCard": {
+      "label": "Your order",
+      "orderingFor": "You're ordering",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery",
+      "pickupAt": "Collect at the counter",
+      "deliveringTo": "To {area}",
+      "chooseArea": "Area: choose in cart",
+      "change": "Change",
+      "lede": {
+        "takeaway": "Browse our menu, order ahead and collect it from {branch}.",
+        "delivery": "Browse our menu and we'll bring your order to your door."
+      }
+    }
+  },
+  "start": {
+    "meta": {
+      "title": "Start your order",
+      "description": "Choose an outlet and order for dine-in, takeaway or delivery."
+    },
+    "eyebrow": "{restaurant}",
+    "title": "How would you like to order?",
+    "lede": "Pick an outlet, then choose dine-in, takeaway or delivery.",
+    "outletsTitle": "Choose an outlet",
+    "outletsLabel": "Outlets",
+    "modesTitle": "How would you like your food?",
+    "modesLabel": "Ways to order",
+    "localTime": "Local time {time}",
+    "openUntil": "Open · until {time}",
+    "closedOpens": "Closed · opens {time}",
+    "paused": "Ordering paused",
+    "hours": "{opens} – {closes}",
+    "selected": "Selected",
+    "modes": {
+      "dineIn": {
+        "title": "Dine-in",
+        "sub": "Order from your table",
+        "unavailable": "Scan the QR code on your table to order dine-in",
+        "tableReady": "You're at Table {table}"
+      },
+      "takeaway": {
+        "title": "Takeaway",
+        "sub": "Ready in about {minutes} min · collect from the counter"
+      },
+      "delivery": {
+        "title": "Delivery",
+        "sub": "{min}–{max} min · delivery from {fee}"
+      }
+    },
+    "areaLabel": "Delivery area",
+    "areaPlaceholder": "Choose your area",
+    "areaHint": "{zone} · fee {fee} · minimum order {minimum}",
+    "areaRequired": "Choose the area we should deliver to",
+    "continue": "Start ordering",
+    "continueMode": "Continue with {mode}",
+    "switching": "Opening your order…",
+    "confirmBranch": {
+      "title": "Switch to {branch}?",
+      "body": "Each outlet has its own menu and prices, so your cart ({items}) will be emptied.",
+      "confirm": "Switch and empty cart",
+      "cancel": "Keep my cart"
+    }
+  },
+  "modeSwitch": {
+    "title": "How would you like to order?",
+    "from": "Ordering from",
+    "changeOutlet": "Change outlet",
+    "current": "Current",
+    "failed": "Couldn't change how you order. Try again.",
+    "switched": {
+      "dineIn": "Now ordering dine-in. Your cart is kept.",
+      "takeaway": "Now ordering takeaway. Your cart is kept.",
+      "delivery": "Now ordering delivery. Your cart is kept."
     }
   }
 }

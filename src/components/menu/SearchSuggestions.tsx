@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useId } from 'react';
 import { Chip, Icon, VegMark, type IconName } from '@/components/ui';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
-import { useContent, useMenu } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { dishImage, startingPrice } from '@/lib/menu';
 import type { CategoryId, Dish } from '@/types/menu';
 import styles from './SearchSuggestions.module.css';
@@ -44,6 +43,7 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
   // The header dropdown and the /search page can both be on screen, so ids must be unique.
   const id = useId();
   const t = useContent('menu');
+  const { money } = useRegion();
 
   return (
     <div className={cx(styles.root, compact && styles.compact)}>
@@ -81,7 +81,9 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
                     <span className={styles.trendText}>
                       <span className={styles.trendName}>{dish.name}</span>
                       <span className={styles.trendFoot}>
-                        <span className={styles.trendPrice}>{formatINR(startingPrice(dish))}</span>
+                        <span className={styles.trendPrice}>
+                          {money.format(startingPrice(dish))}
+                        </span>
                         <span className={styles.trendGo} aria-hidden="true">
                           <Icon name="arrow" size="xs" />
                         </span>

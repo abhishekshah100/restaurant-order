@@ -7,38 +7,40 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Columns } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { OrderingBanner } from '@/components/status/OrderingBanner';
-import { useContent } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { useCartActions, useDishLines } from '@/hooks/useCart';
 import { useDishConfig } from '@/hooks/useDishConfig';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
-import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
 import { unavailableReason } from '@/lib/menu';
 import type { CartLine } from '@/types/cart';
 import type { Dish } from '@/types/menu';
 import { DishHero, DishIntro, DishMediaColumn } from './DishDetailParts';
 import { DishOptionsForm } from './DishOptionsForm';
+import { NotOnMenu } from './NotOnMenu';
 import { unavailableLabel, type MenuText } from './dishTag';
 import styles from './DishDetail.module.css';
 
 /**
- * Food detail (06 · w06). `?edit=<line key>` edits an existing cart line.
+ * Food detail (06 · w06) for a dish on the guest's branch menu. `?edit=<line key>` edits an
+ * existing cart line.
  * The edit key is read after mount so the page can be prerendered.
  */
-export function DishDetail({ dish }: { dish: Dish }) {
-  const lines = useDishLines(dish.slug);
+export function DishDetail({ slug }: { slug: string }) {
+  const dish = useMenu().getDish(slug);
+  const lines = useDishLines(slug);
   const editKey = useQueryParam('edit');
 
+  if (!dish) return <NotOnMenu />;
   const editing = editKey ? lines.find((l) => l.key === editKey) : undefined;
   return <DishDetailForm key={editing?.key ?? 'new'} dish={dish} editing={editing} />;
 }
 
 function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
   const router = useRouter();
-  const table = useTable();
   const t = useContent('menu');
+  const { money } = useRegion();
   const { addItem, editLine } = useCartActions();
   const [photoOpen, setPhotoOpen] = useState(false);
   const state = useDishConfig(
@@ -72,7 +74,7 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
       <SiteHeader showCart />
 
       {hero ? (
-        <DishHero dish={dish} hero={hero} table={table} onBack={back} onZoom={openPhoto} />
+        <DishHero dish={dish} hero={hero} onBack={back} onZoom={openPhoto} />
       ) : (
         <MobileHeader variant="topbar" onBack={back} backLabel={t('nav.backToMenu')} />
       )}
@@ -110,7 +112,7 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
             />
             <Button
               block
-              meta={formatINR(state.total)}
+              meta={money.format(state.total)}
               onClick={submit}
               disabled={!state.valid || Boolean(unavailable) || closed}
             >

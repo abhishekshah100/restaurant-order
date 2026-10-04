@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { Welcome } from '@/components/home/Welcome';
-import { OrderingGate } from '@/components/status/OrderingGate';
+import { Home } from '@/components/home/Home';
 import { getContent } from '@/api/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -9,10 +8,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function WelcomePage() {
-  // Closed, paused or offline: the restaurant-state screen replaces the welcome (s01–s03).
-  return (
-    <OrderingGate>
-      <Welcome />
-    </OrderingGate>
-  );
+  // The start screen without a QR code; closed, paused or offline: the restaurant-state screen (s01–s03).
+  return <Home />;
 }

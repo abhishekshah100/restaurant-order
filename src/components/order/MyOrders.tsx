@@ -7,12 +7,13 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Page } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
+import { useVisitWords } from '@/hooks/useVisitLabel';
 import { formatPlaced, groupByVisit, isFinished, paymentLabel, spentTotal } from '@/lib/orders';
 import { itemCount } from '@/lib/pricing';
 import type { Order } from '@/types/order';
+import { ModeBadge } from './ModeBadge';
 import { OrderThumb } from './OrderThumb';
 import { useLiveOrderList } from './useLiveOrders';
 import styles from './MyOrders.module.css';
@@ -37,10 +38,13 @@ function OrderStatus({ order, className }: { order: Order; className?: string })
 /** One order: a list row (or a highlighted card while active) on mobile, a table row on the web. */
 function OrderRow({ order, now, today }: { order: Order; now: Date; today: boolean }) {
   const t = useContent('orders');
+  const { money, clock } = useRegion();
+  const visitWords = useVisitWords();
   const count = t.plural('shared.itemCount', itemCount(order.items));
   const payment = t(`payment.${paymentLabel(order)}`);
-  const table = t('shared.table', { table: order.table });
-  const placed = formatPlaced(order.placedAt, now);
+  // "Table 12" for dine-in (as drawn); "Takeaway" / "Delivery" otherwise, with a badge.
+  const table = visitWords(order);
+  const placed = formatPlaced(order.placedAt, now, clock);
   const names = order.items.map((i) => i.name).join(', ');
   return (
     <li>
@@ -49,10 +53,11 @@ function OrderRow({ order, now, today }: { order: Order; now: Date; today: boole
         <span className={styles.main}>
           <span className={styles.top}>
             <span className={styles.id}>{t('shared.orderRef', { id: order.id })}</span>
+            {order.mode !== 'dineIn' && <ModeBadge mode={order.mode} className={styles.mode} />}
             <OrderStatus order={order} className="hide-desktop" />
           </span>
           <span className={cx(styles.sub, 'hide-desktop')}>
-            {count} · {formatINR(order.total)} · {payment}
+            {count} · {money.format(order.total)} · {payment}
           </span>
           <span className={cx(styles.sub, styles.when, 'hide-desktop')}>
             {placed} · {table}
@@ -63,7 +68,7 @@ function OrderRow({ order, now, today }: { order: Order; now: Date; today: boole
         </span>
         <span className={cx(styles.sub, 'hide-mobile')}>{placed}</span>
         <span className={cx(styles.amount, 'hide-mobile')}>
-          <b>{formatINR(order.total)}</b>
+          <b>{money.format(order.total)}</b>
           <span className={styles.when}>{payment}</span>
         </span>
         <OrderStatus order={order} className={cx(styles.status, 'hide-mobile')} />
@@ -116,15 +121,16 @@ function VisitSection({
   );
 }
 
-/** "This visit · Today", plus "at Table 12" on the web when every order was at one table. */
+/** "This visit · Today", plus "at Table 12" on the web when every order was dine-in at one table. */
 function VisitTitle({ orders }: { orders: Order[] }) {
   const t = useContent('orders');
-  const tables = new Set(orders.map((o) => o.table));
+  const tables = new Set(orders.map((o) => (o.mode === 'dineIn' ? o.table : undefined)));
+  const [table] = tables;
   return (
     <>
       {t('list.thisVisit')}
-      {tables.size === 1 && (
-        <span className="hide-mobile">{t('list.atTable', { table: orders[0].table })}</span>
+      {tables.size === 1 && table !== undefined && (
+        <span className="hide-mobile">{t('list.atTable', { table })}</span>
       )}
     </>
   );
@@ -132,7 +138,8 @@ function VisitTitle({ orders }: { orders: Order[] }) {
 
 /** My orders (16 · w16): this visit and earlier visits. */
 export function MyOrders() {
-  const restaurant = useRestaurant();
+  const branch = useBranch();
+  const { money, clock } = useRegion();
   const t = useContent('orders');
   const data = useLiveOrderList();
 
@@ -158,14 +165,14 @@ export function MyOrders() {
       </EmptyState>
     );
   } else {
-    const { today, earlier } = groupByVisit(data.orders, data.now);
+    const { today, earlier } = groupByVisit(data.orders, data.now, clock);
     content = (
       <>
         {today.length > 0 && (
           <VisitSection
             id="this-visit"
             title={<VisitTitle orders={today} />}
-            summary={`${t.plural('shared.orderCount', today.length)} · ${formatINR(spentTotal(today))}`}
+            summary={`${t.plural('shared.orderCount', today.length)} · ${money.format(spentTotal(today))}`}
             orders={today}
             now={data.now}
             today
@@ -194,7 +201,7 @@ export function MyOrders() {
         <div className={cx(styles.pageHead, 'hide-mobile')}>
           <div className={styles.headText}>
             <h1 className="t-display">{t('shared.myOrders')}</h1>
-            <p className="t-body c2">{t('list.lede', { restaurant: restaurant.name })}</p>
+            <p className="t-body c2">{t('list.lede', { restaurant: branch.name })}</p>
           </div>
           <Button href="/menu/" size="sm" iconStart="plus">
             {t('list.newOrder')}

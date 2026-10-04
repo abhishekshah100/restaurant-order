@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page, type TestInfo } from '@playwright/test';
+import { dishSlug, waitForSavedCart } from './helpers';
 
 /**
  * Guest sessions: every guest who scans a table's QR code gets their own session, so two
@@ -29,6 +30,7 @@ async function scanAndAdd(page: Page, dish: string) {
     }
     await expect(stepper).toBeVisible({ timeout: 2000 });
   }).toPass({ timeout: 15_000 });
+  await waitForSavedCart(page, dishSlug(dish));
 }
 
 /** Cart lines have a quantity stepper named after the dish. */

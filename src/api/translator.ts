@@ -66,7 +66,8 @@ function lookup(dict: unknown, key: string): unknown {
   }, dict);
 }
 
-const fill = (text: string, vars?: Vars) =>
+/** Fills `{placeholders}` in a string; unknown ones are left as they are. */
+export const fill = (text: string, vars?: Vars) =>
   vars ? text.replace(/\{(\w+)\}/g, (match, name: string) => String(vars[name] ?? match)) : text;
 
 function missing(key: string): string {

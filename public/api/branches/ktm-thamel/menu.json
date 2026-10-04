@@ -55,18 +55,18 @@
       "description": "Charred cottage cheese, hung-curd marinade, peppers and onion, mint chutney.",
       "longDescription": "Charred cottage cheese, hung-curd marinade, peppers and onion. Served with mint chutney.",
       "veg": true,
-      "price": 329,
+      "price": 525,
       "variantLabel": "Portion",
       "variants": [
         {
           "id": "half",
           "name": "Half · 6 pcs",
-          "price": 329
+          "price": 525
         },
         {
           "id": "full",
           "name": "Full · 10 pcs",
-          "price": 549
+          "price": 880
         }
       ],
       "optionGroups": [
@@ -80,7 +80,7 @@
         {
           "id": "extra-paneer",
           "name": "Extra paneer (4 pcs)",
-          "price": 90
+          "price": 145
         },
         {
           "id": "mint-chutney",
@@ -109,7 +109,7 @@
       "description": "Tiger prawns tossed in burnt garlic, Kashmiri chilli butter and spring onion.",
       "cardDescription": "Burnt garlic, Kashmiri chilli butter",
       "veg": false,
-      "price": 449,
+      "price": 720,
       "spice": "medium",
       "prepTime": "12–15 min",
       "serves": 1,
@@ -139,7 +139,7 @@
       "name": "Dahi Kebab",
       "description": "Crisp hung-curd patties with green chilli and cardamom, beetroot chutney.",
       "veg": true,
-      "price": 289,
+      "price": 460,
       "prepTime": "12–15 min",
       "serves": 2,
       "categoryId": "starters",
@@ -155,7 +155,7 @@
       "name": "Hara Bhara Kebab",
       "description": "Spinach, peas and potato patties with mint yoghurt.",
       "veg": true,
-      "price": 259,
+      "price": 415,
       "prepTime": "12–15 min",
       "serves": 2,
       "categoryId": "starters",
@@ -172,7 +172,7 @@
       "name": "Chicken Malai Tikka",
       "description": "Cream-and-cheese marinated chicken from the tandoor.",
       "veg": false,
-      "price": 389,
+      "price": 620,
       "prepTime": "18–20 min",
       "serves": 2,
       "categoryId": "starters",
@@ -188,7 +188,7 @@
       "name": "Tandoori Broccoli",
       "description": "Cheese-and-cashew marinated florets, chaat masala.",
       "veg": true,
-      "price": 299,
+      "price": 480,
       "prepTime": "12–15 min",
       "serves": 2,
       "categoryId": "starters",
@@ -204,7 +204,7 @@
       "name": "Amritsari Fish Tikka",
       "description": "Gram-flour battered river sole with ajwain and lemon.",
       "veg": false,
-      "price": 399,
+      "price": 640,
       "spice": "mild",
       "prepTime": "12–15 min",
       "serves": 2,
@@ -221,7 +221,7 @@
       "name": "Crispy Corn Chaat",
       "description": "Fried sweetcorn tossed with onion, tomato, lime and chaat masala.",
       "veg": true,
-      "price": 249,
+      "price": 400,
       "prepTime": "8–10 min",
       "serves": 2,
       "categoryId": "starters",
@@ -239,37 +239,37 @@
       "cardDescription": "Wild mushrooms, truffle oil, aged parmesan",
       "longDescription": "Spaghetti tossed with wild mushrooms, a splash of white truffle oil, aged parmesan and fresh garden herbs.",
       "veg": true,
-      "price": 369,
+      "price": 590,
       "variantLabel": "Choose a size",
       "variants": [
         {
           "id": "regular",
           "name": "Regular",
           "description": "Perfect for one",
-          "price": 369
+          "price": 590
         },
         {
           "id": "large",
           "name": "Large",
           "description": "Good for sharing",
-          "price": 469
+          "price": 750
         }
       ],
       "addOns": [
         {
           "id": "parmesan",
           "name": "Extra parmesan",
-          "price": 40
+          "price": 65
         },
         {
           "id": "grilled-mushrooms",
           "name": "Grilled mushrooms",
-          "price": 60
+          "price": 95
         },
         {
           "id": "garlic-bread",
           "name": "Garlic bread (2 pcs)",
-          "price": 80
+          "price": 130
         },
         {
           "id": "chilli-flakes",
@@ -317,7 +317,7 @@
       "name": "Old Delhi Butter Chicken",
       "description": "Tandoori chicken simmered in a velvety tomato, butter and fenugreek gravy.",
       "veg": false,
-      "price": 449,
+      "price": 720,
       "spice": "mild",
       "removables": [
         {
@@ -349,20 +349,20 @@
       "description": "San Marzano tomato, fior di latte, basil and cold-pressed olive oil.",
       "cardDescription": "San Marzano tomato, fior di latte, basil",
       "veg": true,
-      "price": 279,
+      "price": 445,
       "variantLabel": "Choose a size",
       "variants": [
         {
           "id": "regular",
           "name": "10\"",
           "description": "Perfect for one",
-          "price": 279
+          "price": 445
         },
         {
           "id": "large",
           "name": "13\"",
           "description": "Good for sharing",
-          "price": 399
+          "price": 640
         }
       ],
       "optionGroups": [
@@ -378,7 +378,7 @@
             },
             {
               "name": "Gluten-free",
-              "price": 80,
+              "price": 130,
               "availableFor": ["regular"]
             }
           ]
@@ -388,23 +388,23 @@
         {
           "id": "burrata",
           "name": "Burrata",
-          "price": 120,
+          "price": 190,
           "priceByVariant": {
-            "large": 160
+            "large": 255
           }
         },
         {
           "id": "olives",
           "name": "Kalamata olives",
-          "price": 40,
+          "price": 65,
           "priceByVariant": {
-            "large": 60
+            "large": 95
           }
         },
         {
           "id": "jalapenos",
           "name": "Jalapeños",
-          "price": 30
+          "price": 50
         },
         {
           "id": "chilli-oil",
@@ -452,7 +452,7 @@
       "name": "Dal Makhani",
       "description": "Black lentils slow-cooked overnight with butter and cream.",
       "veg": true,
-      "price": 299,
+      "price": 480,
       "prepTime": "10–12 min",
       "serves": 2,
       "categoryId": "mains",
@@ -468,20 +468,20 @@
       "name": "Paneer Lababdar",
       "description": "Paneer in a rich onion-tomato gravy with cashew and kasuri methi.",
       "veg": true,
-      "price": 379,
+      "price": 605,
       "variantLabel": "Portion",
       "variants": [
         {
           "id": "regular",
           "name": "Regular",
           "description": "Serves 1–2",
-          "price": 379
+          "price": 605
         },
         {
           "id": "large",
           "name": "Large",
           "description": "Serves 3–4",
-          "price": 579
+          "price": 925
         }
       ],
       "optionGroups": [
@@ -521,7 +521,7 @@
       "name": "Palak Paneer",
       "description": "Fresh spinach purée, garlic tempering, soft paneer cubes.",
       "veg": true,
-      "price": 349,
+      "price": 560,
       "prepTime": "12–15 min",
       "serves": 2,
       "categoryId": "mains",
@@ -537,7 +537,7 @@
       "name": "Malai Kofta",
       "description": "Potato and cottage-cheese dumplings in a mild saffron and cashew gravy.",
       "veg": true,
-      "price": 359,
+      "price": 575,
       "prepTime": "15–18 min",
       "serves": 2,
       "categoryId": "mains",
@@ -553,7 +553,7 @@
       "name": "Wild Mushroom Risotto",
       "description": "Arborio rice, porcini stock, mascarpone and thyme.",
       "veg": true,
-      "price": 419,
+      "price": 670,
       "prepTime": "20–22 min",
       "serves": 1,
       "categoryId": "mains",
@@ -569,7 +569,7 @@
       "name": "Lamb Rogan Josh",
       "description": "Kashmiri lamb curry with ratan jot, fennel and dried ginger.",
       "veg": false,
-      "price": 519,
+      "price": 830,
       "spice": "medium",
       "prepTime": "15–18 min",
       "serves": 1,
@@ -586,7 +586,7 @@
       "name": "Goan Fish Curry",
       "description": "Kingfish in a tangy coconut, kokum and red chilli curry.",
       "veg": false,
-      "price": 489,
+      "price": 780,
       "spice": "hot",
       "prepTime": "15–18 min",
       "serves": 1,
@@ -603,7 +603,7 @@
       "name": "Chettinad Curry",
       "description": "Peppery Chettinad masala with curry leaves and roasted coconut. Choose your protein.",
       "veg": false,
-      "price": 429,
+      "price": 685,
       "optionGroups": [
         {
           "id": "protein",
@@ -615,11 +615,11 @@
             },
             {
               "name": "Lamb",
-              "price": 90
+              "price": 145
             },
             {
               "name": "Prawn",
-              "price": 120
+              "price": 190
             }
           ]
         }
@@ -654,7 +654,7 @@
       "name": "Prawn Linguine",
       "description": "Linguine, garlic prawns, cherry tomato, chilli and lemon butter.",
       "veg": false,
-      "price": 499,
+      "price": 800,
       "prepTime": "15–18 min",
       "serves": 1,
       "categoryId": "mains",
@@ -670,9 +670,9 @@
       "name": "Veg Thali",
       "description": "A full meal: curry, bread, rice, dessert and a drink, your way.",
       "veg": true,
-      "price": 449,
+      "price": 720,
       "combo": {
-        "savings": 140,
+        "savings": 225,
         "includes": "Curry · Bread · Rice · Dessert · Drink"
       },
       "optionGroups": [
@@ -689,7 +689,7 @@
             },
             {
               "name": "Paneer Lababdar",
-              "price": 40
+              "price": 65
             }
           ]
         },
@@ -706,7 +706,7 @@
             },
             {
               "name": "Garlic Naan",
-              "price": 20
+              "price": 30
             }
           ]
         },
@@ -733,7 +733,7 @@
             },
             {
               "name": "Kulfi Falooda",
-              "price": 50
+              "price": 80
             }
           ]
         },
@@ -750,7 +750,7 @@
             },
             {
               "name": "Mango Lassi",
-              "price": 40
+              "price": 65
             }
           ]
         }
@@ -770,9 +770,9 @@
       "name": "Non-veg Thali",
       "description": "Chicken or lamb curry with bread, rice and a drink.",
       "veg": false,
-      "price": 549,
+      "price": 880,
       "combo": {
-        "savings": 160,
+        "savings": 255,
         "includes": "Curry · Bread · Rice · Drink"
       },
       "optionGroups": [
@@ -789,7 +789,7 @@
             },
             {
               "name": "Lamb Rogan Josh",
-              "price": 90
+              "price": 145
             }
           ]
         },
@@ -806,7 +806,7 @@
             },
             {
               "name": "Garlic Naan",
-              "price": 20
+              "price": 30
             }
           ]
         },
@@ -836,7 +836,7 @@
             },
             {
               "name": "Mango Lassi",
-              "price": 40
+              "price": 65
             }
           ]
         }
@@ -866,7 +866,7 @@
       "name": "Burrata & Basil",
       "description": "Tomato, torn burrata, basil pesto and cracked pepper.",
       "veg": true,
-      "price": 449,
+      "price": 720,
       "prepTime": "12–15 min",
       "serves": 1,
       "categoryId": "pizza",
@@ -882,7 +882,7 @@
       "name": "Quattro Formaggi",
       "description": "Mozzarella, gorgonzola, parmesan and smoked scamorza.",
       "veg": true,
-      "price": 429,
+      "price": 685,
       "prepTime": "12–15 min",
       "serves": 1,
       "categoryId": "pizza",
@@ -898,7 +898,7 @@
       "name": "Roasted Veg & Olive",
       "description": "Charred peppers, courgette, red onion and Kalamata olives.",
       "veg": true,
-      "price": 389,
+      "price": 620,
       "prepTime": "12–15 min",
       "serves": 1,
       "categoryId": "pizza",
@@ -914,7 +914,7 @@
       "name": "Mushroom & Truffle",
       "description": "Wild mushrooms, fior di latte, thyme and white truffle oil.",
       "veg": true,
-      "price": 469,
+      "price": 750,
       "prepTime": "12–15 min",
       "serves": 1,
       "categoryId": "pizza",
@@ -930,7 +930,7 @@
       "name": "Chicken Pesto",
       "description": "Basil pesto, roast chicken, sun-dried tomato and rocket.",
       "veg": false,
-      "price": 459,
+      "price": 735,
       "prepTime": "12–15 min",
       "serves": 1,
       "categoryId": "pizza",
@@ -946,7 +946,7 @@
       "name": "Spicy Lamb",
       "description": "Harissa lamb, red onion, mint yoghurt and pickled chilli.",
       "veg": false,
-      "price": 489,
+      "price": 780,
       "spice": "hot",
       "prepTime": "12–15 min",
       "serves": 1,
@@ -963,7 +963,7 @@
       "name": "Garlic Naan",
       "description": "Tandoor-baked naan with garlic, coriander and butter.",
       "veg": true,
-      "price": 89,
+      "price": 140,
       "prepTime": "6–8 min",
       "serves": 1,
       "categoryId": "breads-rice",
@@ -979,7 +979,7 @@
       "name": "Paneer Kulcha",
       "description": "Tandoor-baked bread stuffed with spiced paneer and coriander.",
       "veg": true,
-      "price": 119,
+      "price": 190,
       "prepTime": "8–10 min",
       "serves": 1,
       "categoryId": "breads-rice",
@@ -995,7 +995,7 @@
       "name": "Butter Naan",
       "description": "Soft leavened bread brushed with butter.",
       "veg": true,
-      "price": 79,
+      "price": 125,
       "prepTime": "6–8 min",
       "serves": 1,
       "categoryId": "breads-rice",
@@ -1011,7 +1011,7 @@
       "name": "Tandoori Roti",
       "description": "Whole-wheat flatbread from the clay oven.",
       "veg": true,
-      "price": 49,
+      "price": 80,
       "prepTime": "5–6 min",
       "serves": 1,
       "categoryId": "breads-rice",
@@ -1027,7 +1027,7 @@
       "name": "Laccha Paratha",
       "description": "Flaky layered whole-wheat paratha.",
       "veg": true,
-      "price": 89,
+      "price": 140,
       "prepTime": "6–8 min",
       "serves": 1,
       "categoryId": "breads-rice",
@@ -1043,7 +1043,7 @@
       "name": "Veg Dum Biryani",
       "description": "Basmati and seasonal vegetables sealed and slow-cooked with saffron.",
       "veg": true,
-      "price": 349,
+      "price": 560,
       "prepTime": "18–20 min",
       "serves": 1,
       "categoryId": "breads-rice",
@@ -1059,30 +1059,30 @@
       "name": "Chicken Dum Biryani",
       "description": "Hyderabadi-style biryani with marinated chicken, mint and fried onion.",
       "veg": false,
-      "price": 249,
+      "price": 400,
       "variantLabel": "Portion",
       "variants": [
         {
           "id": "quarter",
           "name": "Quarter · 1 pc",
-          "price": 249
+          "price": 400
         },
         {
           "id": "half",
           "name": "Half · 2 pcs",
-          "price": 429
+          "price": 685
         },
         {
           "id": "full",
           "name": "Full · 4 pcs",
-          "price": 749
+          "price": 1200
         }
       ],
       "addOns": [
         {
           "id": "raita",
           "name": "Burani raita",
-          "price": 49
+          "price": 80
         },
         {
           "id": "salan",
@@ -1116,7 +1116,7 @@
       "name": "Jeera Rice",
       "description": "Basmati tempered with cumin and ghee.",
       "veg": true,
-      "price": 179,
+      "price": 285,
       "prepTime": "8–10 min",
       "serves": 1,
       "categoryId": "breads-rice",
@@ -1132,7 +1132,7 @@
       "name": "Steamed Rice",
       "description": "Plain long-grain basmati.",
       "veg": true,
-      "price": 149,
+      "price": 240,
       "prepTime": "5–6 min",
       "serves": 1,
       "categoryId": "breads-rice",
@@ -1148,7 +1148,7 @@
       "name": "Tiramisu",
       "description": "Espresso-soaked savoiardi, mascarpone cream and cocoa.",
       "veg": true,
-      "price": 299,
+      "price": 480,
       "prepTime": "5 min",
       "serves": 1,
       "categoryId": "desserts",
@@ -1164,28 +1164,28 @@
       "name": "Gulab Jamun",
       "description": "Warm milk dumplings in cardamom and rose syrup.",
       "veg": true,
-      "price": 99,
+      "price": 160,
       "variantLabel": "Portion",
       "variants": [
         {
           "id": "two",
           "name": "2 pcs",
-          "price": 99
+          "price": 160
         },
         {
           "id": "four",
           "name": "4 pcs",
-          "price": 179
+          "price": 285
         },
         {
           "id": "six",
           "name": "6 pcs",
-          "price": 249
+          "price": 400
         },
         {
           "id": "eight",
           "name": "8 pcs",
-          "price": 319
+          "price": 510
         }
       ],
       "prepTime": "5 min",
@@ -1203,7 +1203,7 @@
       "name": "Kulfi Falooda",
       "description": "Pistachio kulfi, rose syrup, vermicelli and basil seeds.",
       "veg": true,
-      "price": 229,
+      "price": 365,
       "prepTime": "5 min",
       "serves": 1,
       "categoryId": "desserts",
@@ -1219,7 +1219,7 @@
       "name": "Baked Cheesecake",
       "description": "New York-style cheesecake with seasonal berry compote.",
       "veg": true,
-      "price": 319,
+      "price": 510,
       "prepTime": "5 min",
       "serves": 1,
       "categoryId": "desserts",
@@ -1235,7 +1235,7 @@
       "name": "Chocolate Fondant",
       "description": "Molten dark chocolate cake with vanilla bean ice cream.",
       "veg": true,
-      "price": 339,
+      "price": 540,
       "prepTime": "12–14 min",
       "serves": 1,
       "categoryId": "desserts",
@@ -1251,26 +1251,26 @@
       "name": "Iced Hazelnut Latte",
       "description": "Double espresso, hazelnut and cold milk over ice.",
       "veg": true,
-      "price": 199,
+      "price": 320,
       "variantLabel": "Choose a size",
       "variants": [
         {
           "id": "regular",
           "name": "Regular",
           "description": "350 ml",
-          "price": 199
+          "price": 320
         },
         {
           "id": "medium",
           "name": "Medium",
           "description": "500 ml",
-          "price": 220
+          "price": 350
         },
         {
           "id": "large",
           "name": "Large",
           "description": "600 ml",
-          "price": 239
+          "price": 380
         }
       ],
       "optionGroups": [
@@ -1286,7 +1286,7 @@
             },
             {
               "name": "Almond milk",
-              "price": 30
+              "price": 50
             }
           ]
         }
@@ -1295,13 +1295,13 @@
         {
           "id": "extra-shot",
           "name": "Extra espresso shot",
-          "price": 40,
+          "price": 65,
           "availableFor": ["medium", "large"]
         },
         {
           "id": "whipped-cream",
           "name": "Whipped cream",
-          "price": 30
+          "price": 50
         }
       ],
       "prepTime": "4–5 min",
@@ -1331,7 +1331,7 @@
       "name": "Cold Coffee",
       "description": "Blended coffee, milk and a scoop of vanilla ice cream.",
       "veg": true,
-      "price": 179,
+      "price": 285,
       "prepTime": "4–5 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1347,7 +1347,7 @@
       "name": "Cappuccino",
       "description": "Double espresso with steamed, foamed milk.",
       "veg": true,
-      "price": 169,
+      "price": 270,
       "prepTime": "3–4 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1363,7 +1363,7 @@
       "name": "Filter Coffee",
       "description": "South Indian decoction with frothed milk and jaggery.",
       "veg": true,
-      "price": 119,
+      "price": 190,
       "prepTime": "3–4 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1379,7 +1379,7 @@
       "name": "Masala Chai",
       "description": "Assam tea brewed with ginger, cardamom and milk.",
       "veg": true,
-      "price": 99,
+      "price": 160,
       "prepTime": "4–5 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1395,13 +1395,13 @@
       "name": "Mango Lassi",
       "description": "Alphonso mango, yoghurt and a pinch of cardamom.",
       "veg": true,
-      "price": 159,
+      "price": 255,
       "variantLabel": "Choose a size",
       "variants": [
         {
           "id": "regular",
           "name": "Regular · 350 ml",
-          "price": 159
+          "price": 255
         }
       ],
       "optionGroups": [
@@ -1426,7 +1426,7 @@
       "name": "Sweet Lassi",
       "description": "Churned yoghurt with sugar and rose water.",
       "veg": true,
-      "price": 139,
+      "price": 220,
       "prepTime": "3–4 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1442,7 +1442,7 @@
       "name": "Masala Chaas",
       "description": "Spiced buttermilk with roasted cumin and mint.",
       "veg": true,
-      "price": 99,
+      "price": 160,
       "prepTime": "2–3 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1458,7 +1458,7 @@
       "name": "Virgin Mojito",
       "description": "Mocktail of muddled mint, lime and soda.",
       "veg": true,
-      "price": 199,
+      "price": 320,
       "prepTime": "3–4 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1474,7 +1474,7 @@
       "name": "Watermelon Cooler",
       "description": "Mocktail of fresh watermelon, basil and black salt.",
       "veg": true,
-      "price": 189,
+      "price": 300,
       "prepTime": "3–4 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1490,7 +1490,7 @@
       "name": "Kokum Spritzer",
       "description": "Mocktail of kokum, ginger and sparkling water.",
       "veg": true,
-      "price": 189,
+      "price": 300,
       "prepTime": "3–4 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1506,7 +1506,7 @@
       "name": "Fresh Lime Soda",
       "description": "Sweet, salted or mixed.",
       "veg": true,
-      "price": 129,
+      "price": 205,
       "optionGroups": [
         {
           "id": "style",
@@ -1529,7 +1529,7 @@
       "name": "Fresh Orange Juice",
       "description": "Pressed to order.",
       "veg": true,
-      "price": 179,
+      "price": 285,
       "prepTime": "3–4 min",
       "serves": 1,
       "categoryId": "beverages",
@@ -1545,7 +1545,7 @@
       "name": "Mineral Water",
       "description": "1 litre, chilled or room temperature.",
       "veg": true,
-      "price": 49,
+      "price": 80,
       "prepTime": "1 min",
       "serves": 2,
       "categoryId": "beverages",
@@ -1588,5 +1588,6 @@
       "slug": "chilli-garlic-prawns",
       "label": "Garlic Prawns"
     }
-  ]
+  ],
+  "priceFilter": 650
 }

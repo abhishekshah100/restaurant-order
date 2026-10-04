@@ -89,3 +89,29 @@ textarea.input {
 .withIcon:focus-within > span[aria-hidden] {
   color: var(--brand-600);
 }
+
+/* Select: a native picker with the field's look and a chevron */
+.selectWrap {
+  position: relative;
+  display: block;
+}
+.select {
+  padding-right: 44px;
+  cursor: pointer;
+}
+.withIcon > select {
+  padding-left: 44px;
+}
+.select:invalid,
+.select option[value=''] {
+  color: var(--ink-3);
+}
+.selectWrap > span.selectChev {
+  position: absolute;
+  right: 14px;
+  left: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-2);
+  pointer-events: none;
+}

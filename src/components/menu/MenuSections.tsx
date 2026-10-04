@@ -5,8 +5,8 @@ import { useMemo } from 'react';
 import { Chip, Icon } from '@/components/ui';
 import { useFilters } from '@/context/FiltersContext';
 import { cx } from '@/lib/cx';
-import { useContent, useMenu } from '@/api/hooks';
-import { applyFilters, sortDishes } from '@/lib/menu';
+import { useBranch, useContent, useMenu } from '@/api/hooks';
+import { applyFilters, isVegMark, sortDishes } from '@/lib/menu';
 import type { Category } from '@/types/menu';
 import { DishCard } from './DishCard';
 import { DishList } from './DishList';
@@ -19,7 +19,11 @@ export function PicksSection() {
   const { setDiet } = useFilterActions();
   const menu = useMenu();
   const t = useContent('menu');
-  const picks = useMemo(() => applyFilters(menu.featuredDishes(), filters), [menu, filters]);
+  const { dietary } = useBranch();
+  const picks = useMemo(
+    () => applyFilters(menu.featuredDishes(), filters, menu.priceFilter),
+    [menu, filters],
+  );
 
   return (
     <section id="picks" className={styles.picks} aria-labelledby="picks-title">
@@ -38,12 +42,16 @@ export function PicksSection() {
           <Chip pressed={filters.diet === 'all'} onClick={() => setDiet('all')}>
             {t('filters.all')}
           </Chip>
-          <Chip veg pressed={filters.diet === 'veg'} onClick={() => setDiet('veg')}>
-            {t('filters.veg')}
-          </Chip>
-          <Chip veg={false} pressed={filters.diet === 'nonveg'} onClick={() => setDiet('nonveg')}>
-            {t('filters.nonVeg')}
-          </Chip>
+          {dietary.marks.map((mark) => (
+            <Chip
+              key={mark}
+              veg={isVegMark(mark)}
+              pressed={filters.diet === mark}
+              onClick={() => setDiet(mark)}
+            >
+              {t(`filters.diet.${mark}.chip`)}
+            </Chip>
+          ))}
         </div>
       </div>
       {picks.length > 0 ? (
@@ -74,8 +82,8 @@ export function CategorySection({ category, preview, divider }: CategorySectionP
   const t = useContent('menu');
   const total = useMemo(() => menu.dishesIn(category.id), [menu, category.id]);
   const all = useMemo(
-    () => sortDishes(applyFilters(total, filters), 'recommended'),
-    [total, filters],
+    () => sortDishes(applyFilters(total, filters, menu.priceFilter), 'recommended'),
+    [total, filters, menu.priceFilter],
   );
   const shown = useMemo(() => (preview ? all.slice(0, preview) : all), [all, preview]);
   const titleId = `sec-${category.id}`;

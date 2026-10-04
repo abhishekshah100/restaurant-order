@@ -1,32 +1,7 @@
 {
   "name": "The Olive Table",
   "tagline": "Seasonal Indian and Mediterranean plates, cooked to order.",
-  "status": "open",
-  "closesAt": "9:00 PM",
-  "opensAt": "11:00 AM",
-  "opensIn": "in about 1 hr 20 min",
-  "pausedForMinutes": 15,
-  "hoursToday": "12:00 PM – 11:00 PM",
-  "lastOrders": "10:30 PM",
-  "prepTime": "18–22 min",
-  "lastOrdersNote": "30 min before close",
-  "serviceWindows": [
-    {
-      "label": "Lunch",
-      "hours": "12:00 PM – 3:30 PM"
-    },
-    {
-      "label": "Dinner",
-      "hours": "7:00 PM – 11:00 PM"
-    }
-  ],
-  "phone": "[RESTAURANT PHONE]",
-  "phoneHref": "tel:+910000000000",
-  "address": "[RESTAURANT ADDRESS]",
-  "wifiName": "[NETWORK NAME]",
-  "paymentPartner": "[PAYMENT PARTNER]",
-  "defaultTable": 12,
-  "tableLocation": "Ground floor · Garden side",
+  "defaultBranchId": "blr-indiranagar",
   "social": [
     {
       "network": "instagram",

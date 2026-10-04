@@ -3,14 +3,15 @@
 import { Button, StatusPill, Tag, VegMark } from '@/components/ui';
 import { PriceSummary } from '@/components/cart/PriceSummary';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import type { ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
 import { cx } from '@/lib/cx';
-import { formatINR, formatTime } from '@/lib/format';
-import { formatOrderDay, isFinished, orderBill } from '@/lib/orders';
+import { useVisitWords } from '@/hooks/useVisitLabel';
+import { formatOrderDay, isFinished, orderBill, unpaidLabel } from '@/lib/orders';
 import { itemCount } from '@/lib/pricing';
 import type { Order } from '@/types/order';
+import { FulfilmentCard } from './FulfilmentCard';
 import { OrderCancelled } from './OrderCancelled';
 import { OrderLoading, OrderNotFound, OrderShell } from './OrderShell';
 import { useLiveOrder } from './useLiveOrders';
@@ -32,7 +33,9 @@ function PaymentStatusTag({ order }: { order: Order }) {
     default:
       return (
         <Tag variant="warn" icon={null}>
-          {order.payment.method === 'counter' ? t('payment.payAtCounter') : t('payment.unpaid')}
+          {order.payment.method === 'online'
+            ? t('payment.unpaid')
+            : t(`payment.${unpaidLabel(order.payment.method)}`)}
         </Tag>
       );
   }
@@ -46,12 +49,17 @@ function trackLabel(order: Order, t: Translator<ContentMap['orders']>): string {
 }
 
 function DetailsView({ order, now }: { order: Order; now: Date }) {
-  const restaurant = useRestaurant();
+  const branch = useBranch();
+  const { money, clock } = useRegion();
   const t = useContent('orders');
+  const common = useContent('common');
+  const visitWords = useVisitWords();
   const { payment } = order;
   const method =
     payment.detail ??
-    (payment.method === 'online' ? t('payment.methodUpi') : t('payment.payAtCounter'));
+    (payment.method === 'online'
+      ? common('paymentMethods.online')
+      : t(`payment.${unpaidLabel(payment.method)}`));
 
   return (
     <OrderShell title={t('details.title')} className={styles.layout}>
@@ -76,10 +84,10 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
             </div>
             <p className={styles.meta}>
               {t('details.meta', {
-                restaurant: restaurant.name,
-                table: order.table,
-                day: formatOrderDay(order.placedAt, now, t('details.today')),
-                time: formatTime(order.placedAt),
+                restaurant: branch.name,
+                visit: visitWords(order),
+                day: formatOrderDay(order.placedAt, now, t('details.today'), clock),
+                time: clock.time(order.placedAt),
                 name: order.customerName,
               })}
             </p>
@@ -130,7 +138,7 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
                   </span>
                   {item.quantity}
                 </span>
-                <span className={styles.price}>{formatINR(item.unitPrice * item.quantity)}</span>
+                <span className={styles.price}>{money.format(item.unitPrice * item.quantity)}</span>
               </li>
             ))}
           </ul>
@@ -144,11 +152,16 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
       </div>
 
       <aside className={styles.aside}>
+        {order.mode !== 'dineIn' && <FulfilmentCard order={order} />}
         <section className={cx(styles.card, styles.bill)} aria-labelledby="bill-heading">
           <h2 id="bill-heading" className="t-h3">
             {t('details.bill')}
           </h2>
-          <PriceSummary bill={orderBill(order)} variant="receipt" totalLabel={t('totals.total')} />
+          <PriceSummary
+            bill={orderBill(order, branch)}
+            variant="receipt"
+            totalLabel={t('totals.total')}
+          />
         </section>
 
         <section className={cx(styles.card, styles.payment)} aria-labelledby="payment-heading">
@@ -175,7 +188,7 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
             {payment.refundAmount !== undefined && (
               <div>
                 <dt>{t('details.refund')}</dt>
-                <dd>{formatINR(payment.refundAmount)}</dd>
+                <dd>{money.format(payment.refundAmount)}</dd>
               </div>
             )}
           </dl>

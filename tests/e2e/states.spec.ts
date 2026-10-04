@@ -1,17 +1,18 @@
 import { readFileSync } from 'node:fs';
+import { waitForSavedCart } from './helpers';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import type { Restaurant } from '../../src/types/restaurant';
+import type { Branch } from '../../src/types/branch';
 
 /**
  * Restaurant states: closed (s01 · ws01), ordering paused (s02 · ws02) and offline (s03 · ws03).
  * Previewed with ?status=, which is remembered for the tab. Runs at 390px and 1280px.
  */
 
-/** The dummy GET /restaurant the site is built with. */
-const restaurant = JSON.parse(
-  readFileSync(path.join(process.cwd(), 'public', 'api', 'restaurant.json'), 'utf8'),
-) as Restaurant;
+/** The default branch (India) in the dummy GET /branches the site is built with. */
+const [restaurant] = JSON.parse(
+  readFileSync(path.join(process.cwd(), 'public', 'api', 'branches.json'), 'utf8'),
+) as Branch[];
 
 const visible = (page: Page, text: string | RegExp) =>
   page.getByText(text).filter({ visible: true }).first();
@@ -66,6 +67,7 @@ test('paused: guests can keep building the cart, and checkout offers a waiter', 
 
   await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
   await expect(page.getByRole('group', { name: 'Quantity of Dahi Kebab' }).first()).toBeVisible();
+  await waitForSavedCart(page, 'dahi-kebab');
 
   await page.goto('/cart/');
   await page.getByRole('link', { name: 'Checkout' }).filter({ visible: true }).click();

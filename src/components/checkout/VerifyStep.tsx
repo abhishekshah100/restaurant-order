@@ -2,16 +2,16 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useRef, useState, type FormEvent } from 'react';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { Button, Icon, OtpInput } from '@/components/ui';
-import { OTP_ATTEMPTS, OTP_RESEND_SECONDS } from '@/lib/constants';
 import { useCheckout } from '@/context/CheckoutContext';
 import { useToast } from '@/context/ToastContext';
 import { useCheckoutGuard } from '@/hooks/useCheckoutGuard';
 import { useCountdown } from '@/hooks/useCountdown';
-import { useTable } from '@/hooks/useTable';
-import { checkOtp, displayPhone, wrongCodeError } from '@/lib/checkout';
+import { useRequestFailed } from '@/hooks/useRequestFailed';
+import { useVisitLabel } from '@/hooks/useVisitLabel';
+import { isCompleteOtp, wrongCodeError } from '@/lib/checkout';
 import { cx } from '@/lib/cx';
 import { formatCountdown } from '@/lib/format';
 import { CheckoutFrame } from './CheckoutFrame';
@@ -19,13 +19,14 @@ import { OrderSummaryPanel } from './OrderSummaryPanel';
 import { OtpIllustration } from './OtpIllustration';
 import frame from './Checkout.module.css';
 import styles from './VerifyStep.module.css';
+import { formatMobile } from '@/lib/phone';
 
 /** Step 2 — OTP (10 · w10 · s07 · ws07). Mock code: 123456. */
 export function VerifyStep() {
   const ready = useCheckoutGuard('verify');
   const { session } = useCheckout();
-  const table = useTable();
-  const restaurant = useRestaurant();
+  const visit = useVisitLabel();
+  const branch = useBranch();
   const t = useContent('checkout');
   return (
     <CheckoutFrame
@@ -35,10 +36,10 @@ export function VerifyStep() {
       ready={ready}
       aside={
         <OrderSummaryPanel
-          footnote={t('lines.nameRestaurantTable', {
+          footnote={t('lines.nameRestaurantVisit', {
             name: session.name,
-            restaurant: restaurant.name,
-            table,
+            restaurant: branch.name,
+            visit,
           })}
         />
       }
@@ -52,44 +53,53 @@ function OtpForm() {
   const router = useRouter();
   const { showToast } = useToast();
   const t = useContent('checkout');
-  const { session, resendOtp, recordWrongCode, markVerified } = useCheckout();
+  const { session, resendOtp, verifyCode } = useCheckout();
+  const { mobile } = useRegion();
+  const requestFailed = useRequestFailed();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const endsAt = session.otpSentAt === null ? null : session.otpSentAt + OTP_RESEND_SECONDS * 1000;
-  const remaining = useCountdown(endsAt);
-  const locked = session.attemptsLeft <= 0;
-  // Same rule as canResendOtp (which resendOtp enforces): cooldown over, or after a wrong code.
-  const canResend = remaining === 0 || session.attemptsLeft < OTP_ATTEMPTS;
-  const phone = displayPhone(session.phone);
+  const checking = useRef(false);
+  const { otp } = session;
+  const remaining = useCountdown(otp?.resendAt ?? null);
+  const locked = otp !== null && otp.attemptsLeft <= 0;
+  // The server's rule, as its answers describe it: cooldown over, or after a wrong code.
+  const canResend = remaining === 0 || (otp !== null && otp.attemptsLeft < otp.maxAttempts);
+  const resendSeconds = otp ? Math.round((otp.resendAt - otp.sentAt) / 1000) : 0;
+  const phone = formatMobile(session.phone, mobile);
 
-  const verify = (value = code) => {
-    if (locked) return;
-    const result = checkOtp(value);
-    if (result === 'incomplete') {
+  const verify = async (value = code) => {
+    if (locked || checking.current) return;
+    if (!isCompleteOtp(value)) {
       setError(t('verify.errors.incomplete'));
       return;
     }
-    if (result === 'wrong') {
-      recordWrongCode();
-      const attemptsLeft = session.attemptsLeft - 1;
+    checking.current = true;
+    const result = await verifyCode(value);
+    checking.current = false;
+    if (result.status === 'failed') {
+      requestFailed();
+      return;
+    }
+    if (result.status === 'wrong') {
       setError(
-        wrongCodeError(attemptsLeft) === 'locked'
+        wrongCodeError(result.attemptsLeft) === 'locked'
           ? t('verify.errors.locked')
-          : t.plural('verify.errors.wrong', attemptsLeft),
+          : t.plural('verify.errors.wrong', result.attemptsLeft),
       );
       return;
     }
-    markVerified();
     router.push('/checkout/payment/');
   };
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    verify();
+    void verify();
   };
 
-  const resend = () => {
-    if (!resendOtp()) return;
+  const resend = async () => {
+    const result = await resendOtp();
+    if (result === 'failed') requestFailed();
+    if (result !== 'sent') return;
     setCode('');
     setError(null);
     document.getElementById('otp')?.focus();
@@ -120,7 +130,7 @@ function OtpForm() {
       {t.rich(
         'verify.resendIn',
         { b: (chunks) => <b>{chunks}</b> },
-        { time: formatCountdown(remaining ?? OTP_RESEND_SECONDS) },
+        { time: formatCountdown(remaining ?? resendSeconds) },
       )}
     </span>
   );
@@ -128,9 +138,7 @@ function OtpForm() {
   return (
     <form className={styles.verify} onSubmit={onSubmit} noValidate>
       <p className="visually-hidden" role="status">
-        {canResend
-          ? t('verify.canResendNow')
-          : t('verify.canResendIn', { seconds: OTP_RESEND_SECONDS })}
+        {canResend ? t('verify.canResendNow') : t('verify.canResendIn', { seconds: resendSeconds })}
       </p>
       <Link href="/checkout/details/" className={cx(frame.backLink, styles.back, 'hide-mobile')}>
         <Icon name="back" size="xs" />
@@ -144,7 +152,7 @@ function OtpForm() {
           {t.rich(
             'verify.sentTo',
             { b: (chunks) => <b className={styles.phone}>{chunks}</b> },
-            { phone },
+            { phone, dialCode: mobile.dialCode },
           )}
         </p>
 

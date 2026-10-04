@@ -7,8 +7,7 @@ import { useQuickAdd } from '@/context/QuickAddContext';
 import { useCartActions } from '@/hooks/useCart';
 import { describeInstructions, describeOptions, describeOptionsShort } from '@/lib/cartLine';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
-import { useContent, useMenu } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { dishImage, isCustomisable } from '@/lib/menu';
 import type { CartLine } from '@/types/cart';
 import { useCartLineLabels } from '@/hooks/useCartLineLabels';
@@ -25,6 +24,7 @@ export function CartLineItem({ line, variant = 'page' }: CartLineItemProps) {
   const { openQuickAdd } = useQuickAdd();
   const menu = useMenu();
   const t = useContent('cart');
+  const { money } = useRegion();
   const labels = useCartLineLabels();
   const dish = menu.getDish(line.dishSlug);
   if (!dish) return null;
@@ -72,10 +72,10 @@ export function CartLineItem({ line, variant = 'page' }: CartLineItemProps) {
         itemName={dish.name}
       />
       <span className={styles.price}>
-        {formatINR(line.unitPrice * line.quantity)}
+        {money.format(line.unitPrice * line.quantity)}
         {variant === 'page' && line.quantity > 1 && (
           <span className={styles.each}>
-            {t('line.each', { price: formatINR(line.unitPrice) })}
+            {t('line.each', { price: money.format(line.unitPrice) })}
           </span>
         )}
       </span>

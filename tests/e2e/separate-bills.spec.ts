@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page, type TestInfo } from '@playwright/test';
+import { dishSlug, waitForSavedCart } from './helpers';
 
 /**
  * Separate bills: two guests at one table order and pay separately. Ananya pays online at
@@ -51,6 +52,7 @@ async function orderAndCheckout(page: Page, dish: string, name: string, pay: 'on
     }
     await expect(stepper).toBeVisible({ timeout: 2000 });
   }).toPass({ timeout: 15_000 });
+  await waitForSavedCart(page, dishSlug(dish));
   await page.goto('/checkout/details/');
   await page.getByLabel('Full name').fill(name);
   await page.getByLabel('Mobile number').fill('9876543210');

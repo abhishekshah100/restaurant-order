@@ -1,4 +1,4 @@
-import type { Rupees } from './menu';
+import type { Price } from './menu';
 
 /** The configuration that makes a cart line unique. */
 export interface LineConfig {
@@ -19,7 +19,7 @@ export interface CartLine extends LineConfig {
   key: string;
   quantity: number;
   /** Price of one unit, including variant and add-ons. */
-  unitPrice: Rupees;
+  unitPrice: Price;
 }
 
 export interface CartState {
@@ -28,11 +28,11 @@ export interface CartState {
 }
 
 export type CartAction =
-  | { type: 'add'; config: LineConfig; unitPrice: Rupees; quantity: number }
+  | { type: 'add'; config: LineConfig; unitPrice: Price; quantity: number }
   | { type: 'setQuantity'; key: string; quantity: number }
   | { type: 'remove'; key: string }
   | { type: 'restore'; line: CartLine; index: number }
-  | { type: 'edit'; key: string; config: LineConfig; unitPrice: Rupees; quantity: number }
+  | { type: 'edit'; key: string; config: LineConfig; unitPrice: Price; quantity: number }
   | { type: 'setKitchenNote'; note: string }
   | { type: 'clear' }
   | { type: 'hydrate'; state: CartState };

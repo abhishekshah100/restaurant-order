@@ -2,6 +2,7 @@
   "history": [
     {
       "id": "A104",
+      "branchId": "blr-indiranagar",
       "table": 12,
       "customerName": "Ananya Rao",
       "placedBy": "you",
@@ -70,6 +71,7 @@
     },
     {
       "id": "A097",
+      "branchId": "blr-indiranagar",
       "table": 12,
       "customerName": "Ananya Rao",
       "placedBy": "you",
@@ -127,6 +129,7 @@
     },
     {
       "id": "A101",
+      "branchId": "blr-indiranagar",
       "table": 12,
       "customerName": "Rohan",
       "placedBy": "other",
@@ -177,6 +180,7 @@
     },
     {
       "id": "A098",
+      "branchId": "blr-indiranagar",
       "table": 12,
       "customerName": "Ananya Rao",
       "placedBy": "you",
@@ -220,6 +224,7 @@
     },
     {
       "id": "A061",
+      "branchId": "blr-indiranagar",
       "table": 5,
       "customerName": "Ananya Rao",
       "placedBy": "you",
@@ -270,6 +275,7 @@
     },
     {
       "id": "A033",
+      "branchId": "blr-indiranagar",
       "table": 8,
       "customerName": "Ananya Rao",
       "placedBy": "you",
@@ -321,6 +327,7 @@
     },
     {
       "id": "A029",
+      "branchId": "blr-indiranagar",
       "table": 8,
       "customerName": "Ananya Rao",
       "placedBy": "you",
@@ -377,5 +384,31 @@
     "A122",
     "A123",
     "A124"
-  ]
+  ],
+  "riders": {
+    "blr-indiranagar": [
+      {
+        "name": "Ravi Kumar",
+        "phone": "98••• ••321",
+        "callHref": "tel:+918826314093"
+      },
+      {
+        "name": "Imran Pasha",
+        "phone": "97••• ••804",
+        "callHref": "tel:+918826314093"
+      }
+    ],
+    "ktm-thamel": [
+      {
+        "name": "Sujan Tamang",
+        "phone": "984-•••••67",
+        "callHref": "tel:+9779852024631"
+      },
+      {
+        "name": "Bikash Gurung",
+        "phone": "980-•••••12",
+        "callHref": "tel:+9779852024631"
+      }
+    ]
+  }
 }

@@ -1,25 +1,36 @@
 'use client';
 
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { createClock, type Clock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
+import { createMoney, type Money } from '@/lib/money';
+import { resolveBranch } from '@/lib/scan';
+import type { Branch, MobileRules } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
-import type { Order } from '@/types/order';
 import type { Restaurant } from '@/types/restaurant';
+import { useActiveBranchId } from './activeBranch';
 import {
+  branchMenuQuery,
+  branchesQuery,
   contentQuery,
+  deliveryQuoteQuery,
   helpQuery,
-  menuQuery,
-  orderHistoryQuery,
+  orderQuery,
   restaurantQuery,
+  serviceRequestsQuery,
+  sessionOrdersQuery,
+  tableOrdersQuery,
   type ContentMap,
   type ContentNamespace,
 } from './queries';
 import { createTranslator, type Translator } from './translator';
 
 /*
- * The root layout prefetches every query at build time, so these hooks never wait on the
- * network in practice: they read the TanStack Query cache, and `data` is never undefined.
+ * The root layout prefetches every reference-data query at build time, so the suspense hooks
+ * never wait on the network in practice: they read the TanStack Query cache, and `data` is
+ * never undefined. Server-owned reads (orders, service requests) load on the client and
+ * return the TanStack result (pending until the first response).
  */
 
 /** Screen copy for one area: `const t = useContent('checkout'); t('verify.title')`. */
@@ -28,28 +39,72 @@ export function useContent<N extends ContentNamespace>(ns: N): Translator<Conten
   return useMemo(() => createTranslator(data), [data]);
 }
 
-/** Restaurant profile, hours and live status. */
+/** The brand: name, tagline, social links and the default branch. */
 export function useRestaurant(): Restaurant {
   return useSuspenseQuery(restaurantQuery()).data;
 }
 
-/** The menu with its lookups (getDish, dishesIn, searchDishes…). The same object until the menu changes. */
+/** Every branch. */
+export function useBranches(): Branch[] {
+  return useSuspenseQuery(branchesQuery()).data;
+}
+
+/**
+ * The branch the guest is at (their session's): hours, live status and region rules. The
+ * default branch until the session has been read, so prerendered HTML matches the first
+ * client render.
+ */
+export function useBranch(): Branch {
+  const branches = useBranches();
+  const { defaultBranchId } = useRestaurant();
+  return resolveBranch(branches, useActiveBranchId() ?? defaultBranchId);
+}
+
+/** The active branch's menu with its lookups (getDish, dishesIn, searchDishes…). The same object until the menu changes. */
 export function useMenu(): MenuCatalog {
-  const { data } = useSuspenseQuery(menuQuery());
+  const { data } = useSuspenseQuery(branchMenuQuery(useBranch().id));
   return useMemo(() => createMenuCatalog(data), [data]);
 }
 
-/** The guest's order history (orders already on the restaurant's books). */
-export function useOrderHistory(): Order[] {
-  return useSuspenseQuery(orderHistoryQuery()).data.history;
+/** How the active branch writes money, times and mobile numbers. */
+export interface Region {
+  money: Money;
+  clock: Clock;
+  mobile: MobileRules;
 }
 
-/** The pre-rendered id pool new orders are numbered from. */
-export function useNewOrderIds(): string[] {
-  return useSuspenseQuery(orderHistoryQuery()).data.newOrderIds;
+/** Money, clock and mobile-number rules of the active branch. */
+export function useRegion(): Region {
+  const branch = useBranch();
+  return useMemo(
+    () => ({ money: createMoney(branch), clock: createClock(branch), mobile: branch.mobile }),
+    [branch],
+  );
 }
 
 /** The Help page topics, by id. */
 export function useHelpTopics(): HelpTopics {
   return useSuspenseQuery(helpQuery()).data;
+}
+
+/* ---------- Server-owned reads ---------- */
+
+/** GET /orders/:id: one order with its live status, polled while the kitchen moves it. */
+export const useOrder = (id: string) => useQuery(orderQuery(id));
+
+/** GET /sessions/:id/orders: the guest's orders; idle until there's a session. */
+export const useSessionOrders = (sessionId: string | undefined) =>
+  useQuery(sessionOrdersQuery(sessionId));
+
+/** GET /tables/:branchId/:table/orders: this visit's orders at the table; idle until `enabled`. */
+export const useTableOrders = (branchId: string, table: number, enabled: boolean) =>
+  useQuery(tableOrdersQuery(branchId, table, enabled));
+
+/** GET /sessions/:id/service-requests: this guest's pending requests; idle until there's a session. */
+export const useServiceRequests = (sessionId: string | undefined) =>
+  useQuery(serviceRequestsQuery(sessionId));
+
+/** POST /delivery/quote at the active branch: idle until there's an area. */
+export function useDeliveryQuote(area: string | undefined, itemTotal: number) {
+  return useQuery(deliveryQuoteQuery(useBranch().id, area, itemTotal));
 }

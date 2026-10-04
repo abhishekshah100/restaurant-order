@@ -1,4 +1,4 @@
-import type { AddOn, ChoiceSpec, Dish, OptionGroup, Rupees } from '@/types/menu';
+import type { AddOn, ChoiceSpec, Dish, OptionGroup, Price } from '@/types/menu';
 import type { LineConfig } from '@/types/cart';
 
 /**
@@ -28,7 +28,7 @@ export function addOnsFor(dish: Dish, variantId: string | undefined): AddOn[] {
     .map((a) => ({ ...a, price: addOnPrice(a, variantId) }));
 }
 
-function addOnPrice(addOn: AddOn, variantId: string | undefined): Rupees {
+function addOnPrice(addOn: AddOn, variantId: string | undefined): Price {
   const sized = variantId !== undefined ? addOn.priceByVariant?.[variantId] : undefined;
   return sized ?? addOn.price;
 }
@@ -38,10 +38,7 @@ export const isPricedGroup = (group: OptionGroup) =>
   group.choices.some((c) => typeof c !== 'string' && (c.price ?? 0) > 0);
 
 /** Extra cost of the selected choices across groups. */
-export function optionsPrice(
-  dish: Dish,
-  config: Pick<LineConfig, 'variantId' | 'options'>,
-): Rupees {
+export function optionsPrice(dish: Dish, config: Pick<LineConfig, 'variantId' | 'options'>): Price {
   return groupsFor(dish, config.variantId).reduce((sum, g) => {
     const picked = choicesFor(g, config.variantId).find((c) => c.name === config.options[g.id]);
     return sum + (picked?.price ?? 0);

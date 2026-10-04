@@ -3,19 +3,29 @@
 import { Banner, Button, StatusPill } from '@/components/ui';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
-import { useContent, useMenu } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import type { ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
+import type { Money } from '@/lib/money';
 import type { Order } from '@/types/order';
 import { OrderShell } from './OrderShell';
 import { TrackTimeline, type TimelineEntry } from './TrackTimeline';
 import styles from './OrderCancelled.module.css';
 
-function refundText({ payment, total }: Order, t: Translator<ContentMap['orders']>): string {
-  const amount = formatINR(payment.refundAmount ?? total);
+/** Words and formatting the refund line needs. */
+interface RefundCopy {
+  t: Translator<ContentMap['orders']>;
+  money: Money;
+  /** Name of an online method the order doesn't record ("UPI"). */
+  onlineName: string;
+}
+
+function refundText({ payment, total }: Order, { t, money, onlineName }: RefundCopy): string {
+  const amount = money.format(payment.refundAmount ?? total);
   const to =
-    payment.method === 'online' ? t('cancelled.refund.toUpi') : t('cancelled.refund.toYou');
+    payment.method === 'online'
+      ? t('cancelled.refund.toAccount', { method: payment.detail ?? onlineName })
+      : t('cancelled.refund.toYou');
   if (payment.status === 'refund-started') return t('cancelled.refund.started', { amount, to });
   if (payment.status === 'refunded') return t('cancelled.refund.done', { amount, to });
   return t('cancelled.refund.notCharged');
@@ -25,6 +35,9 @@ function refundText({ payment, total }: Order, t: Translator<ContentMap['orders'
 export function OrderCancelled({ order }: { order: Order }) {
   const menu = useMenu();
   const t = useContent('orders');
+  const common = useContent('common');
+  const { money } = useRegion();
+  const refundCopy = { t, money, onlineName: common('paymentMethods.online') };
   const received = order.timeline.find((e) => e.status === 'received');
   const cancelled = order.timeline.find((e) => e.status === 'cancelled');
   const entries: TimelineEntry[] = [
@@ -69,7 +82,7 @@ export function OrderCancelled({ order }: { order: Order }) {
           <h1 className={styles.title}>{t('cancelled.title')}</h1>
           <p className="t-body c2">{order.cancelReason ?? t('cancelled.sorry')}</p>
           <Banner tone="ok" className={cx(styles.banner, 'hide-mobile')}>
-            {refundText(order, t)}
+            {refundText(order, refundCopy)}
           </Banner>
           <div className={cx(styles.actions, 'hide-mobile')}>{actions}</div>
         </section>
@@ -87,14 +100,14 @@ export function OrderCancelled({ order }: { order: Order }) {
               <span>
                 {item.quantity} × {item.name}
               </span>
-              <b>{formatINR(item.unitPrice * item.quantity)}</b>
+              <b>{money.format(item.unitPrice * item.quantity)}</b>
             </li>
           ))}
         </ul>
       </aside>
 
       <Banner tone="ok" className="hide-desktop">
-        {refundText(order, t)}
+        {refundText(order, refundCopy)}
       </Banner>
       <div className={cx(styles.foot, 'hide-desktop')}>{actions}</div>
     </OrderShell>

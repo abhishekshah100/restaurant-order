@@ -28,11 +28,14 @@
   background: var(--brand-tint);
   color: var(--brand-700);
 }
-.ready {
+.ready,
+.outForDelivery {
   background: var(--warn-tint);
   color: var(--warn);
 }
-.served {
+.served,
+.pickedUp,
+.delivered {
   background: var(--success-tint);
   color: var(--success);
 }

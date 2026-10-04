@@ -20,9 +20,6 @@
 .cardTitle {
   composes: cardTitle from './BillRequestView.module.css';
 }
-.cardTotals {
-  composes: cardTotals from './BillRequestView.module.css';
-}
 .foot {
   composes: foot from './BillRequestView.module.css';
   display: flex;

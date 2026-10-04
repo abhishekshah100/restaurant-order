@@ -4,25 +4,19 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { useContent } from '@/api/hooks';
+import { useContent, useServiceRequests } from '@/api/hooks';
+import { useCancelServiceRequest, useCreateServiceRequest } from '@/api/mutations';
 import { WaiterRequestDialog } from '@/components/service/WaiterRequestDialog';
+import { useRequestFailed } from '@/hooks/useRequestFailed';
 import { useGuestSession, useTableContext } from './GuestSessionContext';
 import { useToast } from './ToastContext';
-import {
-  SERVICE_PATHS,
-  cleanNote,
-  isServiceRequests,
-  latestRequest,
-  liveRequests,
-  type ServiceRequests,
-} from '@/lib/service';
-import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage';
+import { SERVICE_PATHS, byKind, latestRequest } from '@/lib/service';
 import type {
   BillRequest,
   BillScope,
@@ -45,9 +39,9 @@ interface ServiceRequestContextValue {
   cancelRequest: (kind?: ServiceKind) => void;
   /** Records a waiter request and shows its confirmation page. */
   sendWaiterRequest: (reason: WaiterReason, note: string) => void;
-  /** Records a bill request and shows its confirmation page. */
-  sendBillRequest: (scope: BillScope, balance: number) => void;
-  /** False until saved requests have been read on the client. */
+  /** Records a bill request (the server works out the balance) and shows its confirmation page. */
+  sendBillRequest: (scope: BillScope) => void;
+  /** False until the session's requests have been read. */
   hydrated: boolean;
 }
 
@@ -55,106 +49,75 @@ const ServiceRequestContext = createContext<ServiceRequestContextValue | null>(n
 
 const BILL_PATH = '/help/bill/';
 
-/** This guest session's pending requests; none before the session is known. */
-const readSaved = (sessionId: string | undefined): ServiceRequests =>
-  sessionId
-    ? liveRequests(
-        readJSON(STORAGE_KEYS.service, isServiceRequests, 'session') ?? {},
-        sessionId,
-        Date.now(),
-      )
-    : {};
-
 /**
- * Waiter and bill requests from this guest session. Saved for the browser session so the
- * confirmation pages survive a reload; the waiter dialog is rendered here so any
- * screen can open it.
+ * Waiter and bill requests from this guest session (GET /sessions/:id/service-requests; POST
+ * and DELETE /service-requests). The waiter dialog is rendered here so any screen can open it.
  */
 export function ServiceRequestProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const table = useTableContext();
   const sessionId = useGuestSession()?.id;
   const { showToast } = useToast();
+  const requestFailed = useRequestFailed();
   const t = useContent('service');
-  const [requests, setRequests] = useState<ServiceRequests>({});
-  const [hydrated, setHydrated] = useState(false);
+  const { data } = useServiceRequests(sessionId);
+  const { mutateAsync: create } = useCreateServiceRequest();
+  const { mutate: cancel } = useCancelServiceRequest();
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (!sessionId) return;
-    // Storage is only readable after hydration.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setRequests(readSaved(sessionId));
-    setHydrated(true);
-  }, [sessionId]);
-
-  const save = useCallback((next: ServiceRequests) => {
-    writeJSON(STORAGE_KEYS.service, next, 'session');
-    setRequests(next);
-  }, []);
+  const sending = useRef(false);
+  const requests = useMemo(() => byKind(data?.requests ?? []), [data]);
 
   const openRequest = useCallback(
     (kind: ServiceKind) => {
-      const pending = readSaved(sessionId)[kind];
-      if (pending) router.push(SERVICE_PATHS[kind]);
+      if (requests[kind]) router.push(SERVICE_PATHS[kind]);
       else if (kind === 'bill') router.push(BILL_PATH);
       else setDialogOpen(true);
     },
-    [router, sessionId],
+    [router, requests],
   );
 
   const cancelRequest = useCallback(
     (kind?: ServiceKind) => {
-      const current = readSaved(sessionId);
-      const target = kind ?? latestRequest(current)?.kind;
-      if (!target) return;
-      const next = { ...current };
-      delete next[target];
-      save(next);
+      const target = kind ? requests[kind] : latestRequest(requests);
+      if (target) cancel(target);
     },
-    [save, sessionId],
+    [cancel, requests],
+  );
+
+  /** Sends one request at a time; `then` runs with whether a new one was made. */
+  const send = useCallback(
+    async (
+      body:
+        { kind: 'waiter'; reason: WaiterReason; note: string } | { kind: 'bill'; scope: BillScope },
+      then: (created: boolean) => void,
+    ) => {
+      if (!sessionId || sending.current) return;
+      sending.current = true;
+      try {
+        const { created } = await create({ sessionId, ...body });
+        then(created);
+      } catch {
+        requestFailed();
+      } finally {
+        sending.current = false;
+      }
+    },
+    [create, sessionId, requestFailed],
   );
 
   const sendWaiterRequest = useCallback(
-    (reason: WaiterReason, note: string) => {
-      if (!sessionId) return;
-      const current = readSaved(sessionId);
-      if (!current.waiter) {
-        const request: WaiterRequest = {
-          kind: 'waiter',
-          table,
-          sessionId,
-          reason,
-          note: cleanNote(note),
-          requestedAt: new Date().toISOString(),
-        };
-        save({ ...current, waiter: request });
-        showToast(t('waiterDialog.sentToast', { table }));
-      }
-      setDialogOpen(false);
-      router.push(SERVICE_PATHS.waiter);
-    },
-    [router, save, showToast, table, sessionId, t],
+    (reason: WaiterReason, note: string) =>
+      void send({ kind: 'waiter', reason, note }, (created) => {
+        if (created) showToast(t('waiterDialog.sentToast', { table }));
+        setDialogOpen(false);
+        router.push(SERVICE_PATHS.waiter);
+      }),
+    [send, showToast, t, table, router],
   );
 
   const sendBillRequest = useCallback(
-    (scope: BillScope, balance: number) => {
-      if (!sessionId) return;
-      const current = readSaved(sessionId);
-      if (!current.bill) {
-        const request: BillRequest = {
-          kind: 'bill',
-          table,
-          sessionId,
-          scope,
-          balance,
-          requestedAt: new Date().toISOString(),
-        };
-        save({ ...current, bill: request });
-      }
-      router.push(SERVICE_PATHS.bill);
-    },
-    [router, save, table, sessionId],
+    (scope: BillScope) => void send({ kind: 'bill', scope }, () => router.push(SERVICE_PATHS.bill)),
+    [send, router],
   );
 
   const value = useMemo<ServiceRequestContextValue>(
@@ -168,9 +131,9 @@ export function ServiceRequestProvider({ children }: { children: ReactNode }) {
       cancelRequest,
       sendWaiterRequest,
       sendBillRequest,
-      hydrated,
+      hydrated: data !== undefined,
     }),
-    [openRequest, requests, cancelRequest, sendWaiterRequest, sendBillRequest, hydrated],
+    [openRequest, requests, cancelRequest, sendWaiterRequest, sendBillRequest, data],
   );
 
   return (

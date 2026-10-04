@@ -4,12 +4,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { memo } from 'react';
 import { Icon } from '@/components/ui';
-import { useContent } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import { useDishLines } from '@/hooks/useCart';
 import { useCartLineLabels } from '@/hooks/useCartLineLabels';
 import { describeInMenu } from '@/lib/cartLine';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
 import { dishImage, highlight, isAvailable, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import { AddControl } from './AddControl';
@@ -43,6 +42,7 @@ export const DishRow = memo(function DishRow({
 }: DishRowProps) {
   const lines = useDishLines(dish.slug);
   const t = useContent('menu');
+  const { money } = useRegion();
   const lineLabels = useCartLineLabels();
   const thumb = dishImage(dish, 'thumb');
   const available = isAvailable(dish);
@@ -100,7 +100,7 @@ export const DishRow = memo(function DishRow({
       <div className={styles.foot}>
         <div className={styles.priceBlock}>
           {/* Starting price; sizes and add-ons are chosen in the pop-up */}
-          <span className={styles.price}>{formatINR(startingPrice(dish))}</span>
+          <span className={styles.price}>{money.format(startingPrice(dish))}</span>
           {inCartNote && (
             <span className={cx(styles.note, styles.noteInCart)}>
               <Icon name="bag" size="xs" />

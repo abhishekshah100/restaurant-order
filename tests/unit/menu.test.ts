@@ -11,7 +11,7 @@ import type { MenuData } from '@/types/menu';
 import { readApiJson, testMenu } from '../apiState';
 
 const menu = testMenu();
-const { categories, dishesIn, featuredDishes, searchDishes } = menu;
+const { categories, dishesIn, featuredDishes, searchDishes, priceFilter } = menu;
 
 describe('menu data', () => {
   it('matches the category counts in the designs (plus the Meals demo category)', () => {
@@ -37,14 +37,15 @@ describe('menu data', () => {
 
 describe('filters', () => {
   it('Mains · veg shows 7 dishes (03)', () => {
-    const veg = applyFilters(dishesIn('mains'), { ...DEFAULT_FILTERS, diet: 'veg' });
+    const veg = applyFilters(dishesIn('mains'), { ...DEFAULT_FILTERS, diet: 'veg' }, priceFilter);
     expect(veg).toHaveLength(7);
     expect(filterSummaryKind({ ...DEFAULT_FILTERS, diet: 'veg' })).toBe('veg');
     expect(filterSummaryKind({ ...DEFAULT_FILTERS, diet: 'veg', spicy: true })).toBe('mixed');
   });
-  it('under ₹400 and sorting keep sold-out dishes last', () => {
+  it("under the menu's price filter (₹400) and sorting keep sold-out dishes last", () => {
+    expect(priceFilter).toBe(400);
     const list = sortDishes(
-      applyFilters(dishesIn('starters'), { ...DEFAULT_FILTERS, under400: true }),
+      applyFilters(dishesIn('starters'), { ...DEFAULT_FILTERS, underPrice: true }, priceFilter),
       'price-asc',
     );
     expect(list.every((d) => d.price < 400)).toBe(true);
@@ -75,7 +76,7 @@ describe('search', () => {
 });
 
 describe('createMenuCatalog', () => {
-  const data = readApiJson<MenuData>('menu');
+  const data = readApiJson<MenuData>('branches/blr-indiranagar/menu');
 
   it('returns the same catalog for the same response, and a new one for a new response', () => {
     expect(createMenuCatalog(data)).toBe(createMenuCatalog(data));

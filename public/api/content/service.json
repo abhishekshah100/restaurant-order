@@ -40,6 +40,25 @@
       "paymentSub": "Failed payment, refunds, invoices",
       "faqs": "Allergens & FAQs",
       "faqsSub": "Ingredients, Wi-Fi, timings"
+    },
+    "modeLede": {
+      "takeaway": "Ordering takeaway from {branch}. Questions about your order? We're a call away.",
+      "delivery": "Ordering delivery from {branch}. Questions about your order? We're a call away."
+    },
+    "modeActions": {
+      "directions": {
+        "title": "Get directions",
+        "sub": "To {branch}, for pickup",
+        "label": "Get directions to {branch} (opens your maps app)"
+      },
+      "track": {
+        "title": "Track my order",
+        "sub": "Live status of your orders"
+      },
+      "call": {
+        "title": "Call us",
+        "sub": "Questions about your delivery"
+      }
     }
   },
   "hours": {
@@ -99,7 +118,7 @@
     "mineNone": "No orders from you yet",
     "table": "Whole table",
     "tableSub": "All {orders} placed at Table {table}",
-    "hint": "Your server will bring the printed bill. You can pay by card, UPI or cash."
+    "hint": "Your server will bring the printed bill. You can pay by {paymentMethods}."
   },
   "billRequested": {
     "noneTitle": "No bill request",
@@ -128,7 +147,7 @@
   },
   "payBill": {
     "title": "Pay my bill",
-    "description": "Pay for your own orders at your table by UPI or card.",
+    "description": "Pay for your own orders at your table, right from your phone.",
     "loading": "Loading your bill",
     "backToBill": "Back to bill",
     "heading": "Pay your bill",
@@ -145,6 +164,26 @@
         "title": "Debit or credit card",
         "mobileSub": "Visa, Mastercard or RuPay",
         "desktopSub": "Visa, Mastercard, RuPay or American Express"
+      },
+      "cardNepal": {
+        "title": "Debit or credit card",
+        "mobileSub": "Visa or Mastercard",
+        "desktopSub": "Visa, Mastercard or UnionPay"
+      },
+      "esewa": {
+        "title": "eSewa",
+        "mobileSub": "Pay from your eSewa wallet",
+        "desktopSub": "Approve the request in the eSewa app"
+      },
+      "khalti": {
+        "title": "Khalti",
+        "mobileSub": "Pay from your Khalti wallet",
+        "desktopSub": "Approve the request in the Khalti app"
+      },
+      "fonepay": {
+        "title": "Fonepay QR",
+        "mobileSub": "Scan with any mobile banking app",
+        "desktopSub": "Scan the Fonepay QR with any mobile banking app"
       }
     },
     "pay": "Pay {amount}",
@@ -157,8 +196,8 @@
     "processing": {
       "title": "Confirming your payment",
       "lede": {
-        "upi": "Approve the request in your UPI app. Please don't close this page.",
-        "card": "Complete the payment on your bank's page. Please don't close this page."
+        "app": "Approve the request in your {name} app. Please don't close this page.",
+        "bank": "Complete the payment on your bank's page. Please don't close this page."
       },
       "amount": "Amount",
       "summary": "{orders} · Table {table}",
@@ -186,10 +225,20 @@
       "orders": "Orders",
       "viewOrders": "View my orders"
     },
-    "methodNames": {
-      "upi": "UPI",
-      "card": "Card"
-    },
     "viewBill": "View my bill"
+  },
+  "region": {
+    "atTable": {
+      "card": "card",
+      "upi": "UPI",
+      "esewa": "eSewa",
+      "khalti": "Khalti",
+      "fonepay": "Fonepay QR",
+      "cash": "cash"
+    },
+    "taxInvoice": {
+      "gst": "GST invoice",
+      "vat": "VAT invoice"
+    }
   }
 }

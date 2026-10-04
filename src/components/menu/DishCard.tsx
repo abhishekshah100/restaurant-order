@@ -2,8 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { memo } from 'react';
 import { Tag, VegMark } from '@/components/ui';
-import { useContent } from '@/api/hooks';
-import { formatINR } from '@/lib/format';
+import { useContent, useRegion } from '@/api/hooks';
 import { dishImage, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import { AddControl } from './AddControl';
@@ -41,6 +40,7 @@ function CardTag({ dish, hideChefTag }: { dish: Dish; hideChefTag?: boolean }) {
  */
 export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: DishCardProps) {
   const image = dishImage(dish, 'card');
+  const { money } = useRegion();
   return (
     <li className={styles.card}>
       <div className={styles.media}>
@@ -70,7 +70,7 @@ export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: 
         </div>
         <p className={styles.desc}>{dish.cardDescription ?? dish.description}</p>
         <div className={styles.foot}>
-          <span className={styles.price}>{formatINR(startingPrice(dish))}</span>
+          <span className={styles.price}>{money.format(startingPrice(dish))}</span>
           <AddControl dish={dish} className={styles.control} size="sm" customisableHint />
         </div>
       </div>

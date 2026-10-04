@@ -2,11 +2,10 @@
 
 import Image from 'next/image';
 import { Button, Dialog, IconButton, QuantityStepper, VegMark } from '@/components/ui';
-import { useContent } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import { useCartActions } from '@/hooks/useCart';
 import { useDishConfig } from '@/hooks/useDishConfig';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
 import { dishImage } from '@/lib/menu';
 import type { CartLine } from '@/types/cart';
 import type { Dish } from '@/types/menu';
@@ -28,6 +27,7 @@ export interface QuickAddDialogProps {
 export function QuickAddDialog({ dish, editing, onClose }: QuickAddDialogProps) {
   const { addItem, editLine } = useCartActions();
   const t = useContent('menu');
+  const { money } = useRegion();
   const state = useDishConfig(
     dish,
     editing ? { config: editing, quantity: editing.quantity } : undefined,
@@ -96,7 +96,7 @@ export function QuickAddDialog({ dish, editing, onClose }: QuickAddDialogProps) 
           <Button
             block
             className={styles.cta}
-            meta={formatINR(state.total)}
+            meta={money.format(state.total)}
             onClick={submit}
             disabled={!state.valid}
           >

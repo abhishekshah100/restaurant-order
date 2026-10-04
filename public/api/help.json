@@ -14,11 +14,11 @@
       },
       {
         "heading": "Paying the balance",
-        "body": "Request the bill and your server will bring it to the table. You can pay by card, UPI or cash."
+        "body": "Request the bill and your server will bring it to the table. You can pay by {paymentMethods}."
       },
       {
         "heading": "Invoices",
-        "body": "Ask your server for a GST invoice when you request the bill."
+        "body": "Ask your server for a {taxInvoice} when you request the bill."
       }
     ]
   },

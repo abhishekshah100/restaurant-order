@@ -6,19 +6,20 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Columns, Page } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { Banner, Button, EmptyState, Icon, Skeleton } from '@/components/ui';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
 import { billFor } from '@/lib/service';
 import type { Order } from '@/types/order';
-import type { BillPaymentMethod } from '@/types/service';
+import { PAYMENT_METHODS, pickMethod } from '@/lib/payments';
+import type { PaymentMethodId } from '@/types/branch';
 import { BillOrderList } from './BillOrderList';
 import { BillTotals } from './BillTotals';
 import { PayBillFailed, PayBillPaid, PayBillProcessing } from './PayBillStatus';
 import { usePayBill, type BillPayment, type PaidBill } from './usePayBill';
 import styles from './PayBillView.module.css';
+import { useDineInOnly } from '@/hooks/useDineInOnly';
 
 type Phase =
   | { step: 'choose'; returning?: boolean }
@@ -27,17 +28,32 @@ type Phase =
   | { step: 'paid'; receipt: PaidBill };
 
 /**
- * Pay my bill: one guest pays their own unpaid orders at a shared table (UPI or card, mock
- * payment), then sees them marked paid. Reached from "Pay ₹X now" on the bill pages when
- * "Just my orders" has something to pay. Other guests' orders are never paid here.
+ * Pay my bill: one guest pays their own unpaid orders at a shared table (with one of the
+ * branch's in-app methods, mock payment), then sees them marked paid. Reached from "Pay
+ * {amount} now" on the bill pages when "Just my orders" has something to pay. Other guests'
+ * orders are never paid here.
  */
 export function PayBillView() {
+  useDineInOnly();
   const t = useContent('service');
-  const { table, sessionId, bill, hydrated, startPayment, completePayment, settled } = usePayBill();
+  const { table, sessionId, bill, hydrated, startPayment, completePayment, failPayment, settled } =
+    usePayBill();
   const { state, retry } = useOrderingAvailability();
   const offline = state === 'offline';
-  const [method, setMethod] = useState<BillPaymentMethod>('upi');
+  const options = useBranch().payments.bill;
+  const [chosen, setMethod] = useState<PaymentMethodId | null>(null);
+  const method = pickMethod(options, chosen);
   const [phase, setPhase] = useState<Phase>({ step: 'choose' });
+  const opening = useRef(false);
+
+  /** Opens a payment request and waits on it; a second tap meanwhile is ignored. */
+  const pay = async (payWith: PaymentMethodId) => {
+    if (opening.current) return;
+    opening.current = true;
+    const payment = await startPayment(payWith);
+    opening.current = false;
+    if (payment) setPhase({ step: 'processing', payment });
+  };
 
   if (phase.step === 'paid') return <PayBillPaid receipt={phase.receipt} table={table} />;
 
@@ -49,9 +65,12 @@ export function PayBillView() {
         table={table}
         disabled={offline || settled}
         onCancel={() => setPhase({ step: 'choose', returning: true })}
-        onFailure={() => setPhase({ step: 'failed', payment })}
-        onSuccess={() => {
-          const receipt = completePayment(payment);
+        onFailure={() => {
+          failPayment(payment);
+          setPhase({ step: 'failed', payment });
+        }}
+        onSuccess={async () => {
+          const receipt = await completePayment(payment);
           // Nothing was left to pay (settled in another tab): the form shows the empty state.
           setPhase(receipt ? { step: 'paid', receipt } : { step: 'choose' });
         }}
@@ -64,7 +83,7 @@ export function PayBillView() {
       <PayBillFailed
         payment={phase.payment}
         table={table}
-        onRetry={() => setPhase({ step: 'processing', payment: phase.payment })}
+        onRetry={() => pay(phase.payment.method)}
         onChangeMethod={() => setPhase({ step: 'choose', returning: true })}
       />
     );
@@ -138,8 +157,7 @@ export function PayBillView() {
         onRetryConnection={retry}
         focusMethod={phase.returning === true}
         onPay={() => {
-          if (offline) return;
-          setPhase({ step: 'processing', payment: startPayment(method) });
+          if (!offline) void pay(method);
         }}
       />
     </Page>
@@ -150,8 +168,8 @@ interface PayFormProps {
   table: number;
   sessionId: string | undefined;
   payable: Order[];
-  method: BillPaymentMethod;
-  onMethodChange: (method: BillPaymentMethod) => void;
+  method: PaymentMethodId;
+  onMethodChange: (method: PaymentMethodId) => void;
   offline: boolean;
   onRetryConnection: () => void;
   /** Coming back from a payment: focus the chosen method. */
@@ -159,7 +177,7 @@ interface PayFormProps {
   onPay: () => void;
 }
 
-/** The guest's unpaid orders, the amount, UPI or card, and Pay (laid out like 20 · w20). */
+/** The guest's unpaid orders, the amount, the branch's payment methods and Pay (laid out like 20 · w20). */
 function PayForm({
   table,
   sessionId,
@@ -172,7 +190,8 @@ function PayForm({
   onPay,
 }: PayFormProps) {
   const t = useContent('service');
-  const { paymentPartner } = useRestaurant();
+  const { paymentPartner, payments } = useBranch();
+  const { money } = useRegion();
   const methodsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (focusMethod)
@@ -180,24 +199,16 @@ function PayForm({
   }, [focusMethod]);
   // The payable orders as a bill of their own: total = balance due = the amount to pay.
   const due = billFor(payable, 'mine', sessionId);
-  const amount = formatINR(due.payableTotal);
+  const amount = money.format(due.payableTotal);
 
-  const methods: PaymentMethodOption<BillPaymentMethod>[] = [
-    {
-      id: 'upi',
-      title: t('payBill.methods.upi.title'),
-      mobileSub: t('payBill.methods.upi.mobileSub'),
-      desktopSub: t('payBill.methods.upi.desktopSub'),
-      icon: 'mobile',
-    },
-    {
-      id: 'card',
-      title: t('payBill.methods.card.title'),
-      mobileSub: t('payBill.methods.card.mobileSub'),
-      desktopSub: t('payBill.methods.card.desktopSub'),
-      icon: 'card',
-    },
-  ];
+  // The branch's in-app methods (GET /branches › payments.bill), described in content.
+  const methods: PaymentMethodOption<PaymentMethodId>[] = payments.bill.map((o) => ({
+    id: o.id,
+    title: t(`payBill.methods.${o.labelKey}.title`),
+    mobileSub: t(`payBill.methods.${o.labelKey}.mobileSub`),
+    desktopSub: t(`payBill.methods.${o.labelKey}.desktopSub`),
+    icon: PAYMENT_METHODS[o.id].icon,
+  }));
   const crumbs = [
     { label: t('billRequest.service'), href: '/help/' },
     { label: t('shared.requestBill'), href: '/help/bill/' },
@@ -245,12 +256,7 @@ function PayForm({
             })}
           </h2>
           <BillOrderList orders={payable} sessionId={sessionId} />
-          <BillTotals
-            bill={due}
-            scope="mine"
-            balanceOnly
-            className={cx(styles.cardTotals, 'hide-desktop')}
-          />
+          <BillTotals bill={due} scope="mine" balanceOnly className="hide-desktop" />
         </section>
 
         <div ref={methodsRef} className={styles.methods}>

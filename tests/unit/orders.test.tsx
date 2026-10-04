@@ -1,27 +1,23 @@
-import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { act, renderHook } from '@testing-library/react';
-import { OrdersProvider, useOrders } from '@/context/OrdersContext';
-import { defaultConfig, lineKey, unitPrice } from '@/lib/cartLine';
-import { buildOrder, isOrder, isOwnOrder, markOrdersPaid } from '@/lib/orders';
-import { STORAGE_KEYS } from '@/lib/storage';
+import { isStoredOrder } from '@/api/mock/db';
+import { markOrdersPaid } from '@/api/mock/handlers/payments';
+import { buildOrder, nextOrderId, priceLines } from '@/api/mock/orderBuilder';
+import { defaultConfig, lineKey, orderLine, unitPrice } from '@/lib/cartLine';
+import { isOwnOrder } from '@/lib/orders';
+import { calculateBill } from '@/lib/pricing';
+import type { Branch, PaymentMethodId } from '@/types/branch';
 import type { CartLine } from '@/types/cart';
 import type { Dish } from '@/types/menu';
-import {
-  ApiTestProvider,
-  testMenu,
-  testOrderHistory,
-  testLineLabels,
-  testRestaurant,
-} from '../apiState';
+import { testMenu, testBranch, testOrderHistory, testLineLabels } from '../apiState';
 
 const menu = testMenu();
+const branch = testBranch();
 const labels = {
   paidOnline: 'Paid online',
-  payAtCounter: 'Pay at counter',
-  upi: 'UPI',
+  payInPerson: { counter: 'Pay at counter', pickup: 'Pay at pickup', cod: 'Cash on delivery' },
+  methodName: (method: string) => (method === 'esewa' ? 'eSewa' : 'UPI'),
   lineLabels: testLineLabels(),
-  estimate: testRestaurant().prepTime,
+  estimate: branch.prepTime,
 };
 const mockOrders = testOrderHistory().history;
 
@@ -35,16 +31,27 @@ const line: CartLine = {
 };
 const input = {
   lines: [line],
-  table: 12,
+  fulfilment: { mode: 'dineIn' as const, table: 12 },
   sessionId: 'guest-1',
   customerName: 'Ananya',
-  method: 'counter' as const,
+  method: 'counter' as PaymentMethodId,
   kitchenNote: '',
+  now: new Date(),
+};
+
+/** buildOrder with the bill the server works out for the lines at the branch (orderPricing). */
+const build = (
+  over: Partial<typeof input> & { id: string },
+  m = menu,
+  b: Branch = branch,
+) => {
+  const lines = over.lines ?? input.lines;
+  return buildOrder({ ...input, ...over, bill: calculateBill(lines, b) }, m, labels, b);
 };
 
 describe('buildOrder', () => {
   it('builds an order with the prep-time estimate', () => {
-    const order = buildOrder({ ...input, id: 'A105' }, menu, labels);
+    const order = build({ id: 'A105' });
     expect(order).toMatchObject({
       id: 'A105',
       estimate: '18–22 min',
@@ -55,33 +62,48 @@ describe('buildOrder', () => {
     expect(order?.items[0]).toMatchObject({ dishSlug: 'dahi-kebab', quantity: 2 });
   });
 
+  it("stamps the branch and prices the order with the branch's taxes", () => {
+    const india = build({ id: 'A105' });
+    // 2 × ₹289 = ₹578 + 5% GST (₹28.90) = ₹606.90 → ₹607
+    expect(india).toMatchObject({ branchId: branch.id, itemTotal: 578, total: 607 });
+
+    const nepal = testBranch('ktm-thamel');
+    const nepalMenu = testMenu(nepal.id);
+    const dish = nepalMenu.getDish('dahi-kebab') as Dish;
+    const nepalLine = { ...line, unitPrice: unitPrice(dish, config) };
+    const order = build({ lines: [nepalLine], id: 'A106', method: 'esewa' }, nepalMenu, nepal);
+    // 2 × रू 460 = 920 + 10% service (92) = 1,012 + 13% VAT (131.56) = 1,143.56 → 1,144
+    expect(order).toMatchObject({ branchId: 'ktm-thamel', itemTotal: 920, total: 1144 });
+    expect(order?.payment).toMatchObject({ method: 'online', status: 'paid', detail: 'eSewa' });
+  });
+
   it('refuses an empty cart', () => {
-    expect(buildOrder({ ...input, id: 'A105', lines: [] }, menu, labels)).toBeNull();
+    expect(build({ id: 'A105', lines: [] })).toBeNull();
   });
 });
 
-describe('isOrder', () => {
-  const order = buildOrder({ ...input, id: 'A105' }, menu, labels);
+describe('isStoredOrder', () => {
+  const order = build({ id: 'A105' });
 
   it('accepts built and mock orders', () => {
-    expect(isOrder(order)).toBe(true);
-    expect(mockOrders.every(isOrder)).toBe(true);
-    expect(isOrder(JSON.parse(JSON.stringify(mockOrders[0])))).toBe(true);
+    expect(isStoredOrder(order)).toBe(true);
+    expect(mockOrders.every(isStoredOrder)).toBe(true);
+    expect(isStoredOrder(JSON.parse(JSON.stringify(mockOrders[0])))).toBe(true);
   });
 
   it('rejects orders the confirmation page could not render', () => {
-    expect(isOrder(null)).toBe(false);
-    expect(isOrder({ ...order, payment: null })).toBe(false);
-    expect(isOrder({ ...order, payment: { method: 'cash', status: 'paid' } })).toBe(false);
-    expect(isOrder({ ...order, items: [{ name: 'x' }] })).toBe(false);
-    expect(isOrder({ ...order, table: '12' })).toBe(false);
-    expect(isOrder({ ...order, timeline: undefined })).toBe(false);
-    expect(isOrder({ ...order, sessionId: 7 })).toBe(false);
+    expect(isStoredOrder(null)).toBe(false);
+    expect(isStoredOrder({ ...order, payment: null })).toBe(false);
+    expect(isStoredOrder({ ...order, payment: { method: 'cash', status: 'paid' } })).toBe(false);
+    expect(isStoredOrder({ ...order, items: [{ name: 'x' }] })).toBe(false);
+    expect(isStoredOrder({ ...order, table: '12' })).toBe(false);
+    expect(isStoredOrder({ ...order, timeline: undefined })).toBe(false);
+    expect(isStoredOrder({ ...order, sessionId: 7 })).toBe(false);
   });
 });
 
 describe('isOwnOrder', () => {
-  const order = buildOrder({ ...input, id: 'A105' }, menu, labels);
+  const order = build({ id: 'A105' });
   if (!order) throw new Error('expected an order');
 
   it('matches orders by the session that placed them', () => {
@@ -101,9 +123,9 @@ describe('isOwnOrder', () => {
 });
 
 describe('markOrdersPaid', () => {
-  const unpaid = buildOrder({ ...input, id: 'A105' }, menu, labels)!;
-  const paid = buildOrder({ ...input, id: 'A106', method: 'online' }, menu, labels)!;
-  const other = buildOrder({ ...input, id: 'A107' }, menu, labels)!;
+  const unpaid = build({ id: 'A105' })!;
+  const paid = build({ id: 'A106', method: 'online' })!;
+  const other = build({ id: 'A107' })!;
   const payment = { detail: 'Card', transactionRef: '•••• 4821' };
 
   it('marks only the listed unpaid orders as paid online', () => {
@@ -123,68 +145,17 @@ describe('markOrdersPaid', () => {
   });
 });
 
-const wrapper = ({ children }: { children: ReactNode }) => (
-  <ApiTestProvider>
-    <OrdersProvider>{children}</OrdersProvider>
-  </ApiTestProvider>
-);
-
-describe('OrdersProvider', () => {
-  it('keeps orders placed in another tab', () => {
-    const { result } = renderHook(() => useOrders(), { wrapper });
-    // Another tab places A105 after this one loaded.
-    const other = buildOrder({ ...input, id: 'A105' }, menu, labels);
-    window.localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify([other]));
-
-    let placed: ReturnType<typeof result.current.placeOrder> = null;
-    act(() => {
-      placed = result.current.placeOrder(input);
-    });
-    expect(placed).toMatchObject({ id: 'A106' });
-    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.orders) ?? '[]');
-    expect(stored.map((o: { id: string }) => o.id)).toEqual(['A106', 'A105']);
-    expect(result.current.placed.map((o) => o.id)).toEqual(['A106', 'A105']);
+describe('pricing and numbering (server side)', () => {
+  it('prices ordered lines from the menu, never from the client, and drops unknown dishes', () => {
+    const ordered = [
+      { ...orderLine(line), dishSlug: 'dahi-kebab' },
+      { ...orderLine(line), dishSlug: 'nope' },
+    ];
+    expect(priceLines(ordered, menu)).toEqual([{ ...orderLine(line), unitPrice: 289 }]);
   });
 
-  it('picks up orders from a storage event', () => {
-    const { result } = renderHook(() => useOrders(), { wrapper });
-    const other = buildOrder({ ...input, id: 'A110' }, menu, labels);
-    window.localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify([other]));
-    act(() => {
-      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEYS.orders }));
-    });
-    expect(result.current.placed.map((o) => o.id)).toEqual(['A110']);
-  });
-
-  it('places nothing for an empty cart', () => {
-    const { result } = renderHook(() => useOrders(), { wrapper });
-    act(() => {
-      expect(result.current.placeOrder({ ...input, lines: [] })).toBeNull();
-    });
-    expect(result.current.placed).toEqual([]);
-  });
-
-  it('marks orders paid, saves them and ignores a repeat', () => {
-    const { result } = renderHook(() => useOrders(), { wrapper });
-    let id = '';
-    act(() => {
-      id = result.current.placeOrder(input)?.id ?? '';
-    });
-    let marked: ReturnType<typeof result.current.markPaid> = [];
-    act(() => {
-      marked = result.current.markPaid([id], 'upi');
-    });
-    expect(marked.map((o) => o.id)).toEqual([id]);
-    expect(result.current.placed[0].payment).toMatchObject({
-      method: 'online',
-      status: 'paid',
-      detail: 'UPI',
-    });
-    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.orders) ?? '[]');
-    expect(stored[0].payment.status).toBe('paid');
-    act(() => {
-      expect(result.current.markPaid([id], 'card')).toEqual([]);
-    });
-    expect(result.current.placed[0].payment.detail).toBe('UPI');
+  it('takes the first free id from the pool', () => {
+    expect(nextOrderId([{ id: 'A105' }], ['A105', 'A106'])).toBe('A106');
+    expect(nextOrderId([{ id: 'A105' }], ['A105'])).toBeNull();
   });
 });

@@ -1,11 +1,10 @@
 'use client';
 
 import { Chip, Icon, OptionGroup } from '@/components/ui';
-import { useContent } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import type { DishConfigState } from '@/hooks/useDishConfig';
 import { ITEM_NOTE_MAX } from '@/lib/constants';
 import { cx } from '@/lib/cx';
-import { formatAddOnPrice, formatINR } from '@/lib/format';
 import type { Dish } from '@/types/menu';
 import { addOnsFor, choicesFor, groupsFor, isPricedGroup } from '@/lib/options';
 import { ChoiceChips } from './ChoiceChips';
@@ -24,6 +23,7 @@ export function DishOptionsForm({ dish, state, variant, idPrefix }: DishOptionsF
   const { config } = state;
   const t = useContent('menu');
   const common = useContent('common');
+  const { money } = useRegion();
   const quick = variant === 'quick';
   const Heading = quick ? 'h3' : 'h2';
   const groupTitle = quick ? styles.groupTitle : 't-h3';
@@ -57,7 +57,7 @@ export function DishOptionsForm({ dish, state, variant, idPrefix }: DishOptionsF
               id: v.id,
               label: split ? name : v.name,
               sub: split ? detail.join(' · ') || undefined : quick ? undefined : v.description,
-              price: formatINR(v.price),
+              price: money.format(v.price),
               disabled: v.available === false,
             };
           })}
@@ -84,7 +84,7 @@ export function DishOptionsForm({ dish, state, variant, idPrefix }: DishOptionsF
               choices={choices.map((c) => ({
                 id: c.name,
                 label: c.name,
-                price: c.price ? `+${formatINR(c.price)}` : t('options.included'),
+                price: c.price ? `+${money.format(c.price)}` : t('options.included'),
               }))}
             />
           );
@@ -124,7 +124,7 @@ export function DishOptionsForm({ dish, state, variant, idPrefix }: DishOptionsF
           choices={addOns.map((a) => ({
             id: a.id,
             label: a.name,
-            price: formatAddOnPrice(a.price, common('price.free')),
+            price: money.addOnPrice(a.price, common('price.free')),
           }))}
         />
       )}

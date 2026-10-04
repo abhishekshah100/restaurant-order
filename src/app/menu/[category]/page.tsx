@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import { CategoryView } from '@/components/menu/CategoryView';
-import { getContent, getMenuServer } from '@/api/server';
+import { getCategoryIdsServer, getCategoryServer, getContent } from '@/api/server';
 
 interface Props {
   params: Promise<{ category: string }>;
@@ -10,11 +9,11 @@ interface Props {
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  return (await getMenuServer()).categories.map((c) => ({ category: c.id }));
+  return (await getCategoryIdsServer()).map((category) => ({ category }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const category = (await getMenuServer()).getCategory((await params).category);
+  const category = await getCategoryServer((await params).category);
   if (!category) return {};
   const t = await getContent('menu');
   return {
@@ -26,8 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+/** The category's dishes come from the guest's branch menu on the client. */
 export default async function CategoryPage({ params }: Props) {
-  const category = (await getMenuServer()).getCategory((await params).category);
-  if (!category) notFound();
-  return <CategoryView category={category} />;
+  return <CategoryView categoryId={(await params).category} />;
 }

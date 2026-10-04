@@ -294,6 +294,14 @@
   font: 700 13px/18px var(--f-ui);
   color: var(--ink);
 }
+/* Takeaway and delivery: change the outlet or mode */
+.change {
+  composes: textLink hitArea from '@/styles/patterns.module.css';
+  --hit-inset: -12px -16px;
+  min-height: 0;
+  margin-top: 4px;
+  font: var(--font-small-strong);
+}
 
 /* The ticket adapts to its own width, so it never collides on narrow phones */
 @container ticket (max-width: 330px) {

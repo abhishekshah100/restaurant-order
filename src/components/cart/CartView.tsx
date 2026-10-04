@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { Button, Icon, Skeleton } from '@/components/ui';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Columns } from '@/components/layout/Shells';
@@ -9,20 +9,32 @@ import { SiteHeader } from '@/components/layout/SiteHeader';
 import { OrderingBanner } from '@/components/status/OrderingBanner';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
 import { useCart } from '@/hooks/useCart';
+import { useOrderBill } from '@/hooks/useFulfilment';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
+import { etaMinutes } from '@/lib/fulfilment';
 import { CartLineItem } from './CartLineItem';
+import { DeliveryCard } from './DeliveryCard';
+import { MinimumOrderNotice } from './MinimumOrderNotice';
 import { EmptyCart } from './EmptyCart';
 import { CartSuggestions } from './CartSuggestions';
 import { KitchenNote } from './KitchenNote';
 import { PriceSummary } from './PriceSummary';
 import styles from './CartView.module.css';
 
-/** Cart (08 · w08) and empty cart (s06 · ws06). */
+/** Cart (08 · w08) and empty cart (s06 · ws06); takeaway and delivery add their ETA, area, fee and minimum. */
 export function CartView() {
-  const { lines, bill, kitchenNote, setKitchenNote, hydrated } = useCart();
+  const { lines, kitchenNote, setKitchenNote, hydrated } = useCart();
+  const { bill, mode, quote, canCheckout } = useOrderBill();
   const t = useContent('cart');
-  const { prepTime } = useRestaurant();
+  const branch = useBranch();
+  const { money } = useRegion();
+  const eta =
+    mode === 'dineIn'
+      ? { now: t('page.eta', { time: branch.prepTime }), after: t('page.etaAfterOrder', { time: branch.prepTime }) }
+      : {
+          now: t(`page.etaMode.${mode}`, { minutes: etaMinutes(branch, mode, quote) }),
+          after: t(`page.etaModeAfterOrder.${mode}`, { minutes: etaMinutes(branch, mode, quote) }),
+        };
 
   // The empty state brings its own h1 ("Your cart is empty"), so the top bar title steps down.
   const renderHeader = (empty = false) => (
@@ -69,7 +81,7 @@ export function CartView() {
   }
 
   const checkout = (
-    <Button href="/checkout/details/" block iconEnd="arrow">
+    <Button href="/checkout/details/" block iconEnd="arrow" disabled={!canCheckout}>
       {t('page.checkout')}
     </Button>
   );
@@ -91,6 +103,8 @@ export function CartView() {
               {t('page.addMoreItems')}
             </Button>
           </div>
+          {mode === 'delivery' && <DeliveryCard id="cart-area" />}
+          <MinimumOrderNotice />
           <section aria-labelledby="cart-items">
             <div className={cx(styles.itemsHead, 'hide-desktop')}>
               <h2 id="cart-items" className="t-h2">
@@ -125,7 +139,7 @@ export function CartView() {
           <PriceSummary bill={bill} variant="split" showCount />
           <p className={cx('t-small', styles.eta)}>
             <Icon name="clock" size="xs" />
-            {t('page.eta', { time: prepTime })}
+            {eta.now}
           </p>
           {checkout}
           <p className={cx('t-small c3', styles.lockNote)}>
@@ -139,11 +153,11 @@ export function CartView() {
         <p className={styles.etaBar}>
           <span className={styles.etaPill}>
             <Icon name="clock" size="xs" />
-            {t('page.etaAfterOrder', { time: prepTime })}
+            {eta.after}
           </span>
         </p>
         <div className={styles.total}>
-          <span className={styles.totalAmt}>{formatINR(bill.total)}</span>
+          <span className={styles.totalAmt}>{money.format(bill.total)}</span>
           <span className="t-small c3">{t('page.totalLabel')}</span>
         </div>
         {checkout}

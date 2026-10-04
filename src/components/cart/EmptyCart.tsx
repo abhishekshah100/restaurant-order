@@ -2,8 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button, EmptyState } from '@/components/ui';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
-import { useContent, useMenu } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { dishImage } from '@/lib/menu';
 import styles from './CartView.module.css';
 
@@ -11,6 +10,7 @@ import styles from './CartView.module.css';
 export function EmptyCart() {
   const { popularAtTable, getDish } = useMenu();
   const t = useContent('cart');
+  const { money } = useRegion();
   return (
     <div className={styles.emptyWrap}>
       <EmptyState
@@ -53,7 +53,7 @@ export function EmptyCart() {
                   <span className="t-small">
                     <b>{item.label}</b>
                   </span>
-                  <span className="t-small c2">{formatINR(dish.price)}</span>
+                  <span className="t-small c2">{money.format(dish.price)}</span>
                 </span>
               </Link>
             );

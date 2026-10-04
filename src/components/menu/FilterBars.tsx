@@ -1,19 +1,19 @@
 'use client';
 
 import { Chip } from '@/components/ui';
-import { useContent } from '@/api/hooks';
+import { useBranch, useContent, useMenu, useRegion } from '@/api/hooks';
 import { useFilters } from '@/context/FiltersContext';
 import { cx } from '@/lib/cx';
-import { PRICE_LIMIT, hasActiveFilters } from '@/lib/menu';
-import { formatINR } from '@/lib/format';
+import { hasActiveFilters, isVegMark } from '@/lib/menu';
 import { SortMenu } from './SortMenu';
 import { useFilterActions } from './useFilterActions';
 import styles from './FilterBars.module.css';
 
-/** Mobile menu-home chips: All · Veg · Non-veg · Chef's picks · Spicy (02). */
+/** Mobile menu-home chips: All · Veg · Non-veg · Chef's picks · Spicy (02). Diet chips: the branch's marks. */
 export function MenuFilterChips() {
   const { filters, reset } = useFilters();
   const { toggleDiet, toggleFlag } = useFilterActions();
+  const { dietary } = useBranch();
   const none = !hasActiveFilters(filters);
   const t = useContent('menu');
   return (
@@ -21,12 +21,16 @@ export function MenuFilterChips() {
       <Chip pressed={none} onClick={reset}>
         {t('filters.all')}
       </Chip>
-      <Chip veg pressed={filters.diet === 'veg'} onClick={() => toggleDiet('veg')}>
-        {t('filters.veg')}
-      </Chip>
-      <Chip veg={false} pressed={filters.diet === 'nonveg'} onClick={() => toggleDiet('nonveg')}>
-        {t('filters.nonVeg')}
-      </Chip>
+      {dietary.marks.map((mark) => (
+        <Chip
+          key={mark}
+          veg={isVegMark(mark)}
+          pressed={filters.diet === mark}
+          onClick={() => toggleDiet(mark)}
+        >
+          {t(`filters.diet.${mark}.chip`)}
+        </Chip>
+      ))}
       <Chip iconStart="chef" pressed={filters.chefs} onClick={() => toggleFlag('chefs')}>
         {t('filters.chefsPicks')}
       </Chip>
@@ -37,10 +41,29 @@ export function MenuFilterChips() {
   );
 }
 
-/** Mobile category chips: Sort · Veg · Non-veg · Under ₹400 (03). */
+/** "Under {price}": the menu's price filter (GET /branches/:id/menu › priceFilter). */
+function UnderPriceChip() {
+  const { filters } = useFilters();
+  const { toggleFlag } = useFilterActions();
+  const { priceFilter } = useMenu();
+  const { money } = useRegion();
+  const t = useContent('menu');
+  return (
+    <Chip
+      pressed={filters.underPrice}
+      iconEnd={filters.underPrice ? 'x' : undefined}
+      onClick={() => toggleFlag('underPrice')}
+    >
+      {t('filters.under', { price: money.format(priceFilter) })}
+    </Chip>
+  );
+}
+
+/** Mobile category chips: Sort · Veg · Non-veg · Under a price (03). */
 export function CategoryFilterChips() {
   const { filters, sort, setSort } = useFilters();
-  const { toggleDiet, toggleFlag } = useFilterActions();
+  const { toggleDiet } = useFilterActions();
+  const { dietary } = useBranch();
   const t = useContent('menu');
   return (
     <div
@@ -49,48 +72,29 @@ export function CategoryFilterChips() {
       aria-label={t('filters.filterAndSort')}
     >
       <SortMenu value={sort} onChange={setSort} presentation="sheet" />
-      <Chip
-        veg
-        pressed={filters.diet === 'veg'}
-        iconEnd={filters.diet === 'veg' ? 'x' : undefined}
-        onClick={() => toggleDiet('veg')}
-      >
-        {t('filters.veg')}
-      </Chip>
-      <Chip
-        veg={false}
-        pressed={filters.diet === 'nonveg'}
-        iconEnd={filters.diet === 'nonveg' ? 'x' : undefined}
-        onClick={() => toggleDiet('nonveg')}
-      >
-        {t('filters.nonVeg')}
-      </Chip>
-      <Chip
-        pressed={filters.under400}
-        iconEnd={filters.under400 ? 'x' : undefined}
-        onClick={() => toggleFlag('under400')}
-      >
-        {t('filters.under', { price: formatINR(PRICE_LIMIT) })}
-      </Chip>
+      {dietary.marks.map((mark) => (
+        <Chip
+          key={mark}
+          veg={isVegMark(mark)}
+          pressed={filters.diet === mark}
+          iconEnd={filters.diet === mark ? 'x' : undefined}
+          onClick={() => toggleDiet(mark)}
+        >
+          {t(`filters.diet.${mark}.chip`)}
+        </Chip>
+      ))}
+      <UnderPriceChip />
     </div>
   );
 }
 
-/** Desktop category controls beside the title: Sort · Under ₹400 (w03). */
+/** Desktop category controls beside the title: Sort · Under a price (w03). */
 export function CategoryDesktopActions() {
-  const { filters, sort, setSort } = useFilters();
-  const { toggleFlag } = useFilterActions();
-  const t = useContent('menu');
+  const { sort, setSort } = useFilters();
   return (
     <div className={cx(styles.desktopActions, 'hide-mobile')}>
       <SortMenu value={sort} onChange={setSort} alignEnd />
-      <Chip
-        pressed={filters.under400}
-        iconEnd={filters.under400 ? 'x' : undefined}
-        onClick={() => toggleFlag('under400')}
-      >
-        {t('filters.under', { price: formatINR(PRICE_LIMIT) })}
-      </Chip>
+      <UnderPriceChip />
     </div>
   );
 }
@@ -101,16 +105,10 @@ export function ActiveFilterRow({ summary }: { summary: string }) {
   const { setDiet } = useFilterActions();
   const t = useContent('menu');
   const chips = [
-    filters.diet === 'veg' && {
-      key: 'veg',
-      label: t('filters.vegOnly'),
-      veg: true,
-      clear: () => setDiet('all'),
-    },
-    filters.diet === 'nonveg' && {
-      key: 'nv',
-      label: t('filters.nonVegOnly'),
-      veg: false,
+    filters.diet !== 'all' && {
+      key: filters.diet,
+      label: t(`filters.diet.${filters.diet}.only`),
+      veg: isVegMark(filters.diet),
       clear: () => setDiet('all'),
     },
     filters.spicy && {

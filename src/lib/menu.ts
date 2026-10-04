@@ -1,4 +1,5 @@
-import type { Category, CategoryId, Dish, DishImage, MenuData } from '@/types/menu';
+import type { DietaryMark } from '@/types/branch';
+import type { Category, CategoryId, Dish, DishImage, MenuData, Price } from '@/types/menu';
 
 /** The menu from GET /menu, with lookups. Build one with createMenuCatalog. */
 export interface MenuCatalog extends MenuData {
@@ -86,37 +87,44 @@ export function dishImage(dish: Dish, kind: 'hero' | 'card' | 'thumb'): DishImag
 
 /* ---------- Filters and sorting ---------- */
 
-export type Diet = 'all' | 'veg' | 'nonveg';
+/** All dishes, or only those with one dietary mark (the branch lists its marks). */
+export type Diet = 'all' | DietaryMark;
 export type SortKey = 'recommended' | 'price-asc' | 'price-desc' | 'best-match';
 
 export interface MenuFilters {
   diet: Diet;
   spicy: boolean;
   chefs: boolean;
-  under400: boolean;
+  /** Only dishes under the menu's price filter (GET /branches/:id/menu › priceFilter). */
+  underPrice: boolean;
 }
 
 export const DEFAULT_FILTERS: MenuFilters = {
   diet: 'all',
   spicy: false,
   chefs: false,
-  under400: false,
+  underPrice: false,
 };
 
-export const PRICE_LIMIT = 400;
+/** The dietary mark a dish carries. */
+export const dietaryMark = (dish: Pick<Dish, 'veg'>): DietaryMark => (dish.veg ? 'veg' : 'nonveg');
 
-export function applyFilters(list: readonly Dish[], f: MenuFilters): Dish[] {
+/** Whether a mark is drawn as the vegetarian one (VegMark and Chip take `veg`). */
+export const isVegMark = (mark: DietaryMark) => mark === 'veg';
+
+/** The dishes that pass the filters; `priceLimit` is the menu's "Under {price}" limit. */
+export function applyFilters(list: readonly Dish[], f: MenuFilters, priceLimit: Price): Dish[] {
   return list.filter(
     (d) =>
-      (f.diet === 'all' || (f.diet === 'veg' ? d.veg : !d.veg)) &&
+      (f.diet === 'all' || dietaryMark(d) === f.diet) &&
       (!f.spicy || isSpicy(d)) &&
       (!f.chefs || d.featured || d.tags.includes('chef')) &&
-      (!f.under400 || d.price < PRICE_LIMIT),
+      (!f.underPrice || d.price < priceLimit),
   );
 }
 
 export function hasActiveFilters(f: MenuFilters): boolean {
-  return f.diet !== 'all' || f.spicy || f.chefs || f.under400;
+  return f.diet !== 'all' || f.spicy || f.chefs || f.underPrice;
 }
 
 /** Sorts a copy. Unavailable dishes always go last; they stay visible. */
@@ -135,13 +143,11 @@ export function sortDishes(list: readonly Dish[], sort: SortKey): Dish[] {
  * Which result summary fits the filters (menu content: filters.summary.*): "Showing 7 vegetarian
  * dishes" for veg alone, "non-vegetarian" for non-veg alone, else "Showing 7 of 12 dishes".
  */
-export type FilterSummaryKind = 'veg' | 'nonveg' | 'mixed';
+export type FilterSummaryKind = DietaryMark | 'mixed';
 
 export function filterSummaryKind(f: MenuFilters): FilterSummaryKind {
-  const dietOnly = !f.spicy && !f.chefs && !f.under400;
-  if (dietOnly && f.diet === 'veg') return 'veg';
-  if (dietOnly && f.diet === 'nonveg') return 'nonveg';
-  return 'mixed';
+  const dietOnly = !f.spicy && !f.chefs && !f.underPrice;
+  return dietOnly && f.diet !== 'all' ? f.diet : 'mixed';
 }
 
 /* ---------- Search ---------- */

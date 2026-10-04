@@ -1,4 +1,9 @@
 import { QueryClient, isServer } from '@tanstack/react-query';
+import { ApiError } from './client';
+
+/** Retry once, but not when the server said no (a 4xx such as an unknown order). */
+const retryOnce = (failures: number, error: Error) =>
+  failures < 1 && !(error instanceof ApiError && error.status < 500);
 
 /** Shared defaults: data stays fresh for a minute, failed requests retry once. */
 export function makeQueryClient() {
@@ -6,7 +11,7 @@ export function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 60_000,
-        retry: 1,
+        retry: retryOnce,
         refetchOnWindowFocus: false,
       },
     },

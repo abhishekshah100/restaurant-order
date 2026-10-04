@@ -1,6 +1,5 @@
 import type { CartLine, LineConfig } from '@/types/cart';
-import type { Dish, Rupees, Variant } from '@/types/menu';
-import { formatINR } from './format';
+import type { Dish, Price, Variant } from '@/types/menu';
 import { addOnsFor, choicesFor, groupsFor, normaliseConfig, optionsPrice } from './options';
 
 /**
@@ -18,6 +17,8 @@ export interface CartLineLabels {
   customised: string;
   /** "+1 add-on", "+2 add-ons". */
   addOns: (count: number) => string;
+  /** A price in the branch's currency: "₹90" (useRegion().money.format). */
+  price: (amount: Price) => string;
 }
 
 /**
@@ -65,7 +66,7 @@ function selectedVariant(dish: Dish, config: Pick<LineConfig, 'variantId'>): Var
 export function unitPrice(
   dish: Dish,
   config: Pick<LineConfig, 'variantId' | 'addOnIds'> & Partial<Pick<LineConfig, 'options'>>,
-): Rupees {
+): Price {
   const base = selectedVariant(dish, config)?.price ?? dish.price;
   const addOns = addOnsFor(dish, config.variantId)
     .filter((a) => config.addOnIds.includes(a.id))
@@ -115,14 +116,19 @@ function optionLabels(
     if (!picked) return [];
     if (!g.showInSummary && picked.name === choices[0]?.name) return [];
     const text = g.id === 'spice' && picked.name === 'Medium' ? labels.mediumSpicy : picked.name;
-    return [withPrice && picked.price ? `${text} (+${formatINR(picked.price)})` : text];
+    return [withPrice && picked.price ? `${text} (+${labels.price(picked.price)})` : text];
   });
 }
 
-function addOnLabels(dish: Dish, config: LineConfig, withPrice: boolean): string[] {
+function addOnLabels(
+  dish: Dish,
+  config: LineConfig,
+  labels: CartLineLabels,
+  withPrice: boolean,
+): string[] {
   return addOnsFor(dish, config.variantId)
     .filter((a) => config.addOnIds.includes(a.id))
-    .map((a) => (withPrice && a.price > 0 ? `${a.name} (+${formatINR(a.price)})` : a.name));
+    .map((a) => (withPrice && a.price > 0 ? `${a.name} (+${labels.price(a.price)})` : a.name));
 }
 
 /** "No onion", "No garlic". */
@@ -140,7 +146,7 @@ export function describeOptions(dish: Dish, config: LineConfig, labels: CartLine
   const variant = selectedVariant(dish, config)?.name;
   const rest = [
     ...optionLabels(dish, config, labels, true),
-    ...addOnLabels(dish, config, true),
+    ...addOnLabels(dish, config, labels, true),
     ...removalLabels(dish, config, labels),
   ];
   if (!variant) return rest.join(', ');
@@ -159,7 +165,7 @@ export function describeOptionsShort(
   return [
     shortVariant(dish, config),
     ...optionLabels(dish, config, labels),
-    ...addOnLabels(dish, config, false),
+    ...addOnLabels(dish, config, labels, false),
     ...removalLabels(dish, config, labels),
   ]
     .filter(Boolean)
@@ -191,4 +197,11 @@ export function describeInMenu(
   else if (addOns) extra = labels.addOns(addOns);
   if (!variant) return extra;
   return extra ? `${variant} · ${extra}` : variant;
+}
+
+/** A cart line as it's ordered (POST /orders, POST /payments): what was chosen and how many; the server prices it. */
+export function orderLine({ key: _key, unitPrice: _price, ...line }: CartLine): LineConfig & {
+  quantity: number;
+} {
+  return line;
 }

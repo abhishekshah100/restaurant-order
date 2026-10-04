@@ -1,21 +1,22 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Button, EmptyState, Icon, Spinner, Tag, type IconName } from '@/components/ui';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { SiteHeader } from '@/components/layout/SiteHeader';
-import { useContent, useRestaurant } from '@/api/hooks';
-import { PAYMENT_WINDOW_SECONDS } from '@/lib/constants';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { useCheckout } from '@/context/CheckoutContext';
-import { useCart } from '@/hooks/useCart';
 import { useCheckoutGuard } from '@/hooks/useCheckoutGuard';
 import { useCountdown } from '@/hooks/useCountdown';
-import { usePlaceOrderState } from '@/hooks/usePlaceOrder';
+import { usePayCheckout } from '@/hooks/usePayCheckout';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { useTable } from '@/hooks/useTable';
+import { useOrderBill } from '@/hooks/useFulfilment';
+import { useVisitLabel } from '@/hooks/useVisitLabel';
 import { cx } from '@/lib/cx';
-import { formatCountdown, formatINR } from '@/lib/format';
+import { modePayments } from '@/lib/fulfilment';
+import { isOnlineMethod, onlineMethod, type Approval } from '@/lib/payments';
+import { formatCountdown } from '@/lib/format';
 import styles from './Processing.module.css';
 
 type View = 'processing' | 'failed' | 'cancelled';
@@ -30,35 +31,49 @@ export function ProcessingStep() {
   const ready = useCheckoutGuard('pay');
   const router = useRouter();
   const preview = useQueryParam('state');
-  const { bill } = useCart();
-  const { session, startPayment } = useCheckout();
-  const table = useTable();
-  const { placeOrder, placing } = usePlaceOrderState();
+  const { bill, mode } = useOrderBill();
+  const { session } = useCheckout();
+  const visit = useVisitLabel();
+  const { start, succeed, fail, placeOrder, placing } = usePayCheckout();
   const [outcome, setOutcome] = useState<View | null>(null);
-  const remaining = useCountdown(session.paymentEndsAt);
+  const { payment } = session;
+  const remaining = useCountdown(payment?.expiresAt ?? null);
+  // The request's window as the server opened it (4:32), shown until the countdown starts.
+  const windowSeconds = payment ? Math.round((payment.expiresAt - payment.createdAt) / 1000) : 0;
   const t = useContent('checkout');
   const cartText = useContent('cart');
+  const branch = useBranch();
+  const { money } = useRegion();
+  const options = modePayments(branch, mode);
+  const approval = onlineMethod(options, session.method);
+  // Paying in person instead: at the counter, at pickup or cash on delivery, where offered.
+  const inPerson = options.find((o) => !isOnlineMethod(o.id));
 
   const previewView: View | null =
     preview === 'payment-failed' ? 'failed' : preview === 'payment-cancelled' ? 'cancelled' : null;
-  // The UPI request expiring counts as a failure.
-  const expired = remaining === 0 && session.paymentEndsAt !== null;
+  // The payment request expiring counts as a failure.
+  const expired = remaining === 0 && payment !== null;
   const base: View = outcome ?? previewView ?? 'processing';
   const view: View = base === 'processing' && expired ? 'failed' : base;
+  // Nothing to wait for without a payment request: choose how to pay first.
+  const noRequest = ready && view === 'processing' && payment === null;
+  useEffect(() => {
+    if (noRequest) router.replace('/checkout/payment/');
+  }, [noRequest, router]);
 
-  const summary = t('lines.itemsTable', {
+  const summary = t('lines.itemsVisit', {
     items: cartText.plural('itemCount', bill.itemCount),
-    table,
+    visit,
   });
-  const total = formatINR(bill.total);
+  const total = money.format(bill.total);
 
-  const retry = () => {
-    startPayment();
+  const retry = async () => {
+    if (!(await start(approval.method))) return;
     setOutcome('processing');
     if (preview) router.replace('/checkout/processing/');
   };
 
-  if (!ready) {
+  if (!ready || noRequest) {
     return (
       <div className={styles.page}>
         <SiteHeader variant="payment" />
@@ -76,8 +91,11 @@ export function ProcessingStep() {
   const foot: ProcessingFootProps = {
     disabled: placing,
     onCancel: () => setOutcome('cancelled'),
-    onSuccess: () => placeOrder('online'),
-    onFailure: () => setOutcome('failed'),
+    onSuccess: succeed,
+    onFailure: () => {
+      fail();
+      setOutcome('failed');
+    },
   };
   const retryAction: ActionSpec = {
     label: t('failed.retry', { total }),
@@ -97,10 +115,16 @@ export function ProcessingStep() {
       <MobileHeader variant={view === 'processing' ? 'pill-center' : 'pill-end'} />
       <main id="main" className={cx(styles.body, view !== 'processing' && styles.grow)}>
         {view === 'processing' && (
-          <ProcessingView total={total} summary={summary} remaining={remaining} foot={foot} />
+          <ProcessingView
+            total={total}
+            summary={summary}
+            approval={approval}
+            remaining={remaining ?? windowSeconds}
+            foot={foot}
+          />
         )}
         {view === 'failed' && (
-          <FailedView total={total} summary={summary}>
+          <FailedView total={total} summary={summary} approval={approval}>
             <OutcomeActions
               placement="inline"
               primary={{ ...retryAction, disabled: placing }}
@@ -114,12 +138,14 @@ export function ProcessingStep() {
             <OutcomeActions
               placement="inline"
               primary={tryAgain}
-              secondary={{
-                label: t('payment.methods.counter.title'),
-                iconStart: 'cash',
-                onClick: () => placeOrder('counter'),
-                loading: placing,
-              }}
+              secondary={
+                inPerson && {
+                  label: t(`payment.methods.${inPerson.labelKey}.title`),
+                  iconStart: 'cash',
+                  onClick: () => placeOrder(inPerson.id),
+                  loading: placing,
+                }
+              }
               backLabel={t('frame.backToCart')}
             />
           </CancelledView>
@@ -143,12 +169,17 @@ export function ProcessingStep() {
         <OutcomeActions
           placement="foot"
           primary={tryAgain}
-          secondary={{
-            label: t('cancelled.payAtCounterInstead'),
-            iconStart: 'cash',
-            onClick: () => placeOrder('counter'),
-            loading: placing,
-          }}
+          secondary={
+            inPerson && {
+              label:
+                mode === 'dineIn'
+                  ? t('cancelled.payAtCounterInstead')
+                  : t(`payment.methods.${inPerson.labelKey}.title`),
+              iconStart: 'cash',
+              onClick: () => placeOrder(inPerson.id),
+              loading: placing,
+            }
+          }
           backLabel={t('frame.backToCart')}
         />
       )}
@@ -156,18 +187,27 @@ export function ProcessingStep() {
   );
 }
 
+/** The processing copy names the method: "Approve the request in your eSewa app". */
+function useApprovalVars({ method }: Approval) {
+  return { name: useContent('common')(`paymentMethods.${method}`) };
+}
+
 function ProcessingView({
   total,
   summary,
+  approval,
   remaining,
   foot,
 }: {
   total: string;
   summary: string;
-  remaining: number | null;
+  approval: Approval;
+  /** Seconds left to approve the request. */
+  remaining: number;
   foot: ProcessingFootProps;
 }) {
   const t = useContent('checkout');
+  const vars = useApprovalVars(approval);
   return (
     <section className={cx(styles.card, styles.processing)} aria-busy="true">
       <div className={styles.spinWrap}>
@@ -176,8 +216,8 @@ function ProcessingView({
       <div className={styles.text}>
         <h1 className="t-h1">{t('processing.title')}</h1>
         <p className={cx('t-body c2', styles.lede)} role="status">
-          <span className="hide-desktop">{t('processing.ledeMobile')}</span>
-          <span className="hide-mobile">{t('processing.ledeDesktop')}</span>
+          <span className="hide-desktop">{t(`processing.lede.${approval.kind}.mobile`, vars)}</span>
+          <span className="hide-mobile">{t(`processing.lede.${approval.kind}.desktop`, vars)}</span>
         </p>
       </div>
       <div className={styles.amountCard}>
@@ -199,7 +239,7 @@ function ProcessingView({
               <span className="hide-mobile">{t('processing.waitingDesktop')}</span>
             </span>
             <span className={cx('t-small c3', styles.timeLeft)}>
-              {formatCountdown(remaining ?? PAYMENT_WINDOW_SECONDS)}
+              {formatCountdown(remaining)}
               <span className="hide-desktop">{t('processing.timeLeft')}</span>
             </span>
           </li>
@@ -222,18 +262,25 @@ function ProcessingView({
 function FailedView({
   total,
   summary,
+  approval,
   children,
 }: {
   total: string;
   summary: string;
+  approval: Approval;
   children: ReactNode;
 }) {
   const t = useContent('checkout');
+  const vars = useApprovalVars(approval);
   const summaryTotal = t('failed.summaryTotal', { summary, total });
   return (
     <section className={cx(styles.card, styles.compact)} role="alert">
       <OutcomeHeader icon="alert" tone="err" title={t('failed.title')}>
-        {t.rich('failed.body', { b: (chunks) => <b className={styles.ink}>{chunks}</b> })}
+        {t.rich(
+          `failed.body.${approval.kind}`,
+          { b: (chunks) => <b className={styles.ink}>{chunks}</b> },
+          vars,
+        )}
       </OutcomeHeader>
       <div className={styles.savedCard}>
         <div className={styles.savedHead}>
@@ -352,7 +399,8 @@ function OutcomeActions({
 }: {
   placement: 'inline' | 'foot';
   primary: ActionSpec;
-  secondary: ActionSpec;
+  /** Absent when there's no other way to pay (e.g. no in-person option for this mode). */
+  secondary: ActionSpec | undefined;
   backLabel: string;
 }) {
   if (placement === 'inline') {
@@ -360,7 +408,7 @@ function OutcomeActions({
       <>
         <div className={cx(styles.actions, 'hide-mobile')}>
           <ActionButton spec={primary} />
-          <ActionButton spec={secondary} variant="secondary" />
+          {secondary && <ActionButton spec={secondary} variant="secondary" />}
         </div>
         <Button variant="ghost" href="/cart/" className="hide-mobile">
           {backLabel}
@@ -371,7 +419,7 @@ function OutcomeActions({
   return (
     <div className={cx(styles.foot, styles.footStack, 'hide-desktop')}>
       <ActionButton spec={primary} block />
-      <ActionButton spec={secondary} variant="secondary" block />
+      {secondary && <ActionButton spec={secondary} variant="secondary" block />}
       <Button block variant="ghost" href="/cart/">
         {backLabel}
       </Button>
@@ -388,13 +436,13 @@ interface ProcessingFootProps {
 }
 
 function ProcessingFoot({ disabled, onCancel, onSuccess, onFailure }: ProcessingFootProps) {
-  const restaurant = useRestaurant();
+  const { paymentPartner } = useBranch();
   const t = useContent('checkout');
   return (
     <>
       <p className={cx('t-small c3', styles.secure)}>
         <Icon name="shield" size="xs" />
-        {t('processing.secure', { partner: restaurant.paymentPartner })}
+        {t('processing.secure', { partner: paymentPartner })}
       </p>
       <Button variant="ghost" onClick={onCancel} disabled={disabled}>
         {t('processing.cancel')}

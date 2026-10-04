@@ -16,11 +16,17 @@ import type { Category } from '@/types/menu';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CategorySidebar } from './CategorySidebar';
 import { DishList } from './DishList';
+import { NotOnMenu } from './NotOnMenu';
 import { ActiveFilterRow, CategoryDesktopActions, CategoryFilterChips } from './FilterBars';
 import styles from './MenuViews.module.css';
 
-/** Category view (03 · w03). */
-export function CategoryView({ category }: { category: Category }) {
+/** Category view (03 · w03), from the guest's branch menu. */
+export function CategoryView({ categoryId }: { categoryId: string }) {
+  const category = useMenu().getCategory(categoryId);
+  return category ? <CategoryPage category={category} /> : <NotOnMenu />;
+}
+
+function CategoryPage({ category }: { category: Category }) {
   const { filters, sort } = useFilters();
   const menu = useMenu();
   const t = useContent('menu');
@@ -29,7 +35,10 @@ export function CategoryView({ category }: { category: Category }) {
     [menu],
   );
   const all = useMemo(() => menu.dishesIn(category.id), [menu, category.id]);
-  const shown = useMemo(() => sortDishes(applyFilters(all, filters), sort), [all, filters, sort]);
+  const shown = useMemo(
+    () => sortDishes(applyFilters(all, filters, menu.priceFilter), sort),
+    [all, filters, sort, menu.priceFilter],
+  );
   const active = hasActiveFilters(filters);
   const summary = t.plural(`filters.summary.${filterSummaryKind(filters)}`, shown.length, {
     total: all.length,

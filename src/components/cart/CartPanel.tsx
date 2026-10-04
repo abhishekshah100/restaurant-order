@@ -2,7 +2,8 @@
 
 import { Button, Icon } from '@/components/ui';
 import { useCart } from '@/hooks/useCart';
-import { useTable } from '@/hooks/useTable';
+import { useOrderBill } from '@/hooks/useFulfilment';
+import { useVisitLabel } from '@/hooks/useVisitLabel';
 import { cx } from '@/lib/cx';
 import { useContent } from '@/api/hooks';
 import { CartLineItem } from './CartLineItem';
@@ -17,8 +18,9 @@ export interface CartPanelProps {
 
 /** "Your order" column on desktop menu pages (w02) and the tablet slide-over. */
 export function CartPanel({ inDialog, onNavigate }: CartPanelProps) {
-  const { lines, bill, count, hydrated } = useCart();
-  const table = useTable();
+  const { lines, count, hydrated } = useCart();
+  const { bill, mode } = useOrderBill();
+  const visit = useVisitLabel();
   const t = useContent('cart');
   const Heading = inDialog ? 'p' : 'h2';
 
@@ -29,8 +31,8 @@ export function CartPanel({ inDialog, onNavigate }: CartPanelProps) {
           <Heading className="t-h2">{t('panel.title')}</Heading>
           <span className="t-small c2">
             {hydrated && count > 0
-              ? t('panel.tableWithCount', { table, items: t.plural('itemCount', count) })
-              : t('panel.table', { table })}
+              ? t('panel.visitWithCount', { visit, items: t.plural('itemCount', count) })
+              : visit}
           </span>
         </div>
         {hydrated && count > 0 ? (
@@ -41,10 +43,12 @@ export function CartPanel({ inDialog, onNavigate }: CartPanelProps) {
                   <CartLineItem key={line.key} line={line} variant="panel" />
                 ))}
               </ul>
-              <p className={cx('t-small c3', styles.note)}>
-                <Icon name="user" size="xs" />
-                {t('panel.sharedNote', { table })}
-              </p>
+              {mode === 'dineIn' && (
+                <p className={cx('t-small c3', styles.note)}>
+                  <Icon name="user" size="xs" />
+                  {t('panel.sharedNote', { visit })}
+                </p>
+              )}
             </div>
             <div className={styles.foot}>
               <PriceSummary bill={bill} variant="combined" />

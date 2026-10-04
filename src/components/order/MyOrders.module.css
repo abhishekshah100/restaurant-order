@@ -72,6 +72,10 @@
 .id {
   font: var(--font-price);
 }
+/* Takeaway / delivery badge right after the order number */
+.mode {
+  margin-right: auto;
+}
 .sub {
   font: var(--font-small);
   color: var(--ink-2);

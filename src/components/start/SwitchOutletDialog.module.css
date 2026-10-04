@@ -1,0 +1,15 @@
+.body {
+  margin: 0;
+  font: var(--font-body);
+  color: var(--ink-2);
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+@media (max-width: 1023.98px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+}

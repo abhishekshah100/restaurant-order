@@ -1,17 +1,16 @@
-import { useContent } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { cx } from '@/lib/cx';
-import { formatINR, formatPaise, formatSignedPaise } from '@/lib/format';
-import { taxesAndRoundOffPaise, type Bill } from '@/lib/pricing';
+import { extrasMinor, totalTaxRate, type Bill, type BillLine } from '@/lib/pricing';
 import styles from './PriceSummary.module.css';
 
 export type PriceSummaryVariant =
-  /** CGST, SGST, service charge, round off (cart). */
+  /** Each charge and tax part (CGST, SGST), "Service charge · Not added" when none, round off (cart). */
   | 'split'
-  /** CGST, SGST, round off — a placed order's receipt (order details). */
+  /** Each charge and tax part, round off — a placed order's receipt (order details). */
   | 'receipt'
-  /** CGST + SGST (5%), round off (desktop cart panel, payment). */
+  /** Each charge and tax as one line (CGST + SGST 5%), round off (desktop cart panel, payment). */
   | 'combined'
-  /** GST 5% + round off on one line (checkout summary). */
+  /** Everything on top of the items on one line, "GST 5% + round off" (checkout summary). */
   | 'compact';
 
 export interface PriceSummaryProps {
@@ -25,6 +24,7 @@ export interface PriceSummaryProps {
   tight?: boolean;
 }
 
+/** A bill's lines, labelled from content (cart › priceSummary) by the keys in the branch's tax rules. */
 export function PriceSummary({
   bill,
   variant = 'split',
@@ -33,27 +33,46 @@ export function PriceSummary({
   tight,
 }: PriceSummaryProps) {
   const t = useContent('cart');
+  const { tax } = useBranch();
+  const { money } = useRegion();
+  const line = (l: BillLine): [string, string] => [
+    t(`priceSummary.lines.${l.labelKey}`, l.vars),
+    money.formatMinor(l.amountMinor),
+  ];
+  const roundOff: [string, string][] = bill.showRoundOff
+    ? [[t('priceSummary.roundOff'), money.formatSignedMinor(bill.roundOffMinor)]]
+    : [];
+
   const rows: [string, string][] = [
     [
       showCount
         ? t('priceSummary.itemTotalWithCount', { count: bill.itemCount })
         : t('priceSummary.itemTotal'),
-      formatPaise(bill.itemTotalPaise),
+      money.formatMinor(bill.itemTotalMinor),
     ],
   ];
-  const roundOff = t('priceSummary.roundOff');
-  if (variant === 'split' || variant === 'receipt') {
-    rows.push([t('priceSummary.cgst'), formatPaise(bill.cgstPaise)]);
-    rows.push([t('priceSummary.sgst'), formatPaise(bill.sgstPaise)]);
-    if (variant === 'split') {
+  // Delivery orders: the fee comes right after the items (it isn't a tax).
+  if (bill.deliveryFeeMinor !== null) {
+    rows.push([
+      t('priceSummary.deliveryFee'),
+      bill.deliveryFeeMinor === 0
+        ? t('priceSummary.deliveryFree')
+        : money.formatMinor(bill.deliveryFeeMinor),
+    ]);
+  }
+  if (variant === 'compact') {
+    rows.push([
+      t(`priceSummary.compact.${tax.compactLabelKey}`, { rate: totalTaxRate(tax) }),
+      money.formatMinor(extrasMinor(bill)),
+    ]);
+  } else if (variant === 'combined') {
+    rows.push(...bill.lines.map(line), ...roundOff);
+  } else {
+    rows.push(...bill.lines.flatMap((l) => (l.parts ?? [l]).map(line)));
+    if (variant === 'split' && !bill.serviceCharged) {
       rows.push([t('priceSummary.serviceCharge'), t('priceSummary.notAdded')]);
     }
-    rows.push([roundOff, formatSignedPaise(bill.roundOffPaise)]);
-  } else if (variant === 'combined') {
-    rows.push([t('priceSummary.gstCombined'), formatPaise(bill.gstPaise)]);
-    rows.push([roundOff, formatSignedPaise(bill.roundOffPaise)]);
-  } else {
-    rows.push([t('priceSummary.gstAndRoundOff'), formatPaise(taxesAndRoundOffPaise(bill))]);
+    rows.push(...roundOff);
   }
 
   return (
@@ -66,7 +85,7 @@ export function PriceSummary({
       ))}
       <div className={cx(styles.total, tight && styles.tight)}>
         <dt className={styles.lbl}>{totalLabel ?? t('priceSummary.toPay')}</dt>
-        <dd className={styles.amt}>{formatINR(bill.total)}</dd>
+        <dd className={styles.amt}>{money.format(bill.total)}</dd>
       </div>
     </dl>
   );

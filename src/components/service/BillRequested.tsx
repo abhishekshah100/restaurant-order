@@ -2,23 +2,25 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui';
-import { useContent, useHelpTopics } from '@/api/hooks';
+import { useContent, useHelpTopics, useRegion } from '@/api/hooks';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
 import { PAY_BILL_PATH, billFor } from '@/lib/service';
 import { BillTotals } from './BillTotals';
 import { HelpTopicDialog } from './HelpTopicDialog';
 import { NoRequest, RequestLoading, RequestStatus } from './RequestStatus';
-import { useTableOrders } from './useTableOrders';
+import { useTableVisit } from './useTableVisit';
 import styles from './Summary.module.css';
+import { useDineInOnly } from '@/hooks/useDineInOnly';
 
 /** Bill requested (21 · w21). */
 export function BillRequested() {
+  useDineInOnly();
   const { requests, hydrated } = useServiceRequest();
-  const { table, sessionId, orders, hydrated: ordersReady } = useTableOrders();
+  const { table, sessionId, orders, hydrated: ordersReady } = useTableVisit();
   const helpTopics = useHelpTopics();
   const t = useContent('service');
+  const { money } = useRegion();
   const [helpOpen, setHelpOpen] = useState(false);
   const request = requests.bill;
 
@@ -67,7 +69,7 @@ export function BillRequested() {
           <>
             {canPay && (
               <Button href={PAY_BILL_PATH} block={layout === 'mobile'} iconStart="lock">
-                {t('shared.payNow', { amount: formatINR(bill.payableTotal) })}
+                {t('shared.payNow', { amount: money.format(bill.payableTotal) })}
               </Button>
             )}
             <Button

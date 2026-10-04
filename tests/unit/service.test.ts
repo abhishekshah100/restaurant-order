@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { allOrders } from '@/lib/orders';
+import { isServiceRequest } from '@/api/mock/db';
+import { allOrders, tableOrders } from '@/api/mock/handlers/orders';
+import { cleanNote, isPending } from '@/api/mock/handlers/serviceRequests';
+import { SERVICE_REQUEST_TTL_MS } from '@/api/mock/rules';
+import { isOwnOrder } from '@/lib/orders';
 import {
   SERVICE_NOTE_MAX,
-  SERVICE_REQUEST_TTL_MS,
   billFor,
-  cleanNote,
+  byKind,
   firstName,
-  isServiceRequests,
   payableOrders,
-  latestOwnOrder,
   latestRequest,
-  liveRequests,
-  tableOrders,
-  telHref,
-  type ServiceRequests,
 } from '@/lib/service';
 import type { Order } from '@/types/order';
-import { testOrderHistory } from '../apiState';
+import { createClock } from '@/lib/clock';
+import { testBranch, testOrderHistory } from '../apiState';
+
+const clock = createClock(testBranch());
 
 const mockOrders = testOrderHistory().history;
 
@@ -26,6 +26,7 @@ const iso = (msAgo: number) => new Date(NOW - msAgo).toISOString();
 const SESSION = 'guest-1';
 
 const waiter = {
+  id: 'r1',
   kind: 'waiter' as const,
   table: 12,
   sessionId: SESSION,
@@ -34,6 +35,7 @@ const waiter = {
   requestedAt: iso(60_000),
 };
 const bill = {
+  id: 'r2',
   kind: 'bill' as const,
   table: 12,
   sessionId: SESSION,
@@ -49,36 +51,32 @@ const order = (over: Partial<Order>): Order => ({
 });
 
 describe('service request guards', () => {
-  it('accepts valid saved requests keyed by kind', () => {
-    expect(isServiceRequests({ waiter, bill })).toBe(true);
-    expect(isServiceRequests({})).toBe(true);
+  it('accepts valid stored requests', () => {
+    expect(isServiceRequest(waiter)).toBe(true);
+    expect(isServiceRequest(bill)).toBe(true);
   });
 
-  it('rejects malformed or mismatched entries', () => {
-    expect(isServiceRequests(null)).toBe(false);
-    expect(isServiceRequests({ waiter: bill })).toBe(false);
-    expect(isServiceRequests({ waiter: { ...waiter, reason: 'dance' } })).toBe(false);
-    expect(isServiceRequests({ bill: { ...bill, scope: 'all' } })).toBe(false);
-    expect(isServiceRequests({ waiter: { ...waiter, requestedAt: 'soon' } })).toBe(false);
-    expect(isServiceRequests({ other: waiter })).toBe(false);
+  it('rejects malformed entries', () => {
+    expect(isServiceRequest(null)).toBe(false);
+    expect(isServiceRequest({ ...waiter, reason: 'dance' })).toBe(false);
+    expect(isServiceRequest({ ...bill, scope: 'all' })).toBe(false);
+    expect(isServiceRequest({ ...waiter, requestedAt: 'soon' })).toBe(false);
+    expect(isServiceRequest({ ...waiter, kind: 'other' })).toBe(false);
     const { sessionId: _sessionId, ...noSession } = waiter;
-    expect(isServiceRequests({ waiter: noSession })).toBe(false);
+    expect(isServiceRequest(noSession)).toBe(false);
+    const { id: _id, ...noId } = waiter;
+    expect(isServiceRequest(noId)).toBe(false);
   });
 });
 
-describe('liveRequests / latestRequest', () => {
-  it('keeps only this guest session’s requests within the TTL', () => {
-    const saved: ServiceRequests = {
-      waiter: { ...waiter, requestedAt: iso(SERVICE_REQUEST_TTL_MS + 1) },
-      bill,
-    };
-    expect(liveRequests(saved, SESSION, NOW)).toEqual({ bill });
-    // Another guest at the same table doesn't see them.
-    expect(liveRequests({ waiter, bill }, 'guest-2', NOW)).toEqual({});
+describe('pending requests', () => {
+  it('lapse after the TTL', () => {
+    expect(isPending(bill, NOW)).toBe(true);
+    expect(isPending({ ...waiter, requestedAt: iso(SERVICE_REQUEST_TTL_MS + 1) }, NOW)).toBe(false);
   });
 
   it('picks the most recent request', () => {
-    expect(latestRequest({ waiter, bill })).toEqual(bill);
+    expect(latestRequest(byKind([waiter, bill]))).toEqual(bill);
     expect(latestRequest({})).toBeNull();
   });
 });
@@ -92,11 +90,6 @@ describe('notes and labels', () => {
 
   it('finds first names', () => {
     expect(firstName('Ananya Rao')).toBe('Ananya');
-  });
-
-  it('builds a tel: link, falling back while the number is a placeholder', () => {
-    expect(telHref('+91 98765 43210')).toBe('tel:+919876543210');
-    expect(telHref('[RESTAURANT PHONE]')).toBe('tel:+910000000000');
   });
 });
 
@@ -129,13 +122,13 @@ describe('table orders and bill', () => {
   const yesterday = order({ id: 'A6', placedAt: '2026-10-02T19:00:00+05:30' });
 
   it('lists today’s non-cancelled orders at the table, newest first', () => {
-    const list = tableOrders([a, b, c, cancelled, otherTable, yesterday], 12, NOW);
+    const list = tableOrders([a, b, c, cancelled, otherTable, yesterday], 12, NOW, clock);
     expect(list.map((o) => o.id)).toEqual(['A3', 'A1', 'A2']);
-    expect(latestOwnOrder([a, b, c], 12, NOW, SESSION)?.id).toBe('A1');
+    expect(list.find((o) => isOwnOrder(o, SESSION))?.id).toBe('A1');
   });
 
   it('sums the whole table or just the guest’s orders', () => {
-    const list = tableOrders([a, b, c], 12, NOW);
+    const list = tableOrders([a, b, c], 12, NOW, clock);
     expect(billFor(list, 'table', SESSION)).toMatchObject({
       total: 2498,
       paid: 1424,
@@ -156,9 +149,9 @@ describe('table orders and bill', () => {
       placedAt: '2026-10-03T19:55:00+05:30',
       payment: { method: 'counter', status: 'unpaid' },
     });
-    const list = tableOrders([a, b, c, d], 12, NOW);
-    expect(latestOwnOrder(list, 12, NOW, SESSION)?.id).toBe('A1');
-    expect(latestOwnOrder(list, 12, NOW, 'guest-2')?.id).toBe('A7');
+    const list = tableOrders([a, b, c, d], 12, NOW, clock);
+    expect(list.find((o) => isOwnOrder(o, SESSION))?.id).toBe('A1');
+    expect(list.find((o) => isOwnOrder(o, 'guest-2'))?.id).toBe('A7');
     // Each guest's bill holds only their own session's orders, never the shared history.
     expect(billFor(list, 'mine', SESSION).orders.map((o) => o.id)).toEqual(['A1']);
     expect(billFor(list, 'mine', 'guest-2').orders.map((o) => o.id)).toEqual(['A7']);
@@ -188,7 +181,7 @@ describe('table orders and bill', () => {
       sessionId: 'guest-2',
       payment: { method: 'counter', status: 'unpaid' },
     });
-    const list = tableOrders([a, b, c, mineUnpaid, theirs], 12, NOW);
+    const list = tableOrders([a, b, c, mineUnpaid, theirs], 12, NOW, clock);
     // A2 is the table's history and A9 another guest's; A1 is already paid.
     expect(payableOrders(list, SESSION).map((o) => o.id)).toEqual(['A8']);
     expect(payableOrders(list, undefined)).toEqual([]);

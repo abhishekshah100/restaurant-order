@@ -6,6 +6,7 @@ export type WaiterReason = 'waiter' | 'water' | 'cutlery' | 'other';
 export type BillScope = 'mine' | 'table';
 
 interface BaseRequest {
+  id: string;
   table: number;
   /** The guest session that made it; other guests at the table don't see it. */
   sessionId: string;
@@ -22,11 +23,8 @@ export interface WaiterRequest extends BaseRequest {
 export interface BillRequest extends BaseRequest {
   kind: 'bill';
   scope: BillScope;
-  /** Balance due when the bill was requested, in rupees. */
+  /** Balance due when the bill was requested (worked out by the server), in major units. */
   balance: number;
 }
 
 export type ServiceRequest = WaiterRequest | BillRequest;
-
-/** How a guest pays their own outstanding bill in the app (/help/bill/pay). */
-export type BillPaymentMethod = 'upi' | 'card';

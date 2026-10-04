@@ -1,0 +1,132 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-h3);
+}
+.title > span[aria-hidden] {
+  color: var(--brand-600);
+}
+.place {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.place p {
+  margin: 0;
+}
+.name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-label);
+  color: var(--ink);
+}
+.label {
+  font: var(--font-meta-strong);
+  color: var(--brand-700);
+  background: var(--brand-tint);
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+}
+.line {
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.note {
+  font-style: italic;
+}
+.place .when {
+  margin-top: 8px;
+}
+.when {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--font-small-strong);
+  color: var(--ink);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.button {
+  height: 40px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--r);
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-label);
+  text-decoration: none;
+  flex: none;
+}
+.primary {
+  border-color: var(--brand-600);
+  background: var(--brand-600);
+  color: var(--on-brand);
+}
+@media (hover: hover) {
+  .button:hover {
+    border-color: var(--ink-3);
+  }
+  .primary:hover {
+    background: var(--brand-700);
+    border-color: var(--brand-700);
+  }
+}
+.call {
+  composes: textLink from '@/styles/patterns.module.css';
+}
+.rider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  background: var(--bg);
+}
+.riderIcon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--r-round);
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--brand-600);
+}
+.riderText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.riderName {
+  font: var(--font-label);
+}
+.riderPhone {
+  font: var(--font-small);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.soon {
+  margin: 0;
+  font: var(--font-small);
+  color: var(--ink-3);
+}

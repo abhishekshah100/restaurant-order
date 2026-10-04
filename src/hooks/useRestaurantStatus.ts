@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent } from '@/api/hooks';
 import {
   applyPreview,
   isStatusPreview,
@@ -57,11 +57,11 @@ export interface OrderingAvailabilityResult extends OrderingAvailability {
 
 /**
  * Whether the guest can add dishes and place an order right now: the restaurant
- * status (GET /restaurant) combined with
+ * status (GET /branches, the guest's branch) combined with
  * navigator.onLine. Matches the prerendered HTML until hydration has finished.
  */
 export function useOrderingAvailability(): OrderingAvailabilityResult {
-  const { status } = useRestaurant();
+  const { status } = useBranch();
   const preview = useStatusPreview();
   const online = useOnlineStatus();
 
@@ -85,7 +85,7 @@ export function useOrderingAvailability(): OrderingAvailabilityResult {
 
 /** The header subline ("Open · until 11:00 PM", "Closed now", "Ordering paused") and its colour. */
 export function useStatusLine(): { text: string; tone: 'error' | 'warn' | null } {
-  const { closesAt } = useRestaurant();
+  const { closesAt } = useBranch();
   const { status } = useOrderingAvailability();
   const t = useContent('status');
   return { text: t(`line.${status}`, { time: closesAt }), tone: statusTone(status) };

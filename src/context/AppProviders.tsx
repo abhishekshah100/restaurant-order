@@ -3,11 +3,11 @@
 import type { DehydratedState } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { QueryProvider } from '@/api/QueryProvider';
+import { StartRedirect } from '@/components/start/StartRedirect';
 import { CartProvider } from './CartContext';
 import { CheckoutProvider } from './CheckoutContext';
 import { FiltersProvider } from './FiltersContext';
 import { GuestSessionProvider } from './GuestSessionContext';
-import { OrdersProvider } from './OrdersContext';
 import { QuickAddProvider } from './QuickAddContext';
 import { SearchProvider } from './SearchContext';
 import { ServiceRequestProvider } from './ServiceRequestContext';
@@ -26,17 +26,18 @@ export function AppProviders({
       <ToastProvider>
         <GuestSessionProvider>
           <CartProvider>
-            <OrdersProvider>
-              <CheckoutProvider>
-                <FiltersProvider>
-                  <SearchProvider>
-                    <ServiceRequestProvider>
-                      <QuickAddProvider>{children}</QuickAddProvider>
-                    </ServiceRequestProvider>
-                  </SearchProvider>
-                </FiltersProvider>
-              </CheckoutProvider>
-            </OrdersProvider>
+            <CheckoutProvider>
+              <FiltersProvider>
+                <SearchProvider>
+                  <ServiceRequestProvider>
+                    <QuickAddProvider>
+                      {children}
+                      <StartRedirect />
+                    </QuickAddProvider>
+                  </ServiceRequestProvider>
+                </SearchProvider>
+              </FiltersProvider>
+            </CheckoutProvider>
           </CartProvider>
         </GuestSessionProvider>
       </ToastProvider>

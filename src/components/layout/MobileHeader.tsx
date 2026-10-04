@@ -1,11 +1,11 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Icon, IconButton, TablePill } from '@/components/ui';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { Icon, IconButton } from '@/components/ui';
+import { useBranch, useContent } from '@/api/hooks';
 import { useStatusLine } from '@/hooks/useRestaurantStatus';
-import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
+import { VisitPill } from './VisitPill';
 import styles from './MobileHeader.module.css';
 
 interface Common {
@@ -24,7 +24,7 @@ export interface TopbarHeaderProps extends Common {
   backHref?: string;
   backLabel?: string;
   onBack?: () => void;
-  /** Extra buttons before the table pill (e.g. search). */
+  /** Extra buttons before the table (or order mode) pill, e.g. search. */
   actions?: ReactNode;
   /** Replace the default content (e.g. the search field). */
   children?: ReactNode;
@@ -41,11 +41,10 @@ export type MobileHeaderProps = RestaurantHeaderProps | TopbarHeaderProps | Pill
 /** Mobile / tablet header (<1024px). Hidden from 1024px, where SiteHeader takes over. */
 export function MobileHeader(props: MobileHeaderProps) {
   const t = useContent('common');
-  const restaurant = useRestaurant();
-  const table = useTable();
+  const branch = useBranch();
 
   if (props.variant === 'restaurant') {
-    return <RestaurantHeader table={table} className={props.className} />;
+    return <RestaurantHeader className={props.className} />;
   }
 
   if (props.variant !== 'topbar') {
@@ -58,10 +57,7 @@ export function MobileHeader(props: MobileHeaderProps) {
           props.className,
         )}
       >
-        <TablePill
-          table={table}
-          prefix={props.variant === 'pill-center' ? `${restaurant.name} · ` : undefined}
-        />
+        <VisitPill prefix={props.variant === 'pill-center' ? `${branch.name} · ` : undefined} />
       </header>
     );
   }
@@ -88,20 +84,20 @@ export function MobileHeader(props: MobileHeaderProps) {
           <span className={styles.spacer} />
         ))}
       {actions}
-      {!hideTable && <TablePill table={table} />}
+      {!hideTable && <VisitPill />}
     </header>
   );
 }
 
-/** Brand, live status line and table pill (menu home and the restaurant-state screens). */
-function RestaurantHeader({ table, className }: { table: number; className?: string }) {
-  const restaurant = useRestaurant();
+/** Brand, live status line and table (or order mode) pill (menu home and the restaurant-state screens). */
+function RestaurantHeader({ className }: { className?: string }) {
+  const branch = useBranch();
   const status = useStatusLine();
   return (
     <header className={cx(styles.rhead, 'hide-desktop', className)}>
       <Icon name="olive" />
       <div className={styles.rheadText}>
-        <p className={styles.rheadName}>{restaurant.name}</p>
+        <p className={styles.rheadName}>{branch.name}</p>
         <span
           className={cx(
             styles.rheadSub,
@@ -112,7 +108,7 @@ function RestaurantHeader({ table, className }: { table: number; className?: str
           {status.text}
         </span>
       </div>
-      <TablePill table={table} />
+      <VisitPill />
     </header>
   );
 }

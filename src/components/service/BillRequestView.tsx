@@ -5,23 +5,27 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Columns, Page } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
-import { useContent } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import { Banner, Button, EmptyState, Icon, OptionGroup, Skeleton } from '@/components/ui';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
-import { formatINR, formatTime } from '@/lib/format';
 import { PAY_BILL_PATH, SERVICE_PATHS, billFor, firstName } from '@/lib/service';
 import type { BillScope } from '@/types/service';
 import { BillOrderList } from './BillOrderList';
 import { BillTotals } from './BillTotals';
-import { useTableOrders } from './useTableOrders';
+import { useRegionCopy } from '@/hooks/useRegionCopy';
+import { useTableVisit } from './useTableVisit';
 import styles from './BillRequestView.module.css';
+import { useDineInOnly } from '@/hooks/useDineInOnly';
 
 /** Request the bill (20 · w20). */
 export function BillRequestView() {
+  useDineInOnly();
   const t = useContent('service');
-  const { table, sessionId, orders, hydrated } = useTableOrders();
+  const { money, clock } = useRegion();
+  const { table, sessionId, orders, hydrated } = useTableVisit();
   const { requests, sendBillRequest } = useServiceRequest();
+  const { paymentMethods } = useRegionCopy();
   const [picked, setPicked] = useState<BillScope>('table');
 
   const mine = billFor(orders, 'mine', sessionId);
@@ -85,7 +89,7 @@ export function BillRequestView() {
     <div className={styles.actions}>
       {canPay && (
         <Button href={PAY_BILL_PATH} block iconStart="lock">
-          {t('shared.payNow', { amount: formatINR(bill.payableTotal) })}
+          {t('shared.payNow', { amount: money.format(bill.payableTotal) })}
         </Button>
       )}
       {pending ? (
@@ -97,7 +101,7 @@ export function BillRequestView() {
           variant={requestVariant}
           block
           iconStart="receipt"
-          onClick={() => sendBillRequest(scope, bill.balance)}
+          onClick={() => sendBillRequest(scope)}
         >
           {t('billRequest.confirm')}
         </Button>
@@ -134,7 +138,7 @@ export function BillRequestView() {
                 </Button>
               }
             >
-              {t('billRequest.pending', { time: formatTime(pending.requestedAt) })}
+              {t('billRequest.pending', { time: clock.time(pending.requestedAt) })}
             </Banner>
           )}
 
@@ -154,7 +158,7 @@ export function BillRequestView() {
                   sub: mine.orders.length
                     ? `${mineIds}${mineName ? ` · ${mineName}` : ''}`
                     : t('billRequest.mineNone'),
-                  price: formatINR(mine.total),
+                  price: money.format(mine.total),
                   disabled: mine.orders.length === 0,
                 },
                 {
@@ -164,7 +168,7 @@ export function BillRequestView() {
                     orders: t.plural('shared.orderCount', whole.orders.length),
                     table,
                   }),
-                  price: formatINR(whole.total),
+                  price: money.format(whole.total),
                 },
               ]}
             />
@@ -175,16 +179,11 @@ export function BillRequestView() {
               {heading}
             </h2>
             <BillOrderList orders={bill.orders} sessionId={sessionId} />
-            <BillTotals
-              bill={bill}
-              scope={scope}
-              signed
-              className={cx(styles.cardTotals, 'hide-desktop')}
-            />
+            <BillTotals bill={bill} scope={scope} signed className="hide-desktop" />
           </section>
           <p className={cx(styles.hint, 'hide-desktop')}>
             <Icon name="info" size="xs" className={styles.hintIcon} />
-            {t('billRequest.hint')}
+            {t('billRequest.hint', { paymentMethods })}
           </p>
           <div className={cx(styles.foot, 'hide-desktop')}>{confirm}</div>
         </main>
@@ -197,7 +196,7 @@ export function BillRequestView() {
           {confirm}
           <p className={styles.hint}>
             <Icon name="info" size="xs" className={styles.hintIcon} />
-            {t('billRequest.hint')}
+            {t('billRequest.hint', { paymentMethods })}
           </p>
         </aside>
       </Columns>

@@ -18,26 +18,28 @@ import {
   Textarea,
   type DialogPresentation,
 } from '@/components/ui';
-import { formatAddOnPrice, formatINR } from '@/lib/format';
+import { useRegion } from '@/api/hooks';
+import type { Money } from '@/lib/money';
 import { Section } from './Section';
 import styles from './styleguide.module.css';
 
-const PORTIONS = [
-  { id: 'half', label: 'Half · 6 pcs', price: formatINR(329) },
-  { id: 'full', label: 'Full · 10 pcs', price: formatINR(549) },
+/** Sample prices are shown in the default branch's currency. */
+const portions = (money: Money) => [
+  { id: 'half', label: 'Half · 6 pcs', price: money.format(329) },
+  { id: 'full', label: 'Full · 10 pcs', price: money.format(549) },
   {
     id: 'family',
     label: 'Family · 16 pcs',
     sub: 'Unavailable',
-    price: formatINR(849),
+    price: money.format(849),
     disabled: true,
   },
 ];
 
-const ADD_ONS = [
-  { id: 'cheese', label: 'Extra cheese', price: formatAddOnPrice(50, 'Free') },
-  { id: 'paneer', label: 'Extra paneer', price: formatAddOnPrice(90, 'Free') },
-  { id: 'mint', label: 'Mint chutney', price: formatAddOnPrice(0, 'Free') },
+const addOns = (money: Money) => [
+  { id: 'cheese', label: 'Extra cheese', price: money.addOnPrice(50, 'Free') },
+  { id: 'paneer', label: 'Extra paneer', price: money.addOnPrice(90, 'Free') },
+  { id: 'mint', label: 'Mint chutney', price: money.addOnPrice(0, 'Free') },
 ];
 
 /** Demo "Place order" button: shows the loading state for a moment. */
@@ -61,6 +63,7 @@ function LoadingDemoButton() {
 }
 
 export function ButtonsSection() {
+  const { money } = useRegion();
   return (
     <Section id="sg-buttons" title="Buttons · Button / IconButton">
       <div className={styles.btnGrid}>
@@ -79,7 +82,7 @@ export function ButtonsSection() {
         </Button>
       </div>
       <div className={styles.row}>
-        <Button block meta={formatINR(409)}>
+        <Button block meta={money.format(409)}>
           Add to cart
         </Button>
         <IconButton icon="back" label="Back" variant="raised" />
@@ -98,6 +101,7 @@ export function InputsSection() {
   const [phone, setPhone] = useState('98765432');
   const [otp, setOtp] = useState('48');
   const [otpError, setOtpError] = useState('482719');
+  const { mobile } = useRegion();
 
   return (
     <Section id="sg-inputs" title="Inputs · Input / PhoneInput / OtpInput">
@@ -121,6 +125,7 @@ export function InputsSection() {
       </div>
       <PhoneInput
         id="sg-phone"
+        rules={mobile}
         label="Mobile number · error"
         value={phone}
         onChange={setPhone}
@@ -150,6 +155,7 @@ export function SearchSection() {
   const [query, setQuery] = useState('paneer');
   const [diet, setDiet] = useState<'all' | 'veg' | 'nonveg'>('all');
   const [tab, setTab] = useState('recommended');
+  const { money } = useRegion();
 
   return (
     <Section id="sg-search" title="Search · Chips · Tabs">
@@ -173,7 +179,7 @@ export function SearchSection() {
         <Chip iconStart="sort" iconEnd="chevd" aria-haspopup="listbox">
           Recommended
         </Chip>
-        <Chip>Under ₹400</Chip>
+        <Chip>Under {money.format(400)}</Chip>
         <Chip count={8}>Starters</Chip>
       </div>
       <Tabs
@@ -221,7 +227,8 @@ export function QuantitySection() {
 
 export function OptionsSection() {
   const [portion, setPortion] = useState<string | undefined>('half');
-  const [addOns, setAddOns] = useState<string[]>(['cheese']);
+  const [picked, setPicked] = useState<string[]>(['cheese']);
+  const { money } = useRegion();
 
   return (
     <Section id="sg-opts" title="Variant (radio) · Add-on (checkbox) · OptionGroup">
@@ -233,7 +240,7 @@ export function OptionsSection() {
           hint="Required"
           value={portion}
           onChange={setPortion}
-          choices={PORTIONS}
+          choices={portions(money)}
         />
         <OptionGroup
           id="sg-addons"
@@ -241,9 +248,9 @@ export function OptionsSection() {
           title="Add-ons"
           hint="Optional · up to 2"
           max={2}
-          value={addOns}
-          onChange={setAddOns}
-          choices={ADD_ONS}
+          value={picked}
+          onChange={setPicked}
+          choices={addOns(money)}
         />
       </div>
     </Section>

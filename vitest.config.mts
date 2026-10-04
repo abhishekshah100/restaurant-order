@@ -11,6 +11,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
+    // The mock server answers at once in unit tests.
+    env: { NEXT_PUBLIC_API_MOCK_LATENCY_MS: '0' },
     include: ['tests/unit/**/*.test.{ts,tsx}'],
     css: true,
   },

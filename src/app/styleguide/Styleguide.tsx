@@ -25,6 +25,7 @@ import {
   SearchSection,
 } from './StyleguideControls';
 import styles from './styleguide.module.css';
+import { useRegion } from '@/api/hooks';
 
 const COLOR_TOKENS = [
   'bg',
@@ -58,13 +59,13 @@ const TYPE_SCALE = [
   ['t-body', 'Body · Manrope 500 15/22'],
   ['t-small', 'Small · Manrope 500 13/18'],
   ['t-caption', 'Caption · Manrope 700 11/16'],
-  ['t-price-lg', '₹1,424'],
 ] as const;
 
 const noop = () => {};
 
 /** Design-system board (ds01 / ds02). Interactive sections live in StyleguideControls. */
 export function Styleguide() {
+  const { money } = useRegion();
   return (
     <main id="main" className={styles.page}>
       <header className={styles.header}>
@@ -98,6 +99,7 @@ export function Styleguide() {
                 {label}
               </p>
             ))}
+            <p className="t-price-lg">{money.format(1424)}</p>
           </div>
         </Section>
 

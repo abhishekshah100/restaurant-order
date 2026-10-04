@@ -5,10 +5,11 @@ import Image from 'next/image';
 import { PriceSummary, type PriceSummaryVariant } from '@/components/cart/PriceSummary';
 import { Icon, VegMark } from '@/components/ui';
 import { useCart } from '@/hooks/useCart';
+import { useOrderBill } from '@/hooks/useFulfilment';
+import { etaMinutes } from '@/lib/fulfilment';
 import { describeOptionsShort } from '@/lib/cartLine';
-import { formatINR } from '@/lib/format';
 import { cx } from '@/lib/cx';
-import { useContent, useMenu, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent, useMenu, useRegion } from '@/api/hooks';
 import { dishImage } from '@/lib/menu';
 import { useCartLineLabels } from '@/hooks/useCartLineLabels';
 import styles from './Checkout.module.css';
@@ -28,10 +29,12 @@ export function OrderSummaryPanel({
   editable = true,
   footnote,
 }: OrderSummaryPanelProps) {
-  const { lines, bill } = useCart();
+  const { lines } = useCart();
+  const { bill, mode, quote } = useOrderBill();
   const menu = useMenu();
+  const branch = useBranch();
   const t = useContent('checkout');
-  const { prepTime } = useRestaurant();
+  const { money } = useRegion();
   const labels = useCartLineLabels();
   return (
     <aside className={cx(styles.summary, 'hide-mobile')} aria-labelledby="order-summary">
@@ -79,7 +82,9 @@ export function OrderSummaryPanel({
                 </span>
                 {options && <span className={styles.sumOpts}>{options}</span>}
               </span>
-              <span className={styles.sumPrice}>{formatINR(line.quantity * line.unitPrice)}</span>
+              <span className={styles.sumPrice}>
+                {money.format(line.quantity * line.unitPrice)}
+              </span>
             </li>
           );
         })}
@@ -88,7 +93,9 @@ export function OrderSummaryPanel({
       <PriceSummary bill={bill} variant={variant} totalLabel={totalLabel} />
       <span className={styles.etaPill}>
         <Icon name="clock" size="xs" />
-        {t('summary.eta', { time: prepTime })}
+        {mode === 'dineIn'
+          ? t('summary.eta', { time: branch.prepTime })
+          : t(`summary.etaMode.${mode}`, { minutes: etaMinutes(branch, mode, quote) })}
       </span>
       {footnote && <p className="t-small c3">{footnote}</p>}
     </aside>

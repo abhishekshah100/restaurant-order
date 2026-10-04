@@ -1,42 +1,59 @@
-import type { Rupees } from '@/types/menu';
-
-/** GST on restaurant food: 5%, split equally as CGST 2.5% + SGST 2.5%. */
-const CGST_RATE = 0.025;
-const SGST_RATE = 0.025;
-const GST_RATE = CGST_RATE + SGST_RATE;
+import type { BillLineKey, Branch, TaxConfig } from '@/types/branch';
+import type { Price } from '@/types/menu';
 
 interface PriceLine {
-  unitPrice: Rupees;
+  unitPrice: Price;
   quantity: number;
 }
 
-/** Bill breakdown. Tax lines are in paise so ₹33.90 shows exactly; `total` is whole rupees. */
+/** A charge on the bill: the service charge or a tax. Amounts are in minor units (paise). */
+export interface BillLine {
+  id: string;
+  labelKey: BillLineKey;
+  /** Fills the label's {rate}: "2.5" for 250 basis points. */
+  vars: { rate: string };
+  amountMinor: number;
+  /** The line as shown on a split bill (CGST and SGST for GST); they add up to `amountMinor`. */
+  parts?: BillLine[];
+}
+
+/** Bill breakdown, worked out from the branch's tax rules (GET /branches › tax). */
 export interface Bill {
   itemCount: number;
-  /** Sum of line totals, in rupees. */
-  itemTotal: Rupees;
-  itemTotalPaise: number;
-  cgstPaise: number;
-  sgstPaise: number;
-  gstPaise: number;
-  /** Signed paise added to reach a whole rupee, e.g. +20 or −45. */
-  roundOffPaise: number;
-  /** Amount payable, rounded to the nearest rupee. */
-  total: Rupees;
+  /** Sum of line totals, in major units. */
+  itemTotal: Price;
+  itemTotalMinor: number;
+  /** The service charge (when the branch adds one), then each tax, in the order applied. */
+  lines: BillLine[];
+  /** The branch adds a service charge (otherwise the cart says "Service charge · Not added"). */
+  serviceCharged: boolean;
+  /** Delivery orders: the delivery fee in minor units (0 when free); null for other orders. */
+  deliveryFeeMinor: number | null;
+  /** Signed minor units added to reach the rounding unit, e.g. +20 or −45. */
+  roundOffMinor: number;
+  showRoundOff: boolean;
+  totalMinor: number;
+  /** Amount payable, in major units. */
+  total: Price;
 }
 
-/** Tax on an amount in paise at `rate`, rounded half-up to the nearest paisa. */
-export function taxPaise(amountPaise: number, rate: number): number {
-  // Work in integer basis points to avoid floating point drift (e.g. 2.5% of 135600).
-  const bps = Math.round(rate * 10000);
-  return Math.floor((amountPaise * bps + 5000) / 10000);
+/** "2.5" for 250 basis points, "13" for 1300. */
+export const formatRate = (rateBp: number) => String(rateBp / 100);
+
+/** `rateBp` basis points of an amount in minor units, rounded half up to a whole minor unit. */
+export function percentOf(amountMinor: number, rateBp: number): number {
+  // Integer maths, so 2.5% of 135600 is exact.
+  return Math.floor((amountMinor * rateBp + 5000) / 10000);
 }
 
-function lineTotal(line: PriceLine): Rupees {
-  return line.unitPrice * line.quantity;
+/** Rounds to the nearest multiple of `unit` (half up). */
+export function roundTo(amountMinor: number, unit: number): number {
+  return Math.floor((amountMinor + unit / 2) / unit) * unit;
 }
 
-export function itemTotal(lines: readonly PriceLine[]): Rupees {
+const lineTotal = (line: PriceLine): Price => line.unitPrice * line.quantity;
+
+export function itemTotal(lines: readonly PriceLine[]): Price {
   return lines.reduce((sum, line) => sum + lineTotal(line), 0);
 }
 
@@ -44,34 +61,99 @@ export function itemCount(lines: readonly PriceLine[]): number {
   return lines.reduce((sum, line) => sum + line.quantity, 0);
 }
 
-/** Rounds paise to the nearest whole rupee (half up), returning rupees. */
-export function roundToRupee(paise: number): Rupees {
-  return Math.floor((paise + 50) / 100);
+/**
+ * Splits a tax amount by its parts' rates. The first part takes any odd minor unit, so the
+ * parts always add up to the whole (₹27.45 GST → CGST ₹13.73 + SGST ₹13.72).
+ */
+function splitAmount(amountMinor: number, parts: readonly { rateBp: number }[]): number[] {
+  const totalBp = parts.reduce((sum, p) => sum + p.rateBp, 0);
+  const rest = parts.slice(1).map((p) => Math.floor((amountMinor * p.rateBp) / totalBp));
+  return [amountMinor - rest.reduce((sum, n) => sum + n, 0), ...rest];
 }
 
-export function calculateBill(lines: readonly PriceLine[]): Bill {
+/** What a bill needs from a branch: its tax rules and currency. */
+export type BillRules = Pick<Branch, 'tax' | 'currency'>;
+
+/** Charges on a delivery order besides the items. */
+export interface DeliveryCharge {
+  /** In major units; 0 when delivery is free. */
+  fee: Price;
+  /** Taxed like the items (GET /branches › modes.delivery.feeTaxable); otherwise added after tax. */
+  taxable: boolean;
+}
+
+/**
+ * The bill for some lines under a branch's tax rules: the service charge on the item total,
+ * each tax on its base (computed once, then split into its parts), and the total rounded to
+ * the rounding unit with the difference as the round-off line. Prices exclude tax. A delivery
+ * fee is added to the total, and to each tax's base when the branch taxes it (never to the
+ * service charge's).
+ */
+export function calculateBill(
+  lines: readonly PriceLine[],
+  { tax, currency }: BillRules,
+  delivery?: DeliveryCharge,
+): Bill {
+  const { minorUnit } = currency;
   const total = itemTotal(lines);
-  const itemTotalPaise = total * 100;
-  // GST is computed once at 5% so the combined line is exact (₹549 → ₹27.45),
-  // then split; any odd paisa goes to CGST so CGST + SGST always equals GST.
-  const gstPaise = taxPaise(itemTotalPaise, GST_RATE);
-  const sgstPaise = Math.floor(gstPaise / 2);
-  const cgstPaise = gstPaise - sgstPaise;
-  const grossPaise = itemTotalPaise + gstPaise;
-  const payable = roundToRupee(grossPaise);
+  const itemTotalMinor = Math.round(total * minorUnit);
+  const feeMinor = delivery ? Math.round(delivery.fee * minorUnit) : 0;
+  const taxedFeeMinor = delivery?.taxable ? feeMinor : 0;
+  const service = tax.serviceCharge;
+  const serviceMinor = service ? percentOf(itemTotalMinor, service.rateBp) : 0;
+  const billLines: BillLine[] = service
+    ? [
+        {
+          id: 'serviceCharge',
+          labelKey: service.labelKey,
+          vars: { rate: formatRate(service.rateBp) },
+          amountMinor: serviceMinor,
+        },
+      ]
+    : [];
+
+  for (const line of tax.lines) {
+    const items = itemTotalMinor + taxedFeeMinor;
+    const base = line.base === 'items' ? items : items + serviceMinor;
+    const amountMinor = percentOf(base, line.rateBp);
+    const taxLine: BillLine = {
+      id: line.id,
+      labelKey: line.labelKey,
+      vars: { rate: formatRate(line.rateBp) },
+      amountMinor,
+    };
+    if (line.splitInto) {
+      const split = splitAmount(amountMinor, line.splitInto);
+      taxLine.parts = line.splitInto.map((p, i) => ({
+        id: p.id,
+        labelKey: p.labelKey,
+        vars: { rate: formatRate(p.rateBp) },
+        amountMinor: split[i],
+      }));
+    }
+    billLines.push(taxLine);
+  }
+
+  const grossMinor = billLines.reduce((sum, l) => sum + l.amountMinor, itemTotalMinor + feeMinor);
+  const totalMinor = roundTo(grossMinor, tax.rounding.unit);
   return {
     itemCount: itemCount(lines),
     itemTotal: total,
-    itemTotalPaise,
-    cgstPaise,
-    sgstPaise,
-    gstPaise,
-    roundOffPaise: payable * 100 - grossPaise,
-    total: payable,
+    itemTotalMinor,
+    lines: billLines,
+    serviceCharged: Boolean(service),
+    deliveryFeeMinor: delivery ? feeMinor : null,
+    roundOffMinor: totalMinor - grossMinor,
+    showRoundOff: tax.rounding.showRoundOff,
+    totalMinor,
+    total: totalMinor / minorUnit,
   };
 }
 
-/** GST plus round-off in paise — the combined "GST 5% + round off" line. */
-export function taxesAndRoundOffPaise(bill: Bill): number {
-  return bill.gstPaise + bill.roundOffPaise;
-}
+/** Charges, taxes and round off on top of the items (and delivery fee): the one-line summary. */
+export const extrasMinor = (bill: Bill) =>
+  bill.totalMinor - bill.itemTotalMinor - (bill.deliveryFeeMinor ?? 0);
+
+/** Sum of the tax rates (not the service charge), for the "GST {rate}% + round off" label. */
+export const totalTaxRate = (tax: TaxConfig) =>
+  formatRate(tax.lines.reduce((sum, l) => sum + l.rateBp, 0));

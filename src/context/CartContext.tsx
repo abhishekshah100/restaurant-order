@@ -11,7 +11,7 @@ import {
 } from 'react';
 import type { CartAction, CartLine, CartState, LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
-import { useContent, useMenu } from '@/api/hooks';
+import { useBranch, useContent, useMenu } from '@/api/hooks';
 import type { ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
 import type { MenuCatalog } from '@/lib/menu';
@@ -64,7 +64,7 @@ interface CartStore {
   getState: () => StoreState;
   subscribe: (listener: () => void) => () => void;
   dispatch: (action: CartAction) => void;
-  /** Loads the guest session's saved cart. */
+  /** Loads the guest session's saved cart (keeping anything added before the session was known). */
   hydrate: (sessionId: string, cart: CartState) => void;
   /** This dish's lines; the same array until they change. */
   dishLines: (slug: string) => readonly CartLine[];
@@ -93,8 +93,15 @@ function createCartStore(): CartStore {
       return () => listeners.delete(listener);
     },
     dispatch: (action) => update(cartReducer(state.cart, action), state.sessionId),
-    hydrate: (sessionId, cart) =>
-      update(cartReducer(state.cart, { type: 'hydrate', state: cart }), sessionId),
+    hydrate(sessionId, cart) {
+      // Lines added while the guest's session was still opening are theirs: keep them.
+      const early = state.sessionId === null ? state.cart.lines : [];
+      const loaded = early.reduce(
+        (next, line) => cartReducer(next, { type: 'restore', line, index: next.lines.length }),
+        cartReducer(state.cart, { type: 'hydrate', state: cart }),
+      );
+      update(loaded, sessionId);
+    },
     dishLines(slug) {
       const all = state.cart.lines;
       const cached = dishCache.get(slug);
@@ -194,6 +201,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
   const menu = useMenu();
   const t = useContent('cart');
+  const branch = useBranch();
   const [store] = useState(createCartStore);
   const actions = useMemo(
     () => createActions(store, showToast, menu, t),
@@ -226,7 +234,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const storeValue = useMemo(() => ({ store, actions }), [store, actions]);
 
   const value = useMemo<CartContextValue>(() => {
-    const bill = calculateBill(cart.lines);
+    const bill = calculateBill(cart.lines, branch);
     return {
       lines: cart.lines,
       kitchenNote: cart.kitchenNote,
@@ -236,7 +244,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       ...actions,
       linesForDish: (slug) => cart.lines.filter((l) => l.dishSlug === slug),
     };
-  }, [cart, hydrated, actions]);
+  }, [cart, hydrated, actions, branch]);
 
   return (
     <CartStoreContext.Provider value={storeValue}>

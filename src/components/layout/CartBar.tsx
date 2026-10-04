@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useState, type MouseEvent } from 'react';
-import { useContent } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { CartSlideOver } from '@/components/cart/CartSlideOver';
 import { useCart } from '@/hooks/useCart';
+import { useRegionCopy } from '@/hooks/useRegionCopy';
 import { TABLET_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
 import styles from './CartBar.module.css';
 
 export interface CartBarProps {
@@ -22,7 +22,9 @@ export interface CartBarProps {
  */
 export function CartBar({ noNav }: CartBarProps) {
   const t = useContent('common');
+  const { money } = useRegion();
   const { count, bill, hydrated } = useCart();
+  const { currencyName } = useRegionCopy();
   const isTablet = useMediaQuery(TABLET_QUERY);
   const [panelOpen, setPanelOpen] = useState(false);
   const [refocus, setRefocus] = useState(false);
@@ -59,13 +61,13 @@ export function CartBar({ noNav }: CartBarProps) {
       <Link
         href="/cart/"
         className={cx(styles.bar, noNav && styles.noNav, 'hide-desktop')}
-        aria-label={t('cartBar.label', { items, total: bill.itemTotal })}
+        aria-label={t('cartBar.label', { items, total: bill.itemTotal, currencyName })}
         onClick={onClick}
       >
         <Icon name="bag" />
         <span className={styles.ct}>
           <b>
-            {items} · {formatINR(bill.itemTotal)}
+            {items} · {money.format(bill.itemTotal)}
           </b>
           <span>{t('cartBar.taxes')}</span>
         </span>

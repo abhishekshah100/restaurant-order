@@ -1,6 +1,5 @@
-import { useContent } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
 import type { BillSummary } from '@/lib/service';
 import type { BillScope } from '@/types/service';
 import styles from './BillTotals.module.css';
@@ -27,23 +26,24 @@ export function BillTotals({
   className,
 }: BillTotalsProps) {
   const t = useContent('service');
+  const { money } = useRegion();
   const totalLabel = scope === 'mine' ? t('billTotals.mine') : t('billTotals.table');
-  const paid = signed ? `− ${formatINR(bill.paid)}` : formatINR(bill.paid);
+  const paid = signed ? `− ${money.format(bill.paid)}` : money.format(bill.paid);
 
   if (layout === 'tiles') {
     return (
       <dl className={cx(styles.tiles, className)}>
         <div className={styles.tile}>
           <dt>{totalLabel}</dt>
-          <dd>{formatINR(bill.total)}</dd>
+          <dd>{money.format(bill.total)}</dd>
         </div>
         <div className={styles.tile}>
           <dt>{t('billTotals.paid')}</dt>
-          <dd className={styles.ok}>{formatINR(bill.paid)}</dd>
+          <dd className={styles.ok}>{money.format(bill.paid)}</dd>
         </div>
         <div className={styles.tile}>
           <dt>{t('billTotals.balance')}</dt>
-          <dd className={styles.tileBalance}>{formatINR(bill.balance)}</dd>
+          <dd className={styles.tileBalance}>{money.format(bill.balance)}</dd>
         </div>
       </dl>
     );
@@ -54,7 +54,7 @@ export function BillTotals({
       {!balanceOnly && (
         <div className={styles.row}>
           <dt>{totalLabel}</dt>
-          <dd>{formatINR(bill.total)}</dd>
+          <dd>{money.format(bill.total)}</dd>
         </div>
       )}
       {!balanceOnly && bill.paid > 0 && (
@@ -65,7 +65,7 @@ export function BillTotals({
       )}
       <div className={styles.total}>
         <dt>{t('billTotals.balance')}</dt>
-        <dd>{formatINR(bill.balance)}</dd>
+        <dd>{money.format(bill.balance)}</dd>
       </div>
     </dl>
   );

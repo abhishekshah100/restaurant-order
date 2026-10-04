@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Icon, VegMark } from '@/components/ui';
-import { useContent, useMenu } from '@/api/hooks';
+import { useBranch, useContent, useMenu } from '@/api/hooks';
 import { useFilters } from '@/context/FiltersContext';
 import { cx } from '@/lib/cx';
+import { isVegMark } from '@/lib/menu';
 import type { CategoryId } from '@/types/menu';
 import { useFilterActions } from './useFilterActions';
 import styles from './CategorySidebar.module.css';
@@ -22,6 +23,7 @@ export function CategorySidebar({ active, showAllergyNote }: CategorySidebarProp
   const { filters } = useFilters();
   const { toggleDiet, toggleFlag } = useFilterActions();
   const { categories, categoryCount } = useMenu();
+  const { dietary } = useBranch();
   const t = useContent('menu');
 
   return (
@@ -55,20 +57,16 @@ export function CategorySidebar({ active, showAllergyNote }: CategorySidebarProp
           <span id="diet-title" className={cx('t-caption c3', styles.dietTitle)}>
             {t('filters.dietary')}
           </span>
-          <DietCheck
-            label={t('filters.vegOnly')}
-            checked={filters.diet === 'veg'}
-            onToggle={() => toggleDiet('veg')}
-          >
-            <VegMark veg decorative />
-          </DietCheck>
-          <DietCheck
-            label={t('filters.nonVegOnly')}
-            checked={filters.diet === 'nonveg'}
-            onToggle={() => toggleDiet('nonveg')}
-          >
-            <VegMark veg={false} decorative />
-          </DietCheck>
+          {dietary.marks.map((mark) => (
+            <DietCheck
+              key={mark}
+              label={t(`filters.diet.${mark}.only`)}
+              checked={filters.diet === mark}
+              onToggle={() => toggleDiet(mark)}
+            >
+              <VegMark veg={isVegMark(mark)} decorative />
+            </DietCheck>
+          ))}
           <DietCheck
             label={t('filters.spicy')}
             checked={filters.spicy}

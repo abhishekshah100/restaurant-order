@@ -25,7 +25,15 @@
     "eta": "Ready in about {time}",
     "etaAfterOrder": "Ready in about {time} after you order",
     "totalLabel": "Total incl. taxes",
-    "checkout": "Checkout"
+    "checkout": "Checkout",
+    "etaMode": {
+      "takeaway": "Ready for pickup in about {minutes} min",
+      "delivery": "Delivered in about {minutes} min"
+    },
+    "etaModeAfterOrder": {
+      "takeaway": "Ready for pickup about {minutes} min after you order",
+      "delivery": "At your door about {minutes} min after you order"
+    }
   },
   "line": {
     "each": "{price} each",
@@ -47,10 +55,9 @@
   },
   "panel": {
     "title": "Your order",
-    "table": "Table {table}",
-    "tableWithCount": "Table {table} · {items}",
-    "sharedNote": "This cart is yours. Others at Table {table} order separately.",
-    "review": "Review & checkout"
+    "sharedNote": "This cart is yours. Others at {visit} order separately.",
+    "review": "Review & checkout",
+    "visitWithCount": "{visit} · {items}"
   },
   "empty": {
     "title": "Your cart is empty",
@@ -70,19 +77,46 @@
   "priceSummary": {
     "itemTotal": "Item total",
     "itemTotalWithCount": "Item total ({count})",
-    "cgst": "CGST (2.5%)",
-    "sgst": "SGST (2.5%)",
+    "lines": {
+      "cgst": "CGST ({rate}%)",
+      "sgst": "SGST ({rate}%)",
+      "gst": "CGST + SGST ({rate}%)",
+      "serviceCharge": "Service charge ({rate}%)",
+      "vat": "VAT ({rate}%)"
+    },
+    "compact": {
+      "gst": "GST {rate}% + round off",
+      "serviceAndVat": "Service charge, VAT + round off"
+    },
     "serviceCharge": "Service charge",
     "notAdded": "Not added",
     "roundOff": "Round off",
-    "gstCombined": "CGST + SGST (5%)",
-    "gstAndRoundOff": "GST 5% + round off",
-    "toPay": "To pay"
+    "toPay": "To pay",
+    "deliveryFee": "Delivery fee",
+    "deliveryFree": "Free"
   },
   "toast": {
     "added": "{dish} added",
     "removed": "{dish} removed",
     "unknownItem": "Item",
     "undo": "Undo"
+  },
+  "minOrder": {
+    "title": "Add {amount} more to check out",
+    "takeaway": "The minimum order for takeaway is {minimum}.",
+    "delivery": "The minimum order for delivery to {area} is {minimum}.",
+    "browse": "Add more items"
+  },
+  "delivery": {
+    "title": "Delivery area",
+    "label": "Deliver to",
+    "placeholder": "Choose your area",
+    "zone": "{zone} · arrives in about {minutes} min",
+    "freeAbove": "Free delivery on orders above {amount}",
+    "freeUnlocked": "You've unlocked free delivery",
+    "addForFree": "Add {amount} more for free delivery",
+    "chooseFirst": "Choose your area to see the delivery fee",
+    "pending": "Checking delivery…",
+    "required": "Choose your delivery area first"
   }
 }

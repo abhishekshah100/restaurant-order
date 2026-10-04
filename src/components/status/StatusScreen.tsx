@@ -5,7 +5,7 @@ import { Banner, Button, Icon, type IconName } from '@/components/ui';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent } from '@/api/hooks';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
 import { cx } from '@/lib/cx';
 import { compactTimeRange } from '@/lib/restaurantStatus';
@@ -77,7 +77,7 @@ function StatusCard({
 }
 
 function ClosedCard() {
-  const restaurant = useRestaurant();
+  const branch = useBranch();
   const t = useContent('status');
   return (
     <StatusCard
@@ -88,19 +88,19 @@ function ClosedCard() {
       lede={t.rich(
         'closed.lede',
         { b: (c) => <b className={styles.ink}>{c}</b> },
-        { time: restaurant.opensAt, opensIn: restaurant.opensIn },
+        { time: branch.opensAt, opensIn: branch.opensIn },
       )}
       actions={
         <>
           <Button href="/menu/">{t('closed.browse')}</Button>
-          <Button href={restaurant.phoneHref} variant="secondary" iconStart="phone">
+          <Button href={branch.phoneHref} variant="secondary" iconStart="phone">
             {t('closed.call')}
           </Button>
         </>
       }
     >
       <dl className={styles.hours} aria-label={t('closed.hoursLabel')}>
-        {restaurant.serviceWindows.map((w) => (
+        {branch.serviceWindows.map((w) => (
           <div key={w.label} className={styles.hour}>
             <dt className={styles.hourLabel}>{w.label}</dt>
             <dd className={styles.hourValue}>
@@ -114,7 +114,7 @@ function ClosedCard() {
             <span className="hide-desktop">{t('closed.lastOrderMobile')}</span>
             <span className="hide-mobile">{t('closed.lastOrderDesktop')}</span>
           </dt>
-          <dd className={styles.hourValue}>{restaurant.lastOrdersNote}</dd>
+          <dd className={styles.hourValue}>{branch.lastOrdersNote}</dd>
         </div>
       </dl>
     </StatusCard>
@@ -122,7 +122,7 @@ function ClosedCard() {
 }
 
 function PausedCard() {
-  const restaurant = useRestaurant();
+  const branch = useBranch();
   const { openRequest } = useServiceRequest();
   const t = useContent('status');
   return (
@@ -136,7 +136,7 @@ function PausedCard() {
             {t.rich(
               'paused.ledeMobile',
               { b: (c) => <b className={styles.ink}>{c}</b> },
-              { minutes: restaurant.pausedForMinutes },
+              { minutes: branch.pausedForMinutes },
             )}
           </span>
           <span className="hide-mobile">{t('paused.ledeDesktop')}</span>
@@ -164,7 +164,7 @@ function PausedCard() {
 const RECHECK_MS = 800;
 
 function OfflineCard() {
-  const restaurant = useRestaurant();
+  const branch = useBranch();
   const { retry } = useOrderingAvailability();
   const t = useContent('status');
   const [checking, setChecking] = useState(false);
@@ -203,7 +203,7 @@ function OfflineCard() {
       <p className={styles.wifi}>
         <Icon name="info" size="sm" className="c2" />
         <span className="t-small">
-          {t.rich('offline.wifi', { b: (c) => <b>{c}</b> }, { wifi: restaurant.wifiName })}
+          {t.rich('offline.wifi', { b: (c) => <b>{c}</b> }, { wifi: branch.wifiName })}
         </span>
       </p>
     </StatusCard>

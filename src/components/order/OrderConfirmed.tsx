@@ -2,13 +2,12 @@
 
 import { Button, EmptyState, Icon, Skeleton, Tag } from '@/components/ui';
 import { SiteHeader } from '@/components/layout/SiteHeader';
-import { useContent, useOrderHistory, useRestaurant } from '@/api/hooks';
-import { useOrders } from '@/context/OrdersContext';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { useFinishPlacedOrder } from '@/hooks/usePlaceOrder';
 import { cx } from '@/lib/cx';
-import { formatINR, formatTime } from '@/lib/format';
-import { findOrder } from '@/lib/orders';
+import { TRACK_STEPS, stepKey, unpaidLabel } from '@/lib/orders';
 import type { Order } from '@/types/order';
+import { useLiveOrder } from './useLiveOrders';
 import styles from './OrderConfirmed.module.css';
 
 function PaymentTag({ order }: { order: Order }) {
@@ -17,21 +16,42 @@ function PaymentTag({ order }: { order: Order }) {
     <Tag variant="ok">{t('payment.paidOnline')}</Tag>
   ) : (
     <Tag variant="warn" icon={null}>
-      {t('payment.payAtCounter')}
+      {t(`payment.${unpaidLabel(order.payment.method)}`)}
     </Tag>
   );
 }
 
-/** Order placed (13 · w13). */
-export function OrderConfirmed({ id }: { id: string }) {
-  const restaurant = useRestaurant();
+/** The first and last summary wells: the table and kitchen time (dine-in), the pickup time, or the delivery area and ETA. */
+function useModeWells(order: Order): { first: [string, string]; last: [string, string] } {
+  const branch = useBranch();
+  const { clock } = useRegion();
   const t = useContent('orders');
-  const { placed, hydrated } = useOrders();
-  const history = useOrderHistory();
-  useFinishPlacedOrder(id);
-  const order = hydrated ? findOrder(id, placed, history) : undefined;
+  const common = useContent('common');
+  if (order.mode === 'takeaway' && order.pickup) {
+    return {
+      first: [t('confirmed.mode'), common('modes.takeaway')],
+      last: [t('confirmed.pickupAt'), clock.time(order.pickup.at)],
+    };
+  }
+  if (order.mode === 'delivery' && order.delivery) {
+    return {
+      first: [t('confirmed.deliverTo'), order.delivery.address.area],
+      last: [t('confirmed.arrivesIn'), t('shared.minutes', { minutes: order.etaMinutes ?? 1 })],
+    };
+  }
+  return {
+    first: [t('shared.tableLabel'), t('shared.table', { table: order.table ?? '' })],
+    last: [t('confirmed.readyIn'), order.estimate ?? branch.prepTime],
+  };
+}
 
-  if (!hydrated) {
+/** Order placed (13 · w13); takeaway and delivery show their pickup time or area and ETA. */
+export function OrderConfirmed({ id }: { id: string }) {
+  const t = useContent('orders');
+  const lookup = useLiveOrder(id);
+  useFinishPlacedOrder(id);
+
+  if (lookup.state === 'loading') {
     return (
       <div className={styles.page}>
         <SiteHeader />
@@ -49,7 +69,7 @@ export function OrderConfirmed({ id }: { id: string }) {
     );
   }
 
-  if (!order) {
+  if (lookup.state === 'missing') {
     return (
       <div className={styles.page}>
         <SiteHeader />
@@ -68,9 +88,17 @@ export function OrderConfirmed({ id }: { id: string }) {
     );
   }
 
-  const placedAt = formatTime(order.placedAt);
-  const estimate = order.estimate ?? restaurant.prepTime;
+  return <Confirmed order={lookup.order} />;
+}
+
+function Confirmed({ order }: { order: Order }) {
+  const branch = useBranch();
+  const { money, clock } = useRegion();
+  const t = useContent('orders');
+  const wells = useModeWells(order);
+  const placedAt = clock.time(order.placedAt);
   const trackHref = `/order/${order.id}/track/`;
+  const steps = TRACK_STEPS[order.mode];
 
   return (
     <div className={styles.page}>
@@ -87,12 +115,12 @@ export function OrderConfirmed({ id }: { id: string }) {
 
         <dl className={styles.wells} aria-label={t('confirmed.summary')}>
           <div className={styles.well}>
-            <dt className="t-caption c3">{t('shared.tableLabel')}</dt>
-            <dd>{t('shared.table', { table: order.table })}</dd>
+            <dt className="t-caption c3">{wells.first[0]}</dt>
+            <dd>{wells.first[1]}</dd>
           </div>
           <div className={styles.well}>
             <dt className="t-caption c3">{t('totals.total')}</dt>
-            <dd>{formatINR(order.total)}</dd>
+            <dd>{money.format(order.total)}</dd>
           </div>
           <div className={styles.well}>
             <dt className="t-caption c3">{t('payment.title')}</dt>
@@ -101,8 +129,8 @@ export function OrderConfirmed({ id }: { id: string }) {
             </dd>
           </div>
           <div className={styles.well}>
-            <dt className="t-caption c3">{t('confirmed.readyIn')}</dt>
-            <dd>{estimate}</dd>
+            <dt className="t-caption c3">{wells.last[0]}</dt>
+            <dd>{wells.last[1]}</dd>
           </div>
         </dl>
 
@@ -114,12 +142,15 @@ export function OrderConfirmed({ id }: { id: string }) {
             <i />
           </div>
           <ol className={styles.segLabels} aria-label={t('shared.orderProgress')}>
-            <li className={styles.on} aria-current="step">
-              {t('steps.received')}
-            </li>
-            <li>{t('steps.preparing')}</li>
-            <li>{t('steps.ready')}</li>
-            <li>{t('steps.served')}</li>
+            {steps.map((step, i) => (
+              <li
+                key={step}
+                className={i === 0 ? styles.on : undefined}
+                aria-current={i === 0 ? 'step' : undefined}
+              >
+                {t(`steps.${stepKey(order.mode, step)}`)}
+              </li>
+            ))}
           </ol>
         </div>
 
@@ -133,7 +164,7 @@ export function OrderConfirmed({ id }: { id: string }) {
         </div>
         <p className={cx('t-small c3', styles.byline)}>
           {t('confirmed.byline', {
-            restaurant: restaurant.name,
+            restaurant: branch.name,
             time: placedAt,
             name: order.customerName,
           })}

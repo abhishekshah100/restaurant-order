@@ -1,10 +1,12 @@
-import { queryOptions } from '@tanstack/react-query';
+import { queryOptions, skipToken } from '@tanstack/react-query';
+import { TRACK_REFRESH_MS } from '@/lib/orders';
+import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
 import type { Restaurant } from '@/types/restaurant';
-import { toOrderHistory } from './adapters';
 import { apiGet } from './client';
+import { api } from './endpoints';
 import type common from '../../public/api/content/common.json';
 import type home from '../../public/api/content/home.json';
 import type menu from '../../public/api/content/menu.json';
@@ -51,36 +53,40 @@ export const contentQuery = <N extends ContentNamespace>(ns: N) =>
 
 /* ---------- Domain data ---------- */
 
-/** GET /restaurant: profile, opening hours and live status. The status can change at any time. */
+/** GET /restaurant: the brand (name, tagline, social links, default branch). */
 export const restaurantQuery = () =>
   queryOptions({
     queryKey: ['restaurant'] as const,
     queryFn: () => apiGet<Restaurant>('restaurant'),
+    staleTime: Infinity,
+  });
+
+/** GET /branches: every location with its hours, region rules and live status, which can change at any time. */
+export const branchesQuery = () =>
+  queryOptions({
+    queryKey: ['branches'] as const,
+    queryFn: () => apiGet<Branch[]>('branches'),
     staleTime: 60_000,
     refetchOnWindowFocus: true,
   });
 
-/** GET /menu: categories, dishes and the curated dish lists. */
-export const menuQuery = () =>
+/** GET /branches/:id/menu: one branch's categories, dishes (in its currency) and curated lists. */
+export const branchMenuQuery = (branchId: string) =>
   queryOptions({
-    queryKey: ['menu'] as const,
-    queryFn: () => apiGet<MenuData>('menu'),
+    queryKey: ['branches', branchId, 'menu'] as const,
+    queryFn: () => apiGet<MenuData>(`branches/${branchId}/menu`),
     staleTime: Infinity,
   });
 
-// A stable reference, so TanStack Query memoises the adapted result.
-const selectOrderHistory = (raw: OrdersResponse) => toOrderHistory(raw);
-
 /**
- * GET /orders: the guest's order history and the id pool for new orders. The cache keeps
- * the response as sent; `select` adapts it on read (toOrderHistory), so relative mock
- * dates are worked out in the browser, not frozen at build time.
+ * GET /orders: the drawn order history (each order names its branch) and the id pool for new
+ * orders. It's the mock server's seed (api/mock/seed), not read by screens: they read orders
+ * through the server-owned endpoints below. Also lists the order pages to prerender.
  */
 export const orderHistoryQuery = () =>
   queryOptions({
     queryKey: ['orders', 'history'] as const,
     queryFn: () => apiGet<OrdersResponse>('orders'),
-    select: selectOrderHistory,
     staleTime: Infinity,
   });
 
@@ -90,4 +96,64 @@ export const helpQuery = () =>
     queryKey: ['help'] as const,
     queryFn: () => apiGet<HelpTopics>('help'),
     staleTime: Infinity,
+  });
+
+/* ---------- Server-owned reads (api/contracts) ---------- */
+
+/*
+ * These change on the server (orders move along, other tabs pay or ask for the bill), so they
+ * are never stale for long: refetched on mount and when the guest comes back to the tab.
+ * Keys start with 'orders' / 'service-requests' so a write can invalidate them together.
+ */
+
+/** GET /orders/:id: one order with its live status; polled every 30 s while `live`. */
+export const orderQuery = (id: string) =>
+  queryOptions({
+    queryKey: ['orders', 'detail', id] as const,
+    queryFn: () => api.getOrder(id),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) => (query.state.data?.live ? TRACK_REFRESH_MS : false),
+  });
+
+/** GET /sessions/:id/orders: the guest's orders (My orders); polled while any is live. */
+export const sessionOrdersQuery = (sessionId: string | undefined) =>
+  queryOptions({
+    queryKey: ['orders', 'session', sessionId] as const,
+    queryFn: sessionId ? () => api.sessionOrders(sessionId) : skipToken,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) =>
+      query.state.data?.orders.some((o) => o.live) ? TRACK_REFRESH_MS : false,
+  });
+
+/** GET /tables/:branchId/:table/orders: this visit's orders at the table (the bill). */
+export const tableOrdersQuery = (branchId: string, table: number, enabled: boolean) =>
+  queryOptions({
+    queryKey: ['orders', 'table', branchId, table] as const,
+    queryFn: enabled ? () => api.tableOrders(branchId, table) : skipToken,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+/**
+ * POST /delivery/quote: the fee, minimum order and ETA of delivering an item total to an area.
+ * A calculation the server owns, read like a query: idle until there's an area, and the last
+ * quote for the same area is shown while the total changes.
+ */
+export const deliveryQuoteQuery = (branchId: string, area: string | undefined, itemTotal: number) =>
+  queryOptions({
+    queryKey: ['delivery-quote', branchId, area, itemTotal] as const,
+    queryFn: area ? () => api.quoteDelivery({ branchId, area, itemTotal }) : skipToken,
+    staleTime: 60_000,
+    placeholderData: (previous) => (previous?.area === area ? previous : undefined),
+  });
+
+/** GET /sessions/:id/service-requests: this guest's pending waiter and bill requests. */
+export const serviceRequestsQuery = (sessionId: string | undefined) =>
+  queryOptions({
+    queryKey: ['service-requests', sessionId] as const,
+    queryFn: sessionId ? () => api.serviceRequests(sessionId) : skipToken,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });

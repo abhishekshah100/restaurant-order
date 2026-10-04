@@ -1,0 +1,28 @@
+.pill {
+  composes: pill from '@/components/ui/TablePill/TablePill.module.css';
+  min-width: 0;
+}
+/* Takeaway / delivery and "Choose outlet": the pill is a control */
+.action {
+  position: relative;
+  border: 0;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast);
+}
+.action::before {
+  /* 44px touch target around the 32px pill */
+  content: '';
+  position: absolute;
+  inset: -6px -2px;
+}
+@media (hover: hover) {
+  .action:hover {
+    background: var(--line);
+  }
+}
+.text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

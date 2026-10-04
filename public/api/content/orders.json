@@ -23,7 +23,8 @@
       "one": "{count} order",
       "other": "{count} orders"
     },
-    "status": "Status"
+    "status": "Status",
+    "modeLabel": "How"
   },
   "shell": {
     "backToOrders": "Back to my orders",
@@ -37,7 +38,11 @@
     "received": "Received",
     "preparing": "Preparing",
     "ready": "Ready",
-    "served": "Served"
+    "served": "Served",
+    "pickedUp": "Picked up",
+    "outForDelivery": "Out for delivery",
+    "delivered": "Delivered",
+    "readyForPickup": "Ready for pickup"
   },
   "itemStatus": {
     "queued": "In queue"
@@ -70,13 +75,17 @@
     "payingAtCounter": "Paying at the counter",
     "refunded": "Refunded",
     "refundStarted": "Refund started",
-    "methodUpi": "UPI",
-    "methodCard": "Card"
+    "paidAtPickup": "Paid at pickup",
+    "paidOnDelivery": "Paid on delivery",
+    "payAtPickup": "Pay at pickup",
+    "cashOnDelivery": "Cash on delivery"
   },
   "totals": {
     "total": "Total",
     "totalPaid": "Total paid",
-    "toPayAtCounter": "To pay at counter"
+    "toPayAtCounter": "To pay at counter",
+    "toPayAtPickup": "To pay at pickup",
+    "toPayOnDelivery": "To pay on delivery"
   },
   "actions": {
     "callWaiter": "Call waiter",
@@ -96,7 +105,7 @@
     "yourItems": "Your items",
     "detailsLabel": "Order #{id} details",
     "details": "Details",
-    "meta": "Table {table} · Placed {time} · {payment}",
+    "meta": "{visit} · Placed {time} · {payment}",
     "hero": {
       "readyLabel": "Your food is",
       "readyBody": "Your dishes were ready at {time}. They're on their way to Table {table}.",
@@ -106,6 +115,25 @@
       "estimateLabel": "Usually ready in",
       "preparingBody": "The chef started on your dishes at {time}. We'll bring them to Table {table}.",
       "receivedBody": "The kitchen has your order and will start on it shortly. We'll bring it to Table {table}."
+    },
+    "atCounter": "At the counter",
+    "atDoor": "At your door",
+    "takeaway": {
+      "readyAtLabel": "Ready for pickup at",
+      "receivedBody": "The kitchen has your order. It'll be packed and waiting at the counter.",
+      "preparingBody": "The chef started on your order at {time}. It'll be packed and waiting at the counter.",
+      "readyLabel": "Your order is",
+      "readyBody": "Packed and waiting since {time}. Show order #{id} at the counter.",
+      "pickedUpLabel": "Enjoy your meal",
+      "pickedUpBody": "Collected at {time}. Thanks for ordering from {branch}."
+    },
+    "delivery": {
+      "etaLabel": "Arriving in about",
+      "receivedBody": "The kitchen has your order. It'll leave for {area} as soon as it's ready.",
+      "preparingBody": "The chef started on your order at {time}. A rider will pick it up next.",
+      "outBody": "{rider} picked up your order at {time} and is on the way to {area}.",
+      "deliveredLabel": "Enjoy your meal",
+      "deliveredBody": "Delivered to {area} at {time}."
     }
   },
   "confirmed": {
@@ -115,7 +143,11 @@
     "readyIn": "Ready in",
     "trackOrder": "Track order",
     "orderMore": "Order something else",
-    "byline": "{restaurant} · Placed at {time} by {name}"
+    "byline": "{restaurant} · Placed at {time} by {name}",
+    "pickupAt": "Pickup at",
+    "arrivesIn": "Arrives in",
+    "deliverTo": "Deliver to",
+    "mode": "Order type"
   },
   "cancelled": {
     "title": "The kitchen had to cancel this order",
@@ -126,7 +158,7 @@
     "contactRestaurant": "Contact restaurant",
     "items": "Items",
     "refund": {
-      "toUpi": "your UPI account",
+      "toAccount": "your {method} account",
       "toYou": "you",
       "started": "Refund of {amount} started to {to}. It usually arrives in 3–5 working days.",
       "done": "{amount} was refunded to {to}.",
@@ -136,7 +168,7 @@
   "details": {
     "title": "Order details",
     "heading": "<hidden>Order </hidden>#{id}",
-    "meta": "{restaurant} · Table {table} · {day}, {time} · {name}",
+    "meta": "{restaurant} · {visit} · {day}, {time} · {name}",
     "today": "Today",
     "viewTimeline": "View timeline",
     "trackLive": "Track live",
@@ -173,5 +205,27 @@
     },
     "lede": "Orders placed from this device at {restaurant}",
     "newOrder": "New order"
+  },
+  "fulfilment": {
+    "pickupTitle": "Pickup from",
+    "pickupAt": "Ready for pickup at {time}",
+    "pickupAsap": "As soon as possible · ready around {time}",
+    "directions": "Get directions",
+    "directionsLabel": "Get directions to {branch} (opens your maps app)",
+    "callRestaurant": "Call restaurant",
+    "deliveryTitle": "Delivering to",
+    "landmark": "Near {landmark}",
+    "instructions": "“{text}”",
+    "expected": "Expected by {time}",
+    "riderTitle": "Your rider",
+    "callRider": "Call rider",
+    "callRiderLabel": "Call {name}, your rider",
+    "riderSoon": "A rider will be assigned when your order is ready.",
+    "deliveryFee": "Delivery fee {fee}",
+    "addressLabel": {
+      "home": "Home",
+      "work": "Work",
+      "other": "Other"
+    }
   }
 }

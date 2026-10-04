@@ -1,0 +1,5 @@
+.page {
+  display: grid;
+  place-items: center;
+  padding: 72px 16px;
+}

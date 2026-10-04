@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AddControl } from '@/components/menu/AddControl';
 import { VegMark } from '@/components/ui';
 import { useCart } from '@/hooks/useCart';
-import { formatINR } from '@/lib/format';
-import { useContent, useMenu } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { dishImage, isAvailable, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import styles from './CartSuggestions.module.css';
@@ -20,6 +19,7 @@ export function CartSuggestions() {
   const { cartSuggestions, getDish } = useMenu();
   const { lines } = useCart();
   const t = useContent('cart');
+  const { money } = useRegion();
   const [initialSlugs] = useState(() => new Set(lines.map((l) => l.dishSlug)));
   const listRef = useRef<HTMLUListElement>(null);
   const picks = cartSuggestions
@@ -80,7 +80,7 @@ export function CartSuggestions() {
               </span>
               <span className={styles.name}>{dish.name}</span>
               <span className={styles.foot}>
-                <span className={styles.price}>{formatINR(startingPrice(dish))}</span>
+                <span className={styles.price}>{money.format(startingPrice(dish))}</span>
                 <AddControl dish={dish} size="icon" className={styles.control} />
               </span>
             </li>

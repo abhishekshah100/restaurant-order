@@ -19,10 +19,16 @@
     "quickFilters": "Quick filters",
     "dietary": "Dietary",
     "all": "All",
-    "veg": "Veg",
-    "nonVeg": "Non-veg",
-    "vegOnly": "Veg only",
-    "nonVegOnly": "Non-veg only",
+    "diet": {
+      "veg": {
+        "chip": "Veg",
+        "only": "Veg only"
+      },
+      "nonveg": {
+        "chip": "Non-veg",
+        "only": "Non-veg only"
+      }
+    },
     "chefsPicks": "Chef's picks",
     "spicy": "Spicy",
     "under": "Under {price}",
@@ -166,5 +172,9 @@
       "popular": "Popular at The Olive Table",
       "browse": "Browse by category"
     }
+  },
+  "notOnMenu": {
+    "title": "Not on the menu here",
+    "body": "This branch doesn't serve it. Have a look at what's cooking today."
   }
 }

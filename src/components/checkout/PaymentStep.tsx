@@ -5,15 +5,16 @@ import { useRouter } from 'next/navigation';
 import type { FormEvent } from 'react';
 import { PriceSummary } from '@/components/cart/PriceSummary';
 import { Button, Icon } from '@/components/ui';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { useCheckout } from '@/context/CheckoutContext';
-import { useCart } from '@/hooks/useCart';
 import { useCheckoutGuard } from '@/hooks/useCheckoutGuard';
-import { usePlaceOrderState } from '@/hooks/usePlaceOrder';
-import { useTable } from '@/hooks/useTable';
+import { useOrderBill } from '@/hooks/useFulfilment';
+import { usePayCheckout } from '@/hooks/usePayCheckout';
+import { useVisitLabel } from '@/hooks/useVisitLabel';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
-import type { PaymentMethod } from '@/types/order';
+import { modePayments } from '@/lib/fulfilment';
+import { PAYMENT_METHODS, isOnlineMethod, pickMethod } from '@/lib/payments';
+import type { PaymentMethodId } from '@/types/branch';
 import { CheckoutFrame } from './CheckoutFrame';
 import { OrderSummaryPanel } from './OrderSummaryPanel';
 import { PaymentMethods, type PaymentMethodOption } from './PaymentMethods';
@@ -23,7 +24,7 @@ import styles from './Checkout.module.css';
 export function PaymentStep() {
   const ready = useCheckoutGuard('pay');
   const { session } = useCheckout();
-  const table = useTable();
+  const visit = useVisitLabel();
   const t = useContent('checkout');
   return (
     <CheckoutFrame
@@ -36,7 +37,7 @@ export function PaymentStep() {
           variant="combined"
           totalLabel={t('payment.amountPayable')}
           editable={false}
-          footnote={t('lines.nameTable', { name: session.name, table })}
+          footnote={t('lines.nameVisit', { name: session.name, visit })}
         />
       }
     >
@@ -46,50 +47,41 @@ export function PaymentStep() {
 }
 
 function PaymentForm() {
-  const restaurant = useRestaurant();
+  const branch = useBranch();
+  const { money } = useRegion();
   const router = useRouter();
-  const table = useTable();
-  const { bill } = useCart();
-  const { session, setMethod, startPayment } = useCheckout();
-  const { placeOrder, placing } = usePlaceOrderState();
+  const visit = useVisitLabel();
+  const { bill, mode } = useOrderBill();
+  const { session, setMethod } = useCheckout();
+  const { start, placeOrder, placing } = usePayCheckout();
   const t = useContent('checkout');
   const cartText = useContent('cart');
-  const method = session.method;
+  // The methods for how the guest orders (GET /branches › payments.checkout or modes.<mode>.payments).
+  const options = modePayments(branch, mode);
+  const method = pickMethod(options, session.method);
+  const online = isOnlineMethod(method);
 
-  const onSubmit = (event: FormEvent) => {
+  const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (placing) return;
-    if (method === 'online') {
-      startPayment();
-      router.push('/checkout/processing/');
-    } else {
-      placeOrder('counter');
-    }
+    if (!online) placeOrder(method);
+    else if (await start(method)) router.push('/checkout/processing/');
   };
 
-  const methods: PaymentMethodOption<PaymentMethod>[] = [
-    {
-      id: 'online',
-      title: t('payment.methods.online.title'),
-      mobileSub: t('payment.methods.online.mobileSub'),
-      desktopSub: t('payment.methods.online.desktopSub'),
-      icon: 'mobile',
-      tag: t('payment.fastest'),
-    },
-    {
-      id: 'counter',
-      title: t('payment.methods.counter.title'),
-      mobileSub: t('payment.methods.counter.mobileSub'),
-      desktopSub: t('payment.methods.counter.mobileSub'),
-      icon: 'cash',
-    },
-  ];
+  // Described in content (checkout › payment.methods).
+  const methods: PaymentMethodOption<PaymentMethodId>[] = options.map((o) => ({
+    id: o.id,
+    title: t(`payment.methods.${o.labelKey}.title`),
+    mobileSub: t(`payment.methods.${o.labelKey}.mobileSub`),
+    desktopSub: t(`payment.methods.${o.labelKey}.desktopSub`),
+    icon: PAYMENT_METHODS[o.id].icon,
+    tag: o.recommended ? t('payment.fastest') : undefined,
+  }));
 
-  const total = formatINR(bill.total);
-  const payLabel =
-    method === 'online' ? t('payment.payOnline', { total }) : t('payment.placeOrder', { total });
-  const payIcon = method === 'online' ? 'lock' : undefined;
-  const secured = t('payment.secured', { partner: restaurant.paymentPartner });
+  const total = money.format(bill.total);
+  const payLabel = online ? t('payment.payOnline', { total }) : t('payment.placeOrder', { total });
+  const payIcon = online ? 'lock' : undefined;
+  const secured = t('payment.secured', { partner: branch.paymentPartner });
 
   return (
     <form className={styles.stack} onSubmit={onSubmit} noValidate>
@@ -105,7 +97,7 @@ function PaymentForm() {
       <section className={cx(styles.payCard, 'hide-desktop')} aria-label={t('summary.title')}>
         <div className={styles.payCardHead}>
           <span className="t-small c2">
-            {t('lines.restaurantTable', { restaurant: restaurant.name, table })}
+            {t('lines.restaurantVisit', { restaurant: branch.name, visit })}
           </span>
           <span className="t-small c2">{cartText.plural('itemCount', bill.itemCount)}</span>
         </div>

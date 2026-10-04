@@ -1,7 +1,7 @@
 'use client';
 
 import { Banner } from '@/components/ui';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent } from '@/api/hooks';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
 import { cx } from '@/lib/cx';
 import type { OrderingState } from '@/types/restaurant';
@@ -14,7 +14,7 @@ export interface StateBannerProps {
 
 /** The banner for one restaurant state (ws02 paused, s03 · ws03 offline; closed follows the same pattern). */
 export function StateBanner({ state, className }: StateBannerProps) {
-  const restaurant = useRestaurant();
+  const branch = useBranch();
   const t = useContent('status');
   if (state === 'offline') {
     return (
@@ -27,13 +27,13 @@ export function StateBanner({ state, className }: StateBannerProps) {
   if (state === 'paused') {
     return (
       <Banner tone="warn" icon="clock" live="polite" className={className}>
-        {t('banner.paused', { minutes: restaurant.pausedForMinutes })}
+        {t('banner.paused', { minutes: branch.pausedForMinutes })}
       </Banner>
     );
   }
   return (
     <Banner tone="err" icon="store" live="polite" className={className}>
-      {t('banner.closed', { time: restaurant.opensAt })}
+      {t('banner.closed', { time: branch.opensAt })}
     </Banner>
   );
 }

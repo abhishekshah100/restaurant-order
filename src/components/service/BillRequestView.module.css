@@ -34,10 +34,6 @@
 .cardTitle {
   padding: 16px 0 4px;
 }
-.cardTotals {
-  margin-top: 8px;
-}
-
 .hint {
   font: var(--font-small);
   color: var(--ink-2);

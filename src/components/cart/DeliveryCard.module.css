@@ -1,0 +1,39 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-h3);
+}
+.title > span[aria-hidden] {
+  color: var(--brand-600);
+}
+.detail {
+  margin: -4px 0 0;
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.free {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  font: var(--font-small-strong);
+  color: var(--ink-2);
+}
+.freeOn {
+  background: var(--success-tint);
+  color: var(--success);
+}

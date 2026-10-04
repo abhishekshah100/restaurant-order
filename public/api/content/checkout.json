@@ -14,7 +14,7 @@
     },
     "processing": {
       "title": "Confirming payment",
-      "description": "Approve the payment request in your UPI app."
+      "description": "Approve the payment request to confirm your order."
     }
   },
   "frame": {
@@ -24,16 +24,20 @@
     "backToCart": "Back to cart"
   },
   "lines": {
-    "restaurantTable": "{restaurant} · Table {table}",
-    "itemsTable": "{items} · Table {table}",
-    "nameTable": "{name} · Table {table}",
-    "nameRestaurantTable": "{name} · {restaurant} · Table {table}"
+    "restaurantVisit": "{restaurant} · {visit}",
+    "itemsVisit": "{items} · {visit}",
+    "nameVisit": "{name} · {visit}",
+    "nameRestaurantVisit": "{name} · {restaurant} · {visit}"
   },
   "summary": {
     "title": "Order summary",
     "edit": "Edit",
     "quantity": "{count} × ",
-    "eta": "Ready in about {time}"
+    "eta": "Ready in about {time}",
+    "etaMode": {
+      "takeaway": "Ready for pickup in about {minutes} min",
+      "delivery": "Arrives in about {minutes} min"
+    }
   },
   "details": {
     "title": "Who's ordering?",
@@ -50,13 +54,56 @@
     "errors": {
       "nameRequired": "Please enter your name",
       "nameTooShort": "Enter your full name",
-      "phoneLength": "Enter a 10-digit mobile number",
-      "phonePrefix": "Indian mobile numbers start with 6, 7, 8 or 9"
+      "phoneLength": "Enter a {length}-digit mobile number",
+      "phonePrefix": {
+        "IN": "Indian mobile numbers start with 6, 7, 8 or 9",
+        "NP": "Nepali mobile numbers start with 97 or 98"
+      }
+    },
+    "pickup": {
+      "title": "Pickup time",
+      "label": "When will you collect it?",
+      "asap": "As soon as possible",
+      "asapSub": "Ready around {time}",
+      "later": "Later today",
+      "laterSub": "Choose a pickup time",
+      "slotLabel": "Pickup time",
+      "noAsap": "The kitchen can't take an order for right now. Choose a later time.",
+      "noSlots": "There are no more pickup times today.",
+      "where": "Collect from the counter at {branch} · {address}",
+      "unavailable": "That pickup time is no longer available. Please choose another."
+    },
+    "address": {
+      "title": "Delivery address",
+      "saved": "Saved on this device",
+      "savedLabel": "Saved addresses",
+      "useNew": "Use a new address",
+      "line": "House / flat and street",
+      "linePlaceholder": "e.g. Flat 3B, 12 Lake Road",
+      "area": "Area",
+      "areaPlaceholder": "Choose your area",
+      "landmark": "Landmark",
+      "landmarkPlaceholder": "e.g. Opposite the park",
+      "instructions": "Instructions for the rider",
+      "instructionsPlaceholder": "e.g. Ring the bell twice",
+      "labelTitle": "Save as",
+      "labels": {
+        "home": "Home",
+        "work": "Work",
+        "other": "Other"
+      },
+      "remember": "We'll remember this address on this device for next time.",
+      "errors": {
+        "lineRequired": "Enter your house or flat and street",
+        "areaRequired": "Choose the area we should deliver to"
+      },
+      "notServed": "We don't deliver to that area. Please choose another.",
+      "belowMinimum": "Your order is below the minimum for this area. Add {amount} more."
     }
   },
   "verify": {
     "illustrationCode": "OTP",
-    "sentTo": "We've sent a 6-digit code by SMS to<b>+91 {phone}</b>",
+    "sentTo": "We've sent a 6-digit code by SMS to<b>{dialCode} {phone}</b>",
     "didntGetIt": "Didn't get it?",
     "resendSms": "Resend SMS",
     "getCall": "Get a call",
@@ -93,7 +140,53 @@
       },
       "counter": {
         "title": "Pay at the counter",
-        "mobileSub": "Cash, card or UPI when you leave"
+        "mobileSub": "Cash, card or UPI when you leave",
+        "desktopSub": "Cash, card or UPI when you leave"
+      },
+      "counterNoUpi": {
+        "title": "Pay at the counter",
+        "mobileSub": "Cash or card when you leave",
+        "desktopSub": "Cash or card when you leave"
+      },
+      "esewa": {
+        "title": "eSewa",
+        "mobileSub": "Pay from your eSewa wallet",
+        "desktopSub": "Approve the request in the eSewa app"
+      },
+      "khalti": {
+        "title": "Khalti",
+        "mobileSub": "Pay from your Khalti wallet",
+        "desktopSub": "Approve the request in the Khalti app"
+      },
+      "fonepay": {
+        "title": "Fonepay QR",
+        "mobileSub": "Scan with any mobile banking app",
+        "desktopSub": "Scan the Fonepay QR with any mobile banking app"
+      },
+      "card": {
+        "title": "Debit or credit card",
+        "mobileSub": "Visa or Mastercard",
+        "desktopSub": "Visa, Mastercard or UnionPay"
+      },
+      "pickup": {
+        "title": "Pay at pickup",
+        "mobileSub": "Cash, card or UPI when you collect",
+        "desktopSub": "Cash, card or UPI at the counter when you collect"
+      },
+      "pickupNoUpi": {
+        "title": "Pay at pickup",
+        "mobileSub": "Cash or card when you collect",
+        "desktopSub": "Cash or card at the counter when you collect"
+      },
+      "cod": {
+        "title": "Cash on delivery",
+        "mobileSub": "Pay the rider in cash or UPI",
+        "desktopSub": "Pay the rider in cash or by UPI at your door"
+      },
+      "codNoUpi": {
+        "title": "Cash on delivery",
+        "mobileSub": "Pay the rider in cash",
+        "desktopSub": "Pay the rider in cash at your door"
       }
     },
     "payOnline": "Pay {total}",
@@ -104,8 +197,16 @@
   "processing": {
     "loading": "Loading payment",
     "title": "Confirming your payment",
-    "ledeMobile": "Approve the request in your UPI app. Please don't close this page or press back.",
-    "ledeDesktop": "Approve the request in your UPI app or bank page. Please don't close or refresh this tab.",
+    "lede": {
+      "app": {
+        "mobile": "Approve the request in your {name} app. Please don't close this page or press back.",
+        "desktop": "Approve the request in your {name} app or bank page. Please don't close or refresh this tab."
+      },
+      "bank": {
+        "mobile": "Complete the payment on your bank's page. Please don't close this page or press back.",
+        "desktop": "Complete the payment on your bank's page. Please don't close or refresh this tab."
+      }
+    },
     "amount": "Amount",
     "progressLabel": "Payment progress",
     "requestSent": "Payment request sent",
@@ -121,7 +222,10 @@
   },
   "failed": {
     "title": "Payment didn't go through",
-    "body": "The UPI request expired before it was approved. <b>No money was taken.</b>",
+    "body": {
+      "app": "The {name} request expired before it was approved. <b>No money was taken.</b>",
+      "bank": "The card payment wasn't completed in time. <b>No money was taken.</b>"
+    },
     "saved": "Your order is saved",
     "summaryTotal": "{summary} · {total}",
     "notSent": "Not sent yet",

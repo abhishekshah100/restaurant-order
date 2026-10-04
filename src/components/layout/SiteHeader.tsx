@@ -2,16 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Icon, TablePill } from '@/components/ui';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { Icon } from '@/components/ui';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { useCart } from '@/hooks/useCart';
+import { useRegionCopy } from '@/hooks/useRegionCopy';
 import { useStatusLine } from '@/hooks/useRestaurantStatus';
-import { useTable } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
 import { HeaderSearch } from './HeaderSearch';
 import { CheckoutStepsBar, type CheckoutStep } from './CheckoutSteps';
 import { NAV_ITEMS, isNavActive } from './navItems';
+import { VisitPill } from './VisitPill';
 import styles from './SiteHeader.module.css';
 
 /** minimal: brand and table pill only (restaurant closed / offline, ws01 · ws03). */
@@ -37,10 +37,11 @@ export function SiteHeader({
   className,
 }: SiteHeaderProps) {
   const t = useContent('common');
-  const restaurant = useRestaurant();
+  const branch = useBranch();
+  const { money } = useRegion();
   const pathname = usePathname();
-  const table = useTable();
   const { count, bill, hydrated } = useCart();
+  const { currencyName } = useRegionCopy();
   const status = useStatusLine();
   const isCheckout = variant === 'checkout' || variant === 'payment';
 
@@ -50,7 +51,7 @@ export function SiteHeader({
         <Link href={isCheckout ? '/menu/' : '/'} className={styles.brand}>
           <Icon name="olive" />
           <span>
-            <span className={styles.brandName}>{restaurant.name}</span>
+            <span className={styles.brandName}>{branch.name}</span>
             <span
               className={cx(
                 styles.brandSub,
@@ -97,7 +98,7 @@ export function SiteHeader({
           </span>
         )}
 
-        <TablePill table={table} className={variant === 'minimal' ? styles.pushEnd : undefined} />
+        <VisitPill className={variant === 'minimal' ? styles.pushEnd : undefined} />
 
         {showCart && (
           <Link
@@ -108,12 +109,13 @@ export function SiteHeader({
                 ? t('cart.summaryLabel', {
                     items: t.plural('itemCount', count),
                     total: bill.itemTotal,
+                    currencyName,
                   })
                 : t('cart.emptyLabel')
             }
           >
             <Icon name="bag" size="sm" />
-            {hydrated && count > 0 ? `${count} · ${formatINR(bill.itemTotal)}` : t('cart.label')}
+            {hydrated && count > 0 ? `${count} · ${money.format(bill.itemTotal)}` : t('cart.label')}
           </Link>
         )}
       </div>

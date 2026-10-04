@@ -1,6 +1,5 @@
 import { Tag, VegMark } from '@/components/ui';
-import { formatINR } from '@/lib/format';
-import { useContent, useMenu } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import type { Dish } from '@/types/menu';
 import { TAG_VARIANT, firstHighlight, tagLabel, unavailableTag } from './dishTag';
 import styles from './DishRow.module.css';
@@ -15,6 +14,7 @@ export interface DishTagsProps {
 export function DishTags({ dish, showCategory }: DishTagsProps) {
   const menu = useMenu();
   const t = useContent('menu');
+  const { money } = useRegion();
   if (showCategory) {
     return (
       <span className={styles.metaRow}>
@@ -34,7 +34,7 @@ export function DishTags({ dish, showCategory }: DishTagsProps) {
       ) : dish.combo ? (
         <Tag variant="ok" icon={null}>
           {dish.combo.savings
-            ? t('dish.mealSave', { savings: formatINR(dish.combo.savings) })
+            ? t('dish.mealSave', { savings: money.format(dish.combo.savings) })
             : t('dish.meal')}
         </Tag>
       ) : highlight === 'spicy' ? (

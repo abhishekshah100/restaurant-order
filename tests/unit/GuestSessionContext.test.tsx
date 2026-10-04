@@ -1,16 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { TABLE_SESSION_HOURS } from '@/lib/constants';
+import { TABLE_SESSION_HOURS } from '@/api/mock/rules';
 import { STORAGE_KEYS } from '@/lib/storage';
 import type { GuestSession } from '@/types/session';
-import { ApiTestProvider, seedGuestSession, testRestaurant } from '../apiState';
+import { ApiTestProvider, seedGuestSession, testBranch } from '../apiState';
 
-const { defaultTable } = testRestaurant();
+const { id: defaultBranchId, defaultTable } = testBranch();
+const nepal = testBranch('ktm-thamel');
 
 const HOUR = 3_600_000;
 
-/** Opens the app at `url`: the session is resolved once per page load, so each gets a fresh module. */
+/**
+ * Opens the app at `url` and waits for its session (a new one comes from POST /sessions): the
+ * session is resolved once per page load, so each gets a fresh module.
+ */
 async function openPage(url = '/') {
   window.history.replaceState(null, '', url);
   vi.resetModules();
@@ -24,9 +28,11 @@ async function openPage(url = '/') {
   const { result } = renderHook(() => ({ session: useGuestSession(), table: useTableContext() }), {
     wrapper,
   });
+  // The first request loads the mock server, which can take a moment in a fresh module graph.
+  await waitFor(() => expect(result.current.session).not.toBeNull(), { timeout: 5000 });
   const { session, table } = result.current;
   if (!session) throw new Error('expected a guest session');
-  return { session, table };
+  return { session, table, result };
 }
 
 const stored = () =>
@@ -43,6 +49,7 @@ describe('GuestSessionProvider', () => {
     const { session, table } = await openPage('/?table=7');
     expect(table).toBe(7);
     expect(session).toMatchObject({
+      branchId: defaultBranchId,
       table: 7,
       startedAt: Date.now(),
       expiresAt: Date.now() + TABLE_SESSION_HOURS * HOUR,
@@ -103,8 +110,71 @@ describe('GuestSessionProvider', () => {
     expect((await openPage('/?table=0')).table).toBe(defaultTable);
   });
 
+  it("starts a session at the QR link's branch and table", async () => {
+    const { session, table } = await openPage('/?branch=ktm-thamel&table=5');
+    expect(session).toMatchObject({ branchId: 'ktm-thamel', table: 5 });
+    expect(table).toBe(5);
+    expect(stored()).toEqual(session);
+  });
+
+  it('starts a new session for another branch, even at the same table number', async () => {
+    const india = await openPage('/?table=5');
+    const { session } = await openPage('/?branch=ktm-thamel&table=5');
+    expect(session.id).not.toBe(india.session.id);
+    expect(session.branchId).toBe('ktm-thamel');
+    // Back at the India table: another new session.
+    expect((await openPage('/?table=5')).session).toMatchObject({ branchId: defaultBranchId });
+  });
+
+  it("starts at the branch's default table when the link names only a branch", async () => {
+    const { session } = await openPage('/?branch=ktm-thamel');
+    expect(session).toMatchObject({ branchId: 'ktm-thamel', table: nepal.defaultTable });
+    // Re-opening the branch link keeps that session.
+    expect((await openPage('/?branch=ktm-thamel')).session.id).toBe(session.id);
+  });
+
+  it('falls back to the default branch for an unknown branch', async () => {
+    const { session } = await openPage('/?branch=nowhere&table=7');
+    expect(session).toMatchObject({ branchId: defaultBranchId, table: 7 });
+  });
+
+  it("ignores a table outside the branch's range", async () => {
+    const { session } = await openPage(`/?branch=ktm-thamel&table=${nepal.tables.last + 1}`);
+    expect(session).toMatchObject({ branchId: 'ktm-thamel', table: nepal.defaultTable });
+  });
+
+  it('keeps a session saved before branches, at the default branch', async () => {
+    const { branchId: _branch, ...legacy } = seedGuestSession({ table: 9 });
+    window.localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(legacy));
+    const { session } = await openPage('/menu/');
+    expect(session).toEqual({ ...legacy, branchId: defaultBranchId });
+  });
+
   it('keeps the QR token with the session', async () => {
     expect((await openPage('/?table=7&qr=abc.DEF-123_x')).session.qrToken).toBe('abc.DEF-123_x');
     expect((await openPage('/?table=8&qr=<script>')).session.qrToken).toBeUndefined();
+  });
+
+  it('shows the scanned table while its session opens, and opens it after a reload', async () => {
+    window.history.replaceState(null, '', '/?table=7');
+    vi.resetModules();
+    const { GuestSessionProvider, useGuestSession, useTableContext } =
+      await import('@/context/GuestSessionContext');
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <ApiTestProvider>
+        <GuestSessionProvider>{children}</GuestSessionProvider>
+      </ApiTestProvider>
+    );
+    const { result, unmount } = renderHook(
+      () => ({ session: useGuestSession(), table: useTableContext() }),
+      { wrapper },
+    );
+    // Before POST /sessions answers: the scanned table, no session yet.
+    expect(result.current).toEqual({ session: null, table: 7 });
+    // The page is left before the answer: the next load (without the link) opens it.
+    unmount();
+    const { session } = await openPage('/menu/');
+    expect(session.table).toBe(7);
+    expect(window.sessionStorage.getItem(STORAGE_KEYS.pendingScan)).toBeNull();
   });
 });

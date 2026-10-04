@@ -1,7 +1,6 @@
-import { useContent } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import { Tag } from '@/components/ui';
 import { cx } from '@/lib/cx';
-import { formatINR, formatTime } from '@/lib/format';
 import { isOwnOrder } from '@/lib/orders';
 import { isPaid } from '@/lib/service';
 import type { Order } from '@/types/order';
@@ -17,6 +16,7 @@ export function BillOrderList({
   sessionId: string | undefined;
 }) {
   const t = useContent('service');
+  const { money, clock } = useRegion();
   const who = (order: Order) =>
     isOwnOrder(order, sessionId) ? t('billOrders.you') : order.customerName;
   return (
@@ -29,7 +29,7 @@ export function BillOrderList({
       </div>
       <ul className={styles.list}>
         {orders.map((order) => {
-          const time = formatTime(order.placedAt);
+          const time = clock.time(order.placedAt);
           return (
             <li key={order.id} className={styles.row}>
               <b className={styles.id}>
@@ -40,7 +40,7 @@ export function BillOrderList({
                 <span className="hide-mobile">{who(order)} · </span>
                 {time}
               </span>
-              <b className={styles.amount}>{formatINR(order.total)}</b>
+              <b className={styles.amount}>{money.format(order.total)}</b>
               <span className={styles.status}>
                 {isPaid(order) ? (
                   <Tag variant="ok" icon={null}>

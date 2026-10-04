@@ -1,5 +1,5 @@
-/** All prices are integer rupees. */
-export type Rupees = number;
+/** A price in whole major units of the branch's currency (rupees), e.g. 549. */
+export type Price = number;
 
 export type CategoryId =
   'starters' | 'mains' | 'meals' | 'pizza' | 'breads-rice' | 'desserts' | 'beverages';
@@ -25,7 +25,7 @@ export interface Variant {
   name: string;
   /** Secondary line, e.g. "Perfect for one". */
   description?: string;
-  price: Rupees;
+  price: Price;
   available?: boolean;
 }
 
@@ -33,18 +33,18 @@ export interface AddOn {
   id: string;
   name: string;
   /** 0 = free. */
-  price: Rupees;
+  price: Price;
   /** Only offered with these variant ids (e.g. an extra shot on Large only). Omit = every size. */
   availableFor?: string[];
   /** Size-specific price, keyed by variant id; falls back to `price`. */
-  priceByVariant?: Record<string, Rupees>;
+  priceByVariant?: Record<string, Price>;
 }
 
 /** One choice in a single-select group. A plain string is shorthand for a free choice. */
 export interface ChoiceSpec {
   name: string;
   /** Extra cost of picking this choice (0 / omitted = included). */
-  price?: Rupees;
+  price?: Price;
   /** Only offered with these variant ids. Omit = every size. */
   availableFor?: string[];
 }
@@ -72,8 +72,8 @@ export interface Removable {
 
 /** Meal / combo details: the slots themselves are option groups. */
 interface ComboInfo {
-  /** Saving versus ordering the parts separately, for the "Save ₹X" badge. */
-  savings?: Rupees;
+  /** Saving versus ordering the parts separately, for the "Meal · Save" badge. */
+  savings?: Price;
   /** One-line contents, e.g. "Curry · Bread · Rice · Dessert · Drink". */
   includes: string;
 }
@@ -102,7 +102,7 @@ export interface Dish {
   categoryId: CategoryId;
   veg: boolean;
   /** Base price — the cheapest variant if variants exist. */
-  price: Rupees;
+  price: Price;
   variants?: Variant[];
   /** Label for the variant group, e.g. "Choose a size" or "Portion". */
   variantLabel?: string;
@@ -139,7 +139,7 @@ export interface DishLink {
   label: string;
 }
 
-/** Everything GET /menu returns: the categories, every dish and the curated dish lists. */
+/** GET /branches/:id/menu: one branch's categories, dishes (in its prices) and curated lists. */
 export interface MenuData {
   categories: Category[];
   /** Every dish, in menu order (each category's list order is its "Recommended" rank). */
@@ -154,4 +154,6 @@ export interface MenuData {
   trendingTonight: string[];
   /** Suggestions on the empty-cart screen. */
   popularAtTable: DishLink[];
+  /** The "Under {price}" filter: dishes cheaper than this. */
+  priceFilter: Price;
 }

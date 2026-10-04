@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { waitForSavedCart } from './helpers';
 
 /**
  * Happy path: menu → dish → cart → checkout → confirmation.
@@ -102,6 +103,7 @@ test('a failed payment keeps the cart', async ({ page }) => {
   // Wait until the cart has registered the item (it's saved to the device right after).
   await expect(page.getByRole('status').filter({ hasText: 'Dahi Kebab added' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Quantity of Dahi Kebab' }).first()).toBeVisible();
+  await waitForSavedCart(page, 'dahi-kebab');
   await page.goto('/checkout/details/');
   await page.getByLabel('Full name').fill('Ananya Rao');
   await page.getByLabel('Mobile number').fill('9876543210');

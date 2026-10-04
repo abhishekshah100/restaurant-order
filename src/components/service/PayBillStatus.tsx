@@ -2,11 +2,11 @@
 
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { SiteHeader } from '@/components/layout/SiteHeader';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { Button, EmptyState, Icon, Spinner } from '@/components/ui';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount';
 import { cx } from '@/lib/cx';
-import { formatINR } from '@/lib/format';
+import { approvalKind } from '@/lib/payments';
 import type { BillPayment, PaidBill } from './usePayBill';
 import { RequestStatus } from './RequestStatus';
 import styles from './PayBillView.module.css';
@@ -24,6 +24,8 @@ interface ProcessingProps {
 /** Waiting for the guest to approve the payment (as 12 · w12, without the order steps). */
 export function PayBillProcessing({ payment, table, ...foot }: ProcessingProps) {
   const t = useContent('service');
+  const common = useContent('common');
+  const { money } = useRegion();
   const titleRef = useFocusOnMount<HTMLHeadingElement>();
   const summary = t('payBill.processing.summary', {
     orders: t.plural('shared.orderCount', payment.orderIds.length),
@@ -43,13 +45,15 @@ export function PayBillProcessing({ payment, table, ...foot }: ProcessingProps) 
               {t('payBill.processing.title')}
             </h1>
             <p className={cx('t-body c2', styles.statusLede)} role="status">
-              {t(`payBill.processing.lede.${payment.method}`)}
+              {t(`payBill.processing.lede.${approvalKind(payment.method)}`, {
+                name: common(`paymentMethods.${payment.method}`),
+              })}
             </p>
           </div>
           <div className={styles.amountCard}>
             <div className={styles.amountRow}>
               <span className="t-small c2">{t('payBill.processing.amount')}</span>
-              <span className={styles.amount}>{formatINR(payment.amount)}</span>
+              <span className={styles.amount}>{money.format(payment.amount)}</span>
               <span className="t-small c3 hide-mobile">{summary}</span>
             </div>
             <hr className={styles.hr} />
@@ -87,7 +91,7 @@ function ProcessingFoot({
   onFailure,
 }: Omit<ProcessingProps, 'payment' | 'table'>) {
   const t = useContent('service');
-  const { paymentPartner } = useRestaurant();
+  const { paymentPartner } = useBranch();
   return (
     <>
       <p className={cx('t-small c3', styles.secure)}>
@@ -120,7 +124,8 @@ interface FailedProps {
 export function PayBillFailed({ payment, table, onRetry, onChangeMethod }: FailedProps) {
   const t = useContent('service');
   const titleRef = useFocusOnMount<HTMLSpanElement>();
-  const amount = formatINR(payment.amount);
+  const { money } = useRegion();
+  const amount = money.format(payment.amount);
   const summary = t('payBill.processing.summary', {
     orders: t.plural('shared.orderCount', payment.orderIds.length),
     table,
@@ -178,6 +183,8 @@ interface PaidProps {
 /** Bill paid: the amount, how it was paid and the orders it covered. */
 export function PayBillPaid({ receipt, table }: PaidProps) {
   const t = useContent('service');
+  const common = useContent('common');
+  const { money } = useRegion();
   const titleRef = useFocusOnMount<HTMLHeadingElement>();
   return (
     <RequestStatus
@@ -190,11 +197,11 @@ export function PayBillPaid({ receipt, table }: PaidProps) {
         <dl className={styles.receipt} aria-label={t('payBill.paid.summaryLabel')}>
           <div className={styles.receiptRow}>
             <dt>{t('payBill.paid.amount')}</dt>
-            <dd className={styles.receiptAmount}>{formatINR(receipt.amount)}</dd>
+            <dd className={styles.receiptAmount}>{money.format(receipt.amount)}</dd>
           </div>
           <div className={styles.receiptRow}>
             <dt>{t('payBill.paid.method')}</dt>
-            <dd>{t(`payBill.methodNames.${receipt.method}`)}</dd>
+            <dd>{common(`paymentMethods.${receipt.method}`)}</dd>
           </div>
           <div className={styles.receiptRow}>
             <dt>{t('payBill.paid.orders')}</dt>

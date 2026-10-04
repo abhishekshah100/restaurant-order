@@ -1,0 +1,43 @@
+/* Pickup time (takeaway) and delivery address on the details step */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.title {
+  margin: 0;
+  font: var(--font-h3);
+}
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.note {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.note > span[aria-hidden] {
+  margin-top: 1px;
+  flex: none;
+}
+.labels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.labelTitle {
+  font: var(--font-label);
+  color: var(--ink);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

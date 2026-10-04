@@ -1,20 +1,10 @@
 import type { IconName } from '@/components/ui';
-import { isOwnOrder, isToday, isUnpaid } from '@/lib/orders';
+import { isOwnOrder, isUnpaid } from '@/lib/orders';
 import type { Order } from '@/types/order';
-import type {
-  BillRequest,
-  BillScope,
-  ServiceKind,
-  ServiceRequest,
-  WaiterReason,
-  WaiterRequest,
-} from '@/types/service';
+import type { BillScope, ServiceKind, ServiceRequest, WaiterReason } from '@/types/service';
 
 /** Longest note a guest can add to a waiter request (as drawn: maxlength 80). */
 export const SERVICE_NOTE_MAX = 80;
-
-/** A pending request is dropped after this long: the staff will have seen it by then. */
-export const SERVICE_REQUEST_TTL_MS = 30 * 60_000;
 
 /** Waiter request reasons; their words are in the service content (waiterDialog › reasons › id). */
 export const WAITER_REASONS: readonly { id: WaiterReason; icon: IconName }[] = [
@@ -23,6 +13,9 @@ export const WAITER_REASONS: readonly { id: WaiterReason; icon: IconName }[] = [
   { id: 'cutlery', icon: 'cutlery' },
   { id: 'other', icon: 'msg' },
 ];
+
+/** Every waiter request reason id. */
+export const WAITER_REASON_IDS: ReadonlySet<string> = new Set(WAITER_REASONS.map((r) => r.id));
 
 export const SERVICE_PATHS: Record<ServiceKind, string> = {
   waiter: '/help/waiter-requested/',
@@ -35,60 +28,9 @@ export const PAY_BILL_PATH = '/help/bill/pay/';
 /** Requests by kind; at most one of each is pending. */
 export type ServiceRequests = Partial<Record<ServiceKind, ServiceRequest>>;
 
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
-
-const REASON_IDS = new Set<string>(WAITER_REASONS.map((r) => r.id));
-
-function isWaiterRequest(v: Record<string, unknown>): v is Record<string, unknown> & WaiterRequest {
-  return (
-    v.kind === 'waiter' &&
-    typeof v.reason === 'string' &&
-    REASON_IDS.has(v.reason) &&
-    (v.note === undefined || typeof v.note === 'string')
-  );
-}
-
-function isBillRequest(v: Record<string, unknown>): v is Record<string, unknown> & BillRequest {
-  return (
-    v.kind === 'bill' &&
-    (v.scope === 'mine' || v.scope === 'table') &&
-    typeof v.balance === 'number'
-  );
-}
-
-function isServiceRequest(v: unknown): v is ServiceRequest {
-  return (
-    isObject(v) &&
-    typeof v.table === 'number' &&
-    typeof v.sessionId === 'string' &&
-    typeof v.requestedAt === 'string' &&
-    !Number.isNaN(Date.parse(v.requestedAt)) &&
-    (isWaiterRequest(v) || isBillRequest(v))
-  );
-}
-
-export function isServiceRequests(v: unknown): v is ServiceRequests {
-  if (!isObject(v)) return false;
-  return Object.entries(v).every(
-    ([kind, req]) =>
-      (kind === 'waiter' || kind === 'bill') && isServiceRequest(req) && req.kind === kind,
-  );
-}
-
-/** Drops requests from another guest session or older than the TTL. */
-export function liveRequests(
-  requests: ServiceRequests,
-  sessionId: string,
-  now: number,
-): ServiceRequests {
-  const live: ServiceRequests = {};
-  for (const req of Object.values(requests)) {
-    const age = now - Date.parse(req.requestedAt);
-    if (req.sessionId === sessionId && age >= 0 && age < SERVICE_REQUEST_TTL_MS)
-      live[req.kind] = req;
-  }
-  return live;
-}
+/** A session's pending requests by kind. */
+export const byKind = (requests: readonly ServiceRequest[]): ServiceRequests =>
+  Object.fromEntries(requests.map((r) => [r.kind, r]));
 
 /** The most recent pending request, if any. */
 export function latestRequest(requests: ServiceRequests): ServiceRequest | null {
@@ -97,42 +39,10 @@ export function latestRequest(requests: ServiceRequests): ServiceRequest | null 
   );
 }
 
-export function cleanNote(note: string): string | undefined {
-  const trimmed = note.trim().slice(0, SERVICE_NOTE_MAX);
-  return trimmed || undefined;
-}
-
 // ---- Orders and bill ----
-
-/** This visit's billable orders at the table: today, not cancelled, newest first. */
-export function tableOrders(orders: readonly Order[], table: number, now: number): Order[] {
-  return orders
-    .filter(
-      (o) => o.table === table && o.status !== 'cancelled' && isToday(o.placedAt, new Date(now)),
-    )
-    .sort((a, b) => b.placedAt.localeCompare(a.placedAt));
-}
-
-/** This guest session's most recent order at the table today, if any. */
-export function latestOwnOrder(
-  orders: readonly Order[],
-  table: number,
-  now: number,
-  sessionId: string | undefined,
-) {
-  return tableOrders(orders, table, now).find((o) => isOwnOrder(o, sessionId));
-}
 
 /** First name for the "Just my orders" line, e.g. "Ananya Rao" → "Ananya". */
 export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? '';
-
-/** Design placeholder number, used until the real phone number is filled in. */
-const PLACEHOLDER_PHONE = '+910000000000';
-
-export function telHref(phone: string): string {
-  const digits = phone.replace(/[^\d+]/g, '');
-  return `tel:${digits.length >= 6 ? digits : PLACEHOLDER_PHONE}`;
-}
 
 export const isPaid = (order: Order) => order.payment.status === 'paid';
 

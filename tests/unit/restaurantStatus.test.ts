@@ -8,9 +8,9 @@ import {
 } from '@/lib/restaurantStatus';
 import { createTranslator } from '@/api/translator';
 import type { ContentMap } from '@/api/queries';
-import { readApiJson, testRestaurant } from '../apiState';
+import { readApiJson, testBranch } from '../apiState';
 
-const { closesAt } = testRestaurant();
+const { closesAt } = testBranch();
 const t = createTranslator(readApiJson<ContentMap['status']>('content/status'));
 
 describe('status line / statusTone', () => {

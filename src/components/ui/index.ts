@@ -9,7 +9,7 @@ export type { DialogPresentation } from './Dialog/Dialog';
 export { EmptyState } from './EmptyState/EmptyState';
 export { IconButton } from './IconButton/IconButton';
 export { Lightbox } from './Lightbox/Lightbox';
-export { Input, Textarea } from './Input/Input';
+export { Input, Select, Textarea } from './Input/Input';
 export { OptionRow, OptionGroup } from './OptionRow/OptionRow';
 export { OtpInput } from './OtpInput/OtpInput';
 export { PhoneInput } from './PhoneInput/PhoneInput';

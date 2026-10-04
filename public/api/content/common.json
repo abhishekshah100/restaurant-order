@@ -6,15 +6,38 @@
     "applicationName": "The Olive Table"
   },
   "skipLink": "Skip to content",
-  "itemCount": { "one": "{count} item", "other": "{count} items" },
+  "itemCount": {
+    "one": "{count} item",
+    "other": "{count} items"
+  },
   "orderStatus": {
     "received": "Received",
     "preparing": "Preparing",
     "ready": "Ready",
     "served": "Served",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "pickedUp": "Picked up",
+    "outForDelivery": "Out for delivery",
+    "delivered": "Delivered"
   },
-  "price": { "free": "Free" },
+  "price": {
+    "free": "Free"
+  },
+  "currencyNames": {
+    "inr": "rupees",
+    "npr": "Nepali rupees"
+  },
+  "paymentMethods": {
+    "online": "UPI",
+    "upi": "UPI",
+    "card": "Card",
+    "esewa": "eSewa",
+    "khalti": "Khalti",
+    "fonepay": "Fonepay",
+    "counter": "Counter",
+    "pickup": "Pay at pickup",
+    "cod": "Cash on delivery"
+  },
   "nav": {
     "label": "Primary",
     "menu": "Menu",
@@ -30,10 +53,10 @@
   "cart": {
     "label": "Cart",
     "emptyLabel": "Cart, empty",
-    "summaryLabel": "Cart, {items}, {total} rupees"
+    "summaryLabel": "Cart, {items}, {total} {currencyName}"
   },
   "cartBar": {
-    "label": "View cart, {items}, {total} rupees plus taxes",
+    "label": "View cart, {items}, {total} {currencyName} plus taxes",
     "taxes": "Plus taxes",
     "viewCart": "View cart"
   },
@@ -73,14 +96,20 @@
     "veg": "Vegetarian",
     "nonVeg": "Non-vegetarian"
   },
-  "dialog": { "close": "Close" },
+  "dialog": {
+    "close": "Close"
+  },
   "lightbox": {
     "label": "Photo",
     "labelWithCaption": "Photo: {caption}",
     "close": "Close photo"
   },
-  "field": { "optional": " (optional)" },
-  "options": { "addOnLimit": "Up to {max} add-ons" },
+  "field": {
+    "optional": " (optional)"
+  },
+  "options": {
+    "addOnLimit": "Up to {max} add-ons"
+  },
   "otp": {
     "label": "One-time code",
     "digit": "Digit {n} of {total}"
@@ -88,15 +117,27 @@
   "phone": {
     "label": "Mobile number",
     "countryCodeLabel": "Country code ",
-    "countryCode": "+91",
-    "placeholder": "10-digit number",
-    "placeholderNoCode": "10-digit mobile number"
+    "placeholder": "{length}-digit number",
+    "placeholderNoCode": "{length}-digit mobile number"
   },
   "error": {
     "documentTitle": "Something went wrong · The Olive Table",
     "title": "Something went wrong",
     "body": "Your cart is safe. Try again, or head back to the menu.",
     "retry": "Try again",
-    "backToMenu": "Back to menu"
+    "backToMenu": "Back to menu",
+    "requestFailed": "We couldn't reach the restaurant. Check your connection and try again."
+  },
+  "modes": {
+    "dineIn": "Dine-in",
+    "takeaway": "Takeaway",
+    "delivery": "Delivery"
+  },
+  "visit": {
+    "table": "Table {table}",
+    "pill": "{mode} · {branch}",
+    "pillLabel": "{mode} from {branch}. Change outlet or how you order",
+    "choose": "Choose outlet",
+    "chooseLabel": "Choose an outlet and how you'd like to order"
   }
 }

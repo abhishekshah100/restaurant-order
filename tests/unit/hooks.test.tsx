@@ -1,12 +1,11 @@
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { CheckoutProvider, useCheckout } from '@/context/CheckoutContext';
 import { GuestSessionProvider } from '@/context/GuestSessionContext';
 import { useCountdown } from '@/hooks/useCountdown';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { OTP_ATTEMPTS, OTP_RESEND_SECONDS } from '@/lib/constants';
-import { canResendOtp } from '@/lib/checkout';
+import { OTP_ATTEMPTS, OTP_RESEND_SECONDS } from '@/api/mock/rules';
 import { STORAGE_KEYS } from '@/lib/storage';
 import { ApiTestProvider, seedGuestSession } from '../apiState';
 
@@ -49,38 +48,71 @@ describe('useQueryParam', () => {
   });
 });
 
-describe('OTP resend', () => {
+describe('OTP (CheckoutProvider over the mock server)', () => {
   const sentAt = 1_000_000;
 
-  it('unlocks after the cooldown or after a wrong code', () => {
-    const fresh = { otpSentAt: sentAt, attemptsLeft: OTP_ATTEMPTS };
-    expect(canResendOtp(fresh, sentAt + 1000)).toBe(false);
-    expect(canResendOtp(fresh, sentAt + OTP_RESEND_SECONDS * 1000)).toBe(true);
-    expect(canResendOtp({ ...fresh, attemptsLeft: OTP_ATTEMPTS - 1 }, sentAt + 1000)).toBe(true);
-    expect(canResendOtp({ otpSentAt: null, attemptsLeft: OTP_ATTEMPTS }, 0)).toBe(true);
-  });
+  async function renderCheckout() {
+    seedGuestSession();
+    const view = renderHook(() => useCheckout(), { wrapper: checkoutWrapper });
+    await waitFor(() => expect(view.result.current.hydrated).toBe(true));
+    return view;
+  }
 
-  it('ignores a resend during the cooldown', () => {
-    vi.useFakeTimers({ now: sentAt });
-    const { result } = renderHook(() => useCheckout(), { wrapper: checkoutWrapper });
-    act(() => result.current.submitDetails('Ananya', '9876543210'));
-    act(() => vi.advanceTimersByTime(5000));
-    let sent = true;
-    act(() => {
-      sent = result.current.resendOtp();
-    });
-    expect(sent).toBe(false);
-    expect(result.current.session.otpSentAt).toBe(sentAt);
-
-    act(() => result.current.recordWrongCode());
-    act(() => {
-      sent = result.current.resendOtp();
+  it('sends a code and refuses a resend during the cooldown, until a wrong code', async () => {
+    vi.useFakeTimers({ now: sentAt, toFake: ['Date'] });
+    const { result } = await renderCheckout();
+    let sent = false;
+    await act(async () => {
+      sent = await result.current.submitDetails('Ananya', '9876543210');
     });
     expect(sent).toBe(true);
     expect(result.current.session).toMatchObject({
-      otpSentAt: sentAt + 5000,
+      name: 'Ananya',
+      phone: '9876543210',
+      verified: false,
+      otp: {
+        sentAt,
+        resendAt: sentAt + OTP_RESEND_SECONDS * 1000,
+        attemptsLeft: OTP_ATTEMPTS,
+        maxAttempts: OTP_ATTEMPTS,
+      },
+    });
+
+    vi.setSystemTime(sentAt + 5000);
+    let resend = '';
+    await act(async () => {
+      resend = await result.current.resendOtp();
+    });
+    expect(resend).toBe('tooSoon');
+    expect(result.current.session.otp?.sentAt).toBe(sentAt);
+
+    let check: Awaited<ReturnType<typeof result.current.verifyCode>> = { status: 'failed' };
+    await act(async () => {
+      check = await result.current.verifyCode('482719');
+    });
+    expect(check).toEqual({ status: 'wrong', attemptsLeft: OTP_ATTEMPTS - 1 });
+    // A wrong code unlocks a resend straight away.
+    await act(async () => {
+      resend = await result.current.resendOtp();
+    });
+    expect(resend).toBe('sent');
+    expect(result.current.session.otp).toMatchObject({
+      sentAt: sentAt + 5000,
       attemptsLeft: OTP_ATTEMPTS,
     });
+  });
+
+  it('verifies the right code', async () => {
+    const { result } = await renderCheckout();
+    await act(async () => {
+      await result.current.submitDetails('Ananya', '9876543210');
+    });
+    let check: Awaited<ReturnType<typeof result.current.verifyCode>> = { status: 'failed' };
+    await act(async () => {
+      check = await result.current.verifyCode('123456');
+    });
+    expect(check).toEqual({ status: 'verified' });
+    expect(result.current.session.verified).toBe(true);
   });
 });
 
@@ -94,27 +126,26 @@ describe('checkout session', () => {
         guestSessionId,
         name: 'Ravi',
         phone: '9876543210',
-        otpSentAt: null,
-        attemptsLeft: OTP_ATTEMPTS,
+        otp: null,
         verified: true,
         method: 'online',
-        paymentEndsAt: null,
+        payment: null,
       }),
     );
 
-  it('restores the checkout saved by this guest session', () => {
+  it('restores the checkout saved by this guest session', async () => {
     const { id } = seedGuestSession();
     saveCheckout(id);
     const { result } = renderHook(() => useCheckout(), { wrapper: checkoutWrapper });
-    expect(result.current.hydrated).toBe(true);
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
     expect(result.current.session).toMatchObject({ name: 'Ravi', verified: true });
   });
 
-  it('starts afresh when the saved checkout belongs to another guest session', () => {
+  it('starts afresh when the saved checkout belongs to another guest session', async () => {
     seedGuestSession();
     saveCheckout('another-guest');
     const { result } = renderHook(() => useCheckout(), { wrapper: checkoutWrapper });
-    expect(result.current.hydrated).toBe(true);
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
     expect(result.current.session).toMatchObject({ name: '', verified: false });
     expect(window.sessionStorage.getItem(STORAGE_KEYS.checkout)).toBeNull();
   });

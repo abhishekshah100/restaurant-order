@@ -1,7 +1,8 @@
-import type { OrderingState, RestaurantStatus } from '@/types/restaurant';
+import type { BranchStatus } from '@/types/branch';
+import type { OrderingState } from '@/types/restaurant';
 
 /** Colour of the header subline: error when closed, warning when paused, default when open. */
-export function statusTone(status: RestaurantStatus): 'error' | 'warn' | null {
+export function statusTone(status: BranchStatus): 'error' | 'warn' | null {
   if (status === 'closed') return 'error';
   if (status === 'paused') return 'warn';
   return null;
@@ -21,7 +22,7 @@ export interface OrderingAvailability {
   /** What the guest sees: the restaurant status, or offline (which wins). */
   state: OrderingState;
   /** Restaurant status shown in the header (stays as-is while offline). */
-  status: RestaurantStatus;
+  status: BranchStatus;
   /** Dishes can go into the cart (everything but closed; the cart is local). */
   canAdd: boolean;
   /** An order can be checked out and placed (open and online). */
@@ -29,7 +30,7 @@ export interface OrderingAvailability {
 }
 
 /** Combines the restaurant status with connectivity. */
-export function resolveOrdering(status: RestaurantStatus, online: boolean): OrderingAvailability {
+export function resolveOrdering(status: BranchStatus, online: boolean): OrderingAvailability {
   const state: OrderingState = online ? status : 'offline';
   return { state, status, canAdd: status !== 'closed', canCheckout: state === 'open' };
 }
@@ -40,7 +41,7 @@ export function resolveOrdering(status: RestaurantStatus, online: boolean): Orde
  */
 export function applyPreview(
   preview: StatusPreview | null,
-  live: { status: RestaurantStatus; online: boolean },
+  live: { status: BranchStatus; online: boolean },
 ): OrderingAvailability {
   if (preview === 'offline') return resolveOrdering(live.status, false);
   return resolveOrdering(preview ?? live.status, live.online);

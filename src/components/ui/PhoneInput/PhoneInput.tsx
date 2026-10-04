@@ -3,7 +3,8 @@
 import type { ReactNode } from 'react';
 import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
-import { formatMobile } from '@/lib/format';
+import { formatMobile, mobileDigits, mobileInputLength } from '@/lib/phone';
+import type { MobileRules } from '@/types/branch';
 import { Icon } from '../Icon';
 import { Field, describedBy } from '../Input/Field';
 import inputStyles from '../Input/Input.module.css';
@@ -12,22 +13,25 @@ import styles from './PhoneInput.module.css';
 export interface PhoneInputProps {
   id: string;
   label?: ReactNode;
-  /** Raw digits, at most 10. */
+  /** The branch's mobile-number rules (useRegion().mobile): dial code, length, grouping. */
+  rules: MobileRules;
+  /** Raw digits, at most `rules.length`. */
   value: string;
   onChange: (digits: string) => void;
   onBlur?: () => void;
   hint?: ReactNode;
   error?: ReactNode;
-  /** Show the fixed "+91" country-code box (off for now at checkout). */
+  /** Show the fixed dial-code box ("+977"). */
   showCountryCode?: boolean;
   /** Show a phone icon inside the field. */
   withIcon?: boolean;
 }
 
-/** Indian mobile number (+91). Stores digits only, shows them as "98765 43210". */
+/** A national mobile number. Stores digits only, shows them grouped ("98765 43210", "984-1234567"). */
 export function PhoneInput({
   id,
   label,
+  rules,
   value,
   onChange,
   onBlur,
@@ -43,7 +47,7 @@ export function PhoneInput({
         {showCountryCode && (
           <span className={cx(inputStyles.input, styles.cc)}>
             <span className="visually-hidden">{t('phone.countryCodeLabel')}</span>
-            {t('phone.countryCode')}
+            {rules.dialCode}
           </span>
         )}
         <span className={cx(styles.inputWrap, withIcon && inputStyles.withIcon)}>
@@ -53,10 +57,12 @@ export function PhoneInput({
             type="tel"
             inputMode="numeric"
             autoComplete="tel-national"
-            placeholder={showCountryCode ? t('phone.placeholder') : t('phone.placeholderNoCode')}
-            maxLength={11}
-            value={formatMobile(value)}
-            onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, 10))}
+            placeholder={t(showCountryCode ? 'phone.placeholder' : 'phone.placeholderNoCode', {
+              length: rules.length,
+            })}
+            maxLength={mobileInputLength(rules)}
+            value={formatMobile(value, rules)}
+            onChange={(event) => onChange(mobileDigits(event.target.value, rules))}
             onBlur={onBlur}
             className={cx(inputStyles.input, Boolean(error) && inputStyles.error)}
             aria-invalid={error ? true : undefined}
