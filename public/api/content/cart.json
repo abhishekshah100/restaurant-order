@@ -55,7 +55,6 @@
   },
   "panel": {
     "title": "Your order",
-    "sharedNote": "This cart is yours. Others at {visit} order separately.",
     "review": "Review & checkout",
     "visitWithCount": "{visit} · {items}"
   },

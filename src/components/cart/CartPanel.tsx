@@ -43,12 +43,6 @@ export function CartPanel({ inDialog, onNavigate }: CartPanelProps) {
                   <CartLineItem key={line.key} line={line} variant="panel" />
                 ))}
               </ul>
-              {mode === 'dineIn' && (
-                <p className={cx('t-small c3', styles.note)}>
-                  <Icon name="user" size="xs" />
-                  {t('panel.sharedNote', { visit })}
-                </p>
-              )}
             </div>
             <div className={styles.foot}>
               <PriceSummary bill={bill} variant="combined" />

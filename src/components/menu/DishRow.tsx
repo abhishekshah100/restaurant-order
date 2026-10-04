@@ -48,12 +48,12 @@ export const DishRow = memo(function DishRow({
   const available = isAvailable(dish);
 
   // Once the dish is in the cart, a short note says which version was added.
-  const inCartNote =
-    lines.length > 0
-      ? searchResult
-        ? t('dish.inCart')
-        : (describeInMenu(dish, lines, lineLabels) ?? t('dish.inCart'))
-      : null;
+  // const inCartNote =
+  //   lines.length > 0
+  //     ? searchResult
+  //       ? t('dish.inCart')
+  //       : (describeInMenu(dish, lines, lineLabels) ?? t('dish.inCart'))
+  //     : null;
 
   return (
     <li className={cx(styles.item, !available && styles.out)}>
@@ -101,12 +101,12 @@ export const DishRow = memo(function DishRow({
         <div className={styles.priceBlock}>
           {/* Starting price; sizes and add-ons are chosen in the pop-up */}
           <span className={styles.price}>{money.format(startingPrice(dish))}</span>
-          {inCartNote && (
+          {/* {inCartNote && (
             <span className={cx(styles.note, styles.noteInCart)}>
               <Icon name="bag" size="xs" />
               {inCartNote}
             </span>
-          )}
+          )} */}
         </div>
         <AddControl dish={dish} className={styles.control} size="sm" customisableHint />
       </div>
