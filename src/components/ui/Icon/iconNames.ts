@@ -20,6 +20,8 @@ export const ICON_NAMES = [
   'wifioff',
   'refresh',
   'lock',
+  'eye',
+  'eyeoff',
   'shield',
   'user',
   'pencil',

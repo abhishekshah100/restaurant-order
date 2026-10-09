@@ -1,0 +1,433 @@
+.page {
+  min-height: 100svh;
+  display: flex;
+  background: var(--bg);
+}
+
+.visual {
+  position: relative;
+  isolation: isolate;
+  flex: 1 1 58%;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.visualImage {
+  z-index: -2;
+  object-fit: cover;
+}
+
+.visualShade {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, var(--ink-a50), transparent 38%),
+    linear-gradient(0deg, var(--ink-a62), transparent 45%);
+}
+
+.visualBrand {
+  position: absolute;
+  top: 52px;
+  left: clamp(28px, 5vw, 76px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--brand-on-dark);
+}
+
+.visualBrand > span[aria-hidden] {
+  width: 42px;
+  height: 42px;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brandName {
+  color: var(--on-dark);
+  font: 500 26px/1.1 var(--f-display);
+  white-space: nowrap;
+}
+
+.brandDescriptor {
+  margin-top: 5px;
+  color: currentColor;
+  font: var(--font-caption);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.tagline {
+  position: absolute;
+  bottom: 94px;
+  left: clamp(28px, 5vw, 76px);
+  font: 500 clamp(24px, 3vw, 42px)/1.2 var(--f-display);
+  text-wrap: balance;
+}
+
+.taglineRule {
+  position: absolute;
+  bottom: 68px;
+  left: clamp(28px, 5vw, 76px);
+  width: 76px;
+  height: 2px;
+  background: var(--brand);
+}
+
+.formPane {
+  width: min(44%, 640px);
+  min-width: 450px;
+  display: grid;
+  place-items: center;
+  padding: 44px;
+  background: radial-gradient(ellipse at 100% 0%, var(--brand-tint) 0, transparent 36%), var(--bg);
+}
+
+.card {
+  width: min(100%, 440px);
+  padding: 44px;
+  border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 24px 70px var(--ink-a18);
+}
+
+.cardBrand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 34px;
+  color: var(--brand-600);
+}
+
+.cardBrand > span[aria-hidden] {
+  width: 36px;
+  height: 36px;
+}
+
+.cardBrand .brandName {
+  color: var(--ink);
+  font-size: 25px;
+}
+
+.cardBrand .brandDescriptor {
+  color: var(--ink-2);
+}
+
+.intro {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.title {
+  font: var(--font-h1);
+  color: var(--ink);
+}
+
+.subtitle {
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.passwordField {
+  position: relative;
+}
+
+.passwordField input {
+  padding-right: 70px;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 8px;
+  top: 34px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.passwordToggle:hover {
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+}
+
+.forgotRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -12px;
+}
+
+.forgot {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--brand-600);
+  font: var(--font-small-strong);
+}
+
+.forgot:hover {
+  color: var(--brand-700);
+  text-decoration: underline;
+}
+
+.successMessage,
+.errorMessage {
+  font: var(--font-small);
+}
+
+.successMessage {
+  color: var(--success);
+}
+
+.errorMessage {
+  color: var(--error);
+}
+
+.demo {
+  margin-top: 26px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+}
+
+.demoTitle {
+  margin-bottom: 8px;
+  color: var(--ink);
+  font: var(--font-meta-strong);
+}
+
+.demoDetails {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  color: var(--ink-2);
+  font: 500 12px/17px var(--f-ui);
+}
+
+.demoDetails strong {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+  .page {
+    height: 100svh;
+    min-height: 100svh;
+    display: block;
+  }
+
+  .visual {
+    position: absolute;
+    inset: 0 0 auto;
+    width: 100%;
+    min-height: 0;
+    height: min(42svh, 360px);
+  }
+
+  .visualShade {
+    background:
+      linear-gradient(180deg, var(--ink-a20), transparent 32%),
+      linear-gradient(
+        180deg,
+        transparent 38%,
+        color-mix(in srgb, var(--bg) 65%, transparent) 70%,
+        var(--bg) 100%
+      );
+  }
+
+  .visualBrand {
+    top: max(52px, env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    color: var(--brand-on-dark);
+  }
+
+  .visualBrand > span[aria-hidden] {
+    width: 34px;
+    height: 34px;
+  }
+
+  .visualBrand .brandName {
+    color: var(--on-dark);
+    font-size: 24px;
+    text-shadow: 0 2px 10px var(--ink-a80);
+  }
+
+  .visualBrand .brandDescriptor {
+    color: var(--on-dark);
+    text-shadow: 0 1px 8px var(--ink-a80);
+  }
+
+  .tagline,
+  .taglineRule {
+    display: none;
+  }
+
+  .formPane {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    height: 100svh;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 20px max(12px, env(safe-area-inset-bottom));
+    background: transparent;
+  }
+
+  .card {
+    width: min(100%, 460px);
+    padding: 22px clamp(22px, 7vw, 34px) 20px;
+    border-color: color-mix(in srgb, var(--line) 65%, transparent);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: 0 16px 44px var(--ink-a18);
+    backdrop-filter: blur(12px);
+  }
+
+  .cardBrand {
+    display: none;
+  }
+
+  .title {
+    font-size: 26px;
+    line-height: 32px;
+  }
+
+  .intro {
+    margin-bottom: 16px;
+  }
+
+  .form {
+    gap: 12px;
+  }
+
+  .form input,
+  .form > button {
+    height: 48px;
+  }
+
+  .forgotRow {
+    margin-top: -8px;
+  }
+}
+
+@media (max-width: 359.98px) {
+  .formPane {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .card {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+}
+
+@media (max-height: 700px) and (max-width: 767.98px) {
+  .visual {
+    height: 34svh;
+  }
+
+  .formPane {
+    padding-top: 68px;
+  }
+
+  .card {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+
+  .intro {
+    margin-bottom: 12px;
+  }
+
+  .form {
+    gap: 10px;
+  }
+
+  .form input,
+  .form > button {
+    height: 46px;
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 30px;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 768px) {
+  .formPane {
+    padding: 24px;
+  }
+
+  .card {
+    padding: 32px;
+  }
+
+  .cardBrand {
+    margin-bottom: 20px;
+  }
+
+  .intro {
+    margin-bottom: 18px;
+  }
+
+  .form {
+    gap: 14px;
+  }
+
+  .form input,
+  .form > button {
+    height: 48px;
+  }
+}
+
+@media (max-height: 420px) and (max-width: 767.98px) {
+  .formPane {
+    padding-top: 36px;
+  }
+
+  .card {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .intro {
+    margin-bottom: 8px;
+  }
+
+  .form {
+    gap: 8px;
+  }
+
+  .form input,
+  .form > button {
+    height: 44px;
+  }
+}

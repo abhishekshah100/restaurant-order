@@ -1,0 +1,27 @@
+.page {
+  min-height: 100svh;
+  background: var(--bg);
+}
+
+.main {
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: 44px 32px;
+}
+
+.main h1 {
+  color: var(--ink);
+  font: var(--font-display);
+}
+
+.main p {
+  margin-top: 8px;
+  color: var(--ink-2);
+  font: var(--font-body);
+}
+
+@media (max-width: 767.98px) {
+  .main {
+    padding: 28px 18px;
+  }
+}

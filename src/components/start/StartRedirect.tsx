@@ -4,8 +4,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useVisit } from '@/context/GuestSessionContext';
 
-/** Pages that work without a session: `/` shows the start screen itself. */
-const OPEN_PATHS = ['/start', '/styleguide'];
+/** Pages that work without an ordering session. */
+const OPEN_PATHS = ['/start', '/styleguide', '/admin/'];
 
 /**
  * A guest without a session (no QR code, nothing saved) who lands on an ordering page is sent
