@@ -1,0 +1,61 @@
+.banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--brand-tint-2);
+  border: 1px solid var(--brand-tint);
+  border-radius: var(--r-lg);
+}
+.banner > span[aria-hidden] {
+  color: var(--brand-600);
+  margin-top: 2px;
+}
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.title {
+  margin: 0;
+  font: var(--font-price);
+}
+.body {
+  margin: 0;
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.time {
+  color: var(--brand-700);
+  font-variant-numeric: tabular-nums;
+}
+.closed {
+  color: var(--error);
+}
+.cancel {
+  flex: none;
+  align-self: center;
+}
+
+/* Phones: Cancel editing goes under the text */
+@media (max-width: 599.98px) {
+  .editing {
+    flex-wrap: wrap;
+  }
+  .editing .text {
+    flex-basis: calc(100% - 32px);
+  }
+  .editing .cancel {
+    margin-left: 32px;
+    align-self: flex-start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .banner {
+    padding: 16px 20px;
+    border-radius: var(--r-panel);
+  }
+}

@@ -20,7 +20,8 @@ import { SwitchOutletDialog } from './SwitchOutletDialog';
 import styles from './StartView.module.css';
 
 /** Where to go once the guest has chosen: `?next=` (a path in the app) or the menu. */
-const safeNext = (next: string | null) => (next?.startsWith('/') && !next.startsWith('//') ? next : '/menu/');
+const safeNext = (next: string | null) =>
+  next?.startsWith('/') && !next.startsWith('//') ? next : '/menu/';
 
 /**
  * The start screen for guests without a table QR code (and for changing how they order):
@@ -59,7 +60,10 @@ export function StartView() {
   const scannedTable = sameBranch ? (session.table ?? null) : null;
   const mode = pickedMode ?? visit.choice.mode ?? (sameBranch ? session.mode : null);
   const validMode =
-    branch && mode && branchModes(branch).includes(mode) && (mode !== 'dineIn' || scannedTable !== null)
+    branch &&
+    mode &&
+    branchModes(branch).includes(mode) &&
+    (mode !== 'dineIn' || scannedTable !== null)
       ? mode
       : null;
   const area = pickedArea ?? (sameBranch ? session.deliveryArea : undefined) ?? '';

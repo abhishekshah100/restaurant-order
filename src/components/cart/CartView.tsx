@@ -9,28 +9,36 @@ import { SiteHeader } from '@/components/layout/SiteHeader';
 import { OrderingBanner } from '@/components/status/OrderingBanner';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
 import { useCart } from '@/hooks/useCart';
+import { useCartAction } from '@/hooks/useCartAction';
 import { useOrderBill } from '@/hooks/useFulfilment';
 import { cx } from '@/lib/cx';
 import { etaMinutes } from '@/lib/fulfilment';
 import { CartLineItem } from './CartLineItem';
+import { CartModeBanner } from './CartModeBanner';
 import { DeliveryCard } from './DeliveryCard';
 import { MinimumOrderNotice } from './MinimumOrderNotice';
 import { EmptyCart } from './EmptyCart';
 import { CartSuggestions } from './CartSuggestions';
 import { KitchenNote } from './KitchenNote';
+import { OrderPaymentDialog } from './OrderPaymentDialog';
 import { PriceSummary } from './PriceSummary';
+import { PromoCard } from './PromoCard';
 import styles from './CartView.module.css';
 
 /** Cart (08 · w08) and empty cart (s06 · ws06); takeaway and delivery add their ETA, area, fee and minimum. */
 export function CartView() {
   const { lines, kitchenNote, setKitchenNote, hydrated } = useCart();
-  const { bill, mode, quote, canCheckout } = useOrderBill();
+  const { bill, mode, quote } = useOrderBill();
+  const { action, payment } = useCartAction();
   const t = useContent('cart');
   const branch = useBranch();
   const { money } = useRegion();
   const eta =
     mode === 'dineIn'
-      ? { now: t('page.eta', { time: branch.prepTime }), after: t('page.etaAfterOrder', { time: branch.prepTime }) }
+      ? {
+          now: t('page.eta', { time: branch.prepTime }),
+          after: t('page.etaAfterOrder', { time: branch.prepTime }),
+        }
       : {
           now: t(`page.etaMode.${mode}`, { minutes: etaMinutes(branch, mode, quote) }),
           after: t(`page.etaModeAfterOrder.${mode}`, { minutes: etaMinutes(branch, mode, quote) }),
@@ -74,17 +82,37 @@ export function CartView() {
       <>
         {renderHeader(true)}
         <main id="main">
+          {/* Editing an order down to nothing: the way back stays in reach. */}
+          {action.kind === 'update' && (
+            <CartModeBanner action={action} className={styles.emptyBanner} />
+          )}
           <EmptyCart />
         </main>
       </>
     );
   }
 
-  const checkout = (
-    <Button href="/checkout/details/" block iconEnd="arrow" disabled={!canCheckout}>
-      {t('page.checkout')}
-    </Button>
-  );
+  let checkout;
+  if (action.kind === 'checkout') {
+    checkout = (
+      <Button href="/checkout/details/" block iconEnd="arrow" disabled={action.disabled}>
+        {t('page.checkout')}
+      </Button>
+    );
+  } else {
+    checkout = (
+      <Button
+        block
+        iconEnd={action.kind === 'addRound' ? 'arrow' : undefined}
+        iconStart={action.kind === 'update' ? 'check' : undefined}
+        disabled={action.disabled}
+        loading={action.busy}
+        onClick={action.run}
+      >
+        {action.kind === 'addRound' ? t('tab.add') : t('editing.update')}
+      </Button>
+    );
+  }
 
   return (
     <>
@@ -103,6 +131,7 @@ export function CartView() {
               {t('page.addMoreItems')}
             </Button>
           </div>
+          <CartModeBanner action={action} />
           {mode === 'delivery' && <DeliveryCard id="cart-area" />}
           <MinimumOrderNotice />
           <section aria-labelledby="cart-items">
@@ -123,6 +152,7 @@ export function CartView() {
           </section>
           <CartSuggestions />
           <KitchenNote value={kitchenNote} onChange={setKitchenNote} />
+          <PromoCard action={action} />
           <section className={cx(styles.bill, 'hide-desktop')} aria-labelledby="bill-m">
             <h2 id="bill-m" className="t-h3">
               {t('page.billSummary')}
@@ -162,6 +192,7 @@ export function CartView() {
         </div>
         {checkout}
       </div>
+      <OrderPaymentDialog {...payment} />
     </>
   );
 }

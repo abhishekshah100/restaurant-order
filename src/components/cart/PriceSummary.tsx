@@ -24,6 +24,9 @@ export interface PriceSummaryProps {
   tight?: boolean;
 }
 
+/** One line of the summary: its label, amount, and whether it's a discount (shown as a saving). */
+type Row = [label: string, value: string, saving?: boolean];
+
 /** A bill's lines, labelled from content (cart › priceSummary) by the keys in the branch's tax rules. */
 export function PriceSummary({
   bill,
@@ -35,21 +38,29 @@ export function PriceSummary({
   const t = useContent('cart');
   const { tax } = useBranch();
   const { money } = useRegion();
-  const line = (l: BillLine): [string, string] => [
+  const line = (l: BillLine): Row => [
     t(`priceSummary.lines.${l.labelKey}`, l.vars),
     money.formatMinor(l.amountMinor),
   ];
-  const roundOff: [string, string][] = bill.showRoundOff
+  const roundOff: Row[] = bill.showRoundOff
     ? [[t('priceSummary.roundOff'), money.formatSignedMinor(bill.roundOffMinor)]]
     : [];
 
-  const rows: [string, string][] = [
+  const rows: Row[] = [
     [
       showCount
         ? t('priceSummary.itemTotalWithCount', { count: bill.itemCount })
         : t('priceSummary.itemTotal'),
       money.formatMinor(bill.itemTotalMinor),
     ],
+    // Discounts come straight off the items: "Happy hour −₹40.00", "Promo WELCOME10 −₹100.00".
+    ...bill.discounts.map((d): Row => [
+      d.kind === 'offer'
+        ? t(`priceSummary.offers.${d.labelKey}`)
+        : t('priceSummary.promoCode', { code: d.code }),
+      money.formatMinor(-d.amountMinor),
+      true,
+    ]),
   ];
   // Delivery orders: the fee comes right after the items (it isn't a tax).
   if (bill.deliveryFeeMinor !== null) {
@@ -77,10 +88,10 @@ export function PriceSummary({
 
   return (
     <dl className={styles.sum}>
-      {rows.map(([label, value]) => (
+      {rows.map(([label, value, saving]) => (
         <div key={label} className={styles.row}>
           <dt>{label}</dt>
-          <dd>{value}</dd>
+          <dd className={saving ? styles.saving : undefined}>{value}</dd>
         </div>
       ))}
       <div className={cx(styles.total, tight && styles.tight)}>

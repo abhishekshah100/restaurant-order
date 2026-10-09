@@ -21,6 +21,9 @@
   font-weight: 600;
   text-align: right;
 }
+.row .saving {
+  color: var(--success);
+}
 .total {
   display: flex;
   justify-content: space-between;

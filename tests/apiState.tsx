@@ -6,6 +6,7 @@ import { toOrderHistory } from '@/api/adapters';
 import {
   CONTENT_NAMESPACES,
   branchMenuQuery,
+  branchPromotionsQuery,
   branchesQuery,
   helpQuery,
   orderHistoryQuery,
@@ -29,6 +30,7 @@ import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { MenuData } from '@/types/menu';
 import type { OrderHistory, OrdersResponse } from '@/types/order';
+import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import type { GuestSession } from '@/types/session';
 
@@ -51,6 +53,10 @@ export const testBranch = (id = testRestaurant().defaultBranchId): Branch =>
 /** The menu catalog over GET /branches/:id/menu (default branch), from the dummy JSON. */
 export const testMenu = (branchId = testRestaurant().defaultBranchId): MenuCatalog =>
   createMenuCatalog(readApiJson<MenuData>(`branches/${branchId}/menu`));
+
+/** GET /branches/:id/promotions (default branch), from the dummy JSON. */
+export const testPromotions = (branchId = testRestaurant().defaultBranchId) =>
+  readApiJson<BranchPromotions>(`branches/${branchId}/promotions`);
 
 /** GET /orders after the adapter, for the default branch, dated against `now`. */
 export const testOrderHistory = (now?: Date): OrderHistory =>
@@ -98,6 +104,7 @@ export function createApiState(): DehydratedState {
   client.setQueryData(branchesQuery().queryKey, branches);
   for (const { id } of branches) {
     client.setQueryData(branchMenuQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
+    client.setQueryData(branchPromotionsQuery(id).queryKey, testPromotions(id));
   }
   client.setQueryData(orderHistoryQuery().queryKey, readApiJson<OrdersResponse>('orders'));
   client.setQueryData(helpQuery().queryKey, readApiJson<HelpTopics>('help'));
@@ -106,11 +113,16 @@ export function createApiState(): DehydratedState {
 
 /**
  * A mock server over this device's Web Storage, seeded with the dummy JSON, on a clock the
- * test controls (default: the real one) and with predictable ids (id-1, id-2…).
+ * test controls (default: the real one) and with predictable ids (id-1, id-2…). `branches`
+ * changes the branch data it's seeded with (e.g. another payment rule).
  */
-export function createTestServer(now: () => number = () => Date.now()) {
+export function createTestServer(
+  now: () => number = () => Date.now(),
+  branches?: (branches: Branch[]) => Branch[],
+) {
   const client = new QueryClient();
   hydrate(client, createApiState());
+  if (branches) client.setQueryData(branchesQuery().queryKey, branches(testBranches()));
   let count = 0;
   return createMockServer({
     db: createStorageDb(),

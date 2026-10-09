@@ -10,6 +10,24 @@ import type {
 import type { Clock } from './clock';
 import type { MenuCatalog } from './menu';
 import { calculateBill, type Bill, type BillRules } from './pricing';
+import { fromOrderDiscounts } from './promotions';
+
+/* ---------- Order pages ---------- */
+
+const ORDER_PAGES = {
+  details: '/order/',
+  track: '/order/track/',
+  confirmed: '/order/confirmed/',
+} as const;
+
+export type OrderPage = keyof typeof ORDER_PAGES;
+
+/**
+ * The URL of one of an order's pages. The id travels in the query string (`/order/track/?id=A105`),
+ * so the statically exported pages open any id the API returns, not only ids known at build time.
+ */
+export const orderPath = (id: string, page: OrderPage = 'details') =>
+  `${ORDER_PAGES[page]}?id=${encodeURIComponent(id)}`;
 
 /* ---------- Order lists ---------- */
 
@@ -100,7 +118,8 @@ export const paymentProgress = (order: Pick<Order, 'payment'>): PaymentLabel | '
 /** Content key (orders › totals) of the total line: what's still to pay, and where, or what was paid. */
 export function totalLabel({
   payment,
-}: Pick<Order, 'payment'>): 'totalPaid' | 'toPayAtCounter' | 'toPayAtPickup' | 'toPayOnDelivery' | 'total' {
+}: Pick<Order, 'payment'>):
+  'totalPaid' | 'toPayAtCounter' | 'toPayAtPickup' | 'toPayOnDelivery' | 'total' {
   if (payment.status === 'paid') return 'totalPaid';
   if (payment.status !== 'unpaid') return 'total';
   if (payment.method === 'counter') return 'toPayAtCounter';
@@ -109,9 +128,12 @@ export function totalLabel({
   return 'total';
 }
 
-/** The bill for an order, from its line prices, its delivery fee and its branch's tax rules. */
+/**
+ * The bill for an order, from its line prices, its delivery fee, the discounts the server
+ * recorded on it and its branch's tax rules.
+ */
 export const orderBill = (
-  order: Pick<Order, 'items' | 'delivery'>,
+  order: Pick<Order, 'items' | 'delivery' | 'discounts'>,
   rules: BillRules & Pick<Branch, 'modes'>,
 ): Bill =>
   calculateBill(
@@ -120,6 +142,7 @@ export const orderBill = (
     order.delivery
       ? { fee: order.delivery.fee, taxable: rules.modes.delivery.feeTaxable }
       : undefined,
+    fromOrderDiscounts(order.discounts, rules.currency.minorUnit),
   );
 
 /** "1 × Paneer Tikka (Full)" — the size is named only when it isn't the default one. */

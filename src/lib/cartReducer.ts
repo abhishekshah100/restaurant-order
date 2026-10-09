@@ -1,4 +1,4 @@
-import type { CartAction, CartLine, CartState } from '@/types/cart';
+import type { CartAction, CartEditing, CartLine, CartState } from '@/types/cart';
 import { KITCHEN_NOTE_MAX, MAX_QUANTITY } from './constants';
 import { lineKey } from './cartLine';
 
@@ -61,8 +61,27 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
     }
     case 'setKitchenNote':
       return { ...state, kitchenNote: action.note.slice(0, KITCHEN_NOTE_MAX) };
+    case 'setPromoCode': {
+      const { promoCode: _old, ...rest } = state;
+      return action.code ? { ...rest, promoCode: action.code } : rest;
+    }
     case 'clear':
       return EMPTY_CART;
+    case 'startEditing': {
+      // Editing another order keeps the cart from before the first one.
+      const stash = state.editing?.stash ?? {
+        lines: state.lines,
+        kitchenNote: state.kitchenNote,
+        ...(state.promoCode ? { promoCode: state.promoCode } : {}),
+      };
+      return {
+        lines: action.lines,
+        kitchenNote: action.kitchenNote.slice(0, KITCHEN_NOTE_MAX),
+        editing: { orderId: action.orderId, round: action.round, stash },
+      };
+    }
+    case 'stopEditing':
+      return state.editing ? { ...state.editing.stash } : state;
     case 'hydrate':
       return action.state;
     default:
@@ -101,11 +120,32 @@ function isCartLine(value: unknown): value is CartLine {
   );
 }
 
-/** Reads a persisted cart. Malformed lines are dropped rather than rejecting the whole cart. */
-export function parseCart(value: unknown): CartState | null {
+/** Lines, note and promo code of a persisted cart (or stash). Malformed lines are dropped. */
+function parseLines(value: unknown): Pick<CartState, 'lines' | 'kitchenNote' | 'promoCode'> | null {
   if (typeof value !== 'object' || value === null) return null;
   const v = value as Record<string, unknown>;
   if (typeof v.kitchenNote !== 'string' || !Array.isArray(v.lines)) return null;
-  const lines = v.lines.filter(isCartLine);
-  return { kitchenNote: v.kitchenNote.slice(0, KITCHEN_NOTE_MAX), lines };
+  return {
+    kitchenNote: v.kitchenNote.slice(0, KITCHEN_NOTE_MAX),
+    lines: v.lines.filter(isCartLine),
+    ...(typeof v.promoCode === 'string' && v.promoCode ? { promoCode: v.promoCode } : {}),
+  };
+}
+
+/** The order being edited, if the saved cart says so and it's well formed. */
+function parseEditing(value: unknown): CartEditing | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const v = value as Record<string, unknown>;
+  const stash = parseLines(v.stash);
+  return typeof v.orderId === 'string' && typeof v.round === 'number' && stash
+    ? { orderId: v.orderId, round: v.round, stash }
+    : undefined;
+}
+
+/** Reads a persisted cart. Malformed lines are dropped rather than rejecting the whole cart. */
+export function parseCart(value: unknown): CartState | null {
+  const cart = parseLines(value);
+  if (!cart) return null;
+  const editing = parseEditing((value as Record<string, unknown>).editing);
+  return editing ? { ...cart, editing } : cart;
 }

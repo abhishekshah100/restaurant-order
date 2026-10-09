@@ -7,6 +7,7 @@ import { useContent, useRegion } from '@/api/hooks';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { useToast } from '@/context/ToastContext';
 import { cx } from '@/lib/cx';
+import { orderPath } from '@/lib/orders';
 import { NoRequest, RequestLoading, RequestStatus } from './RequestStatus';
 import { useTableVisit } from './useTableVisit';
 import styles from './Summary.module.css';
@@ -43,7 +44,7 @@ export function WaiterRequested() {
     showToast(t('waiterRequested.cancelledToast'));
     router.push('/help/');
   };
-  const trackHref = latest ? `/order/${latest.id}/track/` : null;
+  const trackHref = latest ? orderPath(latest.id, 'track') : null;
 
   return (
     <RequestStatus

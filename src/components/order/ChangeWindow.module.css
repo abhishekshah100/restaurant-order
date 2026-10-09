@@ -1,0 +1,74 @@
+/* Open: a soft brand card with the countdown and the two actions */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--brand-tint-2);
+  border: 1px solid var(--brand-tint);
+  border-radius: var(--r-lg);
+}
+.text {
+  margin: 0;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font: var(--font-small-strong);
+  color: var(--ink);
+}
+.text > span[aria-hidden] {
+  color: var(--brand-600);
+  margin-top: 1px;
+}
+.time {
+  font-variant-numeric: tabular-nums;
+  color: var(--brand-700);
+}
+.hint {
+  display: block;
+  margin-top: 2px;
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+/* Wider screens: buttons at their own width */
+@media (min-width: 600px) {
+  .actions {
+    display: flex;
+  }
+}
+
+/* Closed: a quiet line saying why the actions have gone */
+.closed {
+  margin: 0;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  background: var(--sand);
+  border-radius: var(--r);
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.closed > span[aria-hidden] {
+  color: var(--ink-3);
+  margin-top: 1px;
+}
+
+@media (min-width: 1024px) {
+  .card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: var(--r-panel);
+  }
+  .actions {
+    flex: none;
+  }
+}

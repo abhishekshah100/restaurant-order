@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Button, Dialog, IconButton, QuantityStepper, VegMark } from '@/components/ui';
 import { useContent, useRegion } from '@/api/hooks';
 import { useCartActions } from '@/hooks/useCart';
+import { useDishOffer } from '@/hooks/useOffers';
 import { useDishConfig } from '@/hooks/useDishConfig';
 import { cx } from '@/lib/cx';
 import { dishImage } from '@/lib/menu';
@@ -32,6 +33,9 @@ export function QuickAddDialog({ dish, editing, onClose }: QuickAddDialogProps) 
     dish,
     editing ? { config: editing, quantity: editing.quantity } : undefined,
   );
+  // The live price on the button, with the offer on now (happy hour).
+  const offer = useDishOffer(dish, state.unitPrice);
+  const offerTotal = (offer?.price ?? state.unitPrice) * state.quantity;
   const titleId = `qa-${dish.slug}-title`;
   const thumb = dishImage(dish, 'thumb');
   const meta = [
@@ -96,7 +100,7 @@ export function QuickAddDialog({ dish, editing, onClose }: QuickAddDialogProps) 
           <Button
             block
             className={styles.cta}
-            meta={money.format(state.total)}
+            meta={money.format(offerTotal)}
             onClick={submit}
             disabled={!state.valid}
           >

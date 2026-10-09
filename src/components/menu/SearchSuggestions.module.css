@@ -142,48 +142,8 @@
   gap: 8px;
 }
 
-/* Browse by category — icon tiles */
-.cats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-.cat {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 4px;
-  padding: 12px 6px 10px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-tile);
-  text-decoration: none;
-  color: var(--ink);
-  transition: border-color var(--dur-fast) ease;
-}
-.catIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-round);
-  display: grid;
-  place-items: center;
-  background: var(--brand-tint-2);
-  color: var(--brand-600);
-  margin-bottom: 2px;
-}
-.catName {
-  font: 700 12.5px/16px var(--f-ui);
-}
-.catCount {
-  font: 500 11px/14px var(--f-ui);
-  color: var(--ink-3);
-}
-
 @media (hover: hover) {
-  .trendLink:hover,
-  .cat:hover {
+  .trendLink:hover {
     border-color: var(--line-strong);
   }
   .trendLink:hover .trendPhoto {
@@ -195,33 +155,7 @@
   }
 }
 
-/* Phones from 360px: four compact tiles per row (7 categories → 4 + 3) */
-@media (min-width: 360px) {
-  .cats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-  }
-  .cat {
-    padding: 10px 4px 8px;
-    border-radius: var(--r);
-  }
-  .catIcon {
-    width: 34px;
-    height: 34px;
-  }
-  .catName {
-    font-size: 12px;
-    line-height: 15px;
-  }
-}
-
 @media (min-width: 768px) {
-  .cats {
-    gap: 8px;
-  }
-  .cat {
-    padding: 12px 6px 10px;
-  }
   .trending {
     margin: 0;
     padding: 2px 0 8px;
@@ -229,12 +163,9 @@
   .trend {
     width: 168px;
   }
-  .cats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
 }
 
-/* Desktop dropdown: 2×2 trending grid, 4-column categories, no horizontal scroll */
+/* Desktop dropdown: 2×2 trending grid, no horizontal scroll */
 .compact {
   gap: 20px;
 }
@@ -296,22 +227,11 @@
   width: 22px;
   height: 22px;
 }
-.compact .cats {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-.compact .cat {
-  padding: 10px 4px 8px;
-}
-.compact .catIcon {
-  width: 34px;
-  height: 34px;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .trendLink,
   .trendGo,
-  .trendPhoto,
-  .cat {
+  .trendPhoto {
     transition: none;
   }
   .trendLink:hover .trendPhoto {

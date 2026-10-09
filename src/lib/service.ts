@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/ui';
+import { amountDue, paidAmount } from '@/lib/lifecycle';
 import { isOwnOrder, isUnpaid } from '@/lib/orders';
 import type { Order } from '@/types/order';
 import type { BillScope, ServiceKind, ServiceRequest, WaiterReason } from '@/types/service';
@@ -69,7 +70,8 @@ export function payableOrders(orders: readonly Order[], sessionId: string | unde
   return orders.filter((o) => o.sessionId === sessionId && isUnpaid(o));
 }
 
-const sumTotals = (orders: readonly Order[]) => orders.reduce((sum, o) => sum + o.total, 0);
+const sum = (orders: readonly Order[], amount: (order: Order) => number) =>
+  orders.reduce((total, o) => total + amount(o), 0);
 
 /** The bill for this guest session's orders (`mine`) or the whole table. */
 export function billFor(
@@ -81,8 +83,9 @@ export function billFor(
   // The guest's own orders first, then the rest of the table (each newest first, as given).
   const picked =
     scope === 'mine' ? own : [...own, ...orders.filter((o) => !isOwnOrder(o, sessionId))];
-  const total = sumTotals(picked);
-  const paid = sumTotals(picked.filter(isPaid));
+  const total = sum(picked, (o) => o.total);
+  // A running order can be paid in part (an earlier round online): count what's been paid.
+  const paid = sum(picked, paidAmount);
   const payable = scope === 'mine' ? payableOrders(own, sessionId) : [];
   return {
     orders: picked,
@@ -90,6 +93,6 @@ export function billFor(
     paid,
     balance: total - paid,
     payable,
-    payableTotal: sumTotals(payable),
+    payableTotal: sum(payable, amountDue),
   };
 }

@@ -33,6 +33,5 @@ export function toOrderHistory(
     history: raw.history
       .filter((o) => o.branchId === branch.id)
       .map((o) => toOrder(o, branch, now)),
-    newOrderIds: raw.newOrderIds,
   };
 }

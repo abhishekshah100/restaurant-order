@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { waitForSavedCart } from './helpers';
+import { waitForSavedCart, scan } from './helpers';
 
 /**
  * Branches and regions: a QR code for the Nepal branch (Thamel, Kathmandu) gives NPR prices,
@@ -14,11 +14,13 @@ const visible = (page: Page, text: string | RegExp) =>
 const npr = (amount: string) => new RegExp(`रू\\s${amount.replace('.', '\\.')}$`);
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/?table=7');
+  await scan(page, 'table=7');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
+  // A fresh guest at table 12 (without a QR code the start screen would open instead).
+  await scan(page, 'table=12');
 });
 
 test('a Nepal QR code: NPR prices, service charge + VAT, +977 and Nepali payments', async ({
@@ -27,7 +29,7 @@ test('a Nepal QR code: NPR prices, service charge + VAT, +977 and Nepali payment
   // Kathmandu is UTC+5:45: 14:00 UTC is 7:45 PM there (7:30 PM in India).
   await page.clock.setFixedTime(new Date('2026-10-03T14:00:00Z'));
 
-  await page.goto('/?branch=ktm-thamel&table=5');
+  await scan(page, 'branch=ktm-thamel&table=5');
   await expect(visible(page, 'Table 5')).toBeVisible();
   await expect(visible(page, 'The Olive Table — Thamel')).toBeVisible();
 
@@ -91,9 +93,9 @@ test('a Nepal QR code: NPR prices, service charge + VAT, +977 and Nepali payment
   await page.getByRole('button', { name: 'Prototype: success' }).filter({ visible: true }).click();
 
   // The order is timed in Kathmandu.
-  await expect(page).toHaveURL(/\/order\/A\d+\/confirmed\/$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
   await expect(visible(page, npr('572'))).toBeVisible();
-  await page.goto(page.url().replace(/confirmed\/$/, ''));
+  await page.goto(page.url().replace('/confirmed/', '/'));
   await expect(visible(page, /Today, 7:45 PM/)).toBeVisible();
   await expect(visible(page, 'eSewa')).toBeVisible();
 });
@@ -102,7 +104,7 @@ test('Nepal: pay at the counter, then pay the bill with Khalti; the copy names N
   page,
 }) => {
   test.slow();
-  await page.goto('/?branch=ktm-thamel&table=5');
+  await scan(page, 'branch=ktm-thamel&table=5');
   await expect(visible(page, 'The Olive Table — Thamel')).toBeVisible();
   await page.goto('/menu/starters/');
   await expect(async () => {
@@ -125,7 +127,7 @@ test('Nepal: pay at the counter, then pay the bill with Khalti; the copy names N
     .getByRole('button', { name: /Place order/ })
     .filter({ visible: true })
     .click();
-  await expect(page).toHaveURL(/\/order\/A\d+\/confirmed\/$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
 
   // The bill hint and the payment help name Nepal's ways to pay and its VAT invoice.
   await page.goto('/help/bill/');
@@ -158,11 +160,11 @@ test('Nepal: pay at the counter, then pay the bill with Khalti; the copy names N
 });
 
 test('India stays the default branch, and another branch is another session', async ({ page }) => {
-  await page.goto('/?branch=ktm-thamel&table=5');
+  await scan(page, 'branch=ktm-thamel&table=5');
   await expect(visible(page, 'The Olive Table — Thamel')).toBeVisible();
 
   // A plain table link is the default (India) branch: a new session with ₹ prices.
-  await page.goto('/?table=5');
+  await scan(page, 'table=5');
   await expect(visible(page, 'Table 5')).toBeVisible();
   await page.goto('/menu/starters/');
   await expect(visible(page, '₹289')).toBeVisible();

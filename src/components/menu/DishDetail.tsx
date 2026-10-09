@@ -9,6 +9,7 @@ import { SiteHeader } from '@/components/layout/SiteHeader';
 import { OrderingBanner } from '@/components/status/OrderingBanner';
 import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { useCartActions, useDishLines } from '@/hooks/useCart';
+import { useDishOffer } from '@/hooks/useOffers';
 import { useDishConfig } from '@/hooks/useDishConfig';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
@@ -47,6 +48,9 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
     dish,
     editing ? { config: editing, quantity: editing.quantity } : undefined,
   );
+  // The live price on the button, with the offer on now (happy hour).
+  const offer = useDishOffer(dish, state.unitPrice);
+  const offerTotal = (offer?.price ?? state.unitPrice) * state.quantity;
   const hero = dish.image;
   const unavailable = unavailableLabel(t, dish);
   // Closed: the menu is read-only, but existing cart lines can still be edited.
@@ -112,7 +116,7 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
             />
             <Button
               block
-              meta={money.format(state.total)}
+              meta={money.format(offerTotal)}
               onClick={submit}
               disabled={!state.valid || Boolean(unavailable) || closed}
             >

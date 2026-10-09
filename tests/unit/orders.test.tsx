@@ -3,7 +3,7 @@ import { isStoredOrder } from '@/api/mock/db';
 import { markOrdersPaid } from '@/api/mock/handlers/payments';
 import { buildOrder, nextOrderId, priceLines } from '@/api/mock/orderBuilder';
 import { defaultConfig, lineKey, orderLine, unitPrice } from '@/lib/cartLine';
-import { isOwnOrder } from '@/lib/orders';
+import { isOwnOrder, orderPath } from '@/lib/orders';
 import { calculateBill } from '@/lib/pricing';
 import type { Branch, PaymentMethodId } from '@/types/branch';
 import type { CartLine } from '@/types/cart';
@@ -18,6 +18,7 @@ const labels = {
   methodName: (method: string) => (method === 'esewa' ? 'eSewa' : 'UPI'),
   lineLabels: testLineLabels(),
   estimate: branch.prepTime,
+  onBill: 'On your bill',
 };
 const mockOrders = testOrderHistory().history;
 
@@ -40,11 +41,7 @@ const input = {
 };
 
 /** buildOrder with the bill the server works out for the lines at the branch (orderPricing). */
-const build = (
-  over: Partial<typeof input> & { id: string },
-  m = menu,
-  b: Branch = branch,
-) => {
+const build = (over: Partial<typeof input> & { id: string }, m = menu, b: Branch = branch) => {
   const lines = over.lines ?? input.lines;
   return buildOrder({ ...input, ...over, bill: calculateBill(lines, b) }, m, labels, b);
 };
@@ -154,8 +151,20 @@ describe('pricing and numbering (server side)', () => {
     expect(priceLines(ordered, menu)).toEqual([{ ...orderLine(line), unitPrice: 289 }]);
   });
 
-  it('takes the first free id from the pool', () => {
-    expect(nextOrderId([{ id: 'A105' }], ['A105', 'A106'])).toBe('A106');
-    expect(nextOrderId([{ id: 'A105' }], ['A105'])).toBeNull();
+  it('numbers the next order after the highest known one, without limit', () => {
+    expect(nextOrderId([{ id: 'A104' }, { id: 'A033' }])).toBe('A105');
+    expect(nextOrderId([{ id: 'A105' }, { id: 'A999' }, { id: 'A120' }])).toBe('A1000');
+    expect(nextOrderId([{ id: 'A1000' }])).toBe('A1001');
+    expect(nextOrderId([{ id: 'X9999' }, { id: 'A007' }])).toBe('A008');
+    expect(nextOrderId([])).toBe('A001');
+  });
+});
+
+describe('orderPath', () => {
+  it('puts the id in the query string of each order page', () => {
+    expect(orderPath('A105')).toBe('/order/?id=A105');
+    expect(orderPath('A1000', 'track')).toBe('/order/track/?id=A1000');
+    expect(orderPath('A105', 'confirmed')).toBe('/order/confirmed/?id=A105');
+    expect(orderPath('A 1&2', 'details')).toBe('/order/?id=A%201%262');
   });
 });

@@ -56,7 +56,9 @@
   "panel": {
     "title": "Your order",
     "review": "Review & checkout",
-    "visitWithCount": "{visit} · {items}"
+    "visitWithCount": "{visit} · {items}",
+    "reviewRound": "Review & add to my order",
+    "reviewChanges": "Review changes"
   },
   "empty": {
     "title": "Your cart is empty",
@@ -92,7 +94,11 @@
     "roundOff": "Round off",
     "toPay": "To pay",
     "deliveryFee": "Delivery fee",
-    "deliveryFree": "Free"
+    "deliveryFree": "Free",
+    "offers": {
+      "happyHour": "Happy hour"
+    },
+    "promoCode": "Promo {code}"
   },
   "toast": {
     "added": "{dish} added",
@@ -117,5 +123,70 @@
     "chooseFirst": "Choose your area to see the delivery fee",
     "pending": "Checking delivery…",
     "required": "Choose your delivery area first"
+  },
+  "tab": {
+    "title": "Adding to order #{id}",
+    "endOfMeal": "No need to check out again: this goes straight to the kitchen as round {round}, and onto your bill.",
+    "perRound": "No need to check out again: pay for round {round} and it goes straight to the kitchen.",
+    "add": "Add to my order",
+    "added": "Round {round} is on its way to the kitchen",
+    "closed": "Your earlier order was cancelled, so please check out this one as a new order."
+  },
+  "editing": {
+    "title": "Editing order #{id}",
+    "titleRound": "Editing round {round} of order #{id}",
+    "open": "Change your items, then update the order. <b>{time}</b> left to make changes.",
+    "closed": "Too late to change it: the kitchen has started on it. Your order stays as it was.",
+    "cancel": "Cancel editing",
+    "update": "Update order",
+    "updated": "Order #{id} updated",
+    "refund": "Order #{id} updated. {amount} will be refunded to your {method} account."
+  },
+  "orderPayment": {
+    "titleRound": "Pay for round {round}",
+    "titleChange": "Pay the difference",
+    "bodyRound": "Round {round} adds {amount} to your bill.",
+    "bodyChange": "Your updated order comes to {total}. You've paid {paid} online, so {amount} is left to pay.",
+    "methods": "Payment method",
+    "pay": "Pay {amount}",
+    "send": "Send to the kitchen",
+    "waiting": "Approve {amount} in your {name} app or bank page. Please don't close this page.",
+    "failed": "That payment didn't go through. No money was taken.",
+    "retry": "Try again",
+    "close": "Not now"
+  },
+  "promo": {
+    "add": "Apply promo code",
+    "addHint": "See offers for this outlet · optional",
+    "label": "Promo code",
+    "placeholder": "Enter code",
+    "apply": "Apply",
+    "applyLabel": "Apply {code}",
+    "available": "Available offers",
+    "appliedTitle": "{code} applied",
+    "saving": "You save {amount} on this order",
+    "appliedTag": "Applied",
+    "remove": "Remove",
+    "removeLabel": "Remove promo code {code}",
+    "rejected": "Your promo code can't be used on this order any more. Check the cart and try again.",
+    "onTab": "{code} is on order #{id}: its discount is worked out on your whole bill, this round included.",
+    "codes": {
+      "percentCapped": "{discount} off orders above {minOrder}, up to {maxDiscount}",
+      "percentUpTo": "{discount} off your order, up to {maxDiscount}",
+      "flatDelivery": "{discount} off delivery orders above {minOrder}"
+    },
+    "modes": {
+      "dineIn": "dine-in",
+      "takeaway": "takeaway",
+      "delivery": "delivery"
+    },
+    "errors": {
+      "required": "Enter a promo code.",
+      "invalid": "{code} isn't a valid code at this outlet.",
+      "expired": "{code} has expired.",
+      "modeNotEligible": "{code} can't be used on {mode} orders.",
+      "limitReached": "You've already used {code}.",
+      "belowMinimum": "Add {amount} more to use {code}."
+    }
   }
 }

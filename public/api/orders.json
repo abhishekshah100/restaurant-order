@@ -21,7 +21,18 @@
           "variant": "Full",
           "details": ["Full · 10 pcs · Medium spicy", "+ Extra mint chutney (free)"],
           "unitPrice": 549,
-          "status": "preparing"
+          "status": "preparing",
+          "config": {
+            "dishSlug": "paneer-tikka",
+            "variantId": "full",
+            "addOnIds": ["mint-chutney"],
+            "options": {
+              "spice": "Medium"
+            },
+            "removals": [],
+            "instructions": [],
+            "note": ""
+          }
         },
         {
           "dishSlug": "truffle-mushroom-pasta",
@@ -32,7 +43,16 @@
           "details": ["Regular · ₹369", "+ Extra parmesan · ₹40"],
           "note": "Less cheese",
           "unitPrice": 409,
-          "status": "queued"
+          "status": "queued",
+          "config": {
+            "dishSlug": "truffle-mushroom-pasta",
+            "variantId": "regular",
+            "addOnIds": ["parmesan"],
+            "options": {},
+            "removals": [],
+            "instructions": ["Less cheese"],
+            "note": ""
+          }
         },
         {
           "dishSlug": "iced-hazelnut-latte",
@@ -42,7 +62,18 @@
           "variant": "Regular",
           "details": ["Regular · Oat milk · ₹199 each"],
           "unitPrice": 199,
-          "status": "ready"
+          "status": "ready",
+          "config": {
+            "dishSlug": "iced-hazelnut-latte",
+            "variantId": "regular",
+            "addOnIds": [],
+            "options": {
+              "milk": "Oat milk"
+            },
+            "removals": [],
+            "instructions": [],
+            "note": ""
+          }
         }
       ],
       "itemTotal": 1356,
@@ -362,28 +393,6 @@
         }
       ]
     }
-  ],
-  "newOrderIds": [
-    "A105",
-    "A106",
-    "A107",
-    "A108",
-    "A109",
-    "A110",
-    "A111",
-    "A112",
-    "A113",
-    "A114",
-    "A115",
-    "A116",
-    "A117",
-    "A118",
-    "A119",
-    "A120",
-    "A121",
-    "A122",
-    "A123",
-    "A124"
   ],
   "riders": {
     "blr-indiranagar": [

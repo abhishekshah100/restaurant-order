@@ -76,7 +76,8 @@ function DetailsForm({ initialName, initialPhone }: { initialName: string; initi
   );
   const [pickedSaved, setPickedSaved] = useState<number | null | undefined>(undefined);
   // A saved address is offered first, unless the guest entered one in this checkout.
-  const savedIndex = pickedSaved === undefined ? (saved.length > 0 && !session.address ? 0 : null) : pickedSaved;
+  const savedIndex =
+    pickedSaved === undefined ? (saved.length > 0 && !session.address ? 0 : null) : pickedSaved;
   const address = savedIndex !== null ? (saved[savedIndex] ?? draft) : draft;
   const areas = deliveryAreas(branch.modes.delivery.zones);
   const addressErrors =

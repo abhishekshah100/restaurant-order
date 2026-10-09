@@ -2,15 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import { PriceSummary, type PriceSummaryVariant } from '@/components/cart/PriceSummary';
 import { GuestSessionProvider } from '@/context/GuestSessionContext';
-import { calculateBill } from '@/lib/pricing';
+import { calculateBill, type BillDiscount } from '@/lib/pricing';
 import { ApiTestProvider, seedGuestSession, testBranch } from '../apiState';
 
 /** The summary's rows as "label: value", for a bill at a branch the guest is at. */
-function rows(branchId: string, prices: number[], variant: PriceSummaryVariant): string[] {
+function rows(
+  branchId: string,
+  prices: number[],
+  variant: PriceSummaryVariant,
+  discounts: BillDiscount[] = [],
+): string[] {
   seedGuestSession({ branchId, table: 5 });
   const bill = calculateBill(
     prices.map((unitPrice) => ({ unitPrice, quantity: 1 })),
     testBranch(branchId),
+    undefined,
+    discounts,
   );
   const { container } = render(
     <ApiTestProvider>
@@ -64,5 +71,28 @@ describe('PriceSummary', () => {
       `To pay: ${nbsp('रू 2,834')}`,
     ]);
     expect(rows(NEPAL, [880], 'compact')[1]).toMatch(/^Service charge, VAT \+ round off: /);
+  });
+
+  it('discounts follow the item total: happy hour, then the promo code', () => {
+    const discounts: BillDiscount[] = [
+      { kind: 'offer', id: 'happy-hour', labelKey: 'happyHour', amountMinor: 4000 },
+      { kind: 'code', code: 'WELCOME10', amountMinor: 7080 },
+    ];
+    // ₹199 + ₹549 = ₹748 − ₹40 − ₹70.80 = ₹637.20 + GST ₹31.86 = ₹669.06 → ₹669.
+    expect(rows(INDIA, [199, 549], 'combined', discounts)).toEqual([
+      'Item total: ₹748.00',
+      'Happy hour: −₹40.00',
+      'Promo WELCOME10: −₹70.80',
+      'CGST + SGST (5%): ₹31.86',
+      'Round off: −₹0.06',
+      'To pay: ₹669',
+    ]);
+    expect(rows(INDIA, [199, 549], 'compact', discounts)).toEqual([
+      'Item total: ₹748.00',
+      'Happy hour: −₹40.00',
+      'Promo WELCOME10: −₹70.80',
+      'GST 5% + round off: ₹31.80',
+      'To pay: ₹669',
+    ]);
   });
 });

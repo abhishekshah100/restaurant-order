@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createTranslator } from '@/api/translator';
 import type { ContentMap } from '@/api/queries';
 import { PAYMENT_METHODS } from '@/lib/payments';
-import { readApiJson, testBranches, testMenu, testRestaurant } from '../apiState';
+import { readApiJson, testBranches, testMenu, testPromotions, testRestaurant } from '../apiState';
 
 /*
  * The branch data is the contract with the backend: every content key it names must exist,
@@ -13,6 +13,7 @@ const branches = testBranches();
 const cart = readApiJson<ContentMap['cart']>('content/cart');
 const checkout = readApiJson<ContentMap['checkout']>('content/checkout');
 const service = readApiJson<ContentMap['service']>('content/service');
+const menuText = readApiJson<ContentMap['menu']>('content/menu');
 const common = createTranslator(readApiJson<ContentMap['common']>('content/common'));
 const checkoutText = createTranslator(checkout);
 
@@ -67,4 +68,25 @@ describe('GET /branches', () => {
     const nepal = testMenu('ktm-thamel');
     expect(nepal.dishes.every((d) => d.price % 5 === 0)).toBe(true);
   });
+
+  it.each(branches.map((b) => [b.id, b] as const))(
+    '%s: promotions name only content, categories and dishes that exist',
+    (_, b) => {
+      const { codes, offers } = testPromotions(b.id);
+      const menu = testMenu(b.id);
+      for (const promo of codes) {
+        expect(cart.promo.codes).toHaveProperty(promo.descriptionKey);
+        expect(promo.code).toBe(promo.code.trim().toUpperCase());
+        expect(promo.modes.every((m) => b.modes[m].enabled)).toBe(true);
+      }
+      for (const offer of offers) {
+        expect(cart.priceSummary.offers).toHaveProperty(offer.labelKey);
+        expect(menuText.offers).toHaveProperty(offer.labelKey);
+        for (const id of offer.scope.categories ?? []) expect(menu.getCategory(id)).toBeDefined();
+        for (const slug of offer.scope.dishes ?? []) expect(menu.getDish(slug)).toBeDefined();
+        expect(offer.from).toMatch(/^\d{2}:\d{2}$/);
+        expect(offer.to).toMatch(/^\d{2}:\d{2}$/);
+      }
+    },
+  );
 });

@@ -8,11 +8,12 @@ import { useCheckout } from '@/context/CheckoutContext';
 import { useGuestSession } from '@/context/GuestSessionContext';
 import { useToast } from '@/context/ToastContext';
 import { orderLine } from '@/lib/cartLine';
+import { orderPath } from '@/lib/orders';
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage';
 import type { FulfilmentRequest } from '@/api/contracts';
 import type { PaymentMethodId } from '@/types/branch';
 import { useCart } from './useCart';
-import { useFulfilmentRequest } from './useFulfilment';
+import { useFulfilmentRequest, useOrderBill } from './useFulfilment';
 import { useOrderRejected } from './useOrderRejected';
 
 /**
@@ -37,6 +38,7 @@ export function usePlaceOrderState(): {
   const { lines, kitchenNote } = useCart();
   const { session } = useCheckout();
   const fulfilment = useFulfilmentRequest();
+  const { promoCode } = useOrderBill();
   const { mutateAsync: createOrder } = useCreateOrder();
   const { showToast } = useToast();
   const rejected = useOrderRejected();
@@ -60,16 +62,17 @@ export function usePlaceOrderState(): {
           lines: lines.map(orderLine),
           fulfilment,
           ...(paymentId ? { paymentId } : {}),
+          ...(promoCode ? { promoCode } : {}),
         });
         writeJSON(STORAGE_KEYS.justPlaced, order.id, 'session');
-        router.replace(`/order/${order.id}/confirmed/`);
+        router.replace(orderPath(order.id, 'confirmed'));
       } catch (error) {
         inFlight.current = false;
         setPlacing(false);
         if (!rejected(error)) showToast(t('payment.placeError'), { tone: 'error' });
       }
     },
-    [lines, session.name, kitchenNote, createOrder, router, showToast, rejected, t],
+    [lines, session.name, kitchenNote, promoCode, createOrder, router, showToast, rejected, t],
   );
 
   const placeOrder = useCallback(
@@ -88,11 +91,11 @@ export function usePlaceOrderState(): {
 const isString = (v: unknown): v is string => typeof v === 'string';
 
 /** On the confirmation page: if this order was just placed here, empty the cart and checkout. */
-export function useFinishPlacedOrder(orderId: string) {
+export function useFinishPlacedOrder(orderId: string | null | undefined) {
   const { clear, hydrated } = useCart();
   const { reset } = useCheckout();
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !orderId) return;
     if (readJSON(STORAGE_KEYS.justPlaced, isString, 'session') !== orderId) return;
     removeKey(STORAGE_KEYS.justPlaced, 'session');
     clear();

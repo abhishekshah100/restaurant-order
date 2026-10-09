@@ -10,16 +10,27 @@ import { SiteHeader } from '@/components/layout/SiteHeader';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { cx } from '@/lib/cx';
 import { useVisitWords } from '@/hooks/useVisitLabel';
-import { formatPlaced, groupByVisit, isFinished, paymentLabel, spentTotal } from '@/lib/orders';
+import {
+  formatPlaced,
+  groupByVisit,
+  isFinished,
+  orderPath,
+  paymentLabel,
+  spentTotal,
+  stepKey,
+  type TrackStep,
+} from '@/lib/orders';
 import { itemCount } from '@/lib/pricing';
 import type { Order } from '@/types/order';
+import { activeRounds, hasRounds } from '@/lib/lifecycle';
 import { ModeBadge } from './ModeBadge';
+import { OrderAgainButton } from './OrderAgainButton';
 import { OrderThumb } from './OrderThumb';
 import { useLiveOrderList } from './useLiveOrders';
 import styles from './MyOrders.module.css';
 
 const orderHref = (order: Order) =>
-  isFinished(order) ? `/order/${order.id}/` : `/order/${order.id}/track/`;
+  isFinished(order) ? orderPath(order.id) : orderPath(order.id, 'track');
 
 function OrderStatus({ order, className }: { order: Order; className?: string }) {
   const t = useContent('orders');
@@ -27,7 +38,7 @@ function OrderStatus({ order, className }: { order: Order; className?: string })
     <StatusPill status={order.status} className={className}>
       {order.etaMinutes && !isFinished(order)
         ? t('list.statusEta', {
-            status: order.status === 'received' ? t('steps.received') : t('steps.preparing'),
+            status: t(`steps.${stepKey(order.mode, order.status as TrackStep)}`),
             minutes: order.etaMinutes,
           })
         : undefined}
@@ -46,9 +57,13 @@ function OrderRow({ order, now, today }: { order: Order; now: Date; today: boole
   const table = visitWords(order);
   const placed = formatPlaced(order.placedAt, now, clock);
   const names = order.items.map((i) => i.name).join(', ');
+  // A running order says how many rounds it has had: "Table 12 · 2 rounds".
+  const rounds = hasRounds(order) ? t.plural('rounds.count', activeRounds(order).length) : '';
+  const join = (...parts: string[]) => parts.filter(Boolean).join(' · ');
+  const finished = isFinished(order);
   return (
-    <li>
-      <Link href={orderHref(order)} className={cx(styles.row, !isFinished(order) && styles.active)}>
+    <li className={styles.item}>
+      <Link href={orderHref(order)} className={cx(styles.row, !finished && styles.active)}>
         <OrderThumb order={order} />
         <span className={styles.main}>
           <span className={styles.top}>
@@ -60,10 +75,10 @@ function OrderRow({ order, now, today }: { order: Order; now: Date; today: boole
             {count} · {money.format(order.total)} · {payment}
           </span>
           <span className={cx(styles.sub, styles.when, 'hide-desktop')}>
-            {placed} · {table}
+            {join(placed, table, rounds)}
           </span>
           <span className={cx(styles.sub, styles.clamp, 'hide-mobile')}>
-            {count} · {today ? names : table}
+            {join(count, rounds, today ? names : table)}
           </span>
         </span>
         <span className={cx(styles.sub, 'hide-mobile')}>{placed}</span>
@@ -74,6 +89,7 @@ function OrderRow({ order, now, today }: { order: Order; now: Date; today: boole
         <OrderStatus order={order} className={cx(styles.status, 'hide-mobile')} />
         <Icon name="chev" size="sm" className={cx(styles.chev, 'hide-mobile')} />
       </Link>
+      {finished && <OrderAgainButton order={order} size="sm" className={styles.again} />}
     </li>
   );
 }

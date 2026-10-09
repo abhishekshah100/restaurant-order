@@ -49,7 +49,7 @@ describe('usePlaceOrder', () => {
       result.current.order.placeOrder('counter');
     });
     act(() => result.current.order.placeOrder('counter'));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('/order/A105/confirmed/'));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/order/confirmed/?id=A105'));
     expect(replace).toHaveBeenCalledTimes(1);
     expect(storedOrders()).toHaveLength(1);
     expect(result.current.order.placing).toBe(true);

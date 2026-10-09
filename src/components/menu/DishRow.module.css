@@ -125,23 +125,9 @@
   flex-wrap: wrap;
   column-gap: 6px;
 }
-.note {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font: 600 11.5px/16px var(--f-ui);
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.note > span[aria-hidden] {
-  width: 13px;
-  height: 13px;
-  flex: none;
-}
-.noteInCart {
-  color: var(--brand-700);
+.badge {
+  align-self: flex-start;
+  margin-top: 4px;
 }
 .control {
   position: relative;

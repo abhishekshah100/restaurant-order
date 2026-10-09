@@ -58,10 +58,7 @@ export function rememberAddress(
   saved: readonly DeliveryAddress[],
   address: DeliveryAddress,
 ): DeliveryAddress[] {
-  return [address, ...saved.filter((a) => !sameAddress(a, address))].slice(
-    0,
-    SAVED_ADDRESS_LIMIT,
-  );
+  return [address, ...saved.filter((a) => !sameAddress(a, address))].slice(0, SAVED_ADDRESS_LIMIT);
 }
 
 /** "Flat 3B, 12 Lake Road, Lazimpat". */

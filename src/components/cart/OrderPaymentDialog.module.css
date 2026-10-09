@@ -1,0 +1,39 @@
+.flow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.text {
+  margin: 0;
+  font: var(--font-body);
+  color: var(--ink-2);
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Waiting for the guest to approve the request */
+.waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 4px;
+  text-align: center;
+}
+.amount {
+  margin: 4px 0 0;
+  font: var(--font-price-lg);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.waiting .actions {
+  margin-top: 8px;
+}
+
+@media (max-width: 1023.98px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+}

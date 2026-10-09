@@ -20,6 +20,7 @@ import { PayBillFailed, PayBillPaid, PayBillProcessing } from './PayBillStatus';
 import { usePayBill, type BillPayment, type PaidBill } from './usePayBill';
 import styles from './PayBillView.module.css';
 import { useDineInOnly } from '@/hooks/useDineInOnly';
+import type { TableLabel } from '@/hooks/useTable';
 
 type Phase =
   | { step: 'choose'; returning?: boolean }
@@ -165,7 +166,7 @@ export function PayBillView() {
 }
 
 interface PayFormProps {
-  table: number;
+  table: TableLabel;
   sessionId: string | undefined;
   payable: Order[];
   method: PaymentMethodId;

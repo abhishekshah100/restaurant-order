@@ -11,9 +11,9 @@ import { useBranch, useContent, useHelpTopics, useRegion } from '@/api/hooks';
 import { useVisit } from '@/context/GuestSessionContext';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
+import { orderPath } from '@/lib/orders';
 import type { HelpTopic } from '@/types/help';
 import { HelpTopicDialog } from './HelpTopicDialog';
-import { HoursCard } from './HoursCard';
 import { SocialFollow } from './SocialFollow';
 import { useTableVisit } from './useTableVisit';
 import styles from './HelpView.module.css';
@@ -97,7 +97,7 @@ export function HelpView() {
     setTopicId(id);
     setTopicOpen(true);
   };
-  const orderHref = latest ? `/order/${latest.id}/` : '/orders/';
+  const orderHref = latest ? orderPath(latest.id) : '/orders/';
 
   return (
     <Page>
@@ -220,7 +220,6 @@ export function HelpView() {
             </ul>
           </section>
           <div className={styles.side}>
-            {/* <HoursCard /> */}
             <SocialFollow />
           </div>
         </div>

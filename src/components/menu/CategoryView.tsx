@@ -7,6 +7,7 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MenuShell } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { OrderingBanner } from '@/components/status/OrderingBanner';
+import { OfferBanner } from './OfferBanner';
 import { CartPanel } from '@/components/cart/CartPanel';
 import { useContent, useMenu } from '@/api/hooks';
 import { useFilters } from '@/context/FiltersContext';
@@ -57,6 +58,7 @@ function CategoryPage({ category }: { category: Category }) {
         actions={<IconButton icon="search" label={t('nav.search')} href="/search/" />}
       />
       <OrderingBanner />
+      <OfferBanner categoryId={category.id} />
       <Tabs className="hide-desktop" label={t('nav.categories')} value={category.id} items={tabs} />
       <MenuShell sidebar={<CategorySidebar active={category.id} />} cart={<CartPanel />} tight>
         <Breadcrumbs items={[{ label: t('nav.menu'), href: '/menu/' }, { label: category.name }]} />

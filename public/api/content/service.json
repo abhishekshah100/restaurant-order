@@ -61,12 +61,6 @@
       }
     }
   },
-  "hours": {
-    "openToday": "Open today {hours}",
-    "lastOrdersAt": "Kitchen takes last orders at {time}",
-    "title": "Opening hours",
-    "lastKitchenOrder": "Last kitchen order"
-  },
   "social": {
     "titleMobile": "Follow us",
     "titleDesktop": "Follow {restaurant}",

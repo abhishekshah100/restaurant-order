@@ -1,3 +1,4 @@
+import { scan } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -15,12 +16,12 @@ const balanceDue = (page: Page) =>
   page.getByText('Balance due', { exact: true }).filter({ visible: true }).first().locator('..');
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/?table=12');
+  await scan(page, 'table=12');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
-  await page.goto('/?table=12');
+  await scan(page, 'table=12');
   await expect(page.getByText('Table 12').filter({ visible: true }).first()).toBeVisible();
 });
 

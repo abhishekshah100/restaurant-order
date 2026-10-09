@@ -4,8 +4,10 @@ import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
+import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { apiGet } from './client';
+import type { OrderLineRequest } from './contracts';
 import { api } from './endpoints';
 import type common from '../../public/api/content/common.json';
 import type home from '../../public/api/content/home.json';
@@ -79,9 +81,20 @@ export const branchMenuQuery = (branchId: string) =>
   });
 
 /**
- * GET /orders: the drawn order history (each order names its branch) and the id pool for new
- * orders. It's the mock server's seed (api/mock/seed), not read by screens: they read orders
- * through the server-owned endpoints below. Also lists the order pages to prerender.
+ * GET /branches/:id/promotions: one branch's promo codes and automatic offers (happy hour).
+ * They can change during the day, so they're re-read after a minute like the branches.
+ */
+export const branchPromotionsQuery = (branchId: string) =>
+  queryOptions({
+    queryKey: ['branches', branchId, 'promotions'] as const,
+    queryFn: () => apiGet<BranchPromotions>(`branches/${branchId}/promotions`),
+    staleTime: 60_000,
+  });
+
+/**
+ * GET /orders: the drawn order history (each order names its branch) and the delivery riders.
+ * It's the mock server's seed (api/mock/seed), not read by screens: they read orders through
+ * the server-owned endpoints below.
  */
 export const orderHistoryQuery = () =>
   queryOptions({
@@ -106,11 +119,11 @@ export const helpQuery = () =>
  * Keys start with 'orders' / 'service-requests' so a write can invalidate them together.
  */
 
-/** GET /orders/:id: one order with its live status; polled every 30 s while `live`. */
-export const orderQuery = (id: string) =>
+/** GET /orders/:id: one order with its live status; polled every 30 s while `live`; idle without an id. */
+export const orderQuery = (id: string | undefined) =>
   queryOptions({
     queryKey: ['orders', 'detail', id] as const,
-    queryFn: () => api.getOrder(id),
+    queryFn: id ? () => api.getOrder(id) : skipToken,
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: (query) => (query.state.data?.live ? TRACK_REFRESH_MS : false),
@@ -147,6 +160,26 @@ export const deliveryQuoteQuery = (branchId: string, area: string | undefined, i
     queryFn: area ? () => api.quoteDelivery({ branchId, area, itemTotal }) : skipToken,
     staleTime: 60_000,
     placeholderData: (previous) => (previous?.area === area ? previous : undefined),
+  });
+
+/**
+ * POST /promos/validate: what a promo code takes off the cart's lines. A calculation the server
+ * owns, read like a query: idle without a code, re-read when the lines change (the last answer
+ * for the same code is shown meanwhile), and a "no" (an error code) isn't retried.
+ */
+export const promoQuoteQuery = (
+  sessionId: string | undefined,
+  code: string | undefined,
+  lines: readonly OrderLineRequest[],
+) =>
+  queryOptions({
+    queryKey: ['promo-quote', sessionId, code, lines] as const,
+    queryFn:
+      sessionId && code
+        ? () => api.validatePromo({ sessionId, code, lines: [...lines] })
+        : skipToken,
+    staleTime: 60_000,
+    placeholderData: (previous) => (previous?.code === code ? previous : undefined),
   });
 
 /** GET /sessions/:id/service-requests: this guest's pending waiter and bill requests. */

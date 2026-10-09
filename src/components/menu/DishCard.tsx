@@ -2,10 +2,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { memo } from 'react';
 import { Tag, VegMark } from '@/components/ui';
-import { useContent, useRegion } from '@/api/hooks';
+import { useContent } from '@/api/hooks';
+import { useDishOffer } from '@/hooks/useOffers';
 import { dishImage, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import { AddControl } from './AddControl';
+import { OfferBadge, OfferPrice } from './OfferPrice';
 import { TAG_VARIANT, firstHighlight, tagLabel, type DishHighlight } from './dishTag';
 import styles from './DishCard.module.css';
 
@@ -40,7 +42,9 @@ function CardTag({ dish, hideChefTag }: { dish: Dish; hideChefTag?: boolean }) {
  */
 export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: DishCardProps) {
   const image = dishImage(dish, 'card');
-  const { money } = useRegion();
+  const price = startingPrice(dish);
+  // While an offer is on, its badge takes the photo's tag spot.
+  const offer = useDishOffer(dish, price);
   return (
     <li className={styles.card}>
       <div className={styles.media}>
@@ -56,7 +60,11 @@ export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: 
           />
         )}
         <span className={styles.tag}>
-          <CardTag dish={dish} hideChefTag={hideChefTag} />
+          {offer ? (
+            <OfferBadge dish={dish} price={price} />
+          ) : (
+            <CardTag dish={dish} hideChefTag={hideChefTag} />
+          )}
         </span>
       </div>
       <div className={styles.body}>
@@ -70,7 +78,9 @@ export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: 
         </div>
         <p className={styles.desc}>{dish.cardDescription ?? dish.description}</p>
         <div className={styles.foot}>
-          <span className={styles.price}>{money.format(startingPrice(dish))}</span>
+          <span className={styles.price}>
+            <OfferPrice dish={dish} price={price} />
+          </span>
           <AddControl dish={dish} className={styles.control} size="sm" customisableHint />
         </div>
       </div>

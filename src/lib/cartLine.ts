@@ -205,3 +205,17 @@ export function orderLine({ key: _key, unitPrice: _price, ...line }: CartLine): 
 } {
   return line;
 }
+
+/** Just what was chosen on a line (no quantity, price or key): what an order item records. */
+export function lineConfig(line: LineConfig): LineConfig {
+  const { dishSlug, variantId, addOnIds, options, removals, instructions, note } = line;
+  return {
+    dishSlug,
+    ...(variantId !== undefined ? { variantId } : {}),
+    addOnIds,
+    options,
+    removals,
+    instructions,
+    note,
+  };
+}

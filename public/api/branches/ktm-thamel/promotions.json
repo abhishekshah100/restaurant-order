@@ -1,0 +1,25 @@
+{
+  "codes": [
+    {
+      "code": "NAMASTE15",
+      "type": "percent",
+      "value": 15,
+      "minOrder": 0,
+      "maxDiscount": 250,
+      "modes": ["dineIn", "takeaway", "delivery"],
+      "descriptionKey": "percentUpTo"
+    }
+  ],
+  "offers": [
+    {
+      "id": "happy-hour",
+      "days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+      "from": "16:00",
+      "to": "19:00",
+      "scope": { "categories": ["beverages"] },
+      "type": "percent",
+      "value": 20,
+      "labelKey": "happyHour"
+    }
+  ]
+}

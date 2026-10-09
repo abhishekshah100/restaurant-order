@@ -1,6 +1,8 @@
 {
   "meta": {
-    "orderPlaced": "Order #{id} placed"
+    "details": "Order details",
+    "tracking": "Order tracking",
+    "confirmed": "Order placed"
   },
   "shared": {
     "myOrders": "My orders",
@@ -31,7 +33,9 @@
     "notFound": {
       "title": "Order not found",
       "body": "We couldn't find order #{id} on this device. Orders placed on another phone or browser show up there.",
-      "bodyShort": "We couldn't find order #{id} on this device."
+      "bodyShort": "We couldn't find order #{id} on this device.",
+      "bodyNoId": "We couldn't find that order on this device. Orders placed on another phone or browser show up there.",
+      "bodyShortNoId": "We couldn't find that order on this device."
     }
   },
   "steps": {
@@ -78,7 +82,10 @@
     "paidAtPickup": "Paid at pickup",
     "paidOnDelivery": "Paid on delivery",
     "payAtPickup": "Pay at pickup",
-    "cashOnDelivery": "Cash on delivery"
+    "cashOnDelivery": "Cash on delivery",
+    "onBill": "On your bill",
+    "paidSoFar": "Paid so far",
+    "stillToPay": "Still to pay"
   },
   "totals": {
     "total": "Total",
@@ -147,7 +154,8 @@
     "pickupAt": "Pickup at",
     "arrivesIn": "Arrives in",
     "deliverTo": "Deliver to",
-    "mode": "Order type"
+    "mode": "Order type",
+    "saved": "You saved {amount} with {discounts}"
   },
   "cancelled": {
     "title": "The kitchen had to cancel this order",
@@ -163,7 +171,12 @@
       "started": "Refund of {amount} started to {to}. It usually arrives in 3–5 working days.",
       "done": "{amount} was refunded to {to}.",
       "notCharged": "You haven’t been charged for this order."
-    }
+    },
+    "titleGuest": "You cancelled this order",
+    "bodyGuest": "Nothing will be made. Hungry after all? You can order it again.",
+    "cancelledByYou": "Cancelled by you",
+    "roundCancelled": "Round {round} cancelled",
+    "roundRefund": "Round {round} cancelled. {amount} will be refunded to your {method} account."
   },
   "details": {
     "title": "Order details",
@@ -227,5 +240,53 @@
       "work": "Work",
       "other": "Other"
     }
+  },
+  "rounds": {
+    "label": "Rounds on this order",
+    "round": "Round {number}",
+    "placed": "Placed {time}",
+    "count": {
+      "one": "{count} round",
+      "other": "{count} rounds"
+    },
+    "latest": "Round {number} of {count}",
+    "kitchenNote": "Note for the kitchen: “{text}”"
+  },
+  "change": {
+    "label": "Change or cancel",
+    "open": "You can change or cancel for <b>{time}</b>",
+    "openRound": "You can change or cancel round {round} for <b>{time}</b>",
+    "openHint": "After that, the kitchen starts on it.",
+    "change": "Change order",
+    "changeRound": "Change round {round}",
+    "cancel": "Cancel order",
+    "cancelRound": "Cancel round {round}",
+    "closed": {
+      "started": "The kitchen has started on it, so it can no longer be changed or cancelled.",
+      "expired": "The time to change or cancel it has passed."
+    },
+    "help": {
+      "dineIn": "Need something changed? Call a waiter.",
+      "takeaway": "Need something changed? Call the restaurant.",
+      "delivery": "Need something changed? Call the restaurant."
+    },
+    "tooLate": "Too late to change it: the kitchen has started on it."
+  },
+  "cancelDialog": {
+    "title": "Cancel order #{id}?",
+    "titleRound": "Cancel round {round}?",
+    "body": "The kitchen won't make it.",
+    "bodyRound": "The kitchen won't make round {round}. The rest of your order stays as it is.",
+    "refund": "{amount} you paid online will be refunded to your {method} account.",
+    "notCharged": "You won't be charged for it.",
+    "confirm": "Yes, cancel",
+    "keep": "Keep it"
+  },
+  "again": {
+    "button": "Order again",
+    "label": "Order again (order #{id})",
+    "added": "Added to your cart from order #{id}",
+    "skipped": "Added to your cart. Not available right now: {names}",
+    "noneAvailable": "None of these dishes can be ordered right now"
   }
 }

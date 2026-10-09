@@ -1,0 +1,29 @@
+.saved {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-tile);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-small-strong);
+  text-align: left;
+}
+.saved > span[aria-hidden] {
+  flex: none;
+  margin-top: 2px;
+}
+
+@media (min-width: 1024px) {
+  .saved {
+    width: auto;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: var(--r-round);
+  }
+  .saved > span[aria-hidden] {
+    margin-top: 0;
+  }
+}

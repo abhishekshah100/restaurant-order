@@ -1,0 +1,62 @@
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 20px 12px;
+}
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-height: 44px;
+  padding: 4px 6px 4px 12px;
+  border-radius: var(--r);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-small);
+}
+.banner > span[aria-hidden] {
+  flex: none;
+}
+.text {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+}
+.text b {
+  color: var(--success);
+  font-weight: 700;
+}
+.link {
+  composes: textLink from '@/styles/patterns.module.css';
+  flex: none;
+  padding: 0 8px;
+  color: var(--success);
+  font: var(--font-small-strong);
+  gap: 2px;
+}
+
+@media (hover: hover) {
+  .link:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .row {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+}
+@media (min-width: 1024px) {
+  .row {
+    width: 100%;
+    max-width: var(--wrap-max);
+    margin: 0 auto;
+    padding: 20px 40px 0;
+  }
+  .banner {
+    padding: 4px 8px 4px 16px;
+  }
+}

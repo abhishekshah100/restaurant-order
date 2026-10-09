@@ -14,7 +14,8 @@ import { useContent, useServiceRequests } from '@/api/hooks';
 import { useCancelServiceRequest, useCreateServiceRequest } from '@/api/mutations';
 import { WaiterRequestDialog } from '@/components/service/WaiterRequestDialog';
 import { useRequestFailed } from '@/hooks/useRequestFailed';
-import { useGuestSession, useTableContext } from './GuestSessionContext';
+import { useTableLabel } from '@/hooks/useTable';
+import { useGuestSession } from './GuestSessionContext';
 import { useToast } from './ToastContext';
 import { SERVICE_PATHS, byKind, latestRequest } from '@/lib/service';
 import type {
@@ -55,7 +56,7 @@ const BILL_PATH = '/help/bill/';
  */
 export function ServiceRequestProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const table = useTableContext();
+  const table = useTableLabel();
   const sessionId = useGuestSession()?.id;
   const { showToast } = useToast();
   const requestFailed = useRequestFailed();

@@ -1,0 +1,12 @@
+.offer {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 6px;
+  color: var(--success);
+}
+.was {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--ink-3);
+}

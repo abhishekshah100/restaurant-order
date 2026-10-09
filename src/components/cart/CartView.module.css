@@ -241,3 +241,14 @@
   width: auto;
   min-width: 0;
 }
+
+/* Editing an order down to no items: the banner sits above the empty state */
+.emptyBanner {
+  margin: 12px 20px 0;
+}
+@media (min-width: 768px) {
+  .emptyBanner {
+    max-width: 680px;
+    margin: 24px auto 0;
+  }
+}

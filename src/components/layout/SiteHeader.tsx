@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Icon } from '@/components/ui';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { useCart } from '@/hooks/useCart';
+import { useCartItemTotal } from '@/hooks/useOffers';
 import { useRegionCopy } from '@/hooks/useRegionCopy';
 import { useStatusLine } from '@/hooks/useRestaurantStatus';
 import { cx } from '@/lib/cx';
@@ -40,7 +41,9 @@ export function SiteHeader({
   const branch = useBranch();
   const { money } = useRegion();
   const pathname = usePathname();
-  const { count, bill, hydrated } = useCart();
+  const { count, hydrated } = useCart();
+  // After the offers on now (happy hour): what the menu showed.
+  const itemTotal = useCartItemTotal();
   const { currencyName } = useRegionCopy();
   const status = useStatusLine();
   const isCheckout = variant === 'checkout' || variant === 'payment';
@@ -108,14 +111,14 @@ export function SiteHeader({
               hydrated && count > 0
                 ? t('cart.summaryLabel', {
                     items: t.plural('itemCount', count),
-                    total: bill.itemTotal,
+                    total: itemTotal,
                     currencyName,
                   })
                 : t('cart.emptyLabel')
             }
           >
             <Icon name="bag" size="sm" />
-            {hydrated && count > 0 ? `${count} · ${money.format(bill.itemTotal)}` : t('cart.label')}
+            {hydrated && count > 0 ? `${count} · ${money.format(itemTotal)}` : t('cart.label')}
           </Link>
         )}
       </div>

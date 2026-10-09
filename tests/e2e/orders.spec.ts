@@ -1,3 +1,4 @@
+import { scan } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -9,11 +10,13 @@ import { expect, test, type Page } from '@playwright/test';
 const isDesktop = (page: Page) => (page.viewportSize()?.width ?? 0) >= 1024;
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/?table=12');
+  await scan(page, 'table=12');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
+  // A fresh guest at table 12 (without a QR code the start screen would open instead).
+  await scan(page, 'table=12');
 });
 
 test('my orders → tracking → details', async ({ page }) => {
@@ -26,7 +29,7 @@ test('my orders → tracking → details', async ({ page }) => {
 
   // The active order opens live tracking.
   await page.getByRole('link', { name: /#A104/ }).filter({ visible: true }).click();
-  await expect(page).toHaveURL(/\/order\/A104\/track\/$/);
+  await expect(page).toHaveURL(/\/order\/track\/\?id=A104$/);
   await expect(page.getByText('12 min').filter({ visible: true })).toBeVisible();
   // A104 is a drawn mock order that doesn't refresh, so it doesn't claim to be live.
   await expect(page.getByText(/^Updated \d{1,2}:\d{2} [AP]M$/)).toBeVisible();
@@ -44,7 +47,7 @@ test('my orders → tracking → details', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeHidden();
 
   await page.getByRole('link', { name: 'Order #A104 details' }).click();
-  await expect(page).toHaveURL(/\/order\/A104\/$/);
+  await expect(page).toHaveURL(/\/order\/\?id=A104$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Order #A104' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Items (4)' })).toBeAttached();
   await expect(page.getByText('“Less cheese”')).toBeVisible();
@@ -54,7 +57,7 @@ test('my orders → tracking → details', async ({ page }) => {
 });
 
 test('a cancelled order explains the refund', async ({ page }) => {
-  for (const path of ['/order/A098/', '/order/A098/track/']) {
+  for (const path of ['/order/?id=A098', '/order/track/?id=A098']) {
     await page.goto(path);
     await expect(
       page.getByRole('heading', { level: 1, name: 'The kitchen had to cancel this order' }),
@@ -98,7 +101,7 @@ test('an order placed on this device moves along live', async ({ page }) => {
     localStorage.setItem('olive.orders.v1', JSON.stringify([order]));
   });
 
-  await page.goto('/order/A105/track/');
+  await page.goto('/order/track/?id=A105');
   await expect(page.getByText('Ready in about')).toBeVisible();
   await expect(page.getByText('10 min').filter({ visible: true })).toBeVisible();
   await expect(page.getByText('Order status: Preparing')).toBeAttached();
@@ -114,8 +117,54 @@ test('an order placed on this device moves along live', async ({ page }) => {
 });
 
 test('an order from another device is not found', async ({ page }) => {
-  await page.goto('/order/A110/');
+  await page.goto('/order/?id=A110');
   await expect(page.getByRole('heading', { level: 1, name: 'Order not found' })).toBeVisible();
+  await expect(page.getByText(/couldn't find order #A110 on this device/)).toBeVisible();
   await page.getByRole('link', { name: 'My orders' }).filter({ visible: true }).last().click();
   await expect(page).toHaveURL(/\/orders\/$/);
+});
+
+test('any order id opens from a deep link; unknown or missing ids are not found', async ({
+  page,
+}) => {
+  // Far past the 20 ids the old pre-rendered pages allowed.
+  await page.evaluate(() => {
+    const order = {
+      id: 'A1000',
+      table: 12,
+      customerName: 'Ananya Rao',
+      placedBy: 'you',
+      placedAt: new Date(Date.now() - 2 * 60_000).toISOString(),
+      status: 'received',
+      items: [
+        {
+          dishSlug: 'masala-chai',
+          name: 'Masala Chai',
+          veg: true,
+          quantity: 1,
+          details: [],
+          unitPrice: 99,
+          status: 'queued',
+        },
+      ],
+      itemTotal: 99,
+      total: 104,
+      payment: { method: 'counter', status: 'unpaid' },
+      timeline: [{ status: 'received', time: '7:00 PM', note: 'Pay at counter' }],
+      estimate: '18–22 min',
+    };
+    localStorage.setItem('olive.orders.v1', JSON.stringify([order]));
+  });
+
+  await page.goto('/order/track/?id=A1000');
+  await expect(page.getByText('Order status: Preparing')).toBeAttached();
+  await expect(page.getByText('1 × Masala Chai')).toBeVisible();
+  await page.getByRole('link', { name: 'Order #A1000 details' }).click();
+  await expect(page).toHaveURL(/\/order\/\?id=A1000$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Order #A1000' })).toBeVisible();
+
+  for (const path of ['/order/track/?id=A9999', '/order/confirmed/?id=A9999', '/order/track/']) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1, name: 'Order not found' })).toBeVisible();
+  }
 });

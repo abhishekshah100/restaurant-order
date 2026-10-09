@@ -23,9 +23,9 @@
       "orderingFor": "You're ordering",
       "takeaway": "Takeaway",
       "delivery": "Delivery",
-      "pickupAt": "Collect at the counter",
+      "pickupAt": "At the counter",
       "deliveringTo": "To {area}",
-      "chooseArea": "Area: choose in cart",
+      "chooseArea": "Area in cart",
       "change": "Change",
       "lede": {
         "takeaway": "Browse our menu, order ahead and collect it from {branch}.",

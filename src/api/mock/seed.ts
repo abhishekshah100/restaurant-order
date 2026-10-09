@@ -4,8 +4,10 @@ import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney } from '@/lib/money';
 import type { Branch } from '@/types/branch';
 import type { OrdersResponse } from '@/types/order';
+import type { BranchPromotions } from '@/types/promotion';
 import {
   branchMenuQuery,
+  branchPromotionsQuery,
   branchesQuery,
   contentQuery,
   orderHistoryQuery,
@@ -16,7 +18,7 @@ import type { OrderLabels } from './orderBuilder';
 
 /**
  * What the mock server knows besides its own tables: the reference data a backend keeps in
- * its database (branches, menus, the drawn order history and the order id pool) and the copy
+ * its database (branches, menus, the drawn order history and the riders) and the copy
  * it writes into orders. It's the dummy JSON from public/api, read through the app's query
  * cache, so it's normally already there (prefetched at build time) and costs no request.
  */
@@ -24,7 +26,9 @@ export interface MockSeed {
   branches(): Promise<Branch[]>;
   defaultBranchId(): Promise<string>;
   menu(branchId: string): Promise<MenuCatalog>;
-  /** GET /orders as sent: the drawn history (every branch) and the order id pool. */
+  /** GET /branches/:id/promotions: the branch's promo codes and automatic offers. */
+  promotions(branchId: string): Promise<BranchPromotions>;
+  /** GET /orders as sent: the drawn history (every branch) and the riders. */
   orders(): Promise<OrdersResponse>;
   /** The words a new order at this branch is written with. */
   orderLabels(branch: Branch): Promise<OrderLabels>;
@@ -38,6 +42,7 @@ export function querySeed(client: QueryClient): MockSeed {
     defaultBranchId: async () => (await client.ensureQueryData(restaurantQuery())).defaultBranchId,
     menu: async (branchId) =>
       createMenuCatalog(await client.ensureQueryData(branchMenuQuery(branchId))),
+    promotions: (branchId) => client.ensureQueryData(branchPromotionsQuery(branchId)),
     orders: () => client.ensureQueryData(orderHistoryQuery()),
     orderLabels: async (branch) => {
       const [orders, common, cart] = await Promise.all([
@@ -52,6 +57,7 @@ export function querySeed(client: QueryClient): MockSeed {
           pickup: orders('payment.payAtPickup'),
           cod: orders('payment.cashOnDelivery'),
         },
+        onBill: orders('payment.onBill'),
         methodName: (method) => common(`paymentMethods.${method}`),
         lineLabels: cartLineLabels(cart, createMoney(branch)),
         estimate: branch.prepTime,

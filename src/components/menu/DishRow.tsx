@@ -4,16 +4,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { memo } from 'react';
 import { Icon } from '@/components/ui';
-import { useContent, useRegion } from '@/api/hooks';
-import { useDishLines } from '@/hooks/useCart';
-import { useCartLineLabels } from '@/hooks/useCartLineLabels';
-import { describeInMenu } from '@/lib/cartLine';
 import { cx } from '@/lib/cx';
 import { dishImage, highlight, isAvailable, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import { AddControl } from './AddControl';
 import { DishTags } from './DishTags';
 import { ExpandableText } from './ExpandableText';
+import { OfferBadge, OfferPrice } from './OfferPrice';
 import styles from './DishRow.module.css';
 
 /** The thumbnail repeats the dish name next to it, so screen readers skip it. */
@@ -40,20 +37,8 @@ export const DishRow = memo(function DishRow({
   showPrepTime,
   searchResult,
 }: DishRowProps) {
-  const lines = useDishLines(dish.slug);
-  const t = useContent('menu');
-  const { money } = useRegion();
-  const lineLabels = useCartLineLabels();
   const thumb = dishImage(dish, 'thumb');
   const available = isAvailable(dish);
-
-  // Once the dish is in the cart, a short note says which version was added.
-  // const inCartNote =
-  //   lines.length > 0
-  //     ? searchResult
-  //       ? t('dish.inCart')
-  //       : (describeInMenu(dish, lines, lineLabels) ?? t('dish.inCart'))
-  //     : null;
 
   return (
     <li className={cx(styles.item, !available && styles.out)}>
@@ -100,13 +85,10 @@ export const DishRow = memo(function DishRow({
       <div className={styles.foot}>
         <div className={styles.priceBlock}>
           {/* Starting price; sizes and add-ons are chosen in the pop-up */}
-          <span className={styles.price}>{money.format(startingPrice(dish))}</span>
-          {/* {inCartNote && (
-            <span className={cx(styles.note, styles.noteInCart)}>
-              <Icon name="bag" size="xs" />
-              {inCartNote}
-            </span>
-          )} */}
+          <span className={styles.price}>
+            <OfferPrice dish={dish} price={startingPrice(dish)} />
+          </span>
+          <OfferBadge dish={dish} price={startingPrice(dish)} className={styles.badge} />
         </div>
         <AddControl dish={dish} className={styles.control} size="sm" customisableHint />
       </div>

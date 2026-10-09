@@ -10,10 +10,11 @@ import { approvalKind } from '@/lib/payments';
 import type { BillPayment, PaidBill } from './usePayBill';
 import { RequestStatus } from './RequestStatus';
 import styles from './PayBillView.module.css';
+import type { TableLabel } from '@/hooks/useTable';
 
 interface ProcessingProps {
   payment: BillPayment;
-  table: number;
+  table: TableLabel;
   /** True while the result can't be accepted (offline, or already recorded). */
   disabled: boolean;
   onCancel: () => void;
@@ -115,7 +116,7 @@ function ProcessingFoot({
 
 interface FailedProps {
   payment: BillPayment;
-  table: number;
+  table: TableLabel;
   onRetry: () => void;
   onChangeMethod: () => void;
 }
@@ -177,7 +178,7 @@ export function PayBillFailed({ payment, table, onRetry, onChangeMethod }: Faile
 
 interface PaidProps {
   receipt: PaidBill;
-  table: number;
+  table: TableLabel;
 }
 
 /** Bill paid: the amount, how it was paid and the orders it covered. */

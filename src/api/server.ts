@@ -7,10 +7,12 @@ import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { Category, Dish, MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
+import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import {
   CONTENT_NAMESPACES,
   branchMenuQuery,
+  branchPromotionsQuery,
   branchesQuery,
   contentQuery,
   helpQuery,
@@ -57,6 +59,12 @@ export async function prefetchAppData(client: QueryClient): Promise<void> {
     client.prefetchQuery({ ...branchesQuery(), queryFn: () => branches }),
     ...branches.map((b) =>
       client.prefetchQuery({ ...branchMenuQuery(b.id), queryFn: () => readMenu(b.id) }),
+    ),
+    ...branches.map((b) =>
+      client.prefetchQuery({
+        ...branchPromotionsQuery(b.id),
+        queryFn: () => readApiFile<BranchPromotions>(`branches/${b.id}/promotions`),
+      }),
     ),
     // The raw response, like the browser's fetch: the query's `select` adapts it on read.
     client.prefetchQuery({
@@ -106,10 +114,4 @@ export async function getDishServer(slug: string): Promise<Dish | undefined> {
 /** A category for page metadata: as the default branch has it, else the first branch that does. */
 export async function getCategoryServer(id: string): Promise<Category | undefined> {
   return (await getMenusServer()).map((m) => m.getCategory(id)).find(Boolean);
-}
-
-/** Every order page to pre-render: the order history plus the pool for new orders. */
-export async function getOrderIdsServer(): Promise<string[]> {
-  const { history, newOrderIds } = await readApiFile<OrdersResponse>('orders');
-  return [...history.map((o) => o.id), ...newOrderIds];
 }

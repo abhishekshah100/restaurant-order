@@ -154,7 +154,7 @@ export interface VisitActions {
 
 interface GuestSessionValue {
   session: GuestSession | null;
-  table: number;
+  table: number | null;
   visit: Visit;
   actions: VisitActions;
 }
@@ -241,10 +241,11 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
   const { defaultTable } = resolveBranch(branches, defaultBranchId);
   const actions = useMemo<VisitActions>(
     () => ({
-      start: (next) => open(next).then(
-        () => true,
-        () => false,
-      ),
+      start: (next) =>
+        open(next).then(
+          () => true,
+          () => false,
+        ),
       update,
     }),
     [open, update],
@@ -253,15 +254,20 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
     const now = session ?? request;
     const table = (now?.mode === 'dineIn' ? now.table : session?.table) ?? null;
     const mode = now?.mode ?? 'dineIn';
+    // Until the link and storage are read (prerendered HTML and the first client render), the
+    // table isn't known: report null so screens show a placeholder, never the default table.
+    const known = session !== null || request !== null || choosing !== null;
+    const current = known ? (table ?? defaultTable) : null;
     return {
       session,
-      table: table ?? defaultTable,
+      table: current,
       visit: {
         mode,
-        // Before the session is read: the default table, as prerendered.
-        table: mode === 'dineIn' ? (table ?? defaultTable) : null,
+        table: mode === 'dineIn' ? current : null,
         scannedTable: table,
-        deliveryArea: session?.deliveryArea ?? (request?.mode === 'delivery' ? request.deliveryArea : undefined),
+        deliveryArea:
+          session?.deliveryArea ??
+          (request?.mode === 'delivery' ? request.deliveryArea : undefined),
         needsStart: choosing !== null,
         choice: choosing ?? {},
       },
@@ -283,8 +289,8 @@ function useGuestSessionContext(): GuestSessionValue {
   return ctx;
 }
 
-/** The current table: the default branch's default table until the session is read. */
-export function useTableContext(): number {
+/** The current table, or null until the session (scanned link or saved session) is read. */
+export function useTableContext(): number | null {
   return useGuestSessionContext().table;
 }
 

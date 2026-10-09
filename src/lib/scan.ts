@@ -108,7 +108,8 @@ export function resolveScan(
 
   const sameBranch = saved && (request.branchId === null || saved.branchId === request.branchId);
   if (mode) {
-    if (sameBranch) return saved.mode === mode ? { keep: saved } : { change: { session: saved, mode } };
+    if (sameBranch)
+      return saved.mode === mode ? { keep: saved } : { change: { session: saved, mode } };
     return request.branchId ? { start: { branchId, mode } } : { choose: { mode } };
   }
   return sameBranch ? { keep: saved } : { choose: { branchId } };

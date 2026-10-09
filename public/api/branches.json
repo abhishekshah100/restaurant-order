@@ -58,6 +58,7 @@
     },
     "tax": {
       "pricesIncludeTax": false,
+      "discountBeforeTax": true,
       "lines": [
         {
           "id": "gst",
@@ -179,6 +180,10 @@
           }
         ]
       }
+    },
+    "ordering": {
+      "dineInPayment": "endOfMeal",
+      "cancelWindowSeconds": 120
     }
   },
   {
@@ -241,6 +246,7 @@
     },
     "tax": {
       "pricesIncludeTax": false,
+      "discountBeforeTax": true,
       "serviceCharge": {
         "labelKey": "serviceCharge",
         "rateBp": 1000
@@ -398,6 +404,10 @@
           }
         ]
       }
+    },
+    "ordering": {
+      "dineInPayment": "endOfMeal",
+      "cancelWindowSeconds": 120
     }
   }
 ]

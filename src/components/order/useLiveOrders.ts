@@ -12,14 +12,16 @@ export type OrderLookup =
 
 /**
  * One order by id (GET /orders/:id) with its live status, polled every 30 s while the kitchen
- * moves it. An order from another branch than the guest's isn't shown here.
+ * moves it. An order from another branch than the guest's isn't shown here. `id` is undefined
+ * while it isn't known yet (loading) and null when there's none (missing).
  */
-export function useLiveOrder(id: string): OrderLookup {
+export function useLiveOrder(id: string | null | undefined): OrderLookup {
   const session = useGuestSession();
   const branch = useBranch();
-  const { data: order, isError, dataUpdatedAt } = useOrder(id);
+  const { data: order, isError, dataUpdatedAt } = useOrder(id ?? undefined);
+  if (id === null) return { state: 'missing' };
   // Wait for the session too: until then the active branch is only the default one.
-  if (!session || (!order && !isError)) return { state: 'loading' };
+  if (id === undefined || !session || (!order && !isError)) return { state: 'loading' };
   if (!order || order.branchId !== branch.id) return { state: 'missing' };
   return { state: 'found', order, now: new Date(dataUpdatedAt), live: Boolean(order.live) };
 }

@@ -8,15 +8,19 @@ import { createMoney, type Money } from '@/lib/money';
 import { resolveBranch } from '@/lib/scan';
 import type { Branch, MobileRules } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
+import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { useActiveBranchId } from './activeBranch';
+import type { OrderLineRequest } from './contracts';
 import {
   branchMenuQuery,
+  branchPromotionsQuery,
   branchesQuery,
   contentQuery,
   deliveryQuoteQuery,
   helpQuery,
   orderQuery,
+  promoQuoteQuery,
   restaurantQuery,
   serviceRequestsQuery,
   sessionOrdersQuery,
@@ -66,6 +70,11 @@ export function useMenu(): MenuCatalog {
   return useMemo(() => createMenuCatalog(data), [data]);
 }
 
+/** The active branch's promo codes and automatic offers (GET /branches/:id/promotions). */
+export function usePromotions(): BranchPromotions {
+  return useSuspenseQuery(branchPromotionsQuery(useBranch().id)).data;
+}
+
 /** How the active branch writes money, times and mobile numbers. */
 export interface Region {
   money: Money;
@@ -89,8 +98,8 @@ export function useHelpTopics(): HelpTopics {
 
 /* ---------- Server-owned reads ---------- */
 
-/** GET /orders/:id: one order with its live status, polled while the kitchen moves it. */
-export const useOrder = (id: string) => useQuery(orderQuery(id));
+/** GET /orders/:id: one order with its live status, polled while the kitchen moves it; idle without an id. */
+export const useOrder = (id: string | undefined) => useQuery(orderQuery(id));
 
 /** GET /sessions/:id/orders: the guest's orders; idle until there's a session. */
 export const useSessionOrders = (sessionId: string | undefined) =>
@@ -107,4 +116,13 @@ export const useServiceRequests = (sessionId: string | undefined) =>
 /** POST /delivery/quote at the active branch: idle until there's an area. */
 export function useDeliveryQuote(area: string | undefined, itemTotal: number) {
   return useQuery(deliveryQuoteQuery(useBranch().id, area, itemTotal));
+}
+
+/** POST /promos/validate for the guest's session: idle until there's a session and a code. */
+export function usePromoQuote(
+  sessionId: string | undefined,
+  code: string | undefined,
+  lines: readonly OrderLineRequest[],
+) {
+  return useQuery(promoQuoteQuery(sessionId, code, lines));
 }

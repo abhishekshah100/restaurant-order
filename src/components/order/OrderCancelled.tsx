@@ -31,13 +31,14 @@ function refundText({ payment, total }: Order, { t, money, onlineName }: RefundC
   return t('cancelled.refund.notCharged');
 }
 
-/** Order cancelled by the restaurant (s10 · ws10). */
+/** Order cancelled by the restaurant (s10 · ws10), or by the guest within the change window. */
 export function OrderCancelled({ order }: { order: Order }) {
   const menu = useMenu();
   const t = useContent('orders');
   const common = useContent('common');
   const { money } = useRegion();
   const refundCopy = { t, money, onlineName: common('paymentMethods.online') };
+  const byGuest = order.cancelledBy === 'guest';
   const received = order.timeline.find((e) => e.status === 'received');
   const cancelled = order.timeline.find((e) => e.status === 'cancelled');
   const entries: TimelineEntry[] = [
@@ -50,7 +51,7 @@ export function OrderCancelled({ order }: { order: Order }) {
     },
     {
       key: 'cancelled',
-      title: t('cancelled.cancelledByRestaurant'),
+      title: byGuest ? t('cancelled.cancelledByYou') : t('cancelled.cancelledByRestaurant'),
       detail: [cancelled?.time, cancelled?.note].filter(Boolean).join(' · '),
       icon: 'x',
       state: 'cancel',
@@ -79,8 +80,12 @@ export function OrderCancelled({ order }: { order: Order }) {
         />
         <section className={cx(styles.panel, styles.hero)} role="alert">
           <StatusPill status="cancelled" className={styles.pill} />
-          <h1 className={styles.title}>{t('cancelled.title')}</h1>
-          <p className="t-body c2">{order.cancelReason ?? t('cancelled.sorry')}</p>
+          <h1 className={styles.title}>
+            {byGuest ? t('cancelled.titleGuest') : t('cancelled.title')}
+          </h1>
+          <p className="t-body c2">
+            {order.cancelReason ?? (byGuest ? t('cancelled.bodyGuest') : t('cancelled.sorry'))}
+          </p>
           <Banner tone="ok" className={cx(styles.banner, 'hide-mobile')}>
             {refundText(order, refundCopy)}
           </Banner>

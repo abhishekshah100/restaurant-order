@@ -17,6 +17,7 @@ import type { Translator } from '@/api/translator';
 import type { MenuCatalog } from '@/lib/menu';
 import { calculateBill, type Bill } from '@/lib/pricing';
 import { lineKey, unitPrice } from '@/lib/cartLine';
+import type { ReorderLine } from '@/lib/lifecycle';
 import { normaliseConfig } from '@/lib/options';
 import { EMPTY_CART, cartReducer, parseCart } from '@/lib/cartReducer';
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage';
@@ -35,12 +36,29 @@ export interface CartActions {
   removeLine: (key: string) => void;
   editLine: (key: string, dish: Dish, config: LineConfig, quantity: number) => void;
   setKitchenNote: (note: string) => void;
+  /** Keeps a promo code the server accepted with the cart; undefined removes it. */
+  setPromoCode: (code: string | undefined) => void;
   clear: () => void;
+  /**
+   * Fills the cart with an order's latest round to change it ("Editing order #A105"); the cart
+   * as it was is put back by `stopEditing`.
+   */
+  startEditing: (
+    target: { orderId: string; round: number },
+    lines: readonly ReorderLine[],
+    kitchenNote: string,
+  ) => void;
+  /** Ends editing: the cart goes back to what it held before. */
+  stopEditing: () => void;
 }
 
 export interface CartContextValue extends CartActions {
   lines: CartLine[];
   kitchenNote: string;
+  /** The promo code the guest applied, if any (see useOrderBill for what it takes off). */
+  promoCode: string | undefined;
+  /** The order (round) being changed, while editing; null otherwise. */
+  editing: { orderId: string; round: number } | null;
   bill: Bill;
   /** Total quantity across lines. */
   count: number;
@@ -120,15 +138,34 @@ function createCartStore(): CartStore {
   };
 }
 
+/** A cart line for a configuration, priced from the menu. */
+const toCartLine = (dish: Dish, config: LineConfig, quantity: number): CartLine => ({
+  ...config,
+  key: lineKey(config),
+  quantity,
+  unitPrice: unitPrice(dish, config),
+});
+
 /** Re-prices saved lines against the current menu and drops dishes that no longer exist. */
-function reconcile(saved: CartState, menu: MenuCatalog): CartState {
-  const lines = saved.lines.flatMap((line) => {
+function repriceLines(lines: readonly CartLine[], menu: MenuCatalog): CartLine[] {
+  return lines.flatMap((line) => {
     const dish = menu.getDish(line.dishSlug);
     if (!dish) return [];
-    const config = normaliseConfig(dish, line);
-    return [{ ...line, ...config, key: lineKey(config), unitPrice: unitPrice(dish, config) }];
+    return [{ ...line, ...toCartLine(dish, normaliseConfig(dish, line), line.quantity) }];
   });
-  return { kitchenNote: saved.kitchenNote, lines };
+}
+
+/** A saved cart (and the one put aside while editing an order) on the current menu. */
+function reconcile(saved: CartState, menu: MenuCatalog): CartState {
+  const cart: CartState = {
+    kitchenNote: saved.kitchenNote,
+    lines: repriceLines(saved.lines, menu),
+    ...(saved.promoCode ? { promoCode: saved.promoCode } : {}),
+  };
+  const { editing } = saved;
+  if (!editing) return cart;
+  const stash = { ...editing.stash, lines: repriceLines(editing.stash.lines, menu) };
+  return { ...cart, editing: { ...editing, stash } };
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -190,7 +227,18 @@ function createActions(
       dispatch({ type: 'edit', key, config, unitPrice: unitPrice(dish, config), quantity });
     },
     setKitchenNote: (note) => dispatch({ type: 'setKitchenNote', note }),
+    setPromoCode: (code) => dispatch({ type: 'setPromoCode', code }),
     clear: () => dispatch({ type: 'clear' }),
+    startEditing({ orderId, round }, lines, kitchenNote) {
+      // Same configuration twice (two items alike) is one line, as in the cart.
+      const cart = lines.reduce(
+        (next, { dish, config, quantity }) =>
+          cartReducer(next, { type: 'add', config, unitPrice: unitPrice(dish, config), quantity }),
+        EMPTY_CART,
+      );
+      dispatch({ type: 'startEditing', orderId, round, lines: cart.lines, kitchenNote });
+    },
+    stopEditing: () => dispatch({ type: 'stopEditing' }),
   };
 }
 
@@ -238,6 +286,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return {
       lines: cart.lines,
       kitchenNote: cart.kitchenNote,
+      promoCode: cart.promoCode,
+      editing: cart.editing ? { orderId: cart.editing.orderId, round: cart.editing.round } : null,
       bill,
       count: bill.itemCount,
       hydrated,

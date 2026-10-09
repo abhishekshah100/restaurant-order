@@ -32,7 +32,14 @@ async function guestWithOrder(): Promise<Order> {
   const res = await server({
     method: 'POST',
     path: 'orders',
-    body: { sessionId, customerName: 'Rohan', method: 'counter', kitchenNote: '', lines: [line] },
+    body: {
+      sessionId,
+      customerName: 'Rohan',
+      method: 'counter',
+      kitchenNote: '',
+      lines: [line],
+      fulfilment: { mode: 'dineIn' },
+    },
   });
   return res?.body as Order;
 }
@@ -52,6 +59,11 @@ describe('order reads', () => {
 
     const missing = renderHook(() => useLiveOrder('A123'), { wrapper });
     await waitFor(() => expect(missing.result.current.state).toBe('missing'));
+    // No id yet (the page is hydrating) or none in the URL.
+    expect(renderHook(() => useLiveOrder(undefined), { wrapper }).result.current.state).toBe(
+      'loading',
+    );
+    expect(renderHook(() => useLiveOrder(null), { wrapper }).result.current.state).toBe('missing');
   });
 
   it("useLiveOrderList: the guest's orders with their drawn history", async () => {

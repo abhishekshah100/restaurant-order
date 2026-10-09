@@ -3,10 +3,11 @@ import type { ReactNode } from 'react';
 import { Icon, IconButton, Tag, VegMark } from '@/components/ui';
 import { VisitPill } from '@/components/layout/VisitPill';
 import { cx } from '@/lib/cx';
-import { useContent, useMenu, useRegion } from '@/api/hooks';
+import { useContent, useMenu } from '@/api/hooks';
 import { startingPrice } from '@/lib/menu';
 import type { Allergen, Dish, DishImage } from '@/types/menu';
 import { Breadcrumbs } from './Breadcrumbs';
+import { OfferBadge, OfferPrice } from './OfferPrice';
 import { tagLabel, type MenuText } from './dishTag';
 import styles from './DishDetail.module.css';
 
@@ -136,7 +137,6 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 /** Veg mark, name, description, mobile detail chips and the starting price. */
 export function DishIntro({ dish }: { dish: Dish }) {
   const t = useContent('menu');
-  const { money } = useRegion();
   const allergens = allergenText(t, dish);
   return (
     <section className={styles.intro} aria-labelledby="dish-title">
@@ -178,8 +178,9 @@ export function DishIntro({ dish }: { dish: Dish }) {
         {(dish.variants?.length ?? 0) > 1 && (
           <span className={styles.from}>{t('detail.from')}</span>
         )}
-        {money.format(startingPrice(dish))}
+        <OfferPrice dish={dish} price={startingPrice(dish)} />
       </p>
+      <OfferBadge dish={dish} price={startingPrice(dish)} className={styles.offerBadge} />
     </section>
   );
 }

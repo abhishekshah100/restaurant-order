@@ -39,18 +39,18 @@ describe('toOrder', () => {
   });
 
   it('passes a real placedAt through untouched', () => {
-    expect(toOrder(dated, india)).toBe(dated);
+    expect(toOrder(dated, india)).toEqual({ ...dated, mode: 'dineIn' });
+    expect(toOrder({ ...dated, mode: 'takeaway' }, india).mode).toBe('takeaway');
   });
 });
 
 describe('toOrderHistory', () => {
-  it("adapts the branch's orders and keeps the id pool", () => {
+  it("adapts the branch's orders", () => {
     const now = new Date('2026-10-03T21:00:00+05:30');
-    const { history, newOrderIds } = toOrderHistory(raw, india, now);
+    const { history } = toOrderHistory(raw, india, now);
     expect(history.map((o) => o.id)).toEqual(raw.history.map((o) => o.id));
     expect(history.every((o) => !Number.isNaN(Date.parse(o.placedAt)))).toBe(true);
     expect(history.find((o) => o.id === 'A104')?.placedAt).toBe('2026-10-03T19:42:00+05:30');
-    expect(newOrderIds).toBe(raw.newOrderIds);
   });
 
   it("leaves out other branches' orders", () => {

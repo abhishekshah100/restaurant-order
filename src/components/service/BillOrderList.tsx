@@ -1,6 +1,7 @@
 import { useContent, useRegion } from '@/api/hooks';
 import { Tag } from '@/components/ui';
 import { cx } from '@/lib/cx';
+import { activeRounds, hasRounds } from '@/lib/lifecycle';
 import { isOwnOrder } from '@/lib/orders';
 import { isPaid } from '@/lib/service';
 import type { Order } from '@/types/order';
@@ -16,6 +17,7 @@ export function BillOrderList({
   sessionId: string | undefined;
 }) {
   const t = useContent('service');
+  const orderText = useContent('orders');
   const { money, clock } = useRegion();
   const who = (order: Order) =>
     isOwnOrder(order, sessionId) ? t('billOrders.you') : order.customerName;
@@ -29,7 +31,10 @@ export function BillOrderList({
       </div>
       <ul className={styles.list}>
         {orders.map((order) => {
-          const time = clock.time(order.placedAt);
+          // A running order is one line on the bill, covering every round: "7:42 PM · 2 rounds".
+          const time = hasRounds(order)
+            ? `${clock.time(order.placedAt)} · ${orderText.plural('rounds.count', activeRounds(order).length)}`
+            : clock.time(order.placedAt);
           return (
             <li key={order.id} className={styles.row}>
               <b className={styles.id}>

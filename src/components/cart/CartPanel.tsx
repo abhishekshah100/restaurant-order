@@ -1,8 +1,9 @@
 'use client';
 
-import { Button, Icon } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { useCart } from '@/hooks/useCart';
 import { useOrderBill } from '@/hooks/useFulfilment';
+import { useOpenTab } from '@/hooks/useRunningOrder';
 import { useVisitLabel } from '@/hooks/useVisitLabel';
 import { cx } from '@/lib/cx';
 import { useContent } from '@/api/hooks';
@@ -18,8 +19,9 @@ export interface CartPanelProps {
 
 /** "Your order" column on desktop menu pages (w02) and the tablet slide-over. */
 export function CartPanel({ inDialog, onNavigate }: CartPanelProps) {
-  const { lines, count, hydrated } = useCart();
-  const { bill, mode } = useOrderBill();
+  const { lines, count, hydrated, editing } = useCart();
+  const tab = useOpenTab();
+  const { bill } = useOrderBill();
   const visit = useVisitLabel();
   const t = useContent('cart');
   const Heading = inDialog ? 'p' : 'h2';
@@ -47,7 +49,11 @@ export function CartPanel({ inDialog, onNavigate }: CartPanelProps) {
             <div className={styles.foot}>
               <PriceSummary bill={bill} variant="combined" />
               <Button href="/cart/" block iconEnd="arrow" onClick={onNavigate}>
-                {t('panel.review')}
+                {editing
+                  ? t('panel.reviewChanges')
+                  : tab
+                    ? t('panel.reviewRound')
+                    : t('panel.review')}
               </Button>
             </div>
           </>

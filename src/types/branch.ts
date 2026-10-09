@@ -63,6 +63,11 @@ export interface TaxLine {
 export interface TaxConfig {
   /** Menu prices exclude tax (the only model so far). */
   pricesIncludeTax: false;
+  /**
+   * Discounts (automatic offers, promo codes) come off the item total before the service charge
+   * and taxes are worked out (true, both demo branches), or off the taxed total (false).
+   */
+  discountBeforeTax: boolean;
   /** Charged on the item total before tax. No service charge: the bill says "Not added". */
   serviceCharge?: { labelKey: BillLineKey; rateBp: number };
   lines: TaxLine[];
@@ -153,6 +158,20 @@ export interface BranchModes {
   delivery: DeliveryMode;
 }
 
+/**
+ * When dine-in guests pay for a running order: for each round as it's ordered (online or at the
+ * counter), or once at the end of the meal (rounds go straight to the kitchen; the tab is paid
+ * with Pay my bill or at the counter).
+ */
+export type DineInPayment = 'perRound' | 'endOfMeal';
+
+/** How orders work once placed. */
+export interface OrderingRules {
+  dineInPayment: DineInPayment;
+  /** Seconds after placing an order (or round) during which the guest can change or cancel it. */
+  cancelWindowSeconds: number;
+}
+
 /** GET /branches: one restaurant location, with everything that differs by place. */
 export interface Branch {
   id: string;
@@ -210,4 +229,6 @@ export interface Branch {
   dietary: { marks: DietaryMark[] };
   /** Dine-in, takeaway and delivery: which are offered and their rules. */
   modes: BranchModes;
+  /** Running orders, and changing or cancelling an order just placed. */
+  ordering: OrderingRules;
 }

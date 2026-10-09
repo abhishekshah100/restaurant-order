@@ -8,6 +8,7 @@ import { billFor, type BillSummary } from '@/lib/service';
 import type { Order } from '@/types/order';
 import type { PaymentMethodId } from '@/types/branch';
 import { useTableVisit } from './useTableVisit';
+import type { TableLabel } from '@/hooks/useTable';
 
 /** A payment in progress: the orders and amount the server fixed when the guest tapped Pay. */
 export interface BillPayment {
@@ -25,7 +26,7 @@ export interface PaidBill {
 }
 
 interface PayBill {
-  table: number;
+  table: TableLabel;
   sessionId: string | undefined;
   /** This guest's "Just my orders" bill; `payable` is what they can pay here. */
   bill: BillSummary;
@@ -80,14 +81,11 @@ export function usePayBill(): PayBill {
   const completePayment = useCallback(
     (payment: BillPayment): Promise<PaidBill | null> => {
       receiptRef.current ??= simulate({ id: payment.id, outcome: 'succeeded' }).then(
-        ({ orders: paid }) => {
+        ({ payment: settled, orders: paid }) => {
           if (paid.length === 0) return null;
           setSettled(true);
-          return {
-            orders: paid,
-            amount: paid.reduce((sum, o) => sum + o.total, 0),
-            method: payment.method,
-          };
+          // What was charged: what was still due on the orders (a running order may have been part paid).
+          return { orders: paid, amount: settled.amount, method: payment.method };
         },
         () => {
           receiptRef.current = null;

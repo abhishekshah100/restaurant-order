@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page, type TestInfo } from '@playwright/test';
-import { dishSlug, waitForSavedCart } from './helpers';
+import { dishSlug, waitForSavedCart, scan } from './helpers';
 
 /**
  * Separate bills: two guests at one table order and pay separately. Ananya pays online at
@@ -9,7 +9,7 @@ import { dishSlug, waitForSavedCart } from './helpers';
  *
  * Table 12 also has the drawn mock orders (#A104, #A097, #A101) from GET /orders. They carry no
  * guest session, so they're on the whole table's bill but never on one guest's own bill.
- * Order IDs come from a pool per device, so both phones may get #A105: don't compare IDs.
+ * Order numbers are counted per device (mock), so both phones may get #A105: don't compare IDs.
  */
 
 /** A separate guest's phone, at this project's viewport, scanned in at table 12. */
@@ -17,7 +17,7 @@ async function newGuest(browser: Browser, testInfo: TestInfo): Promise<Page> {
   const { baseURL, viewport } = testInfo.project.use;
   const context = await browser.newContext({ baseURL, viewport });
   const page = await context.newPage();
-  await page.goto('/?table=12');
+  await scan(page, 'table=12');
   await expect(page.getByText('Table 12').filter({ visible: true }).first()).toBeVisible();
   return page;
 }
@@ -67,7 +67,7 @@ async function orderAndCheckout(page: Page, dish: string, name: string, pay: 'on
     await page.getByRole('radio', { name: /Pay at the counter/ }).click();
     await visible(page, 'button', /^Place order/).click();
   }
-  await expect(page).toHaveURL(/\/order\/A\d+\/confirmed\/$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
 }
 
 async function openMyBill(page: Page) {

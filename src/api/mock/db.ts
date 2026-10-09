@@ -3,7 +3,7 @@ import { isPaymentMethodId } from '@/lib/payments';
 import { WAITER_REASON_IDS } from '@/lib/service';
 import { isGuestSession } from '@/lib/session';
 import { readJSON, storageAvailable, writeJSON, type StorageKind } from '@/lib/storage';
-import type { Order, OrderItem } from '@/types/order';
+import type { Order, OrderItem, OrderRound } from '@/types/order';
 import type { ServiceRequest } from '@/types/service';
 import type { GuestSession } from '@/types/session';
 import type { Payment } from '../contracts';
@@ -66,7 +66,26 @@ function isOrderItem(v: unknown): v is OrderItem {
     Array.isArray(v.details) &&
     v.details.every((d) => typeof d === 'string') &&
     isOptionalString(v.variant) &&
-    isOptionalString(v.note)
+    isOptionalString(v.note) &&
+    (v.config === undefined || (isObject(v.config) && typeof v.config.dishSlug === 'string'))
+  );
+}
+
+const isTimeline = (v: unknown) =>
+  Array.isArray(v) &&
+  v.every((e) => isObject(e) && typeof e.status === 'string' && typeof e.time === 'string');
+
+function isOrderRound(v: unknown): v is OrderRound {
+  return (
+    isObject(v) &&
+    typeof v.number === 'number' &&
+    typeof v.placedAt === 'string' &&
+    typeof v.status === 'string' &&
+    typeof v.changeableUntil === 'string' &&
+    Array.isArray(v.items) &&
+    v.items.every(isOrderItem) &&
+    isTimeline(v.timeline) &&
+    isOptionalString(v.kitchenNote)
   );
 }
 
@@ -101,16 +120,19 @@ export function isStoredOrder(v: unknown): v is StoredOrder {
     typeof v.total === 'number' &&
     Array.isArray(v.items) &&
     v.items.every(isOrderItem) &&
-    Array.isArray(v.timeline) &&
-    v.timeline.every(
-      (e) => isObject(e) && typeof e.status === 'string' && typeof e.time === 'string',
-    ) &&
+    isTimeline(v.timeline) &&
+    (v.rounds === undefined || (Array.isArray(v.rounds) && v.rounds.every(isOrderRound))) &&
     isObject(payment) &&
     typeof payment.method === 'string' &&
     PAYMENT_SETTLEMENTS.has(payment.method) &&
     typeof payment.status === 'string' &&
+    (payment.paid === undefined || typeof payment.paid === 'number') &&
     isOptionalString(v.estimate) &&
-    isOptionalString(v.kitchenNote)
+    isOptionalString(v.kitchenNote) &&
+    isOptionalString(v.promoCode) &&
+    (v.discounts === undefined ||
+      (Array.isArray(v.discounts) &&
+        v.discounts.every((d) => isObject(d) && typeof d.amount === 'number')))
   );
 }
 
@@ -138,10 +160,13 @@ const isOtpTable = (v: unknown): v is Record<string, OtpRecord> =>
 
 const PAYMENT_STATUSES = new Set(['pending', 'succeeded', 'failed', 'expired']);
 
+const PAYMENT_PURPOSES = new Set(['order', 'bill', 'round', 'change']);
+
 const isPayment = (v: unknown): v is Payment =>
   isObject(v) &&
   typeof v.id === 'string' &&
-  (v.purpose === 'order' || v.purpose === 'bill') &&
+  typeof v.purpose === 'string' &&
+  PAYMENT_PURPOSES.has(v.purpose) &&
   typeof v.sessionId === 'string' &&
   isPaymentMethodId(v.method) &&
   typeof v.amount === 'number' &&
@@ -151,6 +176,7 @@ const isPayment = (v: unknown): v is Payment =>
   typeof v.expiresAt === 'number' &&
   Array.isArray(v.orderIds) &&
   v.orderIds.every((id) => typeof id === 'string') &&
+  isOptionalString(v.orderId) &&
   isOptionalString(v.transactionRef);
 
 /* ---------- Service requests ---------- */

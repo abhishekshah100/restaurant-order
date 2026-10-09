@@ -3,11 +3,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useId } from 'react';
-import { Chip, Icon, VegMark, type IconName } from '@/components/ui';
+import { Chip, Icon, VegMark } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { dishImage, startingPrice } from '@/lib/menu';
-import type { CategoryId, Dish } from '@/types/menu';
+import type { Dish } from '@/types/menu';
 import styles from './SearchSuggestions.module.css';
 
 export interface SearchSuggestionsProps {
@@ -15,30 +15,19 @@ export interface SearchSuggestionsProps {
   onPick: (term: string) => void;
   /** Called when a link is followed (e.g. to close a dropdown). */
   onNavigate?: () => void;
-  /** Desktop dropdown density: 2×2 trending grid, 4-column categories. */
+  /** Desktop dropdown density: 2×2 trending grid. */
   compact?: boolean;
 }
 
 /** Trending photos repeat the dish name beside them, so screen readers skip them. */
 const DECORATIVE = '';
 
-/** A recognisable icon per category (from the app's icon set). */
-const CATEGORY_ICON: Record<CategoryId, IconName> = {
-  starters: 'flame',
-  mains: 'cutlery',
-  meals: 'cloche',
-  pizza: 'chef',
-  'breads-rice': 'leaf',
-  desserts: 'heart',
-  beverages: 'drop',
-};
-
 /**
  * What the search screen shows before you type — the same sections on every device:
- * Trending tonight (dishes with photos), Popular searches, Browse by category.
+ * Trending tonight (dishes with photos) and Popular searches.
  */
 export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggestionsProps) {
-  const { categories, popularSearches, trendingTonight, getDish, categoryCountLabel } = useMenu();
+  const { popularSearches, trendingTonight, getDish } = useMenu();
   const trending = trendingTonight.map(getDish).filter((d): d is Dish => d !== undefined);
   // The header dropdown and the /search page can both be on screen, so ids must be unique.
   const id = useId();
@@ -109,26 +98,6 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
             </Chip>
           ))}
         </div>
-      </section>
-
-      <section className={styles.section} aria-labelledby={`${id}-cats`}>
-        <h2 id={`${id}-cats`} className={styles.heading}>
-          <Icon name="menu" size="xs" className={styles.headingIcon} />
-          {t('search.suggestions.browse')}
-        </h2>
-        <ul className={styles.cats}>
-          {categories.map((cat) => (
-            <li key={cat.id}>
-              <Link href={`/menu/${cat.id}/`} className={styles.cat} onClick={onNavigate}>
-                <span className={styles.catIcon}>
-                  <Icon name={CATEGORY_ICON[cat.id]} size="sm" />
-                </span>
-                <span className={styles.catName}>{cat.name}</span>
-                <span className={styles.catCount}>{categoryCountLabel(cat)}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
       </section>
     </div>
   );

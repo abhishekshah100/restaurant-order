@@ -136,6 +136,47 @@
   font-style: normal;
 }
 
+/* A running order: its items round by round */
+.round + .round {
+  border-top: 1px solid var(--line);
+}
+.roundHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 14px;
+}
+.roundTitle {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font: var(--font-caption);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.roundTime {
+  font: var(--font-small);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.roundHead .roundPill {
+  height: 24px;
+}
+.roundNote {
+  margin: 0;
+  padding: 0 0 14px;
+  font: var(--font-small);
+  font-style: italic;
+  color: var(--ink-2);
+}
+.cancelled .list {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+
 /* Bill */
 .bill {
   padding: 20px;
@@ -317,6 +358,7 @@
 
 @media print {
   .track,
+  .again,
   .actions {
     display: none;
   }

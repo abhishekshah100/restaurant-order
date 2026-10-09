@@ -33,7 +33,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const t = await getContent('common');
   return (
     <html lang="en" className={fontVariables}>
-      <body>
+      {/* Browser extensions (e.g. ColorZilla's cz-shortcut-listen) add attributes to <body>
+          before React hydrates; ignore those attribute differences on this element only. */}
+      <body suppressHydrationWarning>
         <a className="skip-link" href="#main">
           {t('skipLink')}
         </a>

@@ -7,7 +7,7 @@ import { useGuestSession } from '@/context/GuestSessionContext';
 import { orderLine } from '@/lib/cartLine';
 import type { PaymentMethodId } from '@/types/branch';
 import { useCart } from './useCart';
-import { useFulfilmentRequest } from './useFulfilment';
+import { useFulfilmentRequest, useOrderBill } from './useFulfilment';
 import { useOrderRejected } from './useOrderRejected';
 import { usePlaceOrderState } from './usePlaceOrder';
 import { useRequestFailed } from './useRequestFailed';
@@ -31,6 +31,7 @@ export function usePayCheckout(): PayCheckout {
   const { lines } = useCart();
   const { session, setPayment } = useCheckout();
   const fulfilment = useFulfilmentRequest();
+  const { promoCode } = useOrderBill();
   const { placeOrder, placing } = usePlaceOrderState();
   const { mutateAsync: createPayment } = useCreatePayment();
   const { mutateAsync: simulate, mutate: report, isPending: settling } = useSimulatePayment();
@@ -50,6 +51,7 @@ export function usePayCheckout(): PayCheckout {
           method,
           lines: lines.map(orderLine),
           fulfilment,
+          ...(promoCode ? { promoCode } : {}),
         });
         setPayment(opened);
         return true;
@@ -60,7 +62,7 @@ export function usePayCheckout(): PayCheckout {
         opening.current = false;
       }
     },
-    [sessionId, fulfilment, lines, createPayment, setPayment, requestFailed, rejected],
+    [sessionId, fulfilment, lines, promoCode, createPayment, setPayment, requestFailed, rejected],
   );
 
   const succeed = useCallback(async () => {

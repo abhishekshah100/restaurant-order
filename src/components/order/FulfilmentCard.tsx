@@ -69,7 +69,9 @@ export function FulfilmentCard({ order, className }: { order: Order; className?:
           </p>
           <p className={styles.line}>{address.line}</p>
           {address.landmark && (
-            <p className={styles.line}>{t('fulfilment.landmark', { landmark: address.landmark })}</p>
+            <p className={styles.line}>
+              {t('fulfilment.landmark', { landmark: address.landmark })}
+            </p>
           )}
           {address.instructions && (
             <p className={cx(styles.line, styles.note)}>
@@ -103,9 +105,7 @@ export function FulfilmentCard({ order, className }: { order: Order; className?:
             </a>
           </div>
         ) : (
-          order.status !== 'delivered' && (
-            <p className={styles.soon}>{t('fulfilment.riderSoon')}</p>
-          )
+          order.status !== 'delivered' && <p className={styles.soon}>{t('fulfilment.riderSoon')}</p>
         )}
       </section>
     );

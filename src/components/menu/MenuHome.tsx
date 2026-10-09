@@ -8,6 +8,7 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { MenuShell } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { OrderingBanner } from '@/components/status/OrderingBanner';
+import { OfferBanner } from './OfferBanner';
 import { CartPanel } from '@/components/cart/CartPanel';
 import { useContent, useMenu } from '@/api/hooks';
 import { CategorySidebar } from './CategorySidebar';
@@ -36,6 +37,7 @@ export function MenuHome() {
       <SiteHeader />
       <MobileHeader variant="restaurant" />
       <OrderingBanner />
+      <OfferBanner />
       <div className={`${styles.top} hide-desktop`}>
         <SearchLink />
         <MenuFilterChips />

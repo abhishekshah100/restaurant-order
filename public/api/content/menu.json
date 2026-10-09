@@ -86,13 +86,13 @@
     "meal": "Meal",
     "mealSave": "Meal · Save {savings}",
     "customisable": "Customisable",
-    "inCart": "In cart",
     "vegetarian": "Vegetarian",
     "nonVegetarian": "Non-vegetarian",
     "more": "more",
     "less": "less",
     "showFullDescription": "Show full description of {dish}",
-    "showLessDescription": "Show less of {dish} description"
+    "showLessDescription": "Show less of {dish} description",
+    "offerPrice": "{price}, was {was}"
   },
   "availability": {
     "soldOut": "Sold out",
@@ -169,12 +169,18 @@
     "clear": "Clear search",
     "suggestions": {
       "trending": "Trending tonight",
-      "popular": "Popular at The Olive Table",
-      "browse": "Browse by category"
+      "popular": "Popular at The Olive Table"
     }
   },
   "notOnMenu": {
     "title": "Not on the menu here",
     "body": "This branch doesn't serve it. Have a look at what's cooking today."
+  },
+  "offers": {
+    "happyHour": {
+      "badge": "Happy hour",
+      "banner": "<b>Happy hour</b> · {discount} off drinks till {time}",
+      "link": "See drinks"
+    }
   }
 }

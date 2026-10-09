@@ -3,6 +3,7 @@ import { mockLatencyRange } from '../config';
 import { getQueryClient } from '../queryClient';
 import { MockHttpError, randomId, type Handler, type MockContext } from './context';
 import { createStorageDb } from './db';
+import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
 import { sendOtp, verifyOtp } from './handlers/otp';
 import { createPayment, simulatePayment } from './handlers/payments';
@@ -12,6 +13,7 @@ import {
   listServiceRequests,
 } from './handlers/serviceRequests';
 import { deliveryQuote } from './handlers/orderPricing';
+import { validatePromo } from './handlers/promos';
 import { createSession, updateSession } from './handlers/sessions';
 import { querySeed } from './seed';
 
@@ -25,10 +27,14 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'sessions', createSession],
   ['PATCH', 'sessions/:id', updateSession],
   ['POST', 'delivery/quote', deliveryQuote],
+  ['POST', 'promos/validate', validatePromo],
   ['POST', 'otp', sendOtp],
   ['POST', 'otp/verify', verifyOtp],
   ['POST', 'orders', placeOrder],
   ['GET', 'orders/:id', getOrder],
+  ['PATCH', 'orders/:id', changeOrder],
+  ['POST', 'orders/:id/rounds', addRound],
+  ['POST', 'orders/:id/cancel', cancelOrder],
   ['GET', 'sessions/:id/orders', listSessionOrders],
   ['GET', 'tables/:branchId/:table/orders', listTableOrders],
   ['POST', 'payments', createPayment],

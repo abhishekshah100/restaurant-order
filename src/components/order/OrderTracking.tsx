@@ -9,8 +9,10 @@ import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
 import { cx } from '@/lib/cx';
 import { useNow } from '@/hooks/useNow';
 import { useVisitWords } from '@/hooks/useVisitLabel';
+import { activeRounds, hasRounds, latestRound } from '@/lib/lifecycle';
 import {
   isFinished,
+  orderPath,
   paymentProgress,
   stepKey,
   totalLabel,
@@ -19,13 +21,16 @@ import {
   type TrackStepView,
 } from '@/lib/orders';
 import type { Order } from '@/types/order';
+import { ChangeWindow } from './ChangeWindow';
 import { FulfilmentCard } from './FulfilmentCard';
 import { ItemStatusList } from './ItemStatusList';
 import { OrderActions } from './OrderActions';
 import { OrderCancelled } from './OrderCancelled';
 import { OrderLoading, OrderNotFound, OrderShell } from './OrderShell';
+import { RoundList } from './RoundList';
 import { TrackStepper, type StepperEntry } from './TrackStepper';
 import { useLiveOrder } from './useLiveOrders';
+import { useOrderId } from './useOrderId';
 import styles from './OrderTracking.module.css';
 
 const STEP_ICON: Record<TrackStep, IconName> = {
@@ -69,7 +74,12 @@ interface Hero {
 }
 
 /** Headline block of the status card for a dine-in order. */
-function dineInHero(order: Order, timeOf: (step: TrackStep) => string, t: OrdersCopy, prepTime: string): Hero {
+function dineInHero(
+  order: Order,
+  timeOf: (step: TrackStep) => string,
+  t: OrdersCopy,
+  prepTime: string,
+): Hero {
   const table = order.table ?? '';
   switch (order.status) {
     case 'ready':
@@ -99,7 +109,12 @@ function dineInHero(order: Order, timeOf: (step: TrackStep) => string, t: Orders
 }
 
 /** Headline block for a takeaway order: when it's ready to collect, then that it's collected. */
-function takeawayHero(order: Order, timeOf: (step: TrackStep) => string, t: OrdersCopy, branch: string): Hero {
+function takeawayHero(
+  order: Order,
+  timeOf: (step: TrackStep) => string,
+  t: OrdersCopy,
+  branch: string,
+): Hero {
   switch (order.status) {
     case 'ready':
       return {
@@ -208,7 +223,10 @@ function TrackingView({
     state: s.state,
   }));
   const currentNote = steps.find((s) => s.state === 'current' && s.step !== 'received')?.note;
-  const detailsHref = `/order/${order.id}/`;
+  const detailsHref = orderPath(order.id);
+  // A running order: the status card follows its latest round.
+  const rounds = activeRounds(order);
+  const round = rounds.length > 1 ? latestRound(order) : undefined;
 
   return (
     <OrderShell title={t('shared.orderNumber', { id: order.id })} className={styles.layout}>
@@ -230,6 +248,11 @@ function TrackingView({
           <StatusPill status={order.status} className={styles.heroPill} />
           {!finished && <Freshness live={live} now={now} />}
           <div className={styles.eta}>
+            {round && (
+              <span className={cx('t-caption c3', styles.round)}>
+                {t('rounds.latest', { number: round.number, count: rounds.length })}
+              </span>
+            )}
             <span className="t-small c2">{hero.label}</span>
             <span className={styles.etaValue}>{hero.value}</span>
             <span className={cx('t-body c2', styles.etaBody)}>{hero.body}</span>
@@ -237,6 +260,8 @@ function TrackingView({
         </section>
 
         <TrackStepper entries={progress} note={currentNote} />
+
+        <ChangeWindow order={order} />
 
         {order.mode === 'dineIn' ? <OrderActions /> : <FulfilmentCard order={order} />}
       </div>
@@ -256,7 +281,7 @@ function TrackingView({
             <Icon name="chev" size="xs" />
           </Link>
         </div>
-        <ItemStatusList order={order} />
+        {hasRounds(order) ? <RoundList order={order} /> : <ItemStatusList order={order} />}
         <div className={styles.total}>
           <span className={styles.totalLabel}>{t(`totals.${totalLabel(order)}`)}</span>
           <span className={styles.totalAmt}>{money.format(order.total)}</span>
@@ -274,11 +299,14 @@ function TrackingView({
 }
 
 /** Live order tracking (14 · w14); the cancelled state (s10 · ws10) for cancelled orders. */
-export function OrderTracking({ id }: { id: string }) {
+export function OrderTracking() {
   const t = useContent('orders');
+  const id = useOrderId();
   const lookup = useLiveOrder(id);
-  if (lookup.state === 'loading') return <OrderLoading title={t('shared.orderNumber', { id })} />;
-  if (lookup.state === 'missing') return <OrderNotFound id={id} />;
+  if (lookup.state === 'loading') {
+    return <OrderLoading title={id ? t('shared.orderNumber', { id }) : t('meta.tracking')} />;
+  }
+  if (lookup.state === 'missing') return <OrderNotFound id={id ?? null} />;
   const { order, live, now } = lookup;
   if (order.status === 'cancelled') return <OrderCancelled order={order} />;
   return <TrackingView order={order} finished={isFinished(order)} live={live} now={now} />;

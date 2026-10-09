@@ -1,0 +1,34 @@
+{
+  "codes": [
+    {
+      "code": "WELCOME10",
+      "type": "percent",
+      "value": 10,
+      "minOrder": 299,
+      "maxDiscount": 100,
+      "modes": ["dineIn", "takeaway", "delivery"],
+      "perGuestLimit": 1,
+      "descriptionKey": "percentCapped"
+    },
+    {
+      "code": "FLAT50",
+      "type": "flat",
+      "value": 50,
+      "minOrder": 499,
+      "modes": ["delivery"],
+      "descriptionKey": "flatDelivery"
+    }
+  ],
+  "offers": [
+    {
+      "id": "happy-hour",
+      "days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+      "from": "16:00",
+      "to": "19:00",
+      "scope": { "categories": ["beverages"] },
+      "type": "percent",
+      "value": 20,
+      "labelKey": "happyHour"
+    }
+  ]
+}

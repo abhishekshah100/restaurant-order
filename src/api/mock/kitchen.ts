@@ -1,7 +1,7 @@
 import { createClock, type Clock } from '@/lib/clock';
 import { TRACK_STEPS, isFinished, type TrackStep } from '@/lib/orders';
 import type { Branch, OrderMode } from '@/types/branch';
-import type { ItemStatus, Order } from '@/types/order';
+import type { ItemStatus, Order, OrderRound } from '@/types/order';
 import { MINUTE_MS } from './rules';
 
 /*
@@ -115,8 +115,51 @@ export function simulateOrder(order: Order, now: Date, clock: Clock, branch: Bra
   };
 }
 
-/** An order placed through the server as read at `now`: its live status, `live` while it still moves. */
+/** One round of an order as the kitchen has it at `now` (cancelled rounds stay as they are). */
+function liveRound(order: Order, round: OrderRound, now: Date, clock: Clock, branch: Branch) {
+  if (round.status === 'cancelled') return { round, order };
+  // Each round moves along like an order of its own, from when it was placed.
+  const { placedAt, status, items, timeline } = round;
+  const current = simulateOrder(
+    { ...order, placedAt, status, items, timeline },
+    now,
+    clock,
+    branch,
+  );
+  const { etaMinutes, readyBy } = current;
+  return {
+    round: {
+      ...round,
+      status: current.status,
+      items: current.items,
+      timeline: current.timeline,
+      etaMinutes,
+      readyBy,
+    },
+    order: current,
+  };
+}
+
+/**
+ * An order placed through the server as read at `now`: its live status, `live` while it still
+ * moves. Each round moves along on its own; the order shows the latest round still on it
+ * (status, timeline, ETA) and the items of every round still on it.
+ */
 export function liveOrder(order: Order, now: number, branch: Branch): Order {
-  const current = simulateOrder(order, new Date(now), createClock(branch), branch);
+  const clock = createClock(branch);
+  const at = new Date(now);
+  if (!order.rounds || order.status === 'cancelled') {
+    const current = simulateOrder(order, at, clock, branch);
+    return { ...current, live: !isFinished(current) };
+  }
+  const live = order.rounds.map((round) => liveRound(order, round, at, clock, branch));
+  const active = live.filter(({ round }) => round.status !== 'cancelled');
+  const latest = active[active.length - 1]?.order ?? order;
+  const current: Order = {
+    ...latest,
+    placedAt: order.placedAt,
+    items: active.flatMap(({ round }) => round.items),
+    rounds: live.map(({ round }) => round),
+  };
   return { ...current, live: !isFinished(current) };
 }

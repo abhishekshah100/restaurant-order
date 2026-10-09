@@ -3,6 +3,7 @@ import type { OrderMode, PaymentMethodId } from '@/types/branch';
 import type { LineConfig } from '@/types/cart';
 import type { Price } from '@/types/menu';
 import type { DeliveryAddress, Order } from '@/types/order';
+import type { PromoDescriptionKey } from '@/types/promotion';
 import type { BillScope, ServiceRequest, WaiterReason } from '@/types/service';
 import type { GuestSession, SessionStart } from '@/types/session';
 
@@ -37,8 +38,6 @@ export type ApiErrorCode =
   | 'phone_not_verified'
   /** 422: nothing orderable in the order (empty, or no dish on the menu). */
   | 'empty_order'
-  /** 503: no order number is free (mock: the pre-rendered id pool is used up). */
-  | 'order_ids_exhausted'
   /** 402: an online method needs a succeeded payment for this order. */
   | 'payment_required'
   /** 409: the payment isn't pending any more, was already used, or doesn't match. */
@@ -54,7 +53,22 @@ export type ApiErrorCode =
   /** 422: the item total is below the mode's minimum order (`shortBy` says how far). */
   | 'below_minimum'
   /** 422: the pickup time isn't one of the slots on offer any more. */
-  | 'pickup_unavailable';
+  | 'pickup_unavailable'
+  /**
+   * 409: too late to change or cancel the order (round): the kitchen has started on it, the
+   * window (GET /branches › ordering.cancelWindowSeconds) has passed, or it isn't the latest round.
+   */
+  | 'window_closed'
+  /** 409: the order was cancelled, so nothing more can go on it. */
+  | 'order_closed'
+  /** 422: no such promo code at the branch (or it can't be used yet). */
+  | 'promo_invalid'
+  /** 422: the promo code's `validTo` has passed. */
+  | 'promo_expired'
+  /** 422: the promo code isn't for the session's order mode. */
+  | 'promo_mode_not_eligible'
+  /** 422: the guest has used the promo code as often as it allows (`perGuestLimit`). */
+  | 'promo_limit_reached';
 
 /** Body of every non-2xx response. */
 export interface ApiErrorBody {
@@ -63,8 +77,10 @@ export interface ApiErrorBody {
   attemptsLeft?: number;
   /** otp_resend_too_soon: epoch ms when a new code can be sent. */
   resendAt?: number;
-  /** below_minimum: how much more the items must add up to (major units). */
+  /** below_minimum (an order's mode, or a promo code's minimum): how much more the items must add up to (major units). */
   shortBy?: Price;
+  /** payment_required on a change or round: the amount a payment must cover (major units). */
+  amountDue?: Price;
 }
 
 /* ---------- Sessions ---------- */
@@ -171,7 +187,9 @@ export type DeliveryQuoteResponse = DeliveryQuote;
  * "order"); an in-person one (counter, pickup, cash on delivery) is left unpaid. 201 → the
  * order. Errors: 403 phone_not_verified, 402 payment_required, 409 payment_conflict,
  * 409 mode_unavailable, 422 empty_order, 422 below_minimum (`shortBy`), 422 area_not_served,
- * 422 pickup_unavailable, 503 order_ids_exhausted.
+ * 422 pickup_unavailable, and a `promoCode`'s errors (see POST /promos/validate). The order
+ * number is a new unique id (mock: numbered per device). Discounts (automatic offers, the code) are priced as at the payment's
+ * `createdAt` for an online method, so the amount paid still matches.
  */
 export interface PlaceOrderRequest {
   sessionId: string;
@@ -181,6 +199,112 @@ export interface PlaceOrderRequest {
   lines: OrderLineRequest[];
   fulfilment: FulfilmentRequest;
   paymentId?: string;
+  /** A promo code the guest applied in the cart (`POST /promos/validate` accepted it). */
+  promoCode?: string;
+}
+
+/* ---------- Promotions ---------- */
+
+/*
+ * `GET /branches/:id/promotions` — reference data, served like the menu
+ * (public/api/branches/<id>/promotions.json): the branch's promo codes and automatic offers
+ * (`BranchPromotions` in types/promotion). Offers such as happy hour apply by themselves to the
+ * dishes in their scope on their days and hours (branch time); a code is applied by the guest.
+ *
+ * Every price the server works out applies them: offers first (on each item, at the time the
+ * order or payment is priced; the item records it as `OrderItem.offer`), then the code (on the
+ * item total after offers), both before the service charge and taxes when the branch's
+ * `tax.discountBeforeTax` is true. An order records its code (`Order.promoCode`) and its
+ * discounts (`Order.discounts`). A running dine-in order keeps its code for the whole tab: each
+ * round re-prices the code's discount over every round (its minimum and cap included). Takeaway
+ * and delivery orders are one round, so the code is per order.
+ */
+
+/**
+ * `POST /promos/validate` — what a promo code takes off these lines for the session (its
+ * branch and mode), now. 200 → the quote. Errors: 400 invalid_request, 404 session_not_found,
+ * 422 promo_invalid, 422 promo_expired, 422 promo_mode_not_eligible, 422 promo_limit_reached
+ * (the guest's orders with it, across the sessions of their verified number), 422 below_minimum
+ * (`shortBy`: the items, before discounts, are below the code's `minOrder`). `POST /orders` and
+ * `POST /payments` (purpose `order`) check a `promoCode` the same way and answer the same errors.
+ */
+export interface ValidatePromoRequest {
+  sessionId: string;
+  /** As the guest typed it; matched without regard to case or surrounding spaces. */
+  code: string;
+  lines: OrderLineRequest[];
+}
+
+export interface PromoQuote {
+  /** The code as the branch lists it: "WELCOME10". */
+  code: string;
+  descriptionKey: PromoDescriptionKey;
+  /** What the code takes off these lines (major units; after its cap). */
+  discount: Price;
+  /** What automatic offers take off the same lines now (the code comes off after them). */
+  offerDiscount: Price;
+}
+
+/* ---------- After placing: rounds, changes, cancellations ---------- */
+
+/**
+ * `POST /orders/:id/rounds` — send another round to the kitchen on the guest's running dine-in
+ * order (their tab) without a new checkout: the session must be the one that placed it, at its
+ * table, with its number verified. The round is priced from the menu and the tab re-priced as a
+ * whole (taxes on every round together, rounded once). How it's paid follows GET /branches ›
+ * ordering.dineInPayment: `endOfMeal` — it goes on the bill (paid later with Pay my bill or at
+ * the counter; `method` is ignored); `perRound` — `method` is one of the dine-in checkout
+ * methods, and an online one needs `paymentId`, a succeeded `round` payment for the round's
+ * share of the tab. 201 → the order. Errors: 400 invalid_request, 402 payment_required
+ * (`amountDue`), 403 phone_not_verified, 404 not_found / session_not_found, 409 mode_unavailable
+ * (not a dine-in order at the session's table), 409 order_closed, 409 payment_conflict,
+ * 422 empty_order.
+ */
+export interface AddRoundRequest {
+  sessionId: string;
+  lines: OrderLineRequest[];
+  kitchenNote: string;
+  /** `perRound` branches only: how this round is paid. */
+  method?: PaymentMethodId;
+  paymentId?: string;
+}
+
+/**
+ * `PATCH /orders/:id` — change what's in the order: the items (and kitchen note) of its latest
+ * round replace what was there, while that round is still `received` and inside the change
+ * window (GET /branches › ordering.cancelWindowSeconds; the server is the authority). Re-priced
+ * from the menu (a delivery fee re-quoted, a minimum order checked). If the order was paid
+ * online and the total rises, `paymentId` must be a succeeded `change` payment for the
+ * difference; if it falls, the difference is refunded. 200 → `OrderChangeResponse`. Errors:
+ * 400, 402 payment_required (`amountDue`), 404 not_found, 409 window_closed, 409
+ * payment_conflict, 422 empty_order, 422 below_minimum (`shortBy`).
+ */
+export interface ChangeOrderRequest {
+  sessionId: string;
+  /** The round being changed (the latest one still on the order): a newer round is never overwritten. */
+  round: number;
+  lines: OrderLineRequest[];
+  kitchenNote: string;
+  paymentId?: string;
+}
+
+/**
+ * `POST /orders/:id/cancel` — take back the order's latest round within the change window: the
+ * whole order when it's the only round (status `cancelled`, `cancelledBy: 'guest'`; anything
+ * paid online is refunded), otherwise just that round (the tab is re-priced and anything paid
+ * beyond the new total refunded). 200 → `OrderChangeResponse`. Errors: 400, 404 not_found,
+ * 409 window_closed.
+ */
+export interface CancelOrderRequest {
+  sessionId: string;
+  /** The round being cancelled (the latest one still on the order). */
+  round: number;
+}
+
+export interface OrderChangeResponse {
+  order: Order;
+  /** What was paid online and is now being refunded (0 when nothing). */
+  refunded: Price;
 }
 
 /**
@@ -203,17 +327,21 @@ export interface OrderListResponse {
 
 /* ---------- Payments ---------- */
 
-export type PaymentPurpose = 'order' | 'bill';
+/** A new order, the guest's bill, a round on a running order, or the difference after a change. */
+export type PaymentPurpose = 'order' | 'bill' | 'round' | 'change';
 
 export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'expired';
 
 /**
  * `POST /payments` — open an online payment request with the payment partner. The server
  * works out the amount itself: for an order, from the lines and fulfilment (as POST /orders
- * would price them, delivery fee included); for a bill, from the listed orders that are this
- * session's and still unpaid. 201 → the pending payment, open until `expiresAt`. Errors: 404
- * session_not_found, 409 nothing_to_pay, 409 mode_unavailable, 422 empty_order,
- * 422 below_minimum, 422 area_not_served, 422 pickup_unavailable.
+ * would price them, delivery fee included); for a bill, from what is still due on the listed
+ * orders that are this session's and unpaid; for a round (`perRound` branches), the round's
+ * share of the re-priced tab; for a change, the new total less what was paid. 201 → the pending
+ * payment, open until `expiresAt`. Errors: 404 session_not_found / not_found, 409
+ * nothing_to_pay, 409 mode_unavailable, 409 window_closed, 422 empty_order, 422 below_minimum,
+ * 422 area_not_served, 422 pickup_unavailable, and a `promoCode`'s errors (POST /promos/validate).
+ * Rounds and changes are priced with the order's own code and the offers on now.
  */
 export type CreatePaymentRequest =
   | {
@@ -222,8 +350,25 @@ export type CreatePaymentRequest =
       method: PaymentMethodId;
       lines: OrderLineRequest[];
       fulfilment: FulfilmentRequest;
+      /** As on POST /orders: the amount includes its discount. */
+      promoCode?: string;
     }
-  | { purpose: 'bill'; sessionId: string; method: PaymentMethodId; orderIds: string[] };
+  | { purpose: 'bill'; sessionId: string; method: PaymentMethodId; orderIds: string[] }
+  | {
+      purpose: 'round';
+      sessionId: string;
+      method: PaymentMethodId;
+      orderId: string;
+      lines: OrderLineRequest[];
+    }
+  | {
+      purpose: 'change';
+      sessionId: string;
+      method: PaymentMethodId;
+      orderId: string;
+      round: number;
+      lines: OrderLineRequest[];
+    };
 
 export interface Payment {
   id: string;
@@ -234,8 +379,10 @@ export interface Payment {
   status: PaymentStatus;
   createdAt: number;
   expiresAt: number;
-  /** Bill: the orders it pays. Order: the order placed with it, once placed. */
+  /** Bill: the orders it pays. Order, round, change: the order it went on, once used. */
   orderIds: string[];
+  /** Round, change: the order it's for. */
+  orderId?: string;
   /** The partner's reference, once succeeded. */
   transactionRef?: string;
 }

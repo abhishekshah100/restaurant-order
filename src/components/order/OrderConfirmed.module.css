@@ -56,6 +56,14 @@
   align-self: flex-start;
 }
 /* What happens next */
+.saved {
+  /* Sits close under the summary wells it explains */
+  margin-top: -8px;
+}
+.change {
+  width: 100%;
+  text-align: left;
+}
 .progress {
   width: 100%;
   display: flex;
@@ -177,31 +185,32 @@
 }
 
 /* ---- Mobile / tablet: compact hero, 2×2 tiles, progress, buttons pinned to the bottom ---- */
+/* Mobile: sizes and gaps scale with the window height (dvh) so the page fits one screen */
 @media (max-width: 1023.98px) {
   .main {
     flex: 1;
-    padding: clamp(20px, 6dvh, 48px) 20px 8px;
-    gap: 18px;
+    padding: clamp(12px, 3dvh, 40px) 20px 4px;
+    gap: clamp(10px, 1.8dvh, 18px);
   }
   .art {
-    width: 76px;
-    height: 76px;
+    width: clamp(52px, 8.5dvh, 76px);
+    height: clamp(52px, 8.5dvh, 76px);
     box-shadow:
-      0 0 0 10px color-mix(in srgb, var(--success-tint) 55%, transparent),
-      0 0 0 20px color-mix(in srgb, var(--success-tint) 25%, transparent);
-    margin-bottom: 6px;
+      0 0 0 8px color-mix(in srgb, var(--success-tint) 55%, transparent),
+      0 0 0 16px color-mix(in srgb, var(--success-tint) 25%, transparent);
+    margin: 8px 0 clamp(4px, 1dvh, 10px);
     animation: pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3);
   }
   .art > span {
-    width: 34px;
-    height: 34px;
+    width: clamp(24px, 3.8dvh, 34px);
+    height: clamp(24px, 3.8dvh, 34px);
   }
   .head {
     gap: 4px;
   }
   .title {
-    font-size: 32px;
-    line-height: 38px;
+    font-size: clamp(26px, 4.2dvh, 32px);
+    line-height: 1.2;
   }
   .wells {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -223,43 +232,47 @@
     border: 1px solid var(--line);
     border-radius: var(--r-tile);
   }
+  /* Both actions in one row */
   .foot {
     position: sticky;
     bottom: 0;
-    padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
+    flex-direction: row;
+    padding: 10px 20px calc(14px + env(safe-area-inset-bottom));
     background: linear-gradient(180deg, transparent, var(--bg) 18px);
+  }
+  /* Element + class beats the Button module's own font rule, whatever the CSS order */
+  .foot > a {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+}
+/* Narrow phones: "Order something else" still fits on one line */
+@media (max-width: 374.98px) {
+  .foot {
+    gap: 8px;
+  }
+  .foot > a {
+    padding-inline: 8px;
+    font-size: 14px;
+  }
+}
+/* Shorter phones: drop what repeats elsewhere (the lede repeats "Order placed", the progress
+   bar is on the tracking page) so the order's essentials and both actions fit */
+@media (max-width: 1023.98px) and (max-height: 760px) {
+  .lede,
+  .progress {
+    display: none;
   }
 }
 @media (max-width: 1023.98px) and (max-height: 640px) {
-  .art {
-    width: 56px;
-    height: 56px;
-    box-shadow: 0 0 0 8px color-mix(in srgb, var(--success-tint) 55%, transparent);
-  }
-  .art > span {
-    width: 26px;
-    height: 26px;
-  }
-  .title {
-    font-size: 26px;
-    line-height: 32px;
-  }
-  .main {
-    gap: 12px;
-  }
   .well {
     padding: 10px 12px;
   }
   .foot a {
     height: 46px;
-  }
-}
-@media (max-width: 1023.98px) and (max-height: 560px) {
-  .lede {
-    display: none;
-  }
-  .progress {
-    padding: 10px 12px;
   }
 }
 @keyframes pop {
@@ -280,9 +293,6 @@
   .well {
     padding: 8px 12px;
     gap: 2px;
-  }
-  .main {
-    padding-top: 16px;
   }
 }
 @media (max-width: 359.98px) {

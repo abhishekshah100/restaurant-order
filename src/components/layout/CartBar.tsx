@@ -6,6 +6,7 @@ import { useContent, useRegion } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { CartSlideOver } from '@/components/cart/CartSlideOver';
 import { useCart } from '@/hooks/useCart';
+import { useCartItemTotal } from '@/hooks/useOffers';
 import { useRegionCopy } from '@/hooks/useRegionCopy';
 import { TABLET_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
 import { cx } from '@/lib/cx';
@@ -23,7 +24,9 @@ export interface CartBarProps {
 export function CartBar({ noNav }: CartBarProps) {
   const t = useContent('common');
   const { money } = useRegion();
-  const { count, bill, hydrated } = useCart();
+  const { count, hydrated } = useCart();
+  // After the offers on now (happy hour): what the menu showed.
+  const itemTotal = useCartItemTotal();
   const { currencyName } = useRegionCopy();
   const isTablet = useMediaQuery(TABLET_QUERY);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -61,13 +64,13 @@ export function CartBar({ noNav }: CartBarProps) {
       <Link
         href="/cart/"
         className={cx(styles.bar, noNav && styles.noNav, 'hide-desktop')}
-        aria-label={t('cartBar.label', { items, total: bill.itemTotal, currencyName })}
+        aria-label={t('cartBar.label', { items, total: itemTotal, currencyName })}
         onClick={onClick}
       >
         <Icon name="bag" />
         <span className={styles.ct}>
           <b>
-            {items} · {money.format(bill.itemTotal)}
+            {items} · {money.format(itemTotal)}
           </b>
           <span>{t('cartBar.taxes')}</span>
         </span>

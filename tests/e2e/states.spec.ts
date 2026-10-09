@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { waitForSavedCart } from './helpers';
+import { waitForSavedCart, scan } from './helpers';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { Branch } from '../../src/types/branch';
@@ -18,11 +18,13 @@ const visible = (page: Page, text: string | RegExp) =>
   page.getByText(text).filter({ visible: true }).first();
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/?table=7');
+  await scan(page, 'table=7');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
+  // A fresh guest at table 12 (without a QR code the start screen would open instead).
+  await scan(page, 'table=12');
 });
 
 test('closed: the menu stays browsable but read-only, and checkout is blocked', async ({
@@ -105,7 +107,7 @@ test('offline: a banner while browsing, and checkout waits for the connection', 
   await expect(
     page.getByRole('heading', { level: 1, name: 'No internet connection' }),
   ).toBeVisible();
-  await expect(visible(page, '[NETWORK NAME]')).toBeVisible();
+  await expect(visible(page, restaurant.wifiName)).toBeVisible();
   await page.getByRole('button', { name: 'Try again' }).click();
   // Back online: checkout takes over (an empty cart goes to /cart).
   await expect(page).toHaveURL(/\/cart\/$/);

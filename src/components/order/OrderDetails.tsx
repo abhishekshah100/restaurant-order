@@ -8,13 +8,17 @@ import type { ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
 import { cx } from '@/lib/cx';
 import { useVisitWords } from '@/hooks/useVisitLabel';
-import { formatOrderDay, isFinished, orderBill, unpaidLabel } from '@/lib/orders';
+import { amountDue, hasRounds, paidAmount } from '@/lib/lifecycle';
+import { formatOrderDay, isFinished, orderBill, orderPath, unpaidLabel } from '@/lib/orders';
 import { itemCount } from '@/lib/pricing';
-import type { Order } from '@/types/order';
+import type { Order, OrderItem } from '@/types/order';
+import { ChangeWindow } from './ChangeWindow';
 import { FulfilmentCard } from './FulfilmentCard';
 import { OrderCancelled } from './OrderCancelled';
+import { OrderAgainButton } from './OrderAgainButton';
 import { OrderLoading, OrderNotFound, OrderShell } from './OrderShell';
 import { useLiveOrder } from './useLiveOrders';
+import { useOrderId } from './useOrderId';
 import styles from './OrderDetails.module.css';
 
 function PaymentStatusTag({ order }: { order: Order }) {
@@ -46,6 +50,42 @@ function trackLabel(order: Order, t: Translator<ContentMap['orders']>): string {
   return order.etaMinutes
     ? t('details.trackLiveEta', { minutes: order.etaMinutes })
     : t('details.trackLive');
+}
+
+/** The item rows of the table: name, options and note; quantity; price. */
+function ItemRows({ items }: { items: OrderItem[] }) {
+  const { money } = useRegion();
+  const t = useContent('orders');
+  return (
+    <ul className={styles.list}>
+      {items.map((item, i) => (
+        <li key={`${item.dishSlug}-${i}`} className={styles.row}>
+          <div className={styles.body}>
+            <p className={styles.name}>
+              <VegMark veg={item.veg} />
+              {item.name}
+            </p>
+            {item.details.length > 0 && (
+              <p className={styles.opts}>
+                {item.details.map((d) => (
+                  <span key={d}>{d}</span>
+                ))}
+              </p>
+            )}
+            {item.note && <p className={styles.note}>{t('shared.quoted', { text: item.note })}</p>}
+          </div>
+          <span className={styles.qty}>
+            <span className="visually-hidden">{t('details.quantity')}</span>
+            <span className="hide-desktop" aria-hidden="true">
+              ×{' '}
+            </span>
+            {item.quantity}
+          </span>
+          <span className={styles.price}>{money.format(item.unitPrice * item.quantity)}</span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function DetailsView({ order, now }: { order: Order; now: Date }) {
@@ -93,7 +133,7 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
             </p>
           </div>
           <Button
-            href={`/order/${order.id}/track/`}
+            href={orderPath(order.id, 'track')}
             variant="secondary"
             size="sm"
             iconStart="clock"
@@ -102,6 +142,8 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
             {trackLabel(order, t)}
           </Button>
         </div>
+
+        <ChangeWindow order={order} />
 
         <section className={cx(styles.card, styles.items)} aria-labelledby="items-heading">
           <h2 id="items-heading" className={styles.itemsTitle}>
@@ -112,37 +154,32 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
             <span>{t('details.columns.qty')}</span>
             <span>{t('details.columns.price')}</span>
           </div>
-          <ul className={styles.list}>
-            {order.items.map((item, i) => (
-              <li key={`${item.dishSlug}-${i}`} className={styles.row}>
-                <div className={styles.body}>
-                  <p className={styles.name}>
-                    <VegMark veg={item.veg} />
-                    {item.name}
-                  </p>
-                  {item.details.length > 0 && (
-                    <p className={styles.opts}>
-                      {item.details.map((d) => (
-                        <span key={d}>{d}</span>
-                      ))}
-                    </p>
-                  )}
-                  {item.note && (
-                    <p className={styles.note}>{t('shared.quoted', { text: item.note })}</p>
-                  )}
+          {hasRounds(order) ? (
+            order.rounds?.map((round) => (
+              <section
+                key={round.number}
+                className={cx(styles.round, round.status === 'cancelled' && styles.cancelled)}
+                aria-labelledby={`round-${round.number}`}
+              >
+                <div className={styles.roundHead}>
+                  <h3 id={`round-${round.number}`} className={styles.roundTitle}>
+                    {t('rounds.round', { number: round.number })}
+                    <span className={styles.roundTime}>{clock.time(round.placedAt)}</span>
+                  </h3>
+                  <StatusPill status={round.status} className={styles.roundPill} />
                 </div>
-                <span className={styles.qty}>
-                  <span className="visually-hidden">{t('details.quantity')}</span>
-                  <span className="hide-desktop" aria-hidden="true">
-                    ×{' '}
-                  </span>
-                  {item.quantity}
-                </span>
-                <span className={styles.price}>{money.format(item.unitPrice * item.quantity)}</span>
-              </li>
-            ))}
-          </ul>
-          {order.kitchenNote && (
+                <ItemRows items={round.items} />
+                {round.kitchenNote && (
+                  <p className={styles.roundNote}>
+                    {t('rounds.kitchenNote', { text: round.kitchenNote })}
+                  </p>
+                )}
+              </section>
+            ))
+          ) : (
+            <ItemRows items={order.items} />
+          )}
+          {order.kitchenNote && !hasRounds(order) && (
             <p className={styles.kitchenNote}>
               <span className="t-caption c3">{t('details.kitchenNote')}</span>
               {t('shared.quoted', { text: order.kitchenNote })}
@@ -179,6 +216,18 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
               <dt>{t('details.method')}</dt>
               <dd>{method}</dd>
             </div>
+            {payment.paid !== undefined && payment.status === 'unpaid' && (
+              <>
+                <div>
+                  <dt>{t('payment.paidSoFar')}</dt>
+                  <dd>{money.format(paidAmount(order))}</dd>
+                </div>
+                <div>
+                  <dt>{t('payment.stillToPay')}</dt>
+                  <dd>{money.format(amountDue(order))}</dd>
+                </div>
+              </>
+            )}
             {payment.transactionRef && (
               <div>
                 <dt>{t('details.transactionId')}</dt>
@@ -194,6 +243,7 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
           </dl>
         </section>
 
+        <OrderAgainButton order={order} block className={styles.again} />
         <div className={styles.actions}>
           <Button variant="secondary" block iconStart="receipt" onClick={() => window.print()}>
             {t('details.invoice')}
@@ -208,11 +258,12 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
 }
 
 /** Order details (15 · w15); the cancelled state (s10 · ws10) for cancelled orders. */
-export function OrderDetails({ id }: { id: string }) {
+export function OrderDetails() {
   const t = useContent('orders');
+  const id = useOrderId();
   const lookup = useLiveOrder(id);
   if (lookup.state === 'loading') return <OrderLoading title={t('details.title')} />;
-  if (lookup.state === 'missing') return <OrderNotFound id={id} />;
+  if (lookup.state === 'missing') return <OrderNotFound id={id ?? null} />;
   if (lookup.order.status === 'cancelled') return <OrderCancelled order={lookup.order} />;
   return <DetailsView order={lookup.order} now={lookup.now} />;
 }

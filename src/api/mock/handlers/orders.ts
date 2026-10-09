@@ -18,6 +18,7 @@ import {
 import { liveOrder } from '../kitchen';
 import { assignRider, buildOrder, nextOrderId } from '../orderBuilder';
 import { priceOrder } from './orderPricing';
+import { guestPromoUses } from './promos';
 
 /* ---------- The order book ---------- */
 
@@ -103,8 +104,9 @@ function placeOrderBody(raw: unknown) {
 export const placeOrder: Handler = async (ctx, { body: raw }) => {
   const body = placeOrderBody(raw);
   const { session, branch } = await liveSession(ctx, body.sessionId);
-  const [menu, labels, seedOrders] = await Promise.all([
+  const [menu, promotions, labels, seedOrders] = await Promise.all([
     ctx.seed.menu(branch.id),
+    ctx.seed.promotions(branch.id),
     ctx.seed.orderLabels(branch),
     ctx.seed.orders(),
   ]);
@@ -115,10 +117,17 @@ export const placeOrder: Handler = async (ctx, { body: raw }) => {
   if (!ctx.db.otp.read()[session.id]?.verified) fail(403, 'phone_not_verified');
 
   const now = new Date(ctx.now());
-  const { lines, fulfilment, bill } = priceOrder(body.body, session, branch, menu, now);
   const online = isOnlineMethod(body.method);
   const payments = ctx.db.payments.read();
   const payment = online ? payments.find((p) => p.id === body.paymentId) : undefined;
+  // Paid online: priced as when the payment opened (a happy hour that has ended since still counts).
+  const { lines, fulfilment, promo, bill } = priceOrder(body.body, session, branch, {
+    menu,
+    promotions,
+    now,
+    pricedAt: payment ? new Date(payment.createdAt) : now,
+    promoUses: guestPromoUses(ctx, session.id),
+  });
   if (online && !payment) fail(402, 'payment_required');
   if (
     payment &&
@@ -132,15 +141,17 @@ export const placeOrder: Handler = async (ctx, { body: raw }) => {
     fail(409, 'payment_conflict');
   }
 
+  // Mock only: numbered per device, after every order this device and the drawn history know.
+  // A real backend issues globally unique ids.
   const stored = ctx.db.orders.read();
-  const id = nextOrderId(stored, seedOrders.newOrderIds);
-  if (!id) fail(503, 'order_ids_exhausted');
+  const id = nextOrderId([...stored, ...seedOrders.history]);
   const order = buildOrder(
     {
       id,
       lines,
       fulfilment,
       bill,
+      promoCode: promo?.code,
       rider:
         fulfilment.mode === 'delivery'
           ? assignRider(seedOrders.riders[branch.id] ?? [], id)

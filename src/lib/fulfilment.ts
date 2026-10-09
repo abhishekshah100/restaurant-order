@@ -119,7 +119,10 @@ export interface PickupOptions {
  * Pickup times for an order placed at `now`, in the branch's time zone: as soon as possible
  * (`prepMinutes` from now, while open) and the slots after that until closing.
  */
-export function pickupOptions(branch: Pick<Branch, 'hours' | 'modes' | 'locale' | 'timezone'>, now: Date): PickupOptions {
+export function pickupOptions(
+  branch: Pick<Branch, 'hours' | 'modes' | 'locale' | 'timezone'>,
+  now: Date,
+): PickupOptions {
   const { prepMinutes, slotMinutes, asap } = branch.modes.takeaway;
   const clock = createClock(branch);
   const today = (time: string) => Date.parse(clock.localTimestamp(0, time, now));

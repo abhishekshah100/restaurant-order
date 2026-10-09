@@ -6,7 +6,7 @@ import { Button, Icon, StatusPill } from '@/components/ui';
 import { useBranch, useContent } from '@/api/hooks';
 import { MODE_ICON } from '@/components/start/ModeOptions';
 import { useVisit } from '@/context/GuestSessionContext';
-import { useTable } from '@/hooks/useTable';
+import { useTableLabel } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
 import { BrandPanel } from './BrandPanel';
 import styles from './Welcome.module.css';
@@ -52,7 +52,7 @@ function ModeCard({ mode }: { mode: 'takeaway' | 'delivery' }) {
 export function Welcome() {
   const branch = useBranch();
   const { mode } = useVisit();
-  const table = useTable();
+  const table = useTableLabel();
   const t = useContent('home');
 
   // Only shown while ordering is open: OrderingGate swaps in the closed / paused / offline screen.
@@ -104,30 +104,30 @@ export function Welcome() {
         {mode !== 'dineIn' ? (
           <ModeCard mode={mode} />
         ) : (
-        <section className={styles.card} aria-label={t('welcome.tableCard')}>
-          <div className={styles.cardMain}>
-            <div className={styles.cardIcon}>
-              <Icon name="table" />
+          <section className={styles.card} aria-label={t('welcome.tableCard')}>
+            <div className={styles.cardMain}>
+              <div className={styles.cardIcon}>
+                <Icon name="table" />
+              </div>
+              <div className={styles.cardText}>
+                <span className={styles.cardLabel}>{t('welcome.seatedAt')}</span>
+                <span className={styles.tableNo}>{t('welcome.tableNumber', { table })}</span>
+              </div>
             </div>
-            <div className={styles.cardText}>
-              <span className={styles.cardLabel}>{t('welcome.seatedAt')}</span>
-              <span className={styles.tableNo}>{t('welcome.tableNumber', { table })}</span>
+            <span className={styles.perforation} aria-hidden="true" />
+            <div className={styles.cardStub}>
+              <Icon name="pin" size="sm" className={styles.stubIcon} />
+              <span className={styles.stubText}>
+                {branch.tableLocation.split(' · ').map((part, i) => (
+                  <span key={part} className={i === 0 ? styles.stubPrimary : undefined}>
+                    {part}
+                    {/* Keep the original "Ground floor · Garden side" for screen readers */}
+                    {i === 0 && <span className="visually-hidden"> · </span>}
+                  </span>
+                ))}
+              </span>
             </div>
-          </div>
-          <span className={styles.perforation} aria-hidden="true" />
-          <div className={styles.cardStub}>
-            <Icon name="pin" size="sm" className={styles.stubIcon} />
-            <span className={styles.stubText}>
-              {branch.tableLocation.split(' · ').map((part, i) => (
-                <span key={part} className={i === 0 ? styles.stubPrimary : undefined}>
-                  {part}
-                  {/* Keep the original "Ground floor · Garden side" for screen readers */}
-                  {i === 0 && <span className="visually-hidden"> · </span>}
-                </span>
-              ))}
-            </span>
-          </div>
-        </section>
+          </section>
         )}
 
         <div className={cx(styles.statusRow, 'hide-desktop')}>

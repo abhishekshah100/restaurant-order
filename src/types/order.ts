@@ -1,5 +1,7 @@
 import type { OrderMode } from './branch';
+import type { LineConfig } from './cart';
 import type { Price } from './menu';
+import type { AppliedOffer, OrderDiscount } from './promotion';
 
 /**
  * Where an order has got to. Dine-in: received → preparing → ready → served. Takeaway: …
@@ -34,6 +36,16 @@ export interface OrderItem {
   note?: string;
   unitPrice: Price;
   status?: ItemStatus;
+  /**
+   * What was chosen (size, choices, add-ons, removals, instructions, note), so it can be
+   * ordered again or changed exactly. Missing on orders from before it was recorded.
+   */
+  config?: LineConfig;
+  /**
+   * The automatic offer (e.g. happy hour) on this item when it was ordered: what it took off.
+   * `unitPrice` stays the menu price.
+   */
+  offer?: AppliedOffer;
 }
 
 export interface OrderEvent {
@@ -87,6 +99,32 @@ export interface DeliveryDetails {
   rider?: Rider;
 }
 
+/**
+ * One round of a running order: what the guest sent to the kitchen at one time. A dine-in
+ * order is a tab that takes more rounds without a new checkout; takeaway and delivery orders
+ * have a single round. Each round has its own kitchen status.
+ */
+export interface OrderRound {
+  /** 1, 2, 3… in the order they were placed. */
+  number: number;
+  /** ISO timestamp. */
+  placedAt: string;
+  /** Its kitchen status; `cancelled` when the guest took it back. */
+  status: OrderStatus;
+  items: OrderItem[];
+  timeline: OrderEvent[];
+  kitchenNote?: string;
+  /**
+   * ISO: until when the guest can still change or cancel it (GET /branches ›
+   * ordering.cancelWindowSeconds after placing), as long as the kitchen hasn't started on it.
+   */
+  changeableUntil: string;
+  /** Minutes until it's ready, while it's being made. */
+  etaMinutes?: number;
+  /** Expected ready time, e.g. "7:58 PM". */
+  readyBy?: string;
+}
+
 export interface Order {
   id: string;
   /** The branch it was placed at (GET /branches). */
@@ -108,9 +146,17 @@ export interface Order {
   placedAt: string;
   status: OrderStatus;
   items: OrderItem[];
+  /** Items at menu prices, before discounts. */
   itemTotal: Price;
   /** Final rounded amount. */
   total: Price;
+  /**
+   * The promo code on the order. On a running dine-in order it covers the whole tab: its
+   * discount is worked out again over every round.
+   */
+  promoCode?: string;
+  /** The discounts on `total`: automatic offers, then the promo code. */
+  discounts?: OrderDiscount[];
   payment: {
     method: PaymentMethod;
     status: PaymentStatus;
@@ -118,7 +164,20 @@ export interface Order {
     detail?: string;
     transactionRef?: string;
     refundAmount?: Price;
+    /**
+     * A running order paid in part: what has been paid so far (online). Missing: all of
+     * `total` when the status is paid, nothing otherwise.
+     */
+    paid?: Price;
   };
+  /**
+   * The rounds sent to the kitchen, oldest first (orders placed through the server). `items`
+   * and `total` are those of every round not cancelled, and the status, timeline and ETA are
+   * the latest such round's. Missing on the drawn history.
+   */
+  rounds?: OrderRound[];
+  /** Who cancelled it: the guest (within the change window) or the restaurant. */
+  cancelledBy?: 'guest' | 'restaurant';
   timeline: OrderEvent[];
   /** e.g. "18–22 min". */
   estimate?: string;
@@ -158,11 +217,6 @@ export interface OrdersResponse {
   /** Orders already on the restaurant's books for this guest and table. */
   history: ApiOrder[];
   /**
-   * IDs handed to orders placed in this browser. A static export can only serve
-   * pre-rendered order pages, so new orders draw from this pre-generated pool.
-   */
-  newOrderIds: string[];
-  /**
    * Riders by branch id, who take delivery orders (the mock server assigns one; a real backend
    * dispatches them). Their numbers are masked, and calls go through a relay line.
    */
@@ -172,5 +226,4 @@ export interface OrdersResponse {
 /** GET /orders after the adapter: every order has a real `placedAt`. */
 export interface OrderHistory {
   history: Order[];
-  newOrderIds: string[];
 }

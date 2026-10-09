@@ -50,6 +50,7 @@ export const ICON_NAMES = [
   'calendar',
   'pin',
   'scooter',
+  'tag',
   'cloche',
   'olive',
   'instagram',

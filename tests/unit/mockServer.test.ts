@@ -191,7 +191,7 @@ describe('OTP', () => {
 });
 
 describe('orders', () => {
-  it('places a counter order: numbered from the pool, priced by the server, table from the session', async () => {
+  it('places a counter order: numbered after the history, priced by the server, table from the session', async () => {
     const session = await verifiedSession('blr-indiranagar', 7);
     const res = await call('POST', 'orders', {
       sessionId: session.id,
@@ -310,6 +310,22 @@ describe('orders', () => {
     expect(drawn.body).toMatchObject({ id: 'A104', status: 'preparing' });
     expect((drawn.body as Order).live).toBeUndefined();
     expect(await call('GET', 'orders/A110')).toEqual({ status: 404, body: { error: 'not_found' } });
+  });
+
+  it('keeps numbering past the old pool of 20 and never reuses a number', async () => {
+    const session = await verifiedSession();
+    const ids: string[] = [];
+    for (let i = 0; i < 25; i++) {
+      ids.push((await placeCounterOrder(session)).id);
+      now += 1_000;
+    }
+    expect(ids).toEqual(Array.from({ length: 25 }, (_, i) => `A${105 + i}`));
+    // An hour later they've all been served: numbers still count on, every order is kept.
+    now += 60 * 60_000;
+    expect((await placeCounterOrder(session)).id).toBe('A130');
+    const mine = (await call('GET', `sessions/${session.id}/orders`)).body as { orders: Order[] };
+    const placed = mine.orders.filter((o) => Number(o.id.slice(1)) >= 105);
+    expect(new Set(placed.map((o) => o.id)).size).toBe(26);
   });
 
   it("lists the guest's orders and the table's orders", async () => {

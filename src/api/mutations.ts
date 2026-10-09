@@ -2,20 +2,39 @@
 
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { ServiceRequest } from '@/types/service';
+import { PROMO_REFUSALS } from '@/lib/promotions';
 import type { Order } from '@/types/order';
 import type {
+  AddRoundRequest,
+  CancelOrderRequest,
+  ChangeOrderRequest,
   ServiceRequestListResponse,
   SimulatePaymentRequest,
   UpdateSessionRequest,
+  ValidatePromoRequest,
 } from './contracts';
 import { isApiError } from './client';
 import { api } from './endpoints';
-import { orderQuery, serviceRequestsQuery } from './queries';
+import { orderQuery, promoQuoteQuery, serviceRequestsQuery } from './queries';
 
 /*
  * Every write, as a TanStack mutation over api/endpoints. After a write the affected reads are
  * updated or invalidated here, so screens never refresh caches themselves.
  */
+
+/** The order changed on the server meanwhile (too late, or cancelled): read it again. */
+function refreshIfStale(client: QueryClient, error: unknown) {
+  if (isApiError(error, 'window_closed') || isApiError(error, 'order_closed')) {
+    return client.invalidateQueries({ queryKey: ['orders'] });
+  }
+}
+
+/** The server refused the cart's promo code: price it again, so the cart says why. */
+function refreshPromoIfRefused(client: QueryClient, error: unknown) {
+  if (PROMO_REFUSALS.some((code) => isApiError(error, code))) {
+    return client.invalidateQueries({ queryKey: ['promo-quote'] });
+  }
+}
 
 /** Caches an order as the server returned it and refreshes every order list. */
 function storeOrders(client: QueryClient, orders: readonly Order[]) {
@@ -39,16 +58,66 @@ export const useSendOtp = () => useMutation({ mutationFn: api.sendOtp });
 /** POST /otp/verify: check the code. */
 export const useVerifyOtp = () => useMutation({ mutationFn: api.verifyOtp });
 
+/**
+ * POST /promos/validate when the guest applies a code: the answer is cached as the cart's quote
+ * for the code the server names, so the bill shows the discount at once.
+ */
+export function useValidatePromo() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.validatePromo,
+    onSuccess: (quote, { sessionId, lines }: ValidatePromoRequest) =>
+      client.setQueryData(promoQuoteQuery(sessionId, quote.code, lines).queryKey, quote),
+  });
+}
+
 /** POST /orders: place an order; it's cached straight away for the confirmation page. */
 export function useCreateOrder() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: api.placeOrder,
     onSuccess: (order) => storeOrders(client, [order]),
+    onError: (error) => refreshPromoIfRefused(client, error),
   });
 }
 
-/** POST /payments: open an online payment request (checkout or bill). Nothing left to pay: the bill is re-read. */
+/** POST /orders/:id/rounds: another round on the guest's running dine-in order; cached at once. */
+export function useAddRound() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, ...body }: { orderId: string } & AddRoundRequest) =>
+      api.addRound(orderId, body),
+    onSuccess: (order) => storeOrders(client, [order]),
+    onError: (error) => refreshIfStale(client, error),
+  });
+}
+
+/** PATCH /orders/:id: change the order's latest round within the window; cached at once. */
+export function useChangeOrder() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, ...body }: { orderId: string } & ChangeOrderRequest) =>
+      api.changeOrder(orderId, body),
+    onSuccess: ({ order }) => storeOrders(client, [order]),
+    onError: (error) => refreshIfStale(client, error),
+  });
+}
+
+/** POST /orders/:id/cancel: take back the latest round (or the order) within the window. */
+export function useCancelOrder() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, ...body }: { orderId: string } & CancelOrderRequest) =>
+      api.cancelOrder(orderId, body),
+    onSuccess: ({ order }) => storeOrders(client, [order]),
+    onError: (error) => refreshIfStale(client, error),
+  });
+}
+
+/**
+ * POST /payments: open an online payment request (checkout or bill). Nothing left to pay: the
+ * bill is re-read; a refused promo code is priced again.
+ */
 export function useCreatePayment() {
   const client = useQueryClient();
   return useMutation({
@@ -56,6 +125,7 @@ export function useCreatePayment() {
     onError: async (error) => {
       if (isApiError(error, 'nothing_to_pay'))
         await client.invalidateQueries({ queryKey: ['orders'] });
+      await refreshPromoIfRefused(client, error);
     },
   });
 }

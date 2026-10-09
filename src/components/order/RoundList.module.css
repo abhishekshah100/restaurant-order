@@ -1,0 +1,44 @@
+.rounds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.round {
+  padding: 8px 0 4px;
+  border-bottom: 1px solid var(--line);
+}
+.round:last-child {
+  border-bottom: 0;
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 6px;
+}
+.title {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font: var(--font-caption);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.time {
+  letter-spacing: normal;
+  text-transform: none;
+  font: var(--font-small);
+}
+.head .pill {
+  height: 24px;
+}
+/* Taken back by the guest: kept for the record, quietened */
+.cancelled ul {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}

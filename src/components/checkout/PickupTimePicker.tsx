@@ -43,7 +43,9 @@ export function PickupTimePicker({ value, onChange }: PickupTimePickerProps) {
           {
             id: ASAP,
             label: t('details.pickup.asap'),
-            sub: asap ? t('details.pickup.asapSub', { time: clock.time(asap) }) : t('details.pickup.noAsap'),
+            sub: asap
+              ? t('details.pickup.asapSub', { time: clock.time(asap) })
+              : t('details.pickup.noAsap'),
             disabled: !asap,
           },
           {

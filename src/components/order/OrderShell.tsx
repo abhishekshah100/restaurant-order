@@ -49,11 +49,14 @@ export function OrderLoading({ title }: { title: string }) {
   );
 }
 
-/** An id from the pre-rendered pool that wasn't placed on this device. */
-export function OrderNotFound({ id }: { id: string }) {
+/** An order id this device doesn't know (or an order page opened without one). */
+export function OrderNotFound({ id }: { id: string | null }) {
   const t = useContent('orders');
   return (
-    <OrderShell title={t('shared.orderNumber', { id })} className={styles.missing}>
+    <OrderShell
+      title={id ? t('shared.orderNumber', { id }) : t('shell.notFound.title')}
+      className={styles.missing}
+    >
       <EmptyState
         icon="receipt"
         tone="neutral"
@@ -68,7 +71,7 @@ export function OrderNotFound({ id }: { id: string }) {
           </>
         }
       >
-        {t('shell.notFound.body', { id })}
+        {id ? t('shell.notFound.body', { id }) : t('shell.notFound.bodyNoId')}
       </EmptyState>
     </OrderShell>
   );

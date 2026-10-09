@@ -2,12 +2,13 @@
 
 import { useBranch, useTableOrders } from '@/api/hooks';
 import { useGuestSession } from '@/context/GuestSessionContext';
-import { useTable } from '@/hooks/useTable';
+import { UNKNOWN_TABLE, useTable, type TableLabel } from '@/hooks/useTable';
 import { isOwnOrder } from '@/lib/orders';
 import type { Order } from '@/types/order';
 
 interface TableVisit {
-  table: number;
+  /** For display: a placeholder until the session is read. */
+  table: TableLabel;
   /** This guest's session id: decides which orders are "mine" (see lib/orders › isOwnOrder). */
   sessionId: string | undefined;
   /** This visit's orders at the table, newest first (empty until loaded). */
@@ -26,10 +27,14 @@ export function useTableVisit(): TableVisit {
   const session = useGuestSession();
   const sessionId = session?.id;
   // Read once the session (and so the guest's branch and table) is known; only at a table.
-  const { data } = useTableOrders(branchId, table, session?.mode === 'dineIn');
+  const { data } = useTableOrders(
+    branchId,
+    table ?? 0,
+    table !== null && session?.mode === 'dineIn',
+  );
   const orders = data?.orders ?? NO_ORDERS;
   return {
-    table,
+    table: table ?? UNKNOWN_TABLE,
     sessionId,
     orders,
     latest: orders.find((o) => isOwnOrder(o, sessionId)),

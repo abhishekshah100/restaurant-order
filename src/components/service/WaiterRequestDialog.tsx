@@ -8,9 +8,10 @@ import { SERVICE_NOTE_MAX } from '@/lib/service';
 import type { WaiterReason } from '@/types/service';
 import { ReasonTiles } from './ReasonTiles';
 import styles from './WaiterRequestDialog.module.css';
+import type { TableLabel } from '@/hooks/useTable';
 
 interface WaiterRequestDialogProps {
-  table: number;
+  table: TableLabel;
   onSend: (reason: WaiterReason, note: string) => void;
   onClose: () => void;
 }

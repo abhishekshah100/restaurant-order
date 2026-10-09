@@ -110,7 +110,9 @@ export function ModeOptions({
             <span className={styles.body}>
               <span className={styles.title}>
                 {t(`start.modes.${mode}.title`)}
-                {current === mode && <span className={styles.current}>{t('modeSwitch.current')}</span>}
+                {current === mode && (
+                  <span className={styles.current}>{t('modeSwitch.current')}</span>
+                )}
               </span>
               <span className={styles.sub}>
                 {disabled && <Icon name="qr" size="xs" />}

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { waitForSavedCart } from './helpers';
+import { waitForSavedCart, scan } from './helpers';
 
 /**
  * Happy path: menu → dish → cart → checkout → confirmation.
@@ -9,16 +9,18 @@ import { waitForSavedCart } from './helpers';
 const isDesktop = (page: Page) => (page.viewportSize()?.width ?? 0) >= 1024;
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/?table=7');
+  await scan(page, 'table=7');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
+  // A fresh guest at table 12 (without a QR code the start screen would open instead).
+  await scan(page, 'table=12');
 });
 
 test('order a dish and pay online', async ({ page }) => {
   // Welcome reads the table from the QR link.
-  await page.goto('/?table=7');
+  await scan(page, 'table=7');
   await expect(page.getByText('Table 7').filter({ visible: true }).first()).toBeVisible();
   await page.getByRole('link', { name: 'View menu' }).filter({ visible: true }).click();
   await expect(page).toHaveURL(/\/menu\/$/);
@@ -87,7 +89,7 @@ test('order a dish and pay online', async ({ page }) => {
   await page.getByRole('button', { name: 'Prototype: success' }).filter({ visible: true }).click();
 
   // Confirmation
-  await expect(page).toHaveURL(/\/order\/A105\/confirmed\/$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A105$/);
   await expect(page.getByRole('heading', { name: 'Order #A105' })).toBeVisible();
   await expect(page.getByText('Paid online').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByText('Table 7').filter({ visible: true }).first()).toBeVisible();

@@ -6,7 +6,7 @@ import { STORAGE_KEYS } from '@/lib/storage';
 import type { GuestSession } from '@/types/session';
 import { ApiTestProvider, seedGuestSession, testBranch } from '../apiState';
 
-const { id: defaultBranchId, defaultTable } = testBranch();
+const { id: defaultBranchId } = testBranch();
 const nepal = testBranch('ktm-thamel');
 
 const HOUR = 3_600_000;
@@ -33,6 +33,25 @@ async function openPage(url = '/') {
   const { session, table } = result.current;
   if (!session) throw new Error('expected a guest session');
   return { session, table, result };
+}
+
+/** Opens the app at `url` where no session follows: the start screen, with what the link chose. */
+async function openStart(url = '/') {
+  window.history.replaceState(null, '', url);
+  vi.resetModules();
+  const { GuestSessionProvider, useGuestSession, useVisit } =
+    await import('@/context/GuestSessionContext');
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <ApiTestProvider>
+      <GuestSessionProvider>{children}</GuestSessionProvider>
+    </ApiTestProvider>
+  );
+  const { result } = renderHook(() => ({ session: useGuestSession(), visit: useVisit() }), {
+    wrapper,
+  });
+  await waitFor(() => expect(result.current.visit.needsStart).toBe(true));
+  expect(result.current.session).toBeNull();
+  return result.current.visit;
 }
 
 const stored = () =>
@@ -87,11 +106,10 @@ describe('GuestSessionProvider', () => {
     expect(table).toBe(9);
   });
 
-  it('starts a session at the default table when there is none', async () => {
-    const { session, table } = await openPage('/menu/');
-    expect(table).toBe(defaultTable);
-    expect(session.table).toBe(defaultTable);
-    expect(stored()).toEqual(session);
+  it('shows the start screen when there is no session and no QR code', async () => {
+    const visit = await openStart('/menu/');
+    expect(visit).toMatchObject({ needsStart: true, choice: {} });
+    expect(stored()).toBeNull();
   });
 
   it('ignores the old saved table', async () => {
@@ -99,15 +117,27 @@ describe('GuestSessionProvider', () => {
       'olive.table.v1',
       JSON.stringify({ table: 7, savedAt: Date.now() }),
     );
-    const { table } = await openPage();
-    expect(table).toBe(defaultTable);
+    await openStart();
   });
 
   it('ignores malformed saved sessions and invalid table numbers', async () => {
     window.localStorage.setItem(STORAGE_KEYS.session, JSON.stringify({ id: 'x', table: 1000 }));
-    expect((await openPage()).table).toBe(defaultTable);
-    expect((await openPage('/?table=1000')).table).toBe(defaultTable);
-    expect((await openPage('/?table=0')).table).toBe(defaultTable);
+    await openStart();
+    await openStart('/?table=1000');
+    await openStart('/?table=0');
+  });
+
+  it('starts a takeaway session from an ordering link, without a table', async () => {
+    const { session } = await openPage('/?branch=ktm-thamel&mode=takeaway');
+    expect(session).toMatchObject({ branchId: 'ktm-thamel', mode: 'takeaway' });
+    expect(session.table).toBeUndefined();
+  });
+
+  it('switches the saved session to an ordering link’s mode, keeping it', async () => {
+    const saved = seedGuestSession({ table: 9 });
+    const { result } = await openPage('/?mode=takeaway');
+    await waitFor(() => expect(result.current.session?.mode).toBe('takeaway'));
+    expect(result.current.session).toMatchObject({ id: saved.id, table: 9 });
   });
 
   it("starts a session at the QR link's branch and table", async () => {
@@ -126,10 +156,12 @@ describe('GuestSessionProvider', () => {
     expect((await openPage('/?table=5')).session).toMatchObject({ branchId: defaultBranchId });
   });
 
-  it("starts at the branch's default table when the link names only a branch", async () => {
-    const { session } = await openPage('/?branch=ktm-thamel');
-    expect(session).toMatchObject({ branchId: 'ktm-thamel', table: nepal.defaultTable });
-    // Re-opening the branch link keeps that session.
+  it('opens the start screen at the branch when the link names only a branch', async () => {
+    expect(await openStart('/?branch=ktm-thamel')).toMatchObject({
+      choice: { branchId: 'ktm-thamel' },
+    });
+    // A session there is kept.
+    const { session } = await openPage('/?branch=ktm-thamel&table=3');
     expect((await openPage('/?branch=ktm-thamel')).session.id).toBe(session.id);
   });
 
@@ -139,8 +171,8 @@ describe('GuestSessionProvider', () => {
   });
 
   it("ignores a table outside the branch's range", async () => {
-    const { session } = await openPage(`/?branch=ktm-thamel&table=${nepal.tables.last + 1}`);
-    expect(session).toMatchObject({ branchId: 'ktm-thamel', table: nepal.defaultTable });
+    const visit = await openStart(`/?branch=ktm-thamel&table=${nepal.tables.last + 1}`);
+    expect(visit.choice).toEqual({ branchId: 'ktm-thamel' });
   });
 
   it('keeps a session saved before branches, at the default branch', async () => {

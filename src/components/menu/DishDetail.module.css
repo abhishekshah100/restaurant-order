@@ -97,6 +97,10 @@
   font: var(--font-price-lg);
   font-variant-numeric: lining-nums tabular-nums;
 }
+.offerBadge {
+  align-self: flex-start;
+  margin-top: 8px;
+}
 .hr {
   composes: hr from '@/styles/patterns.module.css';
 }

@@ -1,5 +1,6 @@
 import type { BillLineKey, Branch, TaxConfig } from '@/types/branch';
 import type { Price } from '@/types/menu';
+import type { OfferLabelKey } from '@/types/promotion';
 
 interface PriceLine {
   unitPrice: Price;
@@ -17,12 +18,21 @@ export interface BillLine {
   parts?: BillLine[];
 }
 
+/** A discount on the bill, in minor units: an automatic offer (happy hour) or a promo code. */
+export type BillDiscount =
+  | { kind: 'offer'; id: string; labelKey: OfferLabelKey; amountMinor: number }
+  | { kind: 'code'; code: string; amountMinor: number };
+
 /** Bill breakdown, worked out from the branch's tax rules (GET /branches › tax). */
 export interface Bill {
   itemCount: number;
-  /** Sum of line totals, in major units. */
+  /** Sum of line totals at menu prices (before discounts), in major units. */
   itemTotal: Price;
   itemTotalMinor: number;
+  /** Discount lines, shown after the item total: automatic offers first, then a promo code. */
+  discounts: BillDiscount[];
+  /** Everything the discounts take off (never more than the item total). */
+  discountMinor: number;
   /** The service charge (when the branch adds one), then each tax, in the order applied. */
   lines: BillLine[];
   /** The branch adds a service charge (otherwise the cart says "Service charge · Not added"). */
@@ -83,24 +93,33 @@ export interface DeliveryCharge {
 }
 
 /**
- * The bill for some lines under a branch's tax rules: the service charge on the item total,
- * each tax on its base (computed once, then split into its parts), and the total rounded to
- * the rounding unit with the difference as the round-off line. Prices exclude tax. A delivery
- * fee is added to the total, and to each tax's base when the branch taxes it (never to the
- * service charge's).
+ * The bill for some lines under a branch's tax rules: the discounts off the item total, the
+ * service charge on what's left, each tax on its base (computed once, then split into its
+ * parts), and the total rounded to the rounding unit with the difference as the round-off line.
+ * Prices exclude tax. With `tax.discountBeforeTax` the charges are worked out on the discounted
+ * item total; otherwise on the full one, with the discounts taken off the taxed total. A
+ * delivery fee is added to the total, and to each tax's base when the branch taxes it (never to
+ * the service charge's).
  */
 export function calculateBill(
   lines: readonly PriceLine[],
   { tax, currency }: BillRules,
   delivery?: DeliveryCharge,
+  discounts: readonly BillDiscount[] = [],
 ): Bill {
   const { minorUnit } = currency;
   const total = itemTotal(lines);
   const itemTotalMinor = Math.round(total * minorUnit);
+  const discountMinor = Math.min(
+    itemTotalMinor,
+    discounts.reduce((sum, d) => sum + d.amountMinor, 0),
+  );
+  // What the service charge and taxes are worked out on.
+  const chargedMinor = tax.discountBeforeTax ? itemTotalMinor - discountMinor : itemTotalMinor;
   const feeMinor = delivery ? Math.round(delivery.fee * minorUnit) : 0;
   const taxedFeeMinor = delivery?.taxable ? feeMinor : 0;
   const service = tax.serviceCharge;
-  const serviceMinor = service ? percentOf(itemTotalMinor, service.rateBp) : 0;
+  const serviceMinor = service ? percentOf(chargedMinor, service.rateBp) : 0;
   const billLines: BillLine[] = service
     ? [
         {
@@ -113,7 +132,7 @@ export function calculateBill(
     : [];
 
   for (const line of tax.lines) {
-    const items = itemTotalMinor + taxedFeeMinor;
+    const items = chargedMinor + taxedFeeMinor;
     const base = line.base === 'items' ? items : items + serviceMinor;
     const amountMinor = percentOf(base, line.rateBp);
     const taxLine: BillLine = {
@@ -134,12 +153,17 @@ export function calculateBill(
     billLines.push(taxLine);
   }
 
-  const grossMinor = billLines.reduce((sum, l) => sum + l.amountMinor, itemTotalMinor + feeMinor);
+  const grossMinor = billLines.reduce(
+    (sum, l) => sum + l.amountMinor,
+    itemTotalMinor - discountMinor + feeMinor,
+  );
   const totalMinor = roundTo(grossMinor, tax.rounding.unit);
   return {
     itemCount: itemCount(lines),
     itemTotal: total,
     itemTotalMinor,
+    discounts: [...discounts],
+    discountMinor,
     lines: billLines,
     serviceCharged: Boolean(service),
     deliveryFeeMinor: delivery ? feeMinor : null,
@@ -150,9 +174,12 @@ export function calculateBill(
   };
 }
 
-/** Charges, taxes and round off on top of the items (and delivery fee): the one-line summary. */
+/**
+ * Charges, taxes and round off on top of the discounted items (and delivery fee): the one-line
+ * summary.
+ */
 export const extrasMinor = (bill: Bill) =>
-  bill.totalMinor - bill.itemTotalMinor - (bill.deliveryFeeMinor ?? 0);
+  bill.totalMinor - (bill.itemTotalMinor - bill.discountMinor) - (bill.deliveryFeeMinor ?? 0);
 
 /** Sum of the tax rates (not the service charge), for the "GST {rate}% + round off" label. */
 export const totalTaxRate = (tax: TaxConfig) =>

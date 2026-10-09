@@ -1,14 +1,18 @@
 import { modePayments } from '@/lib/fulfilment';
+import { amountDue } from '@/lib/lifecycle';
 import { isUnpaid } from '@/lib/orders';
 import { isOnlineMethod, isPaymentMethodId } from '@/lib/payments';
 import { payableOrders } from '@/lib/service';
+import type { OrderMode } from '@/types/branch';
 import type { Order } from '@/types/order';
 import type { Payment, SettledPaymentResponse } from '../../contracts';
 import { fail, liveSession, objectBody, ok, stringField, type Handler } from '../context';
 import { liveOrder } from '../kitchen';
 import { MOCK_TRANSACTION_REF, PAYMENT_WINDOW_SECONDS } from '../rules';
+import { orderChangeAmount } from './orderChanges';
 import { priceOrder } from './orderPricing';
 import { branchOrders } from './orders';
+import { guestPromoUses } from './promos';
 
 /** How an online payment is recorded on the orders it pays, e.g. `{ detail: "UPI" }`. */
 export type OnlinePayment = Pick<Order['payment'], 'detail' | 'transactionRef'>;
@@ -39,31 +43,52 @@ export const createPayment: Handler = async (ctx, { body: raw }) => {
   const body = objectBody(raw);
   const { purpose, method } = body;
   const { session, branch } = await liveSession(ctx, stringField(body, 'sessionId'));
-  const offered = purpose === 'bill' ? branch.payments.bill : modePayments(branch, session.mode);
   if (
-    (purpose !== 'order' && purpose !== 'bill') ||
     !isPaymentMethodId(method) ||
-    !offered.some((o) => o.id === method) ||
-    !isOnlineMethod(method)
+    !isOnlineMethod(method) ||
+    (purpose === 'round' && branch.ordering.dineInPayment !== 'perRound')
   ) {
     fail(400, 'invalid_request');
   }
+  const offeredFor = (mode: OrderMode) => modePayments(branch, mode).some((o) => o.id === method);
 
   let amount: number;
   let orderIds: string[] = [];
+  let orderId: string | undefined;
   if (purpose === 'order') {
-    const menu = await ctx.seed.menu(branch.id);
-    amount = priceOrder(body, session, branch, menu, new Date(ctx.now())).bill.total;
-  } else {
+    if (!offeredFor(session.mode)) fail(400, 'invalid_request');
+    const [menu, promotions] = await Promise.all([
+      ctx.seed.menu(branch.id),
+      ctx.seed.promotions(branch.id),
+    ]);
+    const now = new Date(ctx.now());
+    amount = priceOrder(body, session, branch, {
+      menu,
+      promotions,
+      now,
+      pricedAt: now,
+      promoUses: guestPromoUses(ctx, session.id),
+    }).bill.total;
+  } else if (purpose === 'bill') {
     const { orderIds: wanted } = body;
-    if (!Array.isArray(wanted) || !wanted.every((id) => typeof id === 'string')) {
+    if (
+      !branch.payments.bill.some((o) => o.id === method) ||
+      !Array.isArray(wanted) ||
+      !wanted.every((id) => typeof id === 'string')
+    ) {
       fail(400, 'invalid_request');
     }
     const { placed } = await branchOrders(ctx, branch);
     const payable = payableOrders(placed, session.id).filter((o) => wanted.includes(o.id));
     if (payable.length === 0) fail(409, 'nothing_to_pay');
-    amount = payable.reduce((sum, o) => sum + o.total, 0);
+    amount = payable.reduce((sum, o) => sum + amountDue(o), 0);
     orderIds = payable.map((o) => o.id);
+  } else if (purpose === 'round' || purpose === 'change') {
+    const change = await orderChangeAmount(ctx, body, purpose);
+    if (!offeredFor(change.order.mode)) fail(400, 'invalid_request');
+    ({ amount, orderId } = change);
+  } else {
+    fail(400, 'invalid_request');
   }
 
   const now = ctx.now();
@@ -77,6 +102,7 @@ export const createPayment: Handler = async (ctx, { body: raw }) => {
     createdAt: now,
     expiresAt: now + PAYMENT_WINDOW_SECONDS * 1000,
     orderIds,
+    ...(orderId ? { orderId } : {}),
   };
   ctx.db.payments.write([...ctx.db.payments.read(), payment]);
   return ok(payment, 201);

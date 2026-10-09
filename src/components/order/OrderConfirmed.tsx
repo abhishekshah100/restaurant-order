@@ -5,9 +5,13 @@ import { SiteHeader } from '@/components/layout/SiteHeader';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { useFinishPlacedOrder } from '@/hooks/usePlaceOrder';
 import { cx } from '@/lib/cx';
-import { TRACK_STEPS, stepKey, unpaidLabel } from '@/lib/orders';
+import { TRACK_STEPS, orderPath, stepKey, unpaidLabel } from '@/lib/orders';
 import type { Order } from '@/types/order';
+import { ChangeWindow } from './ChangeWindow';
+import { OrderSavings } from './OrderSavings';
+import { OrderCancelled } from './OrderCancelled';
 import { useLiveOrder } from './useLiveOrders';
+import { useOrderId } from './useOrderId';
 import styles from './OrderConfirmed.module.css';
 
 function PaymentTag({ order }: { order: Order }) {
@@ -45,9 +49,13 @@ function useModeWells(order: Order): { first: [string, string]; last: [string, s
   };
 }
 
-/** Order placed (13 · w13); takeaway and delivery show their pickup time or area and ETA. */
-export function OrderConfirmed({ id }: { id: string }) {
+/**
+ * Order placed (13 · w13); takeaway and delivery show their pickup time or area and ETA. While
+ * the change window is open the guest can change or cancel it here.
+ */
+export function OrderConfirmed() {
   const t = useContent('orders');
+  const id = useOrderId();
   const lookup = useLiveOrder(id);
   useFinishPlacedOrder(id);
 
@@ -81,13 +89,15 @@ export function OrderConfirmed({ id }: { id: string }) {
             title={t('shell.notFound.title')}
             actions={<Button href="/menu/">{t('shared.backToMenu')}</Button>}
           >
-            {t('shell.notFound.bodyShort', { id })}
+            {id ? t('shell.notFound.bodyShort', { id }) : t('shell.notFound.bodyShortNoId')}
           </EmptyState>
         </main>
       </div>
     );
   }
 
+  // Cancelled from here, within the change window.
+  if (lookup.order.status === 'cancelled') return <OrderCancelled order={lookup.order} />;
   return <Confirmed order={lookup.order} />;
 }
 
@@ -97,7 +107,7 @@ function Confirmed({ order }: { order: Order }) {
   const t = useContent('orders');
   const wells = useModeWells(order);
   const placedAt = clock.time(order.placedAt);
-  const trackHref = `/order/${order.id}/track/`;
+  const trackHref = orderPath(order.id, 'track');
   const steps = TRACK_STEPS[order.mode];
 
   return (
@@ -133,6 +143,10 @@ function Confirmed({ order }: { order: Order }) {
             <dd>{wells.last[1]}</dd>
           </div>
         </dl>
+
+        <OrderSavings order={order} className={styles.saved} />
+
+        <ChangeWindow order={order} className={styles.change} />
 
         <div className={styles.progress}>
           <div className={styles.seg} aria-hidden="true">
