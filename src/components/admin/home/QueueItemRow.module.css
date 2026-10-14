@@ -1,0 +1,188 @@
+/*
+ * A queue row: where (badge), what and how long (body), and the action. A thin bar in the
+ * item's tone marks its kind (with the icon beside the title, so not by colour alone). The
+ * action is a compact pill: beside the age on phones, so the title keeps the full width, and
+ * at the row's end from 480px.
+ */
+
+.item {
+  --tone: var(--brand-600);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'where body body'
+    'where age action';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 4px;
+  padding: 12px 14px 12px 16px;
+}
+
+.item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tone);
+}
+
+.waiter {
+  --tone: var(--brand-600);
+}
+
+.bill {
+  --tone: var(--gold);
+}
+
+.ready {
+  --tone: var(--success);
+}
+
+.item > :first-child {
+  grid-area: where;
+}
+
+.body {
+  grid-area: body;
+  min-width: 0;
+  display: grid;
+  align-content: end;
+  gap: 2px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.kindIcon {
+  color: var(--tone);
+}
+
+.detail {
+  overflow: hidden;
+  color: var(--ink-2);
+  font: var(--font-small);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.age {
+  grid-area: age;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.waiting {
+  color: var(--warn);
+}
+
+.late {
+  color: var(--error);
+}
+
+.action {
+  grid-area: action;
+  position: relative;
+  align-self: center;
+  justify-self: end;
+  height: 34px;
+  padding: 0 14px 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+/* The pill is small to look at; the tap target stays 44px tall. */
+.action::after {
+  content: '';
+  position: absolute;
+  inset: -5px -2px;
+}
+
+.actionIcon {
+  color: var(--ink-3);
+  transition: color var(--dur-fast) ease;
+}
+
+/* Food to serve: soft green, so it stands out from Done without shouting. */
+.primary {
+  border-color: transparent;
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.primary .actionIcon {
+  color: var(--success);
+}
+
+.action:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.action:active {
+  transform: translateY(1px);
+}
+
+@media (hover: hover) {
+  .action:hover {
+    border-color: var(--success);
+    color: var(--success);
+  }
+
+  .action:hover .actionIcon {
+    color: var(--success);
+  }
+
+  .primary:hover {
+    border-color: var(--success);
+    background: var(--success);
+    color: var(--white);
+  }
+
+  .primary:hover .actionIcon {
+    color: var(--white);
+  }
+}
+
+@media (min-width: 480px) {
+  .item {
+    grid-template-areas:
+      'where body action'
+      'where age action';
+    row-gap: 2px;
+  }
+
+  .age {
+    align-self: start;
+  }
+}
+
+@media (min-width: 768px) {
+  .item {
+    column-gap: 14px;
+    padding: 14px 20px 14px 22px;
+  }
+}

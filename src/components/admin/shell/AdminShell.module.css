@@ -1,0 +1,47 @@
+/*
+ * The admin frame: below 1024px the page between the dark app bar and the bottom tab bar; from
+ * 1024px a 264px sidebar beside the page. The cream page has the warm glow of the branch picker.
+ */
+
+.shell,
+.fallback {
+  min-height: 100dvh;
+  background: radial-gradient(circle at 100% 0%, var(--brand-tint) 0, transparent 420px), var(--bg);
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px 16px calc(96px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding: 28px 24px calc(104px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .main {
+    padding: 32px clamp(24px, 3vw, 40px) 48px;
+  }
+
+  .fallback {
+    background:
+      linear-gradient(90deg, var(--ink) 0 264px, transparent 264px),
+      radial-gradient(circle at 100% 0%, var(--brand-tint) 0, transparent 420px), var(--bg);
+  }
+}

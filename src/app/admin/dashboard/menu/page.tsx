@@ -1,11 +1,8 @@
-import type { Metadata } from 'next';
-import { AdminDashboardRoute } from '@/components/admin/AdminDashboardRoute';
+import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
+import { MenuSection } from '@/components/admin/sections/MenuSection';
 
-export const metadata: Metadata = {
-  title: 'Menu · Admin',
-  robots: { index: false, follow: false },
-};
+export const generateMetadata = () => adminMetadata('menu');
 
 export default function AdminMenuPage() {
-  return <AdminDashboardRoute section="menu" />;
+  return <MenuSection />;
 }

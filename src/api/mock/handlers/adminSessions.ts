@@ -44,7 +44,7 @@ export const createAdminSession: Handler = async (ctx, { body: raw }) => {
 };
 
 /** The account behind the request's `Authorization: Bearer <token>`, or 401 unauthorized. */
-function signedInAccount(ctx: MockContext, headers: Record<string, string>) {
+export function signedInAccount(ctx: MockContext, headers: Record<string, string>) {
   const token = /^Bearer\s+(\S+)$/i.exec(headers.authorization ?? '')?.[1];
   const session = token && ctx.db.adminSessions.read().find((s) => s.token === token);
   const account = session && ACCOUNTS.find((a) => a.email === session.email);
@@ -88,3 +88,18 @@ export const listAdminBranches: Handler = async (ctx, { headers }) => {
   };
   return ok(body);
 };
+
+/**
+ * The branch, when the signed-in admin manages it: 401 unauthorized without a live session,
+ * 403 forbidden for a branch that isn't theirs (or doesn't exist).
+ */
+export async function adminBranch(
+  ctx: MockContext,
+  headers: Record<string, string>,
+  branchId: string | undefined,
+): Promise<Branch> {
+  const account = signedInAccount(ctx, headers);
+  const branch = (await ctx.seed.branches()).find((b) => b.id === branchId);
+  if (!branch || !account.branchIds.includes(branch.id)) fail(403, 'forbidden');
+  return branch;
+}

@@ -1,11 +1,8 @@
-import type { Metadata } from 'next';
-import { AdminDashboardRoute } from '@/components/admin/AdminDashboardRoute';
+import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
+import { OrdersSection } from '@/components/admin/sections/OrdersSection';
 
-export const metadata: Metadata = {
-  title: 'Unpaid orders · Admin',
-  robots: { index: false, follow: false },
-};
+export const generateMetadata = () => adminMetadata('unpaidOrders');
 
-export default function UnpaidOrdersPage() {
-  return <AdminDashboardRoute section="orders" orderFilter="unpaid" />;
+export default function AdminUnpaidOrdersPage() {
+  return <OrdersSection filter="unpaid" />;
 }

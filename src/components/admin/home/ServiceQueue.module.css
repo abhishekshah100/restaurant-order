@@ -1,0 +1,86 @@
+/* The "Needs you now" panel: a card with a heading, the list (one row per item) or All caught up. */
+
+.panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h2);
+}
+
+.subtitle {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.count {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-pill);
+  background: var(--brand-tint);
+  color: var(--brand-700);
+  font: var(--font-meta-strong);
+}
+
+.list {
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.list > li + li {
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 28px 24px 36px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 8px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.emptyTitle {
+  color: var(--ink);
+  font: 500 22px/28px var(--f-display);
+}
+
+.emptyBody {
+  max-width: 340px;
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-wrap: pretty;
+}
+
+@media (min-width: 768px) {
+  .head {
+    padding: 20px 20px 14px;
+  }
+}

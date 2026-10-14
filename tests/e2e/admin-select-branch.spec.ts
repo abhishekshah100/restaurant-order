@@ -38,7 +38,7 @@ test('signing in lists both branches; choosing Thamel opens its dashboard', asyn
 
   await choose(page, 'Thamel').click();
   await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
-  await expect(visibleText(page, 'The Olive Table — Thamel')).toBeVisible();
+  await expect(visibleText(page, 'Thamel, Kathmandu')).toBeVisible();
 
   // Back to the picker: Thamel comes first, marked "Last used".
   await page.goto('/admin/select-branch/');
@@ -57,7 +57,7 @@ test('a closed branch can still be chosen', async ({ page }) => {
   await expect(card(page, 'Indiranagar')).toContainText('Open');
   await choose(page, 'Thamel').click();
   await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
-  await expect(visibleText(page, 'The Olive Table — Thamel')).toBeVisible();
+  await expect(visibleText(page, 'Thamel, Kathmandu')).toBeVisible();
 });
 
 test('the whole card is the target', async ({ page }) => {

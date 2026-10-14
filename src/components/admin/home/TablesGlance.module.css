@@ -1,0 +1,158 @@
+/*
+ * Tables at a glance: small tiles, the number large and the state in words with an icon, in a
+ * tone per state (needs waiter and wants bill stand out; eating and closing stay quiet).
+ */
+
+.panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h2);
+}
+
+.subtitle {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.all {
+  min-height: 44px;
+  margin: -10px -8px 0 0;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: var(--r-md);
+  color: var(--brand-600);
+  font: var(--font-meta-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.all:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+  list-style: none;
+}
+
+.tile {
+  --tone: var(--ink-2);
+  --tone-bg: var(--bg);
+  min-height: 72px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, var(--line));
+  border-radius: var(--r-tile);
+  background: var(--tone-bg);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    transform var(--dur-base) var(--ease-emphasized),
+    box-shadow var(--dur-base) ease;
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.number {
+  font: 500 24px/26px var(--f-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.icon {
+  margin-top: 4px;
+  color: var(--tone);
+}
+
+.status {
+  color: var(--tone);
+  font: var(--font-meta-strong);
+}
+
+.needsWaiter {
+  --tone: var(--brand-700);
+  --tone-bg: var(--brand-tint);
+}
+
+.wantsBill {
+  --tone: var(--gold-ink);
+  --tone-bg: var(--gold-tint);
+}
+
+.ordering {
+  --tone: var(--ink-2);
+  --tone-bg: var(--bg);
+}
+
+.eating {
+  --tone: var(--success);
+  --tone-bg: var(--success-tint);
+}
+
+.closing {
+  --tone: var(--ink-3);
+  --tone-bg: var(--surface);
+  border-style: dashed;
+}
+
+.tile:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .tile:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--sh-1);
+  }
+
+  .all:hover {
+    background: var(--brand-tint-2);
+  }
+}
+
+.empty {
+  padding: 20px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .panel {
+    padding: 20px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  }
+}

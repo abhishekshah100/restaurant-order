@@ -1,11 +1,8 @@
-import type { Metadata } from 'next';
-import { AdminDashboardRoute } from '@/components/admin/AdminDashboardRoute';
+import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
+import { PaymentsSection } from '@/components/admin/sections/PaymentsSection';
 
-export const metadata: Metadata = {
-  title: 'Payments · Admin',
-  robots: { index: false, follow: false },
-};
+export const generateMetadata = () => adminMetadata('payments');
 
 export default function AdminPaymentsPage() {
-  return <AdminDashboardRoute section="payments" />;
+  return <PaymentsSection />;
 }

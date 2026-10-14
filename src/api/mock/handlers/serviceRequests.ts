@@ -6,11 +6,15 @@ import { fail, liveSession, objectBody, ok, stringField, type Handler } from '..
 import { SERVICE_REQUEST_TTL_MS } from '../rules';
 import { allOrders, branchOrders, tableOrders } from './orders';
 
-/** Pending requests: not older than the TTL. */
-export const isPending = (request: ServiceRequest, now: number) => {
+/** Not older than the TTL: the server still keeps it (resolved or not). */
+export const isRecent = (request: ServiceRequest, now: number) => {
   const age = now - Date.parse(request.requestedAt);
   return age >= 0 && age < SERVICE_REQUEST_TTL_MS;
 };
+
+/** Pending requests: recent and not yet dealt with by staff. */
+export const isPending = (request: ServiceRequest, now: number) =>
+  request.resolvedAt === undefined && isRecent(request, now);
 
 /** Trimmed and capped; undefined when empty. */
 export function cleanNote(note: string): string | undefined {
@@ -36,8 +40,10 @@ export const createServiceRequest: Handler = async (ctx, { body: raw }) => {
   const { placed, history } = await branchOrders(ctx, branch);
 
   const now = ctx.now();
-  const all = ctx.db.serviceRequests.read().filter((r) => isPending(r, now));
-  const pending = all.find((r) => r.sessionId === session.id && r.kind === kind);
+  const all = ctx.db.serviceRequests.read().filter((r) => isRecent(r, now));
+  const pending = all.find(
+    (r) => r.sessionId === session.id && r.kind === kind && isPending(r, now),
+  );
   if (pending) {
     const response: CreateServiceRequestResponse = { request: pending, created: false };
     return ok(response);

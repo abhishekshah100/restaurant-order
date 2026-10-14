@@ -225,56 +225,8 @@
     }
   },
   "adminDashboard": {
-    "brand": "The Olive Table",
-    "waiterWorkspace": "WAITER WORKSPACE",
-    "currentBranch": "CURRENT BRANCH",
-    "workspace": "WORKSPACE",
-    "mainNavigation": "Main navigation",
-    "mobileNavigation": "Mobile navigation",
-    "dataSummary": "Branch data summary",
-    "waiter": "Waiter workspace",
-    "profileInitial": "W",
-    "notificationsUnavailable": "Notifications unavailable",
-    "signOut": "Sign out",
-    "breadcrumb": "Workspace",
-    "greeting": "Good morning, {username}",
-    "greetingFallback": "there",
-    "serviceOverview": "Here's what's happening today",
-    "ordersError": "Order history could not be loaded. {error}",
-    "metrics": {
-      "orders": "Total Table",
-      "ready": "Occupied",
-      "tables": "Available",
-      "menu": "Reserved",
-      "newOrder": "New Order",
-      "requestBill": "Bill",
-      "delayed": "Delayed",
-      "test": "Test"
-    },
-    "recentOrders": "Recent activity",
-    "recentOrdersDetail": "Updates to today's orders",
-    "viewAll": "View all",
-    "quickActions": "Quick actions",
-    "quickActionsDetail": "Common service tasks",
-    "reviewTables": "Review table records",
-    "tableReferences": "Tables with recorded order activity",
-    "readyOrders": "See ready orders",
-    "readyInHistory": "{count} orders",
-    "findMenu": "Find a menu item",
-    "browseDraft": "Browse and build an unsent draft",
-    "unpaidOrders": "Check unpaid records",
-    "tableOverview": "Table overview",
-    "tableOverviewDetail": "Tables with recorded order activity",
-    "seeTables": "See tables",
-    "tableHistory": "History",
-    "liveTablesUnavailable": "Live occupancy and table-session status are not available in the current data source.",
-    "menuPreview": "Menu preview",
-    "menuPreviewDetail": "Available picks from this branch's menu",
-    "browseMenu": "Browse menu",
-    "menuItemFallback": "Menu item",
     "branchWorkspace": "BRANCH WORKSPACE",
     "tableRecords": "Table records",
-    "tableRecordsDetail": "Tables referenced by sample dine-in orders.",
     "tableUnavailable": "Live occupancy, reservations, session state, and table cleaning status are not available in the current data source.",
     "backToTables": "Back to tables",
     "tableDetailSubtitle": "Orders returned for this table by the current endpoint.",
@@ -288,11 +240,9 @@
     "billRequest": "Bill requested",
     "waiterRequest": "Waiter requested · {reason}",
     "noRequestNote": "No additional note",
-    "moreOptions": "More navigation options",
     "categoryFilter": "Category",
     "allCategories": "All categories",
     "tableNumber": "Table {table}",
-    "sampleOrderCount": "{count} sample orders",
     "sampleOrders": {
       "one": "{count} sample order",
       "other": "{count} sample orders"
@@ -312,9 +262,7 @@
     "removeItem": "Remove {item}",
     "requestQueueTitle": "Request queue unavailable",
     "requestQueueDescription": "The current API exposes requests for a known guest session only. It does not provide a branch-wide waiter request queue, so no request count or fabricated request records are shown here.",
-    "paymentsSubtitle": "Payment status is shown separately from order status.",
     "paymentsDisclaimer": "Sample order payment records only; no payment actions are enabled.",
-    "more": "More",
     "payment": "Payment",
     "items": "Items",
     "itemNote": "Note: {note}",
@@ -329,27 +277,7 @@
     "addItemDescription": "Add this item to an unsent local draft.",
     "orderDetails": "Order details",
     "itemCount": "{count} items",
-    "activityUnavailable": "Activity could not be loaded because the order-history request failed.",
-    "loadingMenu": "Loading branch menu…",
     "standard": "Standard",
-    "sampleOrder": "sample order",
-    "item": {
-      "one": "{count} item",
-      "other": "{count} items"
-    },
-    "status": {
-      "open": "Open",
-      "closed": "Closed",
-      "paused": "Paused"
-    },
-    "nav": {
-      "dashboard": "Dashboard",
-      "tables": "Tables",
-      "orders": "Orders",
-      "menu": "Menu",
-      "requests": "Customer requests",
-      "payments": "Payments"
-    },
     "sections": {
       "tablesSubtitle": "Tables referenced by sample dine-in orders.",
       "ordersSubtitle": "Order history is fixture data, not a live waiter feed.",
@@ -358,9 +286,6 @@
       "paymentsSubtitle": "Payment status is shown separately from order status."
     },
     "empty": {
-      "noOrders": "No order records are available for this branch.",
-      "noActivity": "No recent activity is available in the current records.",
-      "noTables": "No table references in this branch's sample orders.",
       "noTableReferences": "No table references are available in sample order history.",
       "noTableOrders": "No orders were returned for this table.",
       "noFilterMatch": "No records match this filter.",
@@ -376,15 +301,157 @@
       "refund-started": "refund started"
     },
     "search": {
-      "label": "Search this branch's menu",
-      "shortcut": "/"
+      "label": "Search this branch's menu"
+    }
+  },
+  "adminShell": {
+    "meta": {
+      "home": "Home · Admin",
+      "tables": "Tables · Admin",
+      "orders": "Orders · Admin",
+      "readyOrders": "Ready to serve · Admin",
+      "unpaidOrders": "Unpaid orders · Admin",
+      "menu": "Menu · Admin",
+      "requests": "Requests · Admin",
+      "payments": "Payments · Admin"
     },
-    "bottomNav": {
+    "loading": "Loading your workspace",
+    "descriptor": "Admin",
+    "homeLink": "{name} admin home",
+    "nav": {
+      "label": "Main",
       "home": "Home",
+      "tables": "Tables",
+      "orders": "Orders",
+      "requests": "Requests",
+      "menu": "Menu",
+      "payments": "Payments",
       "more": "More"
     },
-    "footer": "Staff operations",
-    "dateFallback": "—",
-    "paymentMethod": "{method}"
+    "badge": {
+      "orders": "{count} ready to serve",
+      "requests": "{count} open"
+    },
+    "branch": {
+      "label": "Current branch",
+      "switch": "Switch branch",
+      "timeLabel": "Local time {time}",
+      "where": "{area} · {city}"
+    },
+    "status": {
+      "open": "Open",
+      "closed": "Closed",
+      "paused": "Paused"
+    },
+    "account": {
+      "label": "Signed in as {name}",
+      "signOut": "Sign out",
+      "menu": "Account and more"
+    },
+    "more": {
+      "title": "More",
+      "pages": "More pages",
+      "branch": "Branch",
+      "account": "Account"
+    }
+  },
+  "adminHome": {
+    "greeting": {
+      "morning": "Good Morning",
+      "afternoon": "Good Afternoon",
+      "evening": "Good Evening",
+      "named": "{greeting}, {name}"
+    },
+    "loading": "Loading what needs doing",
+    "error": {
+      "title": "We couldn't load the floor",
+      "body": "Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "counters": {
+      "label": "Right now",
+      "waiterCalls": {
+        "label": "Waiter calls",
+        "hint": "Open now"
+      },
+      "billRequests": {
+        "label": "Bill requests",
+        "hint": "Waiting for the bill"
+      },
+      "readyToServe": {
+        "label": "Ready to serve",
+        "hint": "From the kitchen"
+      },
+      "unpaid": {
+        "label": "Unpaid",
+        "hint": "Orders today"
+      }
+    },
+    "queue": {
+      "title": "Needs you now",
+      "subtitle": "Oldest first",
+      "count": {
+        "one": "{count} waiting",
+        "other": "{count} waiting"
+      },
+      "empty": {
+        "title": "All caught up",
+        "body": "Waiter calls, bill requests and food ready to serve will show up here."
+      },
+      "reasons": {
+        "waiter": "Wants a waiter",
+        "water": "Needs water",
+        "cutlery": "Needs cutlery",
+        "other": "Needs something else"
+      },
+      "bill": {
+        "title": "Wants the bill",
+        "mine": "Just their orders",
+        "table": "Whole table",
+        "balance": "{amount} due"
+      },
+      "ready": {
+        "title": "Order {order} is ready",
+        "round": "Round {round}",
+        "items": {
+          "one": "{count} item",
+          "other": "{count} items"
+        }
+      },
+      "note": "“{note}”",
+      "table": "Table",
+      "pickup": "Pickup",
+      "delivery": "Delivery",
+      "where": {
+        "table": "Table {table}",
+        "pickup": "Pickup",
+        "delivery": "Delivery"
+      },
+      "age": {
+        "now": "Just now",
+        "minutes": "{count} min ago",
+        "hours": "{hours} h {minutes} min ago"
+      },
+      "done": "Done",
+      "serve": "Mark served",
+      "handOver": "Handed over",
+      "actionLabel": "{action}: {what}, {where}",
+      "failed": "Couldn't update that. It's back on the list, try again."
+    },
+    "tables": {
+      "title": "Tables",
+      "subtitle": "Active today",
+      "all": "All tables",
+      "empty": "No tables are active yet today.",
+      "tile": "Table {table}: {status}",
+      "status": {
+        "needsWaiter": "Needs waiter",
+        "wantsBill": "Wants bill",
+        "ordering": "Ordering",
+        "eating": "Eating",
+        "closing": "Paid · closing"
+      }
+    },
+    "where": "{area}, {city}"
   }
 }

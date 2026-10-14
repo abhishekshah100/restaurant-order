@@ -1,0 +1,38 @@
+.badge {
+  width: 50px;
+  height: 50px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tile);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.caption {
+  color: var(--ink-3);
+  font: 800 9px/12px var(--f-ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.number {
+  font: 500 24px/26px var(--f-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.away {
+  gap: 3px;
+  color: var(--ink-2);
+}
+
+@media (min-width: 768px) {
+  .badge {
+    width: 56px;
+    height: 56px;
+  }
+}

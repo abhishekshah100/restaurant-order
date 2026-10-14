@@ -1,11 +1,8 @@
-import type { Metadata } from 'next';
-import { AdminDashboardRoute } from '@/components/admin/AdminDashboardRoute';
+import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
+import { TablesSection } from '@/components/admin/sections/TablesSection';
 
-export const metadata: Metadata = {
-  title: 'Tables · Admin',
-  robots: { index: false, follow: false },
-};
+export const generateMetadata = () => adminMetadata('tables');
 
 export default function AdminTablesPage() {
-  return <AdminDashboardRoute section="tables" />;
+  return <TablesSection />;
 }

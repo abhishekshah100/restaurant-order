@@ -1,11 +1,8 @@
-import type { Metadata } from 'next';
-import { AdminDashboardRoute } from '@/components/admin/AdminDashboardRoute';
+import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
+import { OrdersSection } from '@/components/admin/sections/OrdersSection';
 
-export const metadata: Metadata = {
-  title: 'Ready orders · Admin',
-  robots: { index: false, follow: false },
-};
+export const generateMetadata = () => adminMetadata('readyOrders');
 
-export default function ReadyOrdersPage() {
-  return <AdminDashboardRoute section="orders" orderFilter="ready" />;
+export default function AdminReadyOrdersPage() {
+  return <OrdersSection filter="ready" />;
 }

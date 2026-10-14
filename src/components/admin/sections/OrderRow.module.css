@@ -1,0 +1,89 @@
+.orderRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 1px;
+  border: 0;
+  border-top: 1px solid #f0f2ee;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.orderRow:first-child {
+  border-top: 0;
+}
+
+@media (hover: hover) {
+  .orderRow:hover {
+    background: var(--brand-tint-2);
+  }
+}
+
+.orderIcon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+}
+
+.orderCopy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+
+.orderCopy strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orderCopy strong small {
+  color: #858d85;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.orderCopy > span {
+  color: #899189;
+  font-size: 11px;
+}
+
+.orderCopy i {
+  padding: 0 3px;
+  color: #bbc1b9;
+  font-style: normal;
+}
+
+.orderAmount {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.orderAmount small {
+  color: #858d85;
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+@media (max-width: 560px) {
+  .orderRow {
+    gap: 8px;
+  }
+}

@@ -1,11 +1,9 @@
-import type { Metadata } from 'next';
-import { AdminDashboardRoute } from '@/components/admin/AdminDashboardRoute';
+import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
+import { AdminHome } from '@/components/admin/home/AdminHome';
 
-export const metadata: Metadata = {
-  title: 'Admin dashboard',
-  robots: { index: false, follow: false },
-};
+export const generateMetadata = () => adminMetadata('home');
 
-export default function AdminDashboardPage() {
-  return <AdminDashboardRoute section="dashboard" />;
+/** /admin/dashboard/: the waiter home. */
+export default function AdminHomePage() {
+  return <AdminHome />;
 }

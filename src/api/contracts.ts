@@ -1,5 +1,10 @@
 import type { DeliveryQuote } from '@/lib/fulfilment';
-import type { AdminBranch, AdminSession } from '@/types/admin';
+import type {
+  AdminBranch,
+  AdminBranchService,
+  AdminServiceRequest,
+  AdminSession,
+} from '@/types/admin';
 import type { OrderMode, PaymentMethodId } from '@/types/branch';
 import type { LineConfig } from '@/types/cart';
 import type { Price } from '@/types/menu';
@@ -73,7 +78,11 @@ export type ApiErrorCode =
   /** 401: no admin account matches this email or mobile number and password. */
   | 'invalid_credentials'
   /** 401: an admin request without a session token, or its session has expired; sign in again. */
-  | 'unauthorized';
+  | 'unauthorized'
+  /** 403: the signed-in admin doesn't manage this branch (or the order or request's branch). */
+  | 'forbidden'
+  /** 409: the order (or round) isn't ready to serve yet. */
+  | 'not_ready';
 
 /** Body of every non-2xx response. */
 export interface ApiErrorBody {
@@ -114,6 +123,46 @@ export type AdminSignInResponse = AdminSession;
 export interface AdminBranchesResponse {
   branches: AdminBranch[];
 }
+
+/* ---------- Admin: floor service ---------- */
+
+/**
+ * `GET /admin/branches/:branchId/service` — what the floor staff of one branch need to act on
+ * now (the waiter home). Authorised like GET /admin/branches. 200 → `BranchServiceResponse`:
+ * the open waiter and bill requests (oldest first); today's orders (branch time zone) that are
+ * still active or not paid in full, newest first, each with its rounds ready to serve; the tables
+ * with activity today and where each is in its visit; and the counts. Errors: 401 unauthorized,
+ * 403 forbidden (not one of the admin's branches, or no such branch). Poll it (the app: every
+ * 15 s and on returning to the tab). Mock: from the orders and requests on this device plus the
+ * drawn history; takeaway and delivery orders have no table.
+ */
+export type BranchServiceResponse = AdminBranchService;
+
+/**
+ * `POST /admin/service-requests/:id/resolve` — a waiter dealt with the request: it leaves the
+ * queue and the guest's pending requests (their "Waiter requested" / "Bill requested" page
+ * clears). Idempotent: resolving it again answers the same. No body. 200 → `{ request }` with
+ * `resolvedAt`. Errors: 401 unauthorized, 403 forbidden (another branch's), 404 not_found
+ * (unknown, or lapsed after 30 minutes).
+ */
+export interface ResolveRequestResponse {
+  request: AdminServiceRequest;
+}
+
+/**
+ * `POST /admin/orders/:id/served` — the food is at the table (dine-in), or handed over at the
+ * counter (takeaway). `round` names one round of a running order; without it every round ready
+ * now is marked. The guest's tracking moves to Served (Picked up). Idempotent: an order or
+ * round already served answers the same. 200 → the order (`Order`, as GET /orders/:id).
+ * Errors: 400 invalid_request (no such round), 401 unauthorized, 403 forbidden (another
+ * branch's), 404 not_found, 409 not_ready (still being made, or a delivery), 409 order_closed
+ * (cancelled).
+ */
+export interface MarkServedRequest {
+  round?: number;
+}
+
+export type MarkServedResponse = Order;
 
 /* ---------- Sessions ---------- */
 

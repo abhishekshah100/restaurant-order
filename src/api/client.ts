@@ -84,8 +84,8 @@ export const apiGet = <T>(path: string, init?: RequestInit): Promise<T> =>
   send<T>({ method: 'GET', path }, init);
 
 /** POST a JSON body. Throws ApiError (with the server's error code) on a non-2xx response. */
-export const apiPost = <T>(path: string, body: unknown): Promise<T> =>
-  send<T>({ method: 'POST', path, body });
+export const apiPost = <T>(path: string, body: unknown, init?: RequestInit): Promise<T> =>
+  send<T>({ method: 'POST', path, body }, init);
 
 /** PATCH a JSON body. */
 export const apiPatch = <T>(path: string, body: unknown): Promise<T> =>

@@ -1,15 +1,21 @@
+'use client';
+
 import { useMemo } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { toOrderHistory } from '@/api/adapters';
 import { branchMenuQuery, orderHistoryQuery, serviceRequestsQuery } from '@/api/queries';
 import { useTableOrders } from '@/api/hooks';
-import type { Branch } from '@/types/branch';
 import { createMenuCatalog } from '@/lib/menu';
+import type { Branch } from '@/types/branch';
 import type { Order, OrdersResponse } from '@/types/order';
 
-export type DashboardSection = 'dashboard' | 'tables' | 'orders' | 'menu' | 'requests' | 'payments';
+/*
+ * Reads for the admin sections that haven't been redesigned yet (Tables, Orders, Menu,
+ * Payments). They show the drawn order history, as before; the waiter home reads the floor
+ * through GET /admin/branches/:branchId/service instead (useBranchService).
+ */
 
-/** Keep the dashboard scoped to the selected branch and remove duplicate fixture ids. */
+/** The branch's drawn orders, newest first, without duplicate ids. */
 export function branchOrders(raw: OrdersResponse, branch: Branch): Order[] {
   const history = toOrderHistory(raw, branch).history;
   return [...new Map(history.map((order) => [order.id, order])).values()].sort(
@@ -17,8 +23,8 @@ export function branchOrders(raw: OrdersResponse, branch: Branch): Order[] {
   );
 }
 
-/** Fixture table references only; they do not indicate a live table/session state. */
-export function fixtureTables(orders: readonly Order[]): number[] {
+/** The dine-in tables those orders mention, in order. */
+export function orderTables(orders: readonly Order[]): number[] {
   return [
     ...new Set(
       orders
@@ -31,79 +37,42 @@ export function fixtureTables(orders: readonly Order[]): number[] {
   ].sort((a, b) => a - b);
 }
 
-export function recentOrderActivity(orders: readonly Order[]) {
-  return orders
-    .flatMap((order) =>
-      order.timeline.map((event, index) => ({
-        id: `${order.id}:${index}`,
-        order,
-        status: event.status,
-        time: event.time,
-        note: event.note,
-        sortAt: Date.parse(order.placedAt) + index,
-      })),
-    )
-    .sort((a, b) => b.sortAt - a.sortAt);
+/** The branch's drawn order history. */
+export function useBranchOrderHistory(branch: Branch) {
+  const query = useQuery(orderHistoryQuery());
+  const orders = useMemo(
+    () => (query.data ? branchOrders(query.data, branch) : []),
+    [branch, query.data],
+  );
+  return { orders, loading: query.isPending, error: query.error };
 }
 
-export function useAdminDashboardData(
-  branch?: Branch,
-  selectedTable?: number,
-  section: DashboardSection = 'dashboard',
-) {
-  const menuRequired = section === 'dashboard' || section === 'menu';
-  const ordersRequired =
-    section === 'dashboard' ||
-    section === 'tables' ||
-    section === 'orders' ||
-    section === 'payments';
-  const menuQuery = useQuery({
-    ...branchMenuQuery(branch?.id ?? ''),
-    enabled: Boolean(branch && menuRequired),
-  });
-  const ordersQuery = useQuery({
-    ...orderHistoryQuery(),
-    enabled: Boolean(branch && ordersRequired),
-  });
+/** The branch's menu catalog. */
+export function useBranchMenu(branch: Branch) {
+  const query = useQuery(branchMenuQuery(branch.id));
   const menu = useMemo(
-    () => (menuQuery.data ? createMenuCatalog(menuQuery.data) : undefined),
-    [menuQuery.data],
+    () => (query.data ? createMenuCatalog(query.data) : undefined),
+    [query.data],
   );
-  const orders = useMemo(
-    () => (branch && ordersQuery.data ? branchOrders(ordersQuery.data, branch) : []),
-    [branch, ordersQuery.data],
-  );
-  const tableOrdersQuery = useTableOrders(
-    branch?.id ?? '',
-    selectedTable ?? 0,
-    Boolean(branch && section === 'tables' && selectedTable !== undefined),
-  );
+  return { menu, loading: query.isPending, error: query.error };
+}
+
+/** One table's orders today and the open requests of the sessions behind them. */
+export function useTableDetail(branch: Branch, table: number | undefined) {
+  const ordersQuery = useTableOrders(branch.id, table ?? 0, table !== undefined);
+  const orders = ordersQuery.data?.orders ?? [];
   const sessionIds = [
-    ...new Set(
-      (tableOrdersQuery.data?.orders ?? [])
-        .map((order) => order.sessionId)
-        .filter((id): id is string => id !== undefined),
-    ),
+    ...new Set(orders.map((order) => order.sessionId).filter((id): id is string => !!id)),
   ];
   const requestQueries = useQueries({
     queries: sessionIds.map((sessionId) => serviceRequestsQuery(sessionId)),
   });
-  const tableRequests = requestQueries.flatMap((query) => query.data?.requests ?? []);
-
   return {
-    menu,
-    menuLoading: menuQuery.isPending,
-    menuError: menuQuery.error,
     orders,
     ordersLoading: ordersQuery.isPending,
     ordersError: ordersQuery.error,
-    tables: fixtureTables(orders),
-    activity: recentOrderActivity(orders),
-    tableOrders: tableOrdersQuery.data?.orders ?? [],
-    tableOrdersLoading: tableOrdersQuery.isPending,
-    tableOrdersError: tableOrdersQuery.error,
     sessionIds,
-    tableRequests,
+    requests: requestQueries.flatMap((query) => query.data?.requests ?? []),
     requestsLoading: requestQueries.some((query) => query.isPending),
     requestsError: requestQueries.find((query) => query.error)?.error,
   };

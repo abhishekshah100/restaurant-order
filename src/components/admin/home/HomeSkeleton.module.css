@@ -1,0 +1,36 @@
+.skeleton {
+  display: grid;
+  gap: 20px;
+}
+
+.counters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.counter {
+  height: 112px;
+  border-radius: var(--r-card);
+}
+
+.panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+
+.row {
+  height: 64px;
+  border-radius: var(--r-lg);
+}
+
+@media (min-width: 768px) {
+  .counters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+}

@@ -123,6 +123,8 @@ export interface OrderRound {
   etaMinutes?: number;
   /** Expected ready time, e.g. "7:58 PM". */
   readyBy?: string;
+  /** ISO: when staff marked it served (POST /admin/orders/:id/served); the kitchen's own timing applies until then. */
+  servedAt?: string;
 }
 
 export interface Order {
@@ -189,6 +191,11 @@ export interface Order {
   kitchenNote?: string;
   /** Set by the server on a read: true while the kitchen is still updating the order (poll it). */
   live?: boolean;
+  /**
+   * ISO: when staff marked it served or handed over (POST /admin/orders/:id/served). Orders with
+   * rounds record it on each round instead.
+   */
+  servedAt?: string;
 }
 
 /** A time on a day relative to today in the branch's local time, for mock data only. */

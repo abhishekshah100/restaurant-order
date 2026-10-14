@@ -1,0 +1,74 @@
+.paymentList {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.paymentRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border: 0;
+  border-bottom: 1px solid #eff1ed;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.paymentRow:last-child {
+  border-bottom: 0;
+}
+
+@media (hover: hover) {
+  .paymentRow:hover {
+    background: var(--brand-tint-2);
+  }
+}
+
+.paymentIcon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+}
+
+.paymentRow > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+
+.paymentRow > span:nth-child(2) strong,
+.paymentRow > strong {
+  font-size: 13px;
+}
+
+.paymentRow > span:nth-child(2) small {
+  color: #818a81;
+  font-size: 11px;
+}
+
+@media (max-width: 560px) {
+  .paymentRow {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .paymentRow > span:nth-child(2) {
+    flex-basis: calc(100% - 54px);
+  }
+
+  .paymentRow > strong {
+    margin-left: 42px;
+  }
+}

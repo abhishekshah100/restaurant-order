@@ -1,0 +1,40 @@
+.greeting {
+  display: grid;
+  gap: 4px;
+}
+
+.date {
+  color: var(--brand-700);
+  font: var(--font-caption);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Keeps its height before the time is known, so nothing below moves. */
+.title {
+  min-height: 34px;
+  color: var(--ink);
+  font: var(--font-h1);
+  text-wrap: balance;
+}
+
+.branch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 4px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+@media (min-width: 768px) {
+  .title {
+    min-height: 42px;
+    font: var(--font-display);
+  }
+
+  .branch {
+    font: var(--font-body);
+  }
+}

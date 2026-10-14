@@ -18,6 +18,7 @@ import {
   adminBranchesQuery,
   branchMenuQuery,
   branchPromotionsQuery,
+  branchServiceQuery,
   branchesQuery,
   contentQuery,
   deliveryQuoteQuery,
@@ -121,6 +122,13 @@ export const useServiceRequests = (sessionId: string | undefined) =>
  * with the session on this device; idle while signed out.
  */
 export const useAdminBranches = () => useQuery(adminBranchesQuery(useAdminToken()));
+
+/**
+ * GET /admin/branches/:branchId/service: the branch's open requests, today's orders and tables,
+ * with the signed-in admin's session; polled every 15 s and refetched on returning to the tab.
+ */
+export const useBranchService = (branchId: string | undefined) =>
+  useQuery(branchServiceQuery(useAdminToken(), branchId));
 
 /** POST /delivery/quote at the active branch: idle until there's an area. */
 export function useDeliveryQuote(area: string | undefined, itemTotal: number) {

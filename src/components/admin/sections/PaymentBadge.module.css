@@ -1,0 +1,25 @@
+.paymentStatus {
+  padding: 5px 8px;
+  border-radius: 99px;
+  background: #eff2ee;
+  color: #627062;
+  font-size: 11px;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.paid {
+  background: #edf5ee;
+  color: #347449;
+}
+
+.unpaid {
+  background: #faf3e6;
+  color: #92671f;
+}
+
+.refunded,
+.refund-started {
+  background: #f5eeee;
+  color: #8b5656;
+}

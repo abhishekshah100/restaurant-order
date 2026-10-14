@@ -18,6 +18,13 @@ const START_MINUTES = 2;
 /** A takeaway guest collects their order this long after it's ready. */
 const COLLECT_MINUTES = 10;
 
+/**
+ * When the order (or round) was handed over: staff marking it served (`servedAt`), or the
+ * kitchen's own timing, whichever comes first, and never before it was ready.
+ */
+const handedOver = (order: Pick<Order, 'servedAt'>, readyAt: number, byTiming: number) =>
+  order.servedAt ? Math.max(readyAt, Math.min(byTiming, Date.parse(order.servedAt))) : byTiming;
+
 /** Epoch ms when each of the order's steps starts, by its mode. */
 function stageTimes(order: Order, branch: Branch): Partial<Record<TrackStep, number>> {
   const placedAt = Date.parse(order.placedAt);
@@ -30,7 +37,7 @@ function stageTimes(order: Order, branch: Branch): Partial<Record<TrackStep, num
       // A later slot is started just in time for it.
       preparing: Math.max(after(START_MINUTES), readyAt - prep),
       ready: readyAt,
-      pickedUp: readyAt + COLLECT_MINUTES * MINUTE_MS,
+      pickedUp: handedOver(order, readyAt, readyAt + COLLECT_MINUTES * MINUTE_MS),
     };
   }
   if (order.mode === 'delivery' && order.delivery) {
@@ -45,8 +52,16 @@ function stageTimes(order: Order, branch: Branch): Partial<Record<TrackStep, num
     received: placedAt,
     preparing: after(DINE_IN_MINUTES.preparing),
     ready: after(DINE_IN_MINUTES.ready),
-    served: after(DINE_IN_MINUTES.served),
+    served: handedOver(order, after(DINE_IN_MINUTES.ready), after(DINE_IN_MINUTES.served)),
   };
+}
+
+/**
+ * Epoch ms when the kitchen had the order (or one round of it: pass the round's `placedAt`)
+ * ready to serve or collect; undefined for delivery, which goes straight to the rider.
+ */
+export function readyAt(order: Order, branch: Branch): number | undefined {
+  return order.mode === 'delivery' ? undefined : stageTimes(order, branch).ready;
 }
 
 /** When the kitchen's part is done: ready (dine-in, takeaway) or handed to the rider. */
@@ -119,9 +134,9 @@ export function simulateOrder(order: Order, now: Date, clock: Clock, branch: Bra
 function liveRound(order: Order, round: OrderRound, now: Date, clock: Clock, branch: Branch) {
   if (round.status === 'cancelled') return { round, order };
   // Each round moves along like an order of its own, from when it was placed.
-  const { placedAt, status, items, timeline } = round;
+  const { placedAt, status, items, timeline, servedAt } = round;
   const current = simulateOrder(
-    { ...order, placedAt, status, items, timeline },
+    { ...order, placedAt, status, items, timeline, servedAt },
     now,
     clock,
     branch,
@@ -158,6 +173,7 @@ export function liveOrder(order: Order, now: number, branch: Branch): Order {
   const current: Order = {
     ...latest,
     placedAt: order.placedAt,
+    servedAt: order.servedAt,
     items: active.flatMap(({ round }) => round.items),
     rounds: live.map(({ round }) => round),
   };

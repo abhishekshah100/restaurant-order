@@ -1,0 +1,131 @@
+/* The admin bars: a dark app bar on phones and tablets, a slim light bar beside the sidebar. */
+
+.mobile {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      color-mix(in srgb, var(--brand) 34%, transparent),
+      transparent 40%
+    ),
+    var(--ink);
+  color: var(--on-dark);
+}
+
+.mark {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--on-dark) 16%, transparent);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--on-dark) 6%, transparent);
+  color: var(--brand-on-dark);
+}
+
+.branch {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.branchName {
+  overflow: hidden;
+  font: 500 18px/22px var(--f-display);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.avatar {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-round);
+  background: var(--brand-600);
+  color: var(--on-brand);
+  font: var(--font-label);
+  cursor: pointer;
+}
+
+/* A 44px target around the 34px avatar. */
+.avatar::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+
+.mark:focus-visible,
+.avatar:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--ink),
+    0 0 0 4px var(--brand-on-dark);
+}
+
+.desktop {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile {
+    height: 64px;
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile {
+    display: none;
+  }
+
+  .desktop {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-nav);
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 clamp(24px, 3vw, 40px);
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(12px);
+  }
+
+  .title {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    font: var(--font-label);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .time {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-2);
+    font: var(--font-meta);
+    font-variant-numeric: tabular-nums;
+  }
+}

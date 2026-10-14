@@ -1,0 +1,56 @@
+/* A branch's status: a pill with a dot on light surfaces, a dot and a word on the dark bars. */
+
+.status {
+  height: 26px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-pill);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+}
+
+.status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-round);
+  background: currentColor;
+}
+
+.open {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.paused {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+
+.closed {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.onDark {
+  height: auto;
+  padding: 0;
+  background: none;
+  color: color-mix(in srgb, var(--on-dark) 78%, transparent);
+  font: var(--font-meta);
+}
+
+.onDark.open::before {
+  background: var(--success-on-dark);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success-on-dark) 22%, transparent);
+}
+
+.onDark.paused::before {
+  background: var(--gold-tint-2);
+}
+
+.onDark.closed::before {
+  background: var(--brand-on-dark);
+}

@@ -3,6 +3,7 @@ import { mockLatencyRange } from '../config';
 import { getQueryClient } from '../queryClient';
 import { MockHttpError, randomId, type Handler, type MockContext } from './context';
 import { createStorageDb } from './db';
+import { branchService, markOrderServed, resolveServiceRequest } from './handlers/adminService';
 import { createAdminSession, listAdminBranches } from './handlers/adminSessions';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
@@ -27,6 +28,9 @@ import { querySeed } from './seed';
 const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/sessions', createAdminSession],
   ['GET', 'admin/branches', listAdminBranches],
+  ['GET', 'admin/branches/:branchId/service', branchService],
+  ['POST', 'admin/service-requests/:id/resolve', resolveServiceRequest],
+  ['POST', 'admin/orders/:id/served', markOrderServed],
   ['POST', 'sessions', createSession],
   ['PATCH', 'sessions/:id', updateSession],
   ['POST', 'delivery/quote', deliveryQuote],

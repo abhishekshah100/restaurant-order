@@ -1,6 +1,9 @@
 'use client';
 
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useAdminToken } from '@/hooks/useAdminSession';
+import { withoutReadyRound, withoutRequest } from '@/lib/adminService';
+import type { AdminBranchService, AdminServiceRequest } from '@/types/admin';
 import type { ServiceRequest } from '@/types/service';
 import { PROMO_REFUSALS } from '@/lib/promotions';
 import type { Order } from '@/types/order';
@@ -13,9 +16,9 @@ import type {
   UpdateSessionRequest,
   ValidatePromoRequest,
 } from './contracts';
-import { isApiError } from './client';
 import { api } from './endpoints';
-import { orderQuery, promoQuoteQuery, serviceRequestsQuery } from './queries';
+import { ApiError, isApiError } from './client';
+import { branchServiceQuery, orderQuery, promoQuoteQuery, serviceRequestsQuery } from './queries';
 
 /*
  * Every write, as a TanStack mutation over api/endpoints. After a write the affected reads are
@@ -186,3 +189,65 @@ export function useCancelServiceRequest() {
       client.invalidateQueries({ queryKey: serviceRequestsQuery(request.sessionId).queryKey }),
   });
 }
+
+/* ---------- Admin: floor service ---------- */
+
+/**
+ * The floor's cached service for this branch updated straight away (`update`); returns how to
+ * put it back if the server refuses. Afterwards the floor and the guest-side reads (orders,
+ * requests) are refreshed, so every screen in this browser agrees with the server.
+ */
+function useOptimisticService<V extends { branchId: string }, R>(
+  send: (token: string, variables: V) => Promise<R>,
+  update: (service: AdminBranchService, variables: V) => AdminBranchService,
+  refresh: readonly (readonly string[])[],
+) {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (variables: V) => {
+      if (!token) throw new ApiError(401, 'admin', { error: 'unauthorized' });
+      return send(token, variables);
+    },
+    onMutate: async (variables) => {
+      const { queryKey } = branchServiceQuery(token, variables.branchId);
+      await client.cancelQueries({ queryKey });
+      const previous = client.getQueryData(queryKey);
+      if (previous) client.setQueryData(queryKey, update(previous, variables));
+      return { queryKey, previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) client.setQueryData(context.queryKey, context.previous);
+    },
+    onSettled: () =>
+      Promise.all(
+        [['admin', 'service'], ...refresh].map((queryKey) =>
+          client.invalidateQueries({ queryKey }),
+        ),
+      ),
+  });
+}
+
+/**
+ * POST /admin/service-requests/:id/resolve: a waiter dealt with the request. It leaves the
+ * queue at once (back if the server refuses); the guest's pending requests refresh.
+ */
+export const useResolveRequest = () =>
+  useOptimisticService(
+    (token, { request }: { branchId: string; request: AdminServiceRequest }) =>
+      api.resolveServiceRequest(token, request.id),
+    (service, { request }) => withoutRequest(service, request.id),
+    [['service-requests']],
+  );
+
+/**
+ * POST /admin/orders/:id/served: the round (every ready round without one) is at the table or
+ * handed over. It leaves the queue at once (back if the server refuses); orders refresh.
+ */
+export const useMarkServed = () =>
+  useOptimisticService(
+    (token, { orderId, round }: { branchId: string; orderId: string; round?: number }) =>
+      api.markOrderServed(token, orderId, { round }),
+    (service, { orderId, round }) => withoutReadyRound(service, orderId, round),
+    [['orders']],
+  );

@@ -28,7 +28,10 @@ export const MOCK_KEYS = {
    * reports instead of the branch data's, so testers can preview a closed or paused branch.
    */
   branchStatus: 'olive.mock.branchStatus.v1',
-  /** Per browser session, as before: a request lapses with the tab. */
+  /**
+   * Waiter and bill requests. In localStorage, so the staff pages in another tab of the same
+   * browser see them (a guest still sees only their own session's).
+   */
   serviceRequests: 'olive.service.v1',
 } as const;
 
@@ -92,7 +95,8 @@ function isOrderRound(v: unknown): v is OrderRound {
     Array.isArray(v.items) &&
     v.items.every(isOrderItem) &&
     isTimeline(v.timeline) &&
-    isOptionalString(v.kitchenNote)
+    isOptionalString(v.kitchenNote) &&
+    isOptionalString(v.servedAt)
   );
 }
 
@@ -136,6 +140,7 @@ export function isStoredOrder(v: unknown): v is StoredOrder {
     (payment.paid === undefined || typeof payment.paid === 'number') &&
     isOptionalString(v.estimate) &&
     isOptionalString(v.kitchenNote) &&
+    isOptionalString(v.servedAt) &&
     isOptionalString(v.promoCode) &&
     (v.discounts === undefined ||
       (Array.isArray(v.discounts) &&
@@ -195,7 +200,8 @@ export function isServiceRequest(v: unknown): v is ServiceRequest {
     typeof v.table !== 'number' ||
     typeof v.sessionId !== 'string' ||
     typeof v.requestedAt !== 'string' ||
-    Number.isNaN(Date.parse(v.requestedAt))
+    Number.isNaN(Date.parse(v.requestedAt)) ||
+    !isOptionalString(v.resolvedAt)
   ) {
     return false;
   }
@@ -252,12 +258,7 @@ export function createStorageDb(): MockDb {
     otp: table(MOCK_KEYS.otp, 'local', isOtpTable, () => ({})),
     orders: table(MOCK_KEYS.orders, 'local', listOf(isStoredOrder), () => []),
     payments: table(MOCK_KEYS.payments, 'local', listOf(isPayment), () => []),
-    serviceRequests: table(
-      MOCK_KEYS.serviceRequests,
-      'session',
-      listOf(isServiceRequest),
-      () => [],
-    ),
+    serviceRequests: table(MOCK_KEYS.serviceRequests, 'local', listOf(isServiceRequest), () => []),
     adminSessions: table(MOCK_KEYS.adminSessions, 'local', listOf(isAdminSessionRecord), () => []),
     branchStatus: table(MOCK_KEYS.branchStatus, 'local', isBranchStatusTable, () => ({})),
   };

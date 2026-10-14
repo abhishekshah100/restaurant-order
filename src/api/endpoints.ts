@@ -5,6 +5,7 @@ import type {
   AdminBranchesResponse,
   AdminSignInRequest,
   AdminSignInResponse,
+  BranchServiceResponse,
   CancelOrderRequest,
   ChangeOrderRequest,
   CreatePaymentRequest,
@@ -13,6 +14,8 @@ import type {
   CreateSessionRequest,
   DeliveryQuoteRequest,
   DeliveryQuoteResponse,
+  MarkServedRequest,
+  MarkServedResponse,
   OrderChangeResponse,
   OrderListResponse,
   OrderResponse,
@@ -20,6 +23,7 @@ import type {
   Payment,
   PlaceOrderRequest,
   PromoQuote,
+  ResolveRequestResponse,
   SendOtpRequest,
   ServiceRequestListResponse,
   SettledPaymentResponse,
@@ -37,13 +41,23 @@ import type {
 
 const seg = encodeURIComponent;
 
+/** Admin requests carry the staff session's token. */
+const bearer = (token: string): RequestInit => ({ headers: { Authorization: `Bearer ${token}` } });
+
 export const api = {
   createAdminSession: (body: AdminSignInRequest) =>
     apiPost<AdminSignInResponse>('admin/sessions', body),
-  adminBranches: (token: string) =>
-    apiGet<AdminBranchesResponse>('admin/branches', {
-      headers: { Authorization: `Bearer ${token}` },
-    }),
+  adminBranches: (token: string) => apiGet<AdminBranchesResponse>('admin/branches', bearer(token)),
+  branchService: (token: string, branchId: string) =>
+    apiGet<BranchServiceResponse>(`admin/branches/${seg(branchId)}/service`, bearer(token)),
+  resolveServiceRequest: (token: string, id: string) =>
+    apiPost<ResolveRequestResponse>(
+      `admin/service-requests/${seg(id)}/resolve`,
+      undefined,
+      bearer(token),
+    ),
+  markOrderServed: (token: string, id: string, body: MarkServedRequest) =>
+    apiPost<MarkServedResponse>(`admin/orders/${seg(id)}/served`, body, bearer(token)),
 
   createSession: (body: CreateSessionRequest) => apiPost<GuestSession>('sessions', body),
   updateSession: (id: string, body: UpdateSessionRequest) =>

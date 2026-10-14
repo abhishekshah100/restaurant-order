@@ -1,11 +1,8 @@
-import type { Metadata } from 'next';
-import { AdminDashboardRoute } from '@/components/admin/AdminDashboardRoute';
+import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
+import { RequestsSection } from '@/components/admin/sections/RequestsSection';
 
-export const metadata: Metadata = {
-  title: 'Customer requests · Admin',
-  robots: { index: false, follow: false },
-};
+export const generateMetadata = () => adminMetadata('requests');
 
 export default function AdminRequestsPage() {
-  return <AdminDashboardRoute section="requests" />;
+  return <RequestsSection />;
 }

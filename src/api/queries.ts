@@ -204,3 +204,19 @@ export const serviceRequestsQuery = (sessionId: string | undefined) =>
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
+
+/** The waiter home polls the floor this often (and on returning to the tab). */
+export const BRANCH_SERVICE_REFRESH_MS = 15_000;
+
+/**
+ * GET /admin/branches/:branchId/service: what the branch's floor staff need to act on now.
+ * Polled every 15 s; idle while signed out or without a branch.
+ */
+export const branchServiceQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'service', branchId, token] as const,
+    queryFn: token && branchId ? () => api.branchService(token, branchId) : skipToken,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+  });

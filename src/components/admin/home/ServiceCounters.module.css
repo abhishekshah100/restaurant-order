@@ -1,0 +1,155 @@
+/*
+ * The four counters. Each has its own tone and icon; at zero it rests on the plain card with
+ * a muted number, so a quiet floor looks calm. With something waiting, the tone tints the card.
+ */
+
+.counters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  list-style: none;
+}
+
+.counter {
+  --tone: var(--brand-600);
+  --tone-tint: var(--brand-tint);
+  position: relative;
+  height: 100%;
+  min-height: 112px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'icon value'
+    'label label'
+    'hint hint';
+  align-items: center;
+  column-gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: var(--sh-1);
+  transition:
+    border-color var(--dur-fast) ease,
+    transform var(--dur-base) var(--ease-emphasized),
+    box-shadow var(--dur-base) ease;
+}
+
+.waiterCalls {
+  --tone: var(--brand-600);
+  --tone-tint: var(--brand-tint);
+}
+
+.billRequests {
+  --tone: var(--gold-ink);
+  --tone-tint: var(--gold-tint);
+}
+
+.readyToServe {
+  --tone: var(--success);
+  --tone-tint: var(--success-tint);
+}
+
+.unpaid {
+  --tone: var(--warn);
+  --tone-tint: var(--warn-tint);
+}
+
+.icon {
+  grid-area: icon;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--sand);
+  color: var(--ink-2);
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.value {
+  grid-area: value;
+  justify-self: end;
+  color: var(--ink-3);
+  font: 500 34px/1 var(--f-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  grid-area: label;
+  margin-top: 12px;
+  font: var(--font-small-strong);
+}
+
+.hint {
+  grid-area: hint;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.chev {
+  display: none;
+}
+
+.live {
+  border-color: color-mix(in srgb, var(--tone) 32%, var(--line));
+  background: linear-gradient(160deg, var(--tone-tint) 0%, var(--surface) 70%);
+}
+
+.live .icon {
+  background: var(--tone);
+  color: var(--white);
+}
+
+.live .value {
+  color: var(--tone);
+}
+
+.counter:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .counter:hover {
+    border-color: color-mix(in srgb, var(--tone) 45%, var(--line));
+    transform: translateY(-1px);
+    box-shadow: var(--sh-2);
+  }
+}
+
+@media (min-width: 768px) {
+  .counters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .counter {
+    min-height: 128px;
+    padding: 18px;
+  }
+
+  .value {
+    font-size: 40px;
+  }
+
+  .chev {
+    position: absolute;
+    right: 14px;
+    bottom: 18px;
+    display: block;
+    color: var(--ink-3);
+    opacity: 0;
+    transition: opacity var(--dur-fast) ease;
+  }
+
+  .counter:hover .chev,
+  .counter:focus-visible .chev {
+    opacity: 1;
+  }
+}
