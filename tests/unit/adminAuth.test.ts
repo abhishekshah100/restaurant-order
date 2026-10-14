@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  adminSession,
   adminUsername,
   isAdminSignedIn,
   selectAdminBranch,
@@ -7,19 +8,46 @@ import {
   signInAdmin,
   signOutAdmin,
 } from '@/lib/adminAuth';
+import type { AdminSession } from '@/types/admin';
 import { testBranches } from '../apiState';
 
-describe('temporary admin browser state', () => {
+const NOW = Date.parse('2026-10-14T10:00:00+05:30');
+const session = (over: Partial<AdminSession> = {}): AdminSession => ({
+  token: 'token-1',
+  admin: { name: 'Abhishek Saha', email: 'abhishek@example.com', phone: '+919876543210' },
+  expiresAt: NOW + 60_000,
+  ...over,
+});
+
+describe('admin session on this device', () => {
   beforeEach(() => window.localStorage.clear());
 
-  it('stores and clears the demo sign-in', () => {
-    expect(isAdminSignedIn()).toBe(false);
-    signInAdmin('abhishek.saha@example.com');
-    expect(isAdminSignedIn()).toBe(true);
-    expect(adminUsername()).toBe('Abhishek Saha');
+  it('stores the server session and clears it on sign-out', () => {
+    expect(isAdminSignedIn(NOW)).toBe(false);
+    signInAdmin(session());
+    expect(isAdminSignedIn(NOW)).toBe(true);
+    expect(adminSession(NOW)?.token).toBe('token-1');
     signOutAdmin();
-    expect(isAdminSignedIn()).toBe(false);
-    expect(adminUsername()).toBeUndefined();
+    expect(isAdminSignedIn(NOW)).toBe(false);
+  });
+
+  it('takes the name from the session', () => {
+    signInAdmin(session({ expiresAt: Date.now() + 60_000 }));
+    expect(adminUsername()).toBe('Abhishek Saha');
+  });
+
+  it('treats an expired session as signed out', () => {
+    signInAdmin(session());
+    expect(isAdminSignedIn(NOW + 59_999)).toBe(true);
+    expect(isAdminSignedIn(NOW + 60_000)).toBe(false);
+    expect(adminSession(NOW + 60_000)).toBeNull();
+  });
+
+  it('ignores a stored value that is not a session', () => {
+    window.localStorage.setItem('olive.admin.session.v1', 'true');
+    expect(isAdminSignedIn(NOW)).toBe(false);
+    window.localStorage.setItem('olive.admin.session.v1', JSON.stringify({ token: 'x' }));
+    expect(isAdminSignedIn(NOW)).toBe(false);
   });
 
   it('stores a selected branch and ignores unknown branch ids', () => {

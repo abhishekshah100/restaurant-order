@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney, type Money } from '@/lib/money';
@@ -11,7 +11,8 @@ import type { HelpTopics } from '@/types/help';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { useActiveBranchId } from './activeBranch';
-import type { OrderLineRequest } from './contracts';
+import { isMockApi } from './config';
+import type { AdminSignInRequest, OrderLineRequest } from './contracts';
 import {
   branchMenuQuery,
   branchPromotionsQuery,
@@ -125,4 +126,23 @@ export function usePromoQuote(
   lines: readonly OrderLineRequest[],
 ) {
   return useQuery(promoQuoteQuery(sessionId, code, lines));
+}
+
+/**
+ * The mock server's demo staff login, for testers: null until loaded (after hydration) and
+ * always null with a real backend (NEXT_PUBLIC_API_MOCK=false), which never loads the mock.
+ */
+export function useDemoAdminAccount(): AdminSignInRequest | null {
+  const [account, setAccount] = useState<AdminSignInRequest | null>(null);
+  useEffect(() => {
+    if (!isMockApi()) return;
+    let active = true;
+    void import('./mock/demoAdmin').then(({ DEMO_ADMIN }) => {
+      if (active) setAccount({ identity: DEMO_ADMIN.email, password: DEMO_ADMIN.password });
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return account;
 }

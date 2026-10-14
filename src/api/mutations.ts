@@ -42,6 +42,9 @@ function storeOrders(client: QueryClient, orders: readonly Order[]) {
   return client.invalidateQueries({ queryKey: ['orders'] });
 }
 
+/** POST /admin/sessions: a staff member signs in; resolves with the admin session. */
+export const useAdminLogin = () => useMutation({ mutationFn: api.createAdminSession });
+
 /** POST /sessions: open a guest session at a table. */
 export const useStartSession = () => useMutation({ mutationFn: api.createSession, retry: 2 });
 

@@ -1,29 +1,44 @@
+import type { AdminSession } from '@/types/admin';
 import type { Branch } from '@/types/branch';
+import { readJSON, removeKey, writeJSON } from './storage';
 
-const AUTH_KEY = 'olive.admin.auth.v1';
+const SESSION_KEY = 'olive.admin.session.v1';
 const BRANCH_KEY = 'olive.admin.branch.v1';
-const IDENTITY_KEY = 'olive.admin.identity.v1';
 
-/** Temporary browser-only admin state until the authentication API is available. */
-export function signInAdmin(identity: string) {
-  window.localStorage.setItem(AUTH_KEY, 'true');
-  window.localStorage.setItem(IDENTITY_KEY, identity.trim());
+const isString = (v: unknown): v is string => typeof v === 'string';
+
+/** A stored value shaped like the session POST /admin/sessions returns. */
+export function isAdminSession(value: unknown): value is AdminSession {
+  if (typeof value !== 'object' || value === null) return false;
+  const { token, admin, expiresAt } = value as Partial<AdminSession>;
+  return (
+    isString(token) &&
+    token !== '' &&
+    typeof expiresAt === 'number' &&
+    typeof admin === 'object' &&
+    admin !== null &&
+    isString(admin.name) &&
+    isString(admin.email) &&
+    isString(admin.phone)
+  );
 }
 
-export function isAdminSignedIn(): boolean {
-  return window.localStorage.getItem(AUTH_KEY) === 'true';
+/** Keeps the session the server returned on this device. */
+export function signInAdmin(session: AdminSession) {
+  writeJSON(SESSION_KEY, session);
 }
 
+/** The stored session while it hasn't expired, else null. */
+export function adminSession(now = Date.now()): AdminSession | null {
+  const session = readJSON(SESSION_KEY, isAdminSession);
+  return session && session.expiresAt > now ? session : null;
+}
+
+export const isAdminSignedIn = (now = Date.now()): boolean => adminSession(now) !== null;
+
+/** The signed-in admin's name, as the server sent it. */
 export function adminUsername(): string | undefined {
-  const identity = window.localStorage.getItem(IDENTITY_KEY)?.trim();
-  if (!identity || !identity.includes('@')) return undefined;
-
-  return identity
-    .split('@', 1)[0]
-    .split(/[._-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toLocaleUpperCase() + part.slice(1))
-    .join(' ');
+  return adminSession()?.admin.name.trim() || undefined;
 }
 
 export function selectAdminBranch(branchId: string) {
@@ -36,7 +51,6 @@ export function selectedAdminBranch(branches: readonly Branch[]): Branch | undef
 }
 
 export function signOutAdmin() {
-  window.localStorage.removeItem(AUTH_KEY);
-  window.localStorage.removeItem(BRANCH_KEY);
-  window.localStorage.removeItem(IDENTITY_KEY);
+  removeKey(SESSION_KEY);
+  removeKey(BRANCH_KEY);
 }

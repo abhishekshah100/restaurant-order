@@ -140,6 +140,38 @@
     "choose": "Choose outlet",
     "chooseLabel": "Choose an outlet and how you'd like to order"
   },
+  "adminLogin": {
+    "meta": {
+      "title": "Admin sign in"
+    },
+    "descriptor": "Admin",
+    "panel": {
+      "headline": "Good food, great vibes, together.",
+      "body": "Orders, tables and payments for every branch, in one calm place for your team."
+    },
+    "title": "Welcome back",
+    "subtitle": "Sign in to manage orders, tables and payments.",
+    "identity": "Email or mobile number",
+    "identityPlaceholder": "name@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "showPassword": "Show password",
+    "submit": "Sign in",
+    "errors": {
+      "invalidCredentials": "That email, mobile number or password isn't right. Check them and try again.",
+      "requestFailed": "We couldn't reach the server. Check your connection and try again."
+    },
+    "validation": {
+      "identityRequired": "Enter your email or mobile number.",
+      "identityInvalid": "Enter a valid email, or a mobile number with 10 to 15 digits.",
+      "passwordRequired": "Enter your password."
+    },
+    "demo": {
+      "title": "Demo account",
+      "body": "Fill in the sample admin to explore.",
+      "use": "Use demo account"
+    }
+  },
   "adminDashboard": {
     "brand": "The Olive Table",
     "waiterWorkspace": "WAITER WORKSPACE",

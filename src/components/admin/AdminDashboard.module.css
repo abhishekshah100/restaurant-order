@@ -215,20 +215,6 @@
   white-space: nowrap;
 }
 
-.signOut {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  margin-left: auto;
-  border: 1px solid var(--dash-line);
-  border-radius: 10px;
-  background: #fff;
-  color: #667066;
-  cursor: pointer;
-}
-
 .main {
   width: calc(100% - 250px);
   min-width: 0;

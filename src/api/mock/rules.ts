@@ -7,6 +7,9 @@
 /** A guest session (and the table it's at) ends after this long, so a later visit starts afresh. */
 export const TABLE_SESSION_HOURS = 6;
 
+/** A staff sign-in (POST /admin/sessions) lasts this long before the admin signs in again. */
+export const ADMIN_SESSION_HOURS = 12;
+
 /** OTP accepted at checkout. */
 export const MOCK_OTP = '123456';
 

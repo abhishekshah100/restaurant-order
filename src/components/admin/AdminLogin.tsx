@@ -1,114 +1,115 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useBranches } from '@/api/hooks';
-import { Button, Icon, Input } from '@/components/ui';
+import { isApiError } from '@/api/client';
+import { useBranches, useContent, useDemoAdminAccount, useRestaurant } from '@/api/hooks';
+import { useAdminLogin } from '@/api/mutations';
+import { Banner, Button, Icon, Input } from '@/components/ui';
 import { selectAdminBranch, signInAdmin } from '@/lib/adminAuth';
-import {
-  DEMO_ADMIN_CREDENTIALS,
-  adminLoginSchema,
-  isDemoAdminLogin,
-  type AdminLoginValues,
-} from '@/lib/adminLogin';
+import { adminLoginSchema, type AdminLoginValues } from '@/lib/adminLogin';
 import styles from './AdminLogin.module.css';
 
-const COPY = {
-  brand: 'The Olive Table',
-  descriptor: 'Restaurant',
-  tagline: 'Good food · Great vibes · Together',
-  welcome: 'Welcome Back',
-  identity: 'Email / Mobile Number',
-  password: 'Password',
-  showPassword: 'Show password',
-  hidePassword: 'Hide password',
-  forgotPassword: 'Forgot password?',
-  login: 'Login',
-  invalidCredentials: 'Invalid email or password. Please try again.',
-  recovery: 'Password recovery will be available when admin accounts are connected.',
-  loginError: 'Check the highlighted fields and try again.',
-} as const;
-
-function Brand({ className }: { className?: string }) {
-  return (
-    <div className={className}>
-      <Icon name="olive" size="lg" />
-      <div className={styles.brandText}>
-        <span className={styles.brandName}>{COPY.brand}</span>
-        <span className={styles.brandDescriptor}>{COPY.descriptor}</span>
-      </div>
-    </div>
-  );
-}
+const PHOTO = '/images/pasta-hero.jpg';
+const PHOTO_WIDTH = 780;
+const PHOTO_HEIGHT = 540;
 
 export function AdminLogin() {
+  const t = useContent('common');
+  const restaurant = useRestaurant();
   const branches = useBranches();
   const router = useRouter();
+  const login = useAdminLogin();
+  const demoAccount = useDemoAdminAccount();
   const [showPassword, setShowPassword] = useState(false);
-  const [feedback, setFeedback] = useState<{ message: string; success: boolean } | null>(null);
+  const schema = useMemo(() => adminLoginSchema(t.get('adminLogin.validation')), [t]);
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    setValue,
+    clearErrors,
+    formState: { errors },
   } = useForm<AdminLoginValues>({
-    resolver: zodResolver(adminLoginSchema),
-    defaultValues: {
-      identity: DEMO_ADMIN_CREDENTIALS.email,
-      password: DEMO_ADMIN_CREDENTIALS.password,
-    },
+    resolver: zodResolver(schema),
+    defaultValues: { identity: '', password: '' },
   });
 
-  const onSubmit = (values: AdminLoginValues) => {
-    if (!isDemoAdminLogin(values)) {
-      setFeedback({ success: false, message: COPY.invalidCredentials });
-      return;
-    }
+  const onSubmit = (values: AdminLoginValues) =>
+    login.mutate(values, {
+      onSuccess: (session) => {
+        signInAdmin(session);
+        if (branches.length === 1) {
+          selectAdminBranch(branches[0].id);
+          router.replace('/admin/dashboard/');
+        } else {
+          router.replace('/admin/select-branch/');
+        }
+      },
+    });
 
-    signInAdmin(values.identity);
-    if (branches.length === 1) {
-      selectAdminBranch(branches[0].id);
-      router.replace('/admin/dashboard/');
-    } else {
-      router.replace('/admin/select-branch/');
-    }
+  const fillDemoAccount = () => {
+    if (!demoAccount) return;
+    setValue('identity', demoAccount.identity);
+    setValue('password', demoAccount.password);
+    clearErrors();
+    login.reset();
   };
 
   return (
     <main className={styles.page}>
-      <section className={styles.visual} aria-label={COPY.brand}>
-        <Image
-          className={styles.visualImage}
-          src="/images/pasta-hero.jpg"
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 767px) 100vw, 58vw"
-        />
-        <div className={styles.visualShade} />
-        <Brand className={styles.visualBrand} />
-        <p className={styles.tagline}>{COPY.tagline}</p>
-        <span className={styles.taglineRule} aria-hidden="true" />
+      <section className={styles.panel}>
+        <Image className={styles.bandPhoto} src={PHOTO} alt="" fill loading="eager" sizes="100vw" />
+        <div className={styles.brand}>
+          <Icon name="olive" size="lg" className={styles.brandMark} />
+          <span className={styles.brandText}>
+            <span className={styles.brandName}>{restaurant.name}</span>
+            <span className={styles.descriptor}>{t('adminLogin.descriptor')}</span>
+          </span>
+        </div>
+        <div className={styles.story}>
+          <p className={styles.headline}>{t('adminLogin.panel.headline')}</p>
+          <span className={styles.rule} aria-hidden="true" />
+          <p className={styles.supporting}>{t('adminLogin.panel.body')}</p>
+          <Image
+            className={styles.photo}
+            src={PHOTO}
+            alt=""
+            width={PHOTO_WIDTH}
+            height={PHOTO_HEIGHT}
+            loading="eager"
+            sizes="320px"
+          />
+        </div>
       </section>
 
-      <section className={styles.formPane}>
+      <div className={styles.formPane}>
         <div className={styles.card}>
-          <Brand className={styles.cardBrand} />
-          <div className={styles.intro}>
-            <h1 className={styles.title}>{COPY.welcome}</h1>
-          </div>
+          <header className={styles.intro}>
+            <h1 className={styles.title}>{t('adminLogin.title')}</h1>
+            <p className={styles.subtitle}>{t('adminLogin.subtitle')}</p>
+          </header>
+
+          {login.isError && (
+            <Banner tone="err" icon="alert" live="assertive" className={styles.alert}>
+              {isApiError(login.error, 'invalid_credentials')
+                ? t('adminLogin.errors.invalidCredentials')
+                : t('adminLogin.errors.requestFailed')}
+            </Banner>
+          )}
 
           <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
             <Input
               id="admin-identity"
-              label={COPY.identity}
+              label={t('adminLogin.identity')}
               icon="user"
               type="text"
               autoComplete="username"
-              inputMode="email"
-              placeholder={COPY.identity}
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder={t('adminLogin.identityPlaceholder')}
               error={errors.identity?.message}
               {...register('identity')}
             />
@@ -116,55 +117,57 @@ export function AdminLogin() {
             <div className={styles.passwordField}>
               <Input
                 id="admin-password"
-                label={COPY.password}
+                label={t('adminLogin.password')}
                 icon="lock"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
-                placeholder={COPY.password}
+                placeholder={t('adminLogin.passwordPlaceholder')}
                 error={errors.password?.message}
                 {...register('password')}
               />
               <button
                 className={styles.passwordToggle}
                 type="button"
-                aria-label={showPassword ? COPY.hidePassword : COPY.showPassword}
+                aria-label={t('adminLogin.showPassword')}
                 aria-pressed={showPassword}
+                aria-controls="admin-password"
                 onClick={() => setShowPassword((visible) => !visible)}
               >
                 <Icon name={showPassword ? 'eyeoff' : 'eye'} size="sm" />
               </button>
             </div>
 
-            {/* <div className={styles.forgotRow}>
-              <button
-                className={styles.forgot}
-                type="button"
-                onClick={() => setFeedback({ message: COPY.recovery, success: false })}
-              >
-                {COPY.forgotPassword}
-              </button>
-            </div> */}
-
-            <Button type="submit" block loading={isSubmitting} iconEnd="arrow">
-              {COPY.login}
+            <Button
+              type="submit"
+              block
+              loading={login.isPending || login.isSuccess}
+              iconEnd="arrow"
+              className={styles.submit}
+            >
+              {t('adminLogin.submit')}
             </Button>
-
-            {feedback && (
-              <p
-                className={feedback.success ? styles.successMessage : styles.errorMessage}
-                role={feedback.success ? 'status' : 'alert'}
-              >
-                {feedback.message}
-              </p>
-            )}
-            {!feedback && Object.keys(errors).length > 0 && (
-              <p className={styles.errorMessage} role="alert">
-                {COPY.loginError}
-              </p>
-            )}
           </form>
+
+          {demoAccount && (
+            <aside className={styles.demo} aria-labelledby="admin-demo-title">
+              <div className={styles.demoText}>
+                <p id="admin-demo-title" className={styles.demoTitle}>
+                  {t('adminLogin.demo.title')}
+                </p>
+                <p className={styles.demoBody}>{t('adminLogin.demo.body')}</p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                className={styles.demoButton}
+                onClick={fillDemoAccount}
+              >
+                {t('adminLogin.demo.use')}
+              </Button>
+            </aside>
+          )}
         </div>
-      </section>
+      </div>
     </main>
   );
 }

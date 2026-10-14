@@ -1,4 +1,5 @@
 import type { DeliveryQuote } from '@/lib/fulfilment';
+import type { AdminSession } from '@/types/admin';
 import type { OrderMode, PaymentMethodId } from '@/types/branch';
 import type { LineConfig } from '@/types/cart';
 import type { Price } from '@/types/menu';
@@ -68,7 +69,9 @@ export type ApiErrorCode =
   /** 422: the promo code isn't for the session's order mode. */
   | 'promo_mode_not_eligible'
   /** 422: the guest has used the promo code as often as it allows (`perGuestLimit`). */
-  | 'promo_limit_reached';
+  | 'promo_limit_reached'
+  /** 401: no admin account matches this email or mobile number and password. */
+  | 'invalid_credentials';
 
 /** Body of every non-2xx response. */
 export interface ApiErrorBody {
@@ -82,6 +85,22 @@ export interface ApiErrorBody {
   /** payment_required on a change or round: the amount a payment must cover (major units). */
   amountDue?: Price;
 }
+
+/* ---------- Admin sessions ---------- */
+
+/**
+ * `POST /admin/sessions` — a staff member signs in with their email or mobile number
+ * (`identity`, as typed: the server decides whether it matches an account) and password.
+ * 201 → the session (`token` for admin requests, the admin's profile, `expiresAt`). Errors:
+ * 400 invalid_request, 401 invalid_credentials (unknown identity or wrong password; the server
+ * doesn't say which).
+ */
+export interface AdminSignInRequest {
+  identity: string;
+  password: string;
+}
+
+export type AdminSignInResponse = AdminSession;
 
 /* ---------- Sessions ---------- */
 

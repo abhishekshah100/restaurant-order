@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAdminDashboardData, type DashboardSection } from '@/api/adminDashboard';
 import { useBranches, useContent, useRestaurant } from '@/api/hooks';
 import { Button, Dialog, Icon, MetricCard, StatusPill, VegMark } from '@/components/ui';
@@ -10,7 +9,7 @@ import { AdminDashboardHeader } from '@/components/admin/AdminDashboardHeader';
 import { isAvailable, startingPrice } from '@/lib/menu';
 import { createClock } from '@/lib/clock';
 import { groupByVisit } from '@/lib/orders';
-import { adminUsername, selectedAdminBranch, signOutAdmin } from '@/lib/adminAuth';
+import { adminUsername, selectedAdminBranch } from '@/lib/adminAuth';
 import type { Branch } from '@/types/branch';
 import type { ChoiceSpec, Dish } from '@/types/menu';
 import type { Order } from '@/types/order';
@@ -88,7 +87,6 @@ export function AdminDashboard({
   const [variantId, setVariantId] = useState('');
   const [addOnIds, setAddOnIds] = useState<string[]>([]);
   const [optionChoices, setOptionChoices] = useState<Record<string, string>>({});
-  const router = useRouter();
 
   const dashboardData = useAdminDashboardData(branch, selectedTable, section);
   const { menu, orders, tables } = dashboardData;
@@ -176,11 +174,6 @@ export function AdminDashboard({
     setCustomising(undefined);
   };
 
-  const signOut = () => {
-    signOutAdmin();
-    router.replace('/admin/login/');
-  };
-
   const visibleOrders = orders.filter((order) => {
     if (orderFilter === 'ready' && order.status !== 'ready') return false;
     if (
@@ -235,13 +228,6 @@ export function AdminDashboard({
           <div className={styles.profileCopy}>
             <strong>{t('adminDashboard.waiter')}</strong>
           </div>
-          {/* <button
-            className={styles.signOut}
-            onClick={signOut}
-            aria-label={t('adminDashboard.signOut')}
-          >
-            <Icon name="arrow" size="sm" />
-          </button> */}
         </div>
       </aside>
 
