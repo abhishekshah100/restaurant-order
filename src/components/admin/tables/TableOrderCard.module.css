@@ -1,7 +1,11 @@
-/* An order card on a table's page: header, who and when, the dishes, then count, payment, total. */
+/*
+ * An order card on a table's page: header, who and when, the dishes, count, payment and total,
+ * then Add items. The order number's button stretches over the card, so the whole card opens
+ * the details; Add items sits above it.
+ */
 
 .card {
-  width: 100%;
+  position: relative;
   height: 100%;
   display: grid;
   gap: 6px;
@@ -10,8 +14,6 @@
   border-radius: var(--r-card);
   background: var(--surface);
   color: var(--ink);
-  text-align: left;
-  cursor: pointer;
   transition:
     transform var(--dur-base) var(--ease-emphasized),
     box-shadow var(--dur-base) ease,
@@ -25,8 +27,29 @@
   gap: 8px;
 }
 
-.id {
+.open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
   font: var(--font-h3);
+  text-align: left;
+  cursor: pointer;
+}
+
+.open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.card:has(.open:focus-visible) {
+  box-shadow: var(--focus);
 }
 
 .placed {
@@ -65,15 +88,36 @@
   font-variant-numeric: tabular-nums;
 }
 
-.chev {
-  color: var(--ink-3);
+.addItems {
+  position: relative;
+  z-index: 1;
+  min-height: 40px;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--brand-600);
+  border-radius: var(--r-pill);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
 }
 
-.card:focus-visible {
+.addItems:focus-visible {
   box-shadow: var(--focus);
 }
 
 @media (hover: hover) {
+  .addItems:hover {
+    background: var(--brand-600);
+    color: var(--white);
+  }
+
   .card:hover {
     transform: translateY(-1px);
     border-color: var(--line-strong);

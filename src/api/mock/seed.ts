@@ -63,6 +63,7 @@ export function querySeed(client: QueryClient): MockSeed {
           cod: orders('payment.cashOnDelivery'),
         },
         onBill: orders('payment.onBill'),
+        takenBy: (name) => orders('payment.takenBy', { name }),
         methodName: (method) => common(`paymentMethods.${method}`),
         lineLabels: cartLineLabels(cart, createMoney(branch)),
         estimate: branch.prepTime,

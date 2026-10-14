@@ -10,9 +10,18 @@ const PREVIEW_ITEMS = 2;
 
 /**
  * One open order at the table: its number and kitchen status, who ordered and when, the first
- * dishes, and its total with the payment state. Opens the order's details.
+ * dishes, and its total with the payment state. The card opens the order's details; Add items
+ * opens the order pad on this order.
  */
-export function TableOrderCard({ order, onOpen }: { order: Order; onOpen: () => void }) {
+export function TableOrderCard({
+  order,
+  onOpen,
+  onAddItems,
+}: {
+  order: Order;
+  onOpen: () => void;
+  onAddItems: () => void;
+}) {
   const t = useContent('common');
   const { money, clock } = useAdminWorkspace();
   const shown = order.items.slice(0, PREVIEW_ITEMS);
@@ -20,16 +29,17 @@ export function TableOrderCard({ order, onOpen }: { order: Order; onOpen: () => 
   const itemCount = order.items.reduce((n, item) => n + item.quantity, 0);
 
   return (
-    <button
-      type="button"
-      className={styles.card}
-      onClick={onOpen}
-      aria-label={t('adminTables.detail.order.open', { order: order.id })}
-    >
+    <article className={styles.card}>
       <span className={styles.head}>
-        <span className={styles.id}>
+        {/* Covers the card (see .open::after), so a tap anywhere opens the details. */}
+        <button
+          type="button"
+          className={styles.open}
+          onClick={onOpen}
+          aria-label={t('adminTables.detail.order.open', { order: order.id })}
+        >
           {t('adminTables.detail.order.title', { order: order.id })}
-        </span>
+        </button>
         <StatusPill status={order.status} />
       </span>
       <span className={styles.placed}>
@@ -50,8 +60,16 @@ export function TableOrderCard({ order, onOpen }: { order: Order; onOpen: () => 
           {t(`adminDashboard.paymentStatus.${order.payment.status}`)}
         </PaymentBadge>
         <strong className={styles.total}>{money.format(order.total)}</strong>
-        <Icon name="chev" size="xs" className={styles.chev} />
       </span>
-    </button>
+      <button
+        type="button"
+        className={styles.addItems}
+        onClick={onAddItems}
+        aria-label={t('adminTables.detail.order.addItemsLabel', { order: order.id })}
+      >
+        <Icon name="plus" size="xs" />
+        {t('adminTables.detail.order.addItems')}
+      </button>
+    </article>
   );
 }

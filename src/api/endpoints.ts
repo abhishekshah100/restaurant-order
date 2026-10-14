@@ -29,7 +29,9 @@ import type {
   ServiceRequestListResponse,
   SettledPaymentResponse,
   SimulatePaymentRequest,
+  StaffRoundRequest,
   TableDetailResponse,
+  TakeTableOrderRequest,
   UpdateSessionRequest,
   ValidatePromoRequest,
   VerifyOtpRequest,
@@ -56,6 +58,18 @@ export const api = {
     apiGet<FloorPlanResponse>(`admin/branches/${seg(branchId)}/tables`, bearer(token)),
   tableDetail: (token: string, branchId: string, table: number) =>
     apiGet<TableDetailResponse>(`admin/branches/${seg(branchId)}/tables/${table}`, bearer(token)),
+  takeTableOrder: (token: string, branchId: string, table: number, body: TakeTableOrderRequest) =>
+    apiPost<OrderResponse>(
+      `admin/branches/${seg(branchId)}/tables/${table}/orders`,
+      body,
+      bearer(token),
+    ),
+  addStaffRound: (token: string, branchId: string, orderId: string, body: StaffRoundRequest) =>
+    apiPost<OrderResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/rounds`,
+      body,
+      bearer(token),
+    ),
   resolveServiceRequest: (token: string, id: string) =>
     apiPost<ResolveRequestResponse>(
       `admin/service-requests/${seg(id)}/resolve`,

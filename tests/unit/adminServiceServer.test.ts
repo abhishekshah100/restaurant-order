@@ -404,3 +404,80 @@ describe('GET /admin/branches/:branchId/tables/:table (mock)', () => {
     expect((await detail('five')).status).toBe(404);
   });
 });
+
+describe('Orders a waiter takes at the table (mock)', () => {
+  const take = (table: number | string, body: unknown, headers = admin) =>
+    call('POST', `admin/branches/blr-indiranagar/tables/${table}/orders`, body, headers);
+  const addTo = (orderId: string, body: unknown, branchId = 'blr-indiranagar') =>
+    call('POST', `admin/branches/${branchId}/orders/${orderId}/rounds`, body, admin);
+  const lines = linesOf('blr-indiranagar');
+
+  it('takes a new order at a table: dine-in, at the counter, taken by the waiter', async () => {
+    const res = await take(6, { customerName: ' Table 6 guest ', kitchenNote: ' No ice ', lines });
+    expect(res.status).toBe(201);
+    const order = res.body as Order;
+    expect(order).toMatchObject({
+      mode: 'dineIn',
+      table: 6,
+      customerName: 'Table 6 guest',
+      status: 'received',
+      kitchenNote: 'No ice',
+      payment: { method: 'counter', status: 'unpaid' },
+    });
+    expect(order.sessionId).toBeUndefined();
+    expect(order.timeline[0].note).toBe(`Taken by ${DEMO_ADMIN.name}`);
+    // Priced by the server: the item total plus GST.
+    expect(order.total).toBeGreaterThan(order.itemTotal);
+
+    const table = (await call('GET', 'admin/branches/blr-indiranagar/tables/6', undefined, admin))
+      .body as TableDetailResponse;
+    expect(table).toMatchObject({ status: 'ordering', orderCount: 1, due: order.total });
+  });
+
+  it('refuses a missing name, a table on no area, an empty order and no session', async () => {
+    expect((await take(6, { customerName: '  ', lines })).status).toBe(400);
+    expect((await take(99, { customerName: 'Guest', lines })).status).toBe(404);
+    expect((await take(6, { customerName: 'Guest', lines: [] })).status).toBe(422);
+    expect((await take(6, { customerName: 'Guest', lines }, {})).status).toBe(401);
+  });
+
+  it("adds a round to a guest's running order, on the same bill", async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive);
+    now += 10 * MINUTE_MS;
+
+    const res = await addTo(placed.id, {
+      kitchenNote: 'With the mains',
+      lines: linesOf('blr-indiranagar', 'dahi-kebab', 1),
+    });
+    expect(res.status).toBe(201);
+    const order = res.body as Order;
+    expect(order.rounds?.map((r) => [r.number, r.status])).toEqual([
+      [1, 'preparing'],
+      [2, 'received'],
+    ]);
+    expect(order.rounds?.[1]).toMatchObject({ kitchenNote: 'With the mains' });
+    expect(order.rounds?.[1].timeline[0].note).toBe(`Taken by ${DEMO_ADMIN.name}`);
+    expect(order.total).toBeGreaterThan(placed.total);
+    expect(order.payment).toMatchObject({ method: 'counter', status: 'unpaid' });
+
+    // The guest sees it on their order.
+    const mine = (await call('GET', `orders/${placed.id}`)).body as Order;
+    expect(mine.rounds).toHaveLength(2);
+    expect(mine.total).toBe(order.total);
+  });
+
+  it('only adds to an open dine-in order at the branch', async () => {
+    const pickup = await guest('blr-indiranagar', { mode: 'takeaway' });
+    const takeaway = await place(pickup, {
+      method: 'pickup',
+      fulfilment: { mode: 'takeaway', pickupAt: null },
+    });
+    expect((await addTo(takeaway.id, { lines })).status).toBe(409);
+    expect((await addTo('A999', { lines })).status).toBe(404);
+
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive);
+    expect((await addTo(placed.id, { lines }, 'ktm-thamel')).status).toBe(404);
+  });
+});

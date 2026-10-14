@@ -184,7 +184,10 @@ export async function floorActivity(ctx: MockContext, branch: Branch) {
     .read()
     .filter((r) => isPending(r, now) && branchOf.get(r.sessionId) === branch.id);
   if (!isDemoFloorOn()) return { orders, requests, now };
-  const demo = demoOrders(branch, await ctx.seed.menu(branch.id), now);
+  // A demo order a waiter added to is saved as a real one (handlers/adminOrders).
+  const demo = demoOrders(branch, await ctx.seed.menu(branch.id), now).filter(
+    (d) => !placed.some((o) => o.id === d.id),
+  );
   return { orders: [...orders, ...demo], requests: [...requests, ...demoRequests(demo, now)], now };
 }
 
@@ -236,11 +239,11 @@ function roundOf(body: unknown): number | undefined {
 /** POST /admin/orders/:id/served */
 export const markOrderServed: Handler = async (ctx, { params, body, headers }) => {
   const round = roundOf(body);
-  if (isDemoFloorOn() && isDemoId(params.id)) {
+  const order = (await placedOrders(ctx)).find((o) => o.id === params.id);
+  if (!order && isDemoFloorOn() && isDemoId(params.id)) {
     dismissDemo(params.id);
     return ok({});
   }
-  const order = (await placedOrders(ctx)).find((o) => o.id === params.id);
   if (!order) {
     // The drawn history doesn't move: it can only be served already.
     const drawn = (await ctx.seed.orders()).history.find((o) => o.id === params.id);

@@ -12,7 +12,7 @@ import styles from './OrderDetailDialog.module.css';
 
 /**
  * Everything on one order, for staff: its kitchen and payment state, each dish with its
- * choices and note, the kitchen note, the bill (discounts, paid, still to pay), how it was paid
+ * choices and note (by round, on a running order), the kitchen note, the bill (discounts, paid, still to pay), how it was paid
  * and its progress. A ready order can be marked served (or handed over) from here.
  */
 export function OrderDetailDialog({
@@ -37,6 +37,12 @@ export function OrderDetailDialog({
   const due = amountDue(order);
   const paid = order.total - due;
   const itemCount = order.items.reduce((n, item) => n + item.quantity, 0);
+  // A running order lists its rounds (when each went to the kitchen, its status, who took it).
+  const rounds = (order.rounds ?? []).filter((r) => r.status !== 'cancelled');
+  const groups =
+    rounds.length > 1
+      ? rounds.map((round) => ({ key: `round-${round.number}`, round, items: round.items }))
+      : [{ key: 'items', round: undefined, items: order.items }];
 
   const footer =
     order.status === 'ready' ? (
@@ -86,31 +92,56 @@ export function OrderDetailDialog({
               {t.plural('adminOrder.itemCount', itemCount)}
             </span>
           </h3>
-          <ul className={styles.items}>
-            {order.items.map((item, index) => (
-              <li key={`${item.dishSlug}-${index}`} className={styles.item}>
-                <VegMark veg={item.veg} className={styles.veg} />
-                <span className={styles.qty}>{item.quantity}</span>
-                <span className={styles.itemBody}>
-                  <span className={styles.itemName}>{item.name}</span>
-                  {[item.variant, ...item.details].filter(Boolean).map((line) => (
-                    <span key={line} className={styles.itemLine}>
-                      {line}
-                    </span>
-                  ))}
-                  {item.note && (
-                    <span className={styles.itemNote}>
-                      {t('adminOrder.itemNote', { note: item.note })}
+          {groups.map((group) => (
+            <div key={group.key} className={styles.round}>
+              {group.round && (
+                <div className={styles.roundHead}>
+                  <span className={styles.roundTitle}>
+                    {t('adminOrder.round', {
+                      round: group.round.number,
+                      time: clock.time(group.round.placedAt),
+                    })}
+                  </span>
+                  <StatusPill status={group.round.status} />
+                  {group.round.timeline[0]?.note && (
+                    <span className={styles.roundNote}>{group.round.timeline[0].note}</span>
+                  )}
+                  {group.round.kitchenNote && (
+                    <span className={styles.roundKitchen}>
+                      {t('adminOrder.roundKitchenNote', { note: group.round.kitchenNote })}
                     </span>
                   )}
-                </span>
-                <span className={styles.price}>{money.format(item.unitPrice * item.quantity)}</span>
-              </li>
-            ))}
-          </ul>
+                </div>
+              )}
+              <ul className={styles.items}>
+                {group.items.map((item, index) => (
+                  <li key={`${item.dishSlug}-${index}`} className={styles.item}>
+                    <VegMark veg={item.veg} className={styles.veg} />
+                    <span className={styles.qty}>{item.quantity}</span>
+                    <span className={styles.itemBody}>
+                      <span className={styles.itemName}>{item.name}</span>
+                      {[item.variant, ...item.details].filter(Boolean).map((line) => (
+                        <span key={line} className={styles.itemLine}>
+                          {line}
+                        </span>
+                      ))}
+                      {item.note && (
+                        <span className={styles.itemNote}>
+                          {t('adminOrder.itemNote', { note: item.note })}
+                        </span>
+                      )}
+                    </span>
+                    <span className={styles.price}>
+                      {money.format(item.unitPrice * item.quantity)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
 
-        {order.kitchenNote && (
+        {order.kitchenNote && groups.length === 1 && (
           <p className={styles.kitchenNote}>
             <span className={styles.kitchenLabel}>{t('adminOrder.kitchenNote')}</span>
             {order.kitchenNote}

@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
-import { addDish, adminSignIn, callWaiter, orderAtCounter, scan } from './helpers';
+import {
+  addDish,
+  adminSignIn,
+  callWaiter,
+  expectBranchOpen,
+  orderAtCounter,
+  scan,
+} from './helpers';
 
 /**
  * The waiter home (/admin/dashboard/) against the mock server, in the same browser as a guest:
@@ -96,8 +103,7 @@ test('the shared navigation, Switch branch and Sign out', async ({ page }, testI
 
   await expect(page).toHaveURL(/\/admin\/select-branch\/$/);
   await page.getByRole('button', { name: 'Thamel', exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
-  await expect(page.getByText('Thamel, Kathmandu')).toBeVisible();
+  await expectBranchOpen(page, 'Thamel');
 
   if (testInfo.project.name === 'mobile') {
     await page.getByRole('button', { name: 'Account and more' }).click();

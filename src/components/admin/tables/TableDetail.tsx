@@ -10,6 +10,7 @@ import { ADMIN_LINKS, floorPath } from '@/lib/adminNav';
 import { legendOf } from '@/lib/adminTables';
 import { cx } from '@/lib/cx';
 import type { AdminTableDetail } from '@/types/admin';
+import { OrderPad, type PadTarget } from '../orderPad/OrderPad';
 import { OrderDetailDialog } from '../sections/OrderDetailDialog';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { TableOrderCard } from './TableOrderCard';
@@ -86,6 +87,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
   const { money } = useAdminWorkspace();
   const seatedLabel = useSeatedLabel();
   const [openId, setOpenId] = useState<string>();
+  const [pad, setPad] = useState<PadTarget | null>(null);
   // Looked up on every poll, so an open order shows its latest state.
   const openOrder = detail.orders.find((order) => order.id === openId);
   const seated = seatedLabel(detail.seatedAt, now);
@@ -109,11 +111,21 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               seats: t.plural('adminTables.seats', detail.seats),
             })}
           </p>
+          <span className={styles.status}>
+            <span className={styles.dot} aria-hidden="true" />
+            {t(`adminTables.status.${detail.status}`)}
+          </span>
         </div>
-        <span className={styles.status}>
-          <span className={styles.dot} aria-hidden="true" />
-          {t(`adminTables.status.${detail.status}`)}
-        </span>
+        <Button
+          iconStart="plus"
+          className={styles.takeOrder}
+          onClick={() => setPad({ kind: 'new', table: detail.table })}
+        >
+          {/* With orders open, a new one is a separate bill; Add items goes on an order's own. */}
+          {detail.orders.length > 0
+            ? t('adminTables.detail.newOrder')
+            : t('adminTables.detail.takeOrder')}
+        </Button>
         <dl className={styles.stats} aria-label={t('adminTables.detail.stats.label')}>
           <div className={styles.stat}>
             <dt>{t('adminTables.detail.stats.orders')}</dt>
@@ -145,7 +157,11 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
           <ul className={styles.orders}>
             {detail.orders.map((order) => (
               <li key={order.id}>
-                <TableOrderCard order={order} onOpen={() => setOpenId(order.id)} />
+                <TableOrderCard
+                  order={order}
+                  onOpen={() => setOpenId(order.id)}
+                  onAddItems={() => setPad({ kind: 'add', table: detail.table, order: order })}
+                />
               </li>
             ))}
           </ul>
@@ -161,6 +177,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
       </section>
 
       <OrderDetailDialog order={openOrder} onClose={() => setOpenId(undefined)} />
+      <OrderPad target={pad} onClose={() => setPad(null)} />
     </>
   );
 }

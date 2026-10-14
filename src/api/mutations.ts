@@ -13,6 +13,8 @@ import type {
   ChangeOrderRequest,
   ServiceRequestListResponse,
   SimulatePaymentRequest,
+  StaffRoundRequest,
+  TakeTableOrderRequest,
   UpdateSessionRequest,
   ValidatePromoRequest,
 } from './contracts';
@@ -251,3 +253,51 @@ export const useMarkServed = () =>
     (service, { orderId, round }) => withoutReadyRound(service, orderId, round),
     [['orders']],
   );
+
+/** The admin's token, or a 401 like the server's when signed out. */
+function requireToken(token: string | null): string {
+  if (!token) throw new ApiError(401, 'admin', { error: 'unauthorized' });
+  return token;
+}
+
+/** After a waiter's order: the floor, the table and the guests' orders read fresh. */
+const refreshFloor = (client: QueryClient) =>
+  Promise.all(
+    [['admin', 'service'], ['orders']].map((queryKey) => client.invalidateQueries({ queryKey })),
+  );
+
+/** POST /admin/branches/:branchId/tables/:table/orders: a waiter takes a new order at the table. */
+export function useTakeTableOrder() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      table,
+      body,
+    }: {
+      branchId: string;
+      table: number;
+      body: TakeTableOrderRequest;
+    }) => api.takeTableOrder(requireToken(token), branchId, table, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** POST /admin/branches/:branchId/orders/:id/rounds: a waiter adds items to an open order. */
+export function useAddStaffRound() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      body,
+    }: {
+      branchId: string;
+      orderId: string;
+      body: StaffRoundRequest;
+    }) => api.addStaffRound(requireToken(token), branchId, orderId, body),
+    onSettled: () => refreshFloor(client),
+  });
+}

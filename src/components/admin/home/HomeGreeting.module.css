@@ -18,23 +18,9 @@
   text-wrap: balance;
 }
 
-.branch {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-  margin-top: 4px;
-  color: var(--ink-2);
-  font: var(--font-small);
-}
-
 @media (min-width: 768px) {
   .title {
     min-height: 42px;
     font: var(--font-display);
-  }
-
-  .branch {
-    font: var(--font-body);
   }
 }

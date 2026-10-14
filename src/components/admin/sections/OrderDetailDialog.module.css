@@ -36,6 +36,36 @@
 
 /* ---------- Items ---------- */
 
+.round + .round {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line-strong);
+}
+
+.roundHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-bottom: 2px;
+}
+
+.roundTitle {
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.roundNote,
+.roundKitchen {
+  flex-basis: 100%;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.roundKitchen {
+  color: var(--gold-ink);
+}
+
 .items {
   display: grid;
   gap: 2px;

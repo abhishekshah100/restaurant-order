@@ -424,8 +424,7 @@
         "eating": "Eating",
         "closing": "Paid · closing"
       }
-    },
-    "where": "{area}, {city}"
+    }
   },
   "adminTables": {
     "title": "Tables",
@@ -500,17 +499,21 @@
           "one": "+{count} more",
           "other": "+{count} more"
         },
-        "open": "Open order {order}"
+        "open": "Open order {order}",
+        "addItems": "Add items",
+        "addItemsLabel": "Add items to order {order}"
       },
       "empty": {
         "title": "No open orders",
-        "body": "This table is free. New orders will show up here."
+        "body": "This table is free. Use Take order when guests sit down, or they can scan the QR code."
       },
       "notFound": {
         "title": "Table not found",
         "body": "This branch has no table {table}."
       },
-      "loading": "Loading the table"
+      "loading": "Loading the table",
+      "takeOrder": "Take order",
+      "newOrder": "New order"
     }
   },
   "adminOrder": {
@@ -521,6 +524,8 @@
       "one": "{count} item",
       "other": "{count} items"
     },
+    "round": "Round {round} · {time}",
+    "roundKitchenNote": "Kitchen note: {note}",
     "itemNote": "Note: {note}",
     "kitchenNote": "Kitchen note",
     "bill": "Bill",
@@ -536,5 +541,58 @@
     "handOver": "Handed over",
     "close": "Close",
     "failed": "Couldn't update that. Try again."
+  },
+  "adminOrderPad": {
+    "titleNew": "New order · Table {table}",
+    "titleAdd": "Add to order {order}",
+    "subtitleAdd": "{name} · Table {table}",
+    "close": "Close",
+    "back": "Back",
+    "steps": {
+      "menu": "Menu",
+      "review": "Review"
+    },
+    "search": "Search dishes",
+    "all": "All",
+    "categories": "Categories",
+    "add": "Add",
+    "addLabel": "Add {dish}",
+    "chooseLabel": "Choose options for {dish}",
+    "added": {
+      "one": "{count} added",
+      "other": "{count} added"
+    },
+    "unavailable": "Not available",
+    "noMatch": "No dishes match “{query}”.",
+    "items": {
+      "one": "{count} item",
+      "other": "{count} items"
+    },
+    "review": "Review order",
+    "empty": "Tap Add on a dish to start the order.",
+    "choose": {
+      "size": "Size",
+      "quantity": "Quantity",
+      "note": "Note for this dish",
+      "notePlaceholder": "e.g. no onion, less spicy",
+      "add": "Add to order",
+      "extra": "+{amount}"
+    },
+    "guest": {
+      "label": "Guest name",
+      "placeholder": "Table {table} guest",
+      "default": "Table {table} guest"
+    },
+    "kitchenNote": {
+      "label": "Note for the kitchen",
+      "placeholder": "Allergies, timing, anything else"
+    },
+    "itemTotal": "Item total",
+    "taxNote": "Offers and taxes are worked out on the bill.",
+    "remove": "Remove {dish}",
+    "send": "Send to kitchen",
+    "sentNew": "Order {order} sent to the kitchen",
+    "sentAdd": "Added to order {order}",
+    "failed": "Couldn't send the order. Check the items and try again."
   }
 }

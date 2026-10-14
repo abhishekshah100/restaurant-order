@@ -98,7 +98,7 @@ function openWindow(target: Target, body: Record<string, unknown>) {
 }
 
 /** The body's kitchen note (none when a payment is being priced), or 400. */
-function kitchenNoteOf(body: Record<string, unknown>): string {
+export function kitchenNoteOf(body: Record<string, unknown>): string {
   const { kitchenNote = '' } = body;
   if (typeof kitchenNote !== 'string') fail(400, 'invalid_request');
   return kitchenNote.trim();

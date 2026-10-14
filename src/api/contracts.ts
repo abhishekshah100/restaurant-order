@@ -160,6 +160,33 @@ export type FloorPlanResponse = AdminFloorPlan;
 export type TableDetailResponse = AdminTableDetail;
 
 /**
+ * `POST /admin/branches/:branchId/tables/:table/orders` — a waiter takes an order at the table
+ * for a guest who doesn't order on their phone. Priced like a guest's order (the menu, the
+ * offers on now, the branch's taxes), dine-in, paid at the counter; no guest session. Its
+ * timeline says who took it. Authorised like GET /admin/branches. 201 → `Order`. Errors: 400
+ * invalid_request (no name, a malformed line), 401, 403, 404 not_found (no area has the table),
+ * 409 mode_unavailable (no dine-in), 422 empty_order / item_unavailable.
+ */
+export interface TakeTableOrderRequest {
+  /** The guest's name, or what the waiter calls them ("Table 5 guest"). */
+  customerName: string;
+  kitchenNote?: string;
+  lines: OrderLineRequest[];
+}
+
+/**
+ * `POST /admin/branches/:branchId/orders/:id/rounds` — a waiter adds items to an open dine-in
+ * order at the table: a new round, priced like the guest's own, on the same bill (what's been
+ * paid stays paid). Authorised like GET /admin/branches. 201 → `Order`. Errors: 400, 401, 403,
+ * 404 not_found (no such order at the branch), 409 mode_unavailable (not dine-in) /
+ * order_closed (cancelled), 422 empty_order / item_unavailable.
+ */
+export interface StaffRoundRequest {
+  kitchenNote?: string;
+  lines: OrderLineRequest[];
+}
+
+/**
  * `POST /admin/service-requests/:id/resolve` — a waiter dealt with the request: it leaves the
  * queue and the guest's pending requests (their "Waiter requested" / "Bill requested" page
  * clears). Idempotent: resolving it again answers the same. No body. 200 → `{ request }` with

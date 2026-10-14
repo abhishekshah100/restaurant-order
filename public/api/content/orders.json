@@ -84,6 +84,7 @@
     "payAtPickup": "Pay at pickup",
     "cashOnDelivery": "Cash on delivery",
     "onBill": "On your bill",
+    "takenBy": "Taken by {name}",
     "paidSoFar": "Paid so far",
     "stillToPay": "Still to pay"
   },

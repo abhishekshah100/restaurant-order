@@ -81,3 +81,14 @@ export async function adminSignIn(page: Page, branch = 'Indiranagar') {
   await page.getByRole('button', { name: branch, exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
 }
+
+/**
+ * The staff pages are open on this branch: its short name in the shell (the sidebar from
+ * 1024px, the app bar below).
+ */
+export async function expectBranchOpen(page: Page, shortName: string) {
+  await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
+  await expect(
+    page.getByText(shortName, { exact: true }).filter({ visible: true }).first(),
+  ).toBeVisible();
+}

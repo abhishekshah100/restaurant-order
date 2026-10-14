@@ -43,8 +43,8 @@
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
     'badge heading'
-    'status status'
-    'stats stats';
+    'stats stats'
+    'action action';
   align-items: center;
   gap: 14px 16px;
   padding: 16px;
@@ -108,8 +108,7 @@
 }
 
 .status {
-  grid-area: status;
-  justify-self: start;
+  margin-top: 8px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -129,6 +128,10 @@
   height: 8px;
   border-radius: var(--r-round);
   background: var(--tone);
+}
+
+.takeOrder {
+  grid-area: action;
 }
 
 .stats {
@@ -251,7 +254,7 @@
   .hero {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      'badge heading status'
+      'badge heading action'
       'stats stats stats';
     gap: 18px 20px;
     padding: 22px 24px;
@@ -279,8 +282,8 @@
     font: var(--font-body);
   }
 
-  .status {
-    justify-self: end;
+  .takeOrder {
+    align-self: start;
   }
 
   .panel {

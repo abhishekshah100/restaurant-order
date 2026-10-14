@@ -1,0 +1,107 @@
+'use client';
+
+import { useContent } from '@/api/hooks';
+import { Input, QuantityStepper, Textarea, VegMark } from '@/components/ui';
+import { describeInstructions, describeOptionsShort, type CartLineLabels } from '@/lib/cartLine';
+import type { MenuCatalog } from '@/lib/menu';
+import { padTotals, type PadLines } from '@/lib/orderPad';
+import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import type { PadTarget } from './OrderPad';
+import styles from './OrderPad.module.css';
+
+/**
+ * The pad before it's sent: who it's for (a new order), each line with its choices and a
+ * stepper (down to 0 takes it off), a note for the kitchen and the item total.
+ */
+export function PadReview({
+  target,
+  menu,
+  labels,
+  lines,
+  onQuantity,
+  guest,
+  onGuest,
+  kitchenNote,
+  onKitchenNote,
+}: {
+  target: PadTarget;
+  menu: MenuCatalog;
+  labels: CartLineLabels;
+  lines: PadLines;
+  onQuantity: (key: string, quantity: number) => void;
+  guest: string;
+  onGuest: (name: string) => void;
+  kitchenNote: string;
+  onKitchenNote: (note: string) => void;
+}) {
+  const t = useContent('common');
+  const { money } = useAdminWorkspace();
+  const { total } = padTotals(lines);
+
+  return (
+    <div className={styles.review}>
+      {target.kind === 'new' && (
+        <Input
+          id="pad-guest"
+          label={t('adminOrderPad.guest.label')}
+          optional
+          autoComplete="off"
+          placeholder={t('adminOrderPad.guest.placeholder', { table: target.table })}
+          value={guest}
+          onChange={(event) => onGuest(event.target.value)}
+        />
+      )}
+
+      {lines.length > 0 ? (
+        <ul className={styles.lines}>
+          {lines.map((line) => {
+            const dish = menu.getDish(line.dishSlug);
+            if (!dish) return null;
+            const options = describeOptionsShort(dish, line, labels);
+            const note = describeInstructions(line);
+            return (
+              <li key={line.key} className={styles.line}>
+                <VegMark veg={dish.veg} className={styles.veg} />
+                <span className={styles.lineText}>
+                  <span className={styles.dishName}>{dish.name}</span>
+                  {options && <span className={styles.lineOptions}>{options}</span>}
+                  {note && <span className={styles.lineNote}>{note}</span>}
+                </span>
+                <span className={styles.lineEnd}>
+                  <QuantityStepper
+                    value={line.quantity}
+                    min={0}
+                    size="sm"
+                    itemName={dish.name}
+                    onChange={(next) => onQuantity(line.key, next)}
+                  />
+                  <span className={styles.linePrice}>
+                    {money.format(line.unitPrice * line.quantity)}
+                  </span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className={styles.none}>{t('adminOrderPad.empty')}</p>
+      )}
+
+      <Textarea
+        id="pad-kitchen-note"
+        label={t('adminOrderPad.kitchenNote.label')}
+        optional
+        rows={2}
+        placeholder={t('adminOrderPad.kitchenNote.placeholder')}
+        value={kitchenNote}
+        onChange={(event) => onKitchenNote(event.target.value)}
+      />
+
+      <div className={styles.total}>
+        <span>{t('adminOrderPad.itemTotal')}</span>
+        <strong>{money.format(total)}</strong>
+      </div>
+      <p className={styles.taxNote}>{t('adminOrderPad.taxNote')}</p>
+    </div>
+  );
+}

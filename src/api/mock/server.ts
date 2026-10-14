@@ -5,6 +5,7 @@ import { MockHttpError, randomId, type Handler, type MockContext } from './conte
 import { createStorageDb } from './db';
 import { branchService, markOrderServed, resolveServiceRequest } from './handlers/adminService';
 import { createAdminSession, listAdminBranches } from './handlers/adminSessions';
+import { addStaffRound, takeTableOrder } from './handlers/adminOrders';
 import { branchFloorPlan, branchTable } from './handlers/adminTables';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
@@ -32,6 +33,8 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['GET', 'admin/branches/:branchId/service', branchService],
   ['GET', 'admin/branches/:branchId/tables', branchFloorPlan],
   ['GET', 'admin/branches/:branchId/tables/:table', branchTable],
+  ['POST', 'admin/branches/:branchId/tables/:table/orders', takeTableOrder],
+  ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
   ['POST', 'admin/service-requests/:id/resolve', resolveServiceRequest],
   ['POST', 'admin/orders/:id/served', markOrderServed],
   ['POST', 'sessions', createSession],

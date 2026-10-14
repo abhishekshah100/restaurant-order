@@ -96,6 +96,8 @@ export interface OrderLabels {
   lineLabels: CartLineLabels;
   /** Kitchen estimate stored on a dine-in order: GET /branches › prepTime. */
   estimate: string;
+  /** Timeline note of an order or round a waiter took at the table: "Taken by Abhishek". */
+  takenBy: (name: string) => string;
 }
 
 export interface NewOrder {
@@ -109,8 +111,10 @@ export interface NewOrder {
   bill: Bill;
   /** The promo code it uses (checked). */
   promoCode?: string;
-  /** The guest session placing it. */
-  sessionId: string;
+  /** The guest session placing it; none when a waiter takes it at the table. */
+  sessionId?: string;
+  /** The staff member who took it at the table (their name, for the timeline). */
+  takenBy?: string;
   customerName: string;
   /** The payment method the guest chose (one of the branch's). */
   method: PaymentMethodId;
@@ -161,21 +165,17 @@ export function buildOrder(
   const time = createClock(branch).time(input.now);
   const { settlement } = PAYMENT_METHODS[input.method];
   const mode = fulfilmentFields(input);
-  const timeline: OrderEvent[] = [
-    {
-      status: 'received',
-      time,
-      note: settlement === 'online' ? labels.paidOnline : labels.payInPerson[settlement],
-    },
-  ];
+  let note = settlement === 'online' ? labels.paidOnline : labels.payInPerson[settlement];
+  if (input.takenBy) note = labels.takenBy(input.takenBy);
+  const timeline: OrderEvent[] = [{ status: 'received', time, note }];
   const kitchenNote = input.kitchenNote || undefined;
   return {
     id: input.id,
     branchId: branch.id,
     ...mode,
     customerName: input.customerName,
-    placedBy: 'you',
-    sessionId: input.sessionId,
+    placedBy: input.sessionId ? 'you' : 'other',
+    ...(input.sessionId ? { sessionId: input.sessionId } : {}),
     placedAt: input.now.toISOString(),
     status: 'received',
     items,

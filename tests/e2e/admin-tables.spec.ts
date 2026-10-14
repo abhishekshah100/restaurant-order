@@ -68,3 +68,50 @@ test('a table from the floor plan to its order', async ({ page }) => {
     page.getByRole('link', { name: /^Table 5, 6 seats: Food on the way$/ }),
   ).toBeVisible();
 });
+
+test('a waiter takes an order at a free table, then adds to it', async ({ page }) => {
+  test.slow();
+  await adminSignIn(page);
+  await page.goto('/admin/dashboard/tables/6/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Table 6' })).toBeVisible();
+  await page.getByRole('button', { name: 'Take order' }).click();
+
+  await expect(page.getByRole('dialog', { name: 'New order · Table 6' })).toBeVisible();
+  // Its heading names the dish while its choices are open.
+  const pad = page.getByRole('dialog');
+  // A dish without choices: one tap, then a stepper.
+  await pad.getByRole('button', { name: 'Add Dahi Kebab' }).click();
+  await expect(pad.getByRole('group', { name: 'Quantity of Dahi Kebab' })).toBeVisible();
+  // A dish with choices: its sizes and spice level first.
+  await pad.getByRole('button', { name: 'Choose options for Paneer Tikka' }).click();
+  await pad.getByRole('radio', { name: /Full/ }).click();
+  await pad.getByRole('button', { name: /^Add to order/ }).click();
+  await expect(pad.getByText('1 added')).toBeVisible();
+
+  await pad.getByRole('button', { name: /^Review order/ }).click();
+  await pad.getByLabel(/Guest name/).fill('Mr Rao');
+  await pad.getByLabel(/Note for the kitchen/).fill('Not too spicy');
+  await pad.getByRole('button', { name: /^Send to kitchen/ }).click();
+  await expect(page.getByRole('status').filter({ hasText: /sent to the kitchen/ })).toBeVisible();
+  await expect(pad).toHaveCount(0);
+
+  const card = page.getByRole('article').filter({ hasText: 'Mr Rao' });
+  await expect(card).toContainText('1 × Dahi Kebab, 1 × Paneer Tikka');
+  await expect(page.getByRole('button', { name: 'New order' })).toBeVisible();
+
+  // Later: more for the same guest, on the same bill.
+  await card.getByRole('button', { name: /^Add items to order/ }).click();
+  const more = page.getByRole('dialog', { name: /^Add to order A\d+$/ });
+  await expect(more).toBeVisible();
+  await expect(more).toContainText('Mr Rao · Table 6');
+  await more.getByRole('button', { name: 'Add Dahi Kebab' }).click();
+  await more.getByRole('button', { name: /^Review order/ }).click();
+  await more.getByRole('button', { name: /^Send to kitchen/ }).click();
+  await expect(page.getByRole('status').filter({ hasText: /^Added to order A\d+$/ })).toBeVisible();
+
+  await card.getByRole('button', { name: /^Open order/ }).click();
+  const details = page.getByRole('dialog', { name: /^Order A\d+$/ });
+  await expect(details).toContainText('Round 2');
+  await expect(details).toContainText('Taken by Abhishek Saha');
+  await expect(details).toContainText('Kitchen note: Not too spicy');
+});

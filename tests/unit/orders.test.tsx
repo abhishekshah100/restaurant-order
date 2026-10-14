@@ -19,6 +19,7 @@ const labels = {
   lineLabels: testLineLabels(),
   estimate: branch.prepTime,
   onBill: 'On your bill',
+  takenBy: (name: string) => `Taken by ${name}`,
 };
 const mockOrders = testOrderHistory().history;
 

@@ -4,12 +4,11 @@ import { useContent } from '@/api/hooks';
 import { dayPeriod } from '@/lib/adminService';
 import { firstName } from '@/lib/service';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { BranchStatus } from '../shell/BranchStatus';
 import styles from './HomeGreeting.module.css';
 
 /**
- * "Good evening, Abhishek", by the time of day at the branch, with today's date and where. The
- * status shows here only when the branch isn't open (the bars always show it).
+ * "Good evening, Abhishek", by the time of day at the branch, with today's date above it. The
+ * branch and its status are in the shell's bars.
  */
 export function HomeGreeting({ now, adminName }: { now: Date | null; adminName?: string }) {
   const t = useContent('common');

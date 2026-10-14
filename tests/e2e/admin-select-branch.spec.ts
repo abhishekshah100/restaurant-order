@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { expectBranchOpen } from './helpers';
 
 /**
  * Admin branch picker (/admin/select-branch/) against the mock server: the demo admin manages
@@ -22,8 +23,6 @@ async function signInWithDemo(page: Page) {
 const card = (page: Page, name: string) =>
   page.getByRole('article').filter({ has: page.getByRole('heading', { name }) });
 const choose = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
-const visibleText = (page: Page, text: string) =>
-  page.getByText(text).filter({ visible: true }).first();
 
 test('signing in lists both branches; choosing Thamel opens its dashboard', async ({ page }) => {
   await signInWithDemo(page);
@@ -37,8 +36,7 @@ test('signing in lists both branches; choosing Thamel opens its dashboard', asyn
   await expect(page.getByRole('searchbox')).toHaveCount(0);
 
   await choose(page, 'Thamel').click();
-  await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
-  await expect(visibleText(page, 'Thamel, Kathmandu')).toBeVisible();
+  await expectBranchOpen(page, 'Thamel');
 
   // Back to the picker: Thamel comes first, marked "Last used".
   await page.goto('/admin/select-branch/');
@@ -56,8 +54,7 @@ test('a closed branch can still be chosen', async ({ page }) => {
   await expect(card(page, 'Thamel')).toContainText('Closed');
   await expect(card(page, 'Indiranagar')).toContainText('Open');
   await choose(page, 'Thamel').click();
-  await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
-  await expect(visibleText(page, 'Thamel, Kathmandu')).toBeVisible();
+  await expectBranchOpen(page, 'Thamel');
 });
 
 test('the whole card is the target', async ({ page }) => {

@@ -1,0 +1,276 @@
+/*
+ * The waiter's order pad: a full-height panel (the whole screen on a phone). Header with back,
+ * title and close; the menu with sticky search and category chips; a dish's choices; the review.
+ * Rows are tall enough to tap quickly while standing at a table.
+ */
+
+.pad {
+  width: min(520px, 100vw);
+}
+
+/* ---------- Header ---------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+.heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  overflow: hidden;
+  color: var(--ink);
+  font: var(--font-h2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* ---------- Menu ---------- */
+
+.menu {
+  display: grid;
+  gap: 18px;
+}
+
+/* Search and categories stay in reach while the dishes scroll. */
+.filters {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+  margin: -2px calc(var(--pad-x) * -1) 0;
+  padding: 2px var(--pad-x) 12px;
+  background: var(--surface);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  margin: 0 calc(var(--pad-x) * -1);
+  padding: 0 var(--pad-x);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chips > * {
+  flex: none;
+}
+
+.section {
+  display: grid;
+  gap: 4px;
+}
+
+.sectionTitle {
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dishes {
+  display: grid;
+  list-style: none;
+}
+
+.dish {
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.dish + .dish {
+  border-top: 1px solid var(--line);
+}
+
+.dish[data-off] {
+  opacity: 0.55;
+}
+
+.veg {
+  align-self: start;
+  margin-top: 4px;
+}
+
+.dishText {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.dishName {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.dishMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  color: var(--ink-2);
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.added {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-meta-strong);
+}
+
+.add {
+  min-width: 72px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--brand-600);
+  border-radius: var(--r-pill);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.add:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .add:hover {
+    background: var(--brand-600);
+    color: var(--white);
+  }
+}
+
+.unavailable {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+.none {
+  padding: 24px 8px;
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-align: center;
+}
+
+/* ---------- Choices ---------- */
+
+.choose {
+  display: grid;
+  gap: 20px;
+}
+
+.chooseDescription {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.quantityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quantityLabel {
+  color: var(--ink);
+  font: var(--font-h3);
+}
+
+/* ---------- Review ---------- */
+
+.review {
+  display: grid;
+  gap: 18px;
+}
+
+.lines {
+  display: grid;
+  list-style: none;
+  border-block: 1px solid var(--line);
+}
+
+.line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.line + .line {
+  border-top: 1px dashed var(--line);
+}
+
+.lineText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lineOptions {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.lineNote {
+  color: var(--brand-700);
+  font: var(--font-meta);
+  font-style: italic;
+}
+
+.lineEnd {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.linePrice {
+  color: var(--ink);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: var(--ink);
+  font: var(--font-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.total strong {
+  font: var(--font-price);
+}
+
+.taxNote {
+  margin-top: -12px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
