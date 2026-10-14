@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { dishSlug, scan, waitForSavedCart } from './helpers';
+import { addDish, adminSignIn, callWaiter, orderAtCounter, scan } from './helpers';
 
 /**
  * The waiter home (/admin/dashboard/) against the mock server, in the same browser as a guest:
@@ -9,54 +9,6 @@ import { dishSlug, scan, waitForSavedCart } from './helpers';
  * tracking says Served. Then the shared navigation: the bottom tab bar and More at 390px, the
  * sidebar at 1280px, Switch branch and Sign out.
  */
-
-const visible = (page: Page, role: Parameters<Page['getByRole']>[0], name: string | RegExp) =>
-  page.getByRole(role, { name }).filter({ visible: true }).first();
-
-async function addDish(page: Page, category: string, dish: string) {
-  await page.goto(`/menu/${category}/`);
-  const stepper = page.getByRole('group', { name: `Quantity of ${dish}` }).first();
-  await expect(async () => {
-    if (!(await stepper.isVisible())) {
-      await page.getByRole('button', { name: `Add ${dish}` }).click({ timeout: 2000 });
-    }
-    await expect(stepper).toBeVisible({ timeout: 2000 });
-  }).toPass({ timeout: 15_000 });
-  await waitForSavedCart(page, dishSlug(dish));
-}
-
-/** Places the cart at the counter; returns the order number. */
-async function orderAtCounter(page: Page): Promise<string> {
-  await page.goto('/checkout/details/');
-  await page.getByLabel('Full name').fill('Ananya Rao');
-  await page.getByLabel('Mobile number').fill('9876543210');
-  await visible(page, 'button', 'Send OTP').click();
-  await page.getByLabel('Digit 1 of 6').fill('123456');
-  await visible(page, 'button', 'Verify & continue').click();
-  await page.getByRole('radio', { name: /Pay at the counter/ }).click();
-  await visible(page, 'button', /^Place order/).click();
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
-  return new URL(page.url()).searchParams.get('id') ?? '';
-}
-
-async function callWaiter(page: Page) {
-  await page.goto('/help/');
-  await visible(page, 'button', /Call (a )?waiter/).click();
-  const dialog = page.getByRole('dialog', { name: 'Need assistance?' });
-  await dialog.getByRole('radio', { name: 'Need water' }).click();
-  await dialog.getByLabel(/Add a note/).fill('No ice, please');
-  await dialog.getByRole('button', { name: 'Send request' }).click();
-  await expect(page).toHaveURL(/\/help\/waiter-requested\/$/);
-}
-
-async function signIn(page: Page, branch = 'Indiranagar') {
-  await page.goto('/admin/login/');
-  await page.getByRole('button', { name: 'Use demo account' }).click();
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/select-branch\/$/);
-  await page.getByRole('button', { name: branch, exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
-}
 
 const counter = (page: Page, count: number, label: string) =>
   page
@@ -82,7 +34,7 @@ test('a waiter call and a ready order, from the guest to Done and Mark served', 
   const orderId = await orderAtCounter(page);
   await callWaiter(page);
 
-  await signIn(page);
+  await adminSignIn(page);
   await expect(
     page.getByRole('heading', { level: 1, name: 'Good evening, Abhishek' }),
   ).toBeVisible();
@@ -116,7 +68,7 @@ test('a waiter call and a ready order, from the guest to Done and Mark served', 
 });
 
 test('the shared navigation, Switch branch and Sign out', async ({ page }, testInfo) => {
-  await signIn(page);
+  await adminSignIn(page);
   const nav = page.getByRole('navigation', { name: 'Main' }).filter({ visible: true });
   await expect(nav.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
 

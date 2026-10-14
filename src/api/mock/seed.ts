@@ -2,10 +2,12 @@ import type { QueryClient } from '@tanstack/react-query';
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney } from '@/lib/money';
+import type { FloorPlanLayout } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
 import {
+  branchFloorsQuery,
   branchMenuQuery,
   branchPromotionsQuery,
   branchesQuery,
@@ -28,6 +30,8 @@ export interface MockSeed {
   menu(branchId: string): Promise<MenuCatalog>;
   /** GET /branches/:id/promotions: the branch's promo codes and automatic offers. */
   promotions(branchId: string): Promise<BranchPromotions>;
+  /** GET /branches/:id/floors: the branch's areas and tables. */
+  floors(branchId: string): Promise<FloorPlanLayout>;
   /** GET /orders as sent: the drawn history (every branch) and the riders. */
   orders(): Promise<OrdersResponse>;
   /** The words a new order at this branch is written with. */
@@ -43,6 +47,7 @@ export function querySeed(client: QueryClient): MockSeed {
     menu: async (branchId) =>
       createMenuCatalog(await client.ensureQueryData(branchMenuQuery(branchId))),
     promotions: (branchId) => client.ensureQueryData(branchPromotionsQuery(branchId)),
+    floors: (branchId) => client.ensureQueryData(branchFloorsQuery(branchId)),
     orders: () => client.ensureQueryData(orderHistoryQuery()),
     orderLabels: async (branch) => {
       const [orders, common, cart] = await Promise.all([

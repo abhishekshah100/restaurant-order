@@ -1,0 +1,72 @@
+/*
+ * Area tabs: a segmented strip of pills, the open one raised on the surface. Scrolls sideways
+ * when the areas don't fit (narrow phones, many areas).
+ */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  max-width: 100%;
+  width: max-content;
+  padding: 4px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--sand) 55%, var(--bg));
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex: none;
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+
+.free {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--ink-a06);
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.tab[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--sh-1);
+}
+
+.tab[aria-selected='true'] .free {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.tab:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .tab[aria-selected='false']:hover {
+    color: var(--ink);
+    background: var(--ink-a04);
+  }
+}

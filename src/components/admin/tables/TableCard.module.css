@@ -1,0 +1,159 @@
+/*
+ * A table card, toned by state (tables/FloorLegendBar has the key): available green, occupied
+ * blue, needs waiter red, wants bill gold. The tone tints the card, colours a bar along
+ * its top, the status dot and words, so the floor reads at a glance; the words say it too.
+ */
+
+.card {
+  --tone: var(--success);
+  position: relative;
+  height: 100%;
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 14px 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--tone) 26%, var(--line));
+  border-radius: var(--r-card);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tone) 9%, var(--surface)) 0%,
+    var(--surface) 70%
+  );
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    transform var(--dur-base) var(--ease-emphasized),
+    box-shadow var(--dur-base) ease,
+    border-color var(--dur-base) ease;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--tone);
+}
+
+.available {
+  --tone: var(--success);
+}
+
+.occupied {
+  --tone: var(--info);
+}
+
+.needsWaiter {
+  --tone: var(--error);
+}
+
+.wantsBill {
+  --tone: var(--gold);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.number {
+  font: 500 32px/34px var(--f-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.seats {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px 3px 6px;
+  border-radius: var(--r-pill);
+  background: var(--ink-a05);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: color-mix(in srgb, var(--tone) 85%, var(--ink));
+  font: var(--font-label);
+}
+
+.wantsBill .status {
+  color: var(--gold-ink);
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--tone);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 20%, transparent);
+}
+
+/* Calls for a person: the dot pulses gently. */
+.needsWaiter .dot,
+.wantsBill .dot {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--tone) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .needsWaiter .dot,
+  .wantsBill .dot {
+    animation: none;
+  }
+}
+
+.info {
+  margin-top: auto;
+  display: grid;
+  gap: 2px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.line {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--tone) 50%, var(--line));
+    box-shadow: var(--sh-2);
+  }
+}
+
+@media (min-width: 768px) {
+  .card {
+    min-height: 144px;
+    padding: 16px 16px 14px;
+  }
+
+  .number {
+    font-size: 36px;
+    line-height: 38px;
+  }
+}

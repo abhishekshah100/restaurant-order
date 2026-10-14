@@ -1,25 +1,27 @@
+/* An order's payment status pill: paid green, unpaid amber, refunds red. */
+
 .paymentStatus {
-  padding: 5px 8px;
-  border-radius: 99px;
-  background: #eff2ee;
-  color: #627062;
-  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--ink-a05);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
   text-transform: capitalize;
   white-space: nowrap;
 }
 
 .paid {
-  background: #edf5ee;
-  color: #347449;
+  background: var(--success-tint);
+  color: var(--success);
 }
 
 .unpaid {
-  background: #faf3e6;
-  color: #92671f;
+  background: var(--warn-tint);
+  color: var(--gold-ink);
 }
 
 .refunded,
 .refund-started {
-  background: #f5eeee;
-  color: #8b5656;
+  background: var(--error-tint);
+  color: var(--error);
 }

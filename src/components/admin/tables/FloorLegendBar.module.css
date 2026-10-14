@@ -1,0 +1,46 @@
+/* The colour key: the same tones as the table cards (tables/TableCard). */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  list-style: none;
+}
+
+.item {
+  --tone: var(--success);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-round);
+  background: var(--tone);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+.count {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.available {
+  --tone: var(--success);
+}
+
+.occupied {
+  --tone: var(--info);
+}
+
+.needsWaiter {
+  --tone: var(--error);
+}
+
+.wantsBill {
+  --tone: var(--gold);
+}

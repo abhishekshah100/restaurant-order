@@ -14,6 +14,7 @@ import type {
   CreateSessionRequest,
   DeliveryQuoteRequest,
   DeliveryQuoteResponse,
+  FloorPlanResponse,
   MarkServedRequest,
   MarkServedResponse,
   OrderChangeResponse,
@@ -28,6 +29,7 @@ import type {
   ServiceRequestListResponse,
   SettledPaymentResponse,
   SimulatePaymentRequest,
+  TableDetailResponse,
   UpdateSessionRequest,
   ValidatePromoRequest,
   VerifyOtpRequest,
@@ -50,6 +52,10 @@ export const api = {
   adminBranches: (token: string) => apiGet<AdminBranchesResponse>('admin/branches', bearer(token)),
   branchService: (token: string, branchId: string) =>
     apiGet<BranchServiceResponse>(`admin/branches/${seg(branchId)}/service`, bearer(token)),
+  floorPlan: (token: string, branchId: string) =>
+    apiGet<FloorPlanResponse>(`admin/branches/${seg(branchId)}/tables`, bearer(token)),
+  tableDetail: (token: string, branchId: string, table: number) =>
+    apiGet<TableDetailResponse>(`admin/branches/${seg(branchId)}/tables/${table}`, bearer(token)),
   resolveServiceRequest: (token: string, id: string) =>
     apiPost<ResolveRequestResponse>(
       `admin/service-requests/${seg(id)}/resolve`,

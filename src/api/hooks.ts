@@ -17,6 +17,8 @@ import type { AdminSignInRequest, OrderLineRequest } from './contracts';
 import {
   adminBranchesQuery,
   branchMenuQuery,
+  floorPlanQuery,
+  tableDetailQuery,
   branchPromotionsQuery,
   branchServiceQuery,
   branchesQuery,
@@ -129,6 +131,14 @@ export const useAdminBranches = () => useQuery(adminBranchesQuery(useAdminToken(
  */
 export const useBranchService = (branchId: string | undefined) =>
   useQuery(branchServiceQuery(useAdminToken(), branchId));
+
+/** GET /admin/branches/:branchId/tables: every area with its tables; polled like the service. */
+export const useFloorPlan = (branchId: string | undefined) =>
+  useQuery(floorPlanQuery(useAdminToken(), branchId));
+
+/** GET /admin/branches/:branchId/tables/:table: one table's open orders and requests. */
+export const useTableDetail = (branchId: string | undefined, table: number) =>
+  useQuery(tableDetailQuery(useAdminToken(), branchId, table));
 
 /** POST /delivery/quote at the active branch: idle until there's an area. */
 export function useDeliveryQuote(area: string | undefined, itemTotal: number) {

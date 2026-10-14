@@ -1,0 +1,106 @@
+/* The floor plan: title, the area tabs, then the open area's legend and table cards. */
+
+.page {
+  display: grid;
+  /* Lets the tab strip scroll inside the page instead of widening it. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.head {
+  display: grid;
+  gap: 2px;
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h1);
+}
+
+.subtitle {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.panel {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  list-style: none;
+}
+
+.skeleton {
+  height: 132px;
+  border-radius: var(--r-card);
+  background: linear-gradient(90deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%) 0 0 / 200%
+    100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+.empty {
+  padding: 28px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-align: center;
+}
+
+.state {
+  padding: 40px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+@media (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .page {
+    gap: 20px;
+  }
+
+  .title {
+    font: var(--font-display);
+  }
+
+  .subtitle {
+    font: var(--font-body);
+  }
+
+  .panel {
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 12px;
+  }
+}

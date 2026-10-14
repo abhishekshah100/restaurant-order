@@ -1,0 +1,86 @@
+{
+  "floors": [
+    {
+      "id": "ground",
+      "name": "Ground floor",
+      "tables": [
+        {
+          "number": 1,
+          "seats": 2
+        },
+        {
+          "number": 2,
+          "seats": 4
+        },
+        {
+          "number": 3,
+          "seats": 4
+        },
+        {
+          "number": 4,
+          "seats": 2
+        },
+        {
+          "number": 5,
+          "seats": 6
+        },
+        {
+          "number": 6,
+          "seats": 4
+        },
+        {
+          "number": 7,
+          "seats": 4
+        }
+      ]
+    },
+    {
+      "id": "first",
+      "name": "First floor",
+      "tables": [
+        {
+          "number": 8,
+          "seats": 2
+        },
+        {
+          "number": 9,
+          "seats": 4
+        },
+        {
+          "number": 10,
+          "seats": 4
+        },
+        {
+          "number": 11,
+          "seats": 6
+        },
+        {
+          "number": 12,
+          "seats": 4
+        }
+      ]
+    },
+    {
+      "id": "courtyard",
+      "name": "Courtyard",
+      "tables": [
+        {
+          "number": 13,
+          "seats": 4
+        },
+        {
+          "number": 14,
+          "seats": 4
+        },
+        {
+          "number": 15,
+          "seats": 6
+        },
+        {
+          "number": 16,
+          "seats": 2
+        }
+      ]
+    }
+  ]
+}

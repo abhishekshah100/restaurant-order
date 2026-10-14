@@ -1,75 +1,182 @@
 'use client';
 
 import { useContent } from '@/api/hooks';
-import { Dialog, StatusPill } from '@/components/ui';
-import type { Money } from '@/lib/money';
+import { useMarkServed } from '@/api/mutations';
+import { Button, Dialog, StatusPill, VegMark } from '@/components/ui';
+import { useToast } from '@/context/ToastContext';
+import { amountDue } from '@/lib/lifecycle';
 import type { Order } from '@/types/order';
+import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { PaymentBadge } from './PaymentBadge';
 import styles from './OrderDetailDialog.module.css';
 
-/** An order's items, statuses and total, opened from a section's list. */
+/**
+ * Everything on one order, for staff: its kitchen and payment state, each dish with its
+ * choices and note, the kitchen note, the bill (discounts, paid, still to pay), how it was paid
+ * and its progress. A ready order can be marked served (or handed over) from here.
+ */
 export function OrderDetailDialog({
   order,
-  money,
   onClose,
 }: {
   order: Order | undefined;
-  money: Money;
   onClose: () => void;
 }) {
   const t = useContent('common');
-  const where = order
-    ? order.mode === 'dineIn'
-      ? t('adminDashboard.tableNumber', { table: order.table ?? '—' })
-      : t(`modes.${order.mode}`)
-    : '';
+  const { branch, money, clock } = useAdminWorkspace();
+  const { showToast } = useToast();
+  const serve = useMarkServed();
+
+  if (!order) return null;
+
+  const where =
+    order.mode === 'dineIn' && order.table !== undefined
+      ? t('adminHome.queue.where.table', { table: order.table })
+      : t(`modes.${order.mode}`);
+  const discount = (order.discounts ?? []).reduce((sum, d) => sum + d.amount, 0);
+  const due = amountDue(order);
+  const paid = order.total - due;
+  const itemCount = order.items.reduce((n, item) => n + item.quantity, 0);
+
+  const footer =
+    order.status === 'ready' ? (
+      <Button
+        block
+        iconStart="check"
+        loading={serve.isPending}
+        onClick={() =>
+          serve.mutate(
+            { branchId: branch.id, orderId: order.id },
+            {
+              onSuccess: onClose,
+              onError: () => showToast(t('adminOrder.failed'), { tone: 'error' }),
+            },
+          )
+        }
+      >
+        {order.mode === 'takeaway' ? t('adminOrder.handOver') : t('adminOrder.serve')}
+      </Button>
+    ) : undefined;
+
   return (
     <Dialog
-      open={Boolean(order)}
+      open
       onClose={onClose}
-      title={
-        order
-          ? t('adminDashboard.orderNumber', { order: order.id })
-          : t('adminDashboard.orderDetails')
-      }
-      description={order ? `${order.customerName} · ${where}` : undefined}
+      presentation="adaptive"
+      title={t('adminOrder.title', { order: order.id })}
+      description={t('adminOrder.subtitle', {
+        name: order.customerName,
+        where,
+        time: clock.time(order.placedAt),
+      })}
+      footer={footer}
     >
-      {order && (
-        <div className={styles.orderDetail}>
-          <div className={styles.detailStatuses}>
-            <StatusPill status={order.status} />
-            <PaymentBadge status={order.payment.status}>
-              {t('adminDashboard.payment')}:{' '}
-              {t(`adminDashboard.paymentStatus.${order.payment.status}`)}
-            </PaymentBadge>
-          </div>
-          <h3>{t('adminDashboard.items')}</h3>
-          {order.items.map((item, index) => (
-            <div className={styles.detailItem} key={`${item.dishSlug}-${index}`}>
-              <div>
-                <strong>
-                  {item.quantity} × {item.name}
-                </strong>
-                <small>
-                  {[item.variant, ...item.details].filter(Boolean).join(' · ') ||
-                    t('adminDashboard.noModifiers')}
-                </small>
-                {item.note && <small>{t('adminDashboard.itemNote', { note: item.note })}</small>}
-              </div>
-              {item.status && <span className={styles.itemStatus}>{item.status}</span>}
-            </div>
-          ))}
-          {order.kitchenNote && (
-            <p className={styles.kitchenNote}>
-              {t('adminDashboard.kitchenNote', { note: order.kitchenNote })}
-            </p>
-          )}
-          <div className={styles.totalLine}>
-            <span>{t('adminDashboard.orderTotal')}</span>
-            <strong>{money.format(order.total)}</strong>
-          </div>
+      <div className={styles.detail}>
+        <div className={styles.statuses}>
+          <StatusPill status={order.status} />
+          <PaymentBadge status={order.payment.status}>
+            {t(`adminDashboard.paymentStatus.${order.payment.status}`)}
+          </PaymentBadge>
         </div>
-      )}
+
+        <section className={styles.section} aria-labelledby="order-items">
+          <h3 id="order-items" className={styles.heading}>
+            {t('adminOrder.items')}
+            <span className={styles.headingMeta}>
+              {t.plural('adminOrder.itemCount', itemCount)}
+            </span>
+          </h3>
+          <ul className={styles.items}>
+            {order.items.map((item, index) => (
+              <li key={`${item.dishSlug}-${index}`} className={styles.item}>
+                <VegMark veg={item.veg} className={styles.veg} />
+                <span className={styles.qty}>{item.quantity}</span>
+                <span className={styles.itemBody}>
+                  <span className={styles.itemName}>{item.name}</span>
+                  {[item.variant, ...item.details].filter(Boolean).map((line) => (
+                    <span key={line} className={styles.itemLine}>
+                      {line}
+                    </span>
+                  ))}
+                  {item.note && (
+                    <span className={styles.itemNote}>
+                      {t('adminOrder.itemNote', { note: item.note })}
+                    </span>
+                  )}
+                </span>
+                <span className={styles.price}>{money.format(item.unitPrice * item.quantity)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {order.kitchenNote && (
+          <p className={styles.kitchenNote}>
+            <span className={styles.kitchenLabel}>{t('adminOrder.kitchenNote')}</span>
+            {order.kitchenNote}
+          </p>
+        )}
+
+        <section className={styles.section} aria-labelledby="order-bill">
+          <h3 id="order-bill" className={styles.heading}>
+            {t('adminOrder.bill')}
+          </h3>
+          <dl className={styles.bill}>
+            <div className={styles.row}>
+              <dt>{t('adminOrder.itemTotal')}</dt>
+              <dd>{money.format(order.itemTotal)}</dd>
+            </div>
+            {discount > 0 && (
+              <div className={styles.row}>
+                <dt>{t('adminOrder.discounts')}</dt>
+                <dd className={styles.saving}>{money.format(-discount)}</dd>
+              </div>
+            )}
+            <div className={styles.total}>
+              <dt>{t('adminOrder.total')}</dt>
+              <dd>{money.format(order.total)}</dd>
+            </div>
+            {paid > 0 && due > 0 && (
+              <div className={styles.row}>
+                <dt>{t('adminOrder.paid')}</dt>
+                <dd>{money.format(paid)}</dd>
+              </div>
+            )}
+            {due > 0 && (
+              <div className={styles.due}>
+                <dt>{t('adminOrder.due')}</dt>
+                <dd>{money.format(due)}</dd>
+              </div>
+            )}
+            <div className={styles.row}>
+              <dt>{t('adminOrder.payment')}</dt>
+              <dd>
+                {t('adminOrder.paymentLine', {
+                  method: order.payment.detail ?? t(`paymentMethods.${order.payment.method}`),
+                  status: t(`adminDashboard.paymentStatus.${order.payment.status}`),
+                })}
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        {order.timeline.length > 0 && (
+          <section className={styles.section} aria-labelledby="order-progress">
+            <h3 id="order-progress" className={styles.heading}>
+              {t('adminOrder.progress')}
+            </h3>
+            <ol className={styles.timeline}>
+              {order.timeline.map((event, index) => (
+                <li key={`${event.status}-${index}`} className={styles.event}>
+                  <span className={styles.eventDot} aria-hidden="true" />
+                  <span className={styles.eventName}>{t(`orderStatus.${event.status}`)}</span>
+                  <span className={styles.eventTime}>{event.time}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+      </div>
     </Dialog>
   );
 }

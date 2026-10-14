@@ -5,6 +5,7 @@ import { useState, type ReactNode } from 'react';
 import { toOrderHistory } from '@/api/adapters';
 import {
   CONTENT_NAMESPACES,
+  branchFloorsQuery,
   branchMenuQuery,
   branchPromotionsQuery,
   branchesQuery,
@@ -26,6 +27,7 @@ import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney } from '@/lib/money';
 import { resolveBranch } from '@/lib/scan';
 import { STORAGE_KEYS } from '@/lib/storage';
+import type { FloorPlanLayout } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { MenuData } from '@/types/menu';
@@ -105,6 +107,10 @@ export function createApiState(): DehydratedState {
   for (const { id } of branches) {
     client.setQueryData(branchMenuQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
     client.setQueryData(branchPromotionsQuery(id).queryKey, testPromotions(id));
+    client.setQueryData(
+      branchFloorsQuery(id).queryKey,
+      readApiJson<FloorPlanLayout>(`branches/${id}/floors`),
+    );
   }
   client.setQueryData(orderHistoryQuery().queryKey, readApiJson<OrdersResponse>('orders'));
   client.setQueryData(helpQuery().queryKey, readApiJson<HelpTopics>('help'));

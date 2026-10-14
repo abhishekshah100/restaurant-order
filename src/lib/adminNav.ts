@@ -63,3 +63,10 @@ export const ADMIN_LINKS = {
   readyOrders: `${section('orders')}ready/`,
   unpaidOrders: `${section('orders')}unpaid/`,
 } as const;
+
+/** A table's page: /admin/dashboard/tables/5/. */
+export const tablePath = (table: number) => `${ADMIN_LINKS.tables}${table}/`;
+
+/** The floor plan open on an area: /admin/dashboard/tables/?floor=first. */
+export const floorPath = (floorId: string) =>
+  `${ADMIN_LINKS.tables}?floor=${encodeURIComponent(floorId)}`;

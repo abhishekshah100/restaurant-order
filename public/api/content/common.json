@@ -226,27 +226,9 @@
   },
   "adminDashboard": {
     "branchWorkspace": "BRANCH WORKSPACE",
-    "tableRecords": "Table records",
-    "tableUnavailable": "Live occupancy, reservations, session state, and table cleaning status are not available in the current data source.",
-    "backToTables": "Back to tables",
-    "tableDetailSubtitle": "Orders returned for this table by the current endpoint.",
-    "tableSessionLimitation": "The table-orders endpoint returns today's non-cancelled orders; it does not expose live session status or a branch-wide waiter queue.",
-    "sessionReferences": "Session references on returned orders",
-    "sessionStatusUnavailable": "Session status is not exposed by the current API.",
-    "sessionNumber": "Session {session}",
-    "sessionOrders": "Related orders: {orders}",
-    "noSessionRequests": "No open waiter or bill requests for these known sessions.",
-    "loadingRequests": "Loading requests for these known sessions…",
-    "billRequest": "Bill requested",
-    "waiterRequest": "Waiter requested · {reason}",
-    "noRequestNote": "No additional note",
     "categoryFilter": "Category",
     "allCategories": "All categories",
     "tableNumber": "Table {table}",
-    "sampleOrders": {
-      "one": "{count} sample order",
-      "other": "{count} sample orders"
-    },
     "orderNumber": "Order {order}",
     "allRecords": "All records",
     "readyStatus": "Ready status",
@@ -263,31 +245,21 @@
     "requestQueueTitle": "Request queue unavailable",
     "requestQueueDescription": "The current API exposes requests for a known guest session only. It does not provide a branch-wide waiter request queue, so no request count or fabricated request records are shown here.",
     "paymentsDisclaimer": "Sample order payment records only; no payment actions are enabled.",
-    "payment": "Payment",
-    "items": "Items",
-    "itemNote": "Note: {note}",
-    "kitchenNote": "Kitchen note: {note}",
-    "orderTotal": "Order total",
-    "noModifiers": "No modifiers recorded",
     "addToUnsentDraft": "Add to unsent draft",
     "draftActionDisclaimer": "No kitchen ticket or payment is created by this action.",
     "chooseVariant": "Choose {variant}",
     "variant": "a variant",
     "configureItem": "Configure item",
     "addItemDescription": "Add this item to an unsent local draft.",
-    "orderDetails": "Order details",
     "itemCount": "{count} items",
     "standard": "Standard",
     "sections": {
-      "tablesSubtitle": "Tables referenced by sample dine-in orders.",
       "ordersSubtitle": "Order history is fixture data, not a live waiter feed.",
       "menuSubtitle": "Search this branch's menu and prepare a local, unsent draft.",
       "requestsSubtitle": "Waiter calls and bill requests require live table sessions.",
       "paymentsSubtitle": "Payment status is shown separately from order status."
     },
     "empty": {
-      "noTableReferences": "No table references are available in sample order history.",
-      "noTableOrders": "No orders were returned for this table.",
       "noFilterMatch": "No records match this filter.",
       "noMenuMatch": "No menu items match your search.",
       "loadingOrders": "Loading order history…",
@@ -313,7 +285,8 @@
       "unpaidOrders": "Unpaid orders · Admin",
       "menu": "Menu · Admin",
       "requests": "Requests · Admin",
-      "payments": "Payments · Admin"
+      "payments": "Payments · Admin",
+      "table": "Table {table} · Admin"
     },
     "loading": "Loading your workspace",
     "descriptor": "Admin",
@@ -453,5 +426,112 @@
       }
     },
     "where": "{area}, {city}"
+  },
+  "adminTables": {
+    "title": "Tables",
+    "subtitle": "Tap a table to see its orders",
+    "floors": "Floors",
+    "floorFree": "{free}/{total} free",
+    "legend": {
+      "label": "On this floor",
+      "available": "Available",
+      "occupied": "Occupied",
+      "needsWaiter": "Needs waiter",
+      "wantsBill": "Wants bill"
+    },
+    "status": {
+      "available": "Available",
+      "ordering": "Food on the way",
+      "eating": "Dining",
+      "needsWaiter": "Needs waiter",
+      "wantsBill": "Wants bill"
+    },
+    "seats": {
+      "one": "{count} seat",
+      "other": "{count} seats"
+    },
+    "orders": {
+      "one": "{count} order",
+      "other": "{count} orders"
+    },
+    "due": "{amount} due",
+    "paidUp": "Paid",
+    "seated": {
+      "now": "Just seated",
+      "minutes": "{count} min",
+      "hours": "{hours} h {minutes} min"
+    },
+    "ready": "Ready for guests",
+    "tile": "Table {table}, {seats}: {status}",
+    "emptyFloor": "No tables on this floor yet.",
+    "loading": "Loading the floor plan",
+    "error": {
+      "title": "We couldn't load the tables",
+      "body": "Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "detail": {
+      "back": "All tables",
+      "title": "Table {table}",
+      "where": "{floor} · {seats}",
+      "stats": {
+        "label": "At this table",
+        "orders": "Open orders",
+        "due": "Still to pay",
+        "seated": "Seated for"
+      },
+      "requests": {
+        "title": "Requests",
+        "done": "Done",
+        "doneLabel": "Done: {what}",
+        "failed": "Couldn't update that. Try again."
+      },
+      "orders": {
+        "title": "Orders",
+        "subtitle": "Newest first · tap one for details"
+      },
+      "order": {
+        "title": "Order {order}",
+        "placed": "{name} · {time}",
+        "more": {
+          "one": "+{count} more",
+          "other": "+{count} more"
+        },
+        "open": "Open order {order}"
+      },
+      "empty": {
+        "title": "No open orders",
+        "body": "This table is free. New orders will show up here."
+      },
+      "notFound": {
+        "title": "Table not found",
+        "body": "This branch has no table {table}."
+      },
+      "loading": "Loading the table"
+    }
+  },
+  "adminOrder": {
+    "title": "Order {order}",
+    "subtitle": "{name} · {where} · {time}",
+    "items": "Items",
+    "itemCount": {
+      "one": "{count} item",
+      "other": "{count} items"
+    },
+    "itemNote": "Note: {note}",
+    "kitchenNote": "Kitchen note",
+    "bill": "Bill",
+    "itemTotal": "Item total",
+    "discounts": "Discounts",
+    "total": "Total",
+    "paid": "Paid",
+    "due": "Still to pay",
+    "payment": "Payment",
+    "paymentLine": "{method} · {status}",
+    "progress": "Progress",
+    "serve": "Mark served",
+    "handOver": "Handed over",
+    "close": "Close",
+    "failed": "Couldn't update that. Try again."
   }
 }

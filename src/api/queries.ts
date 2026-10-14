@@ -1,5 +1,6 @@
 import { queryOptions, skipToken } from '@tanstack/react-query';
 import { TRACK_REFRESH_MS } from '@/lib/orders';
+import type { FloorPlanLayout } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { MenuData } from '@/types/menu';
@@ -88,6 +89,17 @@ export const branchPromotionsQuery = (branchId: string) =>
   queryOptions({
     queryKey: ['branches', branchId, 'promotions'] as const,
     queryFn: () => apiGet<BranchPromotions>(`branches/${branchId}/promotions`),
+    staleTime: 60_000,
+  });
+
+/**
+ * GET /branches/:id/floors: the branch's areas and tables. The mock server's seed for the
+ * floor plan (api/mock/seed); staff screens read GET /admin/branches/:branchId/tables.
+ */
+export const branchFloorsQuery = (branchId: string) =>
+  queryOptions({
+    queryKey: ['branches', branchId, 'floors'] as const,
+    queryFn: () => apiGet<FloorPlanLayout>(`branches/${branchId}/floors`),
     staleTime: 60_000,
   });
 
@@ -216,6 +228,35 @@ export const branchServiceQuery = (token: string | null, branchId: string | unde
   queryOptions({
     queryKey: ['admin', 'service', branchId, token] as const,
     queryFn: token && branchId ? () => api.branchService(token, branchId) : skipToken,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+  });
+
+/*
+ * The floor plan and one table. Their keys start like the service's, so Done and Mark served
+ * (which refresh ['admin', 'service']) refresh them too. Polled like the service.
+ */
+
+/** GET /admin/branches/:branchId/tables; idle while signed out or without a branch. */
+export const floorPlanQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'service', 'tables', branchId, token] as const,
+    queryFn: token && branchId ? () => api.floorPlan(token, branchId) : skipToken,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+  });
+
+/** GET /admin/branches/:branchId/tables/:table; idle while signed out or without a branch. */
+export const tableDetailQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  table: number,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'service', 'table', branchId, table, token] as const,
+    queryFn: token && branchId ? () => api.tableDetail(token, branchId, table) : skipToken,
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: BRANCH_SERVICE_REFRESH_MS,

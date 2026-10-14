@@ -1,69 +1,219 @@
-.orderDetail {
-  min-width: min(460px, 78vw);
-}
+/* An order's details: statuses, items, kitchen note, bill, progress — sections split by hairlines. */
 
-.detailStatuses {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 18px;
-}
-
-.orderDetail h3 {
-  margin: 0 0 8px;
-  font: 600 16px var(--f-display);
-}
-
-.detailItem {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 11px 0;
-  border-top: 1px solid #eff1ed;
-}
-
-.detailItem > div {
+.detail {
   display: grid;
-  gap: 4px;
+  gap: 18px;
+  width: min(520px, 100%);
 }
 
-.detailItem strong {
-  font-size: 13px;
+.statuses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
-.detailItem small {
-  color: #7c857c;
-  font-size: 11px;
-  line-height: 1.45;
+.section {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
 }
 
-.itemStatus {
-  color: #667166;
-  font-size: 11px;
-  text-transform: capitalize;
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink);
+  font: var(--font-h3);
+}
+
+.headingMeta {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* ---------- Items ---------- */
+
+.items {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: auto 28px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.item + .item {
+  border-top: 1px dashed var(--line);
+}
+
+.veg {
+  margin-top: 3px;
+}
+
+.qty {
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-xs);
+  background: var(--bg);
+  color: var(--ink);
+  font: var(--font-meta-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.itemBody {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.itemName {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.itemLine {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.itemNote {
+  color: var(--brand-700);
+  font: var(--font-meta);
+  font-style: italic;
+}
+
+.price {
+  color: var(--ink);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .kitchenNote {
-  padding: 10px;
-  border-radius: 8px;
-  background: #faf7ec;
-  color: #716345;
-  font-size: 11px;
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-sm);
+  background: var(--gold-tint);
+  color: var(--ink);
+  font: var(--font-small);
 }
 
-.totalLine {
+.kitchenLabel {
+  color: var(--gold-ink);
+  font: var(--font-meta-strong);
+}
+
+/* ---------- Bill ---------- */
+
+.bill {
+  display: grid;
+  gap: 6px;
+}
+
+.row,
+.total,
+.due {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-  font-size: 12px;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 560px) {
-  .orderDetail {
-    min-width: 0;
-  }
+.row {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.row dd {
+  margin: 0;
+  text-align: right;
+}
+
+.saving {
+  color: var(--success);
+}
+
+.total {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.total dd {
+  margin: 0;
+  font: var(--font-price);
+}
+
+.due dd {
+  margin: 0;
+}
+
+.due {
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  font: var(--font-label);
+}
+
+/* ---------- Progress ---------- */
+
+.timeline {
+  display: grid;
+  list-style: none;
+}
+
+.event {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+/* The line joining the dots. */
+.event + .event::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  bottom: 50%;
+  height: 100%;
+  width: 2px;
+  background: color-mix(in srgb, var(--success) 35%, var(--line));
+}
+
+.eventDot {
+  position: relative;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-round);
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--surface);
+}
+
+.eventName {
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.eventTime {
+  color: var(--ink-3);
+  font: var(--font-meta);
+  font-variant-numeric: tabular-nums;
 }

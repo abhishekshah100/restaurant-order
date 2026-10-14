@@ -2,7 +2,9 @@ import type { DeliveryQuote } from '@/lib/fulfilment';
 import type {
   AdminBranch,
   AdminBranchService,
+  AdminFloorPlan,
   AdminServiceRequest,
+  AdminTableDetail,
   AdminSession,
 } from '@/types/admin';
 import type { OrderMode, PaymentMethodId } from '@/types/branch';
@@ -137,6 +139,25 @@ export interface AdminBranchesResponse {
  * drawn history; takeaway and delivery orders have no table.
  */
 export type BranchServiceResponse = AdminBranchService;
+
+/**
+ * `GET /admin/branches/:branchId/tables` — the floor plan: every area of the branch (in the
+ * order staff walk them) with its tables, each with its seats and where it is now: available,
+ * or taken (needs a waiter, wants the bill, waiting for food, eating), with its open orders
+ * counted, what's still due and since when the guests are seated. An order stays open until
+ * it's both served and paid. Authorised like GET /admin/branches. 200 → `FloorPlanResponse`.
+ * Errors: 401 unauthorized, 403 forbidden. Poll it like the service (every 15 s). Mock: the
+ * areas from GET /branches/:id/floors (the dummy JSON), the activity as for the service.
+ */
+export type FloorPlanResponse = AdminFloorPlan;
+
+/**
+ * `GET /admin/branches/:branchId/tables/:table` — one table as on the floor plan, with its
+ * area, its open orders in full (newest first) and its open requests (oldest first).
+ * Authorised like GET /admin/branches. 200 → `TableDetailResponse`. Errors: 401 unauthorized,
+ * 403 forbidden, 404 not_found (no area has the table).
+ */
+export type TableDetailResponse = AdminTableDetail;
 
 /**
  * `POST /admin/service-requests/:id/resolve` — a waiter dealt with the request: it leaves the

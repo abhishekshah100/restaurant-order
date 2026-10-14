@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { Icon, type IconName } from '@/components/ui';
-import { ADMIN_LINKS } from '@/lib/adminNav';
+import { ADMIN_LINKS, tablePath } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import type { AdminTableState, AdminTableStatus } from '@/types/admin';
 import styles from './TablesGlance.module.css';
@@ -39,7 +39,7 @@ export function TablesGlance({ tables }: { tables: AdminTableState[] }) {
             return (
               <li key={table}>
                 <Link
-                  href={ADMIN_LINKS.tables}
+                  href={tablePath(table)}
                   className={cx(styles.tile, styles[status])}
                   aria-label={t('adminHome.tables.tile', { table, status: label })}
                 >

@@ -1,0 +1,110 @@
+/* A table's open requests: a row each, toned like the queue (waiter red, bill gold), with Done. */
+
+.panel {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h2);
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.item {
+  --tone: var(--error);
+  --tone-bg: var(--error-tint);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--tone-bg) 55%, var(--surface));
+}
+
+.bill {
+  --tone: var(--gold-ink);
+  --tone-bg: var(--gold-tint);
+}
+
+.icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--tone-bg);
+  color: var(--tone);
+}
+
+.body {
+  display: grid;
+  min-width: 0;
+}
+
+.what {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.detail {
+  overflow: hidden;
+  color: var(--ink-2);
+  font: var(--font-meta);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.done {
+  position: relative;
+  height: 34px;
+  padding: 0 14px 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+/* The pill is small to look at; the tap target stays 44px tall. */
+.done::after {
+  content: '';
+  position: absolute;
+  inset: -5px -2px;
+}
+
+.done:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .done:hover {
+    border-color: var(--success);
+    color: var(--success);
+  }
+}
+
+@media (min-width: 768px) {
+  .panel {
+    padding: 20px 24px;
+  }
+}

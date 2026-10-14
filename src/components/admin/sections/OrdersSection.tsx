@@ -71,11 +71,7 @@ export function OrdersSection({ filter: initialFilter = 'all' }: { filter?: Orde
       ) : (
         <SectionEmpty label={t('adminDashboard.empty.noFilterMatch')} />
       )}
-      <OrderDetailDialog
-        order={selectedOrder}
-        money={money}
-        onClose={() => setSelectedOrder(undefined)}
-      />
+      <OrderDetailDialog order={selectedOrder} onClose={() => setSelectedOrder(undefined)} />
     </SectionPage>
   );
 }

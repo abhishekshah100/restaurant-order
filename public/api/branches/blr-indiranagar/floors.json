@@ -1,0 +1,94 @@
+{
+  "floors": [
+    {
+      "id": "ground",
+      "name": "Ground floor",
+      "tables": [
+        {
+          "number": 1,
+          "seats": 2
+        },
+        {
+          "number": 2,
+          "seats": 4
+        },
+        {
+          "number": 3,
+          "seats": 4
+        },
+        {
+          "number": 4,
+          "seats": 2
+        },
+        {
+          "number": 5,
+          "seats": 6
+        },
+        {
+          "number": 6,
+          "seats": 4
+        },
+        {
+          "number": 7,
+          "seats": 4
+        },
+        {
+          "number": 8,
+          "seats": 8
+        }
+      ]
+    },
+    {
+      "id": "first",
+      "name": "First floor",
+      "tables": [
+        {
+          "number": 9,
+          "seats": 2
+        },
+        {
+          "number": 10,
+          "seats": 4
+        },
+        {
+          "number": 11,
+          "seats": 4
+        },
+        {
+          "number": 12,
+          "seats": 6
+        },
+        {
+          "number": 13,
+          "seats": 2
+        },
+        {
+          "number": 14,
+          "seats": 4
+        }
+      ]
+    },
+    {
+      "id": "outdoor",
+      "name": "Outdoor",
+      "tables": [
+        {
+          "number": 15,
+          "seats": 2
+        },
+        {
+          "number": 16,
+          "seats": 4
+        },
+        {
+          "number": 17,
+          "seats": 4
+        },
+        {
+          "number": 18,
+          "seats": 6
+        }
+      ]
+    }
+  ]
+}

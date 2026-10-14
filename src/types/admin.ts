@@ -1,6 +1,6 @@
 import type { BranchImage, BranchStatus, CountryCode, OrderMode } from './branch';
 import type { Price } from './menu';
-import type { OrderStatus, PaymentStatus } from './order';
+import type { Order, OrderStatus, PaymentStatus } from './order';
 import type { ServiceRequest } from './service';
 
 /** The signed-in staff member, as `POST /admin/sessions` returns them. */
@@ -121,6 +121,73 @@ export interface AdminBranchService {
   /** By table number. */
   tables: AdminTableState[];
   counts: AdminServiceCounts;
+  /** ISO: when the server read it. */
+  generatedAt: string;
+}
+
+/* ---------- Floor plan (GET /admin/branches/:branchId/tables) ---------- */
+
+/** A table as the branch has laid it out: its number and how many it seats. */
+export interface FloorTableLayout {
+  number: number;
+  seats: number;
+}
+
+/** One area of the branch: "Ground floor", "First floor", "Outdoor". */
+export interface FloorLayout {
+  id: string;
+  name: string;
+  tables: FloorTableLayout[];
+}
+
+/**
+ * GET /branches/:id/floors: the branch's areas and tables, in the order staff walk them. The
+ * mock server's seed for the floor plan (the dummy JSON at branches/<id>/floors.json).
+ */
+export interface FloorPlanLayout {
+  floors: FloorLayout[];
+}
+
+/**
+ * Where a table is now: free, or taken and why it needs a person most (a waiter call, then a
+ * bill request, then food on the way, then eating). A table is free again once every order at
+ * it today is served and paid.
+ */
+export type FloorTableStatus = 'available' | Exclude<AdminTableStatus, 'closing'>;
+
+/** One table on the floor plan, with what's happening at it. */
+export interface AdminFloorTable {
+  table: number;
+  seats: number;
+  status: FloorTableStatus;
+  /** Today's open orders at the table: not cancelled, and not both served and paid. */
+  orderCount: number;
+  /** Still to pay across them. */
+  due: Price;
+  /** ISO: the first of those orders (how long the guests have been seated). */
+  seatedAt?: string;
+}
+
+export interface AdminFloor {
+  id: string;
+  name: string;
+  tables: AdminFloorTable[];
+}
+
+/** GET /admin/branches/:branchId/tables: every area with its tables, as now. */
+export interface AdminFloorPlan {
+  floors: AdminFloor[];
+  /** ISO: when the server read it. */
+  generatedAt: string;
+}
+
+/** GET /admin/branches/:branchId/tables/:table: one table, its open orders and requests. */
+export interface AdminTableDetail extends AdminFloorTable {
+  floor: Pick<AdminFloor, 'id' | 'name'>;
+  /** The open orders in full (items, payment, timeline), newest first. */
+  orders: Order[];
+  /** Open waiter calls and bill requests at the table, oldest first. */
+  requests: AdminServiceRequest[];
   /** ISO: when the server read it. */
   generatedAt: string;
 }

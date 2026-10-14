@@ -54,11 +54,7 @@ export function PaymentsSection() {
       ) : (
         <SectionEmpty label={t('adminDashboard.empty.noPayments')} />
       )}
-      <OrderDetailDialog
-        order={selectedOrder}
-        money={money}
-        onClose={() => setSelectedOrder(undefined)}
-      />
+      <OrderDetailDialog order={selectedOrder} onClose={() => setSelectedOrder(undefined)} />
     </SectionPage>
   );
 }

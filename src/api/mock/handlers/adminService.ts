@@ -15,7 +15,7 @@ import type { Branch } from '@/types/branch';
 import type { Order, OrderItem, OrderRound } from '@/types/order';
 import type { ServiceRequest } from '@/types/service';
 import type { ResolveRequestResponse } from '../../contracts';
-import { dismissDemo, isDemoFloorOn, isDemoId, withDemoFloor } from '../demoFloor';
+import { demoOrders, demoRequests, dismissDemo, isDemoFloorOn, isDemoId } from '../demoFloor';
 import { fail, isObject, ok, type Handler, type MockContext } from '../context';
 import { liveOrder, readyAt } from '../kitchen';
 import { adminBranch } from './adminSessions';
@@ -169,24 +169,34 @@ async function requestWithBranch(ctx: MockContext, id: string) {
 
 /* ---------- Handlers ---------- */
 
-/** GET /admin/branches/:branchId/service */
-export const branchService: Handler = async (ctx, { params, headers }) => {
-  const branch = await adminBranch(ctx, headers, params.branchId);
+/**
+ * What the floor endpoints read for a branch: its orders (placed ones moved along by the
+ * kitchen, the drawn history and, under `npm run dev`, the demo floor) and its open requests.
+ */
+export async function floorActivity(ctx: MockContext, branch: Branch) {
   const now = ctx.now();
   const [{ placed, history }, branchOf] = await Promise.all([
     branchOrders(ctx, branch),
     sessionBranches(ctx),
   ]);
+  const orders = allOrders(placed, history);
   const requests = ctx.db.serviceRequests
     .read()
     .filter((r) => isPending(r, now) && branchOf.get(r.sessionId) === branch.id);
-  const service = floorService({ orders: allOrders(placed, history), requests, branch, now });
-  return ok(isDemoFloorOn() ? withDemoFloor(service, now, tableStates) : service);
+  if (!isDemoFloorOn()) return { orders, requests, now };
+  const demo = demoOrders(branch, await ctx.seed.menu(branch.id), now);
+  return { orders: [...orders, ...demo], requests: [...requests, ...demoRequests(demo, now)], now };
+}
+
+/** GET /admin/branches/:branchId/service */
+export const branchService: Handler = async (ctx, { params, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  return ok(floorService({ ...(await floorActivity(ctx, branch)), branch }));
 };
 
 /** POST /admin/service-requests/:id/resolve */
 export const resolveServiceRequest: Handler = async (ctx, { params, headers }) => {
-  if (isDemoId(params.id)) {
+  if (isDemoFloorOn() && isDemoId(params.id)) {
     dismissDemo(params.id);
     return ok({});
   }
@@ -226,8 +236,8 @@ function roundOf(body: unknown): number | undefined {
 /** POST /admin/orders/:id/served */
 export const markOrderServed: Handler = async (ctx, { params, body, headers }) => {
   const round = roundOf(body);
-  if (isDemoId(params.id)) {
-    dismissDemo(params.id, round);
+  if (isDemoFloorOn() && isDemoId(params.id)) {
+    dismissDemo(params.id);
     return ok({});
   }
   const order = (await placedOrders(ctx)).find((o) => o.id === params.id);

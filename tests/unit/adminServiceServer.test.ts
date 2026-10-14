@@ -5,8 +5,10 @@ import type {
   ApiErrorBody,
   BranchServiceResponse,
   CreateServiceRequestResponse,
+  FloorPlanResponse,
   ResolveRequestResponse,
   ServiceRequestListResponse,
+  TableDetailResponse,
 } from '@/api/contracts';
 import { MOCK_KEYS } from '@/api/mock/db';
 import { DEMO_ADMIN } from '@/api/mock/demoAdmin';
@@ -303,5 +305,102 @@ describe('POST /admin/orders/:id/served (mock)', () => {
     // The drawn history is already served (A097) or still cooking (A101).
     expect((await served('A097')).status).toBe(200);
     expect(error(await served('A101'))).toBe('not_ready');
+  });
+});
+
+describe('GET /admin/branches/:branchId/tables (mock)', () => {
+  const plan = async (branchId: BranchId = 'blr-indiranagar') => {
+    const res = await call('GET', `admin/branches/${branchId}/tables`, undefined, admin);
+    expect(res.status).toBe(200);
+    return res.body as FloorPlanResponse;
+  };
+  const tableFive = async () =>
+    (await plan()).floors.flatMap((f) => f.tables).find((t) => t.table === 5);
+
+  it("lists each area's tables, free until a guest orders", async () => {
+    const floors = (await plan()).floors;
+    expect(floors.map((f) => [f.id, f.name, f.tables.length])).toEqual([
+      ['ground', 'Ground floor', 8],
+      ['first', 'First floor', 6],
+      ['outdoor', 'Outdoor', 4],
+    ]);
+    expect(await tableFive()).toEqual({
+      table: 5,
+      seats: 6,
+      status: 'available',
+      orderCount: 0,
+      due: 0,
+    });
+    expect((await plan('ktm-thamel')).floors.map((f) => f.name)).toEqual([
+      'Ground floor',
+      'First floor',
+      'Courtyard',
+    ]);
+  });
+
+  it('shows why a table needs a person: waiter, then bill, then food, then eating', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const order = await place(atFive);
+    expect(await tableFive()).toMatchObject({
+      status: 'ordering',
+      orderCount: 1,
+      due: order.total,
+      seatedAt: order.placedAt,
+    });
+
+    await call('POST', 'service-requests', { sessionId: atFive.id, kind: 'bill', scope: 'mine' });
+    expect((await tableFive())?.status).toBe('wantsBill');
+    const waiterCall = await callWaiter(atFive);
+    expect((await tableFive())?.status).toBe('needsWaiter');
+
+    await call('POST', `admin/service-requests/${waiterCall.id}/resolve`, undefined, admin);
+    expect((await tableFive())?.status).toBe('wantsBill');
+
+    now += READY_AFTER;
+    await served(order.id);
+    const bill = (await floor()).requests.find((r) => r.kind === 'bill');
+    await call('POST', `admin/service-requests/${bill?.id}/resolve`, undefined, admin);
+    // Served, not paid: still at the table.
+    expect((await tableFive())?.status).toBe('eating');
+  });
+
+  it('needs a staff session', async () => {
+    const res = await call('GET', 'admin/branches/blr-indiranagar/tables');
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('GET /admin/branches/:branchId/tables/:table (mock)', () => {
+  const detail = (table: number | string) =>
+    call('GET', `admin/branches/blr-indiranagar/tables/${table}`, undefined, admin);
+
+  it('has the area, the open orders in full and the open requests', async () => {
+    const first = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const second = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const older = await place(first);
+    now += MINUTE_MS;
+    const newer = await place(second, { customerName: 'Karan' });
+    const request = await callWaiter(second, 'cutlery');
+
+    const res = await detail(5);
+    expect(res.status).toBe(200);
+    const body = res.body as TableDetailResponse;
+    expect(body).toMatchObject({
+      table: 5,
+      seats: 6,
+      floor: { id: 'ground', name: 'Ground floor' },
+      status: 'needsWaiter',
+      orderCount: 2,
+      due: older.total + newer.total,
+      seatedAt: older.placedAt,
+    });
+    expect(body.orders.map((o) => o.id)).toEqual([newer.id, older.id]);
+    expect(body.orders[0].items[0]).toMatchObject({ dishSlug: 'dahi-kebab', quantity: 2 });
+    expect(body.requests.map((r) => r.id)).toEqual([request.id]);
+  });
+
+  it('is 404 for a table on no area', async () => {
+    expect((await detail(99)).status).toBe(404);
+    expect((await detail('five')).status).toBe(404);
   });
 });
