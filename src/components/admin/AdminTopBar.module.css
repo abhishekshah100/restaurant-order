@@ -1,0 +1,145 @@
+/*
+ * The admin app bar, in the login page's brand colours: espresso with a terracotta glow, the
+ * olive mark and "Admin" in the brand's light accent.
+ */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      color-mix(in srgb, var(--brand) 34%, transparent),
+      transparent 40%
+    ),
+    var(--ink);
+  color: var(--on-dark);
+}
+
+.brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mark {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--on-dark) 16%, transparent);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--on-dark) 6%, transparent);
+  color: var(--brand-on-dark);
+}
+
+.brandText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.brandName {
+  overflow: hidden;
+  font: 500 18px/22px var(--f-display);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.descriptor {
+  color: var(--brand-on-dark);
+  font: var(--font-caption);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.account {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--brand-600);
+  color: var(--on-brand);
+  font: var(--font-label);
+}
+
+.name {
+  display: none;
+  max-width: 200px;
+  overflow: hidden;
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 44px tall: comfortable to tap, quiet on the dark bar. */
+.signOut {
+  height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--on-dark) 28%, transparent);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--on-dark);
+  font: var(--font-label);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.signOut:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--ink),
+    0 0 0 4px var(--brand-on-dark);
+}
+
+.signOut:active {
+  background: color-mix(in srgb, var(--on-dark) 16%, transparent);
+}
+
+@media (hover: hover) {
+  .signOut:hover {
+    border-color: color-mix(in srgb, var(--on-dark) 60%, transparent);
+    background: color-mix(in srgb, var(--on-dark) 8%, transparent);
+  }
+}
+
+@media (max-width: 359.98px) {
+  .avatar {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .bar {
+    height: 68px;
+    padding: 0 32px;
+  }
+
+  .name {
+    display: block;
+  }
+
+  .account {
+    gap: 12px;
+  }
+}

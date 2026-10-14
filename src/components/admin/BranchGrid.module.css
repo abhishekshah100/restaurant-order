@@ -1,0 +1,106 @@
+/* The branch picker grid: 1 column, 2 from 768px, 3 from 1280px when the page is wide. */
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cell {
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1280px) {
+  /* Three columns only once there are enough branches to fill them. */
+  .wide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Skeleton (mirrors BranchCard's grid) ---------- */
+
+.skeleton {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'thumb head pill'
+    'details details details'
+    'foot foot foot';
+  column-gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+
+.skThumb {
+  grid-area: thumb;
+  width: 56px;
+  height: 56px;
+}
+
+.skHead {
+  grid-area: head;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.skPill {
+  grid-area: pill;
+  width: 64px;
+  height: 26px;
+  border-radius: var(--r-pill);
+}
+
+.skDetails {
+  grid-area: details;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.skFoot {
+  grid-area: foot;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.skGo {
+  width: 34px;
+  height: 34px;
+}
+
+@media (min-width: 768px) {
+  .skeleton {
+    column-gap: 16px;
+    padding: 18px;
+  }
+
+  .skThumb {
+    width: 72px;
+    height: 72px;
+  }
+
+  .skDetails,
+  .skFoot {
+    margin-top: 16px;
+  }
+}

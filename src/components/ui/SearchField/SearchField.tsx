@@ -24,6 +24,10 @@ export interface SearchFieldProps {
   ref?: Ref<HTMLInputElement>;
   /** Id of a suggestions region the field drives. */
   'aria-controls'?: string;
+  /** Override the menu wording (`common › search`) for searching something else. */
+  label?: string;
+  placeholder?: string;
+  clearLabel?: string;
 }
 
 export function SearchField({
@@ -39,6 +43,9 @@ export function SearchField({
   className,
   ref,
   'aria-controls': ariaControls,
+  label,
+  placeholder,
+  clearLabel,
 }: SearchFieldProps) {
   const t = useContent('common');
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -49,7 +56,7 @@ export function SearchField({
     <div className={cx(styles.search, className)} role="search">
       <Icon name="search" size="sm" />
       <label htmlFor={id} className="visually-hidden">
-        {t('search.label')}
+        {label ?? t('search.label')}
       </label>
       <input
         ref={ref}
@@ -57,7 +64,7 @@ export function SearchField({
         type="search"
         enterKeyHint="search"
         autoComplete="off"
-        placeholder={t('search.placeholder')}
+        placeholder={placeholder ?? t('search.placeholder')}
         value={value}
         autoFocus={autoFocus}
         aria-controls={ariaControls}
@@ -69,7 +76,7 @@ export function SearchField({
         (value ? (
           <IconButton
             icon="xc"
-            label={t('search.clear')}
+            label={clearLabel ?? t('search.clear')}
             size="sm"
             onClick={() => onChange('')}
             className={styles.clear}

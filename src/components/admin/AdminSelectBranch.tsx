@@ -1,167 +1,188 @@
 'use client';
 
-import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { useBranches } from '@/api/hooks';
-import { Button, Icon } from '@/components/ui';
-import { selectAdminBranch, signOutAdmin } from '@/lib/adminAuth';
+import { useAdminBranches, useContent } from '@/api/hooks';
+import { Button, EmptyState, SearchField } from '@/components/ui';
+import { useAdminName, useSignOutAdmin } from '@/hooks/useAdminSession';
+import { useNow } from '@/hooks/useNow';
+import { selectAdminBranch, selectedAdminBranchId } from '@/lib/adminAuth';
+import {
+  ADMIN_PATHS,
+  BRANCH_SEARCH_MIN,
+  filterAdminBranches,
+  sortAdminBranches,
+} from '@/lib/adminBranches';
+import { cx } from '@/lib/cx';
 import { AdminAccess } from './AdminAccess';
+import { AdminTopBar } from './AdminTopBar';
+import { BranchGrid, BranchGridSkeleton } from './BranchGrid';
 import styles from './AdminSelectBranch.module.css';
 
-const COPY = {
-  brand: 'The Olive Table',
-  descriptor: 'Restaurant & Bar',
-  title: 'Select Your Branch',
-  subtitle: 'Choose a branch to continue to your dashboard',
-  search: 'Search branch...',
-  locationSeparator: ', ',
-  open: 'Open',
-  closed: 'Closed',
-  paused: 'Paused',
-  tables: 'Tables',
-  select: 'Select',
-  noResults: 'No branches match your search.',
-  signOut: 'Sign out',
-} as const;
+/** From this many branches wide screens get three columns (fewer would leave a gap). */
+const WIDE_GRID_MIN = 3;
 
-const BRANCH_IMAGES: Record<string, string> = {
-  'blr-indiranagar': '/images/pasta-hero.jpg',
-  'ktm-thamel': '/images/prawns.jpg',
-};
+interface ShellProps {
+  adminName?: string;
+  onSignOut?: () => void;
+  /** The search field, beside the title on wide screens. */
+  toolbar?: ReactNode;
+  wide?: boolean;
+  children: ReactNode;
+}
 
-function BranchCards() {
-  const branches = useBranches();
-  const router = useRouter();
-  const [search, setSearch] = useState('');
-  const visibleBranches = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return branches;
-    return branches.filter((branch) =>
-      [branch.name, branch.shortName, branch.city, branch.address]
-        .join(' ')
-        .toLowerCase()
-        .includes(query),
-    );
-  }, [branches, search]);
-
-  const chooseBranch = (branchId: string) => {
-    selectAdminBranch(branchId);
-    router.push('/admin/dashboard/');
-  };
-
+/** The page frame: the app bar, the title and the content below it. */
+function SelectBranchShell({ adminName, onSignOut, toolbar, wide, children }: ShellProps) {
+  const t = useContent('common');
   return (
-    <main className={styles.main}>
-      <div className={styles.heading}>
-        <div className={styles.mark} aria-hidden="true">
-          <Icon name="olive" size="lg" />
-        </div>
-        <p className={styles.brandName}>{COPY.brand}</p>
-        <p className={styles.brandDescriptor}>{COPY.descriptor}</p>
-        <h1>{COPY.title}</h1>
-        <p className={styles.subtitle}>{COPY.subtitle}</p>
-      </div>
-
-      <label className={styles.search}>
-        <Icon name="search" size="sm" />
-        <span className="visually-hidden">{COPY.search}</span>
-        <input
-          type="search"
-          value={search}
-          placeholder={COPY.search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
-
-      <div className={styles.branchList}>
-        {visibleBranches.length > 0 ? (
-          <ul
-            className={`${styles.cards} ${visibleBranches.length === 1 ? styles.singleCard : ''}`}
-          >
-            {visibleBranches.map((branch) => {
-              const location = [branch.shortName, branch.city].join(COPY.locationSeparator);
-              const statusLabel =
-                branch.status === 'open'
-                  ? COPY.open
-                  : branch.status === 'paused'
-                    ? COPY.paused
-                    : COPY.closed;
-              return (
-                <li className={styles.card} key={branch.id}>
-                  <div className={styles.photo}>
-                    <Image
-                      src={BRANCH_IMAGES[branch.id] ?? '/images/pasta-hero.jpg'}
-                      alt=""
-                      fill
-                      sizes="(max-width: 767px) 88px, (max-width: 1100px) 40vw, 520px"
-                    />
-                  </div>
-                  <div className={styles.cardBody}>
-                    <div className={styles.cardHeading}>
-                      <h2>{branch.shortName}</h2>
-                      <span className={`${styles.status} ${styles[branch.status]}`}>
-                        <span aria-hidden="true" />
-                        {statusLabel}
-                      </span>
-                    </div>
-                    <p className={styles.location}>
-                      <Icon name="pin" size="xs" />
-                      {location}
-                    </p>
-                    <div className={styles.meta}>
-                      <span>
-                        <Icon name="clock" size="xs" />
-                        {branch.hoursToday}
-                      </span>
-                      <span>
-                        <Icon name="table" size="xs" />
-                        {COPY.tables} {branch.tables.first}–{branch.tables.last}
-                      </span>
-                    </div>
-                    <p className={styles.address}>{branch.address}</p>
-                    <Button
-                      size="sm"
-                      iconEnd="arrow"
-                      disabled={branch.status !== 'open'}
-                      onClick={() => chooseBranch(branch.id)}
-                      className={styles.selectButton}
-                    >
-                      {COPY.select}
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className={styles.noResults} role="status">
-            {COPY.noResults}
-          </p>
-        )}
-      </div>
-      <footer className={styles.footer}>
-        <Button
-          variant="secondary"
-          size="sm"
-          iconStart="user"
-          onClick={() => {
-            signOutAdmin();
-            router.replace('/admin/login/');
-          }}
-        >
-          {COPY.signOut}
-        </Button>
-      </footer>
-    </main>
+    <div className={styles.page}>
+      <AdminTopBar adminName={adminName} onSignOut={onSignOut} />
+      <main id="main" className={cx(styles.main, wide && styles.wide)}>
+        <header className={styles.intro}>
+          <div className={styles.introText}>
+            <h1 className={styles.title}>{t('adminSelectBranch.title')}</h1>
+            <p className={styles.subtitle}>{t('adminSelectBranch.subtitle')}</p>
+          </div>
+          {toolbar}
+        </header>
+        {children}
+      </main>
+    </div>
   );
 }
 
-export function AdminSelectBranch() {
+function SelectBranchScreen() {
+  const t = useContent('common');
+  const router = useRouter();
+  const adminName = useAdminName();
+  const signOut = useSignOutAdmin();
+  const query = useAdminBranches();
+  const now = useNow();
+  // Read once, so choosing a branch doesn't reorder the cards on the way out.
+  const [lastUsedId] = useState(selectedAdminBranchId);
+  const [search, setSearch] = useState('');
+
+  const branches = useMemo(
+    () => sortAdminBranches(query.data ?? [], lastUsedId),
+    [query.data, lastUsedId],
+  );
+  const searchable = branches.length >= BRANCH_SEARCH_MIN;
+  const visible = useMemo(
+    () => (searchable ? filterAdminBranches(branches, search) : branches),
+    [branches, search, searchable],
+  );
+
+  const choose = (branchId: string) => {
+    selectAdminBranch(branchId);
+    router.push(ADMIN_PATHS.dashboard);
+  };
+  const leave = () => {
+    signOut();
+    router.replace(ADMIN_PATHS.login);
+  };
+
+  let content: ReactNode;
+  if (query.isPending) {
+    content = <BranchGridSkeleton label={t('adminSelectBranch.loading')} />;
+  } else if (query.isError) {
+    content = (
+      <EmptyState
+        icon="wifioff"
+        tone="err"
+        title={t('adminSelectBranch.error.title')}
+        titleClassName={styles.stateTitle}
+        className={styles.state}
+        actions={
+          <Button iconStart="refresh" loading={query.isFetching} onClick={() => query.refetch()}>
+            {t('adminSelectBranch.error.retry')}
+          </Button>
+        }
+      >
+        {t('adminSelectBranch.error.body')}
+      </EmptyState>
+    );
+  } else if (branches.length === 0) {
+    content = (
+      <EmptyState
+        icon="store"
+        tone="neutral"
+        title={t('adminSelectBranch.empty.title')}
+        titleClassName={styles.stateTitle}
+        className={styles.state}
+      >
+        {t('adminSelectBranch.empty.body')}
+      </EmptyState>
+    );
+  } else if (visible.length === 0) {
+    content = (
+      <EmptyState
+        icon="search"
+        tone="neutral"
+        title={t('adminSelectBranch.noResults.title', { query: search.trim() })}
+        titleClassName={styles.stateTitle}
+        className={styles.state}
+        actions={
+          <Button variant="secondary" onClick={() => setSearch('')}>
+            {t('adminSelectBranch.noResults.clear')}
+          </Button>
+        }
+      >
+        {t('adminSelectBranch.noResults.body')}
+      </EmptyState>
+    );
+  } else {
+    content = (
+      <BranchGrid
+        branches={visible}
+        now={now}
+        lastUsedId={lastUsedId}
+        onSelect={choose}
+        wide={branches.length >= WIDE_GRID_MIN}
+      />
+    );
+  }
+
   return (
-    <AdminAccess>
-      <div className={styles.page}>
-        <BranchCards />
-      </div>
+    <SelectBranchShell
+      adminName={adminName}
+      onSignOut={leave}
+      wide={branches.length >= WIDE_GRID_MIN}
+      toolbar={
+        searchable && (
+          <div className={styles.toolbar}>
+            <SearchField
+              id="branch-search"
+              value={search}
+              onChange={setSearch}
+              onEscape={() => setSearch('')}
+              label={t('adminSelectBranch.search.label')}
+              placeholder={t('adminSelectBranch.search.placeholder')}
+              clearLabel={t('adminSelectBranch.search.clear')}
+            />
+            <p className="visually-hidden" role="status">
+              {search.trim() && t.plural('adminSelectBranch.results', visible.length)}
+            </p>
+          </div>
+        )
+      }
+    >
+      {content}
+    </SelectBranchShell>
+  );
+}
+
+/** /admin/select-branch/: the admin picks the branch to work in (GET /admin/branches). */
+export function AdminSelectBranch() {
+  const t = useContent('common');
+  return (
+    <AdminAccess
+      fallback={
+        <SelectBranchShell>
+          <BranchGridSkeleton label={t('adminSelectBranch.loading')} />
+        </SelectBranchShell>
+      }
+    >
+      <SelectBranchScreen />
     </AdminAccess>
   );
 }

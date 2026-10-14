@@ -172,6 +172,58 @@
       "use": "Use demo account"
     }
   },
+  "countryNames": {
+    "IN": "India",
+    "NP": "Nepal"
+  },
+  "adminSelectBranch": {
+    "meta": {
+      "title": "Choose a branch"
+    },
+    "account": "Signed in as {name}",
+    "signOut": "Sign out",
+    "title": "Choose a branch",
+    "subtitle": "Pick where you're working today. You can switch any time.",
+    "search": {
+      "label": "Search branches",
+      "placeholder": "Search by name, area or city",
+      "clear": "Clear search"
+    },
+    "results": {
+      "one": "{count} branch",
+      "other": "{count} branches"
+    },
+    "loading": "Loading your branches",
+    "noResults": {
+      "title": "No branches match “{query}”",
+      "body": "Check the spelling, or search by area or city.",
+      "clear": "Clear search"
+    },
+    "empty": {
+      "title": "No branches yet",
+      "body": "Your account isn't linked to a branch. Ask the owner to give you access."
+    },
+    "error": {
+      "title": "We couldn't load your branches",
+      "body": "Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "card": {
+      "location": "{city}, {country}",
+      "lastUsed": "Last used",
+      "status": {
+        "open": "Open",
+        "closed": "Closed",
+        "paused": "Paused"
+      },
+      "hoursToday": "Today {hours}",
+      "now": "Now {time}",
+      "nowLabel": "Local time now {time}",
+      "tables": "Tables {first}–{last}",
+      "modes": "Order modes",
+      "currency": "Currency {code}"
+    }
+  },
   "adminDashboard": {
     "brand": "The Olive Table",
     "waiterWorkspace": "WAITER WORKSPACE",

@@ -2,6 +2,7 @@
 
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { useAdminToken } from '@/hooks/useAdminSession';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney, type Money } from '@/lib/money';
@@ -14,6 +15,7 @@ import { useActiveBranchId } from './activeBranch';
 import { isMockApi } from './config';
 import type { AdminSignInRequest, OrderLineRequest } from './contracts';
 import {
+  adminBranchesQuery,
   branchMenuQuery,
   branchPromotionsQuery,
   branchesQuery,
@@ -113,6 +115,12 @@ export const useTableOrders = (branchId: string, table: number, enabled: boolean
 /** GET /sessions/:id/service-requests: this guest's pending requests; idle until there's a session. */
 export const useServiceRequests = (sessionId: string | undefined) =>
   useQuery(serviceRequestsQuery(sessionId));
+
+/**
+ * GET /admin/branches: the branches the signed-in admin manages (`data` is the list), read
+ * with the session on this device; idle while signed out.
+ */
+export const useAdminBranches = () => useQuery(adminBranchesQuery(useAdminToken()));
 
 /** POST /delivery/quote at the active branch: idle until there's an area. */
 export function useDeliveryQuote(area: string | undefined, itemTotal: number) {

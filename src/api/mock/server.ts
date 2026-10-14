@@ -3,7 +3,7 @@ import { mockLatencyRange } from '../config';
 import { getQueryClient } from '../queryClient';
 import { MockHttpError, randomId, type Handler, type MockContext } from './context';
 import { createStorageDb } from './db';
-import { createAdminSession } from './handlers/adminSessions';
+import { createAdminSession, listAdminBranches } from './handlers/adminSessions';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
 import { sendOtp, verifyOtp } from './handlers/otp';
@@ -26,6 +26,7 @@ import { querySeed } from './seed';
 
 const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/sessions', createAdminSession],
+  ['GET', 'admin/branches', listAdminBranches],
   ['POST', 'sessions', createSession],
   ['PATCH', 'sessions/:id', updateSession],
   ['POST', 'delivery/quote', deliveryQuote],
@@ -77,7 +78,12 @@ export function createMockServer(ctx: MockContext) {
     const found = route(request);
     if (!found) return null;
     try {
-      return wire(await found.handler(ctx, { params: found.params, body: wire(request.body) }));
+      const req = {
+        params: found.params,
+        body: wire(request.body),
+        headers: request.headers ?? {},
+      };
+      return wire(await found.handler(ctx, req));
     } catch (error) {
       if (error instanceof MockHttpError) return { status: error.status, body: error.body };
       throw error;

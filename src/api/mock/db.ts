@@ -3,6 +3,7 @@ import { isPaymentMethodId } from '@/lib/payments';
 import { WAITER_REASON_IDS } from '@/lib/service';
 import { isGuestSession } from '@/lib/session';
 import { readJSON, storageAvailable, writeJSON, type StorageKind } from '@/lib/storage';
+import type { BranchStatus } from '@/types/branch';
 import type { Order, OrderItem, OrderRound } from '@/types/order';
 import type { ServiceRequest } from '@/types/service';
 import type { GuestSession } from '@/types/session';
@@ -21,6 +22,12 @@ export const MOCK_KEYS = {
   otp: 'olive.mock.otp.v1',
   orders: 'olive.orders.v1',
   payments: 'olive.mock.payments.v1',
+  adminSessions: 'olive.mock.adminSessions.v1',
+  /**
+   * MOCK ONLY: a status per branch id (`{ "ktm-thamel": "closed" }`) that GET /admin/branches
+   * reports instead of the branch data's, so testers can preview a closed or paused branch.
+   */
+  branchStatus: 'olive.mock.branchStatus.v1',
   /** Per browser session, as before: a request lapses with the tab. */
   serviceRequests: 'olive.service.v1',
 } as const;
@@ -204,6 +211,27 @@ export function isServiceRequest(v: unknown): v is ServiceRequest {
   );
 }
 
+/* ---------- Admin sessions ---------- */
+
+/** A staff sign-in the server issued: the bearer token, whose account it is, and when it ends. */
+export interface AdminSessionRecord {
+  token: string;
+  /** The account's email (its id in the mock). */
+  email: string;
+  expiresAt: number;
+}
+
+const isAdminSessionRecord = (v: unknown): v is AdminSessionRecord =>
+  isObject(v) &&
+  typeof v.token === 'string' &&
+  typeof v.email === 'string' &&
+  typeof v.expiresAt === 'number';
+
+const BRANCH_STATUSES = new Set<unknown>(['open', 'closed', 'paused'] satisfies BranchStatus[]);
+
+const isBranchStatusTable = (v: unknown): v is Record<string, BranchStatus> =>
+  isObject(v) && Object.values(v).every((status) => BRANCH_STATUSES.has(status));
+
 /** The mock server's tables. */
 export interface MockDb {
   sessions: Table<GuestSession[]>;
@@ -213,6 +241,9 @@ export interface MockDb {
   orders: Table<StoredOrder[]>;
   payments: Table<Payment[]>;
   serviceRequests: Table<ServiceRequest[]>;
+  adminSessions: Table<AdminSessionRecord[]>;
+  /** MOCK ONLY: branch status overrides for the admin pages, by branch id. */
+  branchStatus: Table<Record<string, BranchStatus>>;
 }
 
 export function createStorageDb(): MockDb {
@@ -227,5 +258,7 @@ export function createStorageDb(): MockDb {
       listOf(isServiceRequest),
       () => [],
     ),
+    adminSessions: table(MOCK_KEYS.adminSessions, 'local', listOf(isAdminSessionRecord), () => []),
+    branchStatus: table(MOCK_KEYS.branchStatus, 'local', isBranchStatusTable, () => ({})),
   };
 }

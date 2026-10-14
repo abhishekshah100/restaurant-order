@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   adminSession,
   adminUsername,
@@ -7,6 +7,7 @@ import {
   selectedAdminBranch,
   signInAdmin,
   signOutAdmin,
+  subscribeAdminSession,
 } from '@/lib/adminAuth';
 import type { AdminSession } from '@/types/admin';
 import { testBranches } from '../apiState';
@@ -62,5 +63,17 @@ describe('admin session on this device', () => {
     selectAdminBranch('ktm-thamel');
     signOutAdmin();
     expect(selectedAdminBranch(testBranches())).toBeUndefined();
+  });
+
+  it('tells subscribers about sign-in, branch changes and sign-out', () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeAdminSession(listener);
+    signInAdmin(session());
+    selectAdminBranch('ktm-thamel');
+    signOutAdmin();
+    expect(listener).toHaveBeenCalledTimes(3);
+    unsubscribe();
+    signInAdmin(session());
+    expect(listener).toHaveBeenCalledTimes(3);
   });
 });

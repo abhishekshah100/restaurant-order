@@ -39,6 +39,7 @@ describe('GET /branches', () => {
     }
     expect(checkoutText(`details.errors.phonePrefix.${b.country}`)).not.toContain('details.');
     expect(common.get('currencyNames')).toHaveProperty(b.currency.nameKey);
+    expect(common.get('countryNames')).toHaveProperty(b.country);
     expect(service.region.taxInvoice).toHaveProperty(b.tax.invoiceKey);
     for (const m of b.payments.atTable) expect(service.region.atTable).toHaveProperty(m);
   });

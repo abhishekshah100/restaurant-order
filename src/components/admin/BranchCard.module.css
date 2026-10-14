@@ -1,0 +1,326 @@
+/*
+ * A branch in the admin picker. Mobile first and compact (a 56px thumbnail, two short detail
+ * rows); from 768px a 72px thumbnail and roomier spacing. The card fills its grid cell so a
+ * row of cards shares one height, with the order modes and arrow pinned to the bottom.
+ */
+
+.card {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    'thumb head status'
+    'details details details'
+    'foot foot foot';
+  column-gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+  transition:
+    transform var(--dur-base) var(--ease-emphasized),
+    box-shadow var(--dur-base) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.isLastUsed {
+  border-color: color-mix(in srgb, var(--brand) 45%, var(--line));
+}
+
+/* ---------- Head ---------- */
+
+.thumb {
+  grid-area: thumb;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r);
+  object-fit: cover;
+  background: var(--sand);
+}
+
+.monogram {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--brand-tint) 0%, var(--brand-tint-2) 100%);
+  color: var(--brand-700);
+  font: 500 26px/1 var(--f-display);
+}
+
+.head {
+  grid-area: head;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lastUsed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+  color: var(--brand-700);
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lastUsed > span[aria-hidden] {
+  width: 14px;
+  height: 14px;
+  color: var(--brand-600);
+}
+
+.title {
+  min-width: 0;
+  color: var(--ink);
+  font: 500 21px/26px var(--f-display);
+}
+
+/* The name's button covers the whole card: one target, with the ring drawn on the card. */
+.hit {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hit::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: -1px;
+  border-radius: var(--r-panel);
+}
+
+.hit:focus-visible {
+  box-shadow: none;
+}
+
+.hit:focus-visible::after {
+  box-shadow: var(--focus);
+}
+
+.location {
+  margin-top: 1px;
+  overflow: hidden;
+  color: var(--ink-2);
+  font: var(--font-small);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.status {
+  composes: status from '@/components/ui/StatusPill/StatusPill.module.css';
+  grid-area: status;
+  align-self: start;
+  height: 26px;
+}
+
+.open {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.paused {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+
+.closed {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+/* ---------- Details ---------- */
+
+.details {
+  grid-area: details;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.row > span[aria-hidden]:first-child {
+  color: var(--ink-3);
+}
+
+.now {
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.now::before {
+  content: '·';
+  margin-right: 6px;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+.currency {
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Foot ---------- */
+
+.foot {
+  grid-area: foot;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mode {
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-meta);
+}
+
+/* Icons only where three badges and the arrow fit on one line (desktop cards). */
+.mode > span[aria-hidden] {
+  display: none;
+  width: 14px;
+  height: 14px;
+  color: var(--ink-3);
+}
+
+.go {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    transform var(--dur-base) var(--ease-emphasized);
+}
+
+/* ---------- States ---------- */
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
+    box-shadow: 0 16px 36px var(--ink-a18);
+  }
+
+  .card:hover .go {
+    background: var(--brand-600);
+    color: var(--on-brand);
+    transform: translateX(2px);
+  }
+}
+
+.card:has(.hit:active) {
+  transform: scale(0.99);
+  box-shadow: var(--sh-1);
+}
+
+.card:has(.hit:active) .go {
+  background: var(--brand-700);
+  color: var(--on-brand);
+}
+
+/* ---------- Tablet and up ---------- */
+
+@media (min-width: 768px) {
+  .card {
+    column-gap: 16px;
+    padding: 18px;
+  }
+
+  .thumb {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--r-tile);
+  }
+
+  .monogram {
+    font-size: 32px;
+  }
+
+  .title {
+    font: var(--font-h2);
+  }
+
+  .status {
+    height: 28px;
+  }
+
+  .details {
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
+  }
+
+  .foot {
+    margin-top: 16px;
+  }
+
+  .mode {
+    height: 28px;
+  }
+
+  .go {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mode {
+    padding: 0 10px 0 9px;
+  }
+
+  .mode > span[aria-hidden] {
+    display: inline-block;
+  }
+}

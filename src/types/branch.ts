@@ -172,6 +172,16 @@ export interface OrderingRules {
   cancelWindowSeconds: number;
 }
 
+/**
+ * A photo of the branch at its file's own pixel size, so it's only ever drawn at or below that
+ * size (never upscaled): `{ src: '/images/pasta-square.jpg', width: 240, height: 240 }`.
+ */
+export interface BranchImage {
+  src: string;
+  width: number;
+  height: number;
+}
+
 /** GET /branches: one restaurant location, with everything that differs by place. */
 export interface Branch {
   id: string;
@@ -181,6 +191,8 @@ export interface Branch {
   city: string;
   country: CountryCode;
   address: string;
+  /** Shown as a small thumbnail (admin branch picker); a monogram tile stands in without one. */
+  image?: BranchImage;
   /** A maps search for the address (a plain link, opened in the guest's maps app). */
   mapUrl: string;
   /** Contact number as shown, and its tel: link. */

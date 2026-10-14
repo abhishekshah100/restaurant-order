@@ -16,10 +16,11 @@ export interface MockContext {
   newId(): string;
 }
 
-/** A request as a handler sees it: the path's `:params` and the parsed JSON body. */
+/** A request as a handler sees it: the path's `:params`, the parsed JSON body and the headers (lower-case names). */
 export interface MockRequest {
   params: Record<string, string>;
   body: unknown;
+  headers: Record<string, string>;
 }
 
 export type Handler = (ctx: MockContext, req: MockRequest) => Promise<ApiResponse>;

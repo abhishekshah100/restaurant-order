@@ -28,6 +28,8 @@ export interface ApiRequest {
   method: HttpMethod;
   path: string;
   body?: unknown;
+  /** Request headers, names in lower case (e.g. `authorization` on admin requests). */
+  headers?: Record<string, string>;
 }
 
 /** A response from the mock server, shaped like an HTTP one. */
@@ -70,7 +72,8 @@ async function viaFetch<T>({ method, path, body }: ApiRequest, init?: RequestIni
 async function send<T>(request: ApiRequest, init?: RequestInit): Promise<T> {
   if (isMockApi()) {
     const { handleMockRequest } = await import('./mock/server');
-    const response = await handleMockRequest(request);
+    const headers = Object.fromEntries(new Headers(init?.headers).entries());
+    const response = await handleMockRequest({ ...request, headers });
     if (response) return unwrap<T>(response, apiUrl(request.path));
   }
   return viaFetch<T>(request, init);

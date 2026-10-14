@@ -2,6 +2,7 @@ import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import type {
   AddRoundRequest,
+  AdminBranchesResponse,
   AdminSignInRequest,
   AdminSignInResponse,
   CancelOrderRequest,
@@ -39,6 +40,10 @@ const seg = encodeURIComponent;
 export const api = {
   createAdminSession: (body: AdminSignInRequest) =>
     apiPost<AdminSignInResponse>('admin/sessions', body),
+  adminBranches: (token: string) =>
+    apiGet<AdminBranchesResponse>('admin/branches', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 
   createSession: (body: CreateSessionRequest) => apiPost<GuestSession>('sessions', body),
   updateSession: (id: string, body: UpdateSessionRequest) =>

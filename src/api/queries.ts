@@ -7,7 +7,7 @@ import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { apiGet } from './client';
-import type { OrderLineRequest } from './contracts';
+import type { AdminBranchesResponse, OrderLineRequest } from './contracts';
 import { api } from './endpoints';
 import type common from '../../public/api/content/common.json';
 import type home from '../../public/api/content/home.json';
@@ -180,6 +180,20 @@ export const promoQuoteQuery = (
         : skipToken,
     staleTime: 60_000,
     placeholderData: (previous) => (previous?.code === code ? previous : undefined),
+  });
+
+const adminBranchList = (data: AdminBranchesResponse) => data.branches;
+
+/**
+ * GET /admin/branches: the branches the signed-in admin manages, keyed by their session token
+ * (another sign-in reads them afresh); idle while signed out.
+ */
+export const adminBranchesQuery = (token: string | null) =>
+  queryOptions({
+    queryKey: ['admin', 'branches', token] as const,
+    queryFn: token ? () => api.adminBranches(token) : skipToken,
+    staleTime: 60_000,
+    select: adminBranchList,
   });
 
 /** GET /sessions/:id/service-requests: this guest's pending waiter and bill requests. */

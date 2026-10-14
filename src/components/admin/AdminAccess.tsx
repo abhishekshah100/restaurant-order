@@ -1,44 +1,58 @@
 'use client';
 
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useBranches } from '@/api/hooks';
-import { isAdminSignedIn, selectAdminBranch, selectedAdminBranch } from '@/lib/adminAuth';
+import { isApiError } from '@/api/client';
+import { useAdminBranches } from '@/api/hooks';
+import { useHydrated } from '@/hooks/useHydrated';
+import { useAdminToken, useSelectedAdminBranchId, useSignOutAdmin } from '@/hooks/useAdminSession';
+import { adminAccess, adminPage } from '@/lib/adminBranches';
+import { selectAdminBranch } from '@/lib/adminAuth';
 
-const subscribe = () => () => {};
-
-export function AdminAccess({ children }: { children: ReactNode }) {
-  const branches = useBranches();
+/**
+ * Guards the admin pages: signed in, and on the dashboard a selected branch among the ones
+ * the admin manages (GET /admin/branches; see lib/adminBranches › adminAccess). Shows
+ * `fallback` until the page may show (prerender, hydration, loading, redirecting).
+ */
+export function AdminAccess({
+  children,
+  fallback = null,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  const hydrated = useHydrated();
+  const token = useAdminToken();
+  const branches = useAdminBranches();
+  const selectedId = useSelectedAdminBranchId();
+  const signOut = useSignOutAdmin();
   const pathname = usePathname();
   const router = useRouter();
-  const hydrated = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false,
+
+  const page = adminPage(pathname);
+  const unauthorized = isApiError(branches.error, 'unauthorized');
+  const failed = branches.isError && !unauthorized;
+  const decision = useMemo(
+    () =>
+      adminAccess({
+        page,
+        signedIn: token !== null,
+        branches: branches.data,
+        failed,
+        unauthorized,
+        selectedId,
+      }),
+    [branches.data, failed, page, selectedId, token, unauthorized],
   );
-  const signedIn = hydrated && isAdminSignedIn();
-  const selected = hydrated ? selectedAdminBranch(branches) : undefined;
-  const needsBranch = pathname.startsWith('/admin/dashboard') && branches.length > 1 && !selected;
-  const needsSingleBranchRedirect = pathname === '/admin/select-branch' && branches.length === 1;
 
   useEffect(() => {
     if (!hydrated) return;
-    if (!signedIn) {
-      router.replace('/admin/login/');
-      return;
-    }
+    if (decision.kind === 'select') selectAdminBranch(decision.branchId);
+    if (decision.kind !== 'redirect') return;
+    if (decision.signOut) signOut();
+    if (decision.select) selectAdminBranch(decision.select);
+    router.replace(decision.to);
+  }, [decision, hydrated, router, signOut]);
 
-    if (branches.length === 1) {
-      selectAdminBranch(branches[0].id);
-      if (needsSingleBranchRedirect) {
-        router.replace('/admin/dashboard/');
-        return;
-      }
-    } else if (needsBranch) {
-      router.replace('/admin/select-branch/');
-    }
-  }, [branches, hydrated, needsBranch, needsSingleBranchRedirect, router, signedIn]);
-
-  const allowed = hydrated && signedIn && !needsBranch && !needsSingleBranchRedirect;
-  return allowed ? children : null;
+  return hydrated && decision.kind === 'allow' ? children : fallback;
 }

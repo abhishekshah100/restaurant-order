@@ -1,15 +1,17 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { isApiError } from '@/api/client';
-import { useBranches, useContent, useDemoAdminAccount, useRestaurant } from '@/api/hooks';
+import { useAdminBranches, useContent, useDemoAdminAccount, useRestaurant } from '@/api/hooks';
 import { useAdminLogin } from '@/api/mutations';
 import { Banner, Button, Icon, Input } from '@/components/ui';
 import { selectAdminBranch, signInAdmin } from '@/lib/adminAuth';
+import { useAdminToken } from '@/hooks/useAdminSession';
+import { adminLanding } from '@/lib/adminBranches';
 import { adminLoginSchema, type AdminLoginValues } from '@/lib/adminLogin';
 import styles from './AdminLogin.module.css';
 
@@ -20,9 +22,13 @@ const PHOTO_HEIGHT = 540;
 export function AdminLogin() {
   const t = useContent('common');
   const restaurant = useRestaurant();
-  const branches = useBranches();
   const router = useRouter();
   const login = useAdminLogin();
+  // The branches of the session just started decide where to go (one: its dashboard).
+  const branches = useAdminBranches();
+  const token = useAdminToken();
+  const signedInNow = login.isSuccess && token === login.data.token;
+  const branchesFailed = signedInNow && branches.isError;
   const demoAccount = useDemoAdminAccount();
   const [showPassword, setShowPassword] = useState(false);
   const schema = useMemo(() => adminLoginSchema(t.get('adminLogin.validation')), [t]);
@@ -37,18 +43,14 @@ export function AdminLogin() {
     defaultValues: { identity: '', password: '' },
   });
 
-  const onSubmit = (values: AdminLoginValues) =>
-    login.mutate(values, {
-      onSuccess: (session) => {
-        signInAdmin(session);
-        if (branches.length === 1) {
-          selectAdminBranch(branches[0].id);
-          router.replace('/admin/dashboard/');
-        } else {
-          router.replace('/admin/select-branch/');
-        }
-      },
-    });
+  const onSubmit = (values: AdminLoginValues) => login.mutate(values, { onSuccess: signInAdmin });
+
+  useEffect(() => {
+    if (!signedInNow || !branches.data) return;
+    const landing = adminLanding(branches.data);
+    if (landing.select) selectAdminBranch(landing.select);
+    router.replace(landing.to);
+  }, [branches.data, signedInNow, router]);
 
   const fillDemoAccount = () => {
     if (!demoAccount) return;
@@ -92,7 +94,7 @@ export function AdminLogin() {
             <p className={styles.subtitle}>{t('adminLogin.subtitle')}</p>
           </header>
 
-          {login.isError && (
+          {(login.isError || branchesFailed) && (
             <Banner tone="err" icon="alert" live="assertive" className={styles.alert}>
               {isApiError(login.error, 'invalid_credentials')
                 ? t('adminLogin.errors.invalidCredentials')
@@ -140,7 +142,7 @@ export function AdminLogin() {
             <Button
               type="submit"
               block
-              loading={login.isPending || login.isSuccess}
+              loading={login.isPending || (login.isSuccess && !branchesFailed)}
               iconEnd="arrow"
               className={styles.submit}
             >

@@ -1,5 +1,5 @@
 import type { DeliveryQuote } from '@/lib/fulfilment';
-import type { AdminSession } from '@/types/admin';
+import type { AdminBranch, AdminSession } from '@/types/admin';
 import type { OrderMode, PaymentMethodId } from '@/types/branch';
 import type { LineConfig } from '@/types/cart';
 import type { Price } from '@/types/menu';
@@ -71,7 +71,9 @@ export type ApiErrorCode =
   /** 422: the guest has used the promo code as often as it allows (`perGuestLimit`). */
   | 'promo_limit_reached'
   /** 401: no admin account matches this email or mobile number and password. */
-  | 'invalid_credentials';
+  | 'invalid_credentials'
+  /** 401: an admin request without a session token, or its session has expired; sign in again. */
+  | 'unauthorized';
 
 /** Body of every non-2xx response. */
 export interface ApiErrorBody {
@@ -101,6 +103,17 @@ export interface AdminSignInRequest {
 }
 
 export type AdminSignInResponse = AdminSession;
+
+/**
+ * `GET /admin/branches` — the branches the signed-in admin manages (not every branch), with
+ * what the branch picker shows. Authorised by the session: `Authorization: Bearer <token>`.
+ * 200 → `{ branches }` in the account's order. One branch: the app selects it and opens the
+ * dashboard; several: the admin picks one. Errors: 401 unauthorized (no token, an unknown
+ * token, or the session has expired).
+ */
+export interface AdminBranchesResponse {
+  branches: AdminBranch[];
+}
 
 /* ---------- Sessions ---------- */
 
