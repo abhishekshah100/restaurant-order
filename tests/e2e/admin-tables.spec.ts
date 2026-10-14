@@ -27,7 +27,7 @@ test('a table from the floor plan to its order', async ({ page }) => {
   await adminSignIn(page);
   await visible(page, 'link', 'Tables').click();
   await expect(page).toHaveURL(/\/admin\/dashboard\/tables\/$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Tables' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Tables' })).toHaveCount(1);
 
   const ground = page.getByRole('tab', { name: /Ground floor/ });
   await expect(ground).toHaveAttribute('aria-selected', 'true');

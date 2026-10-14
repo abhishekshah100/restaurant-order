@@ -94,10 +94,8 @@ export function FloorPlan() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.head}>
-        <h1 className={styles.title}>{t('adminTables.title')}</h1>
-        <p className={styles.subtitle}>{t('adminTables.subtitle')}</p>
-      </header>
+      {/* The bar above already names the page; the heading is for screen readers. */}
+      <h1 className="visually-hidden">{t('adminTables.title')}</h1>
       {content}
     </div>
   );
