@@ -18,7 +18,7 @@ export function AdminAccess({ children }: { children: ReactNode }) {
   );
   const signedIn = hydrated && isAdminSignedIn();
   const selected = hydrated ? selectedAdminBranch(branches) : undefined;
-  const needsBranch = pathname === '/admin/dashboard' && branches.length > 1 && !selected;
+  const needsBranch = pathname.startsWith('/admin/dashboard') && branches.length > 1 && !selected;
   const needsSingleBranchRedirect = pathname === '/admin/select-branch' && branches.length === 1;
 
   useEffect(() => {

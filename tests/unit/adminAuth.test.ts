@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  adminUsername,
   isAdminSignedIn,
   selectAdminBranch,
   selectedAdminBranch,
@@ -13,10 +14,12 @@ describe('temporary admin browser state', () => {
 
   it('stores and clears the demo sign-in', () => {
     expect(isAdminSignedIn()).toBe(false);
-    signInAdmin();
+    signInAdmin('abhishek.saha@example.com');
     expect(isAdminSignedIn()).toBe(true);
+    expect(adminUsername()).toBe('Abhishek Saha');
     signOutAdmin();
     expect(isAdminSignedIn()).toBe(false);
+    expect(adminUsername()).toBeUndefined();
   });
 
   it('stores a selected branch and ignores unknown branch ids', () => {

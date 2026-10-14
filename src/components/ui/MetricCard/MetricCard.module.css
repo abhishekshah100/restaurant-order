@@ -1,0 +1,105 @@
+.card {
+  display: grid;
+  min-width: 0;
+  min-height: 142px;
+  align-content: space-between;
+  gap: 15px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.top {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.icon {
+  display: grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  margin-top: 1px;
+  place-items: center;
+  border-radius: var(--r-md);
+}
+
+.label {
+  display: -webkit-box;
+  overflow: hidden;
+  min-width: 0;
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.value {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.value strong {
+  overflow: hidden;
+  color: var(--ink);
+  font: 600 30px/1 var(--f-display);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value small {
+  color: var(--ink-3);
+  font: var(--font-meta);
+  line-height: 1.4;
+}
+
+.brand,
+.rose {
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+}
+
+.success {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.gold {
+  background: var(--gold-tint);
+  color: var(--gold-ink);
+}
+
+@media (max-width: 560px) {
+  .card {
+    min-height: 130px;
+    gap: 12px;
+    padding: 14px 12px;
+    border-radius: var(--r-md);
+  }
+
+  .icon {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--r-sm);
+  }
+
+  .label {
+    font-size: 11px;
+  }
+
+  .value strong {
+    font-size: 26px;
+  }
+
+  .value small {
+    font-size: 10px;
+  }
+}

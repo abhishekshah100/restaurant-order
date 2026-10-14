@@ -18,17 +18,16 @@ import styles from './AdminLogin.module.css';
 
 const COPY = {
   brand: 'The Olive Table',
-  descriptor: 'Restaurant & Bar',
+  descriptor: 'Restaurant',
   tagline: 'Good food · Great vibes · Together',
   welcome: 'Welcome Back',
-  subtitle: 'Login to access your dashboard',
   identity: 'Email / Mobile Number',
   password: 'Password',
   showPassword: 'Show password',
   hidePassword: 'Hide password',
   forgotPassword: 'Forgot password?',
   login: 'Login',
-  invalidCredentials: 'Those credentials do not match the demo account.',
+  invalidCredentials: 'Invalid email or password. Please try again.',
   recovery: 'Password recovery will be available when admin accounts are connected.',
   loginError: 'Check the highlighted fields and try again.',
 } as const;
@@ -68,7 +67,7 @@ export function AdminLogin() {
       return;
     }
 
-    signInAdmin();
+    signInAdmin(values.identity);
     if (branches.length === 1) {
       selectAdminBranch(branches[0].id);
       router.replace('/admin/dashboard/');
@@ -99,7 +98,6 @@ export function AdminLogin() {
           <Brand className={styles.cardBrand} />
           <div className={styles.intro}>
             <h1 className={styles.title}>{COPY.welcome}</h1>
-            <p className={styles.subtitle}>{COPY.subtitle}</p>
           </div>
 
           <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -137,7 +135,7 @@ export function AdminLogin() {
               </button>
             </div>
 
-            <div className={styles.forgotRow}>
+            {/* <div className={styles.forgotRow}>
               <button
                 className={styles.forgot}
                 type="button"
@@ -145,7 +143,7 @@ export function AdminLogin() {
               >
                 {COPY.forgotPassword}
               </button>
-            </div>
+            </div> */}
 
             <Button type="submit" block loading={isSubmitting} iconEnd="arrow">
               {COPY.login}
