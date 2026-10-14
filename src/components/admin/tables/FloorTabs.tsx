@@ -2,12 +2,15 @@
 
 import { useRef, type KeyboardEvent } from 'react';
 import { useContent } from '@/api/hooks';
+import { Icon } from '@/components/ui';
+import { legendCounts } from '@/lib/adminTables';
 import type { AdminFloor } from '@/types/admin';
 import styles from './FloorTabs.module.css';
 
 /**
- * One tab per area, each with how many of its tables are free. A tab list: Tab enters on the
- * open area, the arrow keys and Home / End move between areas.
+ * One tab per area, as a small card: its name, how many tables are free, and a red bell with a
+ * count when tables there need a waiter or the bill, so staff know where to go before opening
+ * it. A tab list: Tab enters on the open area, the arrow keys and Home / End move.
  */
 export function FloorTabs({
   floors,
@@ -46,7 +49,9 @@ export function FloorTabs({
     >
       {floors.map((floor) => {
         const selected = floor.id === value;
-        const free = floor.tables.filter((table) => table.status === 'available').length;
+        const total = floor.tables.length;
+        const counts = legendCounts(floor.tables);
+        const attention = counts.needsWaiter + counts.wantsBill;
         return (
           <button
             key={floor.id}
@@ -59,10 +64,22 @@ export function FloorTabs({
             className={styles.tab}
             onClick={() => onChange(floor.id)}
           >
-            <span className={styles.name}>{floor.name}</span>
-            <span className={styles.free}>
-              {t('adminTables.floorFree', { free, total: floor.tables.length })}
+            <span className={styles.text}>
+              <span className={styles.name}>{floor.name}</span>
+              <span className={styles.free}>
+                <span className={styles.freeDot} aria-hidden="true" />
+                {t('adminTables.floorFree', { free: counts.available, total })}
+              </span>
             </span>
+            {attention > 0 && (
+              <span
+                className={styles.attention}
+                aria-label={t.plural('adminTables.floorAttention', attention)}
+              >
+                <Icon name="bell" size="xs" />
+                {attention}
+              </span>
+            )}
           </button>
         );
       })}

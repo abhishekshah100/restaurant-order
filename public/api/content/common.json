@@ -431,7 +431,11 @@
     "title": "Tables",
     "subtitle": "Tap a table to see its orders",
     "floors": "Floors",
-    "floorFree": "{free}/{total} free",
+    "floorFree": "{free} of {total} free",
+    "floorAttention": {
+      "one": "{count} table needs you",
+      "other": "{count} tables need you"
+    },
     "legend": {
       "label": "On this floor",
       "available": "Available",

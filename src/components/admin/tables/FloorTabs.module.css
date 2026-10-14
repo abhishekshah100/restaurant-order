@@ -1,18 +1,19 @@
 /*
- * Area tabs: a segmented strip of pills, the open one raised on the surface. Scrolls sideways
- * when the areas don't fit (narrow phones, many areas).
+ * Area tabs as quiet cards: the name, how many tables are free (a green dot), and a red bell
+ * with a count only when tables there need a person. The open area is filled dark like the
+ * sidebar, so it reads as selected without another colour. Three fit a 360px row; more scroll.
  */
 
 .tabs {
-  display: flex;
-  gap: 4px;
-  max-width: 100%;
-  width: max-content;
-  padding: 4px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(108px, 1fr);
+  gap: 8px;
+  /* Room for the corner badge, which the sideways scroll would otherwise clip. */
+  margin: -8px -4px -4px;
+  padding: 8px 4px 4px;
   overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--sand) 55%, var(--bg));
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
 }
 
@@ -21,52 +22,130 @@
 }
 
 .tab {
-  flex: none;
-  min-height: 44px;
-  padding: 0 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-2);
-  font: var(--font-label);
-  white-space: nowrap;
+  position: relative;
+  min-height: 64px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 11px 10px 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  scroll-snap-align: start;
   cursor: pointer;
   transition:
-    background-color var(--dur-fast) ease,
-    color var(--dur-fast) ease,
-    box-shadow var(--dur-fast) ease;
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) ease,
+    color var(--dur-base) ease;
+}
+
+.text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .free {
-  padding: 2px 8px;
-  border-radius: var(--r-pill);
-  background: var(--ink-a06);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: var(--ink-3);
-  font: var(--font-meta-strong);
+  font: var(--font-meta);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
+.freeDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--success);
+}
+
+/* On phones a corner badge, so the name keeps the card's width. */
+.attention {
+  position: absolute;
+  top: -7px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: var(--r-pill);
+  background: var(--error);
+  color: var(--white);
+  font: var(--font-meta-strong);
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* The open area. */
 .tab[aria-selected='true'] {
-  background: var(--surface);
-  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
   box-shadow: var(--sh-1);
 }
 
 .tab[aria-selected='true'] .free {
-  background: var(--success-tint);
-  color: var(--success);
+  color: color-mix(in srgb, var(--on-dark) 72%, transparent);
+}
+
+.tab[aria-selected='true'] .freeDot {
+  background: var(--success-on-dark);
 }
 
 .tab:focus-visible {
+  outline: none;
   box-shadow: var(--focus);
 }
 
 @media (hover: hover) {
   .tab[aria-selected='false']:hover {
-    color: var(--ink);
-    background: var(--ink-a04);
+    border-color: var(--line-strong);
+    box-shadow: var(--sh-1);
+  }
+}
+
+@media (min-width: 768px) {
+  .tabs {
+    grid-auto-columns: minmax(168px, 200px);
+    gap: 10px;
+    margin: -4px;
+    padding: 4px;
+  }
+
+  .attention {
+    position: static;
+    flex: none;
+    box-shadow: none;
+  }
+
+  .tab {
+    min-height: 72px;
+    padding: 14px 14px 14px 16px;
+  }
+
+  .name {
+    font: var(--font-label);
+  }
+
+  .free {
+    font: var(--font-small);
   }
 }
