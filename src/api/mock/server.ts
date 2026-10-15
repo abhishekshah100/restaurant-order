@@ -10,7 +10,15 @@ import {
   resolveServiceRequest,
 } from './handlers/adminService';
 import { createAdminSession, listAdminBranches } from './handlers/adminSessions';
-import { addStaffRound, takeTableOrder } from './handlers/adminOrders';
+import {
+  addStaffRound,
+  branchOrdersToday,
+  cancelByStaff,
+  collectPayment,
+  collectTablePayment,
+  editStaffRound,
+  takeTableOrder,
+} from './handlers/adminOrders';
 import { branchFloorPlan, branchTable } from './handlers/adminTables';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
@@ -39,7 +47,12 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['GET', 'admin/branches/:branchId/tables', branchFloorPlan],
   ['GET', 'admin/branches/:branchId/tables/:table', branchTable],
   ['POST', 'admin/branches/:branchId/tables/:table/orders', takeTableOrder],
+  ['POST', 'admin/branches/:branchId/tables/:table/payment', collectTablePayment],
+  ['GET', 'admin/branches/:branchId/orders', branchOrdersToday],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
+  ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],
+  ['POST', 'admin/branches/:branchId/orders/:id/payment', collectPayment],
+  ['POST', 'admin/branches/:branchId/orders/:id/cancel', cancelByStaff],
   ['POST', 'admin/service-requests/:id/acknowledge', acknowledgeServiceRequest],
   ['POST', 'admin/service-requests/:id/resolve', resolveServiceRequest],
   ['POST', 'admin/orders/:id/served', markOrderServed],

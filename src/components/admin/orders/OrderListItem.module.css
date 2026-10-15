@@ -1,0 +1,192 @@
+/*
+ * An order row. From 900px one line: where, the order, its states, total and action. Below,
+ * the states and total share a line under the order, and the action (if any) a line of its
+ * own. The order's button stretches over the row (it opens the order); the action sits above.
+ */
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'where main main'
+    'where state total'
+    'where end end';
+  align-items: center;
+  gap: 8px 14px;
+  padding: 14px;
+  transition: background-color var(--dur-fast) ease;
+}
+
+.row + .row {
+  border-top: 1px solid var(--line);
+}
+
+.row[data-cancelled] {
+  opacity: 0.6;
+}
+
+.row > :first-child {
+  grid-area: where;
+  align-self: start;
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--bg) 45%, var(--surface));
+  }
+}
+
+/* ---------- The order ---------- */
+
+.main {
+  grid-area: main;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.open {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.row:has(.open:focus-visible) {
+  box-shadow: inset var(--focus);
+}
+
+.id {
+  font: var(--font-h3);
+}
+
+.guest {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.items {
+  overflow: hidden;
+  color: var(--ink-2);
+  font: var(--font-small);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.more {
+  margin-left: 6px;
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+.when {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* ---------- State, total, action ---------- */
+
+.state {
+  grid-area: state;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.total {
+  grid-area: total;
+  justify-self: end;
+  color: var(--ink);
+  font: var(--font-price);
+  font-variant-numeric: tabular-nums;
+}
+
+.end {
+  grid-area: end;
+  justify-self: end;
+}
+
+.chev {
+  color: var(--ink-3);
+}
+
+/* Phones: the whole row opens the order, so no chevron (and no empty line for it). */
+.end:has(> .chev) {
+  display: none;
+}
+
+.action {
+  position: relative;
+  z-index: 1;
+  height: 36px;
+  padding: 0 14px 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.action[data-action='collect'] {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+.action:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .action:hover {
+    background: var(--success);
+    color: var(--white);
+  }
+
+  .action[data-action='collect']:hover {
+    background: var(--gold);
+    color: var(--white);
+  }
+}
+
+@media (min-width: 900px) {
+  .row {
+    grid-template-columns: auto minmax(0, 1fr) 190px 96px 140px;
+    grid-template-areas: 'where main state total end';
+    gap: 16px;
+    padding: 14px 20px;
+  }
+
+  .row > :first-child {
+    align-self: center;
+  }
+
+  .end:has(> .chev) {
+    display: block;
+  }
+}

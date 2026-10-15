@@ -1,8 +1,8 @@
 import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
-import { OrdersSection } from '@/components/admin/sections/OrdersSection';
+import { OrdersBoard } from '@/components/admin/orders/OrdersBoard';
 
 export const generateMetadata = () => adminMetadata('unpaidOrders');
 
 export default function AdminUnpaidOrdersPage() {
-  return <OrdersSection filter="unpaid" />;
+  return <OrdersBoard routeView="unpaid" />;
 }

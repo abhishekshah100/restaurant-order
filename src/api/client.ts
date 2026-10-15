@@ -88,8 +88,8 @@ export const apiPost = <T>(path: string, body: unknown, init?: RequestInit): Pro
   send<T>({ method: 'POST', path, body }, init);
 
 /** PATCH a JSON body. */
-export const apiPatch = <T>(path: string, body: unknown): Promise<T> =>
-  send<T>({ method: 'PATCH', path, body });
+export const apiPatch = <T>(path: string, body: unknown, init?: RequestInit): Promise<T> =>
+  send<T>({ method: 'PATCH', path, body }, init);
 
 /** DELETE a resource (204, no body). */
 export const apiDelete = (path: string): Promise<void> => send<void>({ method: 'DELETE', path });

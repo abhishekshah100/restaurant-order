@@ -6,8 +6,8 @@ import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import type { Order } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { OrderDetailDialog } from './OrderDetailDialog';
-import { PaymentBadge } from './PaymentBadge';
+import { OrderDetailDialog } from '../orders/OrderDetailDialog';
+import { PaymentBadge } from '../orders/PaymentBadge';
 import { DataBanner, ErrorNotice, SectionEmpty, SectionPage } from './SectionPage';
 import styles from './PaymentsSection.module.css';
 

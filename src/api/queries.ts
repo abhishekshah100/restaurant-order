@@ -266,3 +266,13 @@ export const tableDetailQuery = (
     refetchOnWindowFocus: true,
     refetchInterval: BRANCH_SERVICE_REFRESH_MS,
   });
+
+/** GET /admin/branches/:branchId/orders: today's orders; idle while signed out or without a branch. */
+export const branchOrdersQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'service', 'orders', branchId, token] as const,
+    queryFn: token && branchId ? () => api.branchOrders(token, branchId) : skipToken,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+  });

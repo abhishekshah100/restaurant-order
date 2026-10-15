@@ -1,25 +1,31 @@
 import { createClock } from '@/lib/clock';
-import { paidAmount } from '@/lib/lifecycle';
+import { CANCEL_REASONS } from '@/lib/adminOrders';
+import { isFinished, isToday } from '@/lib/orders';
+import { amountDue, paidAmount } from '@/lib/lifecycle';
 import { calculateBill } from '@/lib/pricing';
 import { discountsFor, findPromo } from '@/lib/promotions';
+import type { AdminOrders } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { Order, OrderRound } from '@/types/order';
-import { fail, objectBody, ok, type Handler, type MockContext } from '../context';
+import type { OrderChangeResponse, TablePaymentResponse } from '../../contracts';
+import { fail, isObject, objectBody, ok, type Handler, type MockContext } from '../context';
 import { demoOrders, isDemoFloorOn, isDemoId } from '../demoFloor';
 import { liveOrder } from '../kitchen';
 import { buildOrder, changeableUntil, nextOrderId, toOrderItems } from '../orderBuilder';
-import { roundsOf, settlePayment, withRounds } from '../tab';
+import { cancelledPayment, roundsOf, settlePayment, withRounds } from '../tab';
+import { floorActivity } from './adminService';
 import { adminBranch, signedInAccount } from './adminSessions';
 import { kitchenNoteOf } from './orderChanges';
 import { offerLines } from './orderPricing';
-import { placedOrders } from './orders';
+import { branchOrders, placedOrders } from './orders';
 
 /*
- * Orders a waiter takes at the table, for guests who don't order on their phone: a new order
- * at a table (POST /admin/branches/:branchId/tables/:table/orders) and more items on an open
- * dine-in order (POST /admin/branches/:branchId/orders/:id/rounds). Both are priced like a
- * guest's (the menu, the offers on now, the branch's taxes), paid at the counter, and noted
- * "Taken by <name>" on their timeline.
+ * The staff's order endpoints: today's orders at a branch (GET /admin/branches/:branchId/orders);
+ * orders a waiter takes at the table for guests who don't order on their phone — a new order at
+ * a table (POST …/tables/:table/orders) and more items on an open dine-in order (POST
+ * …/orders/:id/rounds), priced like a guest's, paid at the counter and noted "Taken by <name>";
+ * collecting an order's payment in person (POST …/orders/:id/payment); and cancelling it for
+ * the guest (POST …/orders/:id/cancel).
  */
 
 /** What both need: the waiter, the branch, its menu and promotions, the words, and now. */
@@ -72,22 +78,21 @@ export const takeTableOrder: Handler = async (ctx, { params, body: raw, headers 
 };
 
 /**
- * The open order at the branch, as stored. A demo order (dev only) is saved the first time a
- * waiter adds to it, and from then on it's a real one.
+ * The order at the branch, as stored. An order from the drawn history (or, in dev, the demo
+ * floor) is saved the first time staff act on it, and from then on it's a real one.
  */
 async function storedOrder(ctx: MockContext, branch: Branch, id: string): Promise<Order> {
   const placed = (await placedOrders(ctx)).find((o) => o.id === id && o.branchId === branch.id);
   if (placed) return placed;
-  if (isDemoFloorOn() && isDemoId(id)) {
-    const demo = demoOrders(branch, await ctx.seed.menu(branch.id), ctx.now()).find(
-      (o) => o.id === id,
-    );
-    if (demo) {
-      ctx.db.orders.write([demo, ...ctx.db.orders.read()]);
-      return demo;
-    }
-  }
-  return fail(404, 'not_found');
+  const { history } = await branchOrders(ctx, branch);
+  const demo =
+    isDemoFloorOn() && isDemoId(id)
+      ? demoOrders(branch, await ctx.seed.menu(branch.id), ctx.now())
+      : [];
+  const known = [...history, ...demo].find((o) => o.id === id);
+  if (!known) fail(404, 'not_found');
+  ctx.db.orders.write([known, ...ctx.db.orders.read()]);
+  return known;
 }
 
 /** POST /admin/branches/:branchId/orders/:id/rounds */
@@ -131,4 +136,154 @@ export const addStaffRound: Handler = async (ctx, { params, body: raw, headers }
   const updated: Order = { ...next, payment };
   ctx.db.orders.write(ctx.db.orders.read().map((o) => (o.id === order.id ? updated : o)));
   return ok(liveOrder(updated, now.getTime(), branch), 201);
+};
+
+/** GET /admin/branches/:branchId/orders */
+export const branchOrdersToday: Handler = async (ctx, { params, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const { orders, now } = await floorActivity(ctx, branch);
+  const clock = createClock(branch);
+  const response: AdminOrders = {
+    orders: orders
+      .filter((o) => isToday(o.placedAt, new Date(now), clock))
+      .sort((a, b) => b.placedAt.localeCompare(a.placedAt)),
+    generatedAt: new Date(now).toISOString(),
+  };
+  return ok(response);
+};
+
+/** Saves the order and answers with it as read now. */
+function saveOrder(ctx: MockContext, branch: Branch, order: Order, now: Date) {
+  ctx.db.orders.write(ctx.db.orders.read().map((o) => (o.id === order.id ? order : o)));
+  return ok(liveOrder(order, now.getTime(), branch));
+}
+
+/** One of the branch's ways to pay staff in person (GET /branches › payments.atTable), or 400. */
+function atTableMethod(branch: Branch, body: unknown) {
+  const method = branch.payments.atTable.find((m) => isObject(body) && m === body.method);
+  if (!method) fail(400, 'invalid_request');
+  return method;
+}
+
+/** The order paid in full in person, `payment.detail` naming how ("Cash"). */
+function paidInFull(order: Order, detail: string): Order {
+  const { payment } = settlePayment(order, order.total, order.total);
+  return { ...order, payment: { ...payment, status: 'paid', detail } };
+}
+
+/** POST /admin/branches/:branchId/orders/:id/payment */
+export const collectPayment: Handler = async (ctx, { params, body, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const method = atTableMethod(branch, body);
+  const labels = await ctx.seed.orderLabels(branch);
+  const order = await storedOrder(ctx, branch, params.id);
+  const now = new Date(ctx.now());
+  if (liveOrder(order, now.getTime(), branch).status === 'cancelled') fail(409, 'order_closed');
+  if (paidAmount(order) >= order.total) fail(409, 'nothing_to_pay');
+  return saveOrder(ctx, branch, paidInFull(order, labels.atTableName(method)), now);
+};
+
+/** POST /admin/branches/:branchId/tables/:table/payment */
+export const collectTablePayment: Handler = async (ctx, { params, body, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const method = atTableMethod(branch, body);
+  const labels = await ctx.seed.orderLabels(branch);
+  const table = Number(params.table);
+  const { orders, now } = await floorActivity(ctx, branch);
+  const clock = createClock(branch);
+  const due = orders.filter(
+    (o) =>
+      o.mode === 'dineIn' &&
+      o.table === table &&
+      isToday(o.placedAt, new Date(now), clock) &&
+      amountDue(o) > 0,
+  );
+  if (due.length === 0) fail(409, 'nothing_to_pay');
+  const paid: Order[] = [];
+  for (const { id } of due) {
+    const order = paidInFull(await storedOrder(ctx, branch, id), labels.atTableName(method));
+    ctx.db.orders.write(ctx.db.orders.read().map((o) => (o.id === id ? order : o)));
+    paid.push(liveOrder(order, now, branch));
+  }
+  const response: TablePaymentResponse = { orders: paid };
+  return ok(response);
+};
+
+/** The status of one round as the kitchen has it now (an order without rounds is one round). */
+const liveRoundStatus = (live: Order, number: number) =>
+  live.rounds
+    ? live.rounds.find((r) => r.number === number)?.status
+    : number === 1
+      ? live.status
+      : undefined;
+
+/** PATCH /admin/branches/:branchId/orders/:id/rounds/:round */
+export const editStaffRound: Handler = async (ctx, { params, body: raw, headers }) => {
+  const staff = await staffContext(ctx, headers, params.branchId);
+  const { branch, menu, promotions, labels, now } = staff;
+  const body = objectBody(raw);
+  const order = await storedOrder(ctx, branch, params.id);
+  const number = Number(params.round);
+  const live = liveOrder(order, now.getTime(), branch);
+  if (live.status === 'cancelled') fail(409, 'order_closed');
+  const status = liveRoundStatus(live, number);
+  if (!status || status === 'cancelled') fail(404, 'not_found');
+  // Once the food is ready (or served), it can't be changed: add a round or cancel instead.
+  if (status !== 'received' && status !== 'preparing') fail(409, 'window_closed');
+
+  const items = toOrderItems(
+    offerLines(body, branch, { ...staff, pricedAt: now }),
+    menu,
+    labels.lineLabels,
+  );
+  const kitchenNote = kitchenNoteOf(body) || undefined;
+  const rounds = roundsOf(order).map((r) =>
+    r.number === number ? { ...r, items, kitchenNote } : r,
+  );
+  const next = withRounds(order, rounds, branch, findPromo(promotions.codes, order.promoCode));
+  // Already paid more than the new total: the difference goes back to the guest.
+  const settled = settlePayment(order, paidAmount(order), next.total);
+  const updated: Order = { ...next, payment: settled.payment };
+  ctx.db.orders.write(ctx.db.orders.read().map((o) => (o.id === order.id ? updated : o)));
+  const response: OrderChangeResponse = {
+    order: liveOrder(updated, now.getTime(), branch),
+    refunded: settled.refunded,
+  };
+  return ok(response);
+};
+
+/** POST /admin/branches/:branchId/orders/:id/cancel */
+export const cancelByStaff: Handler = async (ctx, { params, body, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const reason = CANCEL_REASONS.find((r) => isObject(body) && r === body.reason);
+  if (!reason) fail(400, 'invalid_request');
+  const labels = await ctx.seed.orderLabels(branch);
+  const order = await storedOrder(ctx, branch, params.id);
+  const now = new Date(ctx.now());
+  // Served, picked up, delivered or already cancelled: too late.
+  if (isFinished(liveOrder(order, now.getTime(), branch))) fail(409, 'order_closed');
+  const time = createClock(branch).time(now);
+  const cancelled = { status: 'cancelled' as const, time };
+  return saveOrder(
+    ctx,
+    branch,
+    {
+      ...order,
+      ...(order.rounds
+        ? {
+            rounds: order.rounds.map((r) =>
+              r.status === 'cancelled'
+                ? r
+                : { ...r, status: 'cancelled', timeline: [...r.timeline, cancelled] },
+            ),
+          }
+        : {}),
+      status: 'cancelled',
+      cancelledBy: 'restaurant',
+      cancelReason: labels.cancelReason(reason),
+      timeline: [...order.timeline, cancelled],
+      payment: cancelledPayment(order).payment,
+    },
+    now,
+  );
 };

@@ -9,8 +9,12 @@ import { PROMO_REFUSALS } from '@/lib/promotions';
 import type { Order } from '@/types/order';
 import type {
   AddRoundRequest,
+  CancelByStaffRequest,
   CancelOrderRequest,
   ChangeOrderRequest,
+  CollectPaymentRequest,
+  CollectTableRequest,
+  EditRoundRequest,
   ServiceRequestListResponse,
   SimulatePaymentRequest,
   StaffRoundRequest,
@@ -312,6 +316,80 @@ export function useAddStaffRound() {
       orderId: string;
       body: StaffRoundRequest;
     }) => api.addStaffRound(requireToken(token), branchId, orderId, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** POST /admin/branches/:branchId/orders/:id/payment: staff took the payment in person. */
+export function useCollectPayment() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      body,
+    }: {
+      branchId: string;
+      orderId: string;
+      body: CollectPaymentRequest;
+    }) => api.collectPayment(requireToken(token), branchId, orderId, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** POST /admin/branches/:branchId/orders/:id/cancel: the restaurant cancels an order. */
+export function useCancelByStaff() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      body,
+    }: {
+      branchId: string;
+      orderId: string;
+      body: CancelByStaffRequest;
+    }) => api.cancelByStaff(requireToken(token), branchId, orderId, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** PATCH /admin/branches/:branchId/orders/:id/rounds/:round: a waiter changes a round's items. */
+export function useEditStaffRound() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      round,
+      body,
+    }: {
+      branchId: string;
+      orderId: string;
+      round: number;
+      body: EditRoundRequest;
+    }) => api.editStaffRound(requireToken(token), branchId, orderId, round, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** POST /admin/branches/:branchId/tables/:table/payment: the whole table paid in person. */
+export function useCollectTablePayment() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      table,
+      body,
+    }: {
+      branchId: string;
+      table: number;
+      body: CollectTableRequest;
+    }) => api.collectTablePayment(requireToken(token), branchId, table, body),
     onSettled: () => refreshFloor(client),
   });
 }

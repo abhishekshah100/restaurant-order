@@ -289,5 +289,12 @@
     "added": "Added to your cart from order #{id}",
     "skipped": "Added to your cart. Not available right now: {names}",
     "noneAvailable": "None of these dishes can be ordered right now"
+  },
+  "restaurantCancel": {
+    "outOfStock": "An item ran out in the kitchen",
+    "guestLeft": "Cancelled at the table",
+    "kitchenIssue": "The kitchen couldn't make it",
+    "duplicate": "It was placed twice",
+    "other": "Cancelled by the restaurant"
   }
 }

@@ -1,5 +1,6 @@
 import type { IconName } from '@/components/ui/Icon/iconNames';
 import type { AdminServiceCounts } from '@/types/admin';
+import type { OrderView } from './adminOrders';
 import { ADMIN_PATHS } from './adminBranches';
 
 /*
@@ -70,3 +71,12 @@ export const tablePath = (table: number) => `${ADMIN_LINKS.tables}${table}/`;
 /** The floor plan open on an area: /admin/dashboard/tables/?floor=first. */
 export const floorPath = (floorId: string) =>
   `${ADMIN_LINKS.tables}?floor=${encodeURIComponent(floorId)}`;
+
+/**
+ * An Orders view on the Orders page (?view=), so switching views keeps the page and its filters.
+ * The home's counters link to the ready/ and unpaid/ pages, which open on those views.
+ */
+export function ordersPath(view: OrderView): string {
+  const base = section('orders');
+  return view === 'active' ? base : `${base}?view=${view}`;
+}

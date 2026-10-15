@@ -4,11 +4,16 @@ import type {
   AcknowledgeRequestResponse,
   AddRoundRequest,
   AdminBranchesResponse,
+  AdminOrdersResponse,
   AdminSignInRequest,
   AdminSignInResponse,
   BranchServiceResponse,
+  CancelByStaffRequest,
   CancelOrderRequest,
   ChangeOrderRequest,
+  CollectPaymentRequest,
+  CollectTableRequest,
+  EditRoundRequest,
   CreatePaymentRequest,
   CreateServiceRequestRequest,
   CreateServiceRequestResponse,
@@ -32,6 +37,7 @@ import type {
   SimulatePaymentRequest,
   StaffRoundRequest,
   TableDetailResponse,
+  TablePaymentResponse,
   TakeTableOrderRequest,
   UpdateSessionRequest,
   ValidatePromoRequest,
@@ -62,6 +68,43 @@ export const api = {
   takeTableOrder: (token: string, branchId: string, table: number, body: TakeTableOrderRequest) =>
     apiPost<OrderResponse>(
       `admin/branches/${seg(branchId)}/tables/${table}/orders`,
+      body,
+      bearer(token),
+    ),
+  branchOrders: (token: string, branchId: string) =>
+    apiGet<AdminOrdersResponse>(`admin/branches/${seg(branchId)}/orders`, bearer(token)),
+  collectPayment: (token: string, branchId: string, orderId: string, body: CollectPaymentRequest) =>
+    apiPost<OrderResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/payment`,
+      body,
+      bearer(token),
+    ),
+  collectTablePayment: (
+    token: string,
+    branchId: string,
+    table: number,
+    body: CollectTableRequest,
+  ) =>
+    apiPost<TablePaymentResponse>(
+      `admin/branches/${seg(branchId)}/tables/${table}/payment`,
+      body,
+      bearer(token),
+    ),
+  editStaffRound: (
+    token: string,
+    branchId: string,
+    orderId: string,
+    round: number,
+    body: EditRoundRequest,
+  ) =>
+    apiPatch<OrderChangeResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/rounds/${round}`,
+      body,
+      bearer(token),
+    ),
+  cancelByStaff: (token: string, branchId: string, orderId: string, body: CancelByStaffRequest) =>
+    apiPost<OrderResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/cancel`,
       body,
       bearer(token),
     ),

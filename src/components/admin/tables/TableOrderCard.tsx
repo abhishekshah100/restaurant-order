@@ -1,7 +1,9 @@
 import { useContent } from '@/api/hooks';
 import { Icon, StatusPill } from '@/components/ui';
+import { dueOn } from '@/lib/adminOrders';
+import { cx } from '@/lib/cx';
 import type { Order } from '@/types/order';
-import { PaymentBadge } from '../sections/PaymentBadge';
+import { PaymentBadge } from '../orders/PaymentBadge';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './TableOrderCard.module.css';
 
@@ -10,23 +12,30 @@ const PREVIEW_ITEMS = 2;
 
 /**
  * One open order at the table: its number and kitchen status, who ordered and when, the first
- * dishes, and its total with the payment state. The card opens the order's details; Add items
- * opens the order pad on this order.
+ * dishes, and its total with the payment state. The card opens the order's details. Its actions:
+ * Add items (a new round), Change (the round the kitchen hasn't finished, if any) and Collect
+ * (while something is due — before, during or after the meal).
  */
 export function TableOrderCard({
   order,
   onOpen,
   onAddItems,
+  onChange,
+  onCollect,
 }: {
   order: Order;
   onOpen: () => void;
   onAddItems: () => void;
+  /** Present while a round can still be changed. */
+  onChange?: () => void;
+  onCollect: () => void;
 }) {
   const t = useContent('common');
   const { money, clock } = useAdminWorkspace();
   const shown = order.items.slice(0, PREVIEW_ITEMS);
   const hidden = order.items.length - shown.length;
   const itemCount = order.items.reduce((n, item) => n + item.quantity, 0);
+  const due = dueOn(order);
 
   return (
     <article className={styles.card}>
@@ -61,15 +70,39 @@ export function TableOrderCard({
         </PaymentBadge>
         <strong className={styles.total}>{money.format(order.total)}</strong>
       </span>
-      <button
-        type="button"
-        className={styles.addItems}
-        onClick={onAddItems}
-        aria-label={t('adminTables.detail.order.addItemsLabel', { order: order.id })}
-      >
-        <Icon name="plus" size="xs" />
-        {t('adminTables.detail.order.addItems')}
-      </button>
+      <span className={styles.actions}>
+        <button
+          type="button"
+          className={styles.action}
+          onClick={onAddItems}
+          aria-label={t('adminTables.detail.order.addItemsLabel', { order: order.id })}
+        >
+          <Icon name="plus" size="xs" />
+          {t('adminTables.detail.order.addItems')}
+        </button>
+        {onChange && (
+          <button
+            type="button"
+            className={styles.action}
+            onClick={onChange}
+            aria-label={t('adminTables.detail.order.changeLabel', { order: order.id })}
+          >
+            <Icon name="pencil" size="xs" />
+            {t('adminTables.detail.order.change')}
+          </button>
+        )}
+        {due > 0 && (
+          <button
+            type="button"
+            className={cx(styles.action, styles.collect)}
+            onClick={onCollect}
+            aria-label={t('adminTables.detail.order.collectLabel', { order: order.id })}
+          >
+            <Icon name="cash" size="xs" />
+            {t('adminTables.detail.order.collect')}
+          </button>
+        )}
+      </span>
     </article>
   );
 }

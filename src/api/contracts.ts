@@ -3,11 +3,13 @@ import type {
   AdminBranch,
   AdminBranchService,
   AdminFloorPlan,
+  AdminOrders,
+  CancelReason,
   AdminServiceRequest,
   AdminTableDetail,
   AdminSession,
 } from '@/types/admin';
-import type { OrderMode, PaymentMethodId } from '@/types/branch';
+import type { AtTableMethodKey, OrderMode, PaymentMethodId } from '@/types/branch';
 import type { LineConfig } from '@/types/cart';
 import type { Price } from '@/types/menu';
 import type { DeliveryAddress, Order } from '@/types/order';
@@ -175,6 +177,65 @@ export interface TakeTableOrderRequest {
   customerName: string;
   kitchenNote?: string;
   lines: OrderLineRequest[];
+}
+
+/**
+ * `GET /admin/branches/:branchId/orders` — today's orders at the branch (its time zone), every
+ * mode and state, in full (items, rounds, payment, timeline, pickup or delivery details), newest
+ * first. Authorised like GET /admin/branches. 200 → `AdminOrdersResponse`. Errors: 401, 403.
+ * Poll it like the service (every 15 s). Mock: this device's orders, the drawn history and, in
+ * dev, the demo floor.
+ */
+export type AdminOrdersResponse = AdminOrders;
+
+/**
+ * `POST /admin/branches/:branchId/orders/:id/payment` — staff took the payment in person, at any
+ * time (before the food, during the meal or after)
+ * (cash, a card machine, a QR wallet): the order is paid in full, `payment.detail` names how.
+ * `method` is one of GET /branches › payments.atTable. 200 → `Order`. Errors: 400 (another
+ * method), 401, 403, 404 not_found, 409 order_closed (cancelled) / nothing_to_pay (paid).
+ */
+export interface CollectPaymentRequest {
+  method: AtTableMethodKey;
+}
+
+/**
+ * `PATCH /admin/branches/:branchId/orders/:id/rounds/:round` — a waiter changes what's on one
+ * round of an order (the guest asked at the table): its lines replace the round's items, the
+ * tab is priced again, and anything paid beyond the new total goes back to the guest. Only
+ * while the kitchen hasn't finished the round (received or preparing). To take everything off,
+ * cancel the order. 200 → `OrderChangeResponse`. Errors: 400, 401, 403, 404 not_found (no such
+ * order or round), 409 order_closed (cancelled) / window_closed (the round is ready or served),
+ * 422 empty_order / item_unavailable.
+ */
+export interface EditRoundRequest {
+  kitchenNote?: string;
+  lines: OrderLineRequest[];
+}
+
+/**
+ * `POST /admin/branches/:branchId/tables/:table/payment` — staff took the whole table's payment
+ * in person: every order at the table today with something still to pay is paid in full,
+ * named by `method` (one of GET /branches › payments.atTable). 200 → `TablePaymentResponse`
+ * (the orders it paid). Errors: 400, 401, 403, 409 nothing_to_pay.
+ */
+export interface CollectTableRequest {
+  method: AtTableMethodKey;
+}
+
+export interface TablePaymentResponse {
+  orders: Order[];
+}
+
+/**
+ * `POST /admin/branches/:branchId/orders/:id/cancel` — the restaurant cancels an order it can't
+ * complete: every round still on it is cancelled, `cancelledBy: 'restaurant'`, `cancelReason`
+ * is the reason in the guest's words (their order page shows it), and anything already paid
+ * starts a refund. Not after it's served, picked up or delivered. 200 → `Order`. Errors: 400
+ * (unknown reason), 401, 403, 404 not_found, 409 order_closed (finished or already cancelled).
+ */
+export interface CancelByStaffRequest {
+  reason: CancelReason;
 }
 
 /**

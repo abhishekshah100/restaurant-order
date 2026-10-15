@@ -11,7 +11,8 @@ import type { MenuCatalog } from '@/lib/menu';
 import { PAYMENT_METHODS } from '@/lib/payments';
 import type { Bill } from '@/lib/pricing';
 import { toOrderDiscounts } from '@/lib/promotions';
-import type { Branch, PaymentMethodId } from '@/types/branch';
+import type { CancelReason } from '@/types/admin';
+import type { AtTableMethodKey, Branch, PaymentMethodId } from '@/types/branch';
 import type { Price } from '@/types/menu';
 import type { Order, OrderEvent, OrderItem, PaymentMethod, Rider } from '@/types/order';
 import type { AppliedOffer } from '@/types/promotion';
@@ -98,6 +99,10 @@ export interface OrderLabels {
   estimate: string;
   /** Timeline note of an order or round a waiter took at the table: "Taken by Abhishek". */
   takenBy: (name: string) => string;
+  /** How a bill paid to staff is shown on the order: "Cash", "Card", "eSewa"… */
+  atTableName: (method: AtTableMethodKey) => string;
+  /** Why the restaurant cancelled an order, as the guest reads it. */
+  cancelReason: (reason: CancelReason) => string;
 }
 
 export interface NewOrder {

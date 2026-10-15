@@ -20,6 +20,8 @@ const labels = {
   estimate: branch.prepTime,
   onBill: 'On your bill',
   takenBy: (name: string) => `Taken by ${name}`,
+  atTableName: (method: string) => method,
+  cancelReason: (reason: string) => reason,
 };
 const mockOrders = testOrderHistory().history;
 

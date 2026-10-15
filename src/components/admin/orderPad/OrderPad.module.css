@@ -256,6 +256,40 @@
   font-variant-numeric: tabular-nums;
 }
 
+.addMore {
+  justify-self: start;
+  min-height: 40px;
+  padding: 0 14px 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: -6px;
+  border: 1px dashed var(--brand-600);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.addMore:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .addMore:hover {
+    background: var(--brand-tint-2);
+  }
+}
+
+.removed {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--warn-tint);
+  color: var(--warn);
+  font: var(--font-small);
+}
+
 .total {
   display: flex;
   align-items: baseline;

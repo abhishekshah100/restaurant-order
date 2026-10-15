@@ -247,3 +247,88 @@
   font: var(--font-meta);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Where it goes (takeaway, delivery) ---------- */
+
+.where {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.whereTitle {
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.whereNote {
+  color: var(--ink-2);
+  font: var(--font-meta);
+}
+
+/* ---------- Actions ---------- */
+
+.actions {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.secondary {
+  display: flex;
+  gap: 8px;
+}
+
+.secondary > * {
+  flex: 1;
+}
+
+.cancelLink {
+  color: var(--error);
+}
+
+.stepActions {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+}
+
+.danger {
+  background: var(--error);
+  border-color: var(--error);
+}
+
+/* ---------- Collect and cancel steps ---------- */
+
+.step {
+  display: grid;
+  gap: 18px;
+}
+
+.amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  font: var(--font-label);
+}
+
+.amount strong {
+  font: var(--font-price-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepNote {
+  color: var(--ink-2);
+  font: var(--font-small);
+}

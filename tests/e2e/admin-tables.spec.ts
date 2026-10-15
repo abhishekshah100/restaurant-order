@@ -115,3 +115,48 @@ test('a waiter takes an order at a free table, then adds to it', async ({ page }
   await expect(details).toContainText('Taken by Abhishek Saha');
   await expect(details).toContainText('Kitchen note: Not too spicy');
 });
+
+test('paying first, changing the order, adding more and paying the rest', async ({ page }) => {
+  test.slow();
+  await adminSignIn(page);
+  await page.goto('/admin/dashboard/tables/6/');
+  await page.getByRole('button', { name: 'Take order' }).click();
+  const pad = page.getByRole('dialog');
+  await pad.getByRole('button', { name: 'Add Dahi Kebab' }).click();
+  await pad.getByRole('button', { name: 'Add one Dahi Kebab' }).click();
+  await pad.getByRole('button', { name: /^Review order/ }).click();
+  await pad.getByRole('button', { name: /^Send to kitchen/ }).click();
+  await expect(pad).toHaveCount(0);
+
+  // The guest pays before the food arrives.
+  const card = page.getByRole('article').filter({ hasText: 'Table 6 guest' });
+  await card.getByRole('button', { name: /^Collect payment for order/ }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('radio', { name: 'UPI' }).click();
+  await dialog.getByRole('button', { name: /^Collect ₹/ }).click();
+  await expect(card).toContainText('paid');
+  await expect(page.getByRole('button', { name: /^Collect ₹/ })).toHaveCount(0);
+
+  // Ten minutes later: one kebab fewer.
+  await card.getByRole('button', { name: /^Change items on order/ }).click();
+  await expect(pad).toContainText('Round 1');
+  await pad.getByRole('button', { name: 'Remove one Dahi Kebab' }).click();
+  await pad.getByRole('button', { name: /^Save changes/ }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: /to give back to the guest/ }),
+  ).toBeVisible();
+  await expect(card).toContainText('1 × Dahi Kebab');
+
+  // Then more for the table: only that is still to pay, collected for the whole table.
+  await card.getByRole('button', { name: /^Add items to order/ }).click();
+  await pad.getByRole('button', { name: 'Add Hara Bhara Kebab' }).click();
+  await pad.getByRole('button', { name: /^Review order/ }).click();
+  await pad.getByRole('button', { name: /^Send to kitchen/ }).click();
+  await expect(card).toContainText('unpaid');
+  await page.getByRole('button', { name: /^Collect ₹/ }).click();
+  await expect(dialog).toContainText('1 order to pay');
+  await dialog.getByRole('radio', { name: 'Cash' }).click();
+  await dialog.getByRole('button', { name: /^Collect ₹/ }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Table 6 paid' })).toBeVisible();
+  await expect(card).toContainText('paid');
+});

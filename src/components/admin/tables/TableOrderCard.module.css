@@ -1,7 +1,7 @@
 /*
  * An order card on a table's page: header, who and when, the dishes, count, payment and total,
- * then Add items. The order number's button stretches over the card, so the whole card opens
- * the details; Add items sits above it.
+ * then its actions (Add items, Change, Collect). The order number's button stretches over the
+ * card, so the whole card opens the details; the actions sit above it.
  */
 
 .card {
@@ -88,33 +88,56 @@
   font-variant-numeric: tabular-nums;
 }
 
-.addItems {
+.actions {
   position: relative;
   z-index: 1;
-  min-height: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   margin-top: 4px;
+}
+
+.action {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border: 1px solid var(--brand-600);
+  gap: 5px;
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-pill);
-  background: var(--brand-tint-2);
-  color: var(--brand-700);
+  background: var(--surface);
+  color: var(--ink);
   font: var(--font-small-strong);
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
     color var(--dur-fast) ease;
 }
 
-.addItems:focus-visible {
+.collect {
+  border-color: transparent;
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+.action:focus-visible {
   box-shadow: var(--focus);
 }
 
 @media (hover: hover) {
-  .addItems:hover {
-    background: var(--brand-600);
+  .action:hover {
+    border-color: var(--brand-600);
+    color: var(--brand-700);
+  }
+
+  .collect:hover {
+    border-color: transparent;
+    background: var(--gold);
     color: var(--white);
   }
 

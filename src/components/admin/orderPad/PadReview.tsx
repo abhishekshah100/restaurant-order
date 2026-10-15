@@ -1,7 +1,7 @@
 'use client';
 
 import { useContent } from '@/api/hooks';
-import { Input, QuantityStepper, Textarea, VegMark } from '@/components/ui';
+import { Icon, Input, QuantityStepper, Textarea, VegMark } from '@/components/ui';
 import { describeInstructions, describeOptionsShort, type CartLineLabels } from '@/lib/cartLine';
 import type { MenuCatalog } from '@/lib/menu';
 import { padTotals, type PadLines } from '@/lib/orderPad';
@@ -19,6 +19,8 @@ export function PadReview({
   labels,
   lines,
   onQuantity,
+  removed,
+  onAddMore,
   guest,
   onGuest,
   kitchenNote,
@@ -29,6 +31,10 @@ export function PadReview({
   labels: CartLineLabels;
   lines: PadLines;
   onQuantity: (key: string, quantity: number) => void;
+  /** Dishes on the round that can't be ordered now, so they come off. */
+  removed: readonly string[];
+  /** Back to the menu to add more dishes. */
+  onAddMore: () => void;
   guest: string;
   onGuest: (name: string) => void;
   kitchenNote: string;
@@ -50,6 +56,12 @@ export function PadReview({
           value={guest}
           onChange={(event) => onGuest(event.target.value)}
         />
+      )}
+
+      {removed.length > 0 && (
+        <p className={styles.removed}>
+          {t('adminOrderPad.removed', { items: removed.join(', ') })}
+        </p>
       )}
 
       {lines.length > 0 ? (
@@ -86,6 +98,11 @@ export function PadReview({
       ) : (
         <p className={styles.none}>{t('adminOrderPad.empty')}</p>
       )}
+
+      <button type="button" className={styles.addMore} onClick={onAddMore}>
+        <Icon name="plus" size="xs" />
+        {t('adminOrderPad.addMore')}
+      </button>
 
       <Textarea
         id="pad-kitchen-note"

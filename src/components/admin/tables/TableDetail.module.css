@@ -44,7 +44,8 @@
   grid-template-areas:
     'badge heading'
     'stats stats'
-    'action action';
+    'action action'
+    'collect collect';
   align-items: center;
   gap: 14px 16px;
   padding: 16px;
@@ -132,6 +133,10 @@
 
 .takeOrder {
   grid-area: action;
+}
+
+.collectTable {
+  grid-area: collect;
 }
 
 .stats {
@@ -252,10 +257,10 @@
   }
 
   .hero {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     grid-template-areas:
-      'badge heading action'
-      'stats stats stats';
+      'badge heading collect action'
+      'stats stats stats stats';
     gap: 18px 20px;
     padding: 22px 24px;
   }
@@ -282,7 +287,8 @@
     font: var(--font-body);
   }
 
-  .takeOrder {
+  .takeOrder,
+  .collectTable {
     align-self: start;
   }
 
@@ -292,7 +298,7 @@
   }
 
   .orders {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 12px;
   }
 }

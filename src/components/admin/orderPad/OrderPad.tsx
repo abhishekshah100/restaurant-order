@@ -3,25 +3,35 @@
 import { useMemo, useState } from 'react';
 import { useBranchMenu } from '@/api/adminDashboard';
 import { useContent } from '@/api/hooks';
-import { useAddStaffRound, useTakeTableOrder } from '@/api/mutations';
+import { useAddStaffRound, useEditStaffRound, useTakeTableOrder } from '@/api/mutations';
 import { Button, Dialog, IconButton } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
 import { defaultConfig } from '@/lib/cartLine';
+import { reorderLines } from '@/lib/lifecycle';
 import { addLine, padRequest, padTotals, setQuantity } from '@/lib/orderPad';
 import type { CartLine, LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
-import type { Order } from '@/types/order';
+import type { Order, OrderRound } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { PadChoose } from './PadChoose';
 import { PadMenu } from './PadMenu';
 import { PadReview } from './PadReview';
 import styles from './OrderPad.module.css';
 
-/** What the pad is for: a new order at the table, or more items on one of its orders. */
+/**
+ * What the pad is for: a new order at the table, more items on one of its orders, or changing
+ * the items of an order's round (the kitchen hasn't finished it).
+ */
 export type PadTarget =
   | { kind: 'new'; table: number }
-  | { kind: 'add'; table: number; order: Pick<Order, 'id' | 'customerName'> };
+  | { kind: 'add'; table: number; order: Pick<Order, 'id' | 'customerName'> }
+  | {
+      kind: 'edit';
+      table: number;
+      order: Pick<Order, 'id' | 'customerName'>;
+      round: Pick<OrderRound, 'number' | 'items' | 'kitchenNote'>;
+    };
 
 /** The dish being set up before it's added: its choices and how many. */
 interface Choosing {
@@ -35,7 +45,8 @@ interface Choosing {
  * branch's menu (search, categories, one tap for a dish without choices), set sizes and
  * choices where a dish has them, then review — guest name, quantities, a note for the kitchen
  * — and send. A new order goes on its own bill (POST …/tables/:table/orders); added items go on
- * the order's bill as a new round (POST …/orders/:id/rounds). Fresh each time it opens.
+ * the order's bill as a new round (POST …/orders/:id/rounds); a change replaces a round's items
+ * (PATCH …/orders/:id/rounds/:round) and opens on the review with them. Fresh each time.
  */
 export function OrderPad({ target, onClose }: { target: PadTarget | null; onClose: () => void }) {
   if (!target) return null;
@@ -51,25 +62,42 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
   const labels = useMemo(() => cartLineLabels(cart, money), [cart, money]);
   const take = useTakeTableOrder();
   const addRound = useAddStaffRound();
-  const sending = take.isPending || addRound.isPending;
+  const editRound = useEditStaffRound();
+  const sending = take.isPending || addRound.isPending || editRound.isPending;
 
-  const [lines, setLines] = useState<CartLine[]>([]);
-  const [step, setStep] = useState<'menu' | 'review'>('menu');
+  // A change starts from the round's items as they can be ordered today (the rest come off).
+  const [start] = useState(() =>
+    target.kind === 'edit' && menu
+      ? reorderLines(target.round.items, menu)
+      : { lines: [], skipped: [] },
+  );
+  const [lines, setLines] = useState<CartLine[]>(() =>
+    start.lines.reduce<CartLine[]>((all, l) => addLine(all, l.dish, l.config, l.quantity), []),
+  );
+  const [step, setStep] = useState<'menu' | 'review'>(target.kind === 'edit' ? 'review' : 'menu');
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [guest, setGuest] = useState('');
-  const [kitchenNote, setKitchenNote] = useState('');
+  const [kitchenNote, setKitchenNote] = useState(
+    target.kind === 'edit' ? (target.round.kitchenNote ?? '') : '',
+  );
   const totals = padTotals(lines);
 
-  const title =
-    target.kind === 'new'
-      ? t('adminOrderPad.titleNew', { table: target.table })
-      : t('adminOrderPad.titleAdd', { order: target.order.id });
+  let title = t('adminOrderPad.titleNew', { table: target.table });
+  if (target.kind === 'add') title = t('adminOrderPad.titleAdd', { order: target.order.id });
+  if (target.kind === 'edit') title = t('adminOrderPad.titleEdit', { order: target.order.id });
   // Setting up a dish: which order it's for. Otherwise: whose order, or the step.
   let subtitle = t(`adminOrderPad.steps.${step}`);
   if (target.kind === 'add') {
     subtitle = t('adminOrderPad.subtitleAdd', {
       name: target.order.customerName,
       table: target.table,
+    });
+  }
+  if (target.kind === 'edit') {
+    subtitle = t('adminOrderPad.subtitleEdit', {
+      name: target.order.customerName,
+      table: target.table,
+      round: target.round.number,
     });
   }
   if (choosing) subtitle = title;
@@ -91,7 +119,29 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
     };
     const failed = () => showToast(t('adminOrderPad.failed'), { tone: 'error' });
     const note = kitchenNote.trim() || undefined;
-    if (target.kind === 'new') {
+    if (target.kind === 'edit') {
+      editRound.mutate(
+        {
+          branchId: branch.id,
+          orderId: target.order.id,
+          round: target.round.number,
+          body: { kitchenNote: note, lines: padRequest(lines) },
+        },
+        {
+          onSuccess: ({ order, refunded }) => {
+            const saved = t('adminOrderPad.saved', { order: order.id });
+            showToast(
+              refunded > 0
+                ? `${saved} · ${t('adminOrderPad.refund', { amount: money.format(refunded) })}`
+                : saved,
+              { tone: 'success' },
+            );
+            onClose();
+          },
+          onError: failed,
+        },
+      );
+    } else if (target.kind === 'new') {
       take.mutate(
         {
           branchId: branch.id,
@@ -150,6 +200,8 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
         labels={labels}
         lines={lines}
         onQuantity={(key, quantity) => setLines(setQuantity(lines, key, quantity))}
+        removed={start.skipped}
+        onAddMore={() => setStep('menu')}
         guest={guest}
         onGuest={setGuest}
         kitchenNote={kitchenNote}
@@ -165,7 +217,7 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
         meta={money.format(totals.total)}
         onClick={send}
       >
-        {t('adminOrderPad.send')}
+        {target.kind === 'edit' ? t('adminOrderPad.save') : t('adminOrderPad.send')}
       </Button>
     );
   } else {

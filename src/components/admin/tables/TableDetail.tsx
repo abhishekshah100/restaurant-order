@@ -9,10 +9,13 @@ import { useNow } from '@/hooks/useNow';
 import { ADMIN_LINKS, floorPath } from '@/lib/adminNav';
 import { legendOf } from '@/lib/adminTables';
 import { cx } from '@/lib/cx';
+import { editableRound } from '@/lib/adminOrders';
 import type { AdminTableDetail } from '@/types/admin';
+import type { Order } from '@/types/order';
 import { OrderPad, type PadTarget } from '../orderPad/OrderPad';
-import { OrderDetailDialog } from '../sections/OrderDetailDialog';
+import { OrderDetailDialog, type OrderDialogView } from '../orders/OrderDetailDialog';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { TableCollectDialog } from './TableCollectDialog';
 import { TableOrderCard } from './TableOrderCard';
 import { TableRequests } from './TableRequests';
 import { useSeatedLabel } from './useSeatedLabel';
@@ -86,10 +89,24 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
   const t = useContent('common');
   const { money } = useAdminWorkspace();
   const seatedLabel = useSeatedLabel();
-  const [openId, setOpenId] = useState<string>();
+  const [open, setOpen] = useState<{ id: string; view: OrderDialogView } | null>(null);
   const [pad, setPad] = useState<PadTarget | null>(null);
+  const [collectingTable, setCollectingTable] = useState(false);
   // Looked up on every poll, so an open order shows its latest state.
-  const openOrder = detail.orders.find((order) => order.id === openId);
+  const openOrder = open ? detail.orders.find((order) => order.id === open.id) : undefined;
+  const addItems = (order: Order) => {
+    setOpen(null);
+    setPad({ kind: 'add', table: detail.table, order });
+  };
+  /** Changing the round the kitchen hasn't finished; undefined when there's none. */
+  const changeItems = (order: Order) => {
+    const round = editableRound(order);
+    if (!round) return undefined;
+    return () => {
+      setOpen(null);
+      setPad({ kind: 'edit', table: detail.table, order, round });
+    };
+  };
   const seated = seatedLabel(detail.seatedAt, now);
 
   return (
@@ -126,6 +143,16 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
             ? t('adminTables.detail.newOrder')
             : t('adminTables.detail.takeOrder')}
         </Button>
+        {detail.due > 0 && (
+          <Button
+            variant="secondary"
+            iconStart="cash"
+            className={styles.collectTable}
+            onClick={() => setCollectingTable(true)}
+          >
+            {t('adminTables.detail.collectTable', { amount: money.format(detail.due) })}
+          </Button>
+        )}
         <dl className={styles.stats} aria-label={t('adminTables.detail.stats.label')}>
           <div className={styles.stat}>
             <dt>{t('adminTables.detail.stats.orders')}</dt>
@@ -159,8 +186,10 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <li key={order.id}>
                 <TableOrderCard
                   order={order}
-                  onOpen={() => setOpenId(order.id)}
-                  onAddItems={() => setPad({ kind: 'add', table: detail.table, order: order })}
+                  onOpen={() => setOpen({ id: order.id, view: 'details' })}
+                  onAddItems={() => addItems(order)}
+                  onChange={changeItems(order)}
+                  onCollect={() => setOpen({ id: order.id, view: 'collect' })}
                 />
               </li>
             ))}
@@ -176,8 +205,17 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
         )}
       </section>
 
-      <OrderDetailDialog order={openOrder} onClose={() => setOpenId(undefined)} />
+      <OrderDetailDialog
+        order={openOrder}
+        initialView={open?.view}
+        onClose={() => setOpen(null)}
+        onAddItems={addItems}
+        onChangeItems={(order) => changeItems(order)?.()}
+      />
       <OrderPad target={pad} onClose={() => setPad(null)} />
+      {collectingTable && (
+        <TableCollectDialog detail={detail} onClose={() => setCollectingTable(false)} />
+      )}
     </>
   );
 }

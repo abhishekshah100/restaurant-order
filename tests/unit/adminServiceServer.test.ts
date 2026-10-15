@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ApiResponse } from '@/api/client';
 import type {
+  AdminOrdersResponse,
   AdminSignInResponse,
   ApiErrorBody,
   BranchServiceResponse,
   CreateServiceRequestResponse,
   FloorPlanResponse,
+  OrderChangeResponse,
+  TablePaymentResponse,
   ResolveRequestResponse,
   ServiceRequestListResponse,
   TableDetailResponse,
@@ -31,7 +34,7 @@ let now = START;
 const server = createTestServer(() => now);
 
 const call = (
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PATCH',
   path: string,
   body?: unknown,
   headers?: Record<string, string>,
@@ -535,5 +538,165 @@ describe('POST /admin/service-requests/:id/acknowledge (mock)', () => {
     const request = await callWaiter(atFive);
     expect((await acknowledge(request.id, {})).status).toBe(401);
     expect((await acknowledge('nope')).status).toBe(404);
+  });
+});
+
+describe('Orders for staff (mock)', () => {
+  const list = async () => {
+    const res = await call('GET', 'admin/branches/blr-indiranagar/orders', undefined, admin);
+    expect(res.status).toBe(200);
+    return (res.body as AdminOrdersResponse).orders;
+  };
+  const collect = (id: string, body: unknown) =>
+    call('POST', `admin/branches/blr-indiranagar/orders/${id}/payment`, body, admin);
+  const cancel = (id: string, body: unknown) =>
+    call('POST', `admin/branches/blr-indiranagar/orders/${id}/cancel`, body, admin);
+
+  it("lists today's orders in every mode, in full, newest first", async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const dineIn = await place(atFive);
+    now += MINUTE_MS;
+    const pickup = await guest('blr-indiranagar', { mode: 'takeaway' });
+    const takeaway = await place(pickup, {
+      method: 'pickup',
+      fulfilment: { mode: 'takeaway', pickupAt: null },
+    });
+
+    const orders = await list();
+    const ids = orders.map((o) => o.id);
+    // Newest first.
+    expect(ids.indexOf(takeaway.id)).toBeLessThan(ids.indexOf(dineIn.id));
+    expect(orders.map((o) => o.placedAt)).toEqual(
+      orders
+        .map((o) => o.placedAt)
+        .sort()
+        .reverse(),
+    );
+    expect(orders.find((o) => o.id === takeaway.id)).toMatchObject({
+      mode: 'takeaway',
+      pickup: { asap: true },
+    });
+    expect(orders.find((o) => o.id === dineIn.id)?.items[0]).toMatchObject({
+      dishSlug: 'dahi-kebab',
+    });
+    // The drawn history's orders today at this branch are listed too.
+    expect(orders.length).toBeGreaterThan(2);
+    expect(orders.every((o) => o.branchId === 'blr-indiranagar')).toBe(true);
+  });
+
+  it("collects the payment in person with one of the branch's methods", async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive);
+
+    expect((await collect(placed.id, { method: 'esewa' })).status).toBe(400);
+    const res = await collect(placed.id, { method: 'cash' });
+    expect(res.status).toBe(200);
+    expect((res.body as Order).payment).toMatchObject({ status: 'paid', detail: 'Cash' });
+    expect((await collect(placed.id, { method: 'card' })).status).toBe(409);
+
+    // A drawn order can be collected too (the mock saves it the first time).
+    const drawn = (await list()).find(
+      (o) => o.payment.status === 'unpaid' && o.status !== 'cancelled',
+    );
+    if (drawn) expect((await collect(drawn.id, { method: 'upi' })).status).toBe(200);
+  });
+
+  it('cancels for the guest with a reason they can read, until it is served', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive);
+    expect((await cancel(placed.id, { reason: 'bored' })).status).toBe(400);
+
+    const res = await cancel(placed.id, { reason: 'outOfStock' });
+    expect(res.status).toBe(200);
+    expect(res.body as Order).toMatchObject({
+      status: 'cancelled',
+      cancelledBy: 'restaurant',
+      cancelReason: 'An item ran out in the kitchen',
+    });
+    const mine = (await call('GET', `orders/${placed.id}`)).body as Order;
+    expect(mine.status).toBe('cancelled');
+    expect((await cancel(placed.id, { reason: 'other' })).status).toBe(409);
+    expect((await collect(placed.id, { method: 'cash' })).status).toBe(409);
+
+    const another = await place(atFive);
+    now += READY_AFTER;
+    await served(another.id);
+    expect((await cancel(another.id, { reason: 'other' })).status).toBe(409);
+  });
+});
+
+describe('Changing an order and paying at any time (mock)', () => {
+  const change = (id: string, round: number, body: unknown) =>
+    call('PATCH', `admin/branches/blr-indiranagar/orders/${id}/rounds/${round}`, body, admin);
+  const collect = (id: string, method = 'cash') =>
+    call('POST', `admin/branches/blr-indiranagar/orders/${id}/payment`, { method }, admin);
+  const collectTable = (table: number, method = 'card') =>
+    call('POST', `admin/branches/blr-indiranagar/tables/${table}/payment`, { method }, admin);
+
+  it("changes a round the kitchen hasn't finished, and prices the tab again", async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive); // 2 × Dahi Kebab
+    now += 10 * MINUTE_MS;
+
+    const res = await change(placed.id, 1, {
+      kitchenNote: 'One less, please',
+      lines: linesOf('blr-indiranagar', 'dahi-kebab', 1),
+    });
+    expect(res.status).toBe(200);
+    const { order, refunded } = res.body as OrderChangeResponse;
+    expect(order.items[0].quantity).toBe(1);
+    expect(order.total).toBeLessThan(placed.total);
+    expect(order.rounds?.[0]).toMatchObject({ kitchenNote: 'One less, please' });
+    expect(refunded).toBe(0);
+
+    expect((await change(placed.id, 1, { lines: [] })).status).toBe(422);
+    expect((await change(placed.id, 2, { lines: linesOf('blr-indiranagar') })).status).toBe(404);
+    now += READY_AFTER;
+    expect((await change(placed.id, 1, { lines: linesOf('blr-indiranagar') })).status).toBe(409);
+  });
+
+  it('takes payment in advance; what is added later is due, and a cut is given back', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive);
+    // Paid before the food arrives.
+    const paid = (await collect(placed.id)).body as Order;
+    expect(paid.payment.status).toBe('paid');
+
+    const cut = (await change(placed.id, 1, { lines: linesOf('blr-indiranagar', 'dahi-kebab', 1) }))
+      .body as OrderChangeResponse;
+    expect(cut.refunded).toBe(placed.total - cut.order.total);
+
+    const more = (
+      await call(
+        'POST',
+        `admin/branches/blr-indiranagar/orders/${placed.id}/rounds`,
+        { lines: linesOf('blr-indiranagar', 'dahi-kebab', 2) },
+        admin,
+      )
+    ).body as Order;
+    const table = (await call('GET', 'admin/branches/blr-indiranagar/tables/5', undefined, admin))
+      .body as TableDetailResponse;
+    // Only the new round is still to pay.
+    expect(table.due).toBe(more.total - cut.order.total);
+  });
+
+  it("collects the whole table's orders at once", async () => {
+    const first = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const second = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    await place(first);
+    await place(second, { customerName: 'Karan' });
+
+    expect((await collectTable(5, 'bitcoin')).status).toBe(400);
+    const res = await collectTable(5);
+    expect(res.status).toBe(200);
+    const { orders } = res.body as TablePaymentResponse;
+    expect(orders).toHaveLength(2);
+    expect(orders.every((o) => o.payment.status === 'paid' && o.payment.detail === 'Card')).toBe(
+      true,
+    );
+    const table = (await call('GET', 'admin/branches/blr-indiranagar/tables/5', undefined, admin))
+      .body as TableDetailResponse;
+    expect(table.due).toBe(0);
+    expect((await collectTable(5)).status).toBe(409);
   });
 });

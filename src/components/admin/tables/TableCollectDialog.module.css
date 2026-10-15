@@ -1,0 +1,49 @@
+/* The table's payment: each order owing, the total, then how they paid. */
+
+.body {
+  display: grid;
+  gap: 16px;
+  width: min(480px, 100%);
+}
+
+.orders {
+  display: grid;
+  list-style: none;
+  border-block: 1px solid var(--line);
+}
+
+.order {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  color: var(--ink-2);
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.order + .order {
+  border-top: 1px dashed var(--line);
+}
+
+.order strong {
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  font: var(--font-label);
+}
+
+.total strong {
+  font: var(--font-price-lg);
+  font-variant-numeric: tabular-nums;
+}

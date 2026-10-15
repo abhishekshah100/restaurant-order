@@ -193,3 +193,15 @@ export interface AdminTableDetail extends AdminFloorTable {
   /** ISO: when the server read it. */
   generatedAt: string;
 }
+
+/* ---------- Orders (GET /admin/branches/:branchId/orders) ---------- */
+
+/** Today's orders at a branch (its time zone) in full, every mode and state, newest first. */
+export interface AdminOrders {
+  orders: Order[];
+  /** ISO: when the server read it. */
+  generatedAt: string;
+}
+
+/** Why the restaurant cancelled an order. */
+export type CancelReason = 'outOfStock' | 'guestLeft' | 'kitchenIssue' | 'duplicate' | 'other';

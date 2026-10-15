@@ -64,6 +64,8 @@ export function querySeed(client: QueryClient): MockSeed {
         },
         onBill: orders('payment.onBill'),
         takenBy: (name) => orders('payment.takenBy', { name }),
+        atTableName: (method) => common(`paymentMethods.${method}`),
+        cancelReason: (reason) => orders(`restaurantCancel.${reason}`),
         methodName: (method) => common(`paymentMethods.${method}`),
         lineLabels: cartLineLabels(cart, createMoney(branch)),
         estimate: branch.prepTime,

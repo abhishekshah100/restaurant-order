@@ -36,7 +36,8 @@
     "fonepay": "Fonepay",
     "counter": "Counter",
     "pickup": "Pay at pickup",
-    "cod": "Cash on delivery"
+    "cod": "Cash on delivery",
+    "cash": "Cash"
   },
   "nav": {
     "label": "Primary",
@@ -230,9 +231,6 @@
     "allCategories": "All categories",
     "tableNumber": "Table {table}",
     "orderNumber": "Order {order}",
-    "allRecords": "All records",
-    "readyStatus": "Ready status",
-    "unpaid": "Unpaid",
     "searchPlaceholder": "Search dishes, categories…",
     "unavailable": "Unavailable",
     "addToDraft": "Add to draft",
@@ -252,14 +250,11 @@
     "itemCount": "{count} items",
     "standard": "Standard",
     "sections": {
-      "ordersSubtitle": "Order history is fixture data, not a live waiter feed.",
       "menuSubtitle": "Search this branch's menu and prepare a local, unsent draft.",
       "paymentsSubtitle": "Payment status is shown separately from order status."
     },
     "empty": {
-      "noFilterMatch": "No records match this filter.",
       "noMenuMatch": "No menu items match your search.",
-      "loadingOrders": "Loading order history…",
       "loadingMenu": "Loading branch menu…",
       "noPayments": "No payment records in sample history."
     },
@@ -498,7 +493,11 @@
         },
         "open": "Open order {order}",
         "addItems": "Add items",
-        "addItemsLabel": "Add items to order {order}"
+        "addItemsLabel": "Add items to order {order}",
+        "change": "Change",
+        "changeLabel": "Change items on order {order}",
+        "collect": "Collect",
+        "collectLabel": "Collect payment for order {order}"
       },
       "empty": {
         "title": "No open orders",
@@ -510,7 +509,8 @@
       },
       "loading": "Loading the table",
       "takeOrder": "Take order",
-      "newOrder": "New order"
+      "newOrder": "New order",
+      "collectTable": "Collect {amount}"
     }
   },
   "adminOrder": {
@@ -537,7 +537,40 @@
     "serve": "Mark served",
     "handOver": "Handed over",
     "close": "Close",
-    "failed": "Couldn't update that. Try again."
+    "failed": "Couldn't update that. Try again.",
+    "pickupTitle": "Pickup",
+    "pickupAsap": "As soon as it's ready · {time}",
+    "pickupAt": "At {time}",
+    "deliveryTitle": "Delivery",
+    "landmark": "Near {landmark}",
+    "rider": "Rider: {name} · {phone}",
+    "addItems": "Add items",
+    "collectPayment": "Collect payment",
+    "cancelOrder": "Cancel order",
+    "back": "Back",
+    "collect": {
+      "title": "Collect payment",
+      "subtitle": "Order {order} · {amount} to collect",
+      "method": "How did they pay?",
+      "confirm": "Collect {amount}",
+      "done": "Order {order} paid"
+    },
+    "cancel": {
+      "title": "Cancel order {order}",
+      "reason": "Why is it cancelled?",
+      "reasons": {
+        "outOfStock": "An item ran out",
+        "guestLeft": "Guest left or changed their mind",
+        "kitchenIssue": "The kitchen couldn't make it",
+        "duplicate": "Placed twice",
+        "other": "Something else"
+      },
+      "guestSees": "The guest sees the order as cancelled, with the reason.",
+      "refund": "{amount} already paid will be refunded.",
+      "confirm": "Cancel order",
+      "done": "Order {order} cancelled"
+    },
+    "changeItems": "Change items"
   },
   "adminOrderPad": {
     "titleNew": "New order · Table {table}",
@@ -590,7 +623,14 @@
     "send": "Send to kitchen",
     "sentNew": "Order {order} sent to the kitchen",
     "sentAdd": "Added to order {order}",
-    "failed": "Couldn't send the order. Check the items and try again."
+    "failed": "Couldn't send the order. Check the items and try again.",
+    "titleEdit": "Change order {order}",
+    "subtitleEdit": "{name} · Table {table} · Round {round}",
+    "addMore": "Add more dishes",
+    "removed": "No longer available, so it comes off: {items}",
+    "save": "Save changes",
+    "saved": "Order {order} updated",
+    "refund": "{amount} to give back to the guest"
   },
   "adminRequests": {
     "title": "Requests",
@@ -634,5 +674,69 @@
     },
     "loading": "Loading requests",
     "failed": "Couldn't update that. Try again."
+  },
+  "adminOrders": {
+    "title": "Orders",
+    "today": {
+      "label": "Today",
+      "orders": "Orders",
+      "sales": "Sales",
+      "toCollect": "To collect"
+    },
+    "views": {
+      "label": "Order status",
+      "active": "Active",
+      "ready": "Ready",
+      "unpaid": "Unpaid",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "all": "All"
+    },
+    "modes": {
+      "label": "Order type",
+      "all": "All types"
+    },
+    "search": "Search order, guest or table",
+    "row": {
+      "title": "Order {order}",
+      "open": "Open order {order}",
+      "pickupAt": "Pickup {time}",
+      "deliveryTo": "To {area}",
+      "items": {
+        "one": "{count} item",
+        "other": "{count} items"
+      },
+      "more": "+{count}"
+    },
+    "actions": {
+      "serve": "Mark served",
+      "handOver": "Handed over",
+      "collect": "Collect",
+      "label": "{action}: order {order}"
+    },
+    "empty": {
+      "title": "Nothing here",
+      "active": "No active orders right now.",
+      "ready": "Nothing is waiting to be served.",
+      "unpaid": "Every order is paid.",
+      "completed": "No completed orders yet today.",
+      "cancelled": "No cancelled orders today.",
+      "all": "No orders yet today.",
+      "search": "No orders match “{query}”."
+    },
+    "loading": "Loading orders",
+    "failed": "Couldn't update that. Try again."
+  },
+  "adminTableCollect": {
+    "title": "Collect for Table {table}",
+    "orders": {
+      "one": "{count} order to pay",
+      "other": "{count} orders to pay"
+    },
+    "order": "Order {order} · {name}",
+    "total": "Total to collect",
+    "confirm": "Collect {amount}",
+    "done": "Table {table} paid",
+    "failed": "Couldn't take the payment. Try again."
   }
 }
