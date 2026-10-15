@@ -19,7 +19,7 @@ import {
   editStaffRound,
   takeTableOrder,
 } from './handlers/adminOrders';
-import { branchFloorPlan, branchTable } from './handlers/adminTables';
+import { branchFloorPlan, branchTable, freeTable } from './handlers/adminTables';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
 import { sendOtp, verifyOtp } from './handlers/otp';
@@ -48,6 +48,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['GET', 'admin/branches/:branchId/tables/:table', branchTable],
   ['POST', 'admin/branches/:branchId/tables/:table/orders', takeTableOrder],
   ['POST', 'admin/branches/:branchId/tables/:table/payment', collectTablePayment],
+  ['POST', 'admin/branches/:branchId/tables/:table/free', freeTable],
   ['GET', 'admin/branches/:branchId/orders', branchOrdersToday],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],

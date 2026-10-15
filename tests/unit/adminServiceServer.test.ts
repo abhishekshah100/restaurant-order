@@ -331,6 +331,7 @@ describe('GET /admin/branches/:branchId/tables (mock)', () => {
       table: 5,
       seats: 6,
       status: 'available',
+      freed: false,
       orderCount: 0,
       due: 0,
     });
@@ -698,5 +699,56 @@ describe('Changing an order and paying at any time (mock)', () => {
       .body as TableDetailResponse;
     expect(table.due).toBe(0);
     expect((await collectTable(5)).status).toBe(409);
+  });
+});
+
+describe('POST /admin/branches/:branchId/tables/:table/free (mock)', () => {
+  const free = (table: number | string, headers = admin) =>
+    call('POST', `admin/branches/blr-indiranagar/tables/${table}/free`, undefined, headers);
+  const tableFive = async () =>
+    (await call('GET', 'admin/branches/blr-indiranagar/tables/5', undefined, admin))
+      .body as TableDetailResponse;
+
+  it('frees a table: available, its earlier orders left out, until the next order', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    await place(atFive);
+    await callWaiter(atFive);
+    expect(await tableFive()).toMatchObject({ status: 'needsWaiter', freed: false, orderCount: 1 });
+
+    now += MINUTE_MS;
+    const res = await free(5);
+    expect(res.status).toBe(200);
+    expect(res.body as TableDetailResponse).toMatchObject({
+      status: 'available',
+      freed: true,
+      orderCount: 0,
+      due: 0,
+      orders: [],
+      requests: [],
+    });
+    const plan = (await call('GET', 'admin/branches/blr-indiranagar/tables', undefined, admin))
+      .body as FloorPlanResponse;
+    expect(plan.floors[0].tables.find((t) => t.table === 5)).toMatchObject({
+      status: 'available',
+      freed: true,
+    });
+
+    // New guests order: the flag clears and only the new order counts.
+    now += MINUTE_MS;
+    const next = await place(await guest('blr-indiranagar', { mode: 'dineIn', table: 5 }));
+    expect(await tableFive()).toMatchObject({
+      status: 'ordering',
+      freed: false,
+      orderCount: 1,
+      orders: [expect.objectContaining({ id: next.id })],
+    });
+  });
+
+  it('carries the flag in the floor data, and needs a known table and a session', async () => {
+    const plan = (await call('GET', 'admin/branches/blr-indiranagar/tables', undefined, admin))
+      .body as FloorPlanResponse;
+    expect(plan.floors.flatMap((f) => f.tables).every((t) => t.freed === false)).toBe(true);
+    expect((await free(99)).status).toBe(404);
+    expect((await free(5, {})).status).toBe(401);
   });
 });

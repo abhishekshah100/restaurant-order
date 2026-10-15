@@ -33,6 +33,8 @@ export const MOCK_KEYS = {
    * browser see them (a guest still sees only their own session's).
    */
   serviceRequests: 'olive.service.v1',
+  /** When staff last freed each table (ISO), by "branchId:table". The floors' `freed` flag. */
+  tablesFreed: 'olive.mock.tablesFreed.v1',
 } as const;
 
 export interface Table<T> {
@@ -238,6 +240,10 @@ const BRANCH_STATUSES = new Set<unknown>(['open', 'closed', 'paused'] satisfies 
 const isBranchStatusTable = (v: unknown): v is Record<string, BranchStatus> =>
   isObject(v) && Object.values(v).every((status) => BRANCH_STATUSES.has(status));
 
+const isFreedTable = (v: unknown): v is Record<string, string> =>
+  isObject(v) &&
+  Object.values(v).every((at) => typeof at === 'string' && !Number.isNaN(Date.parse(at)));
+
 /** The mock server's tables. */
 export interface MockDb {
   sessions: Table<GuestSession[]>;
@@ -250,6 +256,8 @@ export interface MockDb {
   adminSessions: Table<AdminSessionRecord[]>;
   /** MOCK ONLY: branch status overrides for the admin pages, by branch id. */
   branchStatus: Table<Record<string, BranchStatus>>;
+  /** When staff last freed each table (ISO), by "branchId:table". */
+  tablesFreed: Table<Record<string, string>>;
 }
 
 export function createStorageDb(): MockDb {
@@ -261,5 +269,6 @@ export function createStorageDb(): MockDb {
     serviceRequests: table(MOCK_KEYS.serviceRequests, 'local', listOf(isServiceRequest), () => []),
     adminSessions: table(MOCK_KEYS.adminSessions, 'local', listOf(isAdminSessionRecord), () => []),
     branchStatus: table(MOCK_KEYS.branchStatus, 'local', isBranchStatusTable, () => ({})),
+    tablesFreed: table(MOCK_KEYS.tablesFreed, 'local', isFreedTable, () => ({})),
   };
 }

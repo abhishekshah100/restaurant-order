@@ -160,3 +160,27 @@ test('paying first, changing the order, adding more and paying the rest', async 
   await expect(page.getByRole('status').filter({ hasText: 'Table 6 paid' })).toBeVisible();
   await expect(card).toContainText('paid');
 });
+
+test('freeing a table after the guests leave', async ({ page }) => {
+  test.slow();
+  await scan(page, 'table=5');
+  await addDish(page, 'starters', 'Dahi Kebab');
+  const orderId = await orderAtCounter(page);
+
+  await adminSignIn(page);
+  await page.goto('/admin/dashboard/tables/5/');
+  await expect(page.getByText('Food on the way').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Free table' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Free Table 5?' });
+  await expect(dialog).toContainText('still unpaid');
+  await dialog.getByRole('button', { name: 'Free table' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Table 5 is free' })).toBeVisible();
+  await expect(page.getByText('Available').first()).toBeVisible();
+  await expect(page.getByText('No open orders')).toBeVisible();
+
+  await page.goto('/admin/dashboard/tables/');
+  await expect(page.getByRole('link', { name: /^Table 5, 6 seats: Available$/ })).toBeVisible();
+  // The unpaid order is still there to collect.
+  await page.goto('/admin/dashboard/orders/?view=unpaid');
+  await expect(page.getByRole('listitem').filter({ hasText: `Order ${orderId}` })).toBeVisible();
+});

@@ -393,3 +393,14 @@ export function useCollectTablePayment() {
     onSettled: () => refreshFloor(client),
   });
 }
+
+/** POST /admin/branches/:branchId/tables/:table/free: the guests left, the table is free. */
+export function useFreeTable() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, table }: { branchId: string; table: number }) =>
+      api.freeTable(requireToken(token), branchId, table),
+    onSettled: () => refreshFloor(client),
+  });
+}

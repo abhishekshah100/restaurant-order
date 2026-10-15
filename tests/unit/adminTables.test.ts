@@ -9,6 +9,7 @@ const table = (number: number, status: FloorTableStatus): AdminFloorTable => ({
   table: number,
   seats: 4,
   status,
+  freed: false,
   orderCount: status === 'available' ? 0 : 1,
   due: 0,
 });

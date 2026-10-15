@@ -165,6 +165,17 @@ export type FloorPlanResponse = AdminFloorPlan;
 export type TableDetailResponse = AdminTableDetail;
 
 /**
+ * `POST /admin/branches/:branchId/tables/:table/free` — the guests have left: the table's
+ * `freed` flag is set, so it's available on the floor plan whatever its earlier orders say
+ * (those still unpaid stay on GET …/orders to collect). The backend clears the flag with the
+ * next order or request at the table. No body. Authorised like GET /admin/branches. 200 →
+ * `TableDetailResponse` (the table as now). Errors: 401, 403, 404 not_found (no such table).
+ * Mock: the time it was freed is kept per table; GET /branches/:id/floors (the dummy JSON)
+ * carries the flag as `freed: false` on every table.
+ */
+export type FreeTableResponse = TableDetailResponse;
+
+/**
  * `POST /admin/branches/:branchId/tables/:table/orders` — a waiter takes an order at the table
  * for a guest who doesn't order on their phone. Priced like a guest's order (the menu, the
  * offers on now, the branch's taxes), dine-in, paid at the counter; no guest session. Its

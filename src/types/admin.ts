@@ -133,6 +133,12 @@ export interface AdminBranchService {
 export interface FloorTableLayout {
   number: number;
   seats: number;
+  /**
+   * The backend's flag: staff freed the table (the guests left), so it's available whatever its
+   * earlier orders say. Set by POST /admin/branches/:branchId/tables/:table/free; cleared by the
+   * next order or request at the table.
+   */
+  freed: boolean;
 }
 
 /** One area of the branch: "Ground floor", "First floor", "Outdoor". */
@@ -162,6 +168,11 @@ export interface AdminFloorTable {
   table: number;
   seats: number;
   status: FloorTableStatus;
+  /**
+   * Staff freed it (see FloorTableLayout › freed): `status` is available and the counts below
+   * leave out what came before. Earlier orders still unpaid stay on the Orders page.
+   */
+  freed: boolean;
   /** Today's open orders at the table: not cancelled, and not both served and paid. */
   orderCount: number;
   /** Still to pay across them. */

@@ -21,6 +21,7 @@ import type {
   DeliveryQuoteRequest,
   DeliveryQuoteResponse,
   FloorPlanResponse,
+  FreeTableResponse,
   MarkServedRequest,
   MarkServedResponse,
   OrderChangeResponse,
@@ -77,6 +78,12 @@ export const api = {
     apiPost<OrderResponse>(
       `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/payment`,
       body,
+      bearer(token),
+    ),
+  freeTable: (token: string, branchId: string, table: number) =>
+    apiPost<FreeTableResponse>(
+      `admin/branches/${seg(branchId)}/tables/${table}/free`,
+      undefined,
       bearer(token),
     ),
   collectTablePayment: (

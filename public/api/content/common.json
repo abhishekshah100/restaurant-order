@@ -322,9 +322,9 @@
   },
   "adminHome": {
     "greeting": {
-      "morning": "Good Morning",
-      "afternoon": "Good Afternoon",
-      "evening": "Good Evening",
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
       "named": "{greeting}, {name}"
     },
     "loading": "Loading what needs doing",
@@ -510,7 +510,17 @@
       "loading": "Loading the table",
       "takeOrder": "Take order",
       "newOrder": "New order",
-      "collectTable": "Collect {amount}"
+      "collectTable": "Collect {amount}",
+      "free": {
+        "action": "Free table",
+        "title": "Free Table {table}?",
+        "body": "Use this when the guests have left. The table shows as available until the next order.",
+        "unpaid": "{amount} is still unpaid. It stays on the Orders page to collect.",
+        "confirm": "Free table",
+        "keep": "Not yet",
+        "done": "Table {table} is free",
+        "failed": "Couldn't free the table. Try again."
+      }
     }
   },
   "adminOrder": {

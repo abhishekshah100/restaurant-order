@@ -108,8 +108,40 @@
   font: var(--font-small);
 }
 
-.status {
+.statusRow {
   margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.free {
+  min-height: 34px;
+  padding: 0 12px 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.free:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .free:hover {
+    border-color: var(--success);
+    color: var(--success);
+  }
+}
+
+.status {
   display: inline-flex;
   align-items: center;
   gap: 7px;
