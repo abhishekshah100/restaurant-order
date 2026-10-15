@@ -57,7 +57,8 @@ export async function prefetchAppData(client: QueryClient): Promise<void> {
       ...restaurantQuery(),
       queryFn: () => readApiFile<Restaurant>('restaurant'),
     }),
-    client.prefetchQuery({ ...branchesQuery(), queryFn: () => branches }),
+    // Already out of date in the page, like the menu: the browser reads the live status once.
+    Promise.resolve(client.setQueryData(branchesQuery().queryKey, branches, { updatedAt: 0 })),
     // Built into the page as already out of date: staff change the menu during service (sold
     // out, back on), so the browser reads the live one once the page opens.
     ...branches.map(async (b) => {

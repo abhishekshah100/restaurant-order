@@ -1,3 +1,4 @@
+import type { AdminBranch } from '@/types/admin';
 import type { MenuData } from '@/types/menu';
 import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
@@ -42,6 +43,7 @@ import type {
   ServiceRequestListResponse,
   SettledPaymentResponse,
   SetAvailabilityRequest,
+  SetBranchStatusRequest,
   SimulatePaymentRequest,
   StaffRoundRequest,
   TableDetailResponse,
@@ -68,6 +70,8 @@ export const api = {
   createAdminSession: (body: AdminSignInRequest) =>
     apiPost<AdminSignInResponse>('admin/sessions', body),
   adminBranches: (token: string) => apiGet<AdminBranchesResponse>('admin/branches', bearer(token)),
+  setBranchStatus: (token: string, branchId: string, body: SetBranchStatusRequest) =>
+    apiPatch<AdminBranch>(`admin/branches/${seg(branchId)}/status`, body, bearer(token)),
   branchService: (token: string, branchId: string) =>
     apiGet<BranchServiceResponse>(`admin/branches/${seg(branchId)}/service`, bearer(token)),
   floorPlan: (token: string, branchId: string) =>

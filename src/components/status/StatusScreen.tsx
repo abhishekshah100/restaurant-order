@@ -86,7 +86,8 @@ function ClosedCard() {
       title={t('closed.title')}
       wide
       lede={t.rich(
-        'closed.lede',
+        // Closed by staff for the rest of the day: it opens again tomorrow, not later today.
+        branch.reopensTomorrow ? 'closed.ledeTomorrow' : 'closed.lede',
         { b: (c) => <b className={styles.ink}>{c}</b> },
         { time: branch.opensAt, opensIn: branch.opensIn },
       )}

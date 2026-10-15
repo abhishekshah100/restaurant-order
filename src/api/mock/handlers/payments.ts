@@ -6,7 +6,15 @@ import { payableOrders } from '@/lib/service';
 import type { OrderMode } from '@/types/branch';
 import type { Order } from '@/types/order';
 import type { Payment, SettledPaymentResponse } from '../../contracts';
-import { fail, liveSession, objectBody, ok, stringField, type Handler } from '../context';
+import {
+  assertOrdering,
+  fail,
+  liveSession,
+  objectBody,
+  ok,
+  stringField,
+  type Handler,
+} from '../context';
 import { liveOrder } from '../kitchen';
 import { MOCK_TRANSACTION_REF, PAYMENT_WINDOW_SECONDS } from '../rules';
 import { orderChangeAmount } from './orderChanges';
@@ -43,6 +51,8 @@ export const createPayment: Handler = async (ctx, { body: raw }) => {
   const body = objectBody(raw);
   const { purpose, method } = body;
   const { session, branch } = await liveSession(ctx, stringField(body, 'sessionId'));
+  // Paying for new food needs the branch taking orders; settling a bill doesn't.
+  if (purpose === 'order' || purpose === 'round') assertOrdering(branch);
   if (
     !isPaymentMethodId(method) ||
     !isOnlineMethod(method) ||

@@ -11,7 +11,6 @@ import type { BranchPromotions } from '@/types/promotion';
 import {
   branchFloorsQuery,
   branchPromotionsQuery,
-  branchesQuery,
   contentQuery,
   orderHistoryQuery,
   restaurantQuery,
@@ -19,6 +18,7 @@ import {
 import { staticGet } from '../client';
 import { createTranslator } from '../translator';
 import type { MockDb } from './db';
+import { withStatus } from './branchStatus';
 import { applyMenuChanges } from './menuChanges';
 import type { OrderLabels } from './orderBuilder';
 
@@ -29,6 +29,7 @@ import type { OrderLabels } from './orderBuilder';
  * cache, so it's normally already there (prefetched at build time) and costs no request.
  */
 export interface MockSeed {
+  /** GET /branches: the dummy JSON with the status staff set on top. */
   branches(): Promise<Branch[]>;
   defaultBranchId(): Promise<string>;
   /** GET /branches/:id/menu: the dummy JSON with staff changes on top. */
@@ -56,17 +57,35 @@ export const menuBaseQuery = (branchId: string) =>
     staleTime: Infinity,
   });
 
+/**
+ * MOCK ONLY: the branches JSON as published, before the status staff set. Always read over HTTP
+ * (the app's GET /branches is the mock's own, with the status on).
+ */
+export const branchesBaseQuery = () =>
+  queryOptions({
+    queryKey: ['mock', 'branches-base'] as const,
+    queryFn: () => staticGet<Branch[]>('branches'),
+    staleTime: Infinity,
+  });
+
 export function querySeed(
   client: QueryClient,
-  db: Pick<MockDb, 'menuChanges'>,
+  db: Pick<MockDb, 'menuChanges' | 'branchStatus'>,
   now: () => number = Date.now,
 ): MockSeed {
+  const branches = async () => {
+    const at = new Date(now());
+    const changes = db.branchStatus.read();
+    return (await client.ensureQueryData(branchesBaseQuery())).map((b) =>
+      withStatus(b, changes[b.id], at, createClock(b)),
+    );
+  };
   const menuData = async (branchId: string) => {
-    const [base, branches] = await Promise.all([
+    const [base, all] = await Promise.all([
       client.ensureQueryData(menuBaseQuery(branchId)),
-      client.ensureQueryData(branchesQuery()),
+      client.ensureQueryData(branchesBaseQuery()),
     ]);
-    const branch = branches.find((b) => b.id === branchId);
+    const branch = all.find((b) => b.id === branchId);
     if (!branch) return base;
     return applyMenuChanges(
       base,
@@ -78,7 +97,7 @@ export function querySeed(
   const content = <N extends 'orders' | 'common' | 'cart'>(ns: N) =>
     client.ensureQueryData(contentQuery(ns)).then(createTranslator);
   return {
-    branches: () => client.ensureQueryData(branchesQuery()),
+    branches,
     defaultBranchId: async () => (await client.ensureQueryData(restaurantQuery())).defaultBranchId,
     menuData,
     menu: async (branchId) => createMenuCatalog(await menuData(branchId)),

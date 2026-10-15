@@ -81,7 +81,10 @@ describe('GET /admin/branches (mock)', () => {
   });
 
   it("reports a tester's branch status override (mock only)", async () => {
-    window.localStorage.setItem(MOCK_KEYS.branchStatus, JSON.stringify({ 'ktm-thamel': 'closed' }));
+    window.localStorage.setItem(
+      MOCK_KEYS.branchStatus,
+      JSON.stringify({ 'ktm-thamel': { status: 'closed' } }),
+    );
     const res = await listBranches(bearer(await signIn()));
     const statuses = (res.body as AdminBranchesResponse).branches.map((b) => [b.id, b.status]);
     expect(statuses).toEqual([

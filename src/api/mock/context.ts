@@ -45,6 +45,14 @@ export function fail(
 
 export const ok = (body?: unknown, status = 200): ApiResponse => ({ status, body });
 
+/**
+ * 409 ordering_unavailable while the branch is paused or closed: guests can't order on their
+ * phones then (staff still can, at the table).
+ */
+export function assertOrdering(branch: { status: string }) {
+  if (branch.status !== 'open') fail(409, 'ordering_unavailable');
+}
+
 export const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null;
 

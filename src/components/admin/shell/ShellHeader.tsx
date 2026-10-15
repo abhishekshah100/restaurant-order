@@ -5,7 +5,7 @@ import { useContent, useRestaurant } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
 import { useAdminWorkspace } from './AdminWorkspace';
-import { BranchStatus } from './BranchStatus';
+import { BranchStatusControl } from './BranchStatusControl';
 import styles from './ShellHeader.module.css';
 
 export interface ShellHeaderProps {
@@ -40,7 +40,7 @@ export function ShellHeader({ title, time, adminName, onOpenMore }: ShellHeaderP
         </Link>
         <div className={styles.branch}>
           <p className={styles.branchName}>{branch.shortName}</p>
-          <BranchStatus status={branch.status} onDark />
+          <BranchStatusControl onDark />
         </div>
         <button
           type="button"
@@ -55,7 +55,7 @@ export function ShellHeader({ title, time, adminName, onOpenMore }: ShellHeaderP
       <header className={styles.desktop}>
         <p className={styles.title}>{title}</p>
         <div className={styles.meta}>
-          <BranchStatus status={branch.status} />
+          <BranchStatusControl />
           {time && (
             <span className={styles.time}>
               <Icon name="clock" size="xs" />

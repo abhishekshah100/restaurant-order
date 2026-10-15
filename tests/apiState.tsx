@@ -16,7 +16,7 @@ import {
 import { QueryProvider } from '@/api/QueryProvider';
 import { createStorageDb } from '@/api/mock/db';
 import { HOUR_MS, TABLE_SESSION_HOURS } from '@/api/mock/rules';
-import { menuBaseQuery, querySeed } from '@/api/mock/seed';
+import { branchesBaseQuery, menuBaseQuery, querySeed } from '@/api/mock/seed';
 import { createMockServer } from '@/api/mock/server';
 import { AppProviders } from '@/context/AppProviders';
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
@@ -104,6 +104,7 @@ export function createApiState(): DehydratedState {
   client.setQueryData(restaurantQuery().queryKey, testRestaurant());
   const branches = testBranches();
   client.setQueryData(branchesQuery().queryKey, branches);
+  client.setQueryData(branchesBaseQuery().queryKey, branches);
   for (const { id } of branches) {
     client.setQueryData(branchMenuQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
     client.setQueryData(menuBaseQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
@@ -129,7 +130,11 @@ export function createTestServer(
 ) {
   const client = new QueryClient();
   hydrate(client, createApiState());
-  if (branches) client.setQueryData(branchesQuery().queryKey, branches(testBranches()));
+  if (branches) {
+    const changed = branches(testBranches());
+    client.setQueryData(branchesQuery().queryKey, changed);
+    client.setQueryData(branchesBaseQuery().queryKey, changed);
+  }
   let count = 0;
   const db = createStorageDb();
   return createMockServer({

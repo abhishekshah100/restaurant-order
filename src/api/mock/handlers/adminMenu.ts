@@ -371,6 +371,9 @@ const dishIn = (menu: MenuData, slug: string): Dish =>
 
 /* ---------- Handlers ---------- */
 
+/** GET /branches: the branch data with the status staff set (paused, closed for the day). */
+export const listBranches: Handler = async (ctx) => ok(await ctx.seed.branches());
+
 /** GET /branches/:branchId/menu */
 export const branchMenu: Handler = async (ctx, { params }) => {
   const branch = (await ctx.seed.branches()).find((b) => b.id === params.branchId);

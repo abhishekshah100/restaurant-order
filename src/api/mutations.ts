@@ -20,6 +20,7 @@ import type {
   EditRoundRequest,
   ServiceRequestListResponse,
   SetAvailabilityRequest,
+  SetBranchStatusRequest,
   UpdateCategoriesRequest,
   SimulatePaymentRequest,
   StaffRoundRequest,
@@ -514,5 +515,24 @@ export function useUploadDishImage() {
   return useMutation({
     mutationFn: ({ branchId, body }: { branchId: string; body: ImageUploadRequest }) =>
       api.uploadDishImage(requireToken(token), branchId, body),
+  });
+}
+
+/**
+ * PATCH /admin/branches/:branchId/status: pause new orders, close for the day, or open again.
+ * The admin's branches and the branch data guests read are read again.
+ */
+export function useSetBranchStatus() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: SetBranchStatusRequest }) =>
+      api.setBranchStatus(requireToken(token), branchId, body),
+    onSettled: () =>
+      Promise.all(
+        [['admin', 'branches'], ['branches']].map((queryKey) =>
+          client.invalidateQueries({ queryKey, exact: queryKey[0] === 'branches' }),
+        ),
+      ),
   });
 }

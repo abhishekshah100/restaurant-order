@@ -8,7 +8,7 @@ import { ADMIN_NAV, type AdminNavId } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import type { AdminServiceCounts } from '@/types/admin';
 import { useAdminWorkspace } from './AdminWorkspace';
-import { BranchStatus } from './BranchStatus';
+import { BranchStatusControl } from './BranchStatusControl';
 import { NavBadge } from './NavBadge';
 import styles from './Sidebar.module.css';
 
@@ -54,7 +54,7 @@ export function Sidebar({
       <section className={styles.branch} aria-label={t('adminShell.branch.label')}>
         <p className={styles.branchName}>{branch.shortName}</p>
         <p className={styles.branchMeta}>
-          <BranchStatus status={branch.status} onDark />
+          <BranchStatusControl onDark />
           {time && (
             <span className={styles.time}>
               <span aria-hidden="true">{time}</span>

@@ -9,7 +9,7 @@ import type { Branch } from '@/types/branch';
 /** What the shell shows of the branch (GET /admin/branches; GET /branches has it too). */
 export type WorkspaceBranch = Pick<
   AdminBranch,
-  'id' | 'name' | 'shortName' | 'city' | 'status' | 'timezone' | 'locale'
+  'id' | 'name' | 'shortName' | 'city' | 'status' | 'statusUntil' | 'timezone' | 'locale'
 >;
 
 /** The branch the admin is working in, for every admin page inside the shell. */

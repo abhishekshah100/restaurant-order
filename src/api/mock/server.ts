@@ -9,9 +9,10 @@ import {
   markOrderServed,
   resolveServiceRequest,
 } from './handlers/adminService';
-import { createAdminSession, listAdminBranches } from './handlers/adminSessions';
+import { createAdminSession, listAdminBranches, setBranchStatus } from './handlers/adminSessions';
 import {
   branchMenu,
+  listBranches,
   createDish,
   removeDish,
   reorderDishes,
@@ -53,6 +54,7 @@ import { querySeed } from './seed';
 const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/sessions', createAdminSession],
   ['GET', 'admin/branches', listAdminBranches],
+  ['PATCH', 'admin/branches/:branchId/status', setBranchStatus],
   ['GET', 'admin/branches/:branchId/service', branchService],
   ['GET', 'admin/branches/:branchId/tables', branchFloorPlan],
   ['GET', 'admin/branches/:branchId/tables/:table', branchTable],
@@ -68,6 +70,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['PATCH', 'admin/branches/:branchId/menu/categories', updateCategories],
   ['POST', 'admin/branches/:branchId/menu/images', uploadDishImage],
   ['GET', 'branches/:branchId/menu', branchMenu],
+  ['GET', 'branches', listBranches],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],
   ['POST', 'admin/branches/:branchId/orders/:id/payment', collectPayment],

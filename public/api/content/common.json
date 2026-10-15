@@ -294,6 +294,33 @@
       "pages": "More pages",
       "branch": "Branch",
       "account": "Account"
+    },
+    "statusControl": {
+      "label": "Branch status: {status}. Change",
+      "title": "Taking orders?",
+      "now": {
+        "open": "{branch} is open",
+        "paused": "{branch} is paused until {time}",
+        "closed": "{branch} is closed until {time} tomorrow"
+      },
+      "options": {
+        "open": "Open",
+        "openSub": "Guests order on their phones",
+        "paused": "Pause new orders",
+        "pausedSub": "The kitchen catches up; guests can still browse",
+        "closed": "Close for the rest of today",
+        "closedSub": "Opens again at {time} tomorrow"
+      },
+      "for": "For how long?",
+      "minutes": "{count} min",
+      "note": "Waiters can still take orders at the table.",
+      "save": "Save",
+      "saved": {
+        "open": "{branch} is open again",
+        "paused": "New orders paused for {minutes} min",
+        "closed": "{branch} is closed for the rest of today"
+      },
+      "failed": "Couldn't change the status. Try again."
     }
   },
   "adminHome": {

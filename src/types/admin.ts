@@ -32,6 +32,8 @@ export interface AdminBranch {
   country: CountryCode;
   address: string;
   status: BranchStatus;
+  /** ISO: when a pause ends, or a branch closed for the day opens again (back to open by itself). */
+  statusUntil?: string;
   /** Today's opening hours as shown, in the branch's local time: "11:00 AM – 10:00 PM". */
   hoursToday: string;
   /** IANA time zone, for the branch's current local time ("Now 7:45 PM"). */

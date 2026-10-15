@@ -1,0 +1,70 @@
+/* The status pill as a button (with a chevron), and its "Taking orders?" dialog. */
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+/* A 44px tap target around the pill. */
+.button::after {
+  content: '';
+  position: absolute;
+  inset: -9px -4px;
+}
+
+.onDark {
+  color: color-mix(in srgb, var(--on-dark) 70%, transparent);
+}
+
+.chevron {
+  transition: transform var(--dur-fast) ease;
+}
+
+.button:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .button:hover .chevron {
+    transform: translateY(1px);
+  }
+}
+
+.body {
+  display: grid;
+  gap: 16px;
+  width: min(460px, 100%);
+}
+
+.minutes {
+  display: grid;
+  gap: 8px;
+  margin-top: -6px;
+}
+
+.legend {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}

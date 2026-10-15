@@ -17,6 +17,7 @@ import type { BranchPromotions } from '@/types/promotion';
 import type { GuestSession } from '@/types/session';
 import type { OrderChangeResponse, Payment } from '../../contracts';
 import {
+  assertOrdering,
   fail,
   liveSession,
   objectBody,
@@ -207,6 +208,7 @@ export const addRound: Handler = async (ctx, { params, body: raw }) => {
   const body = objectBody(raw);
   const target = await targetOrder(ctx, params.id, stringField(body, 'sessionId'), body.paymentId);
   const { order, session, branch, labels } = target;
+  assertOrdering(branch);
   if (!ctx.db.otp.read()[session.id]?.verified) fail(403, 'phone_not_verified');
   const perRound = branch.ordering.dineInPayment === 'perRound';
   const { method, paymentId } = body;

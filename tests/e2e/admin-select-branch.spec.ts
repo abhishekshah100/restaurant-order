@@ -48,7 +48,10 @@ test('signing in lists both branches; choosing Thamel opens its dashboard', asyn
 test('a closed branch can still be chosen', async ({ page }) => {
   // MOCK ONLY: the mock server reports Thamel as closed.
   await page.evaluate(() =>
-    localStorage.setItem('olive.mock.branchStatus.v1', JSON.stringify({ 'ktm-thamel': 'closed' })),
+    localStorage.setItem(
+      'olive.mock.branchStatus.v2',
+      JSON.stringify({ 'ktm-thamel': { status: 'closed' } }),
+    ),
   );
   await signInWithDemo(page);
   await expect(card(page, 'Thamel')).toContainText('Closed');

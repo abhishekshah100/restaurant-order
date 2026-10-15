@@ -7,7 +7,7 @@ import { ADMIN_NAV, type AdminNavId } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import type { AdminServiceCounts } from '@/types/admin';
 import { useAdminWorkspace } from './AdminWorkspace';
-import { BranchStatus } from './BranchStatus';
+import { BranchStatusControl } from './BranchStatusControl';
 import { NavBadge } from './NavBadge';
 import styles from './MobileNav.module.css';
 
@@ -115,7 +115,7 @@ export function MobileNav({
                 <span className={styles.branchName}>
                   {t('adminShell.branch.where', { area: branch.shortName, city: branch.city })}
                 </span>
-                <BranchStatus status={branch.status} className={styles.branchStatus} />
+                <BranchStatusControl className={styles.branchStatus} />
               </span>
             </div>
             {canSwitch && (

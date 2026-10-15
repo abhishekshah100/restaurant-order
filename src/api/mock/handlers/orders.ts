@@ -7,6 +7,7 @@ import type { Order } from '@/types/order';
 import { toOrderHistory } from '../../adapters';
 import type { OrderListResponse } from '../../contracts';
 import {
+  assertOrdering,
   fail,
   liveSession,
   objectBody,
@@ -104,6 +105,7 @@ function placeOrderBody(raw: unknown) {
 export const placeOrder: Handler = async (ctx, { body: raw }) => {
   const body = placeOrderBody(raw);
   const { session, branch } = await liveSession(ctx, body.sessionId);
+  assertOrdering(branch);
   const [menu, promotions, labels, seedOrders] = await Promise.all([
     ctx.seed.menu(branch.id),
     ctx.seed.promotions(branch.id),

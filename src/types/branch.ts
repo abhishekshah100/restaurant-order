@@ -209,6 +209,11 @@ export interface Branch {
   /** "in about 1 hr 20 min" */
   opensIn: string;
   pausedForMinutes: number;
+  /**
+   * Closed for the rest of the day by staff: ordering opens again at `opensAt` tomorrow (not
+   * today). Absent otherwise.
+   */
+  reopensTomorrow?: boolean;
   hoursToday: string;
   lastOrders: string;
   /** "30 min before close" */

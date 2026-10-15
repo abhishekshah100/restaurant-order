@@ -1,7 +1,9 @@
+import { createClock } from '@/lib/clock';
 import type { AdminBranch } from '@/types/admin';
 import type { Branch, OrderMode } from '@/types/branch';
 import type { AdminBranchesResponse, AdminSignInResponse } from '../../contracts';
 import { fail, objectBody, ok, stringField, type Handler, type MockContext } from '../context';
+import { statusUntil, type BranchStatusChange } from '../branchStatus';
 import { DEMO_ADMIN } from '../demoAdmin';
 import { ADMIN_SESSION_HOURS, HOUR_MS } from '../rules';
 
@@ -54,8 +56,8 @@ export function signedInAccount(ctx: MockContext, headers: Record<string, string
 
 const MODE_ORDER: OrderMode[] = ['dineIn', 'takeaway', 'delivery'];
 
-/** A branch as the admin picker needs it. */
-export function toAdminBranch(branch: Branch): AdminBranch {
+/** A branch as the admin picker needs it (with when the status staff set ends, if it does). */
+export function toAdminBranch(branch: Branch, statusUntil?: string): AdminBranch {
   return {
     id: branch.id,
     name: branch.name,
@@ -64,6 +66,7 @@ export function toAdminBranch(branch: Branch): AdminBranch {
     country: branch.country,
     address: branch.address,
     status: branch.status,
+    ...(statusUntil ? { statusUntil } : {}),
     hoursToday: branch.hoursToday,
     timezone: branch.timezone,
     locale: branch.locale,
@@ -78,12 +81,13 @@ export function toAdminBranch(branch: Branch): AdminBranch {
 export const listAdminBranches: Handler = async (ctx, { headers }) => {
   const account = signedInAccount(ctx, headers);
   const branches = await ctx.seed.branches();
-  const statusOverride = ctx.db.branchStatus.read();
+  const changes = ctx.db.branchStatus.read();
+  const now = new Date(ctx.now());
   const body: AdminBranchesResponse = {
     branches: account.branchIds.flatMap((id) => {
       const branch = branches.find((b) => b.id === id);
       if (!branch) return [];
-      return [{ ...toAdminBranch(branch), status: statusOverride[id] ?? branch.status }];
+      return [toAdminBranch(branch, statusUntil(branch, changes[id], now, createClock(branch)))];
     }),
   };
   return ok(body);
@@ -103,3 +107,27 @@ export async function adminBranch(
   if (!branch || !account.branchIds.includes(branch.id)) fail(403, 'forbidden');
   return branch;
 }
+
+const PAUSE_MINUTES = [15, 30, 45, 60, 90];
+
+/** PATCH /admin/branches/:branchId/status */
+export const setBranchStatus: Handler = async (ctx, { params, body, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const raw = objectBody(body);
+  const now = new Date(ctx.now());
+  const clock = createClock(branch);
+  let change: BranchStatusChange;
+  if (raw.status === 'open') change = { status: 'open' };
+  else if (raw.status === 'closed') change = { status: 'closed', day: clock.dayKey(now) };
+  else if (raw.status === 'paused' && PAUSE_MINUTES.some((m) => m === raw.minutes)) {
+    change = {
+      status: 'paused',
+      until: new Date(now.getTime() + Number(raw.minutes) * 60_000).toISOString(),
+    };
+  } else {
+    return fail(400, 'invalid_request');
+  }
+  ctx.db.branchStatus.write({ ...ctx.db.branchStatus.read(), [branch.id]: change });
+  const updated = (await ctx.seed.branches()).find((b) => b.id === branch.id) ?? branch;
+  return ok(toAdminBranch(updated, statusUntil(updated, change, now, clock)));
+};

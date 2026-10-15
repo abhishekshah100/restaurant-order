@@ -71,6 +71,8 @@ export const branchesQuery = () =>
     queryFn: () => apiGet<Branch[]>('branches'),
     staleTime: 60_000,
     refetchOnWindowFocus: true,
+    // Staff pause or close ordering during service: guests see it within a minute.
+    refetchInterval: 60_000,
   });
 
 /** GET /branches/:id/menu: one branch's categories, dishes (in its currency) and curated lists. */

@@ -4,6 +4,7 @@ import { WAITER_REASON_IDS } from '@/lib/service';
 import { isGuestSession } from '@/lib/session';
 import { readJSON, storageAvailable, writeJSON, type StorageKind } from '@/lib/storage';
 import type { BranchStatus } from '@/types/branch';
+import type { BranchStatusChange } from './branchStatus';
 import type { BranchMenuChanges } from './menuChanges';
 import type { Order, OrderItem, OrderRound } from '@/types/order';
 import type { ServiceRequest } from '@/types/service';
@@ -25,10 +26,10 @@ export const MOCK_KEYS = {
   payments: 'olive.mock.payments.v1',
   adminSessions: 'olive.mock.adminSessions.v1',
   /**
-   * MOCK ONLY: a status per branch id (`{ "ktm-thamel": "closed" }`) that GET /admin/branches
-   * reports instead of the branch data's, so testers can preview a closed or paused branch.
+   * The status staff last set for each branch, by branch id (`{ status, until?, day? }`): paused
+   * until a time, closed for a day, or open. GET /branches and GET /admin/branches report it.
    */
-  branchStatus: 'olive.mock.branchStatus.v1',
+  branchStatus: 'olive.mock.branchStatus.v2',
   /**
    * Waiter and bill requests. In localStorage, so the staff pages in another tab of the same
    * browser see them (a guest still sees only their own session's).
@@ -244,8 +245,15 @@ const isAdminSessionRecord = (v: unknown): v is AdminSessionRecord =>
 
 const BRANCH_STATUSES = new Set<unknown>(['open', 'closed', 'paused'] satisfies BranchStatus[]);
 
-const isBranchStatusTable = (v: unknown): v is Record<string, BranchStatus> =>
-  isObject(v) && Object.values(v).every((status) => BRANCH_STATUSES.has(status));
+const isBranchStatusTable = (v: unknown): v is Record<string, BranchStatusChange> =>
+  isObject(v) &&
+  Object.values(v).every(
+    (c) =>
+      isObject(c) &&
+      BRANCH_STATUSES.has(c.status) &&
+      isOptionalString(c.until) &&
+      isOptionalString(c.day),
+  );
 
 const isFreedTable = (v: unknown): v is Record<string, string> =>
   isObject(v) &&
@@ -278,8 +286,8 @@ export interface MockDb {
   payments: Table<Payment[]>;
   serviceRequests: Table<ServiceRequest[]>;
   adminSessions: Table<AdminSessionRecord[]>;
-  /** MOCK ONLY: branch status overrides for the admin pages, by branch id. */
-  branchStatus: Table<Record<string, BranchStatus>>;
+  /** The status staff last set for each branch, by branch id. */
+  branchStatus: Table<Record<string, BranchStatusChange>>;
   /** When staff last freed each table (ISO), by "branchId:table". */
   tablesFreed: Table<Record<string, string>>;
   /** Staff changes to each branch's menu, by branch id. */

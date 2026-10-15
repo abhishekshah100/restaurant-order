@@ -8,11 +8,13 @@
     "offlineMobile": "You're offline. Reconnecting…",
     "offlineDesktop": "You're offline. Reconnecting automatically…",
     "paused": "Online ordering is paused for about {minutes} minutes while the kitchen catches up. Your cart is saved.",
-    "closed": "We're closed right now. Ordering opens again at {time} — you can still browse the menu."
+    "closed": "We're closed right now. Ordering opens again at {time} — you can still browse the menu.",
+    "closedTomorrow": "We're closed for the rest of today. Ordering opens again at {time} tomorrow — you can still browse the menu."
   },
   "closed": {
     "title": "We're closed right now",
     "lede": "Ordering opens again at <b>{time} today</b> — {opensIn}. You can still browse the menu.",
+    "ledeTomorrow": "We've closed for the rest of today. Ordering opens again at <b>{time} tomorrow</b>. You can still browse the menu.",
     "browse": "Browse the menu",
     "call": "Call restaurant",
     "hoursLabel": "Opening hours",

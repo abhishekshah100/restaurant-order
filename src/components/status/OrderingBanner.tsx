@@ -33,7 +33,9 @@ export function StateBanner({ state, className }: StateBannerProps) {
   }
   return (
     <Banner tone="err" icon="store" live="polite" className={className}>
-      {t('banner.closed', { time: branch.opensAt })}
+      {branch.reopensTomorrow
+        ? t('banner.closedTomorrow', { time: branch.opensAt })
+        : t('banner.closed', { time: branch.opensAt })}
     </Banner>
   );
 }
