@@ -1,6 +1,7 @@
 import { createClock } from '@/lib/clock';
 import { amountDue } from '@/lib/lifecycle';
 import { isFinished, isToday } from '@/lib/orders';
+import { isDue } from '@/lib/reservations';
 import type {
   AdminFloorPlan,
   AdminFloorTable,
@@ -9,19 +10,24 @@ import type {
   FloorPlanLayout,
   FloorTableLayout,
   FloorTableStatus,
+  Reservation,
+  ReservationBrief,
 } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { Order } from '@/types/order';
 import type { TableQrCodesResponse } from '../../contracts';
 import { fail, ok, type Handler, type MockContext } from '../context';
+import { branchReservations } from './adminReservations';
 import { adminBranch } from './adminSessions';
 import { floorActivity } from './adminService';
 
 /*
  * The floor plan: every area of a branch with its tables and what's happening at each (GET
- * /admin/branches/:branchId/tables), and one table's open orders and requests (GET
+ * /admin/branches/:branchId/tables), and one table's open orders, requests and bookings (GET
  * /admin/branches/:branchId/tables/:table).
  */
+
+const MINUTE = 60_000;
 
 /* ---------- Deriving the floor plan (pure) ---------- */
 
@@ -33,6 +39,8 @@ export interface FloorPlanInput {
   requests: readonly AdminServiceRequest[];
   /** When staff last freed each table (ISO), by table number. */
   freedAt?: Readonly<Record<number, string>>;
+  /** The branch's bookings (any day, any status). */
+  reservations?: readonly Reservation[];
   branch: Branch;
   now: number;
 }
@@ -63,35 +71,87 @@ function statusOf(orders: readonly Order[], requests: readonly AdminServiceReque
 /** An order's latest activity: when its last round went to the kitchen. */
 const lastPlaced = (order: Order) => order.rounds?.at(-1)?.placedAt ?? order.placedAt;
 
+const brief = ({ id, guestName, partySize, at, status }: Reservation): ReservationBrief => ({
+  id,
+  guestName,
+  partySize,
+  at,
+  status,
+});
+
 /**
- * One table now. Freed by staff (`freedAt`), only what came after counts, and the first order
- * or request after it clears the flag. Freed in the data itself (`layout.freed`, the backend's
- * flag with no time), nothing counts.
+ * A table's bookings now: today's still to come or seated (by time), the seated party that
+ * hasn't ordered yet (seated by staff, not freed since, no order at the table since, within its
+ * time), the booking it's held for (due within the hour, or a little late), and the next one.
+ */
+function bookingsAt(input: FloorPlanInput, number: number, since: (at: string) => boolean) {
+  const { now, branch } = input;
+  const clock = createClock(branch);
+  const today = (input.reservations ?? [])
+    .filter(
+      (r) =>
+        r.table === number &&
+        (r.status === 'booked' || r.status === 'seated') &&
+        clock.isSameDay(r.at, new Date(now)),
+    )
+    .sort((a, b) => a.at.localeCompare(b.at));
+  const orderedSince = (at: string) =>
+    input.orders.some((o) => o.mode === 'dineIn' && o.table === number && lastPlaced(o) >= at);
+  const seated = today.find(
+    (r) =>
+      r.seatedAt !== undefined &&
+      since(r.seatedAt) &&
+      !orderedSince(r.seatedAt) &&
+      now < Date.parse(r.seatedAt) + r.minutes * MINUTE,
+  );
+  const due = today.find((r) => isDue(r, now));
+  const next = today.find((r) => r.status === 'booked' && Date.parse(r.at) > now);
+  return { today, seated, due, next: due ?? next };
+}
+
+/**
+ * One table now. Freed by staff (`freedAt`), only what came after counts, and the first order,
+ * request or seated party after it clears the flag. Freed in the data itself (`layout.freed`,
+ * the backend's flag with no time), nothing counts. With nothing going on, booked guests seated
+ * make it `seated` and a booking due makes it `reserved`.
  */
 function tableAt(
+  input: FloorPlanInput,
   layout: FloorTableLayout,
   open: readonly Order[],
-  requests: readonly AdminServiceRequest[],
   freedAt: string | undefined,
 ) {
   const { number, seats } = layout;
   const since = (at: string) => !layout.freed && (!freedAt || at > freedAt);
   const orders = open.filter((o) => o.table === number && since(lastPlaced(o)));
-  const asked = requests
+  const asked = input.requests
     .filter((r) => r.table === number && since(r.requestedAt))
     .sort((a, b) => a.requestedAt.localeCompare(b.requestedAt));
+  const bookings = bookingsAt(input, number, since);
+  let status: FloorTableStatus = statusOf(orders, asked);
+  let booking = bookings.next;
+  let seatedAt = orders.at(-1)?.placedAt;
+  if (status === 'available' && bookings.seated) {
+    status = 'seated';
+    booking = bookings.seated;
+    seatedAt = bookings.seated.seatedAt;
+  } else if (status === 'available' && bookings.due) {
+    status = 'reserved';
+  }
   const freed =
-    layout.freed || (freedAt !== undefined && orders.length === 0 && asked.length === 0);
+    layout.freed ||
+    (freedAt !== undefined && orders.length === 0 && asked.length === 0 && !bookings.seated);
   const table: AdminFloorTable = {
     table: number,
     seats,
-    status: statusOf(orders, asked),
+    status,
     freed,
     orderCount: orders.length,
     due: orders.reduce((sum, o) => sum + amountDue(o), 0),
-    ...(orders.length > 0 ? { seatedAt: orders.at(-1)?.placedAt } : {}),
+    ...(seatedAt ? { seatedAt } : {}),
+    ...(booking ? { booking: brief(booking) } : {}),
   };
-  return { table, orders, requests: asked };
+  return { table, orders, requests: asked, reservations: bookings.today };
 }
 
 /** GET /admin/branches/:branchId/tables's answer. */
@@ -102,7 +162,7 @@ export function floorPlan(input: FloorPlanInput): AdminFloorPlan {
       id,
       name,
       tables: tables.map(
-        (layout) => tableAt(layout, open, input.requests, input.freedAt?.[layout.number]).table,
+        (layout) => tableAt(input, layout, open, input.freedAt?.[layout.number]).table,
       ),
     })),
     generatedAt: new Date(input.now).toISOString(),
@@ -114,10 +174,10 @@ export function tableDetail(input: FloorPlanInput, number: number): AdminTableDe
   const floor = input.layout.floors.find((f) => f.tables.some((t) => t.number === number));
   const layout = floor?.tables.find((t) => t.number === number);
   if (!floor || !layout) return undefined;
-  const { table, orders, requests } = tableAt(
+  const { table, orders, requests, reservations } = tableAt(
+    input,
     layout,
     openDineIn(input),
-    input.requests,
     input.freedAt?.[number],
   );
   return {
@@ -125,6 +185,7 @@ export function tableDetail(input: FloorPlanInput, number: number): AdminTableDe
     floor: { id: floor.id, name: floor.name },
     orders,
     requests,
+    reservations,
     generatedAt: new Date(input.now).toISOString(),
   };
 }
@@ -147,7 +208,13 @@ async function floorInput(ctx: MockContext, branch: Branch): Promise<FloorPlanIn
     ctx.seed.floors(branch.id),
     floorActivity(ctx, branch),
   ]);
-  return { layout, ...activity, freedAt: freedTimes(ctx, branch), branch };
+  return {
+    layout,
+    ...activity,
+    freedAt: freedTimes(ctx, branch),
+    reservations: branchReservations(ctx, branch),
+    branch,
+  };
 }
 
 /** The table number in the path, as one of the branch's tables, or 404. */

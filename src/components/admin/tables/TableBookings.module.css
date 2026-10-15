@@ -1,0 +1,37 @@
+/* A table's bookings today: the booking rows (reservations/ReservationRow) in a plum-edged panel. */
+
+.panel {
+  display: grid;
+  gap: 10px;
+  padding: 16px 16px 6px;
+  border: 1px solid color-mix(in srgb, var(--reserved) 28%, var(--line));
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h2);
+}
+
+.subtitle {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.list {
+  margin: 0 -16px;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+@media (min-width: 768px) {
+  .panel {
+    padding: 20px 24px 8px;
+  }
+
+  .list {
+    margin: 0 -24px;
+  }
+}

@@ -1,0 +1,168 @@
+/*
+ * A booking: the guest and its state in a tinted head (toned like its row), the facts in a
+ * two-column list, then its actions — Seat guests full width, the rest beneath.
+ */
+
+.body {
+  display: grid;
+  gap: 16px;
+  width: min(480px, 100%);
+}
+
+.head {
+  --tone: var(--reserved);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--tone) 9%, var(--surface));
+}
+
+.head[data-state='late'] {
+  --tone: var(--error);
+}
+
+.head[data-state='seated'] {
+  --tone: var(--success);
+}
+
+.head[data-state='cancelled'],
+.head[data-state='noShow'] {
+  --tone: var(--ink-3);
+}
+
+.badge {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--tone);
+  color: var(--white);
+}
+
+.headText {
+  min-width: 0;
+}
+
+.guest {
+  color: var(--ink);
+  font: var(--font-h3);
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: color-mix(in srgb, var(--tone) 85%, var(--ink));
+  font: var(--font-small-strong);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-round);
+  background: var(--tone);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.fact {
+  min-width: 0;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.fact dt {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.fact dd {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.note {
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  white-space: pre-line;
+}
+
+.history {
+  display: grid;
+  gap: 2px;
+}
+
+.history > span + span {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.link {
+  color: var(--brand-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:focus-visible {
+  border-radius: var(--r-2xs);
+  box-shadow: var(--focus);
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.actions {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.secondary > * {
+  flex: 1 1 auto;
+}
+
+.danger {
+  color: var(--error);
+}
+
+.pair {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.destroy {
+  border-color: var(--error);
+  background: var(--error);
+}
+
+.confirm {
+  width: min(440px, 100%);
+  color: var(--ink-2);
+  font: var(--font-body);
+}

@@ -3,6 +3,7 @@ import { isPaymentMethodId } from '@/lib/payments';
 import { WAITER_REASON_IDS } from '@/lib/service';
 import { isGuestSession } from '@/lib/session';
 import { readJSON, storageAvailable, writeJSON, type StorageKind } from '@/lib/storage';
+import type { Reservation } from '@/types/admin';
 import type { BranchStatus } from '@/types/branch';
 import type { BranchStatusChange } from './branchStatus';
 import type { BranchMenuChanges } from './menuChanges';
@@ -43,6 +44,11 @@ export const MOCK_KEYS = {
    * /branches/:id/menu is the dummy JSON with these on top.
    */
   menuChanges: 'olive.mock.menu.v2',
+  /**
+   * Bookings, by branch id. A branch with no entry yet is seeded with sample bookings under
+   * `npm run dev` (api/mock/demoReservations).
+   */
+  reservations: 'olive.mock.reservations.v1',
 } as const;
 
 export interface Table<T> {
@@ -276,6 +282,29 @@ const isBranchMenuChanges = (v: unknown): v is BranchMenuChanges =>
 const isMenuChanges = (v: unknown): v is Record<string, BranchMenuChanges> =>
   isObject(v) && Object.values(v).every(isBranchMenuChanges);
 
+const RESERVATION_STATUSES = new Set<unknown>(['booked', 'seated', 'cancelled', 'noShow']);
+
+const isReservation = (v: unknown): v is Reservation =>
+  isObject(v) &&
+  typeof v.id === 'string' &&
+  typeof v.table === 'number' &&
+  typeof v.guestName === 'string' &&
+  isOptionalString(v.phone) &&
+  typeof v.partySize === 'number' &&
+  typeof v.at === 'string' &&
+  !Number.isNaN(Date.parse(v.at)) &&
+  typeof v.minutes === 'number' &&
+  isOptionalString(v.note) &&
+  RESERVATION_STATUSES.has(v.status) &&
+  typeof v.createdAt === 'string' &&
+  typeof v.createdBy === 'string' &&
+  isOptionalString(v.seatedAt) &&
+  isOptionalString(v.updatedAt) &&
+  isOptionalString(v.updatedBy);
+
+const isReservationTable = (v: unknown): v is Record<string, Reservation[]> =>
+  isObject(v) && Object.values(v).every(listOf(isReservation));
+
 /** The mock server's tables. */
 export interface MockDb {
   sessions: Table<GuestSession[]>;
@@ -292,6 +321,8 @@ export interface MockDb {
   tablesFreed: Table<Record<string, string>>;
   /** Staff changes to each branch's menu, by branch id. */
   menuChanges: Table<Record<string, BranchMenuChanges>>;
+  /** Bookings, by branch id. */
+  reservations: Table<Record<string, Reservation[]>>;
 }
 
 export function createStorageDb(): MockDb {
@@ -305,5 +336,6 @@ export function createStorageDb(): MockDb {
     branchStatus: table(MOCK_KEYS.branchStatus, 'local', isBranchStatusTable, () => ({})),
     tablesFreed: table(MOCK_KEYS.tablesFreed, 'local', isFreedTable, () => ({})),
     menuChanges: table(MOCK_KEYS.menuChanges, 'local', isMenuChanges, () => ({})),
+    reservations: table(MOCK_KEYS.reservations, 'local', isReservationTable, () => ({})),
   };
 }

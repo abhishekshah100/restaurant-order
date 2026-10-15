@@ -1,0 +1,244 @@
+/*
+ * A booking row, toned by state: booked and arriving in the reserved plum, late red, seated
+ * green, cancelled and no-show faded. The time sits in a tinted block on the left; the guest's
+ * button stretches over the row (it opens the booking); Seat sits above it.
+ */
+
+.row {
+  --tone: var(--reserved);
+  position: relative;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'time main main'
+    'time state end';
+  align-items: center;
+  gap: 8px 14px;
+  padding: 14px;
+  transition: background-color var(--dur-fast) ease;
+}
+
+.row + .row {
+  border-top: 1px solid var(--line);
+}
+
+.row[data-state='late'] {
+  --tone: var(--error);
+}
+
+.row[data-state='seated'] {
+  --tone: var(--success);
+}
+
+.row[data-state='cancelled'],
+.row[data-state='noShow'] {
+  --tone: var(--ink-3);
+}
+
+.row[data-state='cancelled'] .main,
+.row[data-state='noShow'] .main,
+.row[data-state='cancelled'] .time,
+.row[data-state='noShow'] .time {
+  opacity: 0.6;
+}
+
+.row[data-state='cancelled'] .name {
+  text-decoration: line-through;
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--bg) 45%, var(--surface));
+  }
+}
+
+/* ---------- Time ---------- */
+
+.time {
+  grid-area: time;
+  align-self: stretch;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 4px;
+  border-radius: var(--r-tile);
+  background: color-mix(in srgb, var(--tone) 10%, var(--surface));
+  text-align: center;
+}
+
+.clock {
+  color: color-mix(in srgb, var(--tone) 80%, var(--ink));
+  font: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.length {
+  color: var(--ink-3);
+  font: var(--font-meta);
+  white-space: nowrap;
+}
+
+/* ---------- The booking ---------- */
+
+.main {
+  grid-area: main;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.open {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.row:has(.open:focus-visible) {
+  box-shadow: inset var(--focus);
+}
+
+.name {
+  font: var(--font-h3);
+}
+
+.id {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+.meta {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.note > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.note svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* ---------- State and Seat ---------- */
+
+.state {
+  grid-area: state;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--tone) 12%, var(--surface));
+  color: color-mix(in srgb, var(--tone) 85%, var(--ink));
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-round);
+  background: var(--tone);
+}
+
+.row[data-state='late'] .dot {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tone) 25%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row[data-state='late'] .dot {
+    animation: none;
+  }
+}
+
+.end {
+  grid-area: end;
+  justify-self: end;
+}
+
+.chev {
+  color: var(--ink-3);
+}
+
+.seat {
+  position: relative;
+  z-index: 1;
+  height: 36px;
+  padding: 0 14px 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.seat:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.seat:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .seat:not(:disabled):hover {
+    background: var(--success);
+    color: var(--white);
+  }
+}
+
+@media (min-width: 900px) {
+  .row {
+    grid-template-columns: 84px minmax(0, 1fr) 150px 110px;
+    grid-template-areas: 'time main state end';
+    gap: 16px;
+    padding: 12px 20px;
+  }
+}

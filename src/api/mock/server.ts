@@ -30,6 +30,12 @@ import {
   editStaffRound,
   takeTableOrder,
 } from './handlers/adminOrders';
+import {
+  createReservation,
+  listReservations,
+  setReservationStatus,
+  updateReservation,
+} from './handlers/adminReservations';
 import { branchFloorPlan, branchTable, freeTable, tableQrCodes } from './handlers/adminTables';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
@@ -62,6 +68,10 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/branches/:branchId/tables/:table/orders', takeTableOrder],
   ['POST', 'admin/branches/:branchId/tables/:table/payment', collectTablePayment],
   ['POST', 'admin/branches/:branchId/tables/:table/free', freeTable],
+  ['GET', 'admin/branches/:branchId/reservations', listReservations],
+  ['POST', 'admin/branches/:branchId/reservations', createReservation],
+  ['PATCH', 'admin/branches/:branchId/reservations/:id', updateReservation],
+  ['PATCH', 'admin/branches/:branchId/reservations/:id/status', setReservationStatus],
   ['GET', 'admin/branches/:branchId/orders', branchOrdersToday],
   ['PATCH', 'admin/branches/:branchId/menu/dishes/:slug/availability', setDishAvailability],
   ['POST', 'admin/branches/:branchId/menu/dishes', createDish],

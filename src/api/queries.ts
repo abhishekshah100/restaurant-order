@@ -284,6 +284,19 @@ export const branchOrdersQuery = (token: string | null, branchId: string | undef
     refetchInterval: BRANCH_SERVICE_REFRESH_MS,
   });
 
+/**
+ * GET /admin/branches/:branchId/reservations: bookings from today on. Keyed like the floor, so
+ * a booking seated or changed refreshes the floor plan and the other way round. Polled like it.
+ */
+export const reservationsQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'service', 'reservations', branchId, token] as const,
+    queryFn: token && branchId ? () => api.reservations(token, branchId) : skipToken,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+  });
+
 /** GET /admin/branches/:branchId/tables/qr-codes: the links to print; they change rarely. */
 export const tableQrCodesQuery = (token: string | null, branchId: string | undefined) =>
   queryOptions({

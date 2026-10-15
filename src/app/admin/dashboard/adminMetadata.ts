@@ -7,6 +7,7 @@ type AdminPage =
   | 'tables'
   | 'table'
   | 'qrCodes'
+  | 'reservations'
   | 'orders'
   | 'readyOrders'
   | 'unpaidOrders'

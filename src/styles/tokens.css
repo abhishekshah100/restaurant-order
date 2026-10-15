@@ -41,6 +41,8 @@
   --warn-tint: #f5e8cc;
   --info: #2f5f86; /* Occupied tables on the admin floor plan (6.6:1 on white) */
   --info-tint: #e2ebf3;
+  --reserved: #6a4c93; /* Reserved tables and bookings (7.4:1 on white) */
+  --reserved-tint: #ece5f4;
   --white: #fff; /* Pure white — highlights, light-on-photo text */
   --on-brand: var(--white); /* Text, icons and ticks on brand/ink/dark fills */
   --on-brand-soft: #ffd9c7; /* Tinted icon on a brand fill ("New" tag) */

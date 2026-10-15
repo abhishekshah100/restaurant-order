@@ -20,9 +20,11 @@ const floors: AdminFloor[] = [
 ];
 
 describe('floor plan helpers', () => {
-  it('groups waiting for food and eating as occupied', () => {
+  it('groups seated, waiting for food and eating as occupied; reserved on its own', () => {
+    expect(legendOf('seated')).toBe('occupied');
     expect(legendOf('ordering')).toBe('occupied');
     expect(legendOf('eating')).toBe('occupied');
+    expect(legendOf('reserved')).toBe('reserved');
     expect(legendOf('wantsBill')).toBe('wantsBill');
     expect(
       legendCounts([
@@ -31,8 +33,10 @@ describe('floor plan helpers', () => {
         table(3, 'eating'),
         table(4, 'needsWaiter'),
         table(5, 'available'),
+        table(6, 'reserved'),
+        table(7, 'seated'),
       ]),
-    ).toEqual({ available: 2, occupied: 2, needsWaiter: 1, wantsBill: 0 });
+    ).toEqual({ available: 2, reserved: 1, occupied: 3, needsWaiter: 1, wantsBill: 0 });
   });
 
   it('opens the area in the address, else the first', () => {

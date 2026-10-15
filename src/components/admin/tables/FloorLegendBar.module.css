@@ -33,6 +33,10 @@
   --tone: var(--success);
 }
 
+.reserved {
+  --tone: var(--reserved);
+}
+
 .occupied {
   --tone: var(--info);
 }

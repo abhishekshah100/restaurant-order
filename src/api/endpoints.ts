@@ -1,4 +1,4 @@
-import type { AdminBranch } from '@/types/admin';
+import type { AdminBranch, Reservation } from '@/types/admin';
 import type { MenuData } from '@/types/menu';
 import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
@@ -38,12 +38,15 @@ import type {
   PlaceOrderRequest,
   PromoQuote,
   ReorderDishesRequest,
+  ReservationInput,
+  ReservationsResponse,
   ResolveRequestResponse,
   SendOtpRequest,
   ServiceRequestListResponse,
   SettledPaymentResponse,
   SetAvailabilityRequest,
   SetBranchStatusRequest,
+  SetReservationStatusRequest,
   SimulatePaymentRequest,
   StaffRoundRequest,
   TableDetailResponse,
@@ -122,6 +125,27 @@ export const api = {
   uploadDishImage: (token: string, branchId: string, body: ImageUploadRequest) =>
     apiPost<ImageUploadResponse>(
       `admin/branches/${seg(branchId)}/menu/images`,
+      body,
+      bearer(token),
+    ),
+  reservations: (token: string, branchId: string) =>
+    apiGet<ReservationsResponse>(`admin/branches/${seg(branchId)}/reservations`, bearer(token)),
+  createReservation: (token: string, branchId: string, body: ReservationInput) =>
+    apiPost<Reservation>(`admin/branches/${seg(branchId)}/reservations`, body, bearer(token)),
+  updateReservation: (token: string, branchId: string, id: string, body: ReservationInput) =>
+    apiPatch<Reservation>(
+      `admin/branches/${seg(branchId)}/reservations/${seg(id)}`,
+      body,
+      bearer(token),
+    ),
+  setReservationStatus: (
+    token: string,
+    branchId: string,
+    id: string,
+    body: SetReservationStatusRequest,
+  ) =>
+    apiPatch<Reservation>(
+      `admin/branches/${seg(branchId)}/reservations/${seg(id)}/status`,
       body,
       bearer(token),
     ),

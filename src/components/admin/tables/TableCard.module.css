@@ -1,6 +1,6 @@
 /*
- * A table card, toned by state (tables/FloorLegendBar has the key): available green, occupied
- * blue, needs waiter red, wants bill gold. The tone tints the card, colours a bar along
+ * A table card, toned by state (tables/FloorLegendBar has the key): available green, reserved
+ * plum, occupied blue, needs waiter red, wants bill gold. The tone tints the card, colours a bar along
  * its top, the status dot and words, so the floor reads at a glance; the words say it too.
  */
 
@@ -39,6 +39,10 @@
 
 .available {
   --tone: var(--success);
+}
+
+.reserved {
+  --tone: var(--reserved);
 }
 
 .occupied {
@@ -132,6 +136,15 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.booking {
+  color: var(--reserved);
+  font: var(--font-meta-strong);
+}
+
+.late {
+  color: var(--error);
 }
 
 .card:focus-visible {

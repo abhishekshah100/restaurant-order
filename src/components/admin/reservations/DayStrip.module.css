@@ -1,0 +1,88 @@
+/* Day tiles: the picked one dark, a plum count of bookings under each date. */
+
+.strip {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  margin: 0 -4px;
+  padding: 2px 4px 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.strip::-webkit-scrollbar {
+  display: none;
+}
+
+.day {
+  flex: none;
+  min-width: 78px;
+  padding: 10px 10px 8px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--sh-1);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    transform var(--dur-fast) ease;
+}
+
+.name {
+  font: var(--font-label);
+  white-space: nowrap;
+}
+
+.date {
+  color: var(--ink-3);
+  font: var(--font-meta);
+  white-space: nowrap;
+}
+
+.count {
+  min-width: 24px;
+  margin-top: 4px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--reserved-tint);
+  color: var(--reserved);
+  font: var(--font-meta-strong);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.count[data-none] {
+  background: var(--ink-a05);
+  color: var(--ink-3);
+}
+
+.day[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.day[aria-pressed='true'] .date {
+  color: color-mix(in srgb, var(--on-dark) 78%, transparent);
+}
+
+.day[aria-pressed='true'] .count {
+  background: color-mix(in srgb, var(--on-dark) 18%, transparent);
+  color: var(--on-dark);
+}
+
+.day:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .day:not([aria-pressed='true']):hover {
+    transform: translateY(-1px);
+    border-color: var(--line-strong);
+  }
+}

@@ -18,9 +18,11 @@ import type {
   DishInput,
   ImageUploadRequest,
   EditRoundRequest,
+  ReservationInput,
   ServiceRequestListResponse,
   SetAvailabilityRequest,
   SetBranchStatusRequest,
+  SetReservationStatusRequest,
   UpdateCategoriesRequest,
   SimulatePaymentRequest,
   StaffRoundRequest,
@@ -413,6 +415,48 @@ export function useFreeTable() {
   return useMutation({
     mutationFn: ({ branchId, table }: { branchId: string; table: number }) =>
       api.freeTable(requireToken(token), branchId, table),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/**
+ * POST …/reservations (no `id`) or PATCH …/reservations/:id: a booking taken or changed. The
+ * floor plan and the bookings are read again.
+ */
+export function useSaveReservation() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      id,
+      body,
+    }: {
+      branchId: string;
+      id?: string;
+      body: ReservationInput;
+    }) =>
+      id
+        ? api.updateReservation(requireToken(token), branchId, id, body)
+        : api.createReservation(requireToken(token), branchId, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** PATCH …/reservations/:id/status: seated, cancelled, a no-show, or restored. */
+export function useSetReservationStatus() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      id,
+      body,
+    }: {
+      branchId: string;
+      id: string;
+      body: SetReservationStatusRequest;
+    }) => api.setReservationStatus(requireToken(token), branchId, id, body),
     onSettled: () => refreshFloor(client),
   });
 }

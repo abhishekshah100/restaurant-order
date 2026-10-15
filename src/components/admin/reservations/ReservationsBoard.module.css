@@ -1,0 +1,183 @@
+/* The Reservations page: days and New reservation, the day counted, then the bookings. */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.new {
+  justify-self: stretch;
+}
+
+/* ---------- The day ---------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.stat dt {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.stat dd {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font: var(--font-h3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.next {
+  grid-column: 1 / -1;
+  border-color: color-mix(in srgb, var(--reserved) 30%, var(--line));
+  background: color-mix(in srgb, var(--reserved-tint) 60%, var(--surface));
+}
+
+.next dd {
+  color: var(--reserved);
+}
+
+/* ---------- Bookings ---------- */
+
+.panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.tools {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filters > * {
+  flex: none;
+}
+
+.list {
+  list-style: none;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 6px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--reserved-tint);
+  color: var(--reserved);
+}
+
+.emptyTitle {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.emptyBody {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.state {
+  padding: 40px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.skeleton {
+  height: 420px;
+  border-radius: var(--r-panel);
+  background: linear-gradient(90deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%) 0 0 / 200%
+    100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .page {
+    gap: 20px;
+  }
+
+  .top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.6fr);
+  }
+
+  .next {
+    grid-column: auto;
+  }
+
+  .tools {
+    padding: 14px 20px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .tools {
+    grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
+    align-items: center;
+  }
+}

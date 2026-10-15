@@ -1,0 +1,135 @@
+/*
+ * Tables as small tiles, by area. Picked: the reserved plum fill. Best fit: a brand tag. Booked
+ * then: hatched and disabled, saying until when. Too small: faded.
+ */
+
+.picker {
+  display: grid;
+  gap: 14px;
+}
+
+.area {
+  display: grid;
+  gap: 8px;
+}
+
+.areaName {
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+  list-style: none;
+}
+
+.table {
+  position: relative;
+  width: 100%;
+  min-height: 72px;
+  padding: 8px 6px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    transform var(--dur-fast) ease;
+}
+
+.number {
+  font: 500 22px/26px var(--f-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.seats {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.tag {
+  margin-top: 3px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--ink-a06);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.best {
+  border-color: var(--brand-600);
+}
+
+.best .tag {
+  background: var(--brand-tint);
+  color: var(--brand-700);
+}
+
+.small:not([aria-pressed='true']) {
+  border-style: dashed;
+}
+
+.small:not([aria-pressed='true']) .number,
+.small:not([aria-pressed='true']) .seats {
+  opacity: 0.55;
+}
+
+.table[aria-pressed='true'] {
+  border-color: var(--reserved);
+  background: var(--reserved);
+  color: var(--white);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--reserved) 30%, transparent);
+}
+
+.table[aria-pressed='true'] .seats {
+  color: color-mix(in srgb, var(--white) 85%, transparent);
+}
+
+.table[aria-pressed='true'] .tag {
+  background: color-mix(in srgb, var(--white) 22%, transparent);
+  color: var(--white);
+}
+
+.table:disabled {
+  border-style: solid;
+  border-color: var(--line);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--bg) 0 6px,
+    color-mix(in srgb, var(--bg) 40%, var(--surface)) 6px 12px
+  );
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+
+.table:disabled .tag {
+  background: var(--surface);
+}
+
+.table:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .table:not(:disabled, [aria-pressed='true']):hover {
+    border-color: var(--reserved);
+    transform: translateY(-1px);
+  }
+}
+
+.error {
+  color: var(--error);
+  font: var(--font-small);
+}

@@ -14,9 +14,11 @@ import type { AdminTableDetail } from '@/types/admin';
 import type { Order } from '@/types/order';
 import { OrderPad, type PadTarget } from '../orderPad/OrderPad';
 import { OrderDetailDialog, type OrderDialogView } from '../orders/OrderDetailDialog';
+import { ReservationEditor, type EditorTarget } from '../reservations/ReservationEditor';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { FreeTableDialog } from './FreeTableDialog';
 import { TableQrDialog } from './qr/TableQrDialog';
+import { TableBookings } from './TableBookings';
 import { TableCollectDialog } from './TableCollectDialog';
 import { TableOrderCard } from './TableOrderCard';
 import { TableRequests } from './TableRequests';
@@ -28,8 +30,8 @@ const AGE_REFRESH_MS = 20_000;
 
 /**
  * /admin/dashboard/tables/:table/: one table. Where it is and its state, what's open at it
- * (orders, still to pay, seated for), its open requests with Done, and its open orders, newest
- * first; an order opens with everything on it. Read from GET
+ * (orders, still to pay, seated for), today's bookings with Seat, its open requests with Done,
+ * and its open orders, newest first; an order opens with everything on it. Reserve books it. Read from GET
  * /admin/branches/:branchId/tables/:table, polled every 15 s.
  */
 export function TableDetail({ table }: { table: number }) {
@@ -89,13 +91,14 @@ export function TableDetail({ table }: { table: number }) {
 
 function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | null }) {
   const t = useContent('common');
-  const { money } = useAdminWorkspace();
+  const { money, clock } = useAdminWorkspace();
   const seatedLabel = useSeatedLabel();
   const [open, setOpen] = useState<{ id: string; view: OrderDialogView } | null>(null);
   const [pad, setPad] = useState<PadTarget | null>(null);
   const [collectingTable, setCollectingTable] = useState(false);
   const [freeing, setFreeing] = useState(false);
   const [showingQr, setShowingQr] = useState(false);
+  const [booking, setBooking] = useState<EditorTarget | null>(null);
   // Looked up on every poll, so an open order shows its latest state.
   const openOrder = open ? detail.orders.find((order) => order.id === open.id) : undefined;
   const addItems = (order: Order) => {
@@ -137,11 +140,19 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <span className={styles.dot} aria-hidden="true" />
               {t(`adminTables.status.${detail.status}`)}
             </span>
+            <button
+              type="button"
+              className={styles.free}
+              onClick={() => setBooking({ kind: 'new', table: detail.table })}
+            >
+              <Icon name="calendar" size="xs" />
+              {t('adminTables.detail.reserve')}
+            </button>
             <button type="button" className={styles.free} onClick={() => setShowingQr(true)}>
               <Icon name="qr" size="xs" />
               {t('adminQr.tableButton')}
             </button>
-            {detail.status !== 'available' && (
+            {detail.status !== 'available' && detail.status !== 'reserved' && (
               <button type="button" className={styles.free} onClick={() => setFreeing(true)}>
                 <Icon name="check" size="xs" />
                 {t('adminTables.detail.free.action')}
@@ -187,6 +198,14 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
         </dl>
       </section>
 
+      {detail.reservations.length > 0 && (
+        <TableBookings
+          reservations={detail.reservations}
+          now={(now ?? new Date(detail.generatedAt)).getTime()}
+          onEdit={setBooking}
+        />
+      )}
+
       {detail.requests.length > 0 && <TableRequests requests={detail.requests} now={now} />}
 
       <section className={styles.panel} aria-labelledby="orders-title">
@@ -216,7 +235,14 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <Icon name="check" size="md" />
             </span>
             <p className={styles.emptyTitle}>{t('adminTables.detail.empty.title')}</p>
-            <p className={styles.emptyBody}>{t('adminTables.detail.empty.body')}</p>
+            <p className={styles.emptyBody}>
+              {detail.status === 'reserved' && detail.booking
+                ? t('adminTables.detail.empty.reserved', {
+                    name: detail.booking.guestName,
+                    time: clock.time(detail.booking.at),
+                  })
+                : t('adminTables.detail.empty.body')}
+            </p>
           </div>
         )}
       </section>
@@ -234,6 +260,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
       )}
       {freeing && <FreeTableDialog detail={detail} onClose={() => setFreeing(false)} />}
       {showingQr && <TableQrDialog table={detail.table} onClose={() => setShowingQr(false)} />}
+      <ReservationEditor target={booking} onClose={() => setBooking(null)} />
     </>
   );
 }

@@ -9,7 +9,8 @@ import { ADMIN_PATHS } from './adminBranches';
  * keys (common › adminShell.nav.<id>).
  */
 
-export type AdminNavId = 'home' | 'tables' | 'orders' | 'requests' | 'menu' | 'payments';
+export type AdminNavId =
+  'home' | 'tables' | 'reservations' | 'orders' | 'requests' | 'menu' | 'payments';
 
 export interface AdminNavItem {
   id: AdminNavId;
@@ -40,6 +41,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     tab: true,
     badge: (counts) => counts.waiterCalls + counts.billRequests,
   },
+  { id: 'reservations', href: section('reservations'), icon: 'calendar', tab: false },
   { id: 'menu', href: section('menu'), icon: 'menu', tab: false },
   { id: 'payments', href: section('payments'), icon: 'card', tab: false },
 ];
@@ -61,9 +63,14 @@ export function activeNavId(pathname: string): AdminNavId | undefined {
 export const ADMIN_LINKS = {
   requests: section('requests'),
   tables: section('tables'),
+  reservations: section('reservations'),
   readyOrders: `${section('orders')}ready/`,
   unpaidOrders: `${section('orders')}unpaid/`,
 } as const;
+
+/** The Reservations page on a day (?day=2026-10-17); today without one. */
+export const reservationsPath = (day?: string) =>
+  day ? `${ADMIN_LINKS.reservations}?day=${encodeURIComponent(day)}` : ADMIN_LINKS.reservations;
 
 /** Every table's QR code, to print. */
 export const qrCodesPath = () => `${ADMIN_LINKS.tables}qr/`;

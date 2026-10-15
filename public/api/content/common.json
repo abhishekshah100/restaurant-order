@@ -255,7 +255,8 @@
       "requests": "Requests · Admin",
       "payments": "Payments · Admin",
       "table": "Table {table} · Admin",
-      "qrCodes": "Table QR codes · Admin"
+      "qrCodes": "Table QR codes · Admin",
+      "reservations": "Reservations · Admin"
     },
     "loading": "Loading your workspace",
     "descriptor": "Admin",
@@ -264,6 +265,7 @@
       "label": "Main",
       "home": "Home",
       "tables": "Tables",
+      "reservations": "Reservations",
       "orders": "Orders",
       "requests": "Requests",
       "menu": "Menu",
@@ -433,12 +435,15 @@
     "legend": {
       "label": "On this floor",
       "available": "Available",
+      "reserved": "Reserved",
       "occupied": "Occupied",
       "needsWaiter": "Needs waiter",
       "wantsBill": "Wants bill"
     },
     "status": {
       "available": "Available",
+      "reserved": "Reserved",
+      "seated": "Seated",
       "ordering": "Food on the way",
       "eating": "Dining",
       "needsWaiter": "Needs waiter",
@@ -505,7 +510,8 @@
       },
       "empty": {
         "title": "No open orders",
-        "body": "This table is free. Use Take order when guests sit down, or they can scan the QR code."
+        "body": "This table is free. Use Take order when guests sit down, or they can scan the QR code.",
+        "reserved": "Reserved for {name} at {time}. Seat them when they arrive, then take their order."
       },
       "notFound": {
         "title": "Table not found",
@@ -524,9 +530,14 @@
         "keep": "Not yet",
         "done": "Table {table} is free",
         "failed": "Couldn't free the table. Try again."
-      }
+      },
+      "reserve": "Reserve"
     },
-    "openQr": "QR codes"
+    "openQr": "QR codes",
+    "booking": "{time} · {name}",
+    "nextBooking": "Booked {time}",
+    "late": "{count} min late",
+    "openReservations": "Reservations"
   },
   "adminOrder": {
     "title": "Order {order}",
@@ -1041,5 +1052,154 @@
     "tip": "Tip: print on card and laminate it, or use a stand. Reprints show the same code.",
     "loading": "Loading the QR codes",
     "failed": "Couldn't make the file. Try again."
+  },
+  "adminReservations": {
+    "title": "Reservations",
+    "new": "New reservation",
+    "days": {
+      "label": "Day",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "chip": "{day}: {count}"
+    },
+    "count": {
+      "one": "{count} booking",
+      "other": "{count} bookings"
+    },
+    "stats": {
+      "label": "This day",
+      "bookings": "Bookings",
+      "guests": "Guests",
+      "seated": "Seated",
+      "next": "Next arrival",
+      "none": "None"
+    },
+    "filters": {
+      "label": "Show",
+      "upcoming": "Upcoming",
+      "seated": "Seated",
+      "closed": "Cancelled & no-show",
+      "all": "All"
+    },
+    "search": "Search name, mobile, table or booking",
+    "state": {
+      "upcoming": "Booked",
+      "arriving": "Arriving soon",
+      "late": "{count} min late",
+      "seated": "Seated",
+      "cancelled": "Cancelled",
+      "noShow": "No-show"
+    },
+    "guests": {
+      "one": "{count} guest",
+      "other": "{count} guests"
+    },
+    "table": "Table {table}",
+    "length": {
+      "hours": "{hours} h",
+      "hoursMinutes": "{hours} h {minutes} min"
+    },
+    "until": "Until {time}",
+    "row": {
+      "open": "Booking {id}: {name}, {time}, {state}",
+      "seat": "Seat",
+      "seatLabel": "Seat {name} at table {table}"
+    },
+    "empty": {
+      "title": "No bookings",
+      "body": "Nothing booked for this day yet. Use New reservation to add one.",
+      "filtered": "No bookings match. Try another filter or search."
+    },
+    "loading": "Loading reservations",
+    "error": {
+      "title": "We couldn't load the reservations",
+      "body": "Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "detail": {
+      "title": "Booking {id}",
+      "when": "When",
+      "table": "Table",
+      "party": "Party",
+      "phone": "Mobile",
+      "note": "Note",
+      "bookedBy": "Booked by",
+      "bookedByValue": "{name} · {date}",
+      "updated": {
+        "seated": "Seated by {name} at {time}",
+        "cancelled": "Cancelled by {name} at {time}",
+        "noShow": "Marked no-show by {name} at {time}",
+        "booked": "Restored by {name} at {time}"
+      },
+      "whenValue": "{date} · {time} – {end}",
+      "seat": "Seat guests",
+      "edit": "Change",
+      "cancel": "Cancel booking",
+      "noShow": "Didn't come",
+      "restore": "Restore booking",
+      "openTable": "Open table {table}",
+      "call": "Call",
+      "notYet": "You can seat the guests from an hour before their time.",
+      "confirmCancel": {
+        "title": "Cancel booking {id}?",
+        "body": "Table {table} will be free for others at {time}. You can restore the booking later if the table is still free.",
+        "confirm": "Cancel booking",
+        "keep": "Keep booking"
+      }
+    },
+    "toast": {
+      "created": "Table {table} booked for {name} at {time}",
+      "updated": "Booking {id} saved",
+      "seated": "{name} seated at table {table}",
+      "cancelled": "Booking {id} cancelled",
+      "noShow": "{name} marked as a no-show",
+      "booked": "Booking {id} restored",
+      "failed": "Couldn't save that. Try again.",
+      "taken": "Table {table} is booked for {name} at {time}. Pick another table or time.",
+      "closed": "This booking has changed meanwhile. Check it and try again."
+    },
+    "tableBookings": {
+      "title": "Bookings today",
+      "subtitle": "Seat the guests when they arrive"
+    },
+    "editor": {
+      "newTitle": "New reservation",
+      "editTitle": "Change booking {id}",
+      "guest": "Guest",
+      "name": "Name",
+      "namePlaceholder": "Who is the booking for?",
+      "phone": "Mobile",
+      "phoneHint": "For a reminder, or if plans change",
+      "party": "Party size",
+      "partyValue": {
+        "one": "{count} guest",
+        "other": "{count} guests"
+      },
+      "guestItem": "guest",
+      "when": "When",
+      "day": "Day",
+      "time": "Time",
+      "timePlaceholder": "Pick a time",
+      "noTimes": "No times left on this day. Pick another day.",
+      "length": "Hold the table for",
+      "table": "Table",
+      "tableHint": "Free tables for the party at that time; the best fit is marked.",
+      "pickTimeFirst": "Pick a time first to see which tables are free.",
+      "bestFit": "Best fit",
+      "booked": "Booked {time}",
+      "seats": "{count} seats",
+      "tooSmall": "Table {table} seats {seats}, for a party of {party}. Fine if you'll add chairs or push tables together.",
+      "note": "Note",
+      "notePlaceholder": "Occasion, high chair, allergies…",
+      "save": "Book table",
+      "saveChanges": "Save changes",
+      "errors": {
+        "name": "Enter the guest's name",
+        "time": "Pick a time",
+        "table": "Pick a table",
+        "phoneLength": "Enter the full mobile number",
+        "phonePrefix": "That doesn't look like a mobile number"
+      }
+    }
   }
 }

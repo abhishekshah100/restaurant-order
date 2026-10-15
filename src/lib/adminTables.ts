@@ -1,27 +1,29 @@
 import type { AdminFloor, AdminFloorTable, FloorTableStatus } from '@/types/admin';
 
 /*
- * The floor plan's logic, pure: which area is open, the legend's four groups and their counts,
+ * The floor plan's logic, pure: which area is open, the legend's five groups and their counts,
  * and how long guests have been seated.
  */
 
-/** The legend's groups: waiting for food and eating are both "Occupied". */
-export type FloorLegend = 'available' | 'occupied' | 'needsWaiter' | 'wantsBill';
+/** The legend's groups: seated, waiting for food and eating are all "Occupied". */
+export type FloorLegend = 'available' | 'reserved' | 'occupied' | 'needsWaiter' | 'wantsBill';
 
 export const FLOOR_LEGEND: readonly FloorLegend[] = [
   'available',
+  'reserved',
   'occupied',
   'needsWaiter',
   'wantsBill',
 ];
 
 export const legendOf = (status: FloorTableStatus): FloorLegend =>
-  status === 'ordering' || status === 'eating' ? 'occupied' : status;
+  status === 'ordering' || status === 'eating' || status === 'seated' ? 'occupied' : status;
 
 /** How many tables are in each legend group. */
 export function legendCounts(tables: readonly AdminFloorTable[]): Record<FloorLegend, number> {
   const counts: Record<FloorLegend, number> = {
     available: 0,
+    reserved: 0,
     occupied: 0,
     needsWaiter: 0,
     wantsBill: 0,

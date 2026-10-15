@@ -159,11 +159,13 @@ export interface FloorPlanLayout {
 }
 
 /**
- * Where a table is now: free, or taken and why it needs a person most (a waiter call, then a
- * bill request, then food on the way, then eating). A table is free again once every order at
- * it today is served and paid.
+ * Where a table is now: free; reserved (a booking starts within the hour, or its guests are a
+ * little late); seated (booked guests sat down, nothing ordered yet); or taken and why it needs
+ * a person most (a waiter call, then a bill request, then food on the way, then eating). A
+ * table is free again once every order at it today is served and paid.
  */
-export type FloorTableStatus = 'available' | Exclude<AdminTableStatus, 'closing'>;
+export type FloorTableStatus =
+  'available' | 'reserved' | 'seated' | Exclude<AdminTableStatus, 'closing'>;
 
 /** One table on the floor plan, with what's happening at it. */
 export interface AdminFloorTable {
@@ -179,8 +181,13 @@ export interface AdminFloorTable {
   orderCount: number;
   /** Still to pay across them. */
   due: Price;
-  /** ISO: the first of those orders (how long the guests have been seated). */
+  /** ISO: the first of those orders, or when booked guests were seated (how long they've sat). */
   seatedAt?: string;
+  /**
+   * The booking that matters now: the one it's reserved for, the seated guests', or (free) the
+   * next one later today. Absent when the table has none.
+   */
+  booking?: ReservationBrief;
 }
 
 export interface AdminFloor {
@@ -203,6 +210,8 @@ export interface AdminTableDetail extends AdminFloorTable {
   orders: Order[];
   /** Open waiter calls and bill requests at the table, oldest first. */
   requests: AdminServiceRequest[];
+  /** Today's bookings at the table still to come or seated, by time. */
+  reservations: Reservation[];
   /** ISO: when the server read it. */
   generatedAt: string;
 }
@@ -233,4 +242,51 @@ export interface TableQrCode {
 export interface AdminTableQrCodes {
   /** Every table on the floor plan, by area then table, as staff walk them. */
   codes: TableQrCode[];
+}
+
+/* ---------- Reservations (GET /admin/branches/:branchId/reservations) ---------- */
+
+/**
+ * Where a booking is: still to come, the guests sat down, called off, or the guests never came.
+ */
+export type ReservationStatus = 'booked' | 'seated' | 'cancelled' | 'noShow';
+
+/** A table booked for a party at a time. */
+export interface Reservation {
+  /** Shown to staff: "R1004". */
+  id: string;
+  table: number;
+  guestName: string;
+  /** National mobile digits (the branch's mobile rules), when the guest gave one. */
+  phone?: string;
+  partySize: number;
+  /** ISO: when the party is due. */
+  at: string;
+  /** How long the table is held from `at`. */
+  minutes: number;
+  /** Occasion, high chair, allergies… */
+  note?: string;
+  status: ReservationStatus;
+  /** ISO. */
+  createdAt: string;
+  /** The staff member who took the booking. */
+  createdBy: string;
+  /** ISO: when the guests were seated. */
+  seatedAt?: string;
+  /** ISO and who: the last change of status (seated, cancelled, no-show, restored). */
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+/** What a table card shows of a booking. */
+export type ReservationBrief = Pick<
+  Reservation,
+  'id' | 'guestName' | 'partySize' | 'at' | 'status'
+>;
+
+/** GET /admin/branches/:branchId/reservations: from the start of today on, by time. */
+export interface AdminReservations {
+  reservations: Reservation[];
+  /** ISO: when the server read it. */
+  generatedAt: string;
 }

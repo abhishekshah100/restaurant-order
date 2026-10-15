@@ -5,7 +5,7 @@ import { useContent, useFloorPlan } from '@/api/hooks';
 import { Button, EmptyState } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { floorPath, qrCodesPath } from '@/lib/adminNav';
+import { floorPath, qrCodesPath, reservationsPath } from '@/lib/adminNav';
 import { legendCounts, openFloor } from '@/lib/adminTables';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { FloorLegendBar } from './FloorLegendBar';
@@ -22,7 +22,7 @@ const SKELETON_TILES = 8;
 /**
  * /admin/dashboard/tables/: the floor plan. One tab per area (Ground floor, First floor,
  * Outdoor…), the open area's tables counted by state, and a card per table that opens its
- * page. The open area is in the address (?floor=), so coming back from a table keeps it.
+ * page; Reservations and QR codes beside the tabs. The open area is in the address (?floor=), so coming back from a table keeps it.
  * Read from GET /admin/branches/:branchId/tables, polled every 15 s.
  */
 export function FloorPlan() {
@@ -44,9 +44,14 @@ export function FloorPlan() {
             value={floor.id}
             onChange={(id) => router.replace(floorPath(id), { scroll: false })}
           />
-          <Button href={qrCodesPath()} variant="secondary" iconStart="qr" className={styles.qr}>
-            {t('adminTables.openQr')}
-          </Button>
+          <div className={styles.links}>
+            <Button href={reservationsPath()} variant="secondary" iconStart="calendar">
+              {t('adminTables.openReservations')}
+            </Button>
+            <Button href={qrCodesPath()} variant="secondary" iconStart="qr">
+              {t('adminTables.openQr')}
+            </Button>
+          </div>
         </div>
         <section
           id="floor-panel"

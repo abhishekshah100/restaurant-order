@@ -21,6 +21,7 @@ import {
   floorPlanQuery,
   tableDetailQuery,
   tableQrCodesQuery,
+  reservationsQuery,
   branchPromotionsQuery,
   branchServiceQuery,
   branchesQuery,
@@ -141,6 +142,10 @@ export const useBranchOrders = (branchId: string | undefined) =>
 /** GET /admin/branches/:branchId/tables: every area with its tables; polled like the service. */
 export const useFloorPlan = (branchId: string | undefined) =>
   useQuery(floorPlanQuery(useAdminToken(), branchId));
+
+/** GET /admin/branches/:branchId/reservations: bookings from today on; polled like the floor. */
+export const useReservations = (branchId: string | undefined) =>
+  useQuery(reservationsQuery(useAdminToken(), branchId));
 
 /** GET /admin/branches/:branchId/tables/qr-codes: the link to print on each table. */
 export const useTableQrCodes = (branchId: string | undefined) =>

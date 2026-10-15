@@ -1,0 +1,164 @@
+/*
+ * The booking form: a side panel (the whole screen on a phone) of three short sections — the
+ * guest, when, the table — then a note. Days scroll sideways as small two-line tiles.
+ */
+
+.editor {
+  width: min(620px, 100vw);
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.section {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.heading {
+  color: var(--ink);
+  font: var(--font-h3);
+}
+
+.headingRow {
+  display: grid;
+  gap: 2px;
+}
+
+.hint {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.label {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.twoUp {
+  display: grid;
+  gap: 14px;
+}
+
+/* ---------- Party ---------- */
+
+.party {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label stepper'
+    'value stepper';
+  align-items: center;
+  column-gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--bg) 35%, var(--surface));
+}
+
+.party > .label {
+  grid-area: label;
+}
+
+.partyValue {
+  grid-area: value;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.party > :last-child {
+  grid-area: stepper;
+}
+
+/* ---------- Day, time, length ---------- */
+
+.days {
+  display: flex;
+  gap: 8px;
+  margin: 0 -4px;
+  padding: 2px 4px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.days::-webkit-scrollbar {
+  display: none;
+}
+
+.day {
+  flex: none;
+  min-width: 72px;
+  padding: 8px 10px;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+
+.dayName {
+  font: var(--font-small-strong);
+  white-space: nowrap;
+}
+
+.dayDate {
+  color: var(--ink-3);
+  font: var(--font-meta);
+  white-space: nowrap;
+}
+
+.day[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.day[aria-pressed='true'] .dayDate {
+  color: color-mix(in srgb, var(--on-dark) 80%, transparent);
+}
+
+.day:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .day:not([aria-pressed='true']):hover {
+    border-color: var(--ink-2);
+  }
+}
+
+.lengthField {
+  display: grid;
+  gap: 8px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.warning {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  font: var(--font-small-strong);
+}
+
+@media (min-width: 600px) {
+  .twoUp {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}

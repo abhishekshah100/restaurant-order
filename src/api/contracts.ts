@@ -4,11 +4,13 @@ import type {
   AdminBranchService,
   AdminFloorPlan,
   AdminOrders,
+  AdminReservations,
   AdminTableQrCodes,
   CancelReason,
   AdminServiceRequest,
   AdminTableDetail,
   AdminSession,
+  Reservation,
 } from '@/types/admin';
 import type { AtTableMethodKey, OrderMode, PaymentMethodId } from '@/types/branch';
 import type { LineConfig } from '@/types/cart';
@@ -104,7 +106,11 @@ export type ApiErrorCode =
   /** 403: the signed-in admin doesn't manage this branch (or the order or request's branch). */
   | 'forbidden'
   /** 409: the order (or round) isn't ready to serve yet. */
-  | 'not_ready';
+  | 'not_ready'
+  /** 409: another booking holds the table then (`reservation` says which). */
+  | 'table_taken'
+  /** 409: the booking can't change that way any more (seated, cancelled, or not due yet). */
+  | 'reservation_closed';
 
 /** Body of every non-2xx response. */
 export interface ApiErrorBody {
@@ -119,6 +125,8 @@ export interface ApiErrorBody {
   amountDue?: Price;
   /** item_unavailable: the dishes that can't be ordered now, by name. */
   items?: string[];
+  /** table_taken: the booking holding the table then. */
+  reservation?: Pick<Reservation, 'id' | 'guestName' | 'at'>;
 }
 
 /* ---------- Admin sessions ---------- */
@@ -231,6 +239,56 @@ export interface TakeTableOrderRequest {
  */
 export type SetBranchStatusRequest =
   { status: 'open' } | { status: 'paused'; minutes: 15 | 30 | 45 | 60 | 90 } | { status: 'closed' };
+
+/* ---------- Reservations (staff) ---------- */
+
+/**
+ * `GET /admin/branches/:branchId/reservations` — the branch's bookings from the start of today
+ * (its time zone) on, every status, by time. Authorised like GET /admin/branches. 200 →
+ * `ReservationsResponse`. Errors: 401, 403. Polled like the floor (every 15 s). A booked table
+ * shows as `reserved` on the floor plan from an hour before its time until 30 minutes after
+ * (`booking` on GET …/tables says for whom); seated guests with nothing ordered yet show as
+ * `seated`. Mock: kept on this device (`olive.mock.reservations.v1`); under `npm run dev` each
+ * branch starts with sample bookings.
+ */
+export type ReservationsResponse = AdminReservations;
+
+/**
+ * `POST /admin/branches/:branchId/reservations` — a booking taken by phone or at the door — and
+ * `PATCH /admin/branches/:branchId/reservations/:id` — a booking changed (only while booked).
+ * The table must exist and be free for `minutes` from `at`: a booked or seated booking there
+ * overlapping it is refused. Authorised like GET /admin/branches. 201 / 200 → `Reservation`.
+ * Errors: 400 invalid_request (no name, party not 1–20, a mobile number the branch's rules
+ * refuse, a time in the past or over 60 days ahead, `minutes` not one of 60, 90, 120, 150, 180,
+ * a note over 200 characters), 401, 403, 404 not_found (no such table, or booking), 409
+ * table_taken (with `reservation`: the booking in the way), 409 reservation_closed (edit only:
+ * no longer booked).
+ */
+export interface ReservationInput {
+  table: number;
+  guestName: string;
+  /** National mobile digits; optional. */
+  phone?: string;
+  partySize: number;
+  /** ISO. */
+  at: string;
+  /** Default 90. */
+  minutes?: number;
+  note?: string;
+}
+
+/**
+ * `PATCH /admin/branches/:branchId/reservations/:id/status` — the guests arrived (`seated`:
+ * booked only, from an hour before its time; the table shows as seated until they order or
+ * staff free it), called it off (`cancelled`: booked only), didn't come (`noShow`: booked, once
+ * its time has passed), or a cancelled or no-show booking is restored (`booked`: if the table is
+ * still free then). Records who and when. Authorised like GET /admin/branches. 200 →
+ * `Reservation`. Errors: 400, 401, 403, 404 not_found, 409 reservation_closed (not that change
+ * from where it is), 409 table_taken (restoring).
+ */
+export interface SetReservationStatusRequest {
+  status: Reservation['status'];
+}
 
 /* ---------- The menu (staff) ---------- */
 
