@@ -58,9 +58,11 @@ export async function prefetchAppData(client: QueryClient): Promise<void> {
       queryFn: () => readApiFile<Restaurant>('restaurant'),
     }),
     client.prefetchQuery({ ...branchesQuery(), queryFn: () => branches }),
-    ...branches.map((b) =>
-      client.prefetchQuery({ ...branchMenuQuery(b.id), queryFn: () => readMenu(b.id) }),
-    ),
+    // Built into the page as already out of date: staff change the menu during service (sold
+    // out, back on), so the browser reads the live one once the page opens.
+    ...branches.map(async (b) => {
+      client.setQueryData(branchMenuQuery(b.id).queryKey, await readMenu(b.id), { updatedAt: 0 });
+    }),
     ...branches.map((b) =>
       client.prefetchQuery({
         ...branchPromotionsQuery(b.id),

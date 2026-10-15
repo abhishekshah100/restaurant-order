@@ -970,7 +970,7 @@
       "title": "Categories",
       "subtitle": "Names and order guests see",
       "name": "Name",
-      "shortName": "Short name (phones)",
+      "shortName": "Short name",
       "description": "Description",
       "note": "New categories need the guest app built again, so they're added with the backend.",
       "save": "Save categories",

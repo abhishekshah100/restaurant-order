@@ -82,3 +82,62 @@ test('sold out, back on, and a new dish, as guests see them', async ({ page }) =
   await page.goto('/menu/mains/');
   await expect(page.getByText('Masala Dosa').first()).toBeVisible();
 });
+
+test("a thali's choices, the order of dishes, and removing a dish", async ({ page }) => {
+  test.slow();
+  await scan(page, 'table=5');
+  await adminSignIn(page);
+  await page.goto('/admin/dashboard/menu/');
+
+  // Veg Thali: every choice group is there; a curry costs more.
+  await page.getByRole('button', { name: 'Edit Veg Thali' }).click();
+  const editor = page.getByRole('dialog', { name: 'Edit Veg Thali' });
+  await editor.getByText('Choices', { exact: true }).click();
+  for (const group of [
+    'Choose your curry',
+    'Choose your bread',
+    'Choose your rice',
+    'Choose your dessert',
+    'Choose your drink',
+  ]) {
+    await expect(
+      editor.getByRole('textbox', { name: 'Group name' }).and(editor.locator(`[value="${group}"]`)),
+    ).toHaveCount(1);
+  }
+  const extras = editor.getByRole('textbox', { name: /^Extra/ });
+  await extras.first().fill('25');
+  await editor.getByRole('button', { name: /^Save dish/ }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Veg Thali saved' })).toBeVisible();
+
+  // The guest picks a curry and sees the new price.
+  await page.goto('/dish/veg-thali/');
+  await expect(page.getByText(/Dal Makhani/).first()).toBeVisible();
+  await expect(page.getByText('+₹25').first()).toBeVisible();
+
+  // Reorder Starters: Dahi Kebab first.
+  await page.goto('/admin/dashboard/menu/');
+  await page.getByRole('button', { name: 'Starters', exact: true }).click();
+  await page.getByRole('button', { name: /^Reorder/ }).click();
+  await page.getByRole('button', { name: 'Move Dahi Kebab up' }).click();
+  await page.getByRole('button', { name: 'Move Dahi Kebab up' }).click();
+  await page.getByRole('button', { name: /^Save order/ }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Order saved' })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Menu' }).getByRole('listitem').first(),
+  ).toContainText('Dahi Kebab');
+
+  // Remove a dish.
+  await page.getByRole('button', { name: 'Edit Crispy Corn Chaat' }).click();
+  await page.getByRole('button', { name: 'Remove dish' }).click();
+  await page
+    .getByRole('dialog', { name: 'Remove Crispy Corn Chaat?' })
+    .getByRole('button', { name: 'Remove dish' })
+    .click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Crispy Corn Chaat removed from the menu' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit Crispy Corn Chaat' })).toHaveCount(0);
+  await page.goto('/menu/starters/');
+  await expect(page.getByText('Dahi Kebab').first()).toBeVisible();
+  await expect(page.getByText('Crispy Corn Chaat')).toHaveCount(0);
+});
