@@ -1,4 +1,17 @@
-/* Day tiles: the picked one dark, a plum count of bookings under each date. */
+/* Day tiles: the picked one dark, a plum count of bookings under each date, then a calendar. */
+
+.picker {
+  position: relative;
+  min-width: 0;
+}
+
+/* The calendar floats over what's below, under the tiles. */
+.popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: var(--z-popover);
+}
 
 .strip {
   display: flex;
@@ -61,6 +74,18 @@
   color: var(--ink-3);
 }
 
+/* The calendar button: as tall as the tiles, square-ish, ringed while its month is open. */
+.pick {
+  min-width: 56px;
+  place-content: center;
+  color: var(--ink-2);
+}
+
+.pick[aria-expanded='true'] {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
 .day[aria-pressed='true'] {
   border-color: var(--ink);
   background: var(--ink);
@@ -85,4 +110,23 @@
     transform: translateY(-1px);
     border-color: var(--line-strong);
   }
+}
+
+/* The booking form's size: smaller tiles, no counts. */
+
+.compact .day {
+  min-width: 72px;
+  padding: 8px 10px;
+  gap: 1px;
+  border-color: var(--line-strong);
+  border-radius: var(--r-tile);
+  box-shadow: none;
+}
+
+.compact .pick {
+  min-width: 52px;
+}
+
+.compact .name {
+  font: var(--font-small-strong);
 }

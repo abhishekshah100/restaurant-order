@@ -21,8 +21,8 @@ import {
   MAX_NOTE,
   MAX_PARTY,
   bookingDays,
+  bookingRange,
   dayOffset,
-  dayParts,
   reservationErrors,
   reservationForm,
   reservationInput,
@@ -32,6 +32,7 @@ import {
 } from '@/lib/reservations';
 import type { Reservation } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { DayStrip } from './DayStrip';
 import { TablePicker } from './TablePicker';
 import { useReservationText } from './useReservationText';
 import styles from './ReservationEditor.module.css';
@@ -191,30 +192,14 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
           <h3 id="res-when" className={styles.heading}>
             {t('adminReservations.editor.when')}
           </h3>
-          <div className={styles.days} role="group" aria-label={t('adminReservations.editor.day')}>
-            {days.map((day) => {
-              const parts = dayParts(day.key);
-              const name =
-                day.offset === 0
-                  ? t('adminReservations.days.today')
-                  : day.offset === 1
-                    ? t('adminReservations.days.tomorrow')
-                    : parts.weekday;
-              return (
-                <button
-                  key={day.key}
-                  type="button"
-                  className={styles.day}
-                  aria-pressed={form.day === day.key}
-                  aria-label={`${name}, ${parts.day} ${parts.month}`}
-                  onClick={() => pickDay(day.key)}
-                >
-                  <span className={styles.dayName}>{name}</span>
-                  <span className={styles.dayDate}>{[parts.day, parts.month].join(' ')}</span>
-                </button>
-              );
-            })}
-          </div>
+          <DayStrip
+            days={days}
+            value={form.day}
+            range={bookingRange(clock, now)}
+            label={t('adminReservations.editor.day')}
+            compact
+            onChange={pickDay}
+          />
           <div className={styles.twoUp}>
             <Select
               id="res-time"

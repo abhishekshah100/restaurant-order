@@ -1,0 +1,107 @@
+/* A month to pick a day from: the picked day dark, today ringed, a plum dot on days with bookings. */
+
+.calendar {
+  width: min(100%, 320px);
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-2);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* The chevron points right: turned round for the month before. */
+.previous > span {
+  transform: scaleX(-1);
+}
+
+.month {
+  margin: 0;
+  font: var(--font-label);
+  text-align: center;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.grid th {
+  padding: 4px 0;
+  color: var(--ink-3);
+  font: var(--font-meta);
+  text-align: center;
+}
+
+.grid td {
+  padding: 2px;
+  text-align: center;
+}
+
+.day {
+  position: relative;
+  width: 100%;
+  max-width: 40px;
+  aspect-ratio: 1;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--ink);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.day:disabled {
+  color: var(--ink-a35);
+  cursor: default;
+}
+
+.today {
+  border-color: var(--line-strong);
+}
+
+.dot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--reserved);
+}
+
+.day[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.day[aria-pressed='true'] .dot {
+  background: var(--on-dark);
+}
+
+.day:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .day:not(:disabled, [aria-pressed='true']):hover {
+    background: var(--ink-a05);
+  }
+}

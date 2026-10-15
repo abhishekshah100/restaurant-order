@@ -20,8 +20,8 @@ export const DEFAULT_MINUTES = 90;
 export const MAX_PARTY = 20;
 export const MAX_NOTE = 200;
 export const MAX_NAME = 60;
-/** The days the Reservations page and the booking form offer, today first. */
-export const BOOKING_DAYS = 14;
+/** The days the Reservations page and the booking form show as tiles, today first; a calendar has the rest. */
+export const BOOKING_DAYS = 3;
 /** The furthest ahead the server takes a booking. */
 export const MAX_DAYS_AHEAD = 60;
 /** Booking times go up in these steps. */
@@ -172,6 +172,45 @@ export function bookingDays(clock: Clock, now: Date, count = BOOKING_DAYS): Book
 /** Days from today to a calendar day ("2026-10-17"); negative for a day gone. */
 export const dayOffset = (clock: Clock, now: Date, key: string) =>
   Math.round((Date.parse(key) - Date.parse(clock.dayKey(now))) / DAY);
+
+/** The calendar day `days` after another: "2026-10-30" + 3 → "2026-11-02". */
+export const addDays = (key: string, days: number) =>
+  new Date(Date.parse(key) + days * DAY).toISOString().slice(0, 10);
+
+/** The days a booking can be on: today until the furthest ahead the server takes one. */
+export const bookingRange = (clock: Clock, now: Date) => {
+  const min = clock.dayKey(now);
+  return { min, max: addDays(min, MAX_DAYS_AHEAD) };
+};
+
+/**
+ * A month ("2026-10") as weeks, Sunday first, for a calendar: each day's key, null before the
+ * 1st and after the last day.
+ */
+export function monthWeeks(month: string): (string | null)[][] {
+  const first = `${month}-01`;
+  const lead = new Date(Date.parse(first)).getUTCDay();
+  const length = new Date(Date.parse(addDays(first, 32).slice(0, 7) + '-01') - DAY).getUTCDate();
+  const cells = [
+    ...Array<null>(lead).fill(null),
+    ...Array.from({ length }, (_, i) => addDays(first, i)),
+  ];
+  while (cells.length % 7) cells.push(null);
+  return Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
+}
+
+/** A month's name for a calendar: "October 2026". */
+export const monthName = (month: string) =>
+  new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+    new Date(`${month}-15T12:00:00Z`),
+  );
+
+/** The month before or after one: "2026-12" + 1 → "2027-01". */
+export const addMonths = (month: string, months: number) => {
+  const at = new Date(`${month}-15T12:00:00Z`);
+  at.setUTCMonth(at.getUTCMonth() + months);
+  return at.toISOString().slice(0, 7);
+};
 
 /** A day's parts for a day chip: "Sat", "17", "Oct" (English, as dates are written elsewhere). */
 export function dayParts(key: string) {

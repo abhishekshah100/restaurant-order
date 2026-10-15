@@ -1060,7 +1060,10 @@
       "label": "Day",
       "today": "Today",
       "tomorrow": "Tomorrow",
-      "chip": "{day}: {count}"
+      "chip": "{day}: {count}",
+      "pickDate": "Pick a date",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
     },
     "count": {
       "one": "{count} booking",

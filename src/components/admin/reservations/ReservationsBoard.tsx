@@ -10,10 +10,12 @@ import { reservationsPath } from '@/lib/adminNav';
 import {
   RESERVATION_FILTERS,
   bookingDays,
+  bookingRange,
   dayOffset,
   filterReservations,
   guestCount,
   holdsTable,
+  MAX_DAYS_AHEAD,
   onDay,
   reservationCounts,
   type ReservationFilter,
@@ -57,12 +59,17 @@ export function ReservationsBoard() {
     const now = nowDate.getTime();
     const all = reservations.data.reservations;
     const days = bookingDays(clock, nowDate);
+    const range = bookingRange(clock, nowDate);
     const day = dayParam && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? dayParam : days[0].key;
     if (!days.some((d) => d.key === day)) {
       days.push({ key: day, offset: dayOffset(clock, nowDate, day) });
     }
+    // Every day the calendar offers, and the one in the address.
     const counts = Object.fromEntries(
-      days.map((d) => [d.key, onDay(all, clock, d.key).filter(holdsTable).length]),
+      [...bookingDays(clock, nowDate, MAX_DAYS_AHEAD + 1), ...days].map((d) => [
+        d.key,
+        onDay(all, clock, d.key).filter(holdsTable).length,
+      ]),
     );
     const ofDay = onDay(all, clock, day);
     const filterCounts = reservationCounts(ofDay);
@@ -76,7 +83,9 @@ export function ReservationsBoard() {
           <DayStrip
             days={days}
             value={day}
+            range={range}
             counts={counts}
+            label={t('adminReservations.days.label')}
             onChange={(key) =>
               router.replace(reservationsPath(key === days[0].key ? undefined : key), {
                 scroll: false,

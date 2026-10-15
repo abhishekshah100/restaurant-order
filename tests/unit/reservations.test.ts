@@ -2,12 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { reservationsPath } from '@/lib/adminNav';
 import { createClock } from '@/lib/clock';
 import {
+  addDays,
+  addMonths,
   bookingDays,
+  bookingRange,
   canMarkNoShow,
   canSeat,
   clashWith,
   dayOffset,
   dayParts,
+  monthName,
+  monthWeeks,
   filterReservations,
   guestCount,
   isDue,
@@ -135,12 +140,33 @@ describe('the Reservations page', () => {
     expect(filterReservations(day, 'all', '12').map((r) => r.id)).toEqual(['R1003']);
   });
 
-  it('offers two weeks of days in the branch calendar, and the day in the address', () => {
+  it('offers three days in the branch calendar, a calendar to 60 days ahead, and the day in the address', () => {
     const late = new Date('2026-10-15T19:00:00Z'); // 12:30 AM on the 16th in Bengaluru
     const days = bookingDays(clock, late);
-    expect(days).toHaveLength(14);
-    expect(days[0]).toEqual({ key: '2026-10-16', offset: 0 });
-    expect(days[13].key).toBe('2026-10-29');
+    expect(days).toEqual([
+      { key: '2026-10-16', offset: 0 },
+      { key: '2026-10-17', offset: 1 },
+      { key: '2026-10-18', offset: 2 },
+    ]);
+    expect(bookingRange(clock, late)).toEqual({ min: '2026-10-16', max: '2026-12-15' });
+    expect(addDays('2026-12-30', 3)).toBe('2027-01-02');
+    expect(addMonths('2026-12', 1)).toBe('2027-01');
+    expect(addMonths('2026-01', -1)).toBe('2025-12');
+    expect(monthName('2026-10')).toBe('October 2026');
+    // October 2026 starts on a Thursday and has 31 days: five weeks, Sunday first.
+    const weeks = monthWeeks('2026-10');
+    expect(weeks).toHaveLength(5);
+    expect(weeks[0]).toEqual([null, null, null, null, '2026-10-01', '2026-10-02', '2026-10-03']);
+    expect(weeks[4]).toEqual([
+      '2026-10-25',
+      '2026-10-26',
+      '2026-10-27',
+      '2026-10-28',
+      '2026-10-29',
+      '2026-10-30',
+      '2026-10-31',
+    ]);
+    expect(monthWeeks('2027-02').flat().filter(Boolean)).toHaveLength(28);
     expect(dayOffset(clock, late, '2026-10-18')).toBe(2);
     expect(dayParts('2026-10-17')).toEqual({ weekday: 'Sat', day: '17', month: 'Oct' });
     expect(reservationsPath()).toBe('/admin/dashboard/reservations/');

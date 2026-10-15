@@ -93,3 +93,69 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
     page.getByRole('button', { name: /^Booking R1002: Isha Verma, 8:00 PM, Cancelled/ }),
   ).toBeVisible();
 });
+
+test('three days as tiles, any later day from the calendar', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-10-15T12:45:00Z') });
+  await adminSignIn(page);
+  await page.goto('/admin/dashboard/reservations/');
+  const days = page.getByRole('group', { name: 'Day' });
+  await expect(days.getByRole('button')).toHaveText([
+    /^Today/,
+    /^Tomorrow/,
+    /^Sat/,
+    '', // the calendar
+  ]);
+
+  // The calendar opens on today's month; the arrow keys move a day or a week; Esc closes it.
+  await days.getByRole('button', { name: 'Pick a date' }).click();
+  const calendar = page.getByRole('grid', { name: 'October 2026' });
+  await expect(calendar.getByRole('button', { name: /^Thu 15 Oct/ })).toBeFocused();
+  await expect(calendar.getByRole('button', { name: /^Wed 14 Oct/ })).toBeDisabled();
+  await page.keyboard.press('ArrowDown');
+  await expect(calendar.getByRole('button', { name: /^Thu 22 Oct/ })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(calendar).toBeHidden();
+  await expect(days.getByRole('button', { name: 'Pick a date' })).toBeFocused();
+  // So does a press anywhere else.
+  await days.getByRole('button', { name: 'Pick a date' }).click();
+  await page.getByText('No bookings', { exact: true }).click();
+  await expect(calendar).toBeHidden();
+
+  // A day next month: it gets a tile of its own, picked, and goes in the address.
+  await days.getByRole('button', { name: 'Pick a date' }).click();
+  await page.getByRole('button', { name: 'Next month' }).click();
+  await page
+    .getByRole('grid', { name: 'November 2026' })
+    .getByRole('button', { name: /^Fri 20 Nov/ })
+    .click();
+  await expect(page).toHaveURL(/\?day=2026-11-20$/);
+  await expect(days.getByRole('button', { name: /^Fri 20 Nov/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+
+  // In the booking form, Esc closes the calendar, not the form; a day picked there is booked.
+  await page.getByRole('button', { name: 'New reservation' }).click();
+  const form = page.getByRole('dialog', { name: 'New reservation' });
+  await form.getByRole('button', { name: 'Pick a date' }).click();
+  await page.keyboard.press('Escape');
+  await expect(form.getByRole('grid')).toBeHidden();
+  await expect(form).toBeVisible();
+  await form.getByRole('button', { name: 'Pick a date' }).click();
+  await form.getByRole('button', { name: /^Sat 24 Oct/ }).click();
+  await expect(form.getByRole('button', { name: /^Sat 24 Oct/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await form.getByLabel('Name').fill('Asha Rao');
+  await form.getByLabel('Time').selectOption({ label: '8:00 PM' });
+  await form.getByRole('button', { name: /^Table 2, 4 seats/ }).click();
+  await form.getByRole('button', { name: 'Book table' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Table 2 booked for Asha Rao at 8:00 PM' }),
+  ).toBeVisible();
+  await page.goto('/admin/dashboard/reservations/?day=2026-10-24');
+  await expect(
+    page.getByRole('button', { name: /^Booking R1001: Asha Rao, 8:00 PM/ }),
+  ).toBeVisible();
+});
