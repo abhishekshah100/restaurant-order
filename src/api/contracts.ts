@@ -69,6 +69,8 @@ export type ApiErrorCode =
   | 'window_closed'
   /** 409: the order was cancelled, so nothing more can go on it. */
   | 'order_closed'
+  /** 409: the waiter call or bill request was already dealt with. */
+  | 'request_closed'
   /** 422: no such promo code at the branch (or it can't be used yet). */
   | 'promo_invalid'
   /** 422: the promo code's `validTo` has passed. */
@@ -131,7 +133,8 @@ export interface AdminBranchesResponse {
 /**
  * `GET /admin/branches/:branchId/service` — what the floor staff of one branch need to act on
  * now (the waiter home). Authorised like GET /admin/branches. 200 → `BranchServiceResponse`:
- * the open waiter and bill requests (oldest first); today's orders (branch time zone) that are
+ * the open waiter and bill requests (oldest first, with who's on the way); those dealt with in
+ * the last 30 minutes (`doneRequests`, newest first, with who dealt with them); today's orders (branch time zone) that are
  * still active or not paid in full, newest first, each with its rounds ready to serve; the tables
  * with activity today and where each is in its visit; and the counts. Errors: 401 unauthorized,
  * 403 forbidden (not one of the admin's branches, or no such branch). Poll it (the app: every
@@ -189,10 +192,20 @@ export interface StaffRoundRequest {
 /**
  * `POST /admin/service-requests/:id/resolve` — a waiter dealt with the request: it leaves the
  * queue and the guest's pending requests (their "Waiter requested" / "Bill requested" page
- * clears). Idempotent: resolving it again answers the same. No body. 200 → `{ request }` with
- * `resolvedAt`. Errors: 401 unauthorized, 403 forbidden (another branch's), 404 not_found
+ * clears) and is listed in the service's `doneRequests` for 30 minutes. Idempotent: resolving it
+ * again answers the same. No body. 200 → `{ request }` with `resolvedAt` and `resolvedBy` (the
+ * staff member's name). Errors: 401 unauthorized, 403 forbidden (another branch's), 404 not_found
  * (unknown, or lapsed after 30 minutes).
  */
+/**
+ * `POST /admin/service-requests/:id/acknowledge` — "On my way": a member of staff is heading to
+ * the table. The request stays open (in the queue and the guest's pending requests) with
+ * `acknowledgedAt` and `acknowledgedBy` (their name), and the guest's page says who's coming.
+ * Whoever said it first stays. No body. 200 → `{ request }`. Errors: 401, 403 forbidden
+ * (another branch's), 404 not_found (unknown or lapsed), 409 request_closed (already done).
+ */
+export type AcknowledgeRequestResponse = ResolveRequestResponse;
+
 export interface ResolveRequestResponse {
   request: AdminServiceRequest;
 }

@@ -28,6 +28,7 @@ const order = (id: string, readyAt: string[], extra: Partial<AdminOrderSummary> 
   }) satisfies AdminOrderSummary;
 
 const service: AdminBranchService = {
+  doneRequests: [],
   requests: [
     {
       id: 'w1',

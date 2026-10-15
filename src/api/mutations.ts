@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAdminToken } from '@/hooks/useAdminSession';
-import { withoutReadyRound, withoutRequest } from '@/lib/adminService';
+import { withAcknowledged, withoutReadyRound, withoutRequest } from '@/lib/adminService';
 import type { AdminBranchService, AdminServiceRequest } from '@/types/admin';
 import type { ServiceRequest } from '@/types/service';
 import { PROMO_REFUSALS } from '@/lib/promotions';
@@ -229,6 +229,20 @@ function useOptimisticService<V extends { branchId: string }, R>(
       ),
   });
 }
+
+/**
+ * POST /admin/service-requests/:id/acknowledge: "On my way". The request shows who's coming at
+ * once (as it was if the server refuses); the guest's pending requests refresh.
+ */
+export const useAcknowledgeRequest = () =>
+  useOptimisticService(
+    (
+      token,
+      { request }: { branchId: string; request: AdminServiceRequest; by: string; at: string },
+    ) => api.acknowledgeServiceRequest(token, request.id),
+    (service, { request, by, at }) => withAcknowledged(service, request.id, by, at),
+    [['service-requests']],
+  );
 
 /**
  * POST /admin/service-requests/:id/resolve: a waiter dealt with the request. It leaves the

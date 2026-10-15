@@ -114,8 +114,10 @@ export interface AdminServiceCounts {
 
 /** What needs doing on a branch's floor now (GET /admin/branches/:branchId/service). */
 export interface AdminBranchService {
-  /** Open waiter calls and bill requests, oldest first. */
+  /** Open waiter calls and bill requests (some with someone on the way), oldest first. */
   requests: AdminServiceRequest[];
+  /** Requests dealt with in the last 30 minutes, newest first, with who dealt with them. */
+  doneRequests: AdminServiceRequest[];
   /** Today's orders still active or not paid in full, newest first. */
   orders: AdminOrderSummary[];
   /** By table number. */

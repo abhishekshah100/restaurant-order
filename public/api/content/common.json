@@ -242,8 +242,6 @@
     "draftEmpty": "Items you add will appear here.",
     "submitUnavailable": "Submit order unavailable",
     "removeItem": "Remove {item}",
-    "requestQueueTitle": "Request queue unavailable",
-    "requestQueueDescription": "The current API exposes requests for a known guest session only. It does not provide a branch-wide waiter request queue, so no request count or fabricated request records are shown here.",
     "paymentsDisclaimer": "Sample order payment records only; no payment actions are enabled.",
     "addToUnsentDraft": "Add to unsent draft",
     "draftActionDisclaimer": "No kitchen ticket or payment is created by this action.",
@@ -256,7 +254,6 @@
     "sections": {
       "ordersSubtitle": "Order history is fixture data, not a live waiter feed.",
       "menuSubtitle": "Search this branch's menu and prepare a local, unsent draft.",
-      "requestsSubtitle": "Waiter calls and bill requests require live table sessions.",
       "paymentsSubtitle": "Payment status is shown separately from order status."
     },
     "empty": {
@@ -594,5 +591,48 @@
     "sentNew": "Order {order} sent to the kitchen",
     "sentAdd": "Added to order {order}",
     "failed": "Couldn't send the order. Check the items and try again."
+  },
+  "adminRequests": {
+    "title": "Requests",
+    "filters": {
+      "label": "Show",
+      "all": "All",
+      "waiter": "Waiter calls",
+      "bill": "Bills"
+    },
+    "waiting": {
+      "title": "Waiting",
+      "subtitle": "Oldest first"
+    },
+    "coming": {
+      "title": "On the way",
+      "subtitle": "Someone has it"
+    },
+    "done": {
+      "title": "Done in the last 30 min",
+      "empty": "Nothing done yet in the last 30 minutes."
+    },
+    "tableLink": "Open Table {table}",
+    "acknowledge": "On my way",
+    "acknowledgeLabel": "On my way: {what}, Table {table}",
+    "resolve": "Done",
+    "resolveLabel": "Done: {what}, Table {table}",
+    "comingYou": "You're on the way",
+    "comingBy": "{name} is on the way",
+    "doneBy": "{name} · {time}",
+    "handledIn": {
+      "now": "Handled at once",
+      "minutes": "Handled in {count} min"
+    },
+    "empty": {
+      "title": "All caught up",
+      "body": "Waiter calls and bill requests from guests show up here as they come in."
+    },
+    "emptyFilter": {
+      "waiter": "No waiter calls right now.",
+      "bill": "No bill requests right now."
+    },
+    "loading": "Loading requests",
+    "failed": "Couldn't update that. Try again."
   }
 }

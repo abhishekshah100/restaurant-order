@@ -10,8 +10,7 @@ import type { WaiterReason } from '@/types/service';
  * MOCK ONLY — sample floor activity, so the staff pages aren't empty while there are no real
  * guests on this device: dine-in orders at several tables (two guests at some), a takeaway
  * ready to hand over, and waiter and bill requests. The floor endpoints add it to the branch's
- * own activity; Done dismisses a request and Mark served serves an order, for the rest of the
- * tab's life. A real backend never sees this file. It shows only under `npm run dev` (never in
+ * own activity; On my way, Done and Mark served work on it for the rest of the tab's life. A real backend never sees this file. It shows only under `npm run dev` (never in
  * a build or tests); turn it off there too with NEXT_PUBLIC_ADMIN_DEMO=false.
  */
 
@@ -198,11 +197,29 @@ const DEMO_REQUESTS: DemoRequest[] = [
 export const isDemoId = (id: string) =>
   DEMO_REQUESTS.some((r) => r.id === id) || DEMO_ORDERS.some((o) => o.id === id);
 
-/** Demo requests dealt with, and demo orders served, in this tab. */
-const dismissed = new Set<string>();
+/** Demo orders served in this tab. */
+const served = new Set<string>();
 
-export function dismissDemo(id: string) {
-  dismissed.add(id);
+export function serveDemo(id: string) {
+  served.add(id);
+}
+
+/** Who did what to a demo request, and when (ISO). */
+interface StaffMark {
+  by: string;
+  at: string;
+}
+const acknowledged = new Map<string, StaffMark>();
+const resolved = new Map<string, StaffMark>();
+
+/** A staff member is on their way to a demo request (kept if someone already is). */
+export function acknowledgeDemo(id: string, by: string, at: string) {
+  if (!acknowledged.has(id)) acknowledged.set(id, { by, at });
+}
+
+/** A demo request dealt with (kept if it already was). */
+export function resolveDemo(id: string, by: string, at: string) {
+  if (!resolved.has(id)) resolved.set(id, { by, at });
 }
 
 const ago = (now: number, minutes: number) => new Date(now - minutes * 60_000).toISOString();
@@ -225,8 +242,8 @@ function dishAt(menu: MenuCatalog, category: CategoryId, index: number): Dish {
 function demoOrder(demo: DemoOrder, branch: Branch, menu: MenuCatalog, now: number): Order {
   const clock = createClock(branch);
   const takeaway = demo.table === undefined;
-  const served = dismissed.has(demo.id);
-  const status: OrderStatus = served ? (takeaway ? 'pickedUp' : 'served') : demo.status;
+  const isServed = served.has(demo.id);
+  const status: OrderStatus = isServed ? (takeaway ? 'pickedUp' : 'served') : demo.status;
   const items: OrderItem[] = demo.dishes.map(([category, index, quantity]) => {
     const dish = dishAt(menu, category, index);
     const { slug: dishSlug, name, veg, price: unitPrice } = dish;
@@ -238,7 +255,7 @@ function demoOrder(demo: DemoOrder, branch: Branch, menu: MenuCatalog, now: numb
     status: step,
     time: clock.time(ago(now, Math.max(0, demo.placed - after))),
   }));
-  if (served) timeline.push({ status, time: clock.time(new Date(now)) });
+  if (isServed) timeline.push({ status, time: clock.time(new Date(now)) });
 
   return {
     id: demo.id,
@@ -257,7 +274,7 @@ function demoOrder(demo: DemoOrder, branch: Branch, menu: MenuCatalog, now: numb
     payment: { method: takeaway ? 'pickup' : 'counter', status: 'unpaid' },
     timeline,
     ...(demo.kitchenNote ? { kitchenNote: demo.kitchenNote } : {}),
-    ...(served ? { servedAt: new Date(now).toISOString() } : {}),
+    ...(isServed ? { servedAt: new Date(now).toISOString() } : {}),
   };
 }
 
@@ -266,10 +283,17 @@ export function demoOrders(branch: Branch, menu: MenuCatalog, now: number): Orde
   return DEMO_ORDERS.map((demo) => demoOrder(demo, branch, menu, now));
 }
 
-/** The demo requests not dealt with yet; a bill request's balance is its table's demo orders. */
-export function demoRequests(orders: readonly Order[], now: number): AdminServiceRequest[] {
-  return DEMO_REQUESTS.filter((r) => !dismissed.has(r.id)).map(({ requested, ...request }) => {
-    const base = { sessionId: 'demo-session', requestedAt: ago(now, requested) };
+/** Every demo request as now: who's on the way, who dealt with it. */
+function allDemoRequests(orders: readonly Order[], now: number): AdminServiceRequest[] {
+  return DEMO_REQUESTS.map(({ requested, ...request }) => {
+    const ack = acknowledged.get(request.id);
+    const done = resolved.get(request.id);
+    const base = {
+      sessionId: 'demo-session',
+      requestedAt: ago(now, requested),
+      ...(ack ? { acknowledgedAt: ack.at, acknowledgedBy: ack.by } : {}),
+      ...(done ? { resolvedAt: done.at, resolvedBy: done.by } : {}),
+    };
     if (request.kind === 'waiter') return { ...base, ...request };
     const balance = orders
       .filter((o) => o.table === request.table)
@@ -277,3 +301,11 @@ export function demoRequests(orders: readonly Order[], now: number): AdminServic
     return { ...base, ...request, balance };
   });
 }
+
+/** The demo requests not dealt with yet; a bill request's balance is its table's demo orders. */
+export const demoRequests = (orders: readonly Order[], now: number) =>
+  allDemoRequests(orders, now).filter((r) => !r.resolvedAt);
+
+/** The demo requests dealt with in this tab. */
+export const demoDoneRequests = (orders: readonly Order[], now: number) =>
+  allDemoRequests(orders, now).filter((r) => r.resolvedAt);

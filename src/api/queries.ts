@@ -215,7 +215,12 @@ export const serviceRequestsQuery = (sessionId: string | undefined) =>
     queryFn: sessionId ? () => api.serviceRequests(sessionId) : skipToken,
     staleTime: 0,
     refetchOnWindowFocus: true,
+    // So the guest sees staff on the way, and the request clear once it's dealt with.
+    refetchInterval: SERVICE_REQUESTS_REFRESH_MS,
   });
+
+/** A guest's open requests are read again this often (staff on the way, dealt with). */
+export const SERVICE_REQUESTS_REFRESH_MS = 15_000;
 
 /** The waiter home polls the floor this often (and on returning to the tab). */
 export const BRANCH_SERVICE_REFRESH_MS = 15_000;

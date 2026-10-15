@@ -8,6 +8,7 @@ import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { useToast } from '@/context/ToastContext';
 import { cx } from '@/lib/cx';
 import { orderPath } from '@/lib/orders';
+import { firstName } from '@/lib/service';
 import { NoRequest, RequestLoading, RequestStatus } from './RequestStatus';
 import { useTableVisit } from './useTableVisit';
 import styles from './Summary.module.css';
@@ -45,13 +46,21 @@ export function WaiterRequested() {
     router.push('/help/');
   };
   const trackHref = latest ? orderPath(latest.id, 'track') : null;
+  // A member of staff said they're on their way (the request is still open until they're done).
+  const coming = request.acknowledgedBy ? firstName(request.acknowledgedBy) : undefined;
 
   return (
     <RequestStatus
       icon="bell"
       tone="ok"
-      title={t('waiterRequested.title')}
-      lede={t('waiterRequested.lede', { table })}
+      title={
+        coming ? t('waiterRequested.comingTitle', { name: coming }) : t('waiterRequested.title')
+      }
+      lede={
+        coming
+          ? t('waiterRequested.comingLede', { name: coming, table })
+          : t('waiterRequested.lede', { table })
+      }
       summary={
         <div className={styles.well}>
           <Icon name="clock" size="sm" className={styles.icon} />

@@ -92,6 +92,15 @@
   color: var(--error);
 }
 
+.who {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  color: var(--info);
+  font: var(--font-meta-strong);
+}
+
 .action {
   grid-area: action;
   position: relative;

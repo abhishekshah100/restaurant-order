@@ -12,8 +12,14 @@ interface BaseRequest {
   sessionId: string;
   /** ISO timestamp. */
   requestedAt: string;
+  /** ISO: when a member of staff said they're on their way (POST …/acknowledge). Still pending. */
+  acknowledgedAt?: string;
+  /** Who's on their way: the staff member's name. */
+  acknowledgedBy?: string;
   /** ISO: when staff dealt with it (POST /admin/service-requests/:id/resolve); it's no longer pending. */
   resolvedAt?: string;
+  /** Who dealt with it: the staff member's name. */
+  resolvedBy?: string;
 }
 
 export interface WaiterRequest extends BaseRequest {

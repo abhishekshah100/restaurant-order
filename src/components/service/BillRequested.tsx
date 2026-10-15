@@ -5,7 +5,7 @@ import { Button } from '@/components/ui';
 import { useContent, useHelpTopics, useRegion } from '@/api/hooks';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
-import { PAY_BILL_PATH, billFor } from '@/lib/service';
+import { PAY_BILL_PATH, billFor, firstName } from '@/lib/service';
 import { BillTotals } from './BillTotals';
 import { HelpTopicDialog } from './HelpTopicDialog';
 import { NoRequest, RequestLoading, RequestStatus } from './RequestStatus';
@@ -46,7 +46,11 @@ export function BillRequested() {
       <RequestStatus
         icon="receipt"
         title={t('shared.billRequested')}
-        lede={t('billRequested.lede', { table })}
+        lede={
+          request.acknowledgedBy
+            ? t('billRequested.comingLede', { name: firstName(request.acknowledgedBy), table })
+            : t('billRequested.lede', { table })
+        }
         summary={
           bill.orders.length > 0 && (
             <>

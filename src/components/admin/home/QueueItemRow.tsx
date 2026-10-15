@@ -66,6 +66,8 @@ export function QueueItemRow({
   const t = useContent('common');
   const { title, detail } = useDescription(item);
   const minutes = now ? minutesSince(item.since, now) : null;
+  // A request someone is already on the way to: who.
+  const coming = item.kind === 'ready' ? undefined : item.request.acknowledgedBy;
   const table = item.kind === 'ready' ? item.order.table : item.request.table;
   const mode = item.kind === 'ready' ? item.order.mode : 'dineIn';
   const where =
@@ -110,6 +112,12 @@ export function QueueItemRow({
         >
           <Icon name="clock" size="xs" />
           <time dateTime={item.since}>{age}</time>
+          {coming && (
+            <span className={styles.who}>
+              <Icon name="user" size="xs" />
+              {coming}
+            </span>
+          )}
         </p>
       )}
       <button

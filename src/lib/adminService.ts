@@ -67,6 +67,21 @@ export function withoutRequest(service: AdminBranchService, id: string): AdminBr
   };
 }
 
+/** The service with someone on their way to this request (On my way, before the server confirms). */
+export function withAcknowledged(
+  service: AdminBranchService,
+  id: string,
+  by: string,
+  at: string,
+): AdminBranchService {
+  return {
+    ...service,
+    requests: service.requests.map((r) =>
+      r.id === id && !r.acknowledgedAt ? { ...r, acknowledgedAt: at, acknowledgedBy: by } : r,
+    ),
+  };
+}
+
 /**
  * The service with the order's ready round served (every ready round without `round`), before
  * the server confirms.

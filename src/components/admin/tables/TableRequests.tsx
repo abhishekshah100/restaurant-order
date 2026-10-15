@@ -7,27 +7,9 @@ import { useToast } from '@/context/ToastContext';
 import { minutesSince } from '@/lib/adminService';
 import { cx } from '@/lib/cx';
 import type { AdminServiceRequest } from '@/types/admin';
+import { useRequestText } from '../requests/useRequestText';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './TableRequests.module.css';
-
-/** What the request asks for, in the queue's words (adminHome.queue). */
-function useRequestText() {
-  const t = useContent('common');
-  const { money } = useAdminWorkspace();
-  return (request: AdminServiceRequest) =>
-    request.kind === 'waiter'
-      ? {
-          title: t(`adminHome.queue.reasons.${request.reason}`),
-          detail: request.note ? t('adminHome.queue.note', { note: request.note }) : undefined,
-        }
-      : {
-          title: t('adminHome.queue.bill.title'),
-          detail: [
-            t(`adminHome.queue.bill.${request.scope}`),
-            t('adminHome.queue.bill.balance', { amount: money.format(request.balance) }),
-          ].join(' · '),
-        };
-}
 
 /** The table's open waiter calls and bill requests, oldest first, each with Done. */
 export function TableRequests({

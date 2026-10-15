@@ -481,3 +481,59 @@ describe('Orders a waiter takes at the table (mock)', () => {
     expect((await addTo(placed.id, { lines }, 'ktm-thamel')).status).toBe(404);
   });
 });
+
+describe('POST /admin/service-requests/:id/acknowledge (mock)', () => {
+  const acknowledge = (id: string, headers = admin) =>
+    call('POST', `admin/service-requests/${id}/acknowledge`, undefined, headers);
+
+  it('says who is on the way; the request stays open and the guest sees it', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const request = await callWaiter(atFive);
+    now += MINUTE_MS;
+
+    const res = await acknowledge(request.id);
+    expect(res.status).toBe(200);
+    expect((res.body as ResolveRequestResponse).request).toMatchObject({
+      acknowledgedBy: DEMO_ADMIN.name,
+      acknowledgedAt: new Date(now).toISOString(),
+    });
+    // Again: whoever said it first stays.
+    now += MINUTE_MS;
+    const again = (await acknowledge(request.id)).body as ResolveRequestResponse;
+    expect(again.request.acknowledgedAt).toBe(new Date(now - MINUTE_MS).toISOString());
+
+    const open = (await floor()).requests.find((r) => r.id === request.id);
+    expect(open?.acknowledgedBy).toBe(DEMO_ADMIN.name);
+    const mine = (await call('GET', `sessions/${atFive.id}/service-requests`))
+      .body as ServiceRequestListResponse;
+    expect(mine.requests[0]).toMatchObject({ acknowledgedBy: DEMO_ADMIN.name });
+  });
+
+  it('lists a request dealt with under done, with who and when, for 30 minutes', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const request = await callWaiter(atFive);
+    now += 2 * MINUTE_MS;
+    await call('POST', `admin/service-requests/${request.id}/resolve`, undefined, admin);
+
+    const service = await floor();
+    expect(service.requests).toHaveLength(0);
+    expect(service.doneRequests).toEqual([
+      expect.objectContaining({
+        id: request.id,
+        resolvedBy: DEMO_ADMIN.name,
+        resolvedAt: new Date(now).toISOString(),
+      }),
+    ]);
+    expect((await acknowledge(request.id)).status).toBe(409);
+
+    now += 31 * MINUTE_MS;
+    expect((await floor()).doneRequests).toHaveLength(0);
+  });
+
+  it('needs a staff session and a known request', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const request = await callWaiter(atFive);
+    expect((await acknowledge(request.id, {})).status).toBe(401);
+    expect((await acknowledge('nope')).status).toBe(404);
+  });
+});

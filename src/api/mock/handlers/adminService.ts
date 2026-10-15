@@ -15,10 +15,19 @@ import type { Branch } from '@/types/branch';
 import type { Order, OrderItem, OrderRound } from '@/types/order';
 import type { ServiceRequest } from '@/types/service';
 import type { ResolveRequestResponse } from '../../contracts';
-import { demoOrders, demoRequests, dismissDemo, isDemoFloorOn, isDemoId } from '../demoFloor';
+import {
+  acknowledgeDemo,
+  demoDoneRequests,
+  demoOrders,
+  demoRequests,
+  isDemoFloorOn,
+  isDemoId,
+  resolveDemo,
+  serveDemo,
+} from '../demoFloor';
 import { fail, isObject, ok, type Handler, type MockContext } from '../context';
 import { liveOrder, readyAt } from '../kitchen';
-import { adminBranch } from './adminSessions';
+import { adminBranch, signedInAccount } from './adminSessions';
 import { allOrders, branchOrders, placedOrders } from './orders';
 import { isPending, isRecent } from './serviceRequests';
 
@@ -117,12 +126,20 @@ export interface FloorInput {
   orders: readonly Order[];
   /** The branch's open requests. */
   requests: readonly ServiceRequest[];
+  /** The branch's requests dealt with in the last 30 minutes. */
+  done?: readonly ServiceRequest[];
   branch: Branch;
   now: number;
 }
 
 /** GET /admin/branches/:branchId/service's answer, from the branch's orders and open requests. */
-export function floorService({ orders, requests, branch, now }: FloorInput): AdminBranchService {
+export function floorService({
+  orders,
+  requests,
+  done = [],
+  branch,
+  now,
+}: FloorInput): AdminBranchService {
   const clock = createClock(branch);
   const today = orders
     .filter((o) => o.status !== 'cancelled' && isToday(o.placedAt, new Date(now), clock))
@@ -136,6 +153,7 @@ export function floorService({ orders, requests, branch, now }: FloorInput): Adm
   };
   return {
     requests: open,
+    doneRequests: [...done].sort((a, b) => (b.resolvedAt ?? '').localeCompare(a.resolvedAt ?? '')),
     orders: today
       .filter((o) => !isFinished(o) || o.due > 0)
       .sort((a, b) => b.placedAt.localeCompare(a.placedAt)),
@@ -171,7 +189,8 @@ async function requestWithBranch(ctx: MockContext, id: string) {
 
 /**
  * What the floor endpoints read for a branch: its orders (placed ones moved along by the
- * kitchen, the drawn history and, under `npm run dev`, the demo floor) and its open requests.
+ * kitchen, the drawn history and, under `npm run dev`, the demo floor), its open requests and
+ * those dealt with in the last 30 minutes.
  */
 export async function floorActivity(ctx: MockContext, branch: Branch) {
   const now = ctx.now();
@@ -180,15 +199,22 @@ export async function floorActivity(ctx: MockContext, branch: Branch) {
     sessionBranches(ctx),
   ]);
   const orders = allOrders(placed, history);
-  const requests = ctx.db.serviceRequests
+  const atBranch = ctx.db.serviceRequests
     .read()
-    .filter((r) => isPending(r, now) && branchOf.get(r.sessionId) === branch.id);
-  if (!isDemoFloorOn()) return { orders, requests, now };
+    .filter((r) => isRecent(r, now) && branchOf.get(r.sessionId) === branch.id);
+  const requests = atBranch.filter((r) => isPending(r, now));
+  const done = atBranch.filter((r) => r.resolvedAt !== undefined);
+  if (!isDemoFloorOn()) return { orders, requests, done, now };
   // A demo order a waiter added to is saved as a real one (handlers/adminOrders).
   const demo = demoOrders(branch, await ctx.seed.menu(branch.id), now).filter(
     (d) => !placed.some((o) => o.id === d.id),
   );
-  return { orders: [...orders, ...demo], requests: [...requests, ...demoRequests(demo, now)], now };
+  return {
+    orders: [...orders, ...demo],
+    requests: [...requests, ...demoRequests(demo, now)],
+    done: [...done, ...demoDoneRequests(demo, now)],
+    now,
+  };
 }
 
 /** GET /admin/branches/:branchId/service */
@@ -197,21 +223,55 @@ export const branchService: Handler = async (ctx, { params, headers }) => {
   return ok(floorService({ ...(await floorActivity(ctx, branch)), branch }));
 };
 
-/** POST /admin/service-requests/:id/resolve */
-export const resolveServiceRequest: Handler = async (ctx, { params, headers }) => {
-  if (isDemoFloorOn() && isDemoId(params.id)) {
-    dismissDemo(params.id);
+/**
+ * The open request a staff member acts on, with their name: 401 without a session, 403 for
+ * another branch's, 404 when it's unknown or lapsed. A demo request (dev only) has no record.
+ */
+async function staffRequest(ctx: MockContext, headers: Record<string, string>, id: string) {
+  const { name } = signedInAccount(ctx, headers);
+  if (isDemoFloorOn() && isDemoId(id)) return { name, request: undefined };
+  const { request, branchId } = await requestWithBranch(ctx, id);
+  await adminBranch(ctx, headers, branchId);
+  return { name, request };
+}
+
+/** Saves the request (re-reading the table first, so a concurrent write isn't lost). */
+function saveRequest(ctx: MockContext, request: ServiceRequest) {
+  ctx.db.serviceRequests.write(
+    ctx.db.serviceRequests.read().map((r) => (r.id === request.id ? request : r)),
+  );
+}
+
+/** POST /admin/service-requests/:id/acknowledge */
+export const acknowledgeServiceRequest: Handler = async (ctx, { params, headers }) => {
+  const { name, request } = await staffRequest(ctx, headers, params.id);
+  const at = iso(ctx.now());
+  if (!request) {
+    acknowledgeDemo(params.id, name, at);
     return ok({});
   }
-  const { request, branchId } = await requestWithBranch(ctx, params.id);
-  await adminBranch(ctx, headers, branchId);
-  // Synchronous from here: re-read, so a concurrent write isn't lost.
+  if (request.resolvedAt) fail(409, 'request_closed');
+  // Whoever said it first is the one on the way.
+  const acknowledged: ServiceRequest = request.acknowledgedAt
+    ? request
+    : { ...request, acknowledgedAt: at, acknowledgedBy: name };
+  saveRequest(ctx, acknowledged);
+  const response: ResolveRequestResponse = { request: acknowledged };
+  return ok(response);
+};
+
+/** POST /admin/service-requests/:id/resolve */
+export const resolveServiceRequest: Handler = async (ctx, { params, headers }) => {
+  const { name, request } = await staffRequest(ctx, headers, params.id);
+  const at = iso(ctx.now());
+  if (!request) {
+    resolveDemo(params.id, name, at);
+    return ok({});
+  }
   const resolved: ServiceRequest = request.resolvedAt
     ? request
-    : { ...request, resolvedAt: iso(ctx.now()) };
-  ctx.db.serviceRequests.write(
-    ctx.db.serviceRequests.read().map((r) => (r.id === resolved.id ? resolved : r)),
-  );
+    : { ...request, resolvedAt: at, resolvedBy: name };
+  saveRequest(ctx, resolved);
   const response: ResolveRequestResponse = { request: resolved };
   return ok(response);
 };
@@ -241,7 +301,7 @@ export const markOrderServed: Handler = async (ctx, { params, body, headers }) =
   const round = roundOf(body);
   const order = (await placedOrders(ctx)).find((o) => o.id === params.id);
   if (!order && isDemoFloorOn() && isDemoId(params.id)) {
-    dismissDemo(params.id);
+    serveDemo(params.id);
     return ok({});
   }
   if (!order) {

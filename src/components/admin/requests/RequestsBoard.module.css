@@ -1,0 +1,232 @@
+/* The Requests page: kind filters, Waiting and On the way, then what was done recently. */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  max-width: 960px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filters > * {
+  flex: none;
+}
+
+.section {
+  display: grid;
+  gap: 10px;
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.sectionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font: var(--font-h2);
+}
+
+.sectionCount {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 7px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--ink-a06);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.sectionSubtitle {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+/* ---------- Nothing open ---------- */
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 40px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 8px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.emptyTitle {
+  color: var(--ink);
+  font: var(--font-h2);
+}
+
+.emptyBody {
+  max-width: 360px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+/* ---------- Done recently ---------- */
+
+.done {
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.doneSummary {
+  min-height: 52px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-2);
+  list-style: none;
+  cursor: pointer;
+}
+
+.doneSummary::-webkit-details-marker {
+  display: none;
+}
+
+.doneSummary:focus-visible {
+  border-radius: var(--r-panel);
+  box-shadow: var(--focus);
+}
+
+.doneTitle {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.doneChevron {
+  margin-left: auto;
+  transition: transform var(--dur-base) ease;
+}
+
+.done[open] .doneChevron {
+  transform: rotate(180deg);
+}
+
+.doneList {
+  display: grid;
+  padding: 0 16px 8px;
+  list-style: none;
+}
+
+.doneRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.doneTable {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--ink);
+  font: 500 17px/1 var(--f-display);
+  text-decoration: none;
+}
+
+.doneTable:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.doneText {
+  display: grid;
+  min-width: 0;
+}
+
+.doneWhat {
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.doneMeta {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.doneEmpty {
+  padding: 4px 16px 16px;
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+/* ---------- Loading and errors ---------- */
+
+.state {
+  padding: 40px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.skeleton {
+  height: 280px;
+  border-radius: var(--r-panel);
+  background: linear-gradient(90deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%) 0 0 / 200%
+    100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .page {
+    gap: 22px;
+  }
+}

@@ -1,6 +1,7 @@
 import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import type {
+  AcknowledgeRequestResponse,
   AddRoundRequest,
   AdminBranchesResponse,
   AdminSignInRequest,
@@ -68,6 +69,12 @@ export const api = {
     apiPost<OrderResponse>(
       `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/rounds`,
       body,
+      bearer(token),
+    ),
+  acknowledgeServiceRequest: (token: string, id: string) =>
+    apiPost<AcknowledgeRequestResponse>(
+      `admin/service-requests/${seg(id)}/acknowledge`,
+      undefined,
       bearer(token),
     ),
   resolveServiceRequest: (token: string, id: string) =>

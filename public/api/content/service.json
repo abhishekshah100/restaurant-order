@@ -89,6 +89,8 @@
     "cancelledToast": "Request cancelled",
     "title": "Someone's on the way",
     "lede": "We've let the team know. A member of staff will be at Table {table} shortly.",
+    "comingTitle": "{name} is on the way",
+    "comingLede": "{name} saw your request and will be at Table {table} in a moment.",
     "summary": "<b>{reason}</b> · Requested {time}",
     "cancelRequest": "Cancel request",
     "viewOrder": "View my order"
@@ -118,6 +120,7 @@
     "noneTitle": "No bill request",
     "noneBody": "You haven't asked for the bill at Table {table} yet.",
     "lede": "Your server is preparing the bill for Table {table} and will bring it over in a few minutes.",
+    "comingLede": "{name} is bringing the bill for Table {table}.",
     "payServer": "I'll pay the server",
     "paymentOptions": "Payment options"
   },

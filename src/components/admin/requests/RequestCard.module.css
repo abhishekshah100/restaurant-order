@@ -1,0 +1,237 @@
+/*
+ * An open request: the table badge (a link), what and how long, who's on the way, and the
+ * actions. A bar in the kind's tone runs down the left (waiter red, bill gold). Below 600px the
+ * actions take a row of their own, side by side; from 600px they sit at the end.
+ */
+
+.card {
+  --tone: var(--error);
+  --tone-bg: var(--error-tint);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'table body'
+    'actions actions';
+  gap: 12px 14px;
+  padding: 14px 14px 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--tone);
+}
+
+.bill {
+  --tone: var(--gold);
+  --tone-bg: var(--gold-tint);
+}
+
+/* Someone has it: quieter, with a calm bar. */
+.coming {
+  background: color-mix(in srgb, var(--info-tint) 35%, var(--surface));
+}
+
+.coming::before {
+  background: var(--info);
+}
+
+/* ---------- Table ---------- */
+
+.table {
+  grid-area: table;
+  width: 60px;
+  min-height: 60px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  border-radius: var(--r-tile);
+  background: var(--tone-bg);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    transform var(--dur-base) var(--ease-emphasized),
+    box-shadow var(--dur-base) ease;
+}
+
+.coming .table {
+  background: var(--info-tint);
+}
+
+.tableCaption {
+  color: var(--ink-3);
+  font: 700 9px/12px var(--f-ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tableNumber {
+  font: 500 26px/28px var(--f-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.table:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .table:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--sh-1);
+  }
+}
+
+/* ---------- Text ---------- */
+
+.body {
+  grid-area: body;
+  align-self: center;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.kindIcon {
+  color: var(--tone);
+}
+
+.bill .kindIcon {
+  color: var(--gold-ink);
+}
+
+.detail {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 2px;
+}
+
+.age,
+.who {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.waiting {
+  color: var(--warn);
+  font: var(--font-meta-strong);
+}
+
+.late {
+  color: var(--error);
+}
+
+.who {
+  color: var(--info);
+  font: var(--font-meta-strong);
+}
+
+/* ---------- Actions ---------- */
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  gap: 8px;
+}
+
+.acknowledge,
+.resolve {
+  position: relative;
+  flex: 1;
+  height: 40px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.acknowledge {
+  border-color: var(--info);
+  background: var(--info-tint);
+  color: var(--info);
+}
+
+.primary {
+  border-color: var(--success);
+  background: var(--success);
+  color: var(--white);
+}
+
+.acknowledge:focus-visible,
+.resolve:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .acknowledge:hover {
+    background: var(--info);
+    color: var(--white);
+  }
+
+  .resolve:not(.primary):hover {
+    border-color: var(--success);
+    color: var(--success);
+  }
+
+  .primary:hover {
+    background: color-mix(in srgb, var(--success) 82%, var(--ink));
+  }
+}
+
+@media (min-width: 600px) {
+  .card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'table body actions';
+    align-items: center;
+    padding: 14px 18px 14px 22px;
+  }
+
+  .actions {
+    align-self: center;
+  }
+
+  .acknowledge,
+  .resolve {
+    flex: none;
+    height: 38px;
+  }
+}
