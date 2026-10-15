@@ -1,0 +1,78 @@
+/*
+ * A table's QR card, on screen and on paper: centred, the table number in the display face, the
+ * code in pure black on white for scanners, framed in the brand colour.
+ */
+
+.card {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px 16px 16px;
+  border: 1px solid var(--line);
+  border-top: 6px solid var(--brand-600);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+  break-inside: avoid;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mark {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--brand-tint);
+  color: var(--brand-700);
+}
+
+.name {
+  font: var(--font-label);
+  letter-spacing: 0.02em;
+}
+
+.table {
+  font: 500 34px/1.1 var(--f-display);
+}
+
+.qr {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1;
+}
+
+/* Black on white whatever the theme: scanners read contrast, not colour. */
+.qrBack {
+  fill: var(--white);
+}
+
+.qrModules {
+  fill: #000;
+}
+
+.scan {
+  font: var(--font-label);
+}
+
+.where {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* On paper: a bigger code (easy to scan from across the table) and table number. */
+@media print {
+  .qr {
+    max-width: 62mm;
+  }
+
+  .table {
+    font-size: 40px;
+  }
+}

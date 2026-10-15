@@ -283,3 +283,11 @@ export const branchOrdersQuery = (token: string | null, branchId: string | undef
     refetchOnWindowFocus: true,
     refetchInterval: BRANCH_SERVICE_REFRESH_MS,
   });
+
+/** GET /admin/branches/:branchId/tables/qr-codes: the links to print; they change rarely. */
+export const tableQrCodesQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'qr-codes', branchId, token] as const,
+    queryFn: token && branchId ? () => api.tableQrCodes(token, branchId) : skipToken,
+    staleTime: 10 * 60_000,
+  });

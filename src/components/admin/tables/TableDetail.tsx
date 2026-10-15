@@ -16,6 +16,7 @@ import { OrderPad, type PadTarget } from '../orderPad/OrderPad';
 import { OrderDetailDialog, type OrderDialogView } from '../orders/OrderDetailDialog';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { FreeTableDialog } from './FreeTableDialog';
+import { TableQrDialog } from './qr/TableQrDialog';
 import { TableCollectDialog } from './TableCollectDialog';
 import { TableOrderCard } from './TableOrderCard';
 import { TableRequests } from './TableRequests';
@@ -94,6 +95,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
   const [pad, setPad] = useState<PadTarget | null>(null);
   const [collectingTable, setCollectingTable] = useState(false);
   const [freeing, setFreeing] = useState(false);
+  const [showingQr, setShowingQr] = useState(false);
   // Looked up on every poll, so an open order shows its latest state.
   const openOrder = open ? detail.orders.find((order) => order.id === open.id) : undefined;
   const addItems = (order: Order) => {
@@ -135,6 +137,10 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <span className={styles.dot} aria-hidden="true" />
               {t(`adminTables.status.${detail.status}`)}
             </span>
+            <button type="button" className={styles.free} onClick={() => setShowingQr(true)}>
+              <Icon name="qr" size="xs" />
+              {t('adminQr.tableButton')}
+            </button>
             {detail.status !== 'available' && (
               <button type="button" className={styles.free} onClick={() => setFreeing(true)}>
                 <Icon name="check" size="xs" />
@@ -227,6 +233,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
         <TableCollectDialog detail={detail} onClose={() => setCollectingTable(false)} />
       )}
       {freeing && <FreeTableDialog detail={detail} onClose={() => setFreeing(false)} />}
+      {showingQr && <TableQrDialog table={detail.table} onClose={() => setShowingQr(false)} />}
     </>
   );
 }

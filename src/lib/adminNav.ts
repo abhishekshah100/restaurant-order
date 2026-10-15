@@ -65,6 +65,9 @@ export const ADMIN_LINKS = {
   unpaidOrders: `${section('orders')}unpaid/`,
 } as const;
 
+/** Every table's QR code, to print. */
+export const qrCodesPath = () => `${ADMIN_LINKS.tables}qr/`;
+
 /** A table's page: /admin/dashboard/tables/5/. */
 export const tablePath = (table: number) => `${ADMIN_LINKS.tables}${table}/`;
 

@@ -4,6 +4,7 @@ import type {
   AdminBranchService,
   AdminFloorPlan,
   AdminOrders,
+  AdminTableQrCodes,
   CancelReason,
   AdminServiceRequest,
   AdminTableDetail,
@@ -180,6 +181,15 @@ export type FloorPlanResponse = AdminFloorPlan;
  * 403 forbidden, 404 not_found (no area has the table).
  */
 export type TableDetailResponse = AdminTableDetail;
+
+/**
+ * `GET /admin/branches/:branchId/tables/qr-codes` — the link to print on each table: the guest
+ * app's path with the branch, the table and a token the backend signs (so a guest can't change
+ * the table number in the link); POST /sessions checks it. The app adds its own address in front
+ * and draws the QR code. Authorised like GET /admin/branches. 200 → `TableQrCodesResponse`.
+ * Errors: 401, 403. Mock: a token worked out from the branch and table (not a real signature).
+ */
+export type TableQrCodesResponse = AdminTableQrCodes;
 
 /**
  * `POST /admin/branches/:branchId/tables/:table/free` — the guests have left: the table's

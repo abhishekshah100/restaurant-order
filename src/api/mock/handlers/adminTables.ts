@@ -12,6 +12,7 @@ import type {
 } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { Order } from '@/types/order';
+import type { TableQrCodesResponse } from '../../contracts';
 import { fail, ok, type Handler, type MockContext } from '../context';
 import { adminBranch } from './adminSessions';
 import { floorActivity } from './adminService';
@@ -178,4 +179,40 @@ export const freeTable: Handler = async (ctx, { params, headers }) => {
   const at = new Date(ctx.now()).toISOString();
   ctx.db.tablesFreed.write({ ...ctx.db.tablesFreed.read(), [`${branch.id}:${number}`]: at });
   return ok(tableDetail({ ...input, freedAt: { ...input.freedAt, [number]: at } }, number));
+};
+
+/**
+ * MOCK ONLY: the token printed on a table's QR code. A backend signs the branch and table with a
+ * secret (an HMAC); the mock works one out from them so the same table always gets the same code.
+ */
+export function mockQrToken(branchId: string, table: number): string {
+  let hash = 2166136261;
+  for (const char of `${branchId}:${table}`) {
+    hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+  }
+  return `t${table}.${hash.toString(36)}`;
+}
+
+/** GET /admin/branches/:branchId/tables/qr-codes */
+export const tableQrCodes: Handler = async (ctx, { params, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const layout = await ctx.seed.floors(branch.id);
+  const response: TableQrCodesResponse = {
+    codes: layout.floors.flatMap((floor) =>
+      floor.tables.map((t) => {
+        const query = new URLSearchParams({
+          branch: branch.id,
+          table: String(t.number),
+          qr: mockQrToken(branch.id, t.number),
+        });
+        return {
+          table: t.number,
+          seats: t.seats,
+          floor: { id: floor.id, name: floor.name },
+          path: `/?${query.toString()}`,
+        };
+      }),
+    ),
+  };
+  return ok(response);
 };

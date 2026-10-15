@@ -254,7 +254,8 @@
       "menu": "Menu · Admin",
       "requests": "Requests · Admin",
       "payments": "Payments · Admin",
-      "table": "Table {table} · Admin"
+      "table": "Table {table} · Admin",
+      "qrCodes": "Table QR codes · Admin"
     },
     "loading": "Loading your workspace",
     "descriptor": "Admin",
@@ -524,7 +525,8 @@
         "done": "Table {table} is free",
         "failed": "Couldn't free the table. Try again."
       }
-    }
+    },
+    "openQr": "QR codes"
   },
   "adminOrder": {
     "title": "Order {order}",
@@ -1004,5 +1006,40 @@
       "saved": "Categories saved",
       "errors": "Every category needs a name, and no name twice."
     }
+  },
+  "adminQr": {
+    "title": "Table QR codes",
+    "subtitle": "Print one for each table. Guests scan it to order and pay.",
+    "back": "All tables",
+    "open": "QR codes",
+    "floors": "Floors",
+    "allFloors": "All floors",
+    "selectAll": "Select all",
+    "clear": "Clear",
+    "selected": {
+      "one": "{count} selected",
+      "other": "{count} selected"
+    },
+    "print": "Print",
+    "printSelected": {
+      "one": "Print {count} code",
+      "other": "Print {count} codes"
+    },
+    "download": "Download",
+    "downloadLabel": "Download the QR code for Table {table}",
+    "select": "Select Table {table}",
+    "card": {
+      "table": "Table {table}",
+      "scan": "Scan to order & pay",
+      "where": "{floor} · {branch}",
+      "alt": "QR code for Table {table}"
+    },
+    "tableButton": "QR code",
+    "dialogTitle": "QR code for Table {table}",
+    "dialogHint": "Print it, or download it for your print shop.",
+    "linkLabel": "Link",
+    "tip": "Tip: print on card and laminate it, or use a stand. Reprints show the same code.",
+    "loading": "Loading the QR codes",
+    "failed": "Couldn't make the file. Try again."
   }
 }

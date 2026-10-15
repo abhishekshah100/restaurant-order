@@ -5,7 +5,7 @@ import { useContent, useFloorPlan } from '@/api/hooks';
 import { Button, EmptyState } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { floorPath } from '@/lib/adminNav';
+import { floorPath, qrCodesPath } from '@/lib/adminNav';
 import { legendCounts, openFloor } from '@/lib/adminTables';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { FloorLegendBar } from './FloorLegendBar';
@@ -38,11 +38,16 @@ export function FloorPlan() {
     const floor = openFloor(plan.data.floors, floorId);
     content = floor && (
       <>
-        <FloorTabs
-          floors={plan.data.floors}
-          value={floor.id}
-          onChange={(id) => router.replace(floorPath(id), { scroll: false })}
-        />
+        <div className={styles.bar}>
+          <FloorTabs
+            floors={plan.data.floors}
+            value={floor.id}
+            onChange={(id) => router.replace(floorPath(id), { scroll: false })}
+          />
+          <Button href={qrCodesPath()} variant="secondary" iconStart="qr" className={styles.qr}>
+            {t('adminTables.openQr')}
+          </Button>
+        </div>
         <section
           id="floor-panel"
           role="tabpanel"

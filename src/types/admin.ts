@@ -218,3 +218,19 @@ export interface AdminOrders {
 
 /** Why the restaurant cancelled an order. */
 export type CancelReason = 'outOfStock' | 'guestLeft' | 'kitchenIssue' | 'duplicate' | 'other';
+
+/* ---------- Table QR codes (GET /admin/branches/:branchId/tables/qr-codes) ---------- */
+
+/** One table's QR code: where it is, and the link guests scan (signed, so it can't be edited). */
+export interface TableQrCode {
+  table: number;
+  seats: number;
+  floor: Pick<FloorLayout, 'id' | 'name'>;
+  /** The guest app's path with the branch, table and signed token: "/?branch=…&table=5&qr=…". */
+  path: string;
+}
+
+export interface AdminTableQrCodes {
+  /** Every table on the floor plan, by area then table, as staff walk them. */
+  codes: TableQrCode[];
+}

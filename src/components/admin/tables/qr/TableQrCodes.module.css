@@ -1,0 +1,172 @@
+/* The QR codes page: back, title and Print, area and selection tools, then the cards. */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.back {
+  justify-self: start;
+  min-height: 44px;
+  margin: -8px 0 -6px -8px;
+  padding: 0 10px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  font: var(--font-label);
+  text-decoration: none;
+}
+
+.back:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h1);
+}
+
+.subtitle {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.floors {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.floors > * {
+  flex: none;
+}
+
+.selection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.count {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+.link {
+  min-height: 36px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.link:focus-visible {
+  border-radius: var(--r-sm);
+  box-shadow: var(--focus);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: calc(var(--r-card) + 6px);
+  transition: border-color var(--dur-fast) ease;
+}
+
+.on {
+  border-color: var(--brand-600);
+  background: var(--brand-tint-2);
+}
+
+.pick {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+  cursor: pointer;
+}
+
+.pick input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-600);
+  cursor: pointer;
+}
+
+.download {
+  justify-self: center;
+}
+
+.tip {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.skeleton {
+  height: 360px;
+  border-radius: var(--r-panel);
+  background: var(--bg);
+}
+
+@media (min-width: 768px) {
+  .title {
+    font: var(--font-display);
+  }
+
+  .subtitle {
+    font: var(--font-body);
+  }
+}
+
+/* ---------- The table page's dialog ---------- */
+
+.dialogBody {
+  width: min(320px, 100%);
+  margin: 0 auto;
+}
+
+.dialogActions {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}

@@ -48,6 +48,7 @@ import type {
   StaffRoundRequest,
   TableDetailResponse,
   TablePaymentResponse,
+  TableQrCodesResponse,
   TakeTableOrderRequest,
   UpdateCategoriesRequest,
   UpdateSessionRequest,
@@ -132,6 +133,8 @@ export const api = {
       body,
       bearer(token),
     ),
+  tableQrCodes: (token: string, branchId: string) =>
+    apiGet<TableQrCodesResponse>(`admin/branches/${seg(branchId)}/tables/qr-codes`, bearer(token)),
   freeTable: (token: string, branchId: string, table: number) =>
     apiPost<FreeTableResponse>(
       `admin/branches/${seg(branchId)}/tables/${table}/free`,

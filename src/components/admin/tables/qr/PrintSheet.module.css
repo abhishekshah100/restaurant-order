@@ -1,0 +1,37 @@
+/*
+ * The print sheet: hidden on screen; when printing, the only thing on the page — A4, two cards
+ * across, each kept whole on its page.
+ */
+
+.sheet {
+  display: none;
+}
+
+@media print {
+  :global(html.printing-qr) body > :not([data-print-sheet]) {
+    display: none !important;
+  }
+
+  :global(html.printing-qr) body {
+    background: var(--white);
+  }
+
+  .sheet {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10mm;
+  }
+
+  .card {
+    border-color: var(--line-strong);
+    border-top-color: var(--brand-600);
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+}
