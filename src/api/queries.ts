@@ -78,8 +78,13 @@ export const branchMenuQuery = (branchId: string) =>
   queryOptions({
     queryKey: ['branches', branchId, 'menu'] as const,
     queryFn: () => apiGet<MenuData>(`branches/${branchId}/menu`),
-    staleTime: Infinity,
+    // Staff mark dishes sold out and back during service: read again after a minute.
+    staleTime: MENU_REFRESH_MS,
+    refetchOnWindowFocus: true,
   });
+
+/** How long a menu read is trusted before it's read again (sold out, back on, new dishes). */
+export const MENU_REFRESH_MS = 60_000;
 
 /**
  * GET /branches/:id/promotions: one branch's promo codes and automatic offers (happy hour).

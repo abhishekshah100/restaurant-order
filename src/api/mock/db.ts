@@ -4,6 +4,7 @@ import { WAITER_REASON_IDS } from '@/lib/service';
 import { isGuestSession } from '@/lib/session';
 import { readJSON, storageAvailable, writeJSON, type StorageKind } from '@/lib/storage';
 import type { BranchStatus } from '@/types/branch';
+import type { BranchMenuChanges } from './menuChanges';
 import type { Order, OrderItem, OrderRound } from '@/types/order';
 import type { ServiceRequest } from '@/types/service';
 import type { GuestSession } from '@/types/session';
@@ -35,6 +36,12 @@ export const MOCK_KEYS = {
   serviceRequests: 'olive.service.v1',
   /** When staff last freed each table (ISO), by "branchId:table". The floors' `freed` flag. */
   tablesFreed: 'olive.mock.tablesFreed.v1',
+  /**
+   * Staff changes to each branch's menu, by branch id: the dishes they edited or added (in full,
+   * by slug), the ones they removed, and the categories as they left them. GET
+   * /branches/:id/menu is the dummy JSON with these on top.
+   */
+  menuChanges: 'olive.mock.menu.v2',
 } as const;
 
 export interface Table<T> {
@@ -244,6 +251,23 @@ const isFreedTable = (v: unknown): v is Record<string, string> =>
   isObject(v) &&
   Object.values(v).every((at) => typeof at === 'string' && !Number.isNaN(Date.parse(at)));
 
+const isBranchMenuChanges = (v: unknown): v is BranchMenuChanges =>
+  isObject(v) &&
+  isObject(v.dishes) &&
+  Object.values(v.dishes).every(
+    (d) => isObject(d) && typeof d.slug === 'string' && typeof d.name === 'string',
+  ) &&
+  Array.isArray(v.removed) &&
+  v.removed.every((slug) => typeof slug === 'string') &&
+  (v.categories === undefined ||
+    (Array.isArray(v.categories) &&
+      v.categories.every(
+        (c) => isObject(c) && typeof c.id === 'string' && typeof c.name === 'string',
+      )));
+
+const isMenuChanges = (v: unknown): v is Record<string, BranchMenuChanges> =>
+  isObject(v) && Object.values(v).every(isBranchMenuChanges);
+
 /** The mock server's tables. */
 export interface MockDb {
   sessions: Table<GuestSession[]>;
@@ -258,6 +282,8 @@ export interface MockDb {
   branchStatus: Table<Record<string, BranchStatus>>;
   /** When staff last freed each table (ISO), by "branchId:table". */
   tablesFreed: Table<Record<string, string>>;
+  /** Staff changes to each branch's menu, by branch id. */
+  menuChanges: Table<Record<string, BranchMenuChanges>>;
 }
 
 export function createStorageDb(): MockDb {
@@ -270,5 +296,6 @@ export function createStorageDb(): MockDb {
     adminSessions: table(MOCK_KEYS.adminSessions, 'local', listOf(isAdminSessionRecord), () => []),
     branchStatus: table(MOCK_KEYS.branchStatus, 'local', isBranchStatusTable, () => ({})),
     tablesFreed: table(MOCK_KEYS.tablesFreed, 'local', isFreedTable, () => ({})),
+    menuChanges: table(MOCK_KEYS.menuChanges, 'local', isMenuChanges, () => ({})),
   };
 }

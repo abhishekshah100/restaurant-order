@@ -14,9 +14,9 @@ export interface Category {
   unit: 'dishes' | 'drinks';
 }
 
-type DishTag = 'chef' | 'new' | 'bestseller';
+export type DishTag = 'chef' | 'new' | 'bestseller';
 
-type SpiceLevel = 'mild' | 'medium' | 'hot';
+export type SpiceLevel = 'mild' | 'medium' | 'hot';
 
 export type Allergen = 'dairy' | 'gluten' | 'nuts' | 'shellfish' | 'egg' | 'soy' | 'sesame';
 
@@ -71,17 +71,31 @@ export interface Removable {
 }
 
 /** Meal / combo details: the slots themselves are option groups. */
-interface ComboInfo {
+export interface ComboInfo {
   /** Saving versus ordering the parts separately, for the "Meal · Save" badge. */
   savings?: Price;
   /** One-line contents, e.g. "Curry · Bread · Rice · Dessert · Drink". */
   includes: string;
 }
 
-type Availability =
+/**
+ * Whether a dish can be ordered: available, sold out (until a time the guest reads, e.g.
+ * "8 PM"), or off for the rest of the day. Staff set it (PATCH …/menu/dishes/:slug/availability).
+ */
+export type DishAvailability =
   | { status: 'available' }
-  | { status: 'sold-out'; backAt?: string }
-  | { status: 'unavailable-today' };
+  | {
+      status: 'sold-out';
+      /** When it's back, as guests read it ("8:30 PM"). */
+      backAt?: string;
+      /** ISO: the same moment; from then on it's available again. */
+      until?: string;
+    }
+  | {
+      status: 'unavailable-today';
+      /** The branch's day it was taken off ("2026-10-15"); available again the next day. */
+      day?: string;
+    };
 
 export interface DishImage {
   src: string;
@@ -122,7 +136,7 @@ export interface Dish {
   prepTime?: string;
   serves?: number;
   allergens: Allergen[];
-  availability: Availability;
+  availability: DishAvailability;
   /** Feature image (16:10-ish) for chef's picks and the detail hero. */
   image?: DishImage;
   /** Square thumbnail for list rows and cart lines. */

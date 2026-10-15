@@ -1,3 +1,4 @@
+import type { MenuData } from '@/types/menu';
 import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import type {
@@ -19,6 +20,10 @@ import type {
   CreateServiceRequestResponse,
   CreateSessionRequest,
   DeliveryQuoteRequest,
+  DishInput,
+  DishResponse,
+  ImageUploadRequest,
+  ImageUploadResponse,
   DeliveryQuoteResponse,
   FloorPlanResponse,
   FreeTableResponse,
@@ -31,15 +36,18 @@ import type {
   Payment,
   PlaceOrderRequest,
   PromoQuote,
+  ReorderDishesRequest,
   ResolveRequestResponse,
   SendOtpRequest,
   ServiceRequestListResponse,
   SettledPaymentResponse,
+  SetAvailabilityRequest,
   SimulatePaymentRequest,
   StaffRoundRequest,
   TableDetailResponse,
   TablePaymentResponse,
   TakeTableOrderRequest,
+  UpdateCategoriesRequest,
   UpdateSessionRequest,
   ValidatePromoRequest,
   VerifyOtpRequest,
@@ -69,6 +77,46 @@ export const api = {
   takeTableOrder: (token: string, branchId: string, table: number, body: TakeTableOrderRequest) =>
     apiPost<OrderResponse>(
       `admin/branches/${seg(branchId)}/tables/${table}/orders`,
+      body,
+      bearer(token),
+    ),
+  setDishAvailability: (
+    token: string,
+    branchId: string,
+    slug: string,
+    body: SetAvailabilityRequest,
+  ) =>
+    apiPatch<DishResponse>(
+      `admin/branches/${seg(branchId)}/menu/dishes/${seg(slug)}/availability`,
+      body,
+      bearer(token),
+    ),
+  createDish: (token: string, branchId: string, body: DishInput) =>
+    apiPost<DishResponse>(`admin/branches/${seg(branchId)}/menu/dishes`, body, bearer(token)),
+  updateDish: (token: string, branchId: string, slug: string, body: DishInput) =>
+    apiPatch<DishResponse>(
+      `admin/branches/${seg(branchId)}/menu/dishes/${seg(slug)}`,
+      body,
+      bearer(token),
+    ),
+  removeDish: (token: string, branchId: string, slug: string) =>
+    apiDelete(`admin/branches/${seg(branchId)}/menu/dishes/${seg(slug)}`, bearer(token)),
+  reorderDishes: (
+    token: string,
+    branchId: string,
+    categoryId: string,
+    body: ReorderDishesRequest,
+  ) =>
+    apiPatch<MenuData>(
+      `admin/branches/${seg(branchId)}/menu/categories/${seg(categoryId)}/order`,
+      body,
+      bearer(token),
+    ),
+  updateCategories: (token: string, branchId: string, body: UpdateCategoriesRequest) =>
+    apiPatch<MenuData>(`admin/branches/${seg(branchId)}/menu/categories`, body, bearer(token)),
+  uploadDishImage: (token: string, branchId: string, body: ImageUploadRequest) =>
+    apiPost<ImageUploadResponse>(
+      `admin/branches/${seg(branchId)}/menu/images`,
       body,
       bearer(token),
     ),

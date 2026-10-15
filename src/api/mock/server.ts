@@ -11,6 +11,16 @@ import {
 } from './handlers/adminService';
 import { createAdminSession, listAdminBranches } from './handlers/adminSessions';
 import {
+  branchMenu,
+  createDish,
+  removeDish,
+  reorderDishes,
+  setDishAvailability,
+  updateCategories,
+  updateDish,
+  uploadDishImage,
+} from './handlers/adminMenu';
+import {
   addStaffRound,
   branchOrdersToday,
   cancelByStaff,
@@ -50,6 +60,14 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/branches/:branchId/tables/:table/payment', collectTablePayment],
   ['POST', 'admin/branches/:branchId/tables/:table/free', freeTable],
   ['GET', 'admin/branches/:branchId/orders', branchOrdersToday],
+  ['PATCH', 'admin/branches/:branchId/menu/dishes/:slug/availability', setDishAvailability],
+  ['POST', 'admin/branches/:branchId/menu/dishes', createDish],
+  ['PATCH', 'admin/branches/:branchId/menu/dishes/:slug', updateDish],
+  ['DELETE', 'admin/branches/:branchId/menu/dishes/:slug', removeDish],
+  ['PATCH', 'admin/branches/:branchId/menu/categories/:categoryId/order', reorderDishes],
+  ['PATCH', 'admin/branches/:branchId/menu/categories', updateCategories],
+  ['POST', 'admin/branches/:branchId/menu/images', uploadDishImage],
+  ['GET', 'branches/:branchId/menu', branchMenu],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],
   ['POST', 'admin/branches/:branchId/orders/:id/payment', collectPayment],
@@ -134,12 +152,15 @@ let server: ReturnType<typeof createMockServer> | undefined;
 /** The app's mock server: Web Storage tables, the dummy JSON as seed, the real clock. */
 export async function handleMockRequest(request: ApiRequest): Promise<ApiResponse | null> {
   if (!route(request)) return null;
-  server ??= createMockServer({
-    db: createStorageDb(),
-    seed: querySeed(getQueryClient()),
-    now: () => Date.now(),
-    newId: randomId,
-  });
+  if (!server) {
+    const db = createStorageDb();
+    server = createMockServer({
+      db,
+      seed: querySeed(getQueryClient(), db),
+      now: () => Date.now(),
+      newId: randomId,
+    });
+  }
   const delay = latencyFor(request);
   if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
   return server(request);

@@ -227,35 +227,14 @@
   },
   "adminDashboard": {
     "branchWorkspace": "BRANCH WORKSPACE",
-    "categoryFilter": "Category",
-    "allCategories": "All categories",
     "tableNumber": "Table {table}",
     "orderNumber": "Order {order}",
-    "searchPlaceholder": "Search dishes, categories…",
-    "unavailable": "Unavailable",
-    "addToDraft": "Add to draft",
-    "localOnly": "LOCAL ONLY",
-    "unsentDraft": "Unsent draft",
-    "draftDisclaimer": "This draft stays in this browser session. It is not sent to the kitchen.",
-    "draftEmpty": "Items you add will appear here.",
-    "submitUnavailable": "Submit order unavailable",
-    "removeItem": "Remove {item}",
     "paymentsDisclaimer": "Sample order payment records only; no payment actions are enabled.",
-    "addToUnsentDraft": "Add to unsent draft",
-    "draftActionDisclaimer": "No kitchen ticket or payment is created by this action.",
-    "chooseVariant": "Choose {variant}",
-    "variant": "a variant",
-    "configureItem": "Configure item",
-    "addItemDescription": "Add this item to an unsent local draft.",
     "itemCount": "{count} items",
-    "standard": "Standard",
     "sections": {
-      "menuSubtitle": "Search this branch's menu and prepare a local, unsent draft.",
       "paymentsSubtitle": "Payment status is shown separately from order status."
     },
     "empty": {
-      "noMenuMatch": "No menu items match your search.",
-      "loadingMenu": "Loading branch menu…",
       "noPayments": "No payment records in sample history."
     },
     "paymentStatus": {
@@ -263,9 +242,6 @@
       "unpaid": "unpaid",
       "refunded": "refunded",
       "refund-started": "refund started"
-    },
-    "search": {
-      "label": "Search this branch's menu"
     }
   },
   "adminShell": {
@@ -748,5 +724,258 @@
     "confirm": "Collect {amount}",
     "done": "Table {table} paid",
     "failed": "Couldn't take the payment. Try again."
+  },
+  "adminMenu": {
+    "title": "Menu",
+    "filters": {
+      "label": "Show",
+      "all": "All dishes",
+      "available": "Available",
+      "soldOut": "Sold out",
+      "offToday": "Off today"
+    },
+    "categories": "Categories",
+    "allCategories": "All",
+    "search": "Search dishes",
+    "addDish": "Add dish",
+    "status": {
+      "available": "Available",
+      "soldOut": "Sold out",
+      "backAt": "Sold out · back {time}",
+      "offToday": "Off today"
+    },
+    "sizesOff": {
+      "one": "{count} size off",
+      "other": "{count} sizes off"
+    },
+    "sizePrice": "{size} {price}",
+    "toggle": "{dish} on the menu",
+    "edit": "Edit {dish}",
+    "changeAvailability": "Change availability of {dish}",
+    "empty": {
+      "title": "No dishes here",
+      "filter": "No dishes match this filter.",
+      "search": "No dishes match “{query}”."
+    },
+    "loading": "Loading the menu",
+    "failed": "Couldn't update the menu. Try again.",
+    "availability": {
+      "title": "{dish}",
+      "subtitle": "What guests can order",
+      "question": "Is it on the menu?",
+      "options": {
+        "available": "Available",
+        "availableSub": "Guests can order it",
+        "soldOut": "Sold out for now",
+        "soldOutSub": "Back when the kitchen has more",
+        "soldOutUntil": "Sold out until…",
+        "soldOutUntilSub": "Guests see when it's back",
+        "offToday": "Off for today",
+        "offTodaySub": "Back on the menu tomorrow"
+      },
+      "backAt": "Back at",
+      "sizes": "Sizes",
+      "sizesHint": "Switch off a size that's run out",
+      "sizeToggle": "{size} on the menu",
+      "save": "Save",
+      "toast": {
+        "available": "{dish} is back on the menu",
+        "soldOut": "{dish} is sold out",
+        "soldOutUntil": "{dish} is sold out until {time}",
+        "offToday": "{dish} is off for today"
+      }
+    },
+    "editor": {
+      "titleNew": "Add a dish",
+      "titleEdit": "Edit {dish}",
+      "name": "Dish name",
+      "namePlaceholder": "e.g. Paneer Butter Masala",
+      "description": "Short description",
+      "descriptionPlaceholder": "What's in it, in a line",
+      "category": "Category",
+      "type": "Type",
+      "veg": "Vegetarian",
+      "nonVeg": "Non-vegetarian",
+      "pricing": "Price",
+      "single": "One price",
+      "sizes": "Sizes",
+      "price": "Price ({currency})",
+      "sizeLabel": "Sizes are called",
+      "sizeLabelPlaceholder": "e.g. Portion, Size",
+      "sizeName": "Size name",
+      "sizeNamePlaceholder": "e.g. Half",
+      "sizePrice": "Price",
+      "sizeOn": "{size} available",
+      "addSize": "Add size",
+      "removeSize": "Remove {size}",
+      "status": "Availability",
+      "statusAvailable": "Available",
+      "statusSoldOut": "Sold out",
+      "statusOffToday": "Off today",
+      "errors": {
+        "name": "Give the dish a name.",
+        "price": "Enter a price above 0.",
+        "sizes": "Each size needs a name and a price above 0.",
+        "sizeNames": "Two sizes have the same name.",
+        "groups": "Each choice group needs a name and at least two named choices (extra prices 0 or more, no name twice).",
+        "addOns": "Each add-on needs a name and a price of 0 or more (no name twice).",
+        "maxAddOns": "The limit must be a whole number up to the number of add-ons.",
+        "removables": "Name each ingredient once.",
+        "meal": "Say what the meal includes (the saving is 0 or more).",
+        "serves": "Serves must be a whole number from 1 to 20.",
+        "fix": "Some sections need a look before saving."
+      },
+      "save": "Save dish",
+      "add": "Add dish",
+      "cancel": "Cancel",
+      "saved": "{dish} saved",
+      "added": "{dish} added to the menu",
+      "sections": {
+        "basics": "Basics",
+        "price": "Price & sizes",
+        "choices": "Choices",
+        "addOns": "Add-ons",
+        "leaveOut": "Leave out & kitchen notes",
+        "details": "Details",
+        "availability": "Availability",
+        "needsLook": "Needs a look"
+      },
+      "summary": {
+        "single": "One price · {price}",
+        "sizes": {
+          "one": "{count} size",
+          "other": "{count} sizes"
+        },
+        "groups": {
+          "one": "{count} group",
+          "other": "{count} groups"
+        },
+        "addOns": {
+          "one": "{count} add-on",
+          "other": "{count} add-ons"
+        },
+        "upTo": "up to {count}",
+        "items": {
+          "one": "{count} item",
+          "other": "{count} items"
+        },
+        "none": "None"
+      },
+      "picture": "Picture",
+      "pictureHint": "JPEG, PNG or WebP. It's resized to fit.",
+      "upload": "Add picture",
+      "replace": "Replace",
+      "removePicture": "Remove picture",
+      "uploading": "Uploading…",
+      "uploadFailed": "Couldn't use that picture. Try another one.",
+      "pictureAlt": "Picture of {dish}",
+      "onlyWith": "Offered with",
+      "allSizes": "All sizes",
+      "choicesHint": "Single choices guests pick one of — a meal's curry and bread, a spice level, a crust.",
+      "groupName": "Group name",
+      "groupNamePlaceholder": "e.g. Choose your curry",
+      "choiceName": "Choice",
+      "choiceNamePlaceholder": "e.g. Dal Makhani",
+      "extra": "Extra ({currency})",
+      "addChoice": "Add choice",
+      "removeChoice": "Remove {choice}",
+      "showInSummary": "Always show the choice on the order",
+      "addGroup": "Add choice group",
+      "removeGroup": "Remove {group}",
+      "moveUp": "Move {name} up",
+      "moveDown": "Move {name} down",
+      "addOnsHint": "Extras guests can add, free or priced.",
+      "addOnName": "Add-on",
+      "addOnNamePlaceholder": "e.g. Extra cheese",
+      "addOnPrice": "Price ({currency})",
+      "freeHint": "0 or empty: free",
+      "perSize": "Different price per size",
+      "addAddOn": "Add add-on",
+      "removeAddOn": "Remove {addOn}",
+      "maxAddOns": "Most add-ons a guest can pick",
+      "maxAddOnsHint": "Empty: no limit",
+      "leaveOutHint": "Ingredients guests can ask to leave out (shown as \"No …\").",
+      "ingredient": "Ingredient",
+      "ingredientPlaceholder": "e.g. Onion",
+      "addIngredient": "Add ingredient",
+      "removeIngredient": "Remove {ingredient}",
+      "quick": "Quick kitchen notes",
+      "quickHint": "Shortcuts guests can tap, e.g. Less spicy, Jain.",
+      "quickPlaceholder": "Type a note and press Add",
+      "addQuick": "Add",
+      "removeQuick": "Remove {note}",
+      "longDescription": "Full description",
+      "longDescriptionPlaceholder": "Shown on the dish's own page",
+      "tags": "Highlights",
+      "tag": {
+        "chef": "Chef's pick",
+        "new": "New",
+        "bestseller": "Bestseller"
+      },
+      "spice": "Spice",
+      "spiceLevel": {
+        "none": "Not spicy",
+        "mild": "Mild",
+        "medium": "Medium",
+        "hot": "Hot"
+      },
+      "prepTime": "Prep time",
+      "prepTimePlaceholder": "e.g. 15–18 min",
+      "serves": "Serves",
+      "allergens": "Allergens",
+      "allergen": {
+        "dairy": "Dairy",
+        "gluten": "Gluten",
+        "nuts": "Nuts",
+        "shellfish": "Shellfish",
+        "egg": "Egg",
+        "soy": "Soy",
+        "sesame": "Sesame"
+      },
+      "meal": "It's a meal (combo)",
+      "mealIncludes": "Includes",
+      "mealIncludesPlaceholder": "e.g. Curry · Bread · Rice · Drink",
+      "mealSavings": "Saving vs. ordering separately ({currency})",
+      "remove": "Remove dish",
+      "removeTitle": "Remove {dish}?",
+      "removeBody": "It comes off the menu for every guest. Orders that already have it aren't changed.",
+      "removeConfirm": "Remove dish",
+      "removeKeep": "Keep it",
+      "removed": "{dish} removed from the menu",
+      "sizeNote": "Note for {size}",
+      "sizeNotePlaceholder": "Note guests see, e.g. Perfect for one (optional)",
+      "perSizeHint": "Empty: the add-on's own price"
+    },
+    "reorder": "Reorder",
+    "reorderHint": "Pick a category to reorder its dishes.",
+    "reorderDone": "Save order",
+    "reorderCancel": "Cancel",
+    "reordered": "Order saved",
+    "categoriesButton": "Categories",
+    "meta": {
+      "sizes": {
+        "one": "{count} size",
+        "other": "{count} sizes"
+      },
+      "groups": {
+        "one": "{count} choice",
+        "other": "{count} choices"
+      },
+      "addOns": {
+        "one": "{count} add-on",
+        "other": "{count} add-ons"
+      }
+    },
+    "categoriesDialog": {
+      "title": "Categories",
+      "subtitle": "Names and order guests see",
+      "name": "Name",
+      "shortName": "Short name (phones)",
+      "description": "Description",
+      "note": "New categories need the guest app built again, so they're added with the backend.",
+      "save": "Save categories",
+      "saved": "Categories saved",
+      "errors": "Every category needs a name, and no name twice."
+    }
   }
 }

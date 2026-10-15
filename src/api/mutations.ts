@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAdminToken } from '@/hooks/useAdminSession';
+import { withAvailability } from '@/lib/adminMenu';
 import { withAcknowledged, withoutReadyRound, withoutRequest } from '@/lib/adminService';
 import type { AdminBranchService, AdminServiceRequest } from '@/types/admin';
 import type { ServiceRequest } from '@/types/service';
@@ -14,8 +15,12 @@ import type {
   ChangeOrderRequest,
   CollectPaymentRequest,
   CollectTableRequest,
+  DishInput,
+  ImageUploadRequest,
   EditRoundRequest,
   ServiceRequestListResponse,
+  SetAvailabilityRequest,
+  UpdateCategoriesRequest,
   SimulatePaymentRequest,
   StaffRoundRequest,
   TakeTableOrderRequest,
@@ -24,7 +29,13 @@ import type {
 } from './contracts';
 import { api } from './endpoints';
 import { ApiError, isApiError } from './client';
-import { branchServiceQuery, orderQuery, promoQuoteQuery, serviceRequestsQuery } from './queries';
+import {
+  branchMenuQuery,
+  branchServiceQuery,
+  orderQuery,
+  promoQuoteQuery,
+  serviceRequestsQuery,
+} from './queries';
 
 /*
  * Every write, as a TanStack mutation over api/endpoints. After a write the affected reads are
@@ -402,5 +413,106 @@ export function useFreeTable() {
     mutationFn: ({ branchId, table }: { branchId: string; table: number }) =>
       api.freeTable(requireToken(token), branchId, table),
     onSettled: () => refreshFloor(client),
+  });
+}
+
+/** The branch's menu read again after a staff change (the guest app reads it after a minute). */
+const refreshMenu = (client: QueryClient, branchId: string) =>
+  client.invalidateQueries({ queryKey: branchMenuQuery(branchId).queryKey });
+
+/**
+ * PATCH …/menu/dishes/:slug/availability: sold out, off today or back on (and sizes). The menu
+ * shows it at once (as it was if the server refuses).
+ */
+export function useSetDishAvailability() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      slug,
+      body,
+    }: {
+      branchId: string;
+      slug: string;
+      body: SetAvailabilityRequest;
+    }) => api.setDishAvailability(requireToken(token), branchId, slug, body),
+    onMutate: async ({ branchId, slug, body }) => {
+      const { queryKey } = branchMenuQuery(branchId);
+      await client.cancelQueries({ queryKey });
+      const previous = client.getQueryData(queryKey);
+      if (previous) client.setQueryData(queryKey, withAvailability(previous, slug, body));
+      return { queryKey, previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) client.setQueryData(context.queryKey, context.previous);
+    },
+    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+  });
+}
+
+/** POST …/menu/dishes (no slug) or PATCH …/menu/dishes/:slug: a dish added or edited. */
+export function useSaveDish() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, slug, body }: { branchId: string; slug?: string; body: DishInput }) =>
+      slug
+        ? api.updateDish(requireToken(token), branchId, slug, body)
+        : api.createDish(requireToken(token), branchId, body),
+    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+  });
+}
+
+/** DELETE …/menu/dishes/:slug: a dish off the menu for good. */
+export function useRemoveDish() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, slug }: { branchId: string; slug: string }) =>
+      api.removeDish(requireToken(token), branchId, slug),
+    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+  });
+}
+
+/** PATCH …/menu/categories/:categoryId/order: the order guests see a category's dishes in. */
+export function useReorderDishes() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      categoryId,
+      slugs,
+    }: {
+      branchId: string;
+      categoryId: string;
+      slugs: string[];
+    }) => api.reorderDishes(requireToken(token), branchId, categoryId, { slugs }),
+    onSuccess: (menu, { branchId }) =>
+      client.setQueryData(branchMenuQuery(branchId).queryKey, menu),
+    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+  });
+}
+
+/** PATCH …/menu/categories: the categories renamed and in their order. */
+export function useUpdateCategories() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: UpdateCategoriesRequest }) =>
+      api.updateCategories(requireToken(token), branchId, body),
+    onSuccess: (menu, { branchId }) =>
+      client.setQueryData(branchMenuQuery(branchId).queryKey, menu),
+    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+  });
+}
+
+/** POST …/menu/images: a dish picture (resized by the app), to put on the dish. */
+export function useUploadDishImage() {
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: ImageUploadRequest }) =>
+      api.uploadDishImage(requireToken(token), branchId, body),
   });
 }

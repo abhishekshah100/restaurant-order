@@ -1,8 +1,8 @@
 import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
-import { MenuSection } from '@/components/admin/sections/MenuSection';
+import { MenuBoard } from '@/components/admin/menu/MenuBoard';
 
 export const generateMetadata = () => adminMetadata('menu');
 
 export default function AdminMenuPage() {
-  return <MenuSection />;
+  return <MenuBoard />;
 }

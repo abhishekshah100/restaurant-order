@@ -6,7 +6,7 @@ import {
   quoteDelivery,
   type DeliveryQuote,
 } from '@/lib/fulfilment';
-import type { MenuCatalog } from '@/lib/menu';
+import { isAvailable, type MenuCatalog } from '@/lib/menu';
 import { calculateBill, itemTotal, type Bill } from '@/lib/pricing';
 import { activeOffers, applyOffers, discountsFor } from '@/lib/promotions';
 import type { Branch } from '@/types/branch';
@@ -177,10 +177,27 @@ export function offerLines(
   body: Record<string, unknown>,
   branch: Branch,
   { menu, promotions, pricedAt }: Pick<OrderPricing, 'menu' | 'promotions' | 'pricedAt'>,
+  { orderable = true }: { orderable?: boolean } = {},
 ): PricedLine[] {
   const lines = priceLines(orderLines(body), menu);
   if (lines.length === 0) fail(422, 'empty_order');
+  if (orderable) assertOrderable(lines, menu);
   return applyOffers(lines, menu, activeOffers(promotions.offers, pricedAt, branch.timezone));
+}
+
+/**
+ * 422 item_unavailable (with the dishes' names) when a line's dish is sold out or off today, or
+ * its size is switched off: staff take dishes off during service, and a guest's menu can be up
+ * to a minute old.
+ */
+function assertOrderable(lines: readonly OrderLineRequest[], menu: MenuCatalog) {
+  const unavailable = new Set<string>();
+  for (const line of lines) {
+    const dish = menu.getDish(line.dishSlug);
+    const size = dish?.variants?.find((v) => v.id === line.variantId);
+    if (dish && (!isAvailable(dish) || size?.available === false)) unavailable.add(dish.name);
+  }
+  if (unavailable.size > 0) fail(422, 'item_unavailable', { items: [...unavailable] });
 }
 
 /** Prices a body's lines, promo code and fulfilment for the session (POST /orders and POST /payments). */

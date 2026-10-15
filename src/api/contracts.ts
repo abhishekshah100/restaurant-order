@@ -11,7 +11,18 @@ import type {
 } from '@/types/admin';
 import type { AtTableMethodKey, OrderMode, PaymentMethodId } from '@/types/branch';
 import type { LineConfig } from '@/types/cart';
-import type { Price } from '@/types/menu';
+import type {
+  Allergen,
+  Category,
+  CategoryId,
+  ComboInfo,
+  Dish,
+  DishAvailability,
+  DishImage,
+  DishTag,
+  Price,
+  SpiceLevel,
+} from '@/types/menu';
 import type { DeliveryAddress, Order } from '@/types/order';
 import type { PromoDescriptionKey } from '@/types/promotion';
 import type { BillScope, ServiceRequest, WaiterReason } from '@/types/service';
@@ -48,6 +59,8 @@ export type ApiErrorCode =
   | 'phone_not_verified'
   /** 422: nothing orderable in the order (empty, or no dish on the menu). */
   | 'empty_order'
+  /** 422: a dish (or its size) in the order is sold out or off today; `items` names them. */
+  | 'item_unavailable'
   /** 402: an online method needs a succeeded payment for this order. */
   | 'payment_required'
   /** 409: the payment isn't pending any more, was already used, or doesn't match. */
@@ -101,6 +114,8 @@ export interface ApiErrorBody {
   shortBy?: Price;
   /** payment_required on a change or round: the amount a payment must cover (major units). */
   amountDue?: Price;
+  /** item_unavailable: the dishes that can't be ordered now, by name. */
+  items?: string[];
 }
 
 /* ---------- Admin sessions ---------- */
@@ -188,6 +203,124 @@ export interface TakeTableOrderRequest {
   customerName: string;
   kitchenNote?: string;
   lines: OrderLineRequest[];
+}
+
+/* ---------- The menu (staff) ---------- */
+
+/**
+ * `GET /branches/:id/menu` is the menu everyone reads, staff changes included (the guest app
+ * reads it again after a minute and on returning to the tab). Staff change it with these, each
+ * authorised like GET /admin/branches; errors 401, 403 and 404 not_found for an unknown dish.
+ */
+
+/**
+ * `PATCH /admin/branches/:branchId/menu/dishes/:slug/availability` — the most common change:
+ * sold out (optionally until a time guests read, "8 PM"), off for the day, or back on; and
+ * sizes switched off or on (`variants`: `{ "full": false }`). 200 → `DishResponse`. Errors: 400
+ * (an unknown status or size).
+ */
+export interface SetAvailabilityRequest {
+  availability: DishAvailability;
+  /** By size id: false to switch a size off, true to put it back. */
+  variants?: Record<string, boolean>;
+}
+
+/**
+ * Everything staff set on a dish: name, short and long description, category, veg or not, tags,
+ * spice, prep time and serves; one price or sizes (each named, priced and on or off;
+ * the cheapest is the "from" price) with their label ("Portion"); choice groups (each with two or
+ * more choices and their extra price, optionally only with some sizes — a meal's slots are choice
+ * groups); add-ons (free or priced, optionally per size or only with some sizes) and how many can
+ * be picked; ingredients guests can leave out; quick kitchen instructions; a meal's contents and
+ * saving; allergens; the picture (POST …/menu/images first); and availability. A new size,
+ * group, add-on or ingredient may bring its own id (a-z, 0-9, -) so others can refer to it.
+ */
+export interface DishInput {
+  name: string;
+  description: string;
+  longDescription?: string;
+  categoryId: CategoryId;
+  veg: boolean;
+  tags: DishTag[];
+  spice?: SpiceLevel;
+  prepTime?: string;
+  serves?: number;
+  /** Without sizes. */
+  price?: Price;
+  /** One or more (one: a named size, "Regular · 350 ml"). */
+  variants?: {
+    id?: string;
+    name: string;
+    /** A note under the size, e.g. "Perfect for one". */
+    description?: string;
+    price: Price;
+    available?: boolean;
+  }[];
+  variantLabel?: string;
+  optionGroups?: {
+    id?: string;
+    name: string;
+    showInSummary?: boolean;
+    /** Size ids it's offered with (none: every size). */
+    availableFor?: string[];
+    choices: { name: string; price?: Price; availableFor?: string[] }[];
+  }[];
+  addOns?: {
+    id?: string;
+    name: string;
+    price: Price;
+    availableFor?: string[];
+    priceByVariant?: Record<string, Price>;
+  }[];
+  maxAddOns?: number;
+  removables?: { id?: string; name: string }[];
+  quickInstructions?: string[];
+  combo?: ComboInfo;
+  allergens: Allergen[];
+  /** Absent: no picture. */
+  image?: DishImage;
+  availability: DishAvailability;
+}
+
+/**
+ * `POST /admin/branches/:branchId/menu/dishes` — a new dish, last in its category, its slug made
+ * from the name. 201 → `DishResponse`. `PATCH /admin/branches/:branchId/menu/dishes/:slug` —
+ * the dish as staff left it (moved to another category: last there). 200 → `DishResponse`.
+ * Errors: 400 (a missing name, an unknown category, no price, no size, fewer than two choices, a
+ * name used twice in a list, an add-on limit above the add-ons, a size id that isn't the dish's).
+ * `DELETE /admin/branches/:branchId/menu/dishes/:slug` — off the menu for good (and out of the
+ * curated lists). 204.
+ */
+export type DishResponse = Dish;
+
+/**
+ * `PATCH /admin/branches/:branchId/menu/categories/:categoryId/order` — the order guests see a
+ * category's dishes in (its "Recommended" order): `slugs`, exactly the category's dishes. 200 →
+ * the menu. Errors: 400, 404 (no such category). `PATCH /admin/branches/:branchId/menu/categories`
+ * — the categories renamed (name, short name, description) and in their order: exactly the
+ * menu's categories (adding or removing one needs the guest pages built again). 200 → the menu.
+ */
+export interface ReorderDishesRequest {
+  slugs: string[];
+}
+
+export interface UpdateCategoriesRequest {
+  categories: Pick<Category, 'id' | 'name' | 'shortName' | 'description'>[];
+}
+
+/**
+ * `POST /admin/branches/:branchId/menu/images` — a dish picture, resized by the app (JPEG, at most
+ * 640 px). 201 → `{ image }` to put on the dish. Errors: 400 (not a JPEG / PNG / WebP data URL,
+ * or too large). Mock: the data URL itself is the picture's `src`.
+ */
+export interface ImageUploadRequest {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+export interface ImageUploadResponse {
+  image: DishImage;
 }
 
 /**

@@ -16,7 +16,7 @@ import {
 import { QueryProvider } from '@/api/QueryProvider';
 import { createStorageDb } from '@/api/mock/db';
 import { HOUR_MS, TABLE_SESSION_HOURS } from '@/api/mock/rules';
-import { querySeed } from '@/api/mock/seed';
+import { menuBaseQuery, querySeed } from '@/api/mock/seed';
 import { createMockServer } from '@/api/mock/server';
 import { AppProviders } from '@/context/AppProviders';
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
@@ -106,6 +106,7 @@ export function createApiState(): DehydratedState {
   client.setQueryData(branchesQuery().queryKey, branches);
   for (const { id } of branches) {
     client.setQueryData(branchMenuQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
+    client.setQueryData(menuBaseQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
     client.setQueryData(branchPromotionsQuery(id).queryKey, testPromotions(id));
     client.setQueryData(
       branchFloorsQuery(id).queryKey,
@@ -130,9 +131,10 @@ export function createTestServer(
   hydrate(client, createApiState());
   if (branches) client.setQueryData(branchesQuery().queryKey, branches(testBranches()));
   let count = 0;
+  const db = createStorageDb();
   return createMockServer({
-    db: createStorageDb(),
-    seed: querySeed(client),
+    db,
+    seed: querySeed(client, db, now),
     now,
     newId: () => `id-${++count}`,
   });

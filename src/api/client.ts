@@ -79,6 +79,12 @@ async function send<T>(request: ApiRequest, init?: RequestInit): Promise<T> {
   return viaFetch<T>(request, init);
 }
 
+/**
+ * GET over HTTP even while the mock server is on. MOCK ONLY: the mock reads the dummy JSON it
+ * builds on (the menu before staff changes) with it.
+ */
+export const staticGet = <T>(path: string): Promise<T> => viaFetch<T>({ method: 'GET', path });
+
 /** GET an endpoint and parse its JSON body. Throws ApiError on a non-2xx response. */
 export const apiGet = <T>(path: string, init?: RequestInit): Promise<T> =>
   send<T>({ method: 'GET', path }, init);
@@ -92,4 +98,5 @@ export const apiPatch = <T>(path: string, body: unknown, init?: RequestInit): Pr
   send<T>({ method: 'PATCH', path, body }, init);
 
 /** DELETE a resource (204, no body). */
-export const apiDelete = (path: string): Promise<void> => send<void>({ method: 'DELETE', path });
+export const apiDelete = (path: string, init?: RequestInit): Promise<void> =>
+  send<void>({ method: 'DELETE', path }, init);

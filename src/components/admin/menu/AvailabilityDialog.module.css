@@ -1,0 +1,49 @@
+/* A dish's availability: the four choices, times to be back, then its sizes on or off. */
+
+.body {
+  display: grid;
+  gap: 18px;
+  width: min(480px, 100%);
+}
+
+.times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: -8px;
+}
+
+.sizes {
+  display: grid;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.sizesTitle {
+  color: var(--ink);
+  font: var(--font-h3);
+}
+
+.hint {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.sizeList {
+  display: grid;
+  list-style: none;
+}
+
+.size {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.size + .size {
+  border-top: 1px dashed var(--line);
+}

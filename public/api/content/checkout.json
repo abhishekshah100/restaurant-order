@@ -239,5 +239,6 @@
     "body": "You cancelled the payment, so nothing was charged. Your cart is just as you left it.",
     "tryAgain": "Try paying again",
     "payAtCounterInstead": "Pay at the counter instead"
-  }
+  },
+  "unavailable": "{items} just sold out. Take it out of your cart to order."
 }

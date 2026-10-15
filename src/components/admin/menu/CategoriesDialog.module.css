@@ -1,0 +1,65 @@
+/* The categories panel: one card per category (name, then short name and description). */
+
+.dialog {
+  width: min(560px, 100vw);
+}
+
+.body {
+  display: grid;
+  gap: 14px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.position {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.more {
+  display: grid;
+  gap: 10px;
+}
+
+.error {
+  color: var(--error);
+  font: var(--font-small);
+}
+
+.note {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+@media (min-width: 560px) {
+  .more {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+}

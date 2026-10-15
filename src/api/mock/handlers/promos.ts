@@ -27,7 +27,8 @@ export const validatePromo: Handler = async (ctx, { body: raw }) => {
     ctx.seed.promotions(branch.id),
   ]);
   const at = new Date(ctx.now());
-  const lines = offerLines(body, branch, { menu, promotions, pricedAt: at });
+  // A quote for the cart: the order itself says if something's sold out.
+  const lines = offerLines(body, branch, { menu, promotions, pricedAt: at }, { orderable: false });
   const { promo, discount, offerDiscount } = quotePromo(
     promotions.codes,
     code,
