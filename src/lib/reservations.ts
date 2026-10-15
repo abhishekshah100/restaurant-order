@@ -21,7 +21,7 @@ export const MAX_PARTY = 20;
 export const MAX_NOTE = 200;
 export const MAX_NAME = 60;
 /** The days the Reservations page and the booking form show as tiles, today first; a calendar has the rest. */
-export const BOOKING_DAYS = 3;
+export const BOOKING_DAYS = 2;
 /** The furthest ahead the server takes a booking. */
 export const MAX_DAYS_AHEAD = 60;
 /** Booking times go up in these steps. */
