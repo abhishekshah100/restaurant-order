@@ -28,7 +28,14 @@ import {
 } from '../context';
 import { liveOrder } from '../kitchen';
 import { changeableUntil, toOrderItems, type OrderLabels } from '../orderBuilder';
-import { cancelledPayment, roundsOf, settlePayment, withRounds } from '../tab';
+import {
+  cancelledPayment,
+  roundsOf,
+  settlePayment,
+  withRefund,
+  withRounds,
+  withTransaction,
+} from '../tab';
 import { offerLines } from './orderPricing';
 
 /*
@@ -134,8 +141,34 @@ function takePayment(
   return payment;
 }
 
-/** Saves the order, marks the payment used, and answers with the order as read now. */
-function save(ctx: MockContext, target: Target, order: Order, payment?: Payment): Order {
+/**
+ * Saves the order with the payment (marked used) and any refund recorded on it, and answers with
+ * the order as read now.
+ */
+function save(
+  ctx: MockContext,
+  target: Target,
+  next: Order,
+  payment?: Payment,
+  refund?: { amount: Price; reason: 'cancelled' | 'changed' },
+): Order {
+  const at = target.now.toISOString();
+  let order = next;
+  if (payment) {
+    order = withTransaction(
+      order,
+      {
+        kind: 'payment',
+        amount: payment.amount,
+        channel: 'online',
+        method: payment.method,
+        at,
+        transactionRef: payment.transactionRef,
+      },
+      target.order,
+    );
+  }
+  if (refund) order = withRefund(order, target.order, { ...refund, at });
   ctx.db.orders.write(ctx.db.orders.read().map((o) => (o.id === order.id ? order : o)));
   if (payment) {
     ctx.db.payments.write(
@@ -235,7 +268,10 @@ export const changeOrder: Handler = async (ctx, { params, body: raw }) => {
   const payment = due > 0 ? takePayment(ctx, target, 'change', body.paymentId, due) : undefined;
   const settled = settlePayment(target.order, paid + due, next.total);
   const response: OrderChangeResponse = {
-    order: save(ctx, target, { ...next, payment: settled.payment }, payment),
+    order: save(ctx, target, { ...next, payment: settled.payment }, payment, {
+      amount: settled.refunded,
+      reason: 'changed',
+    }),
     refunded: settled.refunded,
   };
   return ok(response);
@@ -278,7 +314,13 @@ export const cancelOrder: Handler = async (ctx, { params, body: raw }) => {
     };
     refunded = settled.refunded;
   }
-  const response: OrderChangeResponse = { order: save(ctx, target, next), refunded };
+  const response: OrderChangeResponse = {
+    order: save(ctx, target, next, undefined, {
+      amount: refunded,
+      reason: next.status === 'cancelled' ? 'cancelled' : 'changed',
+    }),
+    refunded,
+  };
   return ok(response);
 };
 

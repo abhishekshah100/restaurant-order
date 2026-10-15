@@ -14,6 +14,7 @@ import type {
   CancelOrderRequest,
   ChangeOrderRequest,
   CollectPaymentRequest,
+  RefundRequest,
   CollectTableRequest,
   EditRoundRequest,
   CreatePaymentRequest,
@@ -154,6 +155,12 @@ export const api = {
   collectPayment: (token: string, branchId: string, orderId: string, body: CollectPaymentRequest) =>
     apiPost<OrderResponse>(
       `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/payment`,
+      body,
+      bearer(token),
+    ),
+  refundOrder: (token: string, branchId: string, orderId: string, body: RefundRequest) =>
+    apiPost<OrderResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/refund`,
       body,
       bearer(token),
     ),

@@ -18,6 +18,7 @@ import {
 } from '../context';
 import { liveOrder } from '../kitchen';
 import { assignRider, buildOrder, nextOrderId } from '../orderBuilder';
+import { withTransaction } from '../tab';
 import { priceOrder } from './orderPricing';
 import { guestPromoUses } from './promos';
 
@@ -147,7 +148,7 @@ export const placeOrder: Handler = async (ctx, { body: raw }) => {
   // A real backend issues globally unique ids.
   const stored = ctx.db.orders.read();
   const id = nextOrderId([...stored, ...seedOrders.history]);
-  const order = buildOrder(
+  const built = buildOrder(
     {
       id,
       lines,
@@ -169,7 +170,17 @@ export const placeOrder: Handler = async (ctx, { body: raw }) => {
     labels,
     branch,
   );
-  if (!order) fail(422, 'empty_order');
+  if (!built) fail(422, 'empty_order');
+  const order = payment
+    ? withTransaction(built, {
+        kind: 'payment',
+        amount: payment.amount,
+        channel: 'online',
+        method: payment.method,
+        at: now.toISOString(),
+        transactionRef: payment.transactionRef,
+      })
+    : built;
   ctx.db.orders.write([order, ...stored]);
   if (payment) {
     ctx.db.payments.write(payments.map((p) => (p === payment ? { ...p, orderIds: [id] } : p)));

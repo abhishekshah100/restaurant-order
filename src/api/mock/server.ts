@@ -27,6 +27,7 @@ import {
   cancelByStaff,
   collectPayment,
   collectTablePayment,
+  refundOrder,
   editStaffRound,
   takeTableOrder,
 } from './handlers/adminOrders';
@@ -86,6 +87,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],
   ['POST', 'admin/branches/:branchId/orders/:id/payment', collectPayment],
   ['POST', 'admin/branches/:branchId/orders/:id/cancel', cancelByStaff],
+  ['POST', 'admin/branches/:branchId/orders/:id/refund', refundOrder],
   ['POST', 'admin/service-requests/:id/acknowledge', acknowledgeServiceRequest],
   ['POST', 'admin/service-requests/:id/resolve', resolveServiceRequest],
   ['POST', 'admin/orders/:id/served', markOrderServed],

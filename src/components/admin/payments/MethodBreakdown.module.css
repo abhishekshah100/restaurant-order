@@ -1,0 +1,141 @@
+/* By payment method: a row per method with its bar, then the cash drawer. */
+
+.card {
+  min-width: 0;
+  padding: 16px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.title {
+  font: var(--font-h3);
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+}
+
+.icon[data-channel='inPerson'] {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.name {
+  overflow: hidden;
+  font: var(--font-label);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amount {
+  font: var(--font-price);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--ink-a05);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+}
+
+.fill[data-channel='inPerson'] {
+  background: var(--success);
+}
+
+.meta {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.empty {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.drawer {
+  margin-top: 4px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-radius: var(--r-card);
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.drawerIcon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--surface);
+}
+
+.drawerText {
+  display: grid;
+  min-width: 0;
+}
+
+.drawerLabel {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.drawerHint {
+  color: var(--ink-2);
+  font: var(--font-meta);
+}
+
+.drawerAmount {
+  color: var(--success);
+  font: var(--font-h3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

@@ -24,6 +24,36 @@ export type PaymentMethod = 'online' | 'counter' | 'pickup' | 'cod';
 
 export type PaymentStatus = 'paid' | 'unpaid' | 'refunded' | 'refund-started';
 
+/** Why staff gave money back on an order that stands (POST …/orders/:id/refund). */
+export type RefundReason = 'complaint' | 'wrongItem' | 'overcharged' | 'goodwill' | 'other';
+
+/**
+ * One movement of money on an order, as the server recorded it: a payment (online in the app,
+ * or taken by staff in person) or a refund. Amounts are major units and positive. The order's
+ * `payment` summary is what these add up to.
+ */
+export interface PaymentTransaction {
+  id: string;
+  kind: 'payment' | 'refund';
+  amount: Price;
+  /** Paid in the app (through the payment partner) or to staff in person. */
+  channel: 'online' | 'inPerson';
+  /** The method's id: a checkout or bill method (GET /branches › payments) or a way to pay staff ("cash"). */
+  method: string;
+  /** ISO timestamp. */
+  at: string;
+  /** The staff member who took the payment or gave the refund. */
+  by?: string;
+  /** The payment partner's reference. */
+  transactionRef?: string;
+  /** In person: a tip on top of `amount` (not part of the bill). */
+  tip?: Price;
+  /** Refunds: why (staff refunds), and whether the money has reached the guest yet. */
+  reason?: RefundReason | 'cancelled' | 'changed';
+  note?: string;
+  status?: 'started' | 'done';
+}
+
 export interface OrderItem {
   dishSlug: string;
   name: string;
@@ -166,6 +196,8 @@ export interface Order {
     detail?: string;
     transactionRef?: string;
     refundAmount?: Price;
+    /** Every payment and refund on the order, oldest first. Missing on orders from before it was recorded. */
+    transactions?: PaymentTransaction[];
     /**
      * A running order paid in part: what has been paid so far (online). Missing: all of
      * `total` when the status is paid, nothing otherwise.

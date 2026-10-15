@@ -226,17 +226,6 @@
     }
   },
   "adminDashboard": {
-    "branchWorkspace": "BRANCH WORKSPACE",
-    "tableNumber": "Table {table}",
-    "orderNumber": "Order {order}",
-    "paymentsDisclaimer": "Sample order payment records only; no payment actions are enabled.",
-    "itemCount": "{count} items",
-    "sections": {
-      "paymentsSubtitle": "Payment status is shown separately from order status."
-    },
-    "empty": {
-      "noPayments": "No payment records in sample history."
-    },
     "paymentStatus": {
       "paid": "paid",
       "unpaid": "unpaid",
@@ -1202,6 +1191,241 @@
         "table": "Pick a table",
         "phoneLength": "Enter the full mobile number",
         "phonePrefix": "That doesn't look like a mobile number"
+      }
+    }
+  },
+  "adminPayments": {
+    "title": "Payments",
+    "orderId": "#{order}",
+    "loading": "Loading payments",
+    "failed": "That didn't go through. Try again.",
+    "today": {
+      "label": "Today's takings",
+      "eyebrow": "Today · {date}",
+      "net": "Net takings",
+      "netHint": "{collected} collected · {refunds} refunded",
+      "online": "Online",
+      "inPerson": "In person",
+      "split": "Online and in person",
+      "toCollect": "To collect",
+      "toCollectHint": {
+        "one": "{count} unpaid order",
+        "other": "{count} unpaid orders"
+      },
+      "settled": "All settled",
+      "tips": "Tips",
+      "tipsHint": "On top of the bills",
+      "average": "Average bill",
+      "averageHint": {
+        "one": "{count} paid bill",
+        "other": "{count} paid bills"
+      },
+      "refunds": "Refunds",
+      "refundsHint": "{amount} still on its way to guests",
+      "refundsNone": "Nothing on its way back"
+    },
+    "methods": {
+      "title": "By payment method",
+      "empty": "No payments yet today.",
+      "row": "{method}: {amount} from {count}",
+      "count": {
+        "one": "{count} payment",
+        "other": "{count} payments"
+      },
+      "refunded": "{amount} refunded",
+      "drawer": "Cash in the drawer",
+      "drawerHint": "Cash taken and tips, less cash handed back"
+    },
+    "actions": {
+      "report": "Day report",
+      "export": "Export CSV",
+      "exportFile": "payments-{branch}-{date}.csv"
+    },
+    "views": {
+      "label": "Payments",
+      "collect": "To collect",
+      "transactions": "Transactions",
+      "refunds": "Refunds"
+    },
+    "search": {
+      "collect": "Search table, order or guest",
+      "ledger": "Search order, guest, table, reference or staff"
+    },
+    "channels": {
+      "label": "Paid",
+      "all": "All",
+      "online": "Online",
+      "inPerson": "In person"
+    },
+    "methodFilter": {
+      "label": "Method",
+      "all": "All methods"
+    },
+    "due": {
+      "table": "Table {table}",
+      "orders": {
+        "one": "{count} order",
+        "other": "{count} orders"
+      },
+      "since": "Since {time}",
+      "asked": "Asked for the bill {ago}",
+      "askedOnWay": "Asked for the bill {ago} · {name} on the way",
+      "partPaid": "{amount} paid so far",
+      "dueLabel": "Due",
+      "collect": "Collect",
+      "printBill": "Print bill",
+      "view": "Open",
+      "pickup": "Pickup {time}",
+      "pickupAsap": "Pickup as soon as ready",
+      "delivery": "Delivery to {area}"
+    },
+    "entry": {
+      "payment": "Payment",
+      "refund": "Refund",
+      "where": "#{order} · {where}",
+      "by": "by {name}",
+      "ref": "Ref {ref}",
+      "tip": "+{amount} tip",
+      "online": "Online",
+      "inPerson": "In person",
+      "refundStarted": "On its way",
+      "refundDone": "Refunded",
+      "reasons": {
+        "complaint": "Complaint",
+        "wrongItem": "Wrong item",
+        "overcharged": "Overcharged",
+        "goodwill": "Goodwill",
+        "other": "Other",
+        "cancelled": "Order cancelled",
+        "changed": "Order changed"
+      },
+      "open": "{kind} of {amount} on order {order}"
+    },
+    "empty": {
+      "collectTitle": "Everything's settled",
+      "collect": "No bills are waiting to be paid.",
+      "transactionsTitle": "No payments yet",
+      "transactions": "Payments and refunds show here as they happen today.",
+      "refundsTitle": "No refunds today",
+      "refunds": "Refunds you give, and those for cancelled or changed orders, show here.",
+      "searchTitle": "Nothing matches",
+      "search": "Nothing matches “{query}”."
+    },
+    "refundsSummary": "{amount} refunded today · {pending} still on its way to guests",
+    "collect": {
+      "titleOrder": "Collect payment",
+      "titleTable": "Collect for table {table}",
+      "subtitleOrder": "Order #{order} · {name}",
+      "subtitleTable": {
+        "one": "{count} order with something to pay",
+        "other": "{count} orders with something to pay"
+      },
+      "bill": "Bill",
+      "orderLine": "#{order} · {name}",
+      "paidSoFar": "Paid so far",
+      "due": "Due now",
+      "amount": "How much",
+      "amounts": {
+        "full": "Full bill",
+        "split": "Split evenly",
+        "custom": "Other amount"
+      },
+      "people": "Paying separately",
+      "share": "Each pays {amount}",
+      "shareOf": "This share: {amount} · {left} left after",
+      "customAmount": "Amount",
+      "customHint": "Up to {amount}",
+      "customError": "Enter an amount up to {amount}",
+      "method": "Paid by",
+      "tip": "Tip",
+      "tipNone": "No tip",
+      "tipPercent": "{percent}%",
+      "tipCustom": "Other",
+      "tipAmount": "Tip amount",
+      "cashReceived": "Cash received",
+      "exact": "Exact",
+      "change": "Change to give",
+      "short": "{amount} short",
+      "confirm": "Collect {amount}",
+      "confirmTip": "Collect {amount} + {tip} tip",
+      "doneOrder": "{amount} collected for order #{order}",
+      "doneTable": "Table {table} settled: {amount} collected",
+      "doneShare": "{amount} collected · {left} still due",
+      "tableNote": "Everything due at the table is collected in one go. To split it, collect each order on its own."
+    },
+    "refund": {
+      "title": "Refund order #{order}",
+      "subtitle": "{name} · paid {paid}",
+      "paid": "Paid",
+      "refunded": "Already refunded",
+      "available": "Can refund",
+      "amount": "How much",
+      "amounts": {
+        "full": "Everything ({amount})",
+        "custom": "Part of it"
+      },
+      "customAmount": "Amount to refund",
+      "customError": "Enter an amount up to {amount}",
+      "reason": "Why",
+      "note": "Note",
+      "notePlaceholder": "What happened (for the day report)",
+      "online": "Goes back to {method} through the payment partner. The guest gets it in 5–7 working days.",
+      "inPerson": "Hand {amount} back to the guest in cash now.",
+      "confirm": "Refund {amount}",
+      "done": "{amount} refunded on order #{order}",
+      "nothing": "Nothing paid on this order is left to refund."
+    },
+    "order": {
+      "title": "Order #{order}",
+      "history": "Payments on this order",
+      "none": "Nothing paid yet.",
+      "collect": "Collect",
+      "refund": "Refund",
+      "print": "Print receipt",
+      "table": "Open table {table}"
+    },
+    "receipt": {
+      "title": "Bill",
+      "receiptTitle": "Receipt",
+      "order": "Order #{order}",
+      "table": "Table {table}",
+      "guest": "Guest: {name}",
+      "items": "Items",
+      "itemTotal": "Item total",
+      "discounts": "Discounts",
+      "total": "Total",
+      "paid": "Paid",
+      "refunded": "Refunded",
+      "due": "Amount due",
+      "payments": "Payments",
+      "thanks": "Thank you for dining with us",
+      "printed": "Printed {time}"
+    },
+    "report": {
+      "title": "Day report",
+      "branch": "{branch} · {date}",
+      "printed": "Printed {time} by {name}",
+      "summary": "Summary",
+      "byMethod": "By payment method",
+      "transactions": "Payments and refunds",
+      "outstanding": "Still to collect",
+      "none": "None",
+      "columns": {
+        "time": "Time",
+        "order": "Order",
+        "where": "Where",
+        "guest": "Guest",
+        "kind": "Type",
+        "method": "Method",
+        "channel": "Channel",
+        "amount": "Amount",
+        "tip": "Tip",
+        "by": "Staff",
+        "ref": "Reference",
+        "reason": "Reason",
+        "status": "Status",
+        "count": "Payments",
+        "refunds": "Refunds"
       }
     }
   }

@@ -377,6 +377,18 @@ describe('bill payments', () => {
       status: 'paid',
       detail: 'UPI',
       transactionRef: '•••• 4821',
+      // The ledger records the bill payment for what was due on the order.
+      transactions: [
+        {
+          id: `${order.id}-T1`,
+          kind: 'payment',
+          amount: order.total,
+          channel: 'online',
+          method: 'upi',
+          at: expect.any(String),
+          transactionRef: '•••• 4821',
+        },
+      ],
     });
     const requests = await call('GET', `sessions/${session.id}/service-requests`);
     expect(requests.body).toEqual({ requests: [] });

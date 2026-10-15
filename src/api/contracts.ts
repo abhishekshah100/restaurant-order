@@ -26,7 +26,7 @@ import type {
   Price,
   SpiceLevel,
 } from '@/types/menu';
-import type { DeliveryAddress, Order } from '@/types/order';
+import type { DeliveryAddress, Order, RefundReason } from '@/types/order';
 import type { PromoDescriptionKey } from '@/types/promotion';
 import type { BillScope, ServiceRequest, WaiterReason } from '@/types/service';
 import type { GuestSession, SessionStart } from '@/types/session';
@@ -68,6 +68,8 @@ export type ApiErrorCode =
   | 'payment_required'
   /** 409: the payment isn't pending any more, was already used, or doesn't match. */
   | 'payment_conflict'
+  /** 409: nothing paid on the order is left to refund. */
+  | 'nothing_to_refund'
   /** 409: none of the orders can be paid (already paid, or not this session's). */
   | 'nothing_to_pay'
   /** 409: the order's mode isn't the session's, or the session can't order that way (dine-in needs a table). */
@@ -426,6 +428,27 @@ export type AdminOrdersResponse = AdminOrders;
  */
 export interface CollectPaymentRequest {
   method: AtTableMethodKey;
+  /**
+   * Part of what's due, for a split bill (major units, more than 0, at most what's due): the
+   * rest stays due. Missing: everything due.
+   */
+  amount?: Price;
+  /** A tip on top, recorded with the payment (not part of the bill). */
+  tip?: Price;
+}
+
+/**
+ * `POST /admin/branches/:branchId/orders/:id/refund` — staff give money back on an order that
+ * stands (a complaint, a wrong item, overcharged, goodwill): `amount` up to what's been paid
+ * and not refunded yet. It goes back the way it was paid: online payments through the payment
+ * partner (status `started`, the guest gets it in a few days), in-person ones in cash at once
+ * (`done`). The order stays paid; `payment.refundAmount` and a refund transaction record it.
+ * 200 → `Order`. Errors: 400 (amount or reason), 401, 403, 404 not_found, 409 nothing_to_refund.
+ */
+export interface RefundRequest {
+  amount: Price;
+  reason: RefundReason;
+  note?: string;
 }
 
 /**
@@ -450,6 +473,8 @@ export interface EditRoundRequest {
  */
 export interface CollectTableRequest {
   method: AtTableMethodKey;
+  /** A tip on top, recorded with the payment (not part of the bill). */
+  tip?: Price;
 }
 
 export interface TablePaymentResponse {

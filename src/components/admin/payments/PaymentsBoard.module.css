@@ -1,0 +1,182 @@
+/* The Payments page: today's takings, then the views beside the methods (stacked on phones). */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* ---------- Views, search and filters ---------- */
+
+.panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+  overflow: hidden;
+}
+
+.views,
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.views::-webkit-scrollbar,
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.views > *,
+.chips > * {
+  flex: none;
+}
+
+.views {
+  padding: 14px 14px 0;
+}
+
+.tools {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.filters {
+  display: grid;
+  gap: 8px;
+}
+
+.refundNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-meta);
+}
+
+.body {
+  min-width: 0;
+}
+
+/* ---------- Lists ---------- */
+
+.dueList {
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  background: color-mix(in srgb, var(--bg) 45%, var(--surface));
+}
+
+.ledger {
+  list-style: none;
+}
+
+.side {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+
+/* ---------- Empty, loading, error ---------- */
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 44px 20px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 6px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--bg);
+  color: var(--ink-3);
+}
+
+.emptyIcon[data-icon='checkc'] {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.emptyTitle {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.emptyBody {
+  max-width: 36ch;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.state {
+  padding: 48px 16px;
+}
+
+.skeleton {
+  display: grid;
+  gap: 16px;
+}
+
+.skeleton > span {
+  display: block;
+  border-radius: var(--r-panel);
+  background: linear-gradient(90deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%) 0 0 / 200%
+    100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton > span:first-child {
+  height: 220px;
+}
+
+.skeleton > span:last-child {
+  height: 360px;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton > span {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .dueList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .side {
+    position: sticky;
+    top: 88px;
+  }
+}

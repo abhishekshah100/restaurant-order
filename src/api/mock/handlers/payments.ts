@@ -1,4 +1,5 @@
 import { modePayments } from '@/lib/fulfilment';
+import { ledgerOf } from '@/lib/adminPayments';
 import { amountDue } from '@/lib/lifecycle';
 import { isUnpaid } from '@/lib/orders';
 import { isOnlineMethod, isPaymentMethodId } from '@/lib/payments';
@@ -16,6 +17,7 @@ import {
   type Handler,
 } from '../context';
 import { liveOrder } from '../kitchen';
+import { addTransaction } from '../tab';
 import { MOCK_TRANSACTION_REF, PAYMENT_WINDOW_SECONDS } from '../rules';
 import { orderChangeAmount } from './orderChanges';
 import { priceOrder } from './orderPricing';
@@ -34,12 +36,23 @@ export function markOrdersPaid<T extends Pick<Order, 'id' | 'payment'>>(
   orders: readonly T[],
   ids: readonly string[],
   payment: OnlinePayment,
+  /** Records the payment on each order it pays (the server's ledger), given what was due on it. */
+  record?: (paid: T, due: Order) => T,
 ): { orders: T[]; marked: T[] } {
   const wanted = new Set(ids);
   const marked: T[] = [];
   const next = orders.map((order) => {
     if (!wanted.has(order.id) || !isUnpaid(order)) return order;
-    const paid: T = { ...order, payment: { method: 'online', status: 'paid', ...payment } };
+    const settled: T = {
+      ...order,
+      payment: {
+        method: 'online',
+        status: 'paid',
+        ...payment,
+        ...(order.payment.transactions ? { transactions: order.payment.transactions } : {}),
+      },
+    };
+    const paid = record ? record(settled, order as unknown as Order) : settled;
     marked.push(paid);
     return paid;
   });
@@ -143,10 +156,27 @@ export const simulatePayment: Handler = async (ctx, { params, body: raw }) => {
 
   let paid: Order[] = [];
   if (payment.status === 'succeeded' && payment.purpose === 'bill') {
-    const { orders, marked } = markOrdersPaid(ctx.db.orders.read(), payment.orderIds, {
-      detail: labels.methodName(payment.method),
-      transactionRef: payment.transactionRef,
-    });
+    const at = new Date(now).toISOString();
+    const { orders, marked } = markOrdersPaid(
+      ctx.db.orders.read(),
+      payment.orderIds,
+      { detail: labels.methodName(payment.method), transactionRef: payment.transactionRef },
+      // Earlier payments as they stood, then this one for what was still due.
+      (paid, before) => ({
+        ...paid,
+        payment: {
+          ...paid.payment,
+          transactions: addTransaction(before, ledgerOf(before), {
+            kind: 'payment',
+            amount: amountDue(before),
+            channel: 'online',
+            method: payment.method,
+            at,
+            transactionRef: payment.transactionRef,
+          }),
+        },
+      }),
+    );
     ctx.db.orders.write(orders);
     paid = marked.map((o) =>
       liveOrder({ ...o, branchId: o.branchId ?? branch.id, mode: o.mode ?? 'dineIn' }, now, branch),

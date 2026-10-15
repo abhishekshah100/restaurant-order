@@ -702,6 +702,93 @@ describe('Changing an order and paying at any time (mock)', () => {
   });
 });
 
+describe('Payments for staff: split bills, tips and refunds (mock)', () => {
+  const collect = (id: string, body: unknown) =>
+    call('POST', `admin/branches/blr-indiranagar/orders/${id}/payment`, body, admin);
+  const refund = (id: string, body: unknown) =>
+    call('POST', `admin/branches/blr-indiranagar/orders/${id}/refund`, body, admin);
+
+  it('takes a split bill in shares, each recorded with who took it, the method and any tip', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive);
+    const half = Math.round(placed.total * 50) / 100;
+
+    // More than what's due, or nothing, isn't a share.
+    expect((await collect(placed.id, { method: 'cash', amount: placed.total + 1 })).status).toBe(
+      400,
+    );
+    expect((await collect(placed.id, { method: 'cash', amount: 0 })).status).toBe(400);
+    expect((await collect(placed.id, { method: 'cash', tip: -5 })).status).toBe(400);
+
+    const first = (await collect(placed.id, { method: 'cash', amount: half, tip: 20 }))
+      .body as Order;
+    expect(first.payment).toMatchObject({ status: 'unpaid', paid: half });
+    const second = (await collect(placed.id, { method: 'card' })).body as Order;
+    expect(second.payment.status).toBe('paid');
+    expect(second.payment.transactions).toEqual([
+      expect.objectContaining({
+        kind: 'payment',
+        amount: half,
+        channel: 'inPerson',
+        method: 'cash',
+        tip: 20,
+        by: DEMO_ADMIN.name,
+      }),
+      expect.objectContaining({ kind: 'payment', amount: placed.total - half, method: 'card' }),
+    ]);
+  });
+
+  it('refunds part or all of what was paid, the way it was paid, and the bill stays settled', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive);
+    // Nothing paid yet: nothing to give back.
+    expect((await refund(placed.id, { amount: 10, reason: 'complaint' })).status).toBe(409);
+    await collect(placed.id, { method: 'cash' });
+
+    expect((await refund(placed.id, { amount: 10, reason: 'bored' })).status).toBe(400);
+    expect(
+      (await refund(placed.id, { amount: placed.total + 1, reason: 'complaint' })).status,
+    ).toBe(400);
+    const part = (await refund(placed.id, { amount: 50, reason: 'wrongItem', note: 'Cold naan' }))
+      .body as Order;
+    expect(part.payment).toMatchObject({ status: 'paid', refundAmount: 50 });
+    expect(part.payment.transactions?.at(-1)).toMatchObject({
+      kind: 'refund',
+      amount: 50,
+      channel: 'inPerson',
+      method: 'cash',
+      reason: 'wrongItem',
+      note: 'Cold naan',
+      status: 'done',
+      by: DEMO_ADMIN.name,
+    });
+    // The rest, then nothing more.
+    expect(
+      (await refund(placed.id, { amount: placed.total - 50, reason: 'goodwill' })).status,
+    ).toBe(200);
+    expect((await refund(placed.id, { amount: 1, reason: 'goodwill' })).status).toBe(409);
+  });
+
+  it('records the refund when the restaurant cancels an order that was paid', async () => {
+    const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
+    const placed = await place(atFive);
+    await collect(placed.id, { method: 'upi' });
+    const res = await call(
+      'POST',
+      `admin/branches/blr-indiranagar/orders/${placed.id}/cancel`,
+      { reason: 'kitchenIssue' },
+      admin,
+    );
+    const cancelled = res.body as Order;
+    expect(cancelled.payment.transactions?.map((t) => [t.kind, t.amount, t.reason])).toEqual([
+      ['payment', placed.total, undefined],
+      ['refund', placed.total, 'cancelled'],
+    ]);
+    // A cancelled order has nothing more to refund.
+    expect((await refund(placed.id, { amount: 1, reason: 'other' })).status).toBe(409);
+  });
+});
+
 describe('POST /admin/branches/:branchId/tables/:table/free (mock)', () => {
   const free = (table: number | string, headers = admin) =>
     call('POST', `admin/branches/blr-indiranagar/tables/${table}/free`, undefined, headers);

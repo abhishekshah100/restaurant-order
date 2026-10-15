@@ -1,8 +1,8 @@
 import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
-import { PaymentsSection } from '@/components/admin/sections/PaymentsSection';
+import { PaymentsBoard } from '@/components/admin/payments/PaymentsBoard';
 
 export const generateMetadata = () => adminMetadata('payments');
 
 export default function AdminPaymentsPage() {
-  return <PaymentsSection />;
+  return <PaymentsBoard />;
 }

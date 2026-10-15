@@ -1,9 +1,10 @@
+import { ledgerOf } from '@/lib/adminPayments';
 import { paidAmount } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
 import { discountsFor, toOrderDiscounts } from '@/lib/promotions';
 import type { Branch, OrderMode } from '@/types/branch';
 import type { Price } from '@/types/menu';
-import type { Order, OrderRound, PaymentMethod } from '@/types/order';
+import type { Order, OrderRound, PaymentMethod, PaymentTransaction } from '@/types/order';
 import type { PromoCode } from '@/types/promotion';
 
 /*
@@ -105,4 +106,59 @@ export function cancelledPayment(order: Pick<Order, 'payment' | 'total'>): {
   return refunded > 0
     ? { payment: { ...payment, status: 'refund-started', refundAmount: refunded }, refunded }
     : { payment, refunded: 0 };
+}
+
+/* ---------- The ledger: every payment and refund, as it happens ---------- */
+
+/**
+ * The order with a payment or refund recorded on it, after the payments `before` it (the order
+ * as it was: one from before transactions were recorded starts from what its payment summary
+ * said then, so nothing earlier is lost or counted twice).
+ */
+export function withTransaction(
+  order: Order,
+  entry: Omit<PaymentTransaction, 'id'>,
+  before: Order = order,
+): Order {
+  const ledger = order.payment.transactions ?? ledgerOf(before);
+  return {
+    ...order,
+    payment: { ...order.payment, transactions: addTransaction(order, ledger, entry) },
+  };
+}
+
+/** A ledger with one more entry, numbered on from the order's. */
+export function addTransaction(
+  order: Pick<Order, 'id'>,
+  ledger: readonly PaymentTransaction[],
+  entry: Omit<PaymentTransaction, 'id'>,
+): PaymentTransaction[] {
+  return [...ledger, { ...entry, id: `${order.id}-T${ledger.length + 1}` }];
+}
+
+/**
+ * A refund recorded on the order (`paidFrom`: the order as it was paid, whose payments say how
+ * the money goes back): to the online method if anything was paid online — the payment partner
+ * takes a few days (`started`) — else in cash at once (`done`).
+ */
+export function withRefund(
+  order: Order,
+  paidFrom: Order,
+  refund: Pick<PaymentTransaction, 'amount' | 'reason' | 'at' | 'by' | 'note'>,
+): Order {
+  if (refund.amount <= 0) return order;
+  const payments = ledgerOf(paidFrom).filter((t) => t.kind === 'payment');
+  const source = payments.findLast((t) => t.channel === 'online') ?? payments.at(-1);
+  const online = source?.channel !== 'inPerson';
+  return withTransaction(
+    order,
+    {
+      ...refund,
+      kind: 'refund',
+      channel: online ? 'online' : 'inPerson',
+      method: online ? (source?.method ?? 'online') : 'cash',
+      status: online ? 'started' : 'done',
+    },
+    paidFrom,
+  );
 }

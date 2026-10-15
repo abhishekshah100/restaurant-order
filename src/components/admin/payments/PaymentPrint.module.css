@@ -1,0 +1,196 @@
+/*
+ * A bill or the day report: hidden on screen; when printing, the only thing on the page. The
+ * bill is narrow (it reads like a till receipt on A4 or an 80 mm roll); the report uses the page.
+ */
+
+.sheet {
+  display: none;
+}
+
+@media print {
+  :global(html.printing-payments) body > :not([data-print-sheet]) {
+    display: none !important;
+  }
+
+  :global(html.printing-payments) body {
+    background: var(--white);
+  }
+
+  .sheet {
+    display: block;
+    color: #000;
+    font: 500 11pt/1.4 var(--f-ui);
+  }
+}
+
+.head {
+  margin-bottom: 4mm;
+  text-align: center;
+}
+
+.brand {
+  font: 500 18pt/1.2 var(--f-display);
+}
+
+.branch {
+  font-weight: 700;
+}
+
+.title {
+  margin-top: 3mm;
+  font-size: 13pt;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.muted {
+  color: #444;
+  font-size: 9.5pt;
+}
+
+/* ---------- Bill ---------- */
+
+.bill {
+  max-width: 80mm;
+  margin: 0 auto;
+  text-align: start;
+}
+
+.bill > .muted {
+  text-align: center;
+}
+
+.order {
+  margin-top: 4mm;
+  padding-top: 3mm;
+  border-top: 1px dashed #000;
+}
+
+.orderHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+}
+
+.items {
+  width: 100%;
+  margin-top: 2mm;
+  border-collapse: collapse;
+}
+
+.items td {
+  padding: 0.6mm 0;
+  vertical-align: top;
+}
+
+.qty {
+  width: 8mm;
+}
+
+.num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sums {
+  margin-top: 2mm;
+  display: grid;
+  gap: 0.8mm;
+}
+
+.sums > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+}
+
+.sums dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.strong {
+  font-weight: 700;
+}
+
+.grand {
+  margin-top: 1mm;
+  padding-top: 2mm;
+  border-top: 1px solid #000;
+  font-size: 13pt;
+  font-weight: 800;
+}
+
+.thanks {
+  margin: 6mm 0 2mm;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ---------- Day report ---------- */
+
+.report .head {
+  text-align: start;
+}
+
+.report > .muted {
+  text-align: start;
+}
+
+.section {
+  margin: 6mm 0 2mm;
+  padding-bottom: 1mm;
+  border-bottom: 1.5px solid #000;
+  font-size: 11pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3mm;
+}
+
+.grid dt {
+  color: #444;
+  font-size: 9pt;
+}
+
+.grid dd {
+  margin: 0;
+  font-size: 13pt;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+}
+
+.table th,
+.table td {
+  padding: 1.2mm 2mm 1.2mm 0;
+  border-bottom: 0.5px solid #999;
+  text-align: start;
+  vertical-align: top;
+}
+
+.table th {
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table tr {
+  break-inside: avoid;
+}
+
+.table .num {
+  text-align: end;
+}

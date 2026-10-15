@@ -1,0 +1,126 @@
+/* A payment or refund: method icon, what and where, then the amount. */
+
+.row {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease;
+}
+
+li:last-child > .row {
+  border-bottom: 0;
+}
+
+.row:focus-visible {
+  box-shadow: var(--focus-inset);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: var(--ink-a04);
+  }
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+}
+
+.icon[data-channel='inPerson'] {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.refund .icon {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  min-width: 0;
+}
+
+.method {
+  font: var(--font-label);
+}
+
+.where {
+  overflow: hidden;
+  color: var(--ink-2);
+  font: var(--font-small);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.meta {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.reason {
+  color: var(--ink-2);
+  font: var(--font-meta);
+  font-style: italic;
+}
+
+.end {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.amount {
+  font: var(--font-price);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.refund .amount {
+  color: var(--error);
+}
+
+.tip {
+  color: var(--success);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+}
+
+.status {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+}
+
+.status[data-status='started'] {
+  background: var(--warn-tint);
+  color: var(--warn);
+}

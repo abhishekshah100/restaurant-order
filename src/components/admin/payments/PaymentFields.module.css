@@ -1,0 +1,221 @@
+/* Tiles to choose from, a money field and bill rows, shared by the collect and refund dialogs. */
+
+.fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: 8px;
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.fieldset > .legend {
+  margin-bottom: 0;
+}
+
+.tiles {
+  display: grid;
+  gap: 8px;
+}
+
+.cols2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cols3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cols4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 480px) {
+  .cols4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  position: relative;
+  min-height: 52px;
+  padding: 10px 8px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+
+/* The radio itself is the whole tile: hidden, but kept for the keyboard and screen readers. */
+.radio {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.tile:has(.radio:checked) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.tile:has(.radio:focus-visible) {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .tile:not(:has(.radio:checked)):hover {
+    border-color: var(--ink-2);
+  }
+}
+
+.tileIcon {
+  color: var(--brand-600);
+}
+
+.tile:has(.radio:checked) .tileIcon {
+  color: var(--brand-on-dark);
+}
+
+.tileLabel {
+  font: var(--font-small-strong);
+  overflow-wrap: anywhere;
+}
+
+.tileSub {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.tile:has(.radio:checked) .tileSub {
+  color: color-mix(in srgb, var(--on-dark) 75%, transparent);
+}
+
+/* ---------- Money field ---------- */
+
+.field {
+  display: grid;
+}
+
+.amountBox {
+  min-height: 52px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition:
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+
+.amountBox:focus-within {
+  border-color: var(--brand-600);
+  box-shadow: var(--halo);
+}
+
+.invalid {
+  border-color: var(--error);
+}
+
+.symbol {
+  color: var(--ink-3);
+  font: var(--font-h3);
+}
+
+.amountInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--font-h2);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.hint,
+.error {
+  margin-top: 6px;
+  font: var(--font-meta);
+}
+
+.hint {
+  color: var(--ink-3);
+}
+
+.error {
+  color: var(--error);
+}
+
+/* ---------- Bill rows ---------- */
+
+.sums {
+  display: grid;
+  gap: 6px;
+}
+
+.sum {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.sum dd {
+  margin: 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.total {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.ok dd {
+  color: var(--success);
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+.due {
+  padding: 10px 12px;
+  margin-top: 4px;
+  border-radius: var(--r-md);
+  background: var(--gold-tint);
+  color: var(--gold-ink);
+  font: var(--font-label);
+}
+
+.due dd {
+  color: var(--gold-ink);
+  font: var(--font-h3);
+}

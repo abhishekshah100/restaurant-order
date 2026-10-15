@@ -1,0 +1,219 @@
+/* The Payments page's dialogs: collect, refund and an order's payments. */
+
+@media (min-width: 1024px) {
+  .dialog {
+    width: min(560px, calc(100vw - 48px));
+  }
+}
+
+.form {
+  display: grid;
+  gap: 20px;
+}
+
+.block {
+  display: grid;
+  gap: 10px;
+}
+
+.blockTitle {
+  font: var(--font-label);
+}
+
+.note {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+/* ---------- Split ---------- */
+
+.split {
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+
+.splitLabel {
+  font: var(--font-small-strong);
+}
+
+.splitShare {
+  grid-column: 1 / -1;
+  font: var(--font-h3);
+  font-variant-numeric: tabular-nums;
+}
+
+.splitNote {
+  grid-column: 1 / -1;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* ---------- Cash ---------- */
+
+.quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quickButton {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.quickButton[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.quickButton:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.change {
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  border-radius: var(--r-md);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-label);
+}
+
+.change strong {
+  font: var(--font-h2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Footers ---------- */
+
+.footer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+}
+
+.footerSecondary {
+  white-space: nowrap;
+}
+
+.danger {
+  background: var(--error);
+  border-color: var(--error);
+}
+
+.where {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--info-tint);
+  color: var(--info);
+  font: var(--font-small-strong);
+}
+
+.orderActions {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.orderSecondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.orderSecondary > * {
+  flex: 1 1 auto;
+}
+
+/* ---------- An order's payments ---------- */
+
+.history {
+  display: grid;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.historyItem {
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.historyItem:last-child {
+  border-bottom: 0;
+}
+
+.historyIcon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.historyItem[data-kind='refund'] .historyIcon {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.historyBody {
+  display: grid;
+  min-width: 0;
+}
+
+.historyTitle {
+  font: var(--font-small-strong);
+}
+
+.historyMeta,
+.historyNote {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.historyNote {
+  font-style: italic;
+}
+
+.historyAmount {
+  display: grid;
+  justify-items: end;
+  font: var(--font-price);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.historyAmount small {
+  color: var(--success);
+  font: var(--font-meta-strong);
+}
+
+.historyItem[data-kind='refund'] .historyAmount {
+  color: var(--error);
+}

@@ -1,6 +1,7 @@
 import type { IconName } from '@/components/ui/Icon/iconNames';
 import type { AdminServiceCounts } from '@/types/admin';
 import type { OrderView } from './adminOrders';
+import type { PaymentsView } from './adminPayments';
 import { ADMIN_PATHS } from './adminBranches';
 
 /*
@@ -89,4 +90,10 @@ export const floorPath = (floorId: string) =>
 export function ordersPath(view: OrderView): string {
   const base = section('orders');
   return view === 'active' ? base : `${base}?view=${view}`;
+}
+
+/** The Payments page on a view: To collect is the page itself, the others ?view=. */
+export function paymentsPath(view: PaymentsView = 'collect'): string {
+  const base = section('payments');
+  return view === 'collect' ? base : `${base}?view=${view}`;
 }

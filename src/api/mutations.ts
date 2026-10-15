@@ -14,6 +14,7 @@ import type {
   CancelOrderRequest,
   ChangeOrderRequest,
   CollectPaymentRequest,
+  RefundRequest,
   CollectTableRequest,
   DishInput,
   ImageUploadRequest,
@@ -348,6 +349,24 @@ export function useCollectPayment() {
       orderId: string;
       body: CollectPaymentRequest;
     }) => api.collectPayment(requireToken(token), branchId, orderId, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** POST /admin/branches/:branchId/orders/:id/refund: staff give money back on an order. */
+export function useRefundOrder() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      body,
+    }: {
+      branchId: string;
+      orderId: string;
+      body: RefundRequest;
+    }) => api.refundOrder(requireToken(token), branchId, orderId, body),
     onSettled: () => refreshFloor(client),
   });
 }

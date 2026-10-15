@@ -1,0 +1,153 @@
+/* An open bill: where, its orders, what's due, then Print bill and Collect. */
+
+.card {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+/* Guests asked for the bill: a gold edge and the request on top. */
+.asked {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
+  box-shadow:
+    inset 4px 0 0 var(--gold),
+    var(--sh-1);
+}
+
+.request {
+  justify-self: start;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-pill);
+  background: var(--gold-tint);
+  color: var(--gold-ink);
+  font: var(--font-meta-strong);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.heading {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  overflow: hidden;
+  font: var(--font-h3);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* ---------- A table's orders ---------- */
+
+.orders {
+  display: grid;
+  list-style: none;
+  border-top: 1px dashed var(--line);
+}
+
+.order {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 2px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-bottom: 1px dashed var(--line);
+  background: none;
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.order:focus-visible {
+  border-radius: var(--r-xs);
+  box-shadow: var(--focus);
+}
+
+.orderName {
+  overflow: hidden;
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.orderTime {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.orderDue {
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) {
+  .order:hover .orderName {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* ---------- Due and actions ---------- */
+
+/* The amount, with the buttons beside it when there's room and under it when there isn't. */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.amount {
+  flex: 1 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.amountLabel {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.amountValue {
+  font: var(--font-price-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.paid {
+  color: var(--success);
+  font: var(--font-meta-strong);
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
