@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQueries, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { createClock, type Clock } from '@/lib/clock';
@@ -40,9 +40,11 @@ import {
 import { createTranslator, type Translator } from './translator';
 
 /*
- * The root layout prefetches every reference-data query at build time, so the suspense hooks
- * never wait on the network in practice: they read the TanStack Query cache, and `data` is
- * never undefined. Server-owned reads (orders, service requests) load on the client and
+ * The root layout prefetches the reference data at build time (the default branch's menu and
+ * promotions; the help layout adds the Help topics), and GuestSessionProvider switches to
+ * another branch only once its menu and promotions are loaded (useBranchDataLoaded), so the
+ * suspense hooks never wait on the network in practice: they read the TanStack Query cache,
+ * and `data` is never undefined. Server-owned reads (orders, service requests) load on the client and
  * return the TanStack result (pending until the first response).
  */
 
@@ -77,6 +79,18 @@ export function useBranch(): Branch {
 export function useMenu(): MenuCatalog {
   const { data } = useSuspenseQuery(branchMenuQuery(useBranch().id));
   return useMemo(() => createMenuCatalog(data), [data]);
+}
+
+/**
+ * Whether a branch's menu and promotions are in the cache (or failed to load, for the suspense
+ * hooks to throw to the error page), so it can become the active branch without suspending.
+ * Only the default branch's are built into the page; another's are read here first.
+ */
+export function useBranchDataLoaded(branchId: string): boolean {
+  return useQueries({
+    queries: [branchMenuQuery(branchId), branchPromotionsQuery(branchId)],
+    combine: (results) => results.every((r) => r.data !== undefined || r.isError),
+  });
 }
 
 /** The active branch's promo codes and automatic offers (GET /branches/:id/promotions). */

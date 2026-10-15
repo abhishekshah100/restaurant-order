@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  // Fetch every endpoint once at build time; pages render with the data, the browser reuses it.
+  // What every page needs, fetched once at build time; pages render with it, the browser reuses it.
   const queryClient = makeQueryClient();
   await prefetchAppData(queryClient);
   const t = await getContent('common');

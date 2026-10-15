@@ -7,7 +7,6 @@ import type { FloorPlanLayout } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { Category, Dish, MenuData } from '@/types/menu';
-import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import {
@@ -17,7 +16,6 @@ import {
   branchesQuery,
   contentQuery,
   helpQuery,
-  orderHistoryQuery,
   restaurantQuery,
   type ContentMap,
   type ContentNamespace,
@@ -40,12 +38,21 @@ const readBranches = () => readApiFile<Branch[]>('branches');
 const readMenu = (branchId: string) => readApiFile<MenuData>(`branches/${branchId}/menu`);
 
 /**
- * Fills the query cache with everything the pages need, for the root layout to dehydrate.
- * Every branch's menu is included, so a page renders from the cache whichever branch the
- * guest's QR code is for.
+ * Fills the query cache with what every page needs, for the root layout to dehydrate: the copy,
+ * the brand, the branches, and the default branch's menu and promotions. It's built into every
+ * page, so it stays small: another branch's menu is read in the browser when a guest's session
+ * is there (GuestSessionProvider waits for it), and data for a single screen is prefetched by
+ * that screen's layout (help) or read on demand (the admin's order history).
  */
 export async function prefetchAppData(client: QueryClient): Promise<void> {
-  const branches = await readBranches();
+  const [branches, restaurant] = await Promise.all([
+    readBranches(),
+    readApiFile<Restaurant>('restaurant'),
+  ]);
+  const { id: branchId } = resolveBranch(branches, restaurant.defaultBranchId);
+  client.setQueryData(restaurantQuery().queryKey, restaurant);
+  // Already out of date in the page, like the menu: the browser reads the live status once.
+  client.setQueryData(branchesQuery().queryKey, branches, { updatedAt: 0 });
   await Promise.all([
     ...CONTENT_NAMESPACES.map((ns) =>
       client.prefetchQuery({
@@ -53,30 +60,21 @@ export async function prefetchAppData(client: QueryClient): Promise<void> {
         queryFn: () => readApiFile<ContentMap[typeof ns]>(`content/${ns}`),
       }),
     ),
-    client.prefetchQuery({
-      ...restaurantQuery(),
-      queryFn: () => readApiFile<Restaurant>('restaurant'),
-    }),
-    // Already out of date in the page, like the menu: the browser reads the live status once.
-    Promise.resolve(client.setQueryData(branchesQuery().queryKey, branches, { updatedAt: 0 })),
     // Built into the page as already out of date: staff change the menu during service (sold
     // out, back on), so the browser reads the live one once the page opens.
-    ...branches.map(async (b) => {
-      client.setQueryData(branchMenuQuery(b.id).queryKey, await readMenu(b.id), { updatedAt: 0 });
-    }),
-    ...branches.map((b) =>
-      client.prefetchQuery({
-        ...branchPromotionsQuery(b.id),
-        queryFn: () => readApiFile<BranchPromotions>(`branches/${b.id}/promotions`),
-      }),
+    readMenu(branchId).then((menu) =>
+      client.setQueryData(branchMenuQuery(branchId).queryKey, menu, { updatedAt: 0 }),
     ),
-    // The raw response, like the browser's fetch: the query's `select` adapts it on read.
     client.prefetchQuery({
-      ...orderHistoryQuery(),
-      queryFn: () => readApiFile<OrdersResponse>('orders'),
+      ...branchPromotionsQuery(branchId),
+      queryFn: () => readApiFile<BranchPromotions>(`branches/${branchId}/promotions`),
     }),
-    client.prefetchQuery({ ...helpQuery(), queryFn: () => readApiFile<HelpTopics>('help') }),
   ]);
+}
+
+/** Fills the query cache with the Help topics, for the help pages' layout to dehydrate. */
+export async function prefetchHelp(client: QueryClient): Promise<void> {
+  await client.prefetchQuery({ ...helpQuery(), queryFn: () => readApiFile<HelpTopics>('help') });
 }
 
 /** Copy for server code (metadata): `const t = await getContent('orders')`. */

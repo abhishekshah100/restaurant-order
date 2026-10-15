@@ -6,12 +6,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
 import { ActiveBranchContext } from '@/api/activeBranch';
 import type { UpdateSessionRequest } from '@/api/contracts';
-import { useBranches, useRestaurant } from '@/api/hooks';
+import { useBranchDataLoaded, useBranches, useRestaurant } from '@/api/hooks';
 import { useStartSession, useUpdateSession } from '@/api/mutations';
 import { isOrderMode } from '@/lib/fulfilment';
 import { fitsBranches, parseScan, resolveBranch, resolveScan, type ScanOutcome } from '@/lib/scan';
@@ -274,13 +275,28 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
       actions,
     };
   }, [session, request, choosing, defaultTable, actions]);
+  const branchId = session?.branchId ?? request?.branchId ?? choosing?.branchId ?? null;
+  const activeBranchId = useLoadedBranchId(
+    branchId,
+    resolveBranch(branches, branchId ?? defaultBranchId).id,
+  );
   return (
-    <ActiveBranchContext.Provider
-      value={session?.branchId ?? request?.branchId ?? choosing?.branchId ?? null}
-    >
+    <ActiveBranchContext.Provider value={activeBranchId}>
       <GuestSessionContext.Provider value={value}>{children}</GuestSessionContext.Provider>
     </ActiveBranchContext.Provider>
   );
+}
+
+/**
+ * The session's branch id once its menu and promotions are loaded (`resolvedId` is the branch
+ * it stands for); until then the branch shown before (the default one at first), so screens
+ * keep their content instead of suspending while another branch's menu is read.
+ */
+function useLoadedBranchId(branchId: string | null, resolvedId: string): string | null {
+  const loaded = useBranchDataLoaded(resolvedId);
+  const [shown, setShown] = useState<string | null>(null);
+  if (loaded && shown !== branchId) setShown(branchId);
+  return loaded ? branchId : shown;
 }
 
 function useGuestSessionContext(): GuestSessionValue {
