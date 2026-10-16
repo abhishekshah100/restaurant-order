@@ -18,6 +18,7 @@ import type checkout from '../../public/api/content/checkout.json';
 import type orders from '../../public/api/content/orders.json';
 import type service from '../../public/api/content/service.json';
 import type status from '../../public/api/content/status.json';
+import type kitchen from '../../public/api/content/kitchen.json';
 
 /* ---------- Screen copy: GET /content/<namespace> ---------- */
 
@@ -31,6 +32,7 @@ export const CONTENT_NAMESPACES = [
   'orders',
   'service',
   'status',
+  'kitchen',
 ] as const;
 export type ContentNamespace = (typeof CONTENT_NAMESPACES)[number];
 
@@ -44,6 +46,7 @@ export interface ContentMap {
   orders: typeof orders;
   service: typeof service;
   status: typeof status;
+  kitchen: typeof kitchen;
 }
 
 export const contentQuery = <N extends ContentNamespace>(ns: N) =>

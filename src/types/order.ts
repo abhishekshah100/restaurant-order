@@ -82,7 +82,27 @@ export interface OrderEvent {
   status: OrderStatus;
   /** Display time, e.g. "7:42 PM". */
   time: string;
+  /** ISO: when it happened, for sorting and timing (the kitchen's activity). Missing on the drawn history. */
+  at?: string;
   note?: string;
+}
+
+/** Who did something to an order, and when. */
+export interface StaffMark {
+  /** ISO timestamp. */
+  at: string;
+  /** The staff member's name. */
+  by: string;
+}
+
+/**
+ * What the kitchen marked on a round (PATCH /admin/branches/:branchId/orders/:id/rounds/:round/status):
+ * when it started cooking and when it had it ready (handed to the rider, for delivery), and who.
+ * Missing until the kitchen marks it; the mock kitchen's own timing applies until then.
+ */
+export interface KitchenMarks {
+  started?: StaffMark;
+  ready?: StaffMark;
 }
 
 /** What a delivery address is saved as. */
@@ -155,6 +175,8 @@ export interface OrderRound {
   readyBy?: string;
   /** ISO: when staff marked it served (POST /admin/orders/:id/served); the kitchen's own timing applies until then. */
   servedAt?: string;
+  /** What the kitchen marked on it (started, ready). */
+  kitchen?: KitchenMarks;
 }
 
 export interface Order {
@@ -228,6 +250,8 @@ export interface Order {
    * rounds record it on each round instead.
    */
   servedAt?: string;
+  /** What the kitchen marked on it; orders with rounds record it on each round instead. */
+  kitchen?: KitchenMarks;
 }
 
 /** A time on a day relative to today in the branch's local time, for mock data only. */

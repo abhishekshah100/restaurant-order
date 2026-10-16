@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useVisit } from '@/context/GuestSessionContext';
 
-/** Pages that work without an ordering session. */
+/** Pages that work without an ordering session (staff pages, the kitchen's included, are under /admin/). */
 const OPEN_PATHS = ['/start', '/styleguide', '/admin/'];
 
 /**

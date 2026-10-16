@@ -43,9 +43,17 @@ const quantity = (items: readonly OrderItem[]) => items.reduce((n, item) => n + 
 const iso = (ms: number) => new Date(ms).toISOString();
 
 /** A live order's rounds as the kitchen has them; an order without rounds is one round. */
-const roundsNow = (order: Order): Pick<OrderRound, 'number' | 'placedAt' | 'status' | 'items'>[] =>
+const roundsNow = (
+  order: Order,
+): Pick<OrderRound, 'number' | 'placedAt' | 'status' | 'items' | 'kitchen'>[] =>
   order.rounds ?? [
-    { number: 1, placedAt: order.placedAt, status: order.status, items: order.items },
+    {
+      number: 1,
+      placedAt: order.placedAt,
+      status: order.status,
+      items: order.items,
+      kitchen: order.kitchen,
+    },
   ];
 
 /** The rounds of a live order that are ready and not served yet, oldest first. */
@@ -56,7 +64,8 @@ export function readyRounds(order: Order, branch: Branch): AdminReadyRound[] {
       round: round.number,
       itemCount: quantity(round.items),
       readyAt: iso(
-        readyAt({ ...order, placedAt: round.placedAt }, branch) ?? Date.parse(round.placedAt),
+        readyAt({ ...order, placedAt: round.placedAt, kitchen: round.kitchen }, branch) ??
+          Date.parse(round.placedAt),
       ),
     }))
     .sort((a, b) => a.readyAt.localeCompare(b.readyAt));

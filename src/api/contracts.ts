@@ -571,6 +571,25 @@ export interface MarkServedRequest {
 
 export type MarkServedResponse = Order;
 
+/**
+ * `PATCH /admin/branches/:branchId/orders/:id/rounds/:round/status` — the kitchen moved a round
+ * (round 1 for an order of one round) on: `preparing` (started cooking) or `ready` (ready to serve
+ * or collect; for delivery, handed to the rider). `ready` may skip `preparing`. Recorded on the
+ * round's `kitchen` (`started` / `ready`: when and who); the guest's tracking and the floor follow.
+ * Idempotent: a round already there (or further along in the kitchen) answers the same.
+ * 200 → the order (`Order`, as GET /orders/:id). Errors: 400 invalid_request (another status),
+ * 401 unauthorized, 403 forbidden, 404 not_found (no such order at the branch, or round), 409
+ * order_closed (cancelled, or the round already served, picked up or out for delivery).
+ */
+export interface SetKitchenStatusRequest {
+  status: KitchenStep;
+}
+
+/** What the kitchen can mark a round as. */
+export type KitchenStep = 'preparing' | 'ready';
+
+export type SetKitchenStatusResponse = Order;
+
 /* ---------- Sessions ---------- */
 
 /**

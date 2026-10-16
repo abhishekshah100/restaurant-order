@@ -1,0 +1,221 @@
+/*
+ * The activity charts, one hue (terracotta) each, since each shows one measure: tickets by hour
+ * as columns on a quiet baseline (rounded tops, a 2px gap between them, the busiest darker), and
+ * the dishes ordered most as rows. Counts sit on the marks in ink, never in the bar's colour.
+ */
+
+.card {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.head {
+  display: grid;
+  gap: 2px;
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h3);
+}
+
+.subtitle {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.empty {
+  padding: 24px 0;
+  color: var(--ink-3);
+  font: var(--font-small);
+  text-align: center;
+}
+
+/* ---------- Tickets by hour ---------- */
+
+.columns {
+  height: 200px;
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.column {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
+  outline: none;
+}
+
+.plot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  padding: 0 2px;
+}
+
+.count {
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  width: 100%;
+  max-width: 36px;
+  /* Leaves room above the busiest bar for its count. */
+  height: calc(var(--value) * 0.86);
+  min-height: 2px;
+  border-radius: var(--r-2xs) var(--r-2xs) 0 0;
+  background: var(--brand);
+  transition: background-color var(--dur-fast);
+}
+
+.peak .bar {
+  background: var(--brand-700);
+}
+
+.axis {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  translate: -50% 0;
+  padding-top: 6px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+  white-space: nowrap;
+}
+
+/* With many hours, only every other label, so they don't run together. */
+.columns:has(> :nth-child(9)) .column:nth-child(even) .axis {
+  visibility: hidden;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(var(--value) * 0.86 + 26px);
+  left: 50%;
+  z-index: 1;
+  translate: -50% 0;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--on-dark);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast);
+}
+
+.column:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.column:focus-visible .tooltip {
+  opacity: 1;
+}
+
+.column:focus-visible .bar {
+  background: var(--brand-700);
+}
+
+@media (hover: hover) {
+  .column:hover .tooltip {
+    opacity: 1;
+  }
+
+  .column:hover .bar {
+    background: var(--brand-700);
+  }
+}
+
+/* Room for the hour labels under the baseline. */
+.columns {
+  margin-bottom: 26px;
+}
+
+/* ---------- Dishes ---------- */
+
+.rows {
+  display: grid;
+  gap: 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  grid-template-areas:
+    'name value'
+    'track track';
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.rowName {
+  grid-area: name;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--ink);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rowValue {
+  grid-area: value;
+  color: var(--ink);
+  font: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.track {
+  grid-area: track;
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  width: var(--value);
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--brand);
+}
+
+@media (min-width: 768px) {
+  .card {
+    padding: 18px 20px;
+  }
+
+  .columns {
+    height: 220px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .tooltip {
+    transition: none;
+  }
+}

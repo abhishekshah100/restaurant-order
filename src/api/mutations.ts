@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { withAvailability } from '@/lib/adminMenu';
+import { withKitchenStep } from '@/lib/kitchenBoard';
 import { withAcknowledged, withoutReadyRound, withoutRequest } from '@/lib/adminService';
 import type { AdminBranchService, AdminServiceRequest } from '@/types/admin';
 import type { ServiceRequest } from '@/types/service';
@@ -24,6 +25,7 @@ import type {
   ServiceRequestListResponse,
   SetAvailabilityRequest,
   SetBranchStatusRequest,
+  KitchenStep,
   SetReservationStatusRequest,
   UpdateCategoriesRequest,
   SimulatePaymentRequest,
@@ -36,6 +38,7 @@ import { api } from './endpoints';
 import { ApiError, isApiError } from './client';
 import {
   branchMenuQuery,
+  branchOrdersQuery,
   branchServiceQuery,
   branchesQuery,
   floorLayoutQuery,
@@ -289,6 +292,45 @@ export const useMarkServed = () =>
     (service, { orderId, round }) => withoutReadyRound(service, orderId, round),
     [['orders']],
   );
+
+/**
+ * PATCH /admin/branches/:branchId/orders/:id/rounds/:round/status: the kitchen started a round
+ * or has it ready. The ticket moves lanes at once (back if the server refuses); then the
+ * floor (Ready to serve, the Orders page) and the guests' tracking read fresh.
+ */
+export function useSetKitchenStatus() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      round,
+      step,
+    }: {
+      branchId: string;
+      orderId: string;
+      round: number;
+      step: KitchenStep;
+    }) => api.setKitchenStatus(requireToken(token), branchId, orderId, round, { status: step }),
+    onMutate: async ({ branchId, orderId, round, step }) => {
+      const { queryKey } = branchOrdersQuery(token, branchId);
+      await client.cancelQueries({ queryKey });
+      const previous = client.getQueryData(queryKey);
+      if (previous) {
+        client.setQueryData(queryKey, {
+          ...previous,
+          orders: withKitchenStep(previous.orders, orderId, round, step),
+        });
+      }
+      return { queryKey, previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) client.setQueryData(context.queryKey, context.previous);
+    },
+    onSettled: () => refreshFloor(client),
+  });
+}
 
 /** The admin's token, or a 401 like the server's when signed out. */
 function requireToken(token: string | null): string {

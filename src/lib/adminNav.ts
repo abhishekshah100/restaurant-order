@@ -11,7 +11,15 @@ import { ADMIN_PATHS } from './adminBranches';
  */
 
 export type AdminNavId =
-  'home' | 'tables' | 'reservations' | 'orders' | 'requests' | 'menu' | 'payments' | 'settings';
+  | 'home'
+  | 'tables'
+  | 'reservations'
+  | 'orders'
+  | 'requests'
+  | 'kitchen'
+  | 'menu'
+  | 'payments'
+  | 'settings';
 
 export interface AdminNavItem {
   id: AdminNavId;
@@ -43,6 +51,8 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     badge: (counts) => counts.waiterCalls + counts.billRequests,
   },
   { id: 'reservations', href: section('reservations'), icon: 'calendar', tab: false },
+  // The kitchen has its own workspace (lib/kitchenNav), outside this shell.
+  { id: 'kitchen', href: ADMIN_PATHS.kitchen, icon: 'chef', tab: false },
   { id: 'menu', href: section('menu'), icon: 'menu', tab: false },
   { id: 'payments', href: section('payments'), icon: 'card', tab: false },
   { id: 'settings', href: section('settings'), icon: 'sliders', tab: false },

@@ -1,0 +1,426 @@
+/*
+ * A kitchen ticket. A band along the top says how it's doing — green on time, amber due soon,
+ * red late (blue once ready, red again when the food has waited too long) — with the same
+ * word in the clock, so it never rests on colour alone. Big type for a screen read from the
+ * stove: the table, the order, the clock and the quantities.
+ */
+
+.ticket {
+  --accent: var(--success);
+  --accent-tint: var(--success-tint);
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 16px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+  overflow: hidden;
+}
+
+.ticket::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: var(--accent);
+}
+
+.ticket[data-urgency='soon'] {
+  --accent: var(--gold);
+  --accent-tint: var(--warn-tint);
+}
+
+.ticket[data-urgency='late'] {
+  --accent: var(--error);
+  --accent-tint: var(--error-tint);
+  border-color: color-mix(in srgb, var(--error) 35%, var(--line));
+}
+
+.ticket[data-stage='ready'] {
+  --accent: var(--info);
+  --accent-tint: var(--info-tint);
+}
+
+.ticket[data-stage='ready'][data-urgency='late'] {
+  --accent: var(--error);
+  --accent-tint: var(--error-tint);
+}
+
+/* ---------- Head ---------- */
+
+.head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.title {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.order {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--ink);
+  font: 700 18px/24px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.fresh {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--brand-600);
+  color: var(--on-brand);
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 4px var(--brand-tint);
+  }
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.round {
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--sand);
+  color: var(--ink);
+  font: var(--font-meta-strong);
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.source[data-source='staff'] {
+  color: var(--reserved);
+}
+
+.clock {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  color: var(--ink);
+  font: 700 22px/26px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.urgency {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--accent-tint);
+  color: var(--ink);
+  font: var(--font-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ticket[data-urgency='late'] .clock {
+  color: var(--error);
+}
+
+/* ---------- Due, note ---------- */
+
+.due {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-meta);
+}
+
+.ticket[data-urgency='late'] .due {
+  color: var(--error);
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  font: var(--font-small-strong);
+}
+
+.note > :first-child {
+  margin-top: 2px;
+  flex: none;
+}
+
+/* ---------- Items ---------- */
+
+.items {
+  display: grid;
+  border-top: 1px dashed var(--line-strong);
+}
+
+.items > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.item {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 24px;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 2px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+.item:focus-visible {
+  border-radius: var(--r-sm);
+}
+
+.qty {
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--ink);
+  color: var(--on-dark);
+  font: 800 16px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.itemBody {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.itemName {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font: 700 15px/22px var(--f-ui);
+}
+
+.variant {
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.detail {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.itemNote {
+  justify-self: start;
+  padding: 1px 8px;
+  border-radius: var(--r-xs);
+  background: var(--brand-tint);
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+}
+
+.tick {
+  width: 24px;
+  height: 24px;
+  margin-top: 3px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  color: var(--on-brand);
+}
+
+.plated .tick {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.plated .qty {
+  background: var(--sand);
+  color: var(--ink-3);
+}
+
+.plated .itemName,
+.plated .detail {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+
+.elsewhere {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* ---------- Foot ---------- */
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.primary {
+  flex: 1;
+}
+
+.foot .readyAction {
+  background: var(--success);
+}
+
+.waiting {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: var(--accent-tint);
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.by {
+  width: 100%;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+@media (hover: hover) {
+  .item:hover .tick {
+    border-color: var(--success);
+  }
+
+  .foot .readyAction:hover {
+    background: color-mix(in srgb, var(--success) 85%, var(--ink));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fresh {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .ticket {
+    padding: 18px 16px 16px;
+  }
+}
+
+/* ---------- Item details and stock ---------- */
+
+.itemRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 6px;
+}
+
+/* A meal's slots, one to a line, marked like a list; other choices with their group first. */
+.choices {
+  display: grid;
+  gap: 1px;
+  margin: 2px 0;
+}
+
+.choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--line-strong);
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.choiceGroup {
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.removals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* What to leave out is what goes wrong, so it stands out. */
+.removal {
+  padding: 1px 8px;
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+  border-radius: var(--r-xs);
+  background: var(--error-tint);
+  color: var(--error);
+  font: var(--font-meta-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.stockIssue,
+.stockWarning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--error);
+  font: var(--font-meta-strong);
+}
+
+.stockWarning {
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: var(--error-tint);
+}
+
+.outOfStock {
+  min-height: 32px;
+  margin-top: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .outOfStock:hover {
+    border-color: var(--error);
+    color: var(--error);
+  }
+}

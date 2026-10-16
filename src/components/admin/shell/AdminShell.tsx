@@ -40,6 +40,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
       <div className={styles.body}>
         <ShellHeader
           title={t(`adminShell.nav.${active ?? 'home'}`)}
+          menuActive={active === 'menu'}
           time={time}
           adminName={adminName}
           onOpenMore={() => setMoreOpen(true)}
@@ -62,27 +63,27 @@ function ShellFrame({ children }: { children: ReactNode }) {
 }
 
 /** The selected branch (and its region rules) for the frame; nothing until it's known. */
-function Workspace({ children }: { children: ReactNode }) {
+function Workspace({ children, fallback }: { children: ReactNode; fallback: ReactNode }) {
   const adminBranches = useAdminBranches().data;
   const regions = useBranches();
   const selectedId = useSelectedAdminBranchId();
   const region = regions.find((b) => b.id === selectedId);
   // Through a failed refresh of the admin's branches, the region data stands in.
   const branch = adminBranches?.find((b) => b.id === selectedId) ?? region;
-  if (!branch || !region) return <ShellFallback />;
+  if (!branch || !region) return fallback;
   return (
     <AdminWorkspaceProvider
       branch={branch}
       region={region}
       canSwitch={(adminBranches?.length ?? 0) > 1}
     >
-      <ShellFrame>{children}</ShellFrame>
+      {children}
     </AdminWorkspaceProvider>
   );
 }
 
 /** The page's colours while the session and branch are checked, so nothing flashes. */
-function ShellFallback() {
+export function ShellFallback() {
   const t = useContent('common');
   return (
     <div className={styles.fallback} aria-busy="true">
@@ -94,14 +95,33 @@ function ShellFallback() {
 }
 
 /**
- * Every /admin/dashboard/ page: signed in with a selected branch (AdminAccess), then the
- * navigation, the bar and the page. Rendered once by the route's layout, so it stays put
- * while the admin moves between pages.
+ * A staff workspace in one branch: signed in with a selected branch (AdminAccess), then the
+ * branch for everything inside (useAdminWorkspace). The admin shell and the kitchen's both
+ * sit inside it; `fallback` shows until it's ready.
+ */
+export function WorkspaceGate({
+  children,
+  fallback = <ShellFallback />,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  return (
+    <AdminAccess fallback={fallback}>
+      <Workspace fallback={fallback}>{children}</Workspace>
+    </AdminAccess>
+  );
+}
+
+/**
+ * Every /admin/dashboard/ page: the branch workspace (WorkspaceGate), then the navigation, the
+ * bar and the page. Rendered once by the route's layout, so it stays put while the admin moves
+ * between pages.
  */
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
-    <AdminAccess fallback={<ShellFallback />}>
-      <Workspace>{children}</Workspace>
-    </AdminAccess>
+    <WorkspaceGate>
+      <ShellFrame>{children}</ShellFrame>
+    </WorkspaceGate>
   );
 }

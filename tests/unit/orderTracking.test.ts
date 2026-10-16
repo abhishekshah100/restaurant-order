@@ -46,7 +46,8 @@ describe('simulateOrder', () => {
     expect(order.etaMinutes).toBe(18);
     expect(order.readyBy).toBe('7:18 PM');
     expect(order.items.map((i) => i.status)).toEqual(['queued', 'queued', 'queued']);
-    expect(order.timeline).toEqual(placed.timeline);
+    // The placed event is kept, and says when it happened (ISO) for the kitchen's activity.
+    expect(order.timeline).toEqual([{ ...placed.timeline[0], at: placed.placedAt }]);
   });
 
   it('moves to preparing with items finishing in turn', () => {

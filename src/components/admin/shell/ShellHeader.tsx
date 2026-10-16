@@ -4,13 +4,20 @@ import Link from 'next/link';
 import { useContent, useRestaurant } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
+import { ADMIN_NAV } from '@/lib/adminNav';
+import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from './AdminWorkspace';
 import { BranchStatusControl } from './BranchStatusControl';
 import styles from './ShellHeader.module.css';
 
+/** The Menu page, a tap away from every admin page (waiters check what's sold out). */
+const MENU = ADMIN_NAV.find((item) => item.id === 'menu');
+
 export interface ShellHeaderProps {
   /** The current page's name. */
   title: string;
+  /** The Menu page is the one open. */
+  menuActive: boolean;
   /** The branch's local time; null until known. */
   time: string | null;
   adminName: string | undefined;
@@ -20,13 +27,24 @@ export interface ShellHeaderProps {
 
 /**
  * The bar over every admin page. Below 1024px: the brand mark, the branch and its status, and
- * the admin's avatar (which opens More). From 1024px, beside the sidebar: the page title, the
- * branch status and its local time.
+ * Menu and the admin's avatar (which opens More). From 1024px, beside the sidebar: the page
+ * title, Menu, the branch status and its local time.
  */
-export function ShellHeader({ title, time, adminName, onOpenMore }: ShellHeaderProps) {
+export function ShellHeader({ title, menuActive, time, adminName, onOpenMore }: ShellHeaderProps) {
   const t = useContent('common');
   const restaurant = useRestaurant();
   const { branch } = useAdminWorkspace();
+  const menuLink = (className: string) =>
+    MENU && (
+      <Link
+        href={MENU.href}
+        className={cx(className, menuActive && styles.menuActive)}
+        aria-current={menuActive ? 'page' : undefined}
+      >
+        <Icon name={MENU.icon} size="sm" />
+        {t('adminShell.nav.menu')}
+      </Link>
+    );
 
   return (
     <>
@@ -42,6 +60,7 @@ export function ShellHeader({ title, time, adminName, onOpenMore }: ShellHeaderP
           <p className={styles.branchName}>{branch.shortName}</p>
           <BranchStatusControl onDark />
         </div>
+        {menuLink(styles.menuMobile)}
         <button
           type="button"
           className={styles.avatar}
@@ -55,6 +74,7 @@ export function ShellHeader({ title, time, adminName, onOpenMore }: ShellHeaderP
       <header className={styles.desktop}>
         <p className={styles.title}>{title}</p>
         <div className={styles.meta}>
+          {menuLink(styles.menuDesktop)}
           <BranchStatusControl />
           {time && (
             <span className={styles.time}>

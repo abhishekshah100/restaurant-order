@@ -45,6 +45,7 @@ import {
   tableQrCodes,
   updateFloors,
 } from './handlers/adminTables';
+import { setKitchenStatus } from './handlers/kitchen';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
 import { sendOtp, verifyOtp } from './handlers/otp';
@@ -94,6 +95,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['GET', 'branches', listBranches],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],
+  ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round/status', setKitchenStatus],
   ['POST', 'admin/branches/:branchId/orders/:id/payment', collectPayment],
   ['POST', 'admin/branches/:branchId/orders/:id/cancel', cancelByStaff],
   ['POST', 'admin/branches/:branchId/orders/:id/refund', refundOrder],

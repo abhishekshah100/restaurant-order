@@ -10,6 +10,8 @@ export const ADMIN_PATHS = {
   login: '/admin/login/',
   selectBranch: '/admin/select-branch/',
   dashboard: '/admin/dashboard/',
+  /** The kitchen's own workspace (lib/kitchenNav), for the same staff accounts. */
+  kitchen: '/admin/kitchen-dashboard/',
 } as const;
 
 /** The branch picker shows a search field from this many branches. */
@@ -63,11 +65,16 @@ export function adminLanding(branches: readonly { id: string }[]): AdminLanding 
 
 export type AdminPage = 'selectBranch' | 'dashboard' | 'other';
 
-/** Which admin area a pathname is in (with or without its trailing slash). */
+/**
+ * Which admin area a pathname is in (with or without its trailing slash). The kitchen dashboard
+ * works in a branch like the admin dashboard, so it's guarded the same way.
+ */
 export function adminPage(pathname: string): AdminPage {
   const path = `${pathname.replace(/\/+$/, '')}/`;
   if (path === ADMIN_PATHS.selectBranch) return 'selectBranch';
-  if (path.startsWith(ADMIN_PATHS.dashboard)) return 'dashboard';
+  if (path.startsWith(ADMIN_PATHS.dashboard) || path.startsWith(ADMIN_PATHS.kitchen)) {
+    return 'dashboard';
+  }
   return 'other';
 }
 

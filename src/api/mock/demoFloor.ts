@@ -251,11 +251,13 @@ function demoOrder(demo: DemoOrder, branch: Branch, menu: MenuCatalog, now: numb
   });
   const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const reached = STEPS.slice(0, STEPS.findIndex(([step]) => step === demo.status) + 1);
-  const timeline: OrderEvent[] = reached.map(([step, after]) => ({
-    status: step,
-    time: clock.time(ago(now, Math.max(0, demo.placed - after))),
-  }));
-  if (isServed) timeline.push({ status, time: clock.time(new Date(now)) });
+  const timeline: OrderEvent[] = reached.map(([step, after]) => {
+    const at = ago(now, Math.max(0, demo.placed - after));
+    return { status: step, time: clock.time(at), at };
+  });
+  if (isServed) {
+    timeline.push({ status, time: clock.time(new Date(now)), at: new Date(now).toISOString() });
+  }
 
   return {
     id: demo.id,

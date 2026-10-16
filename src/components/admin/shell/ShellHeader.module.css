@@ -67,7 +67,33 @@
   inset: -5px;
 }
 
+/* Menu, beside the avatar on the dark bar. */
+.menuMobile {
+  min-height: 40px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--on-dark) 22%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--on-dark) 6%, transparent);
+  color: var(--on-dark);
+  font: var(--font-meta-strong);
+  text-decoration: none;
+}
+
+.menuMobile.menuActive {
+  border-color: var(--brand-on-dark);
+  color: var(--brand-on-dark);
+}
+
+.menuDesktop {
+  display: none;
+}
+
 .mark:focus-visible,
+.menuMobile:focus-visible,
 .avatar:focus-visible {
   box-shadow:
     0 0 0 2px var(--ink),
@@ -118,6 +144,32 @@
     display: flex;
     align-items: center;
     gap: 14px;
+  }
+
+  .menuDesktop {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--ink);
+    font: var(--font-meta-strong);
+    text-decoration: none;
+  }
+
+  .menuDesktop.menuActive {
+    border-color: var(--brand-600);
+    background: var(--brand-tint-2);
+    color: var(--brand-700);
+  }
+
+  @media (hover: hover) {
+    .menuDesktop:hover {
+      border-color: var(--brand-600);
+    }
   }
 
   .time {

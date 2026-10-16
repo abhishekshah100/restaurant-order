@@ -1,7 +1,7 @@
 import { createClock, type Clock } from '@/lib/clock';
 import { TRACK_STEPS, isFinished, type TrackStep } from '@/lib/orders';
 import type { Branch, OrderMode } from '@/types/branch';
-import type { ItemStatus, Order, OrderRound } from '@/types/order';
+import type { ItemStatus, Order, OrderRound, StaffMark } from '@/types/order';
 import { MINUTE_MS } from './rules';
 
 /*
@@ -11,6 +11,9 @@ import { MINUTE_MS } from './rules';
 
 /** Dine-in: minutes after placing when each stage starts. */
 const DINE_IN_MINUTES = { received: 0, preparing: 2, ready: 18, served: 22 };
+
+/** Dine-in: a waiter takes the food to the table this long after it's ready. */
+const SERVE_MINUTES = DINE_IN_MINUTES.served - DINE_IN_MINUTES.ready;
 
 /** The kitchen starts on an order this long after it arrives. */
 const START_MINUTES = 2;
@@ -25,39 +28,59 @@ const COLLECT_MINUTES = 10;
 const handedOver = (order: Pick<Order, 'servedAt'>, readyAt: number, byTiming: number) =>
   order.servedAt ? Math.max(readyAt, Math.min(byTiming, Date.parse(order.servedAt))) : byTiming;
 
+/**
+ * When a kitchen step happened: the kitchen marking it (`kitchen.started` / `kitchen.ready`) or
+ * the kitchen's own timing, whichever comes first, and never before `notBefore`.
+ */
+const kitchenStep = (mark: StaffMark | undefined, byTiming: number, notBefore: number) =>
+  mark ? Math.max(notBefore, Math.min(byTiming, Date.parse(mark.at))) : byTiming;
+
 /** Epoch ms when each of the order's steps starts, by its mode. */
 function stageTimes(order: Order, branch: Branch): Partial<Record<TrackStep, number>> {
   const placedAt = Date.parse(order.placedAt);
   const after = (minutes: number) => placedAt + minutes * MINUTE_MS;
+  const { started, ready: readyMark } = order.kitchen ?? {};
+  /** Cooking starts by its timing or when marked, and never after the food was ready. */
+  const preparing = (byTiming: number, ready: number) =>
+    Math.min(kitchenStep(started, byTiming, placedAt), ready);
   if (order.mode === 'takeaway' && order.pickup) {
-    const readyAt = Date.parse(order.pickup.at);
+    const pickupAt = Date.parse(order.pickup.at);
+    const readyAt = kitchenStep(readyMark, pickupAt, placedAt);
     const prep = branch.modes.takeaway.prepMinutes * MINUTE_MS;
     return {
       received: placedAt,
       // A later slot is started just in time for it.
-      preparing: Math.max(after(START_MINUTES), readyAt - prep),
+      preparing: preparing(Math.max(after(START_MINUTES), pickupAt - prep), readyAt),
       ready: readyAt,
-      pickedUp: handedOver(order, readyAt, readyAt + COLLECT_MINUTES * MINUTE_MS),
+      // The guest comes at their pickup time, even when it was ready sooner.
+      pickedUp: handedOver(
+        order,
+        readyAt,
+        Math.max(readyAt, pickupAt) + COLLECT_MINUTES * MINUTE_MS,
+      ),
     };
   }
   if (order.mode === 'delivery' && order.delivery) {
+    // Ready, for delivery, is handed to the rider.
+    const outAt = kitchenStep(readyMark, after(branch.modes.delivery.prepMinutes), placedAt);
     return {
       received: placedAt,
-      preparing: after(START_MINUTES),
-      outForDelivery: after(branch.modes.delivery.prepMinutes),
-      delivered: Date.parse(order.delivery.expectedAt),
+      preparing: preparing(after(START_MINUTES), outAt),
+      outForDelivery: outAt,
+      delivered: Math.max(outAt, Date.parse(order.delivery.expectedAt)),
     };
   }
+  const readyAt = kitchenStep(readyMark, after(DINE_IN_MINUTES.ready), placedAt);
   return {
     received: placedAt,
-    preparing: after(DINE_IN_MINUTES.preparing),
-    ready: after(DINE_IN_MINUTES.ready),
-    served: handedOver(order, after(DINE_IN_MINUTES.ready), after(DINE_IN_MINUTES.served)),
+    preparing: preparing(after(DINE_IN_MINUTES.preparing), readyAt),
+    ready: readyAt,
+    served: handedOver(order, readyAt, readyAt + SERVE_MINUTES * MINUTE_MS),
   };
 }
 
 /**
- * Epoch ms when the kitchen had the order (or one round of it: pass the round's `placedAt`)
+ * Epoch ms when the kitchen had the order (or one round of it: pass the round's `placedAt` and `kitchen`)
  * ready to serve or collect; undefined for delivery, which goes straight to the rider.
  */
 export function readyAt(order: Order, branch: Branch): number | undefined {
@@ -105,13 +128,14 @@ export function simulateOrder(order: Order, now: Date, clock: Clock, branch: Bra
   return {
     ...order,
     status,
-    timeline: reached.map(
-      (step) =>
-        order.timeline.find((e) => e.status === step) ?? {
-          status: step,
-          time: clock.time(new Date(at[step] ?? t)),
-        },
-    ),
+    timeline: reached.map((step) => {
+      const when = new Date(at[step] ?? t);
+      const event = order.timeline.find((e) => e.status === step);
+      // Each event says when it happened (ISO) as well as the time shown.
+      return event
+        ? { ...event, at: event.at ?? when.toISOString() }
+        : { status: step, time: clock.time(when), at: when.toISOString() };
+    }),
     items: order.items.map((item, i) => ({
       ...item,
       status: simulatedItemStatus(i, order.items.length, at, order.mode, t),
@@ -134,9 +158,9 @@ export function simulateOrder(order: Order, now: Date, clock: Clock, branch: Bra
 function liveRound(order: Order, round: OrderRound, now: Date, clock: Clock, branch: Branch) {
   if (round.status === 'cancelled') return { round, order };
   // Each round moves along like an order of its own, from when it was placed.
-  const { placedAt, status, items, timeline, servedAt } = round;
+  const { placedAt, status, items, timeline, servedAt, kitchen } = round;
   const current = simulateOrder(
-    { ...order, placedAt, status, items, timeline, servedAt },
+    { ...order, placedAt, status, items, timeline, servedAt, kitchen },
     now,
     clock,
     branch,

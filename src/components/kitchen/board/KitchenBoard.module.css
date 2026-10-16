@@ -1,0 +1,272 @@
+/*
+ * The kitchen board: the numbers, the filters, then the lanes. Below 1024px one lane at a time
+ * (the lane switch picks it; two tickets to a row from 768px). From 1024px the three lanes side
+ * by side, and from 1280px the all-day counts docked on the right (a panel before that).
+ */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* ---------- Filters ---------- */
+
+.tools {
+  display: grid;
+  gap: 10px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chips > * {
+  flex: none;
+}
+
+.allDayButton {
+  justify-self: start;
+}
+
+/* ---------- Lanes ---------- */
+
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.laneSwitch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.laneSwitch > * {
+  justify-content: center;
+}
+
+.lanes {
+  display: grid;
+  gap: 16px;
+}
+
+.lane {
+  --lane: var(--brand-600);
+  --lane-tint: var(--brand-tint-2);
+  display: none;
+  min-width: 0;
+  align-content: start;
+  gap: 12px;
+}
+
+.lane[data-lane='cooking'] {
+  --lane: var(--gold);
+  --lane-tint: var(--warn-tint);
+}
+
+.lane[data-lane='ready'] {
+  --lane: var(--info);
+  --lane-tint: var(--info-tint);
+}
+
+.current {
+  display: grid;
+}
+
+.laneHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.laneIcon {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--lane-tint);
+  color: var(--lane);
+}
+
+.laneTitle {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.laneTitle h2 {
+  color: var(--ink);
+  font: var(--font-h3);
+}
+
+.laneHint {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.laneCount {
+  min-width: 34px;
+  height: 30px;
+  padding: 0 10px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--lane);
+  color: var(--on-brand);
+  font: 800 15px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.lane[data-lane='cooking'] .laneCount {
+  background: var(--gold-tint-2);
+  color: var(--gold-ink);
+}
+
+.tickets {
+  display: grid;
+  gap: 12px;
+}
+
+.laneEmpty {
+  padding: 28px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  color: var(--ink-3);
+  font: var(--font-small);
+  text-align: center;
+}
+
+/* ---------- All day ---------- */
+
+.allDay {
+  display: none;
+}
+
+.allDayTitle {
+  color: var(--ink);
+  font: var(--font-h2);
+}
+
+.allDaySub {
+  margin-bottom: 14px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* ---------- Loading, error ---------- */
+
+.state {
+  padding: 40px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.skeleton {
+  height: 480px;
+  border-radius: var(--r-panel);
+  background: linear-gradient(90deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%) 0 0 / 200%
+    100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .page {
+    gap: 20px;
+  }
+
+  .tickets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tools {
+    grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .stations {
+    grid-column: 1 / -1;
+  }
+
+  .laneSwitch {
+    display: none;
+  }
+
+  .lanes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .lane {
+    display: grid;
+    padding: 14px 12px;
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--lane);
+    border-radius: var(--r-panel);
+    background: color-mix(in srgb, var(--surface) 55%, transparent);
+  }
+
+  .tickets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .board {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  .allDayButton {
+    display: none;
+  }
+
+  .allDay {
+    position: sticky;
+    top: 92px;
+    max-height: calc(100dvh - 116px);
+    display: block;
+    overflow-y: auto;
+    padding: 18px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    box-shadow: var(--sh-1);
+  }
+}
+
+@media (min-width: 1600px) {
+  .tools {
+    grid-template-columns: minmax(240px, 360px) auto minmax(0, 1fr);
+  }
+
+  .stations {
+    grid-column: auto;
+  }
+}

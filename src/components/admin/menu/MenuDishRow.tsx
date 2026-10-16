@@ -28,7 +28,8 @@ export function MenuDishRow({
   /** On: back on the menu at once. Off: ask how it's off. */
   onSwitch: (on: boolean) => void;
   onAvailability: () => void;
-  onEdit: () => void;
+  /** Opens the dish editor; without it there's no Edit (the kitchen's Stock page). */
+  onEdit?: () => void;
   /** While reordering: move up / down instead of the switch and Edit. */
   reorder?: { first: boolean; last: boolean; onMove: (by: -1 | 1) => void };
 }) {
@@ -128,14 +129,16 @@ export function MenuDishRow({
               onChange={onSwitch}
               label={t('adminMenu.toggle', { dish: dish.name })}
             />
-            <button
-              type="button"
-              className={styles.edit}
-              onClick={onEdit}
-              aria-label={t('adminMenu.edit', { dish: dish.name })}
-            >
-              <Icon name="pencil" size="xs" />
-            </button>
+            {onEdit && (
+              <button
+                type="button"
+                className={styles.edit}
+                onClick={onEdit}
+                aria-label={t('adminMenu.edit', { dish: dish.name })}
+              >
+                <Icon name="pencil" size="xs" />
+              </button>
+            )}
           </>
         )}
       </div>

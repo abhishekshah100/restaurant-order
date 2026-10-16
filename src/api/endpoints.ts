@@ -32,6 +32,8 @@ import type {
   FreeTableResponse,
   MarkServedRequest,
   MarkServedResponse,
+  SetKitchenStatusRequest,
+  SetKitchenStatusResponse,
   OrderChangeResponse,
   OrderListResponse,
   OrderResponse,
@@ -222,6 +224,18 @@ export const api = {
     apiPost<ResolveRequestResponse>(
       `admin/service-requests/${seg(id)}/resolve`,
       undefined,
+      bearer(token),
+    ),
+  setKitchenStatus: (
+    token: string,
+    branchId: string,
+    orderId: string,
+    round: number,
+    body: SetKitchenStatusRequest,
+  ) =>
+    apiPatch<SetKitchenStatusResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/rounds/${round}/status`,
+      body,
       bearer(token),
     ),
   markOrderServed: (token: string, id: string, body: MarkServedRequest) =>

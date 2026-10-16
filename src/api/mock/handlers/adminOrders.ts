@@ -94,7 +94,7 @@ export const takeTableOrder: Handler = async (ctx, { params, body: raw, headers 
  * The order at the branch, as stored. An order from the drawn history (or, in dev, the demo
  * floor) is saved the first time staff act on it, and from then on it's a real one.
  */
-async function storedOrder(ctx: MockContext, branch: Branch, id: string): Promise<Order> {
+export async function storedOrder(ctx: MockContext, branch: Branch, id: string): Promise<Order> {
   const placed = (await placedOrders(ctx)).find((o) => o.id === id && o.branchId === branch.id);
   if (placed) return placed;
   const { history } = await branchOrders(ctx, branch);
@@ -166,7 +166,7 @@ export const branchOrdersToday: Handler = async (ctx, { params, headers }) => {
 };
 
 /** Saves the order and answers with it as read now. */
-function saveOrder(ctx: MockContext, branch: Branch, order: Order, now: Date) {
+export function saveOrder(ctx: MockContext, branch: Branch, order: Order, now: Date) {
   ctx.db.orders.write(ctx.db.orders.read().map((o) => (o.id === order.id ? order : o)));
   return ok(liveOrder(order, now.getTime(), branch));
 }
@@ -322,7 +322,7 @@ export const collectTablePayment: Handler = async (ctx, { params, body, headers 
 };
 
 /** The status of one round as the kitchen has it now (an order without rounds is one round). */
-const liveRoundStatus = (live: Order, number: number) =>
+export const liveRoundStatus = (live: Order, number: number) =>
   live.rounds
     ? live.rounds.find((r) => r.number === number)?.status
     : number === 1

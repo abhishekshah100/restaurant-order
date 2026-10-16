@@ -1,0 +1,257 @@
+{
+  "meta": {
+    "board": "Kitchen · Admin",
+    "activity": "Kitchen activity · Admin",
+    "stock": "Kitchen stock · Admin"
+  },
+  "descriptor": "Kitchen",
+  "homeLink": "{name} kitchen dashboard",
+  "loading": "Loading the kitchen",
+  "nav": {
+    "label": "Kitchen",
+    "board": "Dashboard",
+    "activity": "Activity",
+    "stock": "Stock"
+  },
+  "bar": {
+    "branch": "Current branch",
+    "time": "Local time {time}",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen",
+    "account": "Account and more"
+  },
+  "account": {
+    "title": "Kitchen",
+    "admin": "Admin dashboard",
+    "adminSub": "Tables, orders, menu and more",
+    "switch": "Switch branch",
+    "signOut": "Sign out",
+    "signedIn": "Signed in as {name}"
+  },
+  "error": {
+    "title": "Couldn't load today's orders",
+    "body": "Check the connection, then try again.",
+    "retry": "Try again"
+  },
+  "failed": "Couldn't update that ticket. Try again.",
+  "board": {
+    "title": "Kitchen dashboard",
+    "stats": {
+      "label": "The kitchen now",
+      "new": "New",
+      "cooking": "Cooking",
+      "ready": "Ready",
+      "late": "Late",
+      "itemsToCook": "To cook",
+      "average": "Avg ticket",
+      "minutes": "{count} min",
+      "none": "–"
+    },
+    "filters": {
+      "search": "Search order, table, guest or dish",
+      "modes": "Order type",
+      "allModes": "All types",
+      "stations": "Station",
+      "allStations": "All stations"
+    },
+    "lanes": {
+      "label": "Tickets by stage",
+      "new": "New",
+      "cooking": "Cooking",
+      "ready": "Ready",
+      "hint": {
+        "new": "Start the oldest first",
+        "cooking": "On the stove",
+        "ready": "At the pass"
+      },
+      "empty": {
+        "new": "No new tickets. Orders from guests and waiters show up here.",
+        "cooking": "Nothing on the stove right now.",
+        "ready": "Nothing waiting at the pass."
+      },
+      "noMatch": "No tickets match these filters."
+    },
+    "allDay": {
+      "title": "All day",
+      "subtitle": "Still to cook, across new and cooking tickets",
+      "open": "All day",
+      "tickets": {
+        "one": "on {count} ticket",
+        "other": "on {count} tickets"
+      },
+      "other": "Off the menu",
+      "empty": "Nothing to cook right now."
+    },
+    "announce": {
+      "new": {
+        "one": "New ticket: {where}, order {order}",
+        "other": "{count} new tickets"
+      },
+      "preparing": "Order {order} started",
+      "ready": "Order {order} ready"
+    }
+  },
+  "ticket": {
+    "label": "Order {order}, {where}",
+    "order": "#{order}",
+    "round": "Round {round} of {count}",
+    "where": {
+      "table": "Table {table}",
+      "pickup": "Pickup",
+      "delivery": "Delivery"
+    },
+    "tableCaption": "Table",
+    "source": {
+      "guest": "Guest app",
+      "staff": "Waiter"
+    },
+    "items": {
+      "one": "{count} item",
+      "other": "{count} items"
+    },
+    "timer": {
+      "open": "Open for {time}",
+      "ready": "Ready for {time}"
+    },
+    "due": "Due {time}",
+    "dueIn": "in {count} min",
+    "late": "{count} min late",
+    "pickupAt": "Pickup {time}",
+    "asap": "Pickup as soon as possible",
+    "deliveryTo": "Delivery to {area}",
+    "scheduled": "Later slot · start by {time}",
+    "fresh": "New",
+    "kitchenNote": "Kitchen note",
+    "itemNote": "Note",
+    "plate": "{item}: tap when plated",
+    "plated": "{item}: plated",
+    "otherStation": {
+      "one": "+{count} item at another station",
+      "other": "+{count} items at other stations"
+    },
+    "urgency": {
+      "onTime": "On time",
+      "soon": "Due soon",
+      "late": "Late"
+    },
+    "actions": {
+      "start": "Start cooking",
+      "ready": "Mark ready",
+      "dispatch": "Hand to rider",
+      "skip": "Ready",
+      "startLabel": "Start cooking order {order}",
+      "readyLabel": "Mark order {order} ready",
+      "skipLabel": "Mark order {order} ready without starting"
+    },
+    "waiting": {
+      "dineIn": "Waiting for a waiter to serve",
+      "takeaway": "Waiting for the guest to collect"
+    },
+    "markedBy": "Ready by {name}",
+    "startedBy": "Started by {name}",
+    "addOn": "+ {item}",
+    "without": "No {item}",
+    "stock": {
+      "mark": "Sold out",
+      "markLabel": "Mark {dish} out of stock",
+      "issue": {
+        "soldOut": "Sold out now · tell the waiter",
+        "offToday": "Off today · tell the waiter",
+        "sizeOff": "This size is off · tell the waiter"
+      },
+      "warning": {
+        "one": "{count} item can't be made now. Let the waiter tell the guest.",
+        "other": "{count} items can't be made now. Let the waiter tell the guest."
+      }
+    }
+  },
+  "activity": {
+    "title": "Kitchen activity",
+    "summary": {
+      "label": "Today in the kitchen",
+      "tickets": "Tickets",
+      "finished": "Finished",
+      "itemsCooked": "Items cooked",
+      "average": "Avg ticket time",
+      "onTime": "Ready on time",
+      "longest": "Longest ticket",
+      "cancelled": "Cancelled",
+      "minutes": "{count} min",
+      "percent": "{count}%",
+      "none": "–"
+    },
+    "hours": {
+      "title": "Tickets by hour",
+      "subtitle": "When orders reached the kitchen",
+      "bar": "{hour}: {tickets} tickets, {items} items",
+      "tooltip": "{tickets} tickets · {items} items",
+      "busiest": "Busiest: {hour}",
+      "empty": "No tickets yet today."
+    },
+    "dishes": {
+      "title": "Most ordered today",
+      "subtitle": "Dishes by quantity",
+      "bar": "{dish}: {count}",
+      "empty": "No dishes yet today."
+    },
+    "feed": {
+      "title": "What happened",
+      "subtitle": "Every ticket today, newest first",
+      "search": "Search order, table, guest, dish or staff",
+      "kinds": {
+        "label": "Show",
+        "all": "All",
+        "received": "Received",
+        "started": "Started",
+        "ready": "Ready",
+        "served": "Served",
+        "cancelled": "Cancelled"
+      },
+      "events": {
+        "received": "Came in",
+        "started": "Started cooking",
+        "ready": "Ready",
+        "readyDelivery": "With the rider",
+        "served": "Served",
+        "collected": "Collected",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled"
+      },
+      "order": "Order {order}",
+      "round": "Round {round}",
+      "by": "by {name}",
+      "took": "took {count} min",
+      "more": "Show more",
+      "empty": "Nothing has happened yet today.",
+      "emptyKind": "Nothing like that yet today.",
+      "emptySearch": "Nothing matches “{query}”."
+    }
+  },
+  "stock": {
+    "title": "Kitchen stock",
+    "intro": "Take a dish off when you run out. Guests and waiters see it within a minute, and new orders with it are refused.",
+    "summary": {
+      "label": "The menu now",
+      "all": "Dishes",
+      "available": "Available",
+      "soldOut": "Sold out",
+      "offToday": "Off today"
+    },
+    "search": "Search dishes",
+    "status": "Show",
+    "stations": "Station",
+    "allStations": "All stations",
+    "results": "Results",
+    "empty": {
+      "title": "Nothing here",
+      "all": "No dishes on the menu.",
+      "available": "Nothing is available right now.",
+      "soldOut": "Nothing is sold out.",
+      "offToday": "Nothing is off today.",
+      "search": "No dishes match “{query}”."
+    },
+    "loading": "Loading the menu",
+    "failed": "Couldn't load the menu. Try again.",
+    "retry": "Try again"
+  }
+}

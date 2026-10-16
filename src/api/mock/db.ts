@@ -99,6 +99,13 @@ function isOrderItem(v: unknown): v is OrderItem {
   );
 }
 
+const isStaffMark = (v: unknown) =>
+  v === undefined || (isObject(v) && typeof v.at === 'string' && typeof v.by === 'string');
+
+/** The kitchen's marks on an order or round (started, ready), when it has any. */
+const isKitchenMarks = (v: unknown) =>
+  v === undefined || (isObject(v) && isStaffMark(v.started) && isStaffMark(v.ready));
+
 const isTimeline = (v: unknown) =>
   Array.isArray(v) &&
   v.every((e) => isObject(e) && typeof e.status === 'string' && typeof e.time === 'string');
@@ -114,7 +121,8 @@ function isOrderRound(v: unknown): v is OrderRound {
     v.items.every(isOrderItem) &&
     isTimeline(v.timeline) &&
     isOptionalString(v.kitchenNote) &&
-    isOptionalString(v.servedAt)
+    isOptionalString(v.servedAt) &&
+    isKitchenMarks(v.kitchen)
   );
 }
 
@@ -159,6 +167,7 @@ export function isStoredOrder(v: unknown): v is StoredOrder {
     isOptionalString(v.estimate) &&
     isOptionalString(v.kitchenNote) &&
     isOptionalString(v.servedAt) &&
+    isKitchenMarks(v.kitchen) &&
     isOptionalString(v.promoCode) &&
     (v.discounts === undefined ||
       (Array.isArray(v.discounts) &&

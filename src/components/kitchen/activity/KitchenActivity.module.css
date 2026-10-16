@@ -1,0 +1,55 @@
+/* The kitchen's day: the numbers, the two charts (side by side from 1024px), then the feed. */
+
+.page {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.charts {
+  display: grid;
+  gap: 16px;
+}
+
+.state {
+  padding: 40px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.skeleton {
+  height: 480px;
+  border-radius: var(--r-panel);
+  background: linear-gradient(90deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%) 0 0 / 200%
+    100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .page {
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .charts {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 20px;
+  }
+}

@@ -1,0 +1,86 @@
+/* A row of numbers (the kitchen now, today in the kitchen): two or three to a row on phones, one row from 1024px. */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tile {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.tile dt {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.tile dd {
+  margin: 0;
+  color: var(--ink);
+  font: var(--font-h2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.alert {
+  border-color: color-mix(in srgb, var(--error) 40%, var(--line));
+  background: color-mix(in srgb, var(--error-tint) 60%, var(--surface));
+}
+
+.alert dt,
+.alert dd {
+  color: var(--error);
+}
+
+.ready {
+  border-color: color-mix(in srgb, var(--info) 35%, var(--line));
+  background: color-mix(in srgb, var(--info-tint) 60%, var(--surface));
+}
+
+.ready dd {
+  color: var(--info);
+}
+
+/* Four tiles: two to a row on phones, rather than three and one. */
+.four {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .stats {
+    gap: 12px;
+  }
+
+  .tile {
+    padding: 12px 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .tile dd {
+    font: var(--font-h1);
+  }
+}
+
+@media (min-width: 1024px) {
+  .four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .seven {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
