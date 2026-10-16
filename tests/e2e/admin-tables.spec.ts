@@ -43,7 +43,7 @@ test('a table from the floor plan to its order', async ({ page }) => {
   await ground.click();
 
   await tableFive.click();
-  await expect(page).toHaveURL(/\/admin\/dashboard\/tables\/5\/$/);
+  await expect(page).toHaveURL(/\/admin\/dashboard\/tables\/view\/\?table=5$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Table 5' })).toBeVisible();
   await expect(page.getByText('Ground floor · 6 seats')).toBeVisible();
 
@@ -72,7 +72,7 @@ test('a table from the floor plan to its order', async ({ page }) => {
 test('a waiter takes an order at a free table, then adds to it', async ({ page }) => {
   test.slow();
   await adminSignIn(page);
-  await page.goto('/admin/dashboard/tables/6/');
+  await page.goto('/admin/dashboard/tables/view/?table=6');
   await expect(page.getByRole('heading', { level: 1, name: 'Table 6' })).toBeVisible();
   await page.getByRole('button', { name: 'Take order' }).click();
 
@@ -119,7 +119,7 @@ test('a waiter takes an order at a free table, then adds to it', async ({ page }
 test('paying first, changing the order, adding more and paying the rest', async ({ page }) => {
   test.slow();
   await adminSignIn(page);
-  await page.goto('/admin/dashboard/tables/6/');
+  await page.goto('/admin/dashboard/tables/view/?table=6');
   await page.getByRole('button', { name: 'Take order' }).click();
   const pad = page.getByRole('dialog');
   await pad.getByRole('button', { name: 'Add Dahi Kebab' }).click();
@@ -168,7 +168,7 @@ test('freeing a table after the guests leave', async ({ page }) => {
   const orderId = await orderAtCounter(page);
 
   await adminSignIn(page);
-  await page.goto('/admin/dashboard/tables/5/');
+  await page.goto('/admin/dashboard/tables/view/?table=5');
   await expect(page.getByText('Food on the way').first()).toBeVisible();
   await page.getByRole('button', { name: 'Free table' }).click();
   const dialog = page.getByRole('dialog', { name: 'Free Table 5?' });

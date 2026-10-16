@@ -43,7 +43,7 @@ test('printing and downloading table QR codes', async ({ page }) => {
   await page.getByRole('button', { name: 'Download the QR code for Table 5' }).click();
   expect((await download).suggestedFilename()).toBe('table-5-qr.png');
 
-  await page.goto('/admin/dashboard/tables/5/');
+  await page.goto('/admin/dashboard/tables/view/?table=5');
   await page.getByRole('button', { name: 'QR code' }).click();
   const dialog = page.getByRole('dialog', { name: 'QR code for Table 5' });
   await expect(dialog.getByRole('img', { name: 'QR code for Table 5' })).toBeVisible();

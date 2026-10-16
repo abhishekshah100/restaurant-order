@@ -79,6 +79,10 @@
   --tone: var(--gold);
 }
 
+.outOfService {
+  --tone: var(--ink-3);
+}
+
 .badge {
   grid-area: badge;
   width: 64px;
@@ -337,4 +341,16 @@
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 12px;
   }
+}
+
+/* ---------- Out of service ---------- */
+
+.outOfService strong {
+  font-weight: 700;
+}
+
+.outOfServiceLink {
+  color: inherit;
+  font: var(--font-small-strong);
+  white-space: nowrap;
 }

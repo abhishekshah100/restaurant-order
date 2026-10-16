@@ -27,6 +27,7 @@ import {
   type MockContext,
 } from '../context';
 import { liveOrder } from '../kitchen';
+import { assertTableInService } from '../tableService';
 import { changeableUntil, toOrderItems, type OrderLabels } from '../orderBuilder';
 import {
   cancelledPayment,
@@ -242,6 +243,7 @@ export const addRound: Handler = async (ctx, { params, body: raw }) => {
   const target = await targetOrder(ctx, params.id, stringField(body, 'sessionId'), body.paymentId);
   const { order, session, branch, labels } = target;
   assertOrdering(branch);
+  await assertTableInService(ctx, branch.id, order.table);
   if (!ctx.db.otp.read()[session.id]?.verified) fail(403, 'phone_not_verified');
   const perRound = branch.ordering.dineInPayment === 'perRound';
   const { method, paymentId } = body;

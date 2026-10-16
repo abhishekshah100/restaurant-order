@@ -3,7 +3,6 @@ import path from 'node:path';
 import type { QueryClient } from '@tanstack/react-query';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { resolveBranch } from '@/lib/scan';
-import type { FloorPlanLayout } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { Category, Dish, MenuData } from '@/types/menu';
@@ -94,16 +93,6 @@ async function getMenusServer(): Promise<MenuCatalog[]> {
   const first = resolveBranch(branches, defaultBranchId);
   const ordered = [first, ...branches.filter((b) => b !== first)];
   return Promise.all(ordered.map(async (b) => createMenuCatalog(await readMenu(b.id))));
-}
-
-/** Every table on any branch's floor plan (generateStaticParams for the admin's table pages). */
-export async function getTableNumbersServer(): Promise<number[]> {
-  const branches = await readBranches();
-  const layouts = await Promise.all(
-    branches.map((b) => readApiFile<FloorPlanLayout>(`branches/${b.id}/floors`)),
-  );
-  const numbers = layouts.flatMap((l) => l.floors.flatMap((f) => f.tables.map((t) => t.number)));
-  return [...new Set(numbers)].sort((a, b) => a - b);
 }
 
 /** Every dish slug on any branch's menu (generateStaticParams for /dish/[slug]). */

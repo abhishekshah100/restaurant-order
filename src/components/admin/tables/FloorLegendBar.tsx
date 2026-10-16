@@ -8,7 +8,8 @@ export function FloorLegendBar({ counts }: { counts: Record<FloorLegend, number>
   const t = useContent('common');
   return (
     <ul className={styles.legend} aria-label={t('adminTables.legend.label')}>
-      {FLOOR_LEGEND.map((group) => (
+      {/* Out of service only when there's a table like that. */}
+      {FLOOR_LEGEND.filter((g) => g !== 'outOfService' || counts.outOfService > 0).map((group) => (
         <li key={group} className={cx(styles.item, styles[group])}>
           <span className={styles.dot} aria-hidden="true" />
           {t(`adminTables.legend.${group}`)}

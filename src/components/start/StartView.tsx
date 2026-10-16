@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { useBranches, useContent, useRestaurant } from '@/api/hooks';
 import { BrandPanel } from '@/components/home/BrandPanel';
-import { Button, Icon } from '@/components/ui';
+import { Banner, Button, Icon } from '@/components/ui';
 import { useGuestSession, useVisit, useVisitActions } from '@/context/GuestSessionContext';
 import { useCart } from '@/hooks/useCart';
 import { useQueryParam } from '@/hooks/useQueryParam';
@@ -24,7 +24,8 @@ const safeNext = (next: string | null) =>
   next?.startsWith('/') && !next.startsWith('//') ? next : '/menu/';
 
 /**
- * The start screen for guests without a table QR code (and for changing how they order):
+ * The start screen for guests without a table QR code (and for changing how they order, or
+ * after scanning a table that's out of service, which it says):
  * choose an outlet, then dine-in (only after scanning a table's QR code), takeaway or
  * delivery (with the area). Starting at another outlet opens a new session, so it asks first
  * if that would empty the cart; another mode at the same outlet keeps the cart.
@@ -138,6 +139,12 @@ export function StartView() {
             <h1 className={cx('t-display', styles.title)}>{t('start.title')}</h1>
             <p className={cx('t-body c2', styles.lede)}>{t('start.lede')}</p>
           </div>
+
+          {visit.choice.closedTable !== undefined && (
+            <Banner tone="warn" icon="table" live="polite">
+              {t('start.closedTable', { table: visit.choice.closedTable })}
+            </Banner>
+          )}
 
           <section className={styles.section} aria-labelledby="start-outlets">
             <h2 id="start-outlets" className={styles.sectionTitle}>

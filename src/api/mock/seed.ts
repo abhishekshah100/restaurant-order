@@ -38,7 +38,7 @@ export interface MockSeed {
   menu(branchId: string): Promise<MenuCatalog>;
   /** GET /branches/:id/promotions: the branch's promo codes and automatic offers. */
   promotions(branchId: string): Promise<BranchPromotions>;
-  /** GET /branches/:id/floors: the branch's areas and tables. */
+  /** GET /branches/:id/floors: the branch's areas and tables, as staff last saved them. */
   floors(branchId: string): Promise<FloorPlanLayout>;
   /** GET /orders as sent: the drawn history (every branch) and the riders. */
   orders(): Promise<OrdersResponse>;
@@ -68,16 +68,38 @@ export const branchesBaseQuery = () =>
     staleTime: Infinity,
   });
 
+/**
+ * A branch whose table numbers (the ones guests can scan, `tables`) take in every table on the
+ * floor plan staff saved, so a table added in Settings works with its QR code at once, and
+ * say which are out of service.
+ */
+function withTables(branch: Branch, layout: FloorPlanLayout | undefined): Branch {
+  const tables = layout?.floors.flatMap((f) => f.tables) ?? [];
+  if (tables.length === 0) return branch;
+  const numbers = tables.map((t) => t.number);
+  const outOfService = tables.filter((t) => t.disabled).map((t) => t.number);
+  return {
+    ...branch,
+    tables: {
+      ...branch.tables,
+      first: Math.min(branch.tables.first, ...numbers),
+      last: Math.max(branch.tables.last, ...numbers),
+      ...(outOfService.length > 0 ? { outOfService } : {}),
+    },
+  };
+}
+
 export function querySeed(
   client: QueryClient,
-  db: Pick<MockDb, 'menuChanges' | 'branchStatus'>,
+  db: Pick<MockDb, 'menuChanges' | 'branchStatus' | 'floorLayouts'>,
   now: () => number = Date.now,
 ): MockSeed {
   const branches = async () => {
     const at = new Date(now());
     const changes = db.branchStatus.read();
+    const layouts = db.floorLayouts.read();
     return (await client.ensureQueryData(branchesBaseQuery())).map((b) =>
-      withStatus(b, changes[b.id], at, createClock(b)),
+      withTables(withStatus(b, changes[b.id], at, createClock(b)), layouts[b.id]),
     );
   };
   const menuData = async (branchId: string) => {
@@ -102,7 +124,8 @@ export function querySeed(
     menuData,
     menu: async (branchId) => createMenuCatalog(await menuData(branchId)),
     promotions: (branchId) => client.ensureQueryData(branchPromotionsQuery(branchId)),
-    floors: (branchId) => client.ensureQueryData(branchFloorsQuery(branchId)),
+    floors: async (branchId) =>
+      db.floorLayouts.read()[branchId] ?? client.ensureQueryData(branchFloorsQuery(branchId)),
     orders: () => client.ensureQueryData(orderHistoryQuery()),
     orderLabels: async (branch) => {
       const [orders, common, cart] = await Promise.all([

@@ -8,6 +8,7 @@ import type {
   AdminTableQrCodes,
   CancelReason,
   AdminServiceRequest,
+  FloorPlanLayout,
   AdminTableDetail,
   AdminSession,
   Reservation,
@@ -112,7 +113,11 @@ export type ApiErrorCode =
   /** 409: another booking holds the table then (`reservation` says which). */
   | 'table_taken'
   /** 409: the booking can't change that way any more (seated, cancelled, or not due yet). */
-  | 'reservation_closed';
+  | 'reservation_closed'
+  /** 409: a table the new floor plan leaves out has an open bill, food on the way or a booking. */
+  | 'table_in_use'
+  /** 409: the table is out of service (Settings › Floor plan): nobody can order at it or book it. */
+  | 'table_disabled';
 
 /** Body of every non-2xx response. */
 export interface ApiErrorBody {
@@ -129,6 +134,16 @@ export interface ApiErrorBody {
   items?: string[];
   /** table_taken: the booking holding the table then. */
   reservation?: Pick<Reservation, 'id' | 'guestName' | 'at'>;
+  /** table_in_use: the tables that can't go yet, and why. */
+  tables?: TableInUse[];
+}
+
+/** A table the floor plan can't leave out yet: its open orders or bill, or its bookings to come. */
+export interface TableInUse {
+  number: number;
+  reason: 'openOrder' | 'booking';
+  /** What the plan would do to it: leave it out, or take it out of service. */
+  change: 'removed' | 'disabled';
 }
 
 /* ---------- Admin sessions ---------- */
@@ -464,6 +479,22 @@ export interface EditRoundRequest {
   kitchenNote?: string;
   lines: OrderLineRequest[];
 }
+
+/**
+ * `GET /admin/branches/:branchId/floors` — the branch's floor plan as staff set it up (the
+ * floors.json shape: areas in the order staff walk them, each with its tables and seats).
+ * Authorised like GET /admin/branches. 200 → `FloorPlanLayout`. Errors: 401, 403.
+ *
+ * `PATCH /admin/branches/:branchId/floors` — replaces it (Settings › Floor plan): areas added,
+ * renamed, reordered or removed; tables added, renumbered, moved or removed. Everything that
+ * reads the floor plan follows (the Tables page, table pages and QR codes, reservations, the
+ * tables guests can scan). A table may be out of service (`disabled: true`): it stays on the
+ * plan, but guests, waiters and bookings are refused there (409 table_disabled). A table that's
+ * left out (removed, or renumbered) or taken out of service mustn't have an open order or bill
+ * today or a booking still to come. 200 → `FloorPlanLayout`. Errors: 400
+ * invalid_request (lib/floorLayout › layoutErrors), 401, 403, 409 table_in_use (`tables`).
+ */
+export type UpdateFloorsRequest = FloorPlanLayout;
 
 /**
  * `POST /admin/branches/:branchId/tables/:table/payment` — staff took the whole table's payment

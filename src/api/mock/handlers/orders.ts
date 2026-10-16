@@ -18,6 +18,7 @@ import {
 } from '../context';
 import { liveOrder } from '../kitchen';
 import { assignRider, buildOrder, nextOrderId } from '../orderBuilder';
+import { assertTableInService } from '../tableService';
 import { withTransaction } from '../tab';
 import { priceOrder } from './orderPricing';
 import { guestPromoUses } from './promos';
@@ -107,6 +108,7 @@ export const placeOrder: Handler = async (ctx, { body: raw }) => {
   const body = placeOrderBody(raw);
   const { session, branch } = await liveSession(ctx, body.sessionId);
   assertOrdering(branch);
+  if (session.mode === 'dineIn') await assertTableInService(ctx, branch.id, session.table);
   const [menu, promotions, labels, seedOrders] = await Promise.all([
     ctx.seed.menu(branch.id),
     ctx.seed.promotions(branch.id),

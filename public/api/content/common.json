@@ -243,9 +243,11 @@
       "menu": "Menu · Admin",
       "requests": "Requests · Admin",
       "payments": "Payments · Admin",
-      "table": "Table {table} · Admin",
+      "table": "Table · Admin",
       "qrCodes": "Table QR codes · Admin",
-      "reservations": "Reservations · Admin"
+      "reservations": "Reservations · Admin",
+      "settings": "Settings · Admin",
+      "floorPlan": "Floor plan · Settings · Admin"
     },
     "loading": "Loading your workspace",
     "descriptor": "Admin",
@@ -259,7 +261,8 @@
       "requests": "Requests",
       "menu": "Menu",
       "payments": "Payments",
-      "more": "More"
+      "more": "More",
+      "settings": "Settings"
     },
     "badge": {
       "orders": "{count} ready to serve",
@@ -427,7 +430,8 @@
       "reserved": "Reserved",
       "occupied": "Occupied",
       "needsWaiter": "Needs waiter",
-      "wantsBill": "Wants bill"
+      "wantsBill": "Wants bill",
+      "outOfService": "Out of service"
     },
     "status": {
       "available": "Available",
@@ -436,7 +440,8 @@
       "ordering": "Food on the way",
       "eating": "Dining",
       "needsWaiter": "Needs waiter",
-      "wantsBill": "Wants bill"
+      "wantsBill": "Wants bill",
+      "outOfService": "Out of service"
     },
     "seats": {
       "one": "{count} seat",
@@ -500,7 +505,8 @@
       "empty": {
         "title": "No open orders",
         "body": "This table is free. Use Take order when guests sit down, or they can scan the QR code.",
-        "reserved": "Reserved for {name} at {time}. Seat them when they arrive, then take their order."
+        "reserved": "Reserved for {name} at {time}. Seat them when they arrive, then take their order.",
+        "outOfService": "Out of service: nothing can be ordered here until it's back in service."
       },
       "notFound": {
         "title": "Table not found",
@@ -520,13 +526,19 @@
         "done": "Table {table} is free",
         "failed": "Couldn't free the table. Try again."
       },
-      "reserve": "Reserve"
+      "reserve": "Reserve",
+      "outOfService": {
+        "title": "This table is out of service",
+        "body": "Guests can't order here, waiters can't take orders and it can't be booked. Turn it back on in Settings › Floor plan.",
+        "link": "Open floor plan settings"
+      }
     },
     "openQr": "QR codes",
     "booking": "{time} · {name}",
     "nextBooking": "Booked {time}",
     "late": "{count} min late",
-    "openReservations": "Reservations"
+    "openReservations": "Reservations",
+    "outOfService": "Not in use"
   },
   "adminOrder": {
     "title": "Order {order}",
@@ -1426,6 +1438,150 @@
         "status": "Status",
         "count": "Payments",
         "refunds": "Refunds"
+      }
+    }
+  },
+  "adminSettings": {
+    "title": "Settings",
+    "subtitle": "How {branch} is set up. Changes here are rare and apply to every member of staff.",
+    "nav": "Settings",
+    "back": "Settings",
+    "groups": {
+      "restaurant": "Restaurant setup"
+    },
+    "sections": {
+      "floorPlan": {
+        "title": "Floor plan",
+        "description": "Areas and tables: add, rename, move or remove them.",
+        "summary": "{areas} · {tables} · {seats}"
+      }
+    },
+    "open": "Manage",
+    "counts": {
+      "areas": {
+        "one": "{count} area",
+        "other": "{count} areas"
+      },
+      "tables": {
+        "one": "{count} table",
+        "other": "{count} tables"
+      },
+      "seats": {
+        "one": "{count} seat",
+        "other": "{count} seats"
+      },
+      "outOfService": {
+        "one": "{count} out of service",
+        "other": "{count} out of service"
+      }
+    },
+    "floorPlan": {
+      "title": "Floor plan",
+      "subtitle": "The areas and tables at {branch}. The Tables page, QR codes, reservations and bills follow it.",
+      "loading": "Loading the floor plan",
+      "addArea": "Add area",
+      "addTables": "Add tables",
+      "single": "With one area, the Tables page shows its tables without area tabs. Add an area for another floor, a terrace or a private room.",
+      "area": {
+        "meta": "{tables} · {seats}",
+        "rename": "Rename {area}",
+        "remove": "Remove {area}",
+        "up": "Move {area} up",
+        "down": "Move {area} down",
+        "empty": "No tables in this area yet.",
+        "addTable": "Add table",
+        "addTableIn": "Add a table to {area}"
+      },
+      "table": {
+        "label": "Table {number}",
+        "seats": {
+          "one": "{count} seat",
+          "other": "{count} seats"
+        },
+        "edit": "Table {number}, {seats}. Change",
+        "new": "New",
+        "changed": "Changed",
+        "outOfService": "Out of service"
+      },
+      "save": {
+        "unsaved": "Unsaved changes",
+        "summary": "Changes apply when you save.",
+        "discard": "Discard",
+        "save": "Save changes",
+        "saved": "Floor plan saved",
+        "failed": "The floor plan wasn't saved. Try again.",
+        "leave": "You have unsaved changes to the floor plan. Leave without saving?"
+      },
+      "errors": {
+        "noAreas": "Add at least one area.",
+        "noTables": "Add at least one table.",
+        "areaName": "Every area needs a name of its own.",
+        "areaId": "Two areas share an id. Remove one and add it again.",
+        "tableNumber": "Table numbers go from 1 to 9999.",
+        "duplicateNumber": "Each table number can be used once.",
+        "seats": "A table has 1 to 50 seats.",
+        "inUseTitle": "Some tables can't be removed yet",
+        "inUse": {
+          "openOrder": "Table {number} has an open order or bill today.",
+          "booking": "Table {number} has a booking still to come."
+        },
+        "inUseHint": "Settle the bill or move the booking, then save again. Or keep the table for now.",
+        "inUseHintDisable": "Settle the bill or move the booking first, then take it out of service."
+      },
+      "areaDialog": {
+        "addTitle": "Add an area",
+        "renameTitle": "Rename area",
+        "description": "A floor, a terrace, a private room: wherever staff go to serve.",
+        "name": "Name",
+        "placeholder": "e.g. Roof terrace",
+        "add": "Add area",
+        "rename": "Save name",
+        "errors": {
+          "empty": "Enter a name",
+          "long": "Keep it to 40 characters",
+          "taken": "Another area has this name"
+        }
+      },
+      "removeArea": {
+        "title": "Remove {area}?",
+        "body": "Guests can't be seated there any more.",
+        "tables": {
+          "one": "Its table ({list}) comes off the plan too.",
+          "other": "Its {count} tables ({list}) come off the plan too."
+        },
+        "confirm": "Remove area",
+        "cancel": "Keep area"
+      },
+      "tableDialog": {
+        "addTitle": "Add tables",
+        "editTitle": "Table {number}",
+        "addDescription": "Numbered in a row from the first number. Guests use the number on the QR code.",
+        "editDescription": "Its number is the one on its QR code: reprint it if you change the number.",
+        "area": "Area",
+        "count": "How many",
+        "first": "First number",
+        "number": "Table number",
+        "seats": "Seats",
+        "preview": {
+          "one": "Table {first} · {seats} each",
+          "other": "Tables {first}–{last} · {seats} each"
+        },
+        "taken": {
+          "one": "Table {list} is already on the plan",
+          "other": "Tables {list} are already on the plan"
+        },
+        "invalidNumber": "Use a number from 1 to 9999",
+        "takenOne": "Table {number} is already on the plan",
+        "add": {
+          "one": "Add table",
+          "other": "Add {count} tables"
+        },
+        "save": "Save table",
+        "remove": "Remove table",
+        "qrNote": "Its QR code stops working once you save.",
+        "service": "In service",
+        "serviceOn": "Guests can scan its QR code and order; it can be booked.",
+        "serviceOff": "Out of service: kept on the plan with its number and QR code, but nobody can order or book it."
       }
     }
   }

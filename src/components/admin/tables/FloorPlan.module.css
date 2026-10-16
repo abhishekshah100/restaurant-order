@@ -24,6 +24,12 @@
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
   }
+
+  /* No area tabs: the links on their own, at the end. */
+  .single {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: end;
+  }
 }
 
 .panel {

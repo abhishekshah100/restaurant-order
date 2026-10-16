@@ -7,6 +7,7 @@ import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { floorPath, qrCodesPath, reservationsPath } from '@/lib/adminNav';
 import { legendCounts, openFloor } from '@/lib/adminTables';
+import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { FloorLegendBar } from './FloorLegendBar';
 import { FloorTabs } from './FloorTabs';
@@ -21,7 +22,7 @@ const SKELETON_TILES = 8;
 
 /**
  * /admin/dashboard/tables/: the floor plan. One tab per area (Ground floor, First floor,
- * Outdoor…), the open area's tables counted by state, and a card per table that opens its
+ * Outdoor…; none when there's only one), the open area's tables counted by state, and a card per table that opens its
  * page; Reservations and QR codes beside the tabs. The open area is in the address (?floor=), so coming back from a table keeps it.
  * Read from GET /admin/branches/:branchId/tables, polled every 15 s.
  */
@@ -36,14 +37,18 @@ export function FloorPlan() {
   let content;
   if (plan.data) {
     const floor = openFloor(plan.data.floors, floorId);
+    // One area: its tables, without tabs to choose it.
+    const tabs = plan.data.floors.length > 1;
     content = floor && (
       <>
-        <div className={styles.bar}>
-          <FloorTabs
-            floors={plan.data.floors}
-            value={floor.id}
-            onChange={(id) => router.replace(floorPath(id), { scroll: false })}
-          />
+        <div className={cx(styles.bar, !tabs && styles.single)}>
+          {tabs && (
+            <FloorTabs
+              floors={plan.data.floors}
+              value={floor.id}
+              onChange={(id) => router.replace(floorPath(id), { scroll: false })}
+            />
+          )}
           <div className={styles.links}>
             <Button href={reservationsPath()} variant="secondary" iconStart="calendar">
               {t('adminTables.openReservations')}
@@ -55,9 +60,10 @@ export function FloorPlan() {
         </div>
         <section
           id="floor-panel"
-          role="tabpanel"
-          aria-labelledby={`floor-tab-${floor.id}`}
           className={styles.panel}
+          {...(tabs
+            ? { role: 'tabpanel', 'aria-labelledby': `floor-tab-${floor.id}` }
+            : { 'aria-label': floor.name })}
         >
           <FloorLegendBar counts={legendCounts(floor.tables)} />
           {floor.tables.length > 0 ? (

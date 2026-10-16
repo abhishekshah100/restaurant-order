@@ -58,16 +58,19 @@ export function TableQrCodes() {
       </header>
 
       <div className={styles.tools}>
-        <div className={styles.floors} role="group" aria-label={t('adminQr.floors')}>
-          <Chip pressed={floor === 'all'} onClick={() => setFloor('all')}>
-            {t('adminQr.allFloors')}
-          </Chip>
-          {floors.map((f) => (
-            <Chip key={f.id} pressed={floor === f.id} onClick={() => setFloor(f.id)}>
-              {f.name}
+        {/* One area: nothing to choose between. */}
+        {floors.length > 1 && (
+          <div className={styles.floors} role="group" aria-label={t('adminQr.floors')}>
+            <Chip pressed={floor === 'all'} onClick={() => setFloor('all')}>
+              {t('adminQr.allFloors')}
             </Chip>
-          ))}
-        </div>
+            {floors.map((f) => (
+              <Chip key={f.id} pressed={floor === f.id} onClick={() => setFloor(f.id)}>
+                {f.name}
+              </Chip>
+            ))}
+          </div>
+        )}
         <div className={styles.selection}>
           <span className={styles.count}>{t.plural('adminQr.selected', picked.length)}</span>
           <button

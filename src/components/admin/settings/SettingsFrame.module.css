@@ -1,0 +1,127 @@
+/* Settings: the menu beside the page from 1024px; on phones, the page with Back above it. */
+
+.frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.menu {
+  display: none;
+}
+
+.content {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.back {
+  justify-self: start;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  text-decoration: none;
+}
+
+.back:focus-visible {
+  border-radius: var(--r-xs);
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .back:hover {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .frame {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .menu {
+    position: sticky;
+    top: 88px;
+    padding: 16px 12px;
+    display: grid;
+    gap: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    background: var(--surface);
+    box-shadow: var(--sh-1);
+  }
+
+  .back {
+    display: none;
+  }
+}
+
+.menuTitle {
+  padding: 0 8px;
+  color: var(--ink);
+  font: var(--font-h2);
+  text-decoration: none;
+}
+
+.menuTitle:focus-visible {
+  border-radius: var(--r-xs);
+  box-shadow: var(--focus);
+}
+
+.group {
+  display: grid;
+  gap: 6px;
+}
+
+.groupTitle {
+  padding: 0 8px;
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.items {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+}
+
+.item {
+  min-height: 40px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.item:focus-visible {
+  box-shadow: var(--focus-inset);
+}
+
+@media (hover: hover) {
+  .item:not(.current):hover {
+    background: var(--ink-a04);
+    color: var(--ink);
+  }
+}
+
+.current {
+  background: var(--brand-tint);
+  color: var(--brand-700);
+}

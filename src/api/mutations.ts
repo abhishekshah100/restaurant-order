@@ -15,6 +15,7 @@ import type {
   ChangeOrderRequest,
   CollectPaymentRequest,
   RefundRequest,
+  UpdateFloorsRequest,
   CollectTableRequest,
   DishInput,
   ImageUploadRequest,
@@ -36,6 +37,8 @@ import { ApiError, isApiError } from './client';
 import {
   branchMenuQuery,
   branchServiceQuery,
+  branchesQuery,
+  floorLayoutQuery,
   orderQuery,
   promoQuoteQuery,
   serviceRequestsQuery,
@@ -424,6 +427,28 @@ export function useCollectTablePayment() {
       body: CollectTableRequest;
     }) => api.collectTablePayment(requireToken(token), branchId, table, body),
     onSettled: () => refreshFloor(client),
+  });
+}
+
+/**
+ * PATCH /admin/branches/:branchId/floors: saves the floor plan. Everything that reads it is read
+ * again: the staff pages (floor plan, tables, QR codes, reservations) and the branches (the
+ * tables guests can scan).
+ */
+export function useUpdateFloors() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: UpdateFloorsRequest }) =>
+      api.updateFloors(requireToken(token), branchId, body),
+    onSuccess: (layout, { branchId }) =>
+      client.setQueryData(floorLayoutQuery(token, branchId).queryKey, layout),
+    onSettled: () =>
+      Promise.all(
+        [['admin'], branchesQuery().queryKey].map((queryKey) =>
+          client.invalidateQueries({ queryKey }),
+        ),
+      ),
   });
 }
 

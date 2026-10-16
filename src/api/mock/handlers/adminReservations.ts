@@ -17,6 +17,7 @@ import type { ReservationsResponse } from '../../contracts';
 import { fail, objectBody, ok, type Handler, type MockContext } from '../context';
 import { isDemoFloorOn } from '../demoFloor';
 import { demoReservations } from '../demoReservations';
+import { assertTableInService } from '../tableService';
 import { adminBranch, signedInAccount } from './adminSessions';
 
 /*
@@ -97,6 +98,7 @@ async function bookingFields(ctx: MockContext, branch: Branch, body: unknown) {
   if (!layout.floors.some((f) => f.tables.some((t) => t.number === table))) {
     fail(404, 'not_found');
   }
+  await assertTableInService(ctx, branch.id, table);
   const note = typeof raw.note === 'string' ? raw.note.trim() : '';
   return {
     table,

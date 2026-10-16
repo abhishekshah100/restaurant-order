@@ -1,4 +1,4 @@
-import type { AdminBranch, Reservation } from '@/types/admin';
+import type { AdminBranch, FloorPlanLayout, Reservation } from '@/types/admin';
 import type { MenuData } from '@/types/menu';
 import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
@@ -15,6 +15,7 @@ import type {
   ChangeOrderRequest,
   CollectPaymentRequest,
   RefundRequest,
+  UpdateFloorsRequest,
   CollectTableRequest,
   EditRoundRequest,
   CreatePaymentRequest,
@@ -81,6 +82,10 @@ export const api = {
     apiGet<BranchServiceResponse>(`admin/branches/${seg(branchId)}/service`, bearer(token)),
   floorPlan: (token: string, branchId: string) =>
     apiGet<FloorPlanResponse>(`admin/branches/${seg(branchId)}/tables`, bearer(token)),
+  floorLayout: (token: string, branchId: string) =>
+    apiGet<FloorPlanLayout>(`admin/branches/${seg(branchId)}/floors`, bearer(token)),
+  updateFloors: (token: string, branchId: string, body: UpdateFloorsRequest) =>
+    apiPatch<FloorPlanLayout>(`admin/branches/${seg(branchId)}/floors`, body, bearer(token)),
   tableDetail: (token: string, branchId: string, table: number) =>
     apiGet<TableDetailResponse>(`admin/branches/${seg(branchId)}/tables/${table}`, bearer(token)),
   takeTableOrder: (token: string, branchId: string, table: number, body: TakeTableOrderRequest) =>

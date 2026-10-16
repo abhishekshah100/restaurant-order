@@ -297,6 +297,14 @@ export const reservationsQuery = (token: string | null, branchId: string | undef
     refetchInterval: BRANCH_SERVICE_REFRESH_MS,
   });
 
+/** GET /admin/branches/:branchId/floors: the floor plan to edit; it changes rarely. */
+export const floorLayoutQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'floor-layout', branchId, token] as const,
+    queryFn: token && branchId ? () => api.floorLayout(token, branchId) : skipToken,
+    staleTime: 60_000,
+  });
+
 /** GET /admin/branches/:branchId/tables/qr-codes: the links to print; they change rarely. */
 export const tableQrCodesQuery = (token: string | null, branchId: string | undefined) =>
   queryOptions({

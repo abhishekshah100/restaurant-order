@@ -48,3 +48,7 @@
 .wantsBill {
   --tone: var(--gold);
 }
+
+.outOfService {
+  --tone: var(--ink-3);
+}

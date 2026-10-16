@@ -13,6 +13,7 @@ import type { OrderChangeResponse, TablePaymentResponse } from '../../contracts'
 import { fail, isObject, objectBody, ok, type Handler, type MockContext } from '../context';
 import { demoOrders, isDemoFloorOn, isDemoId } from '../demoFloor';
 import { liveOrder } from '../kitchen';
+import { assertTableInService } from '../tableService';
 import { buildOrder, changeableUntil, nextOrderId, toOrderItems } from '../orderBuilder';
 import {
   cancelledPayment,
@@ -61,6 +62,7 @@ export const takeTableOrder: Handler = async (ctx, { params, body: raw, headers 
   const table = Number(params.table);
   const [layout, seedOrders] = await Promise.all([ctx.seed.floors(branch.id), ctx.seed.orders()]);
   if (!layout.floors.some((f) => f.tables.some((t) => t.number === table))) fail(404, 'not_found');
+  await assertTableInService(ctx, branch.id, table);
   if (!branch.modes.dineIn.enabled) fail(409, 'mode_unavailable');
 
   // Everything below is synchronous, so concurrent requests can't interleave their writes.

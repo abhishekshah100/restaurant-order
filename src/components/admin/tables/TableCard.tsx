@@ -64,6 +64,8 @@ export function TableCard({ table, now }: { table: AdminFloorTable; now: Date | 
               </span>
             )}
           </>
+        ) : table.status === 'outOfService' ? (
+          <span>{t('adminTables.outOfService')}</span>
         ) : table.status === 'available' ? (
           booking ? (
             <span className={cx(styles.line, styles.booking)}>

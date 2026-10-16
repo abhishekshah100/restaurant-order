@@ -11,7 +11,7 @@ import { ADMIN_PATHS } from './adminBranches';
  */
 
 export type AdminNavId =
-  'home' | 'tables' | 'reservations' | 'orders' | 'requests' | 'menu' | 'payments';
+  'home' | 'tables' | 'reservations' | 'orders' | 'requests' | 'menu' | 'payments' | 'settings';
 
 export interface AdminNavItem {
   id: AdminNavId;
@@ -45,6 +45,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
   { id: 'reservations', href: section('reservations'), icon: 'calendar', tab: false },
   { id: 'menu', href: section('menu'), icon: 'menu', tab: false },
   { id: 'payments', href: section('payments'), icon: 'card', tab: false },
+  { id: 'settings', href: section('settings'), icon: 'sliders', tab: false },
 ];
 
 /** "/admin/dashboard/orders/ready" and "/admin/dashboard/orders/ready/" alike. */
@@ -67,7 +68,11 @@ export const ADMIN_LINKS = {
   reservations: section('reservations'),
   readyOrders: `${section('orders')}ready/`,
   unpaidOrders: `${section('orders')}unpaid/`,
+  settings: section('settings'),
 } as const;
+
+/** A settings page: /admin/dashboard/settings/floor-plan/. */
+export const settingsPath = (page: string) => `${ADMIN_LINKS.settings}${page}/`;
 
 /** The Reservations page on a day (?day=2026-10-17); today without one. */
 export const reservationsPath = (day?: string) =>
@@ -76,8 +81,11 @@ export const reservationsPath = (day?: string) =>
 /** Every table's QR code, to print. */
 export const qrCodesPath = () => `${ADMIN_LINKS.tables}qr/`;
 
-/** A table's page: /admin/dashboard/tables/5/. */
-export const tablePath = (table: number) => `${ADMIN_LINKS.tables}${table}/`;
+/**
+ * A table's page: /admin/dashboard/tables/view/?table=5. One page for every table (it reads the
+ * number), so tables added in Settings › Floor plan open without a new build.
+ */
+export const tablePath = (table: number) => `${ADMIN_LINKS.tables}view/?table=${table}`;
 
 /** The floor plan open on an area: /admin/dashboard/tables/?floor=first. */
 export const floorPath = (floorId: string) =>

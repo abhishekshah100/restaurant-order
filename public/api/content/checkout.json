@@ -241,5 +241,6 @@
     "payAtCounterInstead": "Pay at the counter instead"
   },
   "unavailable": "{items} just sold out. Take it out of your cart to order.",
-  "orderingUnavailable": "The kitchen has just paused new orders. Your cart is saved — try again in a little while."
+  "orderingUnavailable": "The kitchen has just paused new orders. Your cart is saved — try again in a little while.",
+  "tableDisabled": "This table isn't taking orders right now. Please ask a member of staff."
 }

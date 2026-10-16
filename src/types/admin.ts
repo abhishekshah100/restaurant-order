@@ -141,6 +141,12 @@ export interface FloorTableLayout {
    * next order or request at the table.
    */
   freed: boolean;
+  /**
+   * Out of service (Settings › Floor plan): kept on the plan with its number, seats and QR code,
+   * but guests can't order there, waiters can't take orders and it can't be booked. Missing:
+   * in service.
+   */
+  disabled?: boolean;
 }
 
 /** One area of the branch: "Ground floor", "First floor", "Outdoor". */
@@ -165,7 +171,12 @@ export interface FloorPlanLayout {
  * table is free again once every order at it today is served and paid.
  */
 export type FloorTableStatus =
-  'available' | 'reserved' | 'seated' | Exclude<AdminTableStatus, 'closing'>;
+  | 'available'
+  | 'reserved'
+  | 'seated'
+  | Exclude<AdminTableStatus, 'closing'>
+  /** Out of service, with nothing going on at it. */
+  | 'outOfService';
 
 /** One table on the floor plan, with what's happening at it. */
 export interface AdminFloorTable {
@@ -177,6 +188,8 @@ export interface AdminFloorTable {
    * leave out what came before. Earlier orders still unpaid stay on the Orders page.
    */
   freed: boolean;
+  /** Out of service (see FloorTableLayout › disabled). */
+  disabled: boolean;
   /** Today's open orders at the table: not cancelled, and not both served and paid. */
   orderCount: number;
   /** Still to pay across them. */

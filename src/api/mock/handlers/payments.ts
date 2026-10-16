@@ -18,6 +18,7 @@ import {
 } from '../context';
 import { liveOrder } from '../kitchen';
 import { addTransaction } from '../tab';
+import { assertTableInService } from '../tableService';
 import { MOCK_TRANSACTION_REF, PAYMENT_WINDOW_SECONDS } from '../rules';
 import { orderChangeAmount } from './orderChanges';
 import { priceOrder } from './orderPricing';
@@ -65,7 +66,10 @@ export const createPayment: Handler = async (ctx, { body: raw }) => {
   const { purpose, method } = body;
   const { session, branch } = await liveSession(ctx, stringField(body, 'sessionId'));
   // Paying for new food needs the branch taking orders; settling a bill doesn't.
-  if (purpose === 'order' || purpose === 'round') assertOrdering(branch);
+  if (purpose === 'order' || purpose === 'round') {
+    assertOrdering(branch);
+    if (session.mode === 'dineIn') await assertTableInService(ctx, branch.id, session.table);
+  }
   if (
     !isPaymentMethodId(method) ||
     !isOnlineMethod(method) ||

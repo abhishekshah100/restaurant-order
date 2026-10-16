@@ -1,12 +1,14 @@
 import { createClock } from '@/lib/clock';
 import { amountDue } from '@/lib/lifecycle';
 import { isFinished, isToday } from '@/lib/orders';
+import { cleanLayout, disabledNumbers, layoutErrors, removedNumbers } from '@/lib/floorLayout';
 import { isDue } from '@/lib/reservations';
 import type {
   AdminFloorPlan,
   AdminFloorTable,
   AdminServiceRequest,
   AdminTableDetail,
+  FloorLayout,
   FloorPlanLayout,
   FloorTableLayout,
   FloorTableStatus,
@@ -15,8 +17,8 @@ import type {
 } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { Order } from '@/types/order';
-import type { TableQrCodesResponse } from '../../contracts';
-import { fail, ok, type Handler, type MockContext } from '../context';
+import type { TableInUse, TableQrCodesResponse } from '../../contracts';
+import { fail, isObject, ok, type Handler, type MockContext } from '../context';
 import { branchReservations } from './adminReservations';
 import { adminBranch } from './adminSessions';
 import { floorActivity } from './adminService';
@@ -24,7 +26,8 @@ import { floorActivity } from './adminService';
 /*
  * The floor plan: every area of a branch with its tables and what's happening at each (GET
  * /admin/branches/:branchId/tables), and one table's open orders, requests and bookings (GET
- * /admin/branches/:branchId/tables/:table).
+ * /admin/branches/:branchId/tables/:table). And the floor plan itself as staff set it up in
+ * Settings (GET and PATCH /admin/branches/:branchId/floors).
  */
 
 const MINUTE = 60_000;
@@ -138,6 +141,8 @@ function tableAt(
   } else if (status === 'available' && bookings.due) {
     status = 'reserved';
   }
+  const disabled = layout.disabled === true;
+  if (status === 'available' && disabled) status = 'outOfService';
   const freed =
     layout.freed ||
     (freedAt !== undefined && orders.length === 0 && asked.length === 0 && !bookings.seated);
@@ -146,6 +151,7 @@ function tableAt(
     seats,
     status,
     freed,
+    disabled,
     orderCount: orders.length,
     due: orders.reduce((sum, o) => sum + amountDue(o), 0),
     ...(seatedAt ? { seatedAt } : {}),
@@ -282,4 +288,87 @@ export const tableQrCodes: Handler = async (ctx, { params, headers }) => {
     ),
   };
   return ok(response);
+};
+
+/* ---------- Settings › Floor plan ---------- */
+
+/** Whether a body is a floor plan in the floors.json shape (every field there, of its type). */
+function asLayout(body: unknown): FloorPlanLayout {
+  const floors = isObject(body) && Array.isArray(body.floors) ? body.floors : null;
+  const valid =
+    floors?.every(
+      (f: unknown) =>
+        isObject(f) &&
+        typeof f.id === 'string' &&
+        typeof f.name === 'string' &&
+        Array.isArray(f.tables) &&
+        f.tables.every(
+          (t: unknown) =>
+            isObject(t) && typeof t.number === 'number' && typeof t.seats === 'number',
+        ),
+    ) ?? false;
+  if (!floors || !valid) fail(400, 'invalid_request');
+  return cleanLayout({
+    floors: (floors as FloorLayout[]).map((f) => ({
+      ...f,
+      tables: f.tables.map(({ number, seats, freed, disabled }) => ({
+        number,
+        seats,
+        freed: freed === true,
+        ...(disabled === true ? { disabled: true } : {}),
+      })),
+    })),
+  });
+}
+
+/**
+ * The tables a new plan leaves out or takes out of service that can't be yet: an order at it
+ * today that isn't finished or paid, or a booking that hasn't ended.
+ */
+function tablesInUse(
+  input: FloorPlanInput,
+  numbers: readonly number[],
+  change: TableInUse['change'],
+): TableInUse[] {
+  const now = new Date(input.now);
+  const clock = createClock(input.branch);
+  return numbers.flatMap((number): TableInUse[] => {
+    const open = input.orders.some(
+      (o) =>
+        o.mode === 'dineIn' &&
+        o.table === number &&
+        o.status !== 'cancelled' &&
+        isToday(o.placedAt, now, clock) &&
+        (!isFinished(o) || amountDue(o) > 0),
+    );
+    if (open) return [{ number, reason: 'openOrder', change }];
+    const booked = (input.reservations ?? []).some(
+      (r) =>
+        r.table === number &&
+        (r.status === 'booked' || r.status === 'seated') &&
+        Date.parse(r.at) + r.minutes * MINUTE > input.now,
+    );
+    return booked ? [{ number, reason: 'booking', change }] : [];
+  });
+}
+
+/** GET /admin/branches/:branchId/floors */
+export const branchFloors: Handler = async (ctx, { params, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  return ok(await ctx.seed.floors(branch.id));
+};
+
+/** PATCH /admin/branches/:branchId/floors */
+export const updateFloors: Handler = async (ctx, { params, body, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const next = asLayout(body);
+  if (layoutErrors(next).length > 0) fail(400, 'invalid_request');
+  const input = await floorInput(ctx, branch);
+  const inUse = [
+    ...tablesInUse(input, removedNumbers(input.layout, next), 'removed'),
+    ...tablesInUse(input, disabledNumbers(input.layout, next), 'disabled'),
+  ];
+  if (inUse.length > 0) fail(409, 'table_in_use', { tables: inUse });
+  ctx.db.floorLayouts.write({ ...ctx.db.floorLayouts.read(), [branch.id]: next });
+  return ok(next);
 };

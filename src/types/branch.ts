@@ -223,8 +223,11 @@ export interface Branch {
   prepTime: string;
   /** Table a session starts at when the link has none. */
   defaultTable: number;
-  /** Table numbers a QR link may carry. */
-  tables: { first: number; last: number };
+  /**
+   * Table numbers a QR link may carry, and those out of service now (Settings › Floor plan):
+   * scanning one of those opens the start screen saying so, not a visit at the table.
+   */
+  tables: { first: number; last: number; outOfService?: number[] };
   tableLocation: string;
   /** BCP 47 locale for numbers and times, e.g. "en-IN". */
   locale: string;

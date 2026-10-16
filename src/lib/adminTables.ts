@@ -6,7 +6,8 @@ import type { AdminFloor, AdminFloorTable, FloorTableStatus } from '@/types/admi
  */
 
 /** The legend's groups: seated, waiting for food and eating are all "Occupied". */
-export type FloorLegend = 'available' | 'reserved' | 'occupied' | 'needsWaiter' | 'wantsBill';
+export type FloorLegend =
+  'available' | 'reserved' | 'occupied' | 'needsWaiter' | 'wantsBill' | 'outOfService';
 
 export const FLOOR_LEGEND: readonly FloorLegend[] = [
   'available',
@@ -14,6 +15,7 @@ export const FLOOR_LEGEND: readonly FloorLegend[] = [
   'occupied',
   'needsWaiter',
   'wantsBill',
+  'outOfService',
 ];
 
 export const legendOf = (status: FloorTableStatus): FloorLegend =>
@@ -27,6 +29,7 @@ export function legendCounts(tables: readonly AdminFloorTable[]): Record<FloorLe
     occupied: 0,
     needsWaiter: 0,
     wantsBill: 0,
+    outOfService: 0,
   };
   for (const table of tables) counts[legendOf(table.status)] += 1;
   return counts;

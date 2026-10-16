@@ -363,15 +363,18 @@ export function tableChoices(
   const choices = floors.map((floor) => ({
     id: floor.id,
     name: floor.name,
-    tables: floor.tables.map(({ table, seats }) => ({
-      table,
-      seats,
-      clash: slot.at
-        ? clashWith(reservations, { table, at: slot.at, minutes: slot.minutes }, ignoreId)
-        : undefined,
-      tooSmall: seats < slot.partySize,
-      bestFit: false,
-    })),
+    // A table out of service can't be booked: it isn't offered.
+    tables: floor.tables
+      .filter((t) => !t.disabled)
+      .map(({ table, seats }) => ({
+        table,
+        seats,
+        clash: slot.at
+          ? clashWith(reservations, { table, at: slot.at, minutes: slot.minutes }, ignoreId)
+          : undefined,
+        tooSmall: seats < slot.partySize,
+        bestFit: false,
+      })),
   }));
   const best = choices
     .flatMap((floor) => floor.tables)

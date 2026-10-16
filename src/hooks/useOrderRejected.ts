@@ -12,7 +12,8 @@ import { promoError } from './useFulfilment';
 /**
  * Handles the server turning an order (or its payment) down because of how it's fulfilled — a
  * pickup slot that's gone, an area it doesn't deliver to, a total below the minimum — because a
- * dish in it just sold out (the menu is read again), because staff paused or closed ordering,
+ * dish in it just sold out (the menu is read again), because staff paused or closed ordering or
+ * took the table out of service,
  * or because its promo code no longer applies, with an error toast and the step where it can be fixed (the cart shows why the code
  * doesn't apply). Returns false for any other error.
  */
@@ -49,6 +50,11 @@ export function useOrderRejected(): (error: unknown) => boolean {
         // Staff paused or closed ordering: read the branch again (its screen shows why).
         void client.invalidateQueries({ queryKey: branchesQuery().queryKey, exact: true });
         return fix(t('orderingUnavailable'), '/cart/');
+      }
+      if (isApiError(error, 'table_disabled')) {
+        // Staff took the table out of service: read the branch again (its tables say so).
+        void client.invalidateQueries({ queryKey: branchesQuery().queryKey, exact: true });
+        return fix(t('tableDisabled'), '/cart/');
       }
       if (isApiError(error, 'item_unavailable')) {
         // Staff took something off since the guest's menu was read: read it again.

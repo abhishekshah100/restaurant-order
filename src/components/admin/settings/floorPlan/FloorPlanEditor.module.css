@@ -1,0 +1,374 @@
+/* Settings › Floor plan: the header, then a card per area with its tables as tiles. */
+
+.editor {
+  display: grid;
+  gap: 16px;
+}
+
+/* Room under the last area for the save bar. */
+.withBar {
+  padding-bottom: 96px;
+}
+
+/* ---------- Header ---------- */
+
+.head {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background:
+    radial-gradient(circle at 100% 0%, var(--brand-tint-2), transparent 260px), var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.headText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title {
+  font: var(--font-h1);
+}
+
+.subtitle {
+  max-width: 62ch;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.totals {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.totals li {
+  min-height: 28px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.totals .offTotal {
+  background: var(--ink-a05);
+  color: var(--ink-3);
+}
+
+.headActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+}
+
+.note {
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: var(--r-md);
+  background: var(--info-tint);
+  color: var(--info);
+  font: var(--font-small-strong);
+}
+
+.note > :first-child {
+  margin-top: 1px;
+  flex: none;
+}
+
+.inUse {
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--error) 35%, var(--line));
+  border-radius: var(--r-card);
+  background: var(--error-tint);
+  color: var(--error);
+  font: var(--font-small);
+}
+
+.inUse ul {
+  padding-left: 30px;
+}
+
+.inUseTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-label);
+}
+
+.inUseHint {
+  color: var(--ink-2);
+}
+
+/* ---------- Areas ---------- */
+
+.areas {
+  display: grid;
+  gap: 14px;
+  list-style: none;
+}
+
+.area {
+  padding: 14px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.areaHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.order {
+  display: grid;
+  gap: 2px;
+}
+
+/* The down chevron, turned round for up. */
+.up > span {
+  transform: rotate(180deg);
+}
+
+.areaText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.areaName {
+  overflow: hidden;
+  font: var(--font-h3);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.areaMeta {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.areaActions {
+  display: flex;
+  gap: 6px;
+}
+
+.remove {
+  color: var(--error);
+}
+
+.areaEmpty {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+/* ---------- Tables ---------- */
+
+.tables {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  list-style: none;
+}
+
+.table,
+.addTable {
+  position: relative;
+  width: 100%;
+  min-height: 88px;
+  padding: 12px 8px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  border-radius: var(--r-card);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    transform var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+
+.table {
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.table[data-state='new'] {
+  border-color: var(--success);
+  background: var(--success-tint);
+}
+
+.table[data-state='changed'] {
+  border-color: var(--gold);
+  background: var(--gold-tint);
+}
+
+/* Out of service: dashed, hatched and greyed, still there to switch back on. */
+.table[data-off] {
+  border-style: dashed;
+  background:
+    repeating-linear-gradient(135deg, transparent 0 8px, var(--ink-a05) 8px 16px), var(--surface);
+  color: var(--ink-3);
+}
+
+.table[data-off] .seats {
+  color: var(--ink-3);
+}
+
+.number {
+  font: var(--font-h1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.seats {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-2);
+  font: var(--font-meta);
+}
+
+.flag {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--font-caption);
+}
+
+.addTable {
+  border: 1.5px dashed var(--line-strong);
+  background: none;
+  color: var(--brand-600);
+  font: var(--font-small-strong);
+}
+
+.table:focus-visible,
+.addTable:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .table:hover {
+    border-color: var(--ink-2);
+    transform: translateY(-1px);
+  }
+
+  .addTable:hover {
+    border-color: var(--brand-600);
+    background: var(--brand-tint-2);
+  }
+}
+
+/* ---------- Save bar ---------- */
+
+.saveBar {
+  position: fixed;
+  z-index: var(--z-actionbar);
+  left: 12px;
+  right: 12px;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  padding: 12px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  border-radius: var(--r-panel);
+  background: var(--ink);
+  color: var(--on-dark);
+  box-shadow: var(--sh-2);
+}
+
+.saveText {
+  display: grid;
+  min-width: 0;
+  font: var(--font-small);
+}
+
+.saveText strong {
+  font: var(--font-label);
+}
+
+.saveText span {
+  color: color-mix(in srgb, var(--on-dark) 75%, transparent);
+}
+
+.saveActions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+@media (min-width: 1024px) {
+  .saveBar {
+    left: calc(264px + 32px);
+    right: 32px;
+    bottom: 24px;
+  }
+}
+
+/* ---------- Loading ---------- */
+
+.skeleton {
+  display: grid;
+  gap: 16px;
+}
+
+.skeleton > span {
+  display: block;
+  border-radius: var(--r-panel);
+  background: linear-gradient(90deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%) 0 0 / 200%
+    100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton > span:first-child {
+  height: 140px;
+}
+
+.skeleton > span:last-child {
+  height: 320px;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton > span {
+    animation: none;
+  }
+}

@@ -38,4 +38,6 @@ export type SessionStart =
 export interface StartChoice {
   branchId?: string;
   mode?: Exclude<OrderMode, 'dineIn'>;
+  /** The table QR code scanned is for a table out of service: the start screen says so. */
+  closedTable?: number;
 }

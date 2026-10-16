@@ -79,7 +79,8 @@
       "body": "Each outlet has its own menu and prices, so your cart ({items}) will be emptied.",
       "confirm": "Switch and empty cart",
       "cancel": "Keep my cart"
-    }
+    },
+    "closedTable": "Table {table} isn't taking orders right now. Please ask a member of staff to seat you, or order takeaway below."
   },
   "modeSwitch": {
     "title": "How would you like to order?",

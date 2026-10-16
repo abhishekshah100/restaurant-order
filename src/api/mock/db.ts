@@ -3,7 +3,7 @@ import { isPaymentMethodId } from '@/lib/payments';
 import { WAITER_REASON_IDS } from '@/lib/service';
 import { isGuestSession } from '@/lib/session';
 import { readJSON, storageAvailable, writeJSON, type StorageKind } from '@/lib/storage';
-import type { Reservation } from '@/types/admin';
+import type { FloorPlanLayout, FloorTableLayout, Reservation } from '@/types/admin';
 import type { BranchStatus } from '@/types/branch';
 import type { BranchStatusChange } from './branchStatus';
 import type { BranchMenuChanges } from './menuChanges';
@@ -49,6 +49,8 @@ export const MOCK_KEYS = {
    * `npm run dev` (api/mock/demoReservations).
    */
   reservations: 'olive.mock.reservations.v1',
+  /** The floor plan staff set up for each branch (Settings › Floor plan), by branch id. */
+  floorLayouts: 'olive.mock.floorLayouts.v1',
 } as const;
 
 export interface Table<T> {
@@ -305,6 +307,28 @@ const isReservation = (v: unknown): v is Reservation =>
 const isReservationTable = (v: unknown): v is Record<string, Reservation[]> =>
   isObject(v) && Object.values(v).every(listOf(isReservation));
 
+const isFloorTable = (v: unknown): v is FloorTableLayout =>
+  isObject(v) &&
+  typeof v.number === 'number' &&
+  typeof v.seats === 'number' &&
+  typeof v.freed === 'boolean' &&
+  (v.disabled === undefined || typeof v.disabled === 'boolean');
+
+const isFloorLayout = (v: unknown): v is FloorPlanLayout =>
+  isObject(v) &&
+  Array.isArray(v.floors) &&
+  v.floors.every(
+    (f: unknown) =>
+      isObject(f) &&
+      typeof f.id === 'string' &&
+      typeof f.name === 'string' &&
+      Array.isArray(f.tables) &&
+      f.tables.every(isFloorTable),
+  );
+
+const isFloorLayoutTable = (v: unknown): v is Record<string, FloorPlanLayout> =>
+  isObject(v) && Object.values(v).every(isFloorLayout);
+
 /** The mock server's tables. */
 export interface MockDb {
   sessions: Table<GuestSession[]>;
@@ -323,6 +347,8 @@ export interface MockDb {
   menuChanges: Table<Record<string, BranchMenuChanges>>;
   /** Bookings, by branch id. */
   reservations: Table<Record<string, Reservation[]>>;
+  /** The floor plan staff saved, by branch id (else the branch's floors.json). */
+  floorLayouts: Table<Record<string, FloorPlanLayout>>;
 }
 
 export function createStorageDb(): MockDb {
@@ -337,5 +363,6 @@ export function createStorageDb(): MockDb {
     tablesFreed: table(MOCK_KEYS.tablesFreed, 'local', isFreedTable, () => ({})),
     menuChanges: table(MOCK_KEYS.menuChanges, 'local', isMenuChanges, () => ({})),
     reservations: table(MOCK_KEYS.reservations, 'local', isReservationTable, () => ({})),
+    floorLayouts: table(MOCK_KEYS.floorLayouts, 'local', isFloorLayoutTable, () => ({})),
   };
 }

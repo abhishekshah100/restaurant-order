@@ -84,7 +84,8 @@ export type ScanOutcome =
  * What a link leads to, given the live saved session:
  *
  * - A table QR keeps the session at the same branch and table (a re-scan or refresh), and
- *   otherwise starts a dine-in session there. Another branch or table is another session.
+ *   otherwise starts a dine-in session there. Another branch or table is another session. A
+ *   table out of service opens the start screen at its branch, saying so.
  * - An ordering link at the session's branch (or naming none) keeps the session, switching it
  *   to the link's mode; at another branch it starts a session there. With no session and no
  *   branch, the start screen opens with the mode chosen.
@@ -102,6 +103,11 @@ export function resolveScan(
   const { table, mode, qrToken } = request;
 
   if (table !== null) {
+    // Out of service: no visit at that table; the start screen says so (takeaway still works).
+    const branch = branches.find((b) => b.id === branchId);
+    if (branch?.tables.outOfService?.includes(table)) {
+      return { choose: { branchId, closedTable: table } };
+    }
     if (saved?.branchId === branchId && saved.table === table) return { keep: saved };
     return { start: { branchId, mode: 'dineIn', table, ...(qrToken ? { qrToken } : {}) } };
   }

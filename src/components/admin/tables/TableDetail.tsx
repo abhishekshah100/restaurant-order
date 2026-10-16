@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ApiError } from '@/api/client';
 import { useContent, useTableDetail } from '@/api/hooks';
-import { Button, EmptyState, Icon } from '@/components/ui';
+import { Banner, Button, EmptyState, Icon } from '@/components/ui';
+import { useHydrated } from '@/hooks/useHydrated';
 import { useNow } from '@/hooks/useNow';
-import { ADMIN_LINKS, floorPath } from '@/lib/adminNav';
+import { useQueryParam } from '@/hooks/useQueryParam';
+import { ADMIN_LINKS, floorPath, settingsPath } from '@/lib/adminNav';
 import { legendOf } from '@/lib/adminTables';
 import { cx } from '@/lib/cx';
 import { editableRound } from '@/lib/adminOrders';
@@ -29,28 +31,38 @@ import styles from './TableDetail.module.css';
 const AGE_REFRESH_MS = 20_000;
 
 /**
- * /admin/dashboard/tables/:table/: one table. Where it is and its state, what's open at it
- * (orders, still to pay, seated for), today's bookings with Seat, its open requests with Done,
- * and its open orders, newest first; an order opens with everything on it. Reserve books it. Read from GET
+ * /admin/dashboard/tables/view/?table=5: one table (`tablePath`). One static page reads the
+ * number from the address, so a table added in Settings › Floor plan opens without a new build.
+ * Where it is and its state, what's open at it (orders, still to pay, seated for), today's
+ * bookings with Seat, its open requests with Done, and its open orders, newest first; an order
+ * opens with everything on it. Reserve books it. Read from GET
  * /admin/branches/:branchId/tables/:table, polled every 15 s.
  */
-export function TableDetail({ table }: { table: number }) {
+export function TableDetail() {
+  const hydrated = useHydrated();
+  const raw = useQueryParam('table');
+  // Undefined while the prerendered page hydrates (no address yet); null for no such number.
+  const table = !hydrated ? undefined : raw && /^\d{1,4}$/.test(raw) ? Number(raw) : null;
+  return <TableDetailFor table={table} />;
+}
+
+function TableDetailFor({ table }: { table: number | null | undefined }) {
   const t = useContent('common');
   const { branch } = useAdminWorkspace();
-  const detail = useTableDetail(branch.id, table);
+  const detail = useTableDetail(typeof table === 'number' ? branch.id : undefined, table ?? 0);
   const now = useNow(AGE_REFRESH_MS);
 
   let content;
   if (detail.data) {
     content = <TableContent detail={detail.data} now={now} />;
-  } else if (detail.error instanceof ApiError && detail.error.status === 404) {
+  } else if (table === null || (detail.error instanceof ApiError && detail.error.status === 404)) {
     content = (
       <EmptyState
         icon="table"
         title={t('adminTables.detail.notFound.title')}
         className={styles.state}
       >
-        {t('adminTables.detail.notFound.body', { table })}
+        {t('adminTables.detail.notFound.body', { table: table ?? '' })}
       </EmptyState>
     );
   } else if (detail.isError) {
@@ -140,36 +152,42 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <span className={styles.dot} aria-hidden="true" />
               {t(`adminTables.status.${detail.status}`)}
             </span>
-            <button
-              type="button"
-              className={styles.free}
-              onClick={() => setBooking({ kind: 'new', table: detail.table })}
-            >
-              <Icon name="calendar" size="xs" />
-              {t('adminTables.detail.reserve')}
-            </button>
+            {!detail.disabled && (
+              <button
+                type="button"
+                className={styles.free}
+                onClick={() => setBooking({ kind: 'new', table: detail.table })}
+              >
+                <Icon name="calendar" size="xs" />
+                {t('adminTables.detail.reserve')}
+              </button>
+            )}
             <button type="button" className={styles.free} onClick={() => setShowingQr(true)}>
               <Icon name="qr" size="xs" />
               {t('adminQr.tableButton')}
             </button>
-            {detail.status !== 'available' && detail.status !== 'reserved' && (
-              <button type="button" className={styles.free} onClick={() => setFreeing(true)}>
-                <Icon name="check" size="xs" />
-                {t('adminTables.detail.free.action')}
-              </button>
-            )}
+            {detail.status !== 'available' &&
+              detail.status !== 'reserved' &&
+              detail.status !== 'outOfService' && (
+                <button type="button" className={styles.free} onClick={() => setFreeing(true)}>
+                  <Icon name="check" size="xs" />
+                  {t('adminTables.detail.free.action')}
+                </button>
+              )}
           </span>
         </div>
-        <Button
-          iconStart="plus"
-          className={styles.takeOrder}
-          onClick={() => setPad({ kind: 'new', table: detail.table })}
-        >
-          {/* With orders open, a new one is a separate bill; Add items goes on an order's own. */}
-          {detail.orders.length > 0
-            ? t('adminTables.detail.newOrder')
-            : t('adminTables.detail.takeOrder')}
-        </Button>
+        {!detail.disabled && (
+          <Button
+            iconStart="plus"
+            className={styles.takeOrder}
+            onClick={() => setPad({ kind: 'new', table: detail.table })}
+          >
+            {/* With orders open, a new one is a separate bill; Add items goes on an order's own. */}
+            {detail.orders.length > 0
+              ? t('adminTables.detail.newOrder')
+              : t('adminTables.detail.takeOrder')}
+          </Button>
+        )}
         {detail.due > 0 && (
           <Button
             variant="secondary"
@@ -197,6 +215,21 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
           )}
         </dl>
       </section>
+      {detail.disabled && (
+        <Banner
+          tone="info"
+          icon="lock"
+          className={styles.outOfService}
+          action={
+            <Link href={settingsPath('floor-plan')} className={styles.outOfServiceLink}>
+              {t('adminTables.detail.outOfService.link')}
+            </Link>
+          }
+        >
+          <strong>{t('adminTables.detail.outOfService.title')}</strong>{' '}
+          {t('adminTables.detail.outOfService.body')}
+        </Banner>
+      )}
 
       {detail.reservations.length > 0 && (
         <TableBookings
@@ -241,7 +274,9 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
                     name: detail.booking.guestName,
                     time: clock.time(detail.booking.at),
                   })
-                : t('adminTables.detail.empty.body')}
+                : detail.disabled
+                  ? t('adminTables.detail.empty.outOfService')
+                  : t('adminTables.detail.empty.body')}
             </p>
           </div>
         )}

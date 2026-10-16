@@ -37,7 +37,14 @@ import {
   setReservationStatus,
   updateReservation,
 } from './handlers/adminReservations';
-import { branchFloorPlan, branchTable, freeTable, tableQrCodes } from './handlers/adminTables';
+import {
+  branchFloorPlan,
+  branchFloors,
+  branchTable,
+  freeTable,
+  tableQrCodes,
+  updateFloors,
+} from './handlers/adminTables';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
 import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
 import { sendOtp, verifyOtp } from './handlers/otp';
@@ -64,6 +71,8 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['PATCH', 'admin/branches/:branchId/status', setBranchStatus],
   ['GET', 'admin/branches/:branchId/service', branchService],
   ['GET', 'admin/branches/:branchId/tables', branchFloorPlan],
+  ['GET', 'admin/branches/:branchId/floors', branchFloors],
+  ['PATCH', 'admin/branches/:branchId/floors', updateFloors],
   ['GET', 'admin/branches/:branchId/tables/qr-codes', tableQrCodes],
   ['GET', 'admin/branches/:branchId/tables/:table', branchTable],
   ['POST', 'admin/branches/:branchId/tables/:table/orders', takeTableOrder],

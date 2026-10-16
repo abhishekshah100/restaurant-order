@@ -332,6 +332,7 @@ describe('GET /admin/branches/:branchId/tables (mock)', () => {
       seats: 6,
       status: 'available',
       freed: false,
+      disabled: false,
       orderCount: 0,
       due: 0,
     });

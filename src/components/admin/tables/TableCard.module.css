@@ -57,6 +57,17 @@
   --tone: var(--gold);
 }
 
+.outOfService {
+  --tone: var(--ink-3);
+}
+
+/* Out of service: hatched and quiet, so it reads as not in use at a glance. */
+.card.outOfService {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 8px, var(--ink-a04) 8px 16px), var(--surface);
+  color: var(--ink-3);
+}
+
 .top {
   display: flex;
   align-items: flex-start;

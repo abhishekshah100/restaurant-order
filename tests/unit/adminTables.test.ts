@@ -10,7 +10,8 @@ const table = (number: number, status: FloorTableStatus): AdminFloorTable => ({
   seats: 4,
   status,
   freed: false,
-  orderCount: status === 'available' ? 0 : 1,
+  disabled: status === 'outOfService',
+  orderCount: status === 'available' || status === 'outOfService' ? 0 : 1,
   due: 0,
 });
 
@@ -26,6 +27,7 @@ describe('floor plan helpers', () => {
     expect(legendOf('eating')).toBe('occupied');
     expect(legendOf('reserved')).toBe('reserved');
     expect(legendOf('wantsBill')).toBe('wantsBill');
+    expect(legendOf('outOfService')).toBe('outOfService');
     expect(
       legendCounts([
         table(1, 'available'),
@@ -35,8 +37,16 @@ describe('floor plan helpers', () => {
         table(5, 'available'),
         table(6, 'reserved'),
         table(7, 'seated'),
+        table(8, 'outOfService'),
       ]),
-    ).toEqual({ available: 2, reserved: 1, occupied: 3, needsWaiter: 1, wantsBill: 0 });
+    ).toEqual({
+      available: 2,
+      reserved: 1,
+      occupied: 3,
+      needsWaiter: 1,
+      wantsBill: 0,
+      outOfService: 1,
+    });
   });
 
   it('opens the area in the address, else the first', () => {
@@ -53,7 +63,7 @@ describe('floor plan helpers', () => {
   });
 
   it("builds a table's page and an area's address", () => {
-    expect(tablePath(5)).toBe('/admin/dashboard/tables/5/');
+    expect(tablePath(5)).toBe('/admin/dashboard/tables/view/?table=5');
     expect(floorPath('first floor')).toBe('/admin/dashboard/tables/?floor=first%20floor');
   });
 });

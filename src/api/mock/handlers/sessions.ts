@@ -1,5 +1,6 @@
 import { deliveryAreas, isOrderMode } from '@/lib/fulfilment';
 import { isTableAt } from '@/lib/scan';
+import { assertTableInService } from '../tableService';
 import { isLiveSession } from '@/lib/session';
 import type { Branch } from '@/types/branch';
 import type { GuestSession } from '@/types/session';
@@ -35,6 +36,7 @@ export const createSession: Handler = async (ctx, { body: raw }) => {
   ) {
     fail(400, 'invalid_request');
   }
+  if (mode === 'dineIn') await assertTableInService(ctx, branch.id, table as number);
   const area = servedArea(branch, deliveryArea);
   const now = ctx.now();
   const session: GuestSession = {

@@ -79,6 +79,15 @@ describe('resolveScan', () => {
     expect(resolve(there, '?branch=ktm-thamel')).toEqual({ keep: there });
   });
 
+  it('sends a scan of a table out of service to the start screen, saying so', () => {
+    const closed = branches.map((b) =>
+      b.id === india.id ? { ...b, tables: { ...b.tables, outOfService: [8] } } : b,
+    );
+    const at = (search: string) => resolveScan(session(), parse(search), closed, defaultBranchId);
+    expect(at('?table=8')).toEqual({ choose: { branchId: india.id, closedTable: 8 } });
+    expect(at('?table=9')).toEqual({ start: { branchId: india.id, mode: 'dineIn', table: 9 } });
+  });
+
   it('starts a dine-in session for another table or another branch', () => {
     expect(resolve(session(), '?table=8')).toEqual({
       start: { branchId: india.id, mode: 'dineIn', table: 8 },
