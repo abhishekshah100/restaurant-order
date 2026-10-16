@@ -18,7 +18,9 @@
     "time": "Local time {time}",
     "fullscreen": "Full screen",
     "exitFullscreen": "Exit full screen",
-    "account": "Account and more"
+    "account": "Account and more",
+    "admin": "Admin dashboard",
+    "adminShort": "Admin"
   },
   "account": {
     "title": "Kitchen",

@@ -21,7 +21,8 @@ const CLOCK_REFRESH_MS = 15_000;
 
 /**
  * The kitchen's bar, in the admin bar's colours: the brand and "Kitchen", the branch and its
- * status (which the kitchen can pause when it's swamped), the kitchen's pages, the branch's
+ * status (which the kitchen can pause when it's swamped), the kitchen's pages and Admin dashboard
+ * beside them, the branch's
  * local time, full screen, and the account menu (the admin dashboard, switch branch, sign out).
  * Below 1024px the pages sit in a row under the rest.
  */
@@ -74,10 +75,26 @@ export function KitchenBar() {
               </Link>
             </li>
           ))}
+          {/* Back to the waiter / admin pages in one tap (also in the account menu). */}
+          <li className={styles.adminItem}>
+            <Link href={ADMIN_PATHS.dashboard} className={styles.adminLink}>
+              <Icon name="home" size="sm" />
+              {t('bar.admin')}
+            </Link>
+          </li>
         </ul>
       </nav>
 
       <div className={styles.end}>
+        {/* Below 1024px the tabs have no room for it, so it sits up here. */}
+        <Link
+          href={ADMIN_PATHS.dashboard}
+          className={cx(styles.adminLink, styles.adminTop)}
+          aria-label={t('bar.admin')}
+        >
+          <Icon name="home" size="sm" />
+          {t('bar.adminShort')}
+        </Link>
         {time && (
           <p className={styles.clock}>
             <span aria-hidden="true">{time}</span>

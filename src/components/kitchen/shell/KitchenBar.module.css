@@ -140,6 +140,42 @@
   }
 }
 
+/* Admin dashboard: a way out of the kitchen, set apart from its own pages. */
+.adminItem {
+  display: none;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 8px;
+}
+
+.adminLink {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--on-dark) 22%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--on-dark) 6%, transparent);
+  color: var(--on-dark);
+  font: var(--font-meta-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.adminLink:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--ink),
+    0 0 0 4px var(--brand-on-dark);
+}
+
+@media (hover: hover) {
+  .adminLink:hover {
+    border-color: var(--brand-on-dark);
+    color: var(--brand-on-dark);
+  }
+}
+
 /* ---------- Clock, full screen, account ---------- */
 
 .end {
@@ -335,6 +371,13 @@
     border-radius: 0;
   }
 
+  .adminItem {
+    display: flex;
+    margin-left: 12px;
+    padding-left: 20px;
+    border-left: 1px solid color-mix(in srgb, var(--on-dark) 14%, transparent);
+  }
+
   .clock {
     font: 500 22px/28px var(--f-display);
   }
@@ -342,5 +385,9 @@
   .fullscreen {
     display: inline-flex;
     align-items: center;
+  }
+
+  .adminTop {
+    display: none;
   }
 }
