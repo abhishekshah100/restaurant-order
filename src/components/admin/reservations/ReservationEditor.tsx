@@ -42,8 +42,8 @@ export type EditorTarget =
   { kind: 'new'; table?: number } | { kind: 'edit'; reservation: Reservation };
 
 /**
- * New reservation / Change booking: the guest (name, mobile, party size), when (a day of the
- * next two weeks, a time the branch is open, how long to hold the table), the table (free ones
+ * New reservation / Change booking: the guest (name, mobile, party size), when (a day up to
+ * 60 days ahead, a time the branch is open, how long to hold the table), the table (free ones
  * for the party then, the best fit marked) and a note. Checks before sending; a table taken
  * meanwhile says by whom.
  */

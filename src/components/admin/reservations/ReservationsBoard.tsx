@@ -33,8 +33,8 @@ import styles from './ReservationsBoard.module.css';
 const STATE_REFRESH_MS = 30_000;
 
 /**
- * /admin/dashboard/reservations/: the branch's bookings a day at a time. Pick a day of the next
- * two weeks (in the address, ?day=), see it counted (bookings, guests, seated, the next
+ * /admin/dashboard/reservations/: the branch's bookings a day at a time. Pick today, tomorrow
+ * or a day up to 60 days ahead (in the address, ?day=), see it counted (bookings, guests, seated, the next
  * arrival), filter (upcoming, seated, cancelled and no-show, all) and search; a row per booking
  * by time with Seat when the guests can sit. A row opens the booking; New reservation books a
  * table. Read from GET /admin/branches/:branchId/reservations, polled every 15 s.
