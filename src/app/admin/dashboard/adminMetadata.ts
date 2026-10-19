@@ -22,7 +22,8 @@ type AdminPage =
   | 'paymentMethods'
   | 'deliveryZones'
   | 'pickup'
-  | 'branches';
+  | 'branches'
+  | 'services';
 
 /** An admin page's title (common › adminShell.meta); staff pages are never indexed. */
 export async function adminMetadata(page: AdminPage, vars?: Vars): Promise<Metadata> {

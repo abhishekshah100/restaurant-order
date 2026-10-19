@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import type { BranchSettingsResponse } from '@/api/contracts';
+import type { Vars } from '@/api/translator';
 import { useBranchSettings, useContent } from '@/api/hooks';
 import { useUpdateBranchSettings } from '@/api/mutations';
 import { Button, EmptyState, Icon } from '@/components/ui';
@@ -36,6 +37,7 @@ export function SettingsEditor<K extends BranchSettingsSection>({
   title,
   subtitle,
   check,
+  messageVars,
   children,
 }: {
   section: K;
@@ -43,6 +45,8 @@ export function SettingsEditor<K extends BranchSettingsSection>({
   subtitle: string;
   /** The draft's problems (lib/branchSettings), shown in the save bar; Save waits for none. */
   check: (value: BranchSettings[K], data: BranchSettingsResponse) => SettingsError[];
+  /** Values the problems' words take (e.g. the phone's `{dialCode}`). */
+  messageVars?: (value: BranchSettings[K]) => Vars;
   children: (form: SectionForm<K>) => ReactNode;
 }) {
   const t = useContent('common');
@@ -51,7 +55,11 @@ export function SettingsEditor<K extends BranchSettingsSection>({
 
   if (query.data) {
     return (
-      <Editor key={branch.id} {...{ section, title, subtitle, check }} data={query.data}>
+      <Editor
+        key={branch.id}
+        {...{ section, title, subtitle, check, messageVars }}
+        data={query.data}
+      >
         {children}
       </Editor>
     );
@@ -89,6 +97,7 @@ function Editor<K extends BranchSettingsSection>({
   title,
   subtitle,
   check,
+  messageVars,
   data,
   children,
 }: {
@@ -96,6 +105,7 @@ function Editor<K extends BranchSettingsSection>({
   title: string;
   subtitle: string;
   check: (value: BranchSettings[K], data: BranchSettingsResponse) => SettingsError[];
+  messageVars?: (value: BranchSettings[K]) => Vars;
   data: BranchSettingsResponse;
   children: (form: SectionForm<K>) => ReactNode;
 }) {
@@ -136,7 +146,11 @@ function Editor<K extends BranchSettingsSection>({
 
       {dirty && (
         <SaveBar
-          problem={errors.length > 0 ? t(`adminSettings.errors.${errors[0]}`) : undefined}
+          problem={
+            errors.length > 0
+              ? t(`adminSettings.errors.${errors[0]}`, messageVars?.(value))
+              : undefined
+          }
           saving={save.isPending}
           onDiscard={() => setDraft(null)}
           onSave={submit}

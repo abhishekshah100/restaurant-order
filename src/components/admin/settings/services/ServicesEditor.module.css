@@ -1,0 +1,17 @@
+/* Settings › Services: a switch per way to order, with where it's set up in more detail. */
+
+.services {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.service {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.service > :first-child {
+  justify-self: stretch;
+}

@@ -9,7 +9,15 @@ import { settingsPath } from './adminNav';
 
 export type SettingsGroupId = 'branch' | 'money' | 'ordering' | 'restaurant';
 export type SettingsSectionId =
-  'details' | 'hours' | 'floorPlan' | 'tax' | 'payments' | 'delivery' | 'pickup' | 'branches';
+  | 'details'
+  | 'hours'
+  | 'floorPlan'
+  | 'tax'
+  | 'payments'
+  | 'services'
+  | 'delivery'
+  | 'pickup'
+  | 'branches';
 
 export interface SettingsSection {
   id: SettingsSectionId;
@@ -41,6 +49,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
   {
     id: 'ordering',
     sections: [
+      { id: 'services', href: settingsPath('services'), icon: 'cutlery' },
       { id: 'delivery', href: settingsPath('delivery'), icon: 'scooter' },
       { id: 'pickup', href: settingsPath('pickup'), icon: 'bag' },
     ],

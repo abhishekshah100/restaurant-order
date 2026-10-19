@@ -32,11 +32,6 @@ export interface MockSeed {
   branches(): Promise<Branch[]>;
   /** The same branches before today's hours and the status: what staff saved. */
   branchConfigs(): Promise<Branch[]>;
-  /**
-   * The published branch one builds on: its own entry in branches.json, or for a branch staff
-   * added, the one it was copied from (its menu, promotions, floor plan and payment methods).
-   */
-  baseBranch(branchId: string): Promise<Branch | undefined>;
   defaultBranchId(): Promise<string>;
   /** GET /branches/:id/menu: the dummy JSON with staff changes on top. */
   menuData(branchId: string): Promise<MenuData>;
@@ -159,8 +154,6 @@ export function querySeed(
   return {
     branches,
     branchConfigs,
-    baseBranch: async (branchId) =>
-      (await client.ensureQueryData(branchesBaseQuery())).find((b) => b.id === sourceOf(branchId)),
     defaultBranchId: async () => {
       const [{ defaultBranchId }, configs] = await Promise.all([
         client.ensureQueryData(restaurantQuery()),

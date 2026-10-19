@@ -5,6 +5,7 @@ import type {
   BranchSettings,
   BranchSettingsChoices,
   DeliverySettings,
+  ServicesSettings,
   PaymentChannelSettings,
   PaymentChoices,
   PaymentSettings,
@@ -12,6 +13,16 @@ import type {
   TaxSettings,
 } from '@/types/branchSettings';
 import { PAYMENT_CHANNELS } from '@/types/branchSettings';
+import {
+  CURRENCIES,
+  LOCALES,
+  isMasterValue,
+  isTimeZone,
+  type CurrencyCode,
+  type LocaleCode,
+} from '@/config/masters';
+import { REGION_PRESETS } from '@/config/regions';
+import { ORDER_MODES } from './fulfilment';
 import { isTime, openMinutes, toMinutes } from './branchHours';
 
 /*
@@ -62,6 +73,12 @@ export type SettingsError =
   | 'phoneRegion'
   | 'wifiLong'
   | 'tableLocationLong'
+  | 'country'
+  | 'timezone'
+  | 'locale'
+  | 'currency'
+  | 'noService'
+  | 'deliveryNeedsZones'
   | 'noOpenDay'
   | 'dayTime'
   | 'dayOrder'
@@ -99,8 +116,33 @@ export const cleanPhone = (phone: string) => phone.replace(/[\s()-]/g, '');
 
 export function detailsOf(branch: Branch): BranchDetails {
   const { name, shortName, city, address, phone, wifiName, tableLocation } = branch;
-  return { name, shortName, city, address, phone, wifiName, tableLocation };
+  const { country, timezone, locale } = branch;
+  return {
+    name,
+    shortName,
+    city,
+    address,
+    phone,
+    wifiName,
+    tableLocation,
+    country,
+    timezone,
+    locale,
+    currency: branch.currency.code,
+  };
 }
+
+export function servicesOf({ modes }: Pick<Branch, 'modes'>): ServicesSettings {
+  return {
+    dineIn: modes.dineIn.enabled,
+    takeaway: modes.takeaway.enabled,
+    delivery: modes.delivery.enabled,
+  };
+}
+
+/** The country code a mobile number there starts with: "+977". */
+export const dialCodeOf = (country: string): string =>
+  isMasterValue('countries', country) ? REGION_PRESETS[country].mobile.dialCode : '';
 
 export function taxOf({ tax }: Pick<Branch, 'tax'>): TaxSettings {
   return {
@@ -147,6 +189,7 @@ export function pickupOf({ modes }: Pick<Branch, 'modes'>): PickupSettings {
 export function settingsOf(branch: Branch): BranchSettings {
   return {
     details: detailsOf(branch),
+    services: servicesOf(branch),
     hours: structuredClone(branch.schedule),
     tax: taxOf(branch),
     payments: paymentsOf(branch),
@@ -156,18 +199,19 @@ export function settingsOf(branch: Branch): BranchSettings {
 }
 
 /**
- * The methods a branch can offer on each screen: the ones its region was set up with (the
- * published branch, or the one a new branch was copied from), so labels always match.
+ * The methods a branch can offer on each screen: the ones its country offers (config/regions),
+ * so labels always match.
  */
-export function paymentChoicesOf(base: Pick<Branch, 'payments' | 'modes'>): PaymentChoices {
+export function paymentChoicesFor(country: Branch['country']): PaymentChoices {
+  const { payments } = REGION_PRESETS[country];
   const plain = <K extends string>(options: readonly PaymentOption<K>[]) =>
     options.map(({ id, labelKey }) => ({ id, labelKey }));
   return {
-    checkout: plain(base.payments.checkout),
-    bill: plain(base.payments.bill),
-    takeaway: plain(base.modes.takeaway.payments),
-    delivery: plain(base.modes.delivery.payments),
-    atTable: [...base.payments.atTable],
+    checkout: plain(payments.checkout),
+    bill: plain(payments.bill),
+    takeaway: plain(payments.takeaway),
+    delivery: plain(payments.delivery),
+    atTable: [...payments.atTable],
   };
 }
 
@@ -196,15 +240,16 @@ function textErrors(
 }
 
 /**
- * Problems with a branch's details. `dialCode`: the region's ("+977"), which the phone must
- * start with; `otherShortNames`: the other branches', which the short name mustn't repeat.
+ * Problems with a branch's details: the phone must start with its country's code ("+977");
+ * `otherShortNames` (the other branches') mustn't include its short name; the country, time
+ * zone, locale and currency must be ones the app knows.
  */
 export function detailsErrors(
   d: BranchDetails,
-  dialCode: string,
   otherShortNames: readonly string[] = [],
 ): SettingsError[] {
   const phone = cleanPhone(d.phone);
+  const dialCode = dialCodeOf(d.country);
   const taken = otherShortNames.some(
     (n) => n.trim().toLowerCase() === d.shortName.trim().toLowerCase(),
   );
@@ -221,6 +266,18 @@ export function detailsErrors(
         : []),
     ...textErrors(d.wifiName, LIMITS.wifiName, null, 'wifiLong'),
     ...textErrors(d.tableLocation, LIMITS.tableLocation, null, 'tableLocationLong'),
+    ...(!dialCode ? (['country'] as const) : []),
+    ...(!isTimeZone(d.timezone) ? (['timezone'] as const) : []),
+    ...(!isMasterValue('locales', d.locale) ? (['locale'] as const) : []),
+    ...(!isMasterValue('currencies', d.currency) ? (['currency'] as const) : []),
+  ];
+}
+
+/** At least one way to order; delivery only with a zone to deliver to. */
+export function servicesErrors(s: ServicesSettings, deliveryZones: number): SettingsError[] {
+  return [
+    ...(!ORDER_MODES.some((m) => s[m]) ? (['noService'] as const) : []),
+    ...(s.delivery && deliveryZones === 0 ? (['deliveryNeedsZones'] as const) : []),
   ];
 }
 
@@ -342,11 +399,73 @@ export function pickupErrors(p: PickupSettings): SettingsError[] {
 export const mapUrlFor = (address: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.trim())}`;
 
+/**
+ * The branch in a country, time zone, locale and currency. Another country brings its phone
+ * rules, taxes and payment methods (config/regions); prices keep their numbers.
+ */
+export function withRegion(
+  branch: Branch,
+  {
+    country,
+    timezone,
+    locale,
+    currency,
+  }: Pick<BranchDetails, 'country' | 'timezone' | 'locale' | 'currency'>,
+): Branch {
+  const { localeFallback: _fallback, ...rest } = branch;
+  const money = CURRENCIES[currency as CurrencyCode];
+  const fallback: string | undefined = (LOCALES[locale as LocaleCode] as { fallback?: string })
+    .fallback;
+  let next: Branch = {
+    ...rest,
+    country,
+    timezone,
+    locale,
+    ...(fallback ? { localeFallback: fallback } : {}),
+    currency: {
+      code: currency,
+      symbol: money.symbol,
+      minorUnit: money.minorUnit,
+      nameKey: money.nameKey,
+    },
+  };
+  if (country !== branch.country) {
+    const preset = structuredClone(REGION_PRESETS[country]);
+    next = {
+      ...next,
+      mobile: preset.mobile,
+      tax: preset.tax,
+      payments: {
+        checkout: preset.payments.checkout,
+        bill: preset.payments.bill,
+        atTable: preset.payments.atTable,
+      },
+      modes: {
+        ...next.modes,
+        takeaway: { ...next.modes.takeaway, payments: preset.payments.takeaway },
+        delivery: { ...next.modes.delivery, payments: preset.payments.delivery },
+      },
+    };
+  }
+  return next;
+}
+
+export function withServices(branch: Branch, s: ServicesSettings): Branch {
+  return {
+    ...branch,
+    modes: {
+      dineIn: { ...branch.modes.dineIn, enabled: s.dineIn },
+      takeaway: { ...branch.modes.takeaway, enabled: s.takeaway },
+      delivery: { ...branch.modes.delivery, enabled: s.delivery },
+    },
+  };
+}
+
 export function withDetails(branch: Branch, d: BranchDetails): Branch {
   const phone = cleanPhone(d.phone);
   const address = trimmed(d.address);
   return {
-    ...branch,
+    ...withRegion(branch, d),
     name: trimmed(d.name),
     shortName: trimmed(d.shortName),
     city: trimmed(d.city),
@@ -491,6 +610,7 @@ export function applySettings(
 ): Branch {
   let next = branch;
   if (patch.details) next = withDetails(next, patch.details);
+  if (patch.services) next = withServices(next, patch.services);
   if (patch.hours) next = withHours(next, patch.hours);
   if (patch.tax) next = withTax(next, patch.tax);
   if (patch.payments) next = withPayments(next, patch.payments, choices.payments);

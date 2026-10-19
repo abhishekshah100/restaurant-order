@@ -15,7 +15,7 @@ import {
   PAYMENT_REQUEST_STATUSES,
   PAYMENT_STATUSES,
 } from './payments';
-import { BRANCH_STATUSES, COUNTRY_CODES, WEEKDAYS } from './regions';
+import { BRANCH_STATUSES, COUNTRY_CODES, CURRENCY_CODES, LOCALE_CODES, WEEKDAYS } from './regions';
 import { BILL_SCOPES, CUSTOMER_REQUEST_TYPES, RESERVATION_STATUSES } from './service';
 import { TAX_BASES, TAX_TYPE_CODES } from './tax';
 import { UNIT_CODES } from './units';
@@ -65,6 +65,8 @@ export const MASTERS = {
   notificationTypes: NOTIFICATION_TYPE_CODES,
   branchStatuses: BRANCH_STATUSES,
   countries: COUNTRY_CODES,
+  locales: LOCALE_CODES,
+  currencies: CURRENCY_CODES,
   weekdays: WEEKDAYS,
 } as const;
 

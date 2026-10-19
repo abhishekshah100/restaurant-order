@@ -3,7 +3,9 @@ import {
   deliveryErrors,
   detailsErrors,
   hoursErrors,
-  paymentChoicesOf,
+  paymentChoicesFor,
+  servicesErrors,
+  servicesOf,
   paymentErrors,
   pickupErrors,
   settingsOf,
@@ -25,6 +27,7 @@ import type {
   PaymentChannelSettings,
   PaymentSettings,
   PickupSettings,
+  ServicesSettings,
   TaxSettings,
 } from '@/types/branchSettings';
 import { PAYMENT_CHANNELS } from '@/types/branchSettings';
@@ -59,6 +62,10 @@ function detailsBody(v: unknown): BranchDetails {
     phone: str(d.phone),
     wifiName: str(d.wifiName),
     tableLocation: str(d.tableLocation),
+    country: str(d.country) as BranchDetails['country'],
+    timezone: str(d.timezone),
+    locale: str(d.locale),
+    currency: str(d.currency),
   };
 }
 
@@ -169,8 +176,14 @@ async function configOf(ctx: MockContext, branchId: string): Promise<Branch> {
   return (await ctx.seed.branchConfigs()).find((b) => b.id === branchId) ?? fail(404, 'not_found');
 }
 
-async function choicesOf(ctx: MockContext, config: Branch): Promise<BranchSettingsChoices> {
-  return { payments: paymentChoicesOf((await ctx.seed.baseBranch(config.id)) ?? config) };
+/** What a branch's settings may choose from: its country's payment methods. */
+const choicesOf = (branch: Branch): BranchSettingsChoices => ({
+  payments: paymentChoicesFor(branch.country),
+});
+
+function servicesBody(v: unknown): ServicesSettings {
+  const s = obj(v);
+  return { dineIn: bool(s.dineIn), takeaway: bool(s.takeaway), delivery: bool(s.delivery) };
 }
 
 /** The short names of every other branch, which a branch's mustn't repeat. */
@@ -191,7 +204,7 @@ export const branchSettings: Handler = async (ctx, { params, headers }) => {
   const config = await configOf(ctx, branch.id);
   const body: BranchSettingsResponse = {
     settings: settingsOf(config),
-    choices: await choicesOf(ctx, config),
+    choices: choicesOf(config),
   };
   return ok(body);
 };
@@ -200,47 +213,63 @@ export const branchSettings: Handler = async (ctx, { params, headers }) => {
 export const updateBranchSettings: Handler = async (ctx, { params, body, headers }) => {
   const branch = await adminBranch(ctx, headers, params.branchId);
   const config = await configOf(ctx, branch.id);
-  const choices = await choicesOf(ctx, config);
   const raw = objectBody(body);
   const keys = Object.keys(raw);
-  const known = new Set<string>(['details', 'hours', 'tax', 'payments', 'delivery', 'pickup']);
+  const known = new Set<string>([
+    'details',
+    'services',
+    'hours',
+    'tax',
+    'payments',
+    'delivery',
+    'pickup',
+  ]);
   if (keys.length === 0 || keys.some((k) => !known.has(k))) bad();
 
-  const patch: Partial<BranchSettings> = {};
+  // Each section is checked against the branch as the ones before it left it (another
+  // country brings other taxes and payment methods).
+  let next = config;
+  const apply = (patch: Partial<BranchSettings>) => {
+    next = applySettings(next, patch, choicesOf(next));
+  };
   if (raw.details !== undefined) {
-    patch.details = detailsBody(raw.details);
-    const errors = detailsErrors(
-      patch.details,
-      config.mobile.dialCode,
-      await otherShortNames(ctx, config.id),
-    );
-    if (errors.length > 0) bad();
+    const details = detailsBody(raw.details);
+    if (detailsErrors(details, await otherShortNames(ctx, config.id)).length > 0) bad();
+    apply({ details });
   }
   if (raw.hours !== undefined) {
-    patch.hours = hoursBody(raw.hours);
-    if (hoursErrors(patch.hours).length > 0) bad();
+    const hours = hoursBody(raw.hours);
+    if (hoursErrors(hours).length > 0) bad();
+    apply({ hours });
   }
   if (raw.tax !== undefined) {
-    const current = taxOf(config);
-    patch.tax = taxBody(raw.tax, current);
-    if (taxErrors(patch.tax, current).length > 0) bad();
+    const current = taxOf(next);
+    const tax = taxBody(raw.tax, current);
+    if (taxErrors(tax, current).length > 0) bad();
+    apply({ tax });
   }
   if (raw.payments !== undefined) {
-    patch.payments = paymentsBody(raw.payments);
-    if (paymentErrors(patch.payments, choices.payments).length > 0) bad();
+    const payments = paymentsBody(raw.payments);
+    if (paymentErrors(payments, choicesOf(next).payments).length > 0) bad();
+    apply({ payments });
   }
   if (raw.delivery !== undefined) {
-    patch.delivery = deliveryBody(raw.delivery);
-    if (deliveryErrors(patch.delivery).length > 0) bad();
+    const delivery = deliveryBody(raw.delivery);
+    if (deliveryErrors(delivery).length > 0) bad();
+    apply({ delivery });
   }
   if (raw.pickup !== undefined) {
-    patch.pickup = pickupBody(raw.pickup);
-    if (pickupErrors(patch.pickup).length > 0) bad();
+    const pickup = pickupBody(raw.pickup);
+    if (pickupErrors(pickup).length > 0) bad();
+    apply({ pickup });
+  }
+  if (raw.services !== undefined) {
+    apply({ services: servicesBody(raw.services) });
+    if (servicesErrors(servicesOf(next), next.modes.delivery.zones.length).length > 0) bad();
   }
 
-  const next = applySettings(config, patch, choices);
   saveBranch(ctx, next);
-  const response: BranchSettingsResponse = { settings: settingsOf(next), choices };
+  const response: BranchSettingsResponse = { settings: settingsOf(next), choices: choicesOf(next) };
   return ok(response);
 };
 
@@ -257,7 +286,6 @@ export const createBranch: Handler = async (ctx, { body, headers }) => {
   }
   const errors = detailsErrors(
     details,
-    source.mobile.dialCode,
     configs.map((b) => b.shortName),
   );
   if (errors.length > 0) bad();

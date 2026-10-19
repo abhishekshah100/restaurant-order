@@ -9,6 +9,7 @@ import type { DeliverySettings } from '@/types/branchSettings';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { NumberField } from '../shared/NumberField';
 import { SettingsCard, SettingsEditor, SettingsNote, ToggleRow } from '../shared/SettingsEditor';
+import { ServiceStatus } from '../shared/ServiceStatus';
 import { ZoneDialog } from './ZoneDialog';
 import styles from './DeliveryZonesEditor.module.css';
 
@@ -61,18 +62,8 @@ function DeliveryForm({
 
   return (
     <>
+      <ServiceStatus mode="delivery" on={value.enabled} />
       <SettingsCard title={t('adminSettings.delivery.service')}>
-        <ToggleRow
-          id="delivery-on"
-          label={t('adminSettings.delivery.enabled')}
-          hint={
-            value.enabled
-              ? t('adminSettings.delivery.enabledOn')
-              : t('adminSettings.delivery.enabledOff')
-          }
-          checked={value.enabled}
-          onChange={(enabled) => set({ ...value, enabled })}
-        />
         <div className={styles.rules}>
           <NumberField
             id="delivery-prep"

@@ -8,7 +8,8 @@ import { pickupOptions } from '@/lib/fulfilment';
 import type { PickupSettings } from '@/types/branchSettings';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { NumberField } from '../shared/NumberField';
-import { SettingsCard, SettingsEditor, SettingsNote, ToggleRow } from '../shared/SettingsEditor';
+import { SettingsCard, SettingsEditor, ToggleRow } from '../shared/SettingsEditor';
+import { ServiceStatus } from '../shared/ServiceStatus';
 import styles from './PickupEditor.module.css';
 
 /** The preview lists this many of today's slots. */
@@ -32,18 +33,8 @@ export function PickupEditor() {
     >
       {({ value, set, errors }) => (
         <>
+          <ServiceStatus mode="takeaway" on={value.enabled} />
           <SettingsCard title={t('adminSettings.pickup.service')}>
-            <ToggleRow
-              id="pickup-on"
-              label={t('adminSettings.pickup.enabled')}
-              hint={
-                value.enabled
-                  ? t('adminSettings.pickup.enabledOn')
-                  : t('adminSettings.pickup.enabledOff')
-              }
-              checked={value.enabled}
-              onChange={(enabled) => set({ ...value, enabled })}
-            />
             <div className={styles.rules}>
               <NumberField
                 id="pickup-prep"
@@ -99,7 +90,6 @@ export function PickupEditor() {
           </SettingsCard>
 
           {errors.length === 0 && value.enabled && <SlotPreview value={value} />}
-          {!value.enabled && <SettingsNote>{t('adminSettings.pickup.offNote')}</SettingsNote>}
         </>
       )}
     </SettingsEditor>

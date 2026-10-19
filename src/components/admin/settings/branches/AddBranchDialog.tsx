@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useBranches, useContent } from '@/api/hooks';
 import { useCreateBranch } from '@/api/mutations';
 import { Button, Dialog, Input, Select, Textarea } from '@/components/ui';
-import { LIMITS, detailsErrors, type SettingsError } from '@/lib/branchSettings';
+import { COUNTRY_CODES, COUNTRY_DEFAULTS } from '@/config/masters';
+import { LIMITS, detailsErrors, dialCodeOf, type SettingsError } from '@/lib/branchSettings';
+import type { Branch } from '@/types/branch';
 import type { AdminBranch } from '@/types/admin';
 import type { BranchDetails } from '@/types/branchSettings';
 import styles from './BranchesManager.module.css';
@@ -24,6 +26,19 @@ const FIELD_OF: Partial<Record<SettingsError, Field>> = {
   phoneInvalid: 'phone',
   phoneRegion: 'phone',
 };
+
+/** A branch's region (the source's, for a copy), else India's defaults. */
+const regionOf = (
+  branch: Branch | undefined,
+): Pick<BranchDetails, 'country' | 'timezone' | 'locale' | 'currency'> =>
+  branch
+    ? {
+        country: branch.country,
+        timezone: branch.timezone,
+        locale: branch.locale,
+        currency: branch.currency.code,
+      }
+    : { country: 'IN', ...COUNTRY_DEFAULTS.IN };
 
 /**
  * Adding a branch: its name, short name, city, address and phone, and the branch it starts as a
@@ -46,21 +61,28 @@ export function AddBranchDialog({
   const create = useCreateBranch();
   const [copyFrom, setCopyFrom] = useState(initialSource);
   const source = all.find((b) => b.id === copyFrom);
-  const dialCode = source?.mobile.dialCode ?? '';
-  const [details, setDetails] = useState<BranchDetails>({
+  const [details, setDetails] = useState<BranchDetails>(() => ({
     name: '',
     shortName: '',
     city: source?.city ?? '',
     address: '',
-    phone: dialCode,
+    phone: source?.mobile.dialCode ?? '',
     wifiName: '',
     tableLocation: '',
-  });
+    ...regionOf(source),
+  }));
+  const dialCode = dialCodeOf(details.country);
+  /** The region changes: the phone's country code follows when it's all that's typed. */
+  const moveTo = (region: Pick<BranchDetails, 'country' | 'timezone' | 'locale' | 'currency'>) =>
+    setDetails({
+      ...details,
+      ...region,
+      phone: details.phone.trim() === dialCode ? dialCodeOf(region.country) : details.phone,
+    });
   const [tried, setTried] = useState(false);
 
   const errors = detailsErrors(
     details,
-    dialCode,
     all.map((b) => b.shortName),
   );
   const errorFor = (field: Field) => {
@@ -102,17 +124,29 @@ export function AddBranchDialog({
           hint={t('adminSettings.addBranch.copyFromHint')}
           value={copyFrom}
           onChange={(event) => {
-            const next = all.find((b) => b.id === event.target.value);
             setCopyFrom(event.target.value);
-            // The phone's dial code follows the region.
-            if (next && details.phone.trim() === dialCode) {
-              setDetails({ ...details, phone: next.mobile.dialCode });
-            }
+            moveTo(regionOf(all.find((b) => b.id === event.target.value)));
           }}
         >
           {branches.map((b) => (
             <option key={b.id} value={b.id}>
               {t('adminSettings.addBranch.copyOption', { branch: b.shortName, city: b.city })}
+            </option>
+          ))}
+        </Select>
+        <Select
+          id="new-branch-country"
+          label={t('adminSettings.details.country')}
+          hint={t('adminSettings.addBranch.countryHint')}
+          value={details.country}
+          onChange={(event) => {
+            const country = event.target.value as BranchDetails['country'];
+            moveTo({ country, ...COUNTRY_DEFAULTS[country] });
+          }}
+        >
+          {COUNTRY_CODES.map((code) => (
+            <option key={code} value={code}>
+              {t(`countryNames.${code}`)}
             </option>
           ))}
         </Select>

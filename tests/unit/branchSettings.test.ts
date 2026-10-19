@@ -5,7 +5,11 @@ import {
   detailsErrors,
   detailsOf,
   hoursErrors,
-  paymentChoicesOf,
+  paymentChoicesFor,
+  servicesErrors,
+  servicesOf,
+  withRegion,
+  withServices,
   paymentErrors,
   paymentsOf,
   pickupErrors,
@@ -160,18 +164,18 @@ describe('opening hours (lib/branchHours)', () => {
 describe('branch details', () => {
   it("needs the names, address and a phone with the region's country code", () => {
     const details = detailsOf(india);
-    expect(detailsErrors(details, '+91')).toEqual([]);
-    expect(detailsErrors({ ...details, name: ' ', city: '' }, '+91')).toEqual([
+    expect(detailsErrors(details)).toEqual([]);
+    expect(detailsErrors({ ...details, name: ' ', city: '' })).toEqual([
       'nameRequired',
       'cityRequired',
     ]);
-    expect(detailsErrors({ ...details, phone: '+977 9852024631' }, '+91')).toEqual(['phoneRegion']);
-    expect(detailsErrors({ ...details, phone: '98263' }, '+91')).toEqual(['phoneInvalid']);
-    expect(detailsErrors(details, '+91', ['Thamel', details.shortName.toUpperCase()])).toEqual([
+    expect(detailsErrors({ ...details, phone: '+977 9852024631' })).toEqual(['phoneRegion']);
+    expect(detailsErrors({ ...details, phone: '98263' })).toEqual(['phoneInvalid']);
+    expect(detailsErrors(details, ['Thamel', details.shortName.toUpperCase()])).toEqual([
       'shortNameTaken',
     ]);
     // Wi-Fi and where the tables are may be left empty.
-    expect(detailsErrors({ ...details, wifiName: '', tableLocation: '' }, '+91')).toEqual([]);
+    expect(detailsErrors({ ...details, wifiName: '', tableLocation: '' })).toEqual([]);
   });
 
   it('writes them back tidied, with the phone link, and a new map link for a new address', () => {
@@ -244,7 +248,7 @@ describe('tax and service charge', () => {
 
 describe('payment methods', () => {
   it("offers the region's methods, in staff's order, with the one marked Fastest", () => {
-    const choices = paymentChoicesOf(nepal);
+    const choices = paymentChoicesFor('NP');
     const payments = paymentsOf(nepal);
     expect(paymentErrors(payments, choices)).toEqual([]);
 
@@ -269,7 +273,7 @@ describe('payment methods', () => {
   });
 
   it('needs a method on every screen, from the region, and Fastest among them', () => {
-    const choices = paymentChoicesOf(india);
+    const choices = paymentChoicesFor('IN');
     const payments = paymentsOf(india);
     expect(
       paymentErrors({ ...payments, bill: { methods: [], recommended: null } }, choices),
@@ -321,6 +325,7 @@ it('reads every section off a branch and the branch data agrees with its week', 
   const settings = settingsOf(india);
   expect(Object.keys(settings)).toEqual([
     'details',
+    'services',
     'hours',
     'tax',
     'payments',
@@ -336,4 +341,55 @@ it('reads every section off a branch and the branch data agrees with its week', 
     expect(today.serviceWindows).toEqual(branch.serviceWindows);
     expect(today.lastOrdersNote).toBe(branch.lastOrdersNote);
   }
+});
+
+describe('region and services', () => {
+  it('moves a branch to another country with its phone rules, taxes and payment methods', () => {
+    const moved = withRegion(india, {
+      country: 'NP',
+      timezone: 'Asia/Kathmandu',
+      locale: 'en-NP',
+      currency: 'NPR',
+    });
+    expect(moved.mobile).toEqual(nepal.mobile);
+    expect(moved.tax).toEqual(nepal.tax);
+    expect(moved.payments).toEqual(nepal.payments);
+    expect(moved.modes.delivery.payments).toEqual(nepal.modes.delivery.payments);
+    expect(moved.localeFallback).toBe('en-IN');
+    expect(moved.currency).toEqual(nepal.currency);
+    // Its zones and opening hours stay.
+    expect(moved.modes.delivery.zones).toEqual(india.modes.delivery.zones);
+
+    // Same country: only the time zone, locale and currency change.
+    const dollars = withRegion(india, {
+      country: 'IN',
+      timezone: 'Asia/Kolkata',
+      locale: 'en-US',
+      currency: 'USD',
+    });
+    expect(dollars.tax).toEqual(india.tax);
+    expect(dollars.localeFallback).toBeUndefined();
+    expect(dollars.currency).toEqual({ code: 'USD', symbol: '$', minorUnit: 100, nameKey: 'usd' });
+  });
+
+  it("checks the region, and the phone against the new country's code", () => {
+    const details = detailsOf(india);
+    expect(detailsErrors({ ...details, country: 'NP' })).toEqual(['phoneRegion']);
+    expect(detailsErrors({ ...details, timezone: 'Mars/Olympus' })).toEqual(['timezone']);
+    expect(detailsErrors({ ...details, locale: 'fr-FR', currency: 'XYZ' })).toEqual([
+      'locale',
+      'currency',
+    ]);
+  });
+
+  it('keeps at least one service, and delivery only with a zone', () => {
+    const services = servicesOf(india);
+    expect(services).toEqual({ dineIn: true, takeaway: true, delivery: true });
+    expect(servicesErrors(services, 3)).toEqual([]);
+    expect(servicesErrors({ dineIn: false, takeaway: false, delivery: false }, 3)).toEqual([
+      'noService',
+    ]);
+    expect(servicesErrors({ ...services, delivery: true }, 0)).toEqual(['deliveryNeedsZones']);
+    expect(withServices(india, { ...services, dineIn: false }).modes.dineIn.enabled).toBe(false);
+  });
 });

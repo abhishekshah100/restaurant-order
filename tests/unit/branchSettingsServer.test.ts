@@ -163,6 +163,48 @@ describe('GET and PATCH /admin/branches/:branchId/settings (mock)', () => {
   });
 });
 
+describe('region and services on the mock server', () => {
+  it('moves a branch to Nepal: guests get its rules, the choices follow, prices keep numbers', async () => {
+    const { settings: s } = await settings();
+    const details = {
+      ...s.details,
+      country: 'NP',
+      timezone: 'Asia/Kathmandu',
+      locale: 'en-NP',
+      currency: 'NPR',
+      phone: '+9779852024631',
+    };
+    const res = await save({ details });
+    expect(res.status).toBe(200);
+    const after = res.body as BranchSettingsResponse;
+    expect(after.choices.payments.checkout.map((c) => c.id)).toContain('esewa');
+    expect(after.settings.tax.lines.map((l) => l.id)).toEqual(['vat']);
+    const branch = await guestBranch();
+    expect(branch).toMatchObject({ country: 'NP', timezone: 'Asia/Kathmandu', locale: 'en-NP' });
+    expect(branch.currency.code).toBe('NPR');
+    expect(branch.mobile.dialCode).toBe('+977');
+    // The phone must carry the new country's code.
+    expect((await save({ details: { ...details, phone: '+919811122233' } })).status).toBe(400);
+  });
+
+  it('switches services, never all of them', async () => {
+    const { settings: s } = await settings();
+    expect(s.services).toEqual({ dineIn: true, takeaway: true, delivery: true });
+    expect((await save({ services: { ...s.services, dineIn: false } })).status).toBe(200);
+    expect((await guestBranch()).modes.dineIn.enabled).toBe(false);
+    // A table's QR code no longer opens a dine-in visit.
+    const session = await call('POST', 'sessions', {
+      branchId: 'blr-indiranagar',
+      mode: 'dineIn',
+      table: 5,
+    });
+    expect(session.status).toBe(400);
+    expect(
+      (await save({ services: { dineIn: false, takeaway: false, delivery: false } })).status,
+    ).toBe(400);
+  });
+});
+
 describe('POST and DELETE /admin/branches (mock)', () => {
   const details: BranchDetails = {
     name: 'The Olive Table — Sector 29',
@@ -172,6 +214,10 @@ describe('POST and DELETE /admin/branches (mock)', () => {
     phone: '+91 98111 22233',
     wifiName: '',
     tableLocation: '',
+    country: 'IN',
+    timezone: 'Asia/Kolkata',
+    locale: 'en-IN',
+    currency: 'INR',
   };
   const add = (body: unknown) => call('POST', 'admin/branches', body, admin);
 
@@ -223,7 +269,9 @@ describe('POST and DELETE /admin/branches (mock)', () => {
     expect(
       await status({ details: { ...details, shortName: 'Thamel' }, copyFrom: 'blr-indiranagar' }),
     ).toBe(400);
-    expect(await status({ details, copyFrom: 'ktm-thamel' })).toBe(400);
+    expect(await status({ details: { ...details, country: 'NP' }, copyFrom: 'ktm-thamel' })).toBe(
+      400,
+    );
     expect(await status({ details, copyFrom: 'nowhere' })).toBe(400);
     expect((await call('POST', 'admin/branches', { details, copyFrom: 'ktm-thamel' })).status).toBe(
       401,

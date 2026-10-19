@@ -25,7 +25,11 @@
   },
   "currencyNames": {
     "inr": "rupees",
-    "npr": "Nepali rupees"
+    "npr": "Nepali rupees",
+    "usd": "US dollars",
+    "eur": "euros",
+    "gbp": "pounds",
+    "aed": "dirhams"
   },
   "paymentMethods": {
     "online": "UPI",
@@ -254,7 +258,8 @@
       "paymentMethods": "Payment methods · Settings · Admin",
       "deliveryZones": "Delivery zones · Settings · Admin",
       "pickup": "Pickup · Settings · Admin",
-      "branches": "Branches · Settings · Admin"
+      "branches": "Branches · Settings · Admin",
+      "services": "Services · Settings · Admin"
     },
     "loading": "Loading your workspace",
     "descriptor": "Admin",
@@ -1457,7 +1462,7 @@
     "groups": {
       "branch": "This branch",
       "money": "Money",
-      "ordering": "Takeaway & delivery",
+      "ordering": "Ordering",
       "restaurant": "All branches"
     },
     "sections": {
@@ -1504,6 +1509,12 @@
         "title": "Branches",
         "description": "Every branch you manage: add a new one or remove one.",
         "summary": "{branches}"
+      },
+      "services": {
+        "title": "Services",
+        "description": "Dine-in, takeaway and delivery: which ones guests can use.",
+        "summary": "{modes}",
+        "none": "No services on"
       }
     },
     "open": "Manage",
@@ -1709,7 +1720,13 @@
       "distance": "Distance is 1 to 100 km, or leave it empty.",
       "slotMinutes": "Choose how far apart pickup slots are.",
       "lastBranch": "This is your only branch. Add another branch before removing it.",
-      "branchInUse": "This branch has orders today still to finish or pay. Settle them, then remove it."
+      "branchInUse": "This branch has orders today still to finish or pay. Settle them, then remove it.",
+      "country": "Choose the branch's country.",
+      "timezone": "Choose a time zone from the list, e.g. Asia/Kolkata.",
+      "locale": "Choose how numbers and times are written.",
+      "currency": "Choose a currency.",
+      "noService": "Keep at least one way to order switched on.",
+      "deliveryNeedsZones": "Add a delivery zone before switching delivery on."
     },
     "details": {
       "subtitle": "Who and where this branch is. Guests see these on the start screen, the welcome screen and the Help page.",
@@ -1731,12 +1748,18 @@
       "tableLocationHint": "Shown on the welcome screen. Separate parts with ·",
       "tableLocationPlaceholder": "e.g. Ground floor · Garden side",
       "region": "Region",
-      "regionHint": "Set when the branch was opened: prices, times and phone numbers follow it.",
+      "regionHint": "Prices, times and phone numbers follow these.",
       "country": "Country",
       "currency": "Currency",
-      "currencyValue": "{code} ({symbol})",
       "timezone": "Time zone",
-      "dialCode": "Country code"
+      "dialCode": "Country code",
+      "currencyOption": "{code} · {name} ({symbol})",
+      "localeHint": "How numbers, prices and times are written. Example: {example}",
+      "timezoneHint": "Today's hours, orders and reports follow it. Local time now: {time}",
+      "countryChanged": "Moving the branch to {country} switches its phone number rules, taxes and payment methods to {country}'s when you save. Check Tax & service charge and Payment methods afterwards; delivery areas stay as they are.",
+      "currencyChanged": "Menu prices keep their numbers in the new currency. Change them on the Menu page if they should be converted.",
+      "locale": "Number and time format",
+      "timezoneSearch": "Type a city or region to find it, e.g. Kathmandu."
     },
     "hours": {
       "subtitle": "When this branch is open. Guests see today's hours; on a closed day the branch shows as closed until it next opens.",
@@ -1835,10 +1858,7 @@
     },
     "delivery": {
       "subtitle": "Where this branch delivers and what it costs. Guests pick their area at checkout.",
-      "service": "Delivery",
-      "enabled": "Deliver from this branch",
-      "enabledOn": "Guests can choose delivery on the start screen.",
-      "enabledOff": "Guests can't order delivery from this branch.",
+      "service": "Delivery rules",
       "prepMinutes": "Kitchen time (minutes)",
       "prepHint": "Before the rider leaves with the order.",
       "maxDistance": "Furthest delivery (km)",
@@ -1886,10 +1906,7 @@
     },
     "pickup": {
       "subtitle": "Takeaway at this branch: guests order ahead and collect at the counter.",
-      "service": "Takeaway",
-      "enabled": "Take takeaway orders",
-      "enabledOn": "Guests can choose takeaway on the start screen.",
-      "enabledOff": "Guests can't order takeaway from this branch.",
+      "service": "Takeaway rules",
       "prepMinutes": "Kitchen time (minutes)",
       "prepHint": "\"As soon as possible\" is ready this long after ordering.",
       "minOrder": "Minimum order ({symbol})",
@@ -1905,8 +1922,7 @@
       "previewHint": "What a guest ordering now would see. Open today {hours}.",
       "asapAt": "As soon as possible · {time}",
       "more": "+{count} more",
-      "noneToday": "No pickup times left today.",
-      "offNote": "Takeaway is off, so guests don't see pickup times."
+      "noneToday": "No pickup times left today."
     },
     "branches": {
       "subtitle": "The branches you manage. You always keep at least one.",
@@ -1937,7 +1953,33 @@
       "copyOption": "{branch} · {city}",
       "namePlaceholder": "e.g. The Olive Table — Sector 29",
       "add": "Add branch",
-      "failed": "The branch wasn't added. Try again."
+      "failed": "The branch wasn't added. Try again.",
+      "countryHint": "Its time zone, currency, phone rules, taxes and payment methods follow the country."
+    },
+    "services": {
+      "subtitle": "The ways guests can order at this branch. Keep at least one on.",
+      "card": "Ways to order",
+      "cardHint": "Guests only see the ones that are on, on the start screen and on QR codes.",
+      "dineIn": {
+        "label": "Dine-in",
+        "on": "Guests scan the table's QR code and order at the table; waiters take orders too.",
+        "off": "Table QR codes open the start screen instead, and waiters can't take table orders."
+      },
+      "takeaway": {
+        "label": "Takeaway",
+        "on": "Guests order ahead and collect at the counter.",
+        "off": "Guests can't order takeaway from this branch."
+      },
+      "delivery": {
+        "label": "Delivery",
+        "on": "Guests in your delivery zones can order delivery.",
+        "off": "Guests can't order delivery from this branch."
+      },
+      "configure": "{mode} settings",
+      "managedHere": "{mode} is {state}. Switch it on or off in Services.",
+      "stateOn": "on",
+      "stateOff": "off",
+      "openServices": "Open Services"
     }
   },
   "masters": {
@@ -2038,6 +2080,20 @@
       "paymentFailed": "Payment failed",
       "refundIssued": "Refund issued",
       "serviceRequest": "Guest request"
+    },
+    "locales": {
+      "en-IN": "English (India)",
+      "en-NP": "English (Nepal)",
+      "en-GB": "English (UK)",
+      "en-US": "English (US)"
+    },
+    "currencies": {
+      "INR": "Indian rupee",
+      "NPR": "Nepali rupee",
+      "USD": "US dollar",
+      "EUR": "Euro",
+      "GBP": "British pound",
+      "AED": "UAE dirham"
     }
   }
 }

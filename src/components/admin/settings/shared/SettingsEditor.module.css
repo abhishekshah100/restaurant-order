@@ -270,3 +270,15 @@
     animation: none;
   }
 }
+
+.noteLink {
+  color: inherit;
+  font: var(--font-small-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.noteLink:focus-visible {
+  border-radius: var(--r-xs);
+  box-shadow: var(--focus);
+}

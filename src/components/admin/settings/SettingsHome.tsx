@@ -5,6 +5,7 @@ import { useAdminBranches, useBranchSettings, useContent, useFloorLayout } from 
 import { Icon } from '@/components/ui';
 import { SETTINGS_GROUPS, type SettingsSectionId } from '@/lib/adminSettings';
 import { layoutTotals } from '@/lib/floorLayout';
+import { ORDER_MODES } from '@/lib/fulfilment';
 import { formatRate } from '@/lib/pricing';
 import { WEEKDAYS } from '@/types/branch';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
@@ -83,7 +84,11 @@ function useSummaries(): Partial<Record<SettingsSectionId, string>> {
     });
   }
   if (settings) {
-    const { details, hours, tax, payments, delivery, pickup } = settings;
+    const { details, services, hours, tax, payments, delivery, pickup } = settings;
+    const on = ORDER_MODES.filter((m) => services[m]).map((m) => t(`modes.${m}`));
+    summaries.services = on.length
+      ? t('adminSettings.sections.services.summary', { modes: on.join(' · ') })
+      : t('adminSettings.sections.services.none');
     const openDays = WEEKDAYS.filter((d) => hours.days[d].open).length;
     summaries.details = t('adminSettings.sections.details.summary', {
       area: details.shortName,

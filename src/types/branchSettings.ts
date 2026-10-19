@@ -3,8 +3,10 @@ import type {
   BillLineKey,
   BillMethodKey,
   CheckoutMethodKey,
+  CountryCode,
   DeliveryMode,
   OpeningSchedule,
+  OrderMode,
   PaymentMethodId,
   PaymentOption,
   TakeawayMode,
@@ -30,7 +32,21 @@ export interface BranchDetails {
   wifiName: string;
   /** Where the tables are, told on the welcome screen: "Ground floor · Garden side". */
   tableLocation: string;
+  /**
+   * The country (config/masters › COUNTRY_CODES). Moving a branch to another country gives it
+   * that country's phone rules, taxes and payment methods (config/regions).
+   */
+  country: CountryCode;
+  /** IANA time zone: "today" and every time shown are in it. */
+  timezone: string;
+  /** How numbers, money and times are written (config/masters › LOCALES). */
+  locale: string;
+  /** ISO 4217 code (config/masters › CURRENCIES). Menu prices keep their numbers. */
+  currency: string;
 }
+
+/** Settings › Services: the ways guests can order at the branch (at least one). */
+export type ServicesSettings = Record<OrderMode, boolean>;
 
 /** A tax line as staff edit it: its rate and what it's charged on (its name is the region's). */
 export interface TaxLineSettings {
@@ -89,6 +105,7 @@ export type PickupSettings = Omit<TakeawayMode, 'payments'>;
 
 export interface BranchSettings {
   details: BranchDetails;
+  services: ServicesSettings;
   hours: OpeningSchedule;
   tax: TaxSettings;
   payments: PaymentSettings;
