@@ -1,0 +1,148 @@
+/* Settings › Branches: a card per branch (the current one marked) and the add / remove dialogs. */
+
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.headText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.branch {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.branch[data-current] {
+  border-color: color-mix(in srgb, var(--brand-600) 45%, var(--line));
+  background:
+    radial-gradient(circle at 100% 0%, var(--brand-tint-2), transparent 240px), var(--surface);
+}
+
+.monogram {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--brand-600);
+  color: var(--on-dark);
+  font: var(--font-h2);
+}
+
+.text {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.name {
+  font: var(--font-h3);
+}
+
+.meta {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.address {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .branch {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .actions {
+    grid-column: auto;
+  }
+}
+
+.remove {
+  color: var(--error);
+}
+
+/* ---------- Dialogs ---------- */
+
+@media (min-width: 1024px) {
+  .dialog {
+    width: min(560px, calc(100vw - 48px));
+  }
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.row {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 560px) {
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.footer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dialogBody {
+  display: grid;
+  gap: 10px;
+  color: var(--ink-2);
+  font: var(--font-body);
+}
+
+.refused {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--error-tint);
+  color: var(--error);
+  font: var(--font-small-strong);
+}

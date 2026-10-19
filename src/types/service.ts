@@ -1,9 +1,11 @@
-export type ServiceKind = 'waiter' | 'bill';
+import type { BillScopeCode, ServiceRequestKind, WaiterRequestReason } from '@/config/masters';
 
-export type WaiterReason = 'waiter' | 'water' | 'cutlery' | 'other';
+export type ServiceKind = ServiceRequestKind;
+
+export type WaiterReason = WaiterRequestReason;
 
 /** Which orders the guest wants on the bill. */
-export type BillScope = 'mine' | 'table';
+export type BillScope = BillScopeCode;
 
 interface BaseRequest {
   id: string;

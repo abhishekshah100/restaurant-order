@@ -18,6 +18,7 @@ import {
   adminBranchesQuery,
   branchMenuQuery,
   branchOrdersQuery,
+  branchSettingsQuery,
   floorLayoutQuery,
   floorPlanQuery,
   tableDetailQuery,
@@ -161,6 +162,10 @@ export const useFloorPlan = (branchId: string | undefined) =>
 /** GET /admin/branches/:branchId/reservations: bookings from today on; polled like the floor. */
 export const useReservations = (branchId: string | undefined) =>
   useQuery(reservationsQuery(useAdminToken(), branchId));
+
+/** GET /admin/branches/:branchId/settings: the branch's settings, to edit, and their choices. */
+export const useBranchSettings = (branchId: string | undefined) =>
+  useQuery(branchSettingsQuery(useAdminToken(), branchId));
 
 /** GET /admin/branches/:branchId/floors: the floor plan as staff set it up, to edit. */
 export const useFloorLayout = (branchId: string | undefined) =>

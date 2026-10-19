@@ -6,7 +6,11 @@
     "city": "Gurgaon",
     "country": "IN",
     "address": "Udyog Vihar, Phase 3, Gurgaon, India",
-    "image": { "src": "/images/pasta-square.jpg", "width": 240, "height": 240 },
+    "image": {
+      "src": "/images/pasta-square.jpg",
+      "width": 240,
+      "height": 240
+    },
     "mapUrl": "https://www.google.com/maps/search/?api=1&query=Udyog%20Vihar%20Phase%203%2C%20Gurgaon%2C%20India",
     "phone": "+918826314093",
     "phoneHref": "tel:+918826314093",
@@ -21,17 +25,69 @@
     },
     "opensIn": "in about 1 hr 20 min",
     "pausedForMinutes": 15,
-    "hoursToday": "12:00 PM – 11:00 PM",
-    "lastOrders": "10:30 PM",
+    "schedule": {
+      "days": {
+        "mon": {
+          "open": true,
+          "opens": "11:00",
+          "closes": "21:00"
+        },
+        "tue": {
+          "open": true,
+          "opens": "11:00",
+          "closes": "21:00"
+        },
+        "wed": {
+          "open": true,
+          "opens": "11:00",
+          "closes": "21:00"
+        },
+        "thu": {
+          "open": true,
+          "opens": "11:00",
+          "closes": "21:00"
+        },
+        "fri": {
+          "open": true,
+          "opens": "11:00",
+          "closes": "21:00"
+        },
+        "sat": {
+          "open": true,
+          "opens": "11:00",
+          "closes": "21:00"
+        },
+        "sun": {
+          "open": true,
+          "opens": "11:00",
+          "closes": "21:00"
+        }
+      },
+      "lastOrdersMinutes": 30,
+      "windows": [
+        {
+          "label": "Lunch",
+          "from": "11:00",
+          "to": "15:30"
+        },
+        {
+          "label": "Dinner",
+          "from": "18:30",
+          "to": "21:00"
+        }
+      ]
+    },
+    "hoursToday": "11:00 AM – 9:00 PM",
+    "lastOrders": "8:30 PM",
     "lastOrdersNote": "30 min before close",
     "serviceWindows": [
       {
         "label": "Lunch",
-        "hours": "12:00 PM – 3:30 PM"
+        "hours": "11:00 AM – 3:30 PM"
       },
       {
         "label": "Dinner",
-        "hours": "7:00 PM – 11:00 PM"
+        "hours": "6:30 PM – 9:00 PM"
       }
     ],
     "prepTime": "18–22 min",
@@ -194,7 +250,11 @@
     "city": "Kathmandu",
     "country": "NP",
     "address": "[RESTAURANT ADDRESS], Thamel, Kathmandu",
-    "image": { "src": "/images/prawns.jpg", "width": 240, "height": 228 },
+    "image": {
+      "src": "/images/prawns.jpg",
+      "width": 240,
+      "height": 228
+    },
     "mapUrl": "https://www.google.com/maps/search/?api=1&query=Thamel%2C%20Kathmandu",
     "phone": "+9779852024631",
     "phoneHref": "tel:+9779852024631",
@@ -209,13 +269,65 @@
     },
     "opensIn": "in about 1 hr",
     "pausedForMinutes": 15,
-    "hoursToday": "11:00 AM – 10:00 PM",
+    "schedule": {
+      "days": {
+        "mon": {
+          "open": true,
+          "opens": "10:00",
+          "closes": "22:00"
+        },
+        "tue": {
+          "open": true,
+          "opens": "10:00",
+          "closes": "22:00"
+        },
+        "wed": {
+          "open": true,
+          "opens": "10:00",
+          "closes": "22:00"
+        },
+        "thu": {
+          "open": true,
+          "opens": "10:00",
+          "closes": "22:00"
+        },
+        "fri": {
+          "open": true,
+          "opens": "10:00",
+          "closes": "22:00"
+        },
+        "sat": {
+          "open": true,
+          "opens": "10:00",
+          "closes": "22:00"
+        },
+        "sun": {
+          "open": true,
+          "opens": "10:00",
+          "closes": "22:00"
+        }
+      },
+      "lastOrdersMinutes": 30,
+      "windows": [
+        {
+          "label": "Lunch",
+          "from": "10:00",
+          "to": "15:00"
+        },
+        {
+          "label": "Dinner",
+          "from": "18:00",
+          "to": "22:00"
+        }
+      ]
+    },
+    "hoursToday": "10:00 AM – 10:00 PM",
     "lastOrders": "9:30 PM",
     "lastOrdersNote": "30 min before close",
     "serviceWindows": [
       {
         "label": "Lunch",
-        "hours": "11:00 AM – 3:00 PM"
+        "hours": "10:00 AM – 3:00 PM"
       },
       {
         "label": "Dinner",

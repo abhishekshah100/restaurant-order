@@ -82,10 +82,11 @@ describe('router', () => {
       table: '5',
     });
     expect(matchPath('orders/:id', 'orders')).toBeNull();
-    // Fixed reference data isn't the mock's: it falls through to the static JSON. (Branches and
-    // menus are: staff change their status and dishes.)
+    // Fixed reference data isn't the mock's: it falls through to the static JSON. (Branches,
+    // menus and promotions are: staff change their settings and dishes, and add branches.)
     expect(await server({ method: 'GET', path: 'restaurant' })).toBeNull();
-    expect(await server({ method: 'GET', path: 'branches/ktm-thamel/promotions' })).toBeNull();
+    expect(await server({ method: 'GET', path: 'help' })).toBeNull();
+    expect(await server({ method: 'GET', path: 'branches/ktm-thamel/floors' })).toBeNull();
   });
 
   it('answers within the configured latency, the same each time', () => {

@@ -1,3 +1,4 @@
+import { ORDER_TYPES } from '@/config/masters';
 import type { Branch, DeliveryZone, OrderMode } from '@/types/branch';
 import type { Price } from '@/types/menu';
 import { createClock } from './clock';
@@ -11,7 +12,7 @@ import { createClock } from './clock';
 const MINUTE_MS = 60_000;
 
 /** Every order mode, in the order the guest is offered them. */
-export const ORDER_MODES: readonly OrderMode[] = ['dineIn', 'takeaway', 'delivery'];
+export const ORDER_MODES: readonly OrderMode[] = ORDER_TYPES;
 
 export const isOrderMode = (v: unknown): v is OrderMode =>
   typeof v === 'string' && (ORDER_MODES as readonly string[]).includes(v);

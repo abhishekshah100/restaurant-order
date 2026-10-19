@@ -77,18 +77,28 @@ export function toAdminBranch(branch: Branch, statusUntil?: string): AdminBranch
   };
 }
 
+/**
+ * The branches an account manages, in its order: its own (less any staff removed) and, MOCK
+ * ONLY, every branch staff added in Settings › Branches (a backend gives the creator access).
+ */
+export async function managedBranches(
+  ctx: MockContext,
+  account: { branchIds: readonly string[] },
+): Promise<Branch[]> {
+  const branches = await ctx.seed.branches();
+  const ids = new Set([...account.branchIds, ...ctx.db.branchSetup.read().added.map((a) => a.id)]);
+  return [...ids].flatMap((id) => branches.filter((b) => b.id === id));
+}
+
 /** GET /admin/branches */
 export const listAdminBranches: Handler = async (ctx, { headers }) => {
   const account = signedInAccount(ctx, headers);
-  const branches = await ctx.seed.branches();
   const changes = ctx.db.branchStatus.read();
   const now = new Date(ctx.now());
   const body: AdminBranchesResponse = {
-    branches: account.branchIds.flatMap((id) => {
-      const branch = branches.find((b) => b.id === id);
-      if (!branch) return [];
-      return [toAdminBranch(branch, statusUntil(branch, changes[id], now, createClock(branch)))];
-    }),
+    branches: (await managedBranches(ctx, account)).map((branch) =>
+      toAdminBranch(branch, statusUntil(branch, changes[branch.id], now, createClock(branch))),
+    ),
   };
   return ok(body);
 };
@@ -103,8 +113,8 @@ export async function adminBranch(
   branchId: string | undefined,
 ): Promise<Branch> {
   const account = signedInAccount(ctx, headers);
-  const branch = (await ctx.seed.branches()).find((b) => b.id === branchId);
-  if (!branch || !account.branchIds.includes(branch.id)) fail(403, 'forbidden');
+  const branch = (await managedBranches(ctx, account)).find((b) => b.id === branchId);
+  if (!branch) fail(403, 'forbidden');
   return branch;
 }
 

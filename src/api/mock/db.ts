@@ -1,10 +1,17 @@
+import {
+  BRANCH_STATUSES,
+  PAYMENT_PURPOSES,
+  PAYMENT_REQUEST_STATUSES,
+  PAYMENT_SETTLEMENTS,
+  RESERVATION_STATUSES,
+} from '@/config/masters';
 import { isOrderMode } from '@/lib/fulfilment';
 import { isPaymentMethodId } from '@/lib/payments';
 import { WAITER_REASON_IDS } from '@/lib/service';
 import { isGuestSession } from '@/lib/session';
 import { readJSON, storageAvailable, writeJSON, type StorageKind } from '@/lib/storage';
 import type { FloorPlanLayout, FloorTableLayout, Reservation } from '@/types/admin';
-import type { BranchStatus } from '@/types/branch';
+import type { Branch } from '@/types/branch';
 import type { BranchStatusChange } from './branchStatus';
 import type { BranchMenuChanges } from './menuChanges';
 import type { Order, OrderItem, OrderRound } from '@/types/order';
@@ -51,6 +58,12 @@ export const MOCK_KEYS = {
   reservations: 'olive.mock.reservations.v1',
   /** The floor plan staff set up for each branch (Settings › Floor plan), by branch id. */
   floorLayouts: 'olive.mock.floorLayouts.v1',
+  /**
+   * The branches as staff set them up (Settings): each branch they changed in full, the ones
+   * they added (and the branch each was copied from), and the ones they removed. GET /branches
+   * is branches.json with these on top.
+   */
+  branchSetup: 'olive.mock.branches.v1',
 } as const;
 
 export interface Table<T> {
@@ -135,7 +148,7 @@ export type StoredOrder = Omit<Order, 'branchId' | 'mode'> & {
   mode?: Order['mode'];
 };
 
-const PAYMENT_SETTLEMENTS = new Set(['online', 'counter', 'pickup', 'cod']);
+const SETTLEMENTS = new Set<string>(PAYMENT_SETTLEMENTS);
 
 /** Runtime guard for a stored order. */
 export function isStoredOrder(v: unknown): v is StoredOrder {
@@ -161,7 +174,7 @@ export function isStoredOrder(v: unknown): v is StoredOrder {
     (v.rounds === undefined || (Array.isArray(v.rounds) && v.rounds.every(isOrderRound))) &&
     isObject(payment) &&
     typeof payment.method === 'string' &&
-    PAYMENT_SETTLEMENTS.has(payment.method) &&
+    SETTLEMENTS.has(payment.method) &&
     typeof payment.status === 'string' &&
     (payment.paid === undefined || typeof payment.paid === 'number') &&
     isOptionalString(v.estimate) &&
@@ -197,20 +210,20 @@ const isOtpTable = (v: unknown): v is Record<string, OtpRecord> =>
 
 /* ---------- Payments ---------- */
 
-const PAYMENT_STATUSES = new Set(['pending', 'succeeded', 'failed', 'expired']);
+const REQUEST_STATUSES = new Set<string>(PAYMENT_REQUEST_STATUSES);
 
-const PAYMENT_PURPOSES = new Set(['order', 'bill', 'round', 'change']);
+const PURPOSES = new Set<string>(PAYMENT_PURPOSES);
 
 const isPayment = (v: unknown): v is Payment =>
   isObject(v) &&
   typeof v.id === 'string' &&
   typeof v.purpose === 'string' &&
-  PAYMENT_PURPOSES.has(v.purpose) &&
+  PURPOSES.has(v.purpose) &&
   typeof v.sessionId === 'string' &&
   isPaymentMethodId(v.method) &&
   typeof v.amount === 'number' &&
   typeof v.status === 'string' &&
-  PAYMENT_STATUSES.has(v.status) &&
+  REQUEST_STATUSES.has(v.status) &&
   typeof v.createdAt === 'number' &&
   typeof v.expiresAt === 'number' &&
   Array.isArray(v.orderIds) &&
@@ -260,14 +273,14 @@ const isAdminSessionRecord = (v: unknown): v is AdminSessionRecord =>
   typeof v.email === 'string' &&
   typeof v.expiresAt === 'number';
 
-const BRANCH_STATUSES = new Set<unknown>(['open', 'closed', 'paused'] satisfies BranchStatus[]);
+const BRANCH_STATUS_SET = new Set<unknown>(BRANCH_STATUSES);
 
 const isBranchStatusTable = (v: unknown): v is Record<string, BranchStatusChange> =>
   isObject(v) &&
   Object.values(v).every(
     (c) =>
       isObject(c) &&
-      BRANCH_STATUSES.has(c.status) &&
+      BRANCH_STATUS_SET.has(c.status) &&
       isOptionalString(c.until) &&
       isOptionalString(c.day),
   );
@@ -293,7 +306,7 @@ const isBranchMenuChanges = (v: unknown): v is BranchMenuChanges =>
 const isMenuChanges = (v: unknown): v is Record<string, BranchMenuChanges> =>
   isObject(v) && Object.values(v).every(isBranchMenuChanges);
 
-const RESERVATION_STATUSES = new Set<unknown>(['booked', 'seated', 'cancelled', 'noShow']);
+const RESERVATION_STATUS_SET = new Set<unknown>(RESERVATION_STATUSES);
 
 const isReservation = (v: unknown): v is Reservation =>
   isObject(v) &&
@@ -306,7 +319,7 @@ const isReservation = (v: unknown): v is Reservation =>
   !Number.isNaN(Date.parse(v.at)) &&
   typeof v.minutes === 'number' &&
   isOptionalString(v.note) &&
-  RESERVATION_STATUSES.has(v.status) &&
+  RESERVATION_STATUS_SET.has(v.status) &&
   typeof v.createdAt === 'string' &&
   typeof v.createdBy === 'string' &&
   isOptionalString(v.seatedAt) &&
@@ -338,6 +351,46 @@ const isFloorLayout = (v: unknown): v is FloorPlanLayout =>
 const isFloorLayoutTable = (v: unknown): v is Record<string, FloorPlanLayout> =>
   isObject(v) && Object.values(v).every(isFloorLayout);
 
+/* ---------- Branch setup ---------- */
+
+/** What staff changed about the branches themselves (Settings › Branches and each branch's settings). */
+export interface BranchSetup {
+  /** Branches as staff last saved them, in full, by id (else as in branches.json). */
+  saved: Record<string, Branch>;
+  /**
+   * Branches staff added, in the order they were added. Each starts as a copy of a branch in
+   * branches.json (`copiedFrom`), whose menu, promotions and floor plan it builds on.
+   */
+  added: { id: string; copiedFrom: string }[];
+  /** Branches staff removed (from branches.json or added ones). */
+  removed: string[];
+}
+
+export const emptyBranchSetup = (): BranchSetup => ({ saved: {}, added: [], removed: [] });
+
+const isSavedBranch = (v: unknown): v is Branch =>
+  isObject(v) &&
+  typeof v.id === 'string' &&
+  typeof v.name === 'string' &&
+  typeof v.shortName === 'string' &&
+  typeof v.timezone === 'string' &&
+  isObject(v.schedule) &&
+  isObject(v.schedule.days) &&
+  isObject(v.tax) &&
+  isObject(v.payments) &&
+  isObject(v.modes);
+
+const isBranchSetup = (v: unknown): v is BranchSetup =>
+  isObject(v) &&
+  isObject(v.saved) &&
+  Object.values(v.saved).every(isSavedBranch) &&
+  Array.isArray(v.added) &&
+  v.added.every(
+    (a: unknown) => isObject(a) && typeof a.id === 'string' && typeof a.copiedFrom === 'string',
+  ) &&
+  Array.isArray(v.removed) &&
+  v.removed.every((id: unknown) => typeof id === 'string');
+
 /** The mock server's tables. */
 export interface MockDb {
   sessions: Table<GuestSession[]>;
@@ -358,6 +411,8 @@ export interface MockDb {
   reservations: Table<Record<string, Reservation[]>>;
   /** The floor plan staff saved, by branch id (else the branch's floors.json). */
   floorLayouts: Table<Record<string, FloorPlanLayout>>;
+  /** Branches staff changed, added and removed. */
+  branchSetup: Table<BranchSetup>;
 }
 
 export function createStorageDb(): MockDb {
@@ -373,5 +428,6 @@ export function createStorageDb(): MockDb {
     menuChanges: table(MOCK_KEYS.menuChanges, 'local', isMenuChanges, () => ({})),
     reservations: table(MOCK_KEYS.reservations, 'local', isReservationTable, () => ({})),
     floorLayouts: table(MOCK_KEYS.floorLayouts, 'local', isFloorLayoutTable, () => ({})),
+    branchSetup: table(MOCK_KEYS.branchSetup, 'local', isBranchSetup, emptyBranchSetup),
   };
 }

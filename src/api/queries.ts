@@ -308,6 +308,14 @@ export const floorLayoutQuery = (token: string | null, branchId: string | undefi
     staleTime: 60_000,
   });
 
+/** GET /admin/branches/:branchId/settings: what the Settings pages edit; it changes rarely. */
+export const branchSettingsQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'settings', branchId, token] as const,
+    queryFn: token && branchId ? () => api.branchSettings(token, branchId) : skipToken,
+    staleTime: 60_000,
+  });
+
 /** GET /admin/branches/:branchId/tables/qr-codes: the links to print; they change rarely. */
 export const tableQrCodesQuery = (token: string | null, branchId: string | undefined) =>
   queryOptions({

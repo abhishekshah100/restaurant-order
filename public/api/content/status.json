@@ -9,7 +9,8 @@
     "offlineDesktop": "You're offline. Reconnecting automatically…",
     "paused": "Online ordering is paused for about {minutes} minutes while the kitchen catches up. Your cart is saved.",
     "closed": "We're closed right now. Ordering opens again at {time} — you can still browse the menu.",
-    "closedTomorrow": "We're closed for the rest of today. Ordering opens again at {time} tomorrow — you can still browse the menu."
+    "closedTomorrow": "We're closed for the rest of today. Ordering opens again at {time} tomorrow — you can still browse the menu.",
+    "closedOn": "We're closed today. Ordering opens again on {day} at {time} — you can still browse the menu."
   },
   "closed": {
     "title": "We're closed right now",
@@ -19,7 +20,8 @@
     "call": "Call restaurant",
     "hoursLabel": "Opening hours",
     "lastOrderMobile": "Last kitchen order",
-    "lastOrderDesktop": "Last order"
+    "lastOrderDesktop": "Last order",
+    "ledeOn": "We're closed today. Ordering opens again on <b>{day} at {time}</b>. You can still browse the menu."
   },
   "paused": {
     "title": "Our kitchen needs a moment",
@@ -35,5 +37,18 @@
     "ledeDesktop": "Check your connection or join the restaurant Wi-Fi. Your cart is saved on this device.",
     "retry": "Try again",
     "wifi": "Wi-Fi: <b>{wifi}</b> · Ask staff for the password"
+  },
+  "hours": {
+    "lastOrdersNote": "{minutes} min before close",
+    "closedToday": "Closed today",
+    "weekdays": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    }
   }
 }

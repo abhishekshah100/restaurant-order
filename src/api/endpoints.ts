@@ -10,6 +10,9 @@ import type {
   AdminSignInRequest,
   AdminSignInResponse,
   BranchServiceResponse,
+  BranchSettingsResponse,
+  CreateBranchRequest,
+  UpdateBranchSettingsRequest,
   CancelByStaffRequest,
   CancelOrderRequest,
   ChangeOrderRequest,
@@ -80,6 +83,18 @@ export const api = {
   adminBranches: (token: string) => apiGet<AdminBranchesResponse>('admin/branches', bearer(token)),
   setBranchStatus: (token: string, branchId: string, body: SetBranchStatusRequest) =>
     apiPatch<AdminBranch>(`admin/branches/${seg(branchId)}/status`, body, bearer(token)),
+  createBranch: (token: string, body: CreateBranchRequest) =>
+    apiPost<AdminBranch>('admin/branches', body, bearer(token)),
+  removeBranch: (token: string, branchId: string) =>
+    apiDelete(`admin/branches/${seg(branchId)}`, bearer(token)),
+  branchSettings: (token: string, branchId: string) =>
+    apiGet<BranchSettingsResponse>(`admin/branches/${seg(branchId)}/settings`, bearer(token)),
+  updateBranchSettings: (token: string, branchId: string, body: UpdateBranchSettingsRequest) =>
+    apiPatch<BranchSettingsResponse>(
+      `admin/branches/${seg(branchId)}/settings`,
+      body,
+      bearer(token),
+    ),
   branchService: (token: string, branchId: string) =>
     apiGet<BranchServiceResponse>(`admin/branches/${seg(branchId)}/service`, bearer(token)),
   floorPlan: (token: string, branchId: string) =>

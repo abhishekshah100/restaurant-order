@@ -86,10 +86,19 @@ function ClosedCard() {
       title={t('closed.title')}
       wide
       lede={t.rich(
-        // Closed by staff for the rest of the day: it opens again tomorrow, not later today.
-        branch.reopensTomorrow ? 'closed.ledeTomorrow' : 'closed.lede',
+        // Closed by staff for the rest of the day, or today isn't an opening day: it opens again
+        // tomorrow or on a later day, not later today.
+        branch.reopensTomorrow
+          ? 'closed.ledeTomorrow'
+          : branch.reopensOn
+            ? 'closed.ledeOn'
+            : 'closed.lede',
         { b: (c) => <b className={styles.ink}>{c}</b> },
-        { time: branch.opensAt, opensIn: branch.opensIn },
+        {
+          time: branch.opensAt,
+          opensIn: branch.opensIn,
+          day: branch.reopensOn ? t(`hours.weekdays.${branch.reopensOn}`) : '',
+        },
       )}
       actions={
         <>
@@ -201,12 +210,14 @@ function OfflineCard() {
         </Button>
       }
     >
-      <p className={styles.wifi}>
-        <Icon name="info" size="sm" className="c2" />
-        <span className="t-small">
-          {t.rich('offline.wifi', { b: (c) => <b>{c}</b> }, { wifi: branch.wifiName })}
-        </span>
-      </p>
+      {branch.wifiName && (
+        <p className={styles.wifi}>
+          <Icon name="info" size="sm" className="c2" />
+          <span className="t-small">
+            {t.rich('offline.wifi', { b: (c) => <b>{c}</b> }, { wifi: branch.wifiName })}
+          </span>
+        </p>
+      )}
     </StatusCard>
   );
 }

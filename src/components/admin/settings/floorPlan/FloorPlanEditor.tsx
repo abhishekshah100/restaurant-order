@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ApiError } from '@/api/client';
 import type { TableInUse } from '@/api/contracts';
 import { useContent, useFloorLayout } from '@/api/hooks';
@@ -24,6 +24,7 @@ import {
 import { cx } from '@/lib/cx';
 import type { FloorLayout, FloorPlanLayout } from '@/types/admin';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
+import { useLeaveGuard } from '../shared/useLeaveGuard';
 import { AreaDialog, RemoveAreaDialog, type AreaDialogTarget } from './AreaDialog';
 import { TableDialog, type TableDialogTarget } from './TableDialog';
 import styles from './FloorPlanEditor.module.css';
@@ -430,31 +431,4 @@ function AreaCard({
       )}
     </li>
   );
-}
-
-/**
- * With unsaved changes, leaving asks first: closing or reloading the tab (the browser's own
- * prompt) and following a link inside the app.
- */
-function useLeaveGuard(active: boolean, message: string) {
-  useEffect(() => {
-    if (!active) return;
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-    };
-    const onClick = (event: MouseEvent) => {
-      const link = (event.target as Element | null)?.closest?.('a[href]');
-      if (!link || link.getAttribute('target') === '_blank') return;
-      if (!window.confirm(message)) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    document.addEventListener('click', onClick, true);
-    return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload);
-      document.removeEventListener('click', onClick, true);
-    };
-  }, [active, message]);
 }

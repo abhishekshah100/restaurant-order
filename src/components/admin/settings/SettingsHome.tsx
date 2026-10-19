@@ -1,16 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useContent, useFloorLayout } from '@/api/hooks';
+import { useAdminBranches, useBranchSettings, useContent, useFloorLayout } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { SETTINGS_GROUPS, type SettingsSectionId } from '@/lib/adminSettings';
 import { layoutTotals } from '@/lib/floorLayout';
+import { formatRate } from '@/lib/pricing';
+import { WEEKDAYS } from '@/types/branch';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './SettingsHome.module.css';
 
 /**
  * /admin/dashboard/settings/: every setting by group, each as a card with what it holds now
- * (the floor plan: its areas, tables and seats) that opens its page.
+ * (the floor plan's areas, tables and seats; today's hours; the taxes…) that opens its page.
  */
 export function SettingsHome() {
   const t = useContent('common');
@@ -65,15 +67,58 @@ export function SettingsHome() {
 /** What each setting holds now, in a line, once it's read. */
 function useSummaries(): Partial<Record<SettingsSectionId, string>> {
   const t = useContent('common');
-  const { branch } = useAdminWorkspace();
+  const cart = useContent('cart');
+  const { branch, region } = useAdminWorkspace();
   const layout = useFloorLayout(branch.id).data;
-  if (!layout) return {};
-  const totals = layoutTotals(layout);
-  return {
-    floorPlan: t('adminSettings.sections.floorPlan.summary', {
+  const settings = useBranchSettings(branch.id).data?.settings;
+  const branches = useAdminBranches().data;
+  const summaries: Partial<Record<SettingsSectionId, string>> = {};
+
+  if (layout) {
+    const totals = layoutTotals(layout);
+    summaries.floorPlan = t('adminSettings.sections.floorPlan.summary', {
       areas: t.plural('adminSettings.counts.areas', totals.areas),
       tables: t.plural('adminSettings.counts.tables', totals.tables),
       seats: t.plural('adminSettings.counts.seats', totals.seats),
-    }),
-  };
+    });
+  }
+  if (settings) {
+    const { details, hours, tax, payments, delivery, pickup } = settings;
+    const openDays = WEEKDAYS.filter((d) => hours.days[d].open).length;
+    summaries.details = t('adminSettings.sections.details.summary', {
+      area: details.shortName,
+      city: details.city,
+    });
+    summaries.hours = t('adminSettings.sections.hours.summary', {
+      days: t.plural('adminSettings.counts.openDays', openDays),
+      today: region.hoursToday,
+    });
+    summaries.tax = t('adminSettings.sections.tax.summary', {
+      taxes: tax.lines
+        .map((l) => cart(`priceSummary.lines.${l.labelKey}`, { rate: formatRate(l.rateBp) }))
+        .join(', '),
+      service:
+        tax.serviceChargeBp === null
+          ? t('adminSettings.sections.tax.serviceNone')
+          : t('adminSettings.sections.tax.serviceRate', { rate: formatRate(tax.serviceChargeBp) }),
+    });
+    summaries.payments = t('adminSettings.sections.payments.summary', {
+      count: t.plural('adminSettings.counts.methods', payments.checkout.methods.length),
+      bill: t.plural('adminSettings.counts.methods', payments.bill.methods.length),
+    });
+    summaries.delivery = delivery.enabled
+      ? t('adminSettings.sections.delivery.summaryOn', {
+          zones: t.plural('adminSettings.counts.zones', delivery.zones.length),
+        })
+      : t('adminSettings.sections.delivery.summaryOff');
+    summaries.pickup = pickup.enabled
+      ? t('adminSettings.sections.pickup.summaryOn', { minutes: pickup.slotMinutes })
+      : t('adminSettings.sections.pickup.summaryOff');
+  }
+  if (branches) {
+    summaries.branches = t('adminSettings.sections.branches.summary', {
+      branches: t.plural('adminSettings.counts.branches', branches.length),
+    });
+  }
+  return summaries;
 }

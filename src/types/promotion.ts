@@ -1,10 +1,11 @@
 import type cart from '../../public/api/content/cart.json';
 import type menu from '../../public/api/content/menu.json';
+import type { DiscountType, PROMO_CODE_DISCOUNT_TYPES, WeekdayCode } from '@/config/masters';
 import type { OrderMode } from './branch';
 import type { Price } from './menu';
 
 /** A day of the week, as offers list them. */
-export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+export type Weekday = WeekdayCode;
 
 /** Content key of a promo code's description (cart › promo.codes). */
 export type PromoDescriptionKey = keyof (typeof cart)['promo']['codes'];
@@ -21,7 +22,7 @@ export interface PromoCode {
   /** Upper case, e.g. "WELCOME10"; matched without regard to case or surrounding spaces. */
   code: string;
   /** `percent`: `value` per cent of the item total (after automatic offers); `flat`: `value` off. */
-  type: 'percent' | 'flat';
+  type: (typeof PROMO_CODE_DISCOUNT_TYPES)[number];
   /** Per cent (10 = 10%), or an amount in major units. */
   value: number;
   /** The smallest item total (before discounts) it applies to; 0: none. */
@@ -54,7 +55,7 @@ export interface AutoOffer {
    * `percent`: `value` per cent off each item (rounded to a whole currency unit); `flat`:
    * `value` off each item; `priceOverride`: each item costs `value`.
    */
-  type: 'percent' | 'flat' | 'priceOverride';
+  type: DiscountType;
   value: number;
   labelKey: OfferLabelKey;
 }

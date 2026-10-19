@@ -35,7 +35,12 @@ export function StateBanner({ state, className }: StateBannerProps) {
     <Banner tone="err" icon="store" live="polite" className={className}>
       {branch.reopensTomorrow
         ? t('banner.closedTomorrow', { time: branch.opensAt })
-        : t('banner.closed', { time: branch.opensAt })}
+        : branch.reopensOn
+          ? t('banner.closedOn', {
+              time: branch.opensAt,
+              day: t(`hours.weekdays.${branch.reopensOn}`),
+            })
+          : t('banner.closed', { time: branch.opensAt })}
     </Banner>
   );
 }

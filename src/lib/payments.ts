@@ -1,3 +1,4 @@
+import { PAYMENT_METHOD_CODES, PAYMENT_METHOD_MASTER } from '@/config/masters';
 import type { IconName } from '@/components/ui';
 import type { PaymentMethodId } from '@/types/branch';
 import type { PaymentMethod } from '@/types/order';
@@ -17,17 +18,26 @@ type PaymentMethodSpec =
   /** Paid in person: at the counter, when collecting, or cash to the rider. */
   | { icon: IconName; settlement: Exclude<PaymentMethod, 'online'> };
 
-export const PAYMENT_METHODS: Record<PaymentMethodId, PaymentMethodSpec> = {
-  online: { icon: 'mobile', settlement: 'online', approval: 'app' },
-  upi: { icon: 'mobile', settlement: 'online', approval: 'app' },
-  card: { icon: 'card', settlement: 'online', approval: 'bank' },
-  esewa: { icon: 'mobile', settlement: 'online', approval: 'app' },
-  khalti: { icon: 'mobile', settlement: 'online', approval: 'app' },
-  fonepay: { icon: 'qr', settlement: 'online', approval: 'app' },
-  counter: { icon: 'cash', settlement: 'counter' },
-  pickup: { icon: 'cash', settlement: 'pickup' },
-  cod: { icon: 'cash', settlement: 'cod' },
+const ICONS: Record<PaymentMethodId, IconName> = {
+  online: 'mobile',
+  upi: 'mobile',
+  card: 'card',
+  esewa: 'mobile',
+  khalti: 'mobile',
+  fonepay: 'qr',
+  counter: 'cash',
+  pickup: 'cash',
+  cod: 'cash',
 };
+
+/** How each method looks (here) and settles (the master: config/masters › payments). */
+export const PAYMENT_METHODS = Object.fromEntries(
+  PAYMENT_METHOD_CODES.map((id) => {
+    const master: { settlement: PaymentMethodSpec['settlement']; approval?: 'app' | 'bank' } =
+      PAYMENT_METHOD_MASTER[id];
+    return [id, { icon: ICONS[id], ...master }];
+  }),
+) as Record<PaymentMethodId, PaymentMethodSpec>;
 
 /** Paid now, in the app (otherwise in person, later). */
 export const isOnlineMethod = (method: PaymentMethodId) =>

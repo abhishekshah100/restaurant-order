@@ -114,19 +114,23 @@ export function Welcome() {
                 <span className={styles.tableNo}>{t('welcome.tableNumber', { table })}</span>
               </div>
             </div>
-            <span className={styles.perforation} aria-hidden="true" />
-            <div className={styles.cardStub}>
-              <Icon name="pin" size="sm" className={styles.stubIcon} />
-              <span className={styles.stubText}>
-                {branch.tableLocation.split(' · ').map((part, i) => (
-                  <span key={part} className={i === 0 ? styles.stubPrimary : undefined}>
-                    {part}
-                    {/* Keep the original "Ground floor · Garden side" for screen readers */}
-                    {i === 0 && <span className="visually-hidden"> · </span>}
+            {branch.tableLocation && (
+              <>
+                <span className={styles.perforation} aria-hidden="true" />
+                <div className={styles.cardStub}>
+                  <Icon name="pin" size="sm" className={styles.stubIcon} />
+                  <span className={styles.stubText}>
+                    {branch.tableLocation.split(' · ').map((part, i) => (
+                      <span key={part} className={i === 0 ? styles.stubPrimary : undefined}>
+                        {part}
+                        {/* Keep the original "Ground floor · Garden side" for screen readers */}
+                        {i === 0 && <span className="visually-hidden"> · </span>}
+                      </span>
+                    ))}
                   </span>
-                ))}
-              </span>
-            </div>
+                </div>
+              </>
+            )}
           </section>
         )}
 

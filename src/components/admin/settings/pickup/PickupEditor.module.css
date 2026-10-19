@@ -1,0 +1,51 @@
+/* Settings › Pickup: the rules, the slot interval as chips, and today's times as a preview. */
+
+.rules {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .rules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.slotChoice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.preview li {
+  min-height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.preview .asap {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.preview .more {
+  background: none;
+  color: var(--ink-3);
+}
+
+.none {
+  color: var(--ink-3);
+  font: var(--font-small);
+}

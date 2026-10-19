@@ -1,0 +1,125 @@
+/* Settings › Delivery zones: the delivery rules, then a card per zone; the zone dialog's form. */
+
+.rules {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .rules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.zones {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.zone {
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+
+.zoneHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.zoneText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.zoneName {
+  font: var(--font-h3);
+}
+
+.areas {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.zoneActions {
+  display: flex;
+  gap: 6px;
+}
+
+.remove {
+  color: var(--error);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.facts > div {
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.facts dt {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.facts dd {
+  margin: 0;
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 768px) {
+  .facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.problem {
+  color: var(--error);
+  font: var(--font-small-strong);
+}
+
+/* ---------- Dialogs ---------- */
+
+@media (min-width: 1024px) {
+  .dialog {
+    width: min(560px, calc(100vw - 48px));
+  }
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dialogFooter {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dialogText {
+  color: var(--ink-2);
+  font: var(--font-body);
+}

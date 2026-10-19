@@ -1,5 +1,6 @@
 import type { PromoQuote } from '../../contracts';
 import {
+  fail,
   liveSession,
   objectBody,
   ok,
@@ -43,4 +44,11 @@ export const validatePromo: Handler = async (ctx, { body: raw }) => {
     offerDiscount,
   };
   return ok(response);
+};
+
+/** GET /branches/:branchId/promotions */
+export const branchPromotions: Handler = async (ctx, { params }) => {
+  const branch = (await ctx.seed.branches()).find((b) => b.id === params.branchId);
+  if (!branch) fail(404, 'not_found');
+  return ok(await ctx.seed.promotions(branch.id));
 };

@@ -1,3 +1,4 @@
+import type { CancellationReason, ReservationStatusCode } from '@/config/masters';
 import type { BranchImage, BranchStatus, CountryCode, OrderMode } from './branch';
 import type { Price } from './menu';
 import type { Order, OrderStatus, PaymentStatus } from './order';
@@ -239,7 +240,7 @@ export interface AdminOrders {
 }
 
 /** Why the restaurant cancelled an order. */
-export type CancelReason = 'outOfStock' | 'guestLeft' | 'kitchenIssue' | 'duplicate' | 'other';
+export type CancelReason = CancellationReason;
 
 /* ---------- Table QR codes (GET /admin/branches/:branchId/tables/qr-codes) ---------- */
 
@@ -262,7 +263,7 @@ export interface AdminTableQrCodes {
 /**
  * Where a booking is: still to come, the guests sat down, called off, or the guests never came.
  */
-export type ReservationStatus = 'booked' | 'seated' | 'cancelled' | 'noShow';
+export type ReservationStatus = ReservationStatusCode;
 
 /** A table booked for a party at a time. */
 export interface Reservation {

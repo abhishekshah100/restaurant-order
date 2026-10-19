@@ -247,7 +247,14 @@
       "qrCodes": "Table QR codes · Admin",
       "reservations": "Reservations · Admin",
       "settings": "Settings · Admin",
-      "floorPlan": "Floor plan · Settings · Admin"
+      "floorPlan": "Floor plan · Settings · Admin",
+      "branchDetails": "Branch details · Settings · Admin",
+      "openingHours": "Opening hours · Settings · Admin",
+      "tax": "Tax & service charge · Settings · Admin",
+      "paymentMethods": "Payment methods · Settings · Admin",
+      "deliveryZones": "Delivery zones · Settings · Admin",
+      "pickup": "Pickup · Settings · Admin",
+      "branches": "Branches · Settings · Admin"
     },
     "loading": "Loading your workspace",
     "descriptor": "Admin",
@@ -1444,17 +1451,59 @@
   },
   "adminSettings": {
     "title": "Settings",
-    "subtitle": "How {branch} is set up. Changes here are rare and apply to every member of staff.",
+    "subtitle": "How {branch} is set up. Changes here apply to every member of staff and reach guests within a minute.",
     "nav": "Settings",
     "back": "Settings",
     "groups": {
-      "restaurant": "Restaurant setup"
+      "branch": "This branch",
+      "money": "Money",
+      "ordering": "Takeaway & delivery",
+      "restaurant": "All branches"
     },
     "sections": {
+      "details": {
+        "title": "Branch details",
+        "description": "Name, address, phone and what guests at the table are told.",
+        "summary": "{area} · {city}"
+      },
+      "hours": {
+        "title": "Opening hours",
+        "description": "Each day's hours, closed days, last orders and service windows.",
+        "summary": "{days} · today {today}"
+      },
       "floorPlan": {
         "title": "Floor plan",
         "description": "Areas and tables: add, rename, move or remove them.",
         "summary": "{areas} · {tables} · {seats}"
+      },
+      "tax": {
+        "title": "Tax & service charge",
+        "description": "Tax rates, a service charge, discounts and rounding on the bill.",
+        "summary": "{taxes} · {service}",
+        "serviceNone": "no service charge",
+        "serviceRate": "service charge {rate}%"
+      },
+      "payments": {
+        "title": "Payment methods",
+        "description": "How guests pay at checkout, on their bill, for takeaway and delivery.",
+        "summary": "{count} at checkout · {bill} on the bill"
+      },
+      "delivery": {
+        "title": "Delivery zones",
+        "description": "Where you deliver, the fee, free delivery and minimum order per zone.",
+        "summaryOn": "Delivering · {zones}",
+        "summaryOff": "Delivery is off"
+      },
+      "pickup": {
+        "title": "Pickup",
+        "description": "Takeaway on or off, kitchen time, pickup slots and the minimum order.",
+        "summaryOn": "Takeaway on · slots every {minutes} min",
+        "summaryOff": "Takeaway is off"
+      },
+      "branches": {
+        "title": "Branches",
+        "description": "Every branch you manage: add a new one or remove one.",
+        "summary": "{branches}"
       }
     },
     "open": "Manage",
@@ -1474,6 +1523,22 @@
       "outOfService": {
         "one": "{count} out of service",
         "other": "{count} out of service"
+      },
+      "openDays": {
+        "one": "Open {count} day a week",
+        "other": "Open {count} days a week"
+      },
+      "zones": {
+        "one": "{count} zone",
+        "other": "{count} zones"
+      },
+      "methods": {
+        "one": "{count} method",
+        "other": "{count} methods"
+      },
+      "branches": {
+        "one": "{count} branch",
+        "other": "{count} branches"
       }
     },
     "floorPlan": {
@@ -1584,6 +1649,395 @@
         "serviceOn": "Guests can scan its QR code and order; it can be booked.",
         "serviceOff": "Out of service: kept on the plan with its number and QR code, but nobody can order or book it."
       }
+    },
+    "load": {
+      "loading": "Loading {page}",
+      "errorTitle": "Settings didn't load",
+      "errorBody": "Check the connection and try again.",
+      "retry": "Try again"
+    },
+    "save": {
+      "unsaved": "Unsaved changes",
+      "summary": "Changes apply for guests as soon as you save.",
+      "discard": "Discard",
+      "save": "Save changes",
+      "saved": "{page} saved",
+      "failed": "Your changes weren't saved. Try again.",
+      "leave": "You have unsaved changes. Leave without saving?"
+    },
+    "errors": {
+      "nameRequired": "Enter the branch's name",
+      "nameLong": "Keep the name to 60 characters",
+      "shortNameRequired": "Enter a short name",
+      "shortNameLong": "Keep the short name to 30 characters",
+      "shortNameTaken": "Another branch has this short name",
+      "cityRequired": "Enter the city",
+      "cityLong": "Keep the city to 40 characters",
+      "addressRequired": "Enter the address",
+      "addressLong": "Keep the address to 160 characters",
+      "phoneInvalid": "Enter the number with its country code, e.g. {dialCode} and the number",
+      "phoneRegion": "Use a number starting {dialCode}, this branch's country code",
+      "wifiLong": "Keep the Wi-Fi name to 40 characters",
+      "tableLocationLong": "Keep it to 60 characters",
+      "noOpenDay": "Open the branch on at least one day.",
+      "dayTime": "Give each open day an opening and a closing time.",
+      "dayOrder": "Closing time must be after opening time.",
+      "lastOrders": "Last orders must fall within every open day's hours.",
+      "windowLabel": "Name each service window (up to 30 characters).",
+      "windowLabelTaken": "Each service window needs a name of its own.",
+      "windowTime": "Give each service window a start and an end time.",
+      "windowOrder": "A service window must end after it starts.",
+      "tooManyWindows": "Keep it to 6 service windows.",
+      "taxRate": "Use a rate from 0 to 50%, with up to two decimals.",
+      "serviceRate": "Use a service charge from 0.01 to 30%.",
+      "taxLines": "The taxes changed meanwhile. Discard and try again.",
+      "noMethods": "Offer at least one payment method here.",
+      "unknownMethod": "A payment method isn't available at this branch.",
+      "recommended": "The method marked Fastest must be offered.",
+      "noAtTable": "Accept at least one way to pay the printed bill.",
+      "noZones": "Add a delivery zone, or switch delivery off.",
+      "tooManyZones": "Keep it to 20 zones.",
+      "zoneName": "Name the zone (up to 40 characters).",
+      "zoneNameTaken": "Another zone has this name.",
+      "noAreas": "Add at least one area this zone covers.",
+      "areaName": "Keep each area to 40 characters, and up to 30 per zone.",
+      "areaTaken": "An area appears twice, or is already in another zone.",
+      "money": "Use an amount of 0 or more, with up to two decimals.",
+      "freeAbove": "Free delivery needs an amount above 0, or leave it empty.",
+      "eta": "Time to the door is 5 to 240 minutes.",
+      "prepMinutes": "Kitchen time is 5 to 180 minutes.",
+      "distance": "Distance is 1 to 100 km, or leave it empty.",
+      "slotMinutes": "Choose how far apart pickup slots are.",
+      "lastBranch": "This is your only branch. Add another branch before removing it.",
+      "branchInUse": "This branch has orders today still to finish or pay. Settle them, then remove it."
+    },
+    "details": {
+      "subtitle": "Who and where this branch is. Guests see these on the start screen, the welcome screen and the Help page.",
+      "about": "About the branch",
+      "aboutHint": "The name guests see, and how staff tell branches apart.",
+      "name": "Name",
+      "shortName": "Short name",
+      "shortNameHint": "The area or neighbourhood: shown in the branch picker and on the start screen.",
+      "city": "City",
+      "address": "Address",
+      "addressHint": "The map link guests open is made from it.",
+      "phone": "Phone",
+      "phoneHint": "With the country code: {dialCode}…",
+      "guests": "For guests at the table",
+      "guestsHint": "Leave either empty and guests aren't shown it.",
+      "wifiName": "Guest Wi-Fi name",
+      "wifiHint": "Shown when a guest's phone goes offline.",
+      "tableLocation": "Where the tables are",
+      "tableLocationHint": "Shown on the welcome screen. Separate parts with ·",
+      "tableLocationPlaceholder": "e.g. Ground floor · Garden side",
+      "region": "Region",
+      "regionHint": "Set when the branch was opened: prices, times and phone numbers follow it.",
+      "country": "Country",
+      "currency": "Currency",
+      "currencyValue": "{code} ({symbol})",
+      "timezone": "Time zone",
+      "dialCode": "Country code"
+    },
+    "hours": {
+      "subtitle": "When this branch is open. Guests see today's hours; on a closed day the branch shows as closed until it next opens.",
+      "week": "The week",
+      "weekHint": "Opening and closing time each day, in the branch's local time.",
+      "copyAll": "Use {day}'s hours every day",
+      "days": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      },
+      "today": "Today",
+      "open": "Open",
+      "closed": "Closed",
+      "openOn": "Open on {day}",
+      "opensOn": "{day} opens at",
+      "closesOn": "{day} closes at",
+      "closedNote": "Staff can still pause or close ordering for the day from the bar at the top of every admin page.",
+      "lastOrders": "Last orders",
+      "lastOrdersHint": "When the kitchen takes its last order. Guests see it on the closed screen.",
+      "lastOrdersLabel": "Last order",
+      "atClosing": "At closing time",
+      "beforeClosing": "{minutes} min before closing",
+      "windows": "Service windows",
+      "windowsHint": "Parts of the day guests are told about, such as Lunch and Dinner.",
+      "addWindow": "Add window",
+      "noWindows": "No service windows: guests see just the opening hours.",
+      "windowN": "Window {n}",
+      "windowLabel": "Name",
+      "windowPlaceholder": "e.g. Lunch",
+      "from": "From",
+      "to": "To",
+      "removeWindow": "Remove {name}"
+    },
+    "tax": {
+      "subtitle": "How this branch's bills are worked out. New bills use these straight away.",
+      "taxes": "Taxes",
+      "taxesHint": "Your region's taxes. Change a rate when the law changes.",
+      "rate": "Rate (%)",
+      "parts": "On the bill as {parts}",
+      "base": "Charged on",
+      "baseItems": "The items",
+      "baseItemsPlusService": "The items and service charge",
+      "service": "Service charge",
+      "serviceHint": "Added to the item total before tax.",
+      "serviceOn": "Add a service charge",
+      "serviceOnHint": "Every bill shows the service charge as its own line.",
+      "serviceOffHint": "Bills say \"Service charge · Not added\".",
+      "bill": "Discounts and rounding",
+      "discountBeforeTax": "Take discounts off before tax",
+      "discountBeforeTaxOn": "Offers and promo codes lower the amount taxes are worked out on.",
+      "discountBeforeTaxOff": "Taxes are worked out on the full item total, then discounts come off.",
+      "roundTotal": "Round the total to a whole {symbol}",
+      "roundTotalOn": "Bills show a round-off line.",
+      "roundTotalOff": "Bills show the exact total.",
+      "example": "Example bill",
+      "exampleHint": "For items worth {amount}, with what you've set.",
+      "note": "Orders already placed keep the rates they were priced with."
+    },
+    "payments": {
+      "subtitle": "How guests can pay at this branch, screen by screen. Methods are shown in the order you set.",
+      "channels": {
+        "checkout": {
+          "title": "Dine-in checkout",
+          "hint": "When a guest at a table places an order."
+        },
+        "bill": {
+          "title": "Pay my bill",
+          "hint": "When a guest pays their bill in the app. Online methods only."
+        },
+        "takeaway": {
+          "title": "Takeaway",
+          "hint": "When a guest orders to collect. A pay-later method is paid on pickup."
+        },
+        "delivery": {
+          "title": "Delivery",
+          "hint": "When a guest orders delivery. A pay-later method is paid to the rider."
+        }
+      },
+      "modeOff": {
+        "takeaway": "Takeaway is off at this branch, so guests don't see these now.",
+        "delivery": "Delivery is off at this branch, so guests don't see these now."
+      },
+      "atTable": {
+        "title": "Paying the printed bill",
+        "hint": "Ways staff accept at the table. The bill and the Help page name them in this order."
+      },
+      "fastest": "Fastest",
+      "fastestFor": "Mark {method} as fastest",
+      "up": "Move {method} up",
+      "down": "Move {method} down"
+    },
+    "delivery": {
+      "subtitle": "Where this branch delivers and what it costs. Guests pick their area at checkout.",
+      "service": "Delivery",
+      "enabled": "Deliver from this branch",
+      "enabledOn": "Guests can choose delivery on the start screen.",
+      "enabledOff": "Guests can't order delivery from this branch.",
+      "prepMinutes": "Kitchen time (minutes)",
+      "prepHint": "Before the rider leaves with the order.",
+      "maxDistance": "Furthest delivery (km)",
+      "maxDistanceHint": "Told to guests choosing delivery.",
+      "feeTaxable": "Tax the delivery fee",
+      "feeTaxableOn": "The fee is taxed like the items.",
+      "feeTaxableOff": "The fee is added after tax.",
+      "zones": "Zones",
+      "zonesHint": "Each zone's areas, fee and minimum order. An area can be in one zone only.",
+      "addZone": "Add zone",
+      "noZones": "No delivery zones yet. Add one so guests can choose their area.",
+      "editZone": "Change {zone}",
+      "removeZone": "Remove {zone}",
+      "fee": "Fee",
+      "free": "Free",
+      "freeAbove": "Free from",
+      "never": "Never free",
+      "minOrder": "Minimum order",
+      "noMinimum": "None",
+      "eta": "To the door",
+      "minutes": "{minutes} min",
+      "removeTitle": "Remove {zone}?",
+      "removeBody": "Guests in {areas} can't order delivery any more once you save.",
+      "keepZone": "Keep zone",
+      "confirmRemove": "Remove zone"
+    },
+    "zoneDialog": {
+      "addTitle": "Add a delivery zone",
+      "editTitle": "Change {zone}",
+      "description": "Guests in these areas pay this fee and order at least this much.",
+      "name": "Zone name",
+      "namePlaceholder": "e.g. City centre",
+      "areas": "Areas",
+      "areasHint": "One per line, or separated by commas. Guests pick from these.",
+      "fee": "Delivery fee ({symbol})",
+      "feeHint": "0 for free delivery.",
+      "freeAbove": "Free from ({symbol})",
+      "freeAboveHint": "Free delivery once the items reach this.",
+      "minOrder": "Minimum order ({symbol})",
+      "minOrderHint": "0 for none.",
+      "eta": "Minutes to the door",
+      "etaHint": "From ordering to delivery.",
+      "add": "Add zone",
+      "save": "Save zone"
+    },
+    "pickup": {
+      "subtitle": "Takeaway at this branch: guests order ahead and collect at the counter.",
+      "service": "Takeaway",
+      "enabled": "Take takeaway orders",
+      "enabledOn": "Guests can choose takeaway on the start screen.",
+      "enabledOff": "Guests can't order takeaway from this branch.",
+      "prepMinutes": "Kitchen time (minutes)",
+      "prepHint": "\"As soon as possible\" is ready this long after ordering.",
+      "minOrder": "Minimum order ({symbol})",
+      "minOrderHint": "0 for none.",
+      "slots": "Pickup slots",
+      "slotsHint": "Times guests can choose, counted from opening time until closing.",
+      "every": "Time between slots",
+      "minutes": "Every {minutes} min",
+      "asap": "Offer \"As soon as possible\"",
+      "asapOn": "Guests can collect as soon as it's ready, as well as at a slot.",
+      "asapOff": "Guests choose a slot.",
+      "preview": "Today's pickup times",
+      "previewHint": "What a guest ordering now would see. Open today {hours}.",
+      "asapAt": "As soon as possible · {time}",
+      "more": "+{count} more",
+      "noneToday": "No pickup times left today.",
+      "offNote": "Takeaway is off, so guests don't see pickup times."
+    },
+    "branches": {
+      "subtitle": "The branches you manage. You always keep at least one.",
+      "loading": "Loading your branches",
+      "add": "Add branch",
+      "onlyOne": "This is your only branch. You can add more, but there must always be at least one.",
+      "current": "You're working here",
+      "where": "{area} · {city}",
+      "edit": "Edit details",
+      "switch": "Work in this branch",
+      "switched": "Now working in {branch}",
+      "remove": "Remove {branch}",
+      "removeOnly": "{branch} is your only branch and can't be removed",
+      "added": "{branch} added. Switch to it to set it up.",
+      "removed": "{branch} removed",
+      "removeTitle": "Remove {branch}?",
+      "removeBody": "{branch} leaves the start screen and the branch picker: guests can't order there and staff can't open it.",
+      "removeCurrent": "You're working in it now, so you'll move to {next}.",
+      "removeFailed": "The branch wasn't removed. Try again.",
+      "keep": "Keep branch",
+      "confirmRemove": "Remove branch"
+    },
+    "addBranch": {
+      "title": "Add a branch",
+      "description": "It starts as a copy of a branch you have: region, taxes, payments, hours, delivery, pickup, menu and floor plan. Change any of them in Settings.",
+      "copyFrom": "Copy setup from",
+      "copyFromHint": "Its country, currency and time zone carry over.",
+      "copyOption": "{branch} · {city}",
+      "namePlaceholder": "e.g. The Olive Table — Sector 29",
+      "add": "Add branch",
+      "failed": "The branch wasn't added. Try again."
+    }
+  },
+  "masters": {
+    "paymentInstruments": {
+      "cash": "Cash",
+      "upi": "UPI",
+      "card": "Card",
+      "onlineProvider": "Online provider"
+    },
+    "paymentRequestStatuses": {
+      "pending": "Processing",
+      "succeeded": "Paid",
+      "failed": "Failed",
+      "expired": "Expired"
+    },
+    "taxTypes": {
+      "gst": "GST",
+      "vat": "VAT",
+      "serviceCharge": "Service charge"
+    },
+    "taxBases": {
+      "items": "Items",
+      "itemsPlusService": "Items and service charge",
+      "deliveryFee": "Delivery fee"
+    },
+    "rejectionReasons": {
+      "outOfStock": "Out of stock",
+      "ingredientUnavailable": "Ingredient unavailable",
+      "equipmentIssue": "Equipment issue",
+      "other": "Other"
+    },
+    "discountTypes": {
+      "percent": "Percentage",
+      "flat": "Fixed amount",
+      "priceOverride": "Set price"
+    },
+    "eligibility": {
+      "minOrder": "Minimum order",
+      "maxDiscount": "Maximum discount",
+      "orderTypes": "Order types",
+      "schedule": "Days and times",
+      "validity": "Valid between dates",
+      "perGuestLimit": "Uses per guest",
+      "scope": "Categories or dishes"
+    },
+    "customerRequestTypes": {
+      "waiter": "Waiter",
+      "water": "Water",
+      "cutlery": "Cutlery",
+      "other": "Something else",
+      "bill": "Bill"
+    },
+    "units": {
+      "piece": {
+        "name": "Piece",
+        "short": "pc"
+      },
+      "plate": {
+        "name": "Plate",
+        "short": "plate"
+      },
+      "bowl": {
+        "name": "Bowl",
+        "short": "bowl"
+      },
+      "glass": {
+        "name": "Glass",
+        "short": "glass"
+      },
+      "bottle": {
+        "name": "Bottle",
+        "short": "btl"
+      },
+      "ml": {
+        "name": "Millilitre",
+        "short": "ml"
+      },
+      "litre": {
+        "name": "Litre",
+        "short": "L"
+      },
+      "g": {
+        "name": "Gram",
+        "short": "g"
+      },
+      "kg": {
+        "name": "Kilogram",
+        "short": "kg"
+      }
+    },
+    "notificationTypes": {
+      "newOrder": "New order",
+      "orderDelayed": "Order delayed",
+      "orderCancelled": "Order cancelled",
+      "itemReady": "Ready to serve",
+      "itemRejected": "Item can't be made",
+      "paymentReceived": "Payment received",
+      "paymentFailed": "Payment failed",
+      "refundIssued": "Refund issued",
+      "serviceRequest": "Guest request"
     }
   }
 }

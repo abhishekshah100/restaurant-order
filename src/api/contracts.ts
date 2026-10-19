@@ -1,3 +1,4 @@
+import type { PaymentPurposeCode, PaymentRequestStatus } from '@/config/masters';
 import type { DeliveryQuote } from '@/lib/fulfilment';
 import type {
   AdminBranch,
@@ -14,6 +15,7 @@ import type {
   Reservation,
 } from '@/types/admin';
 import type { AtTableMethodKey, OrderMode, PaymentMethodId } from '@/types/branch';
+import type { BranchDetails, BranchSettings, BranchSettingsChoices } from '@/types/branchSettings';
 import type { LineConfig } from '@/types/cart';
 import type {
   Allergen,
@@ -117,7 +119,11 @@ export type ApiErrorCode =
   /** 409: a table the new floor plan leaves out has an open bill, food on the way or a booking. */
   | 'table_in_use'
   /** 409: the table is out of service (Settings › Floor plan): nobody can order at it or book it. */
-  | 'table_disabled';
+  | 'table_disabled'
+  /** 409: the admin's only branch can't be removed: there must always be at least one. */
+  | 'last_branch'
+  /** 409: the branch has orders today that aren't finished or paid, so it can't be removed yet. */
+  | 'branch_in_use';
 
 /** Body of every non-2xx response. */
 export interface ApiErrorBody {
@@ -171,6 +177,49 @@ export type AdminSignInResponse = AdminSession;
  */
 export interface AdminBranchesResponse {
   branches: AdminBranch[];
+}
+
+/* ---------- Admin: branch settings ---------- */
+
+/**
+ * `GET /admin/branches/:branchId/settings` — the branch's settings as staff edit them, one
+ * section per Settings page (details, opening hours, tax & service charge, payment methods,
+ * delivery zones, pickup), and what the pages may choose from (the payment methods the
+ * branch's region offers on each screen). Authorised like GET /admin/branches. 200 →
+ * `BranchSettingsResponse`. Errors: 401, 403.
+ *
+ * `PATCH /admin/branches/:branchId/settings` — replaces the sections sent (each whole; the
+ * others stay). Everything reads the branch through GET /branches, so guests' screens, prices,
+ * checkout and the server's own checks follow at once: today's hours and closed days, taxes and
+ * the service charge on new bills, the methods offered at checkout and on the bill, delivery
+ * zones, fees and minimums, pickup slots. Orders already placed keep what they were priced
+ * with. 200 → `BranchSettingsResponse`. Errors: 400 invalid_request (lib/branchSettings ›
+ * detailsErrors, hoursErrors, taxErrors, paymentErrors, deliveryErrors, pickupErrors), 401, 403.
+ */
+export interface BranchSettingsResponse {
+  settings: BranchSettings;
+  choices: BranchSettingsChoices;
+}
+
+export type UpdateBranchSettingsRequest = Partial<BranchSettings>;
+
+/**
+ * `POST /admin/branches` — opens a new branch (Settings › Branches) with these details. Its
+ * region (country, currency, time zone, phone rules), taxes, payment methods, opening hours,
+ * delivery zones and pickup, menu, promotions and floor plan start as a copy of `copyFrom` (one
+ * of the admin's branches); staff change them in Settings afterwards. The admin manages it at
+ * once (GET /admin/branches lists it), guests can choose it on the start screen, and it's open.
+ * 201 → `AdminBranch`. Errors: 400 invalid_request (details as for PATCH …/settings, or an
+ * unknown `copyFrom`), 401, 403 (`copyFrom` isn't the admin's).
+ *
+ * `DELETE /admin/branches/:branchId` — removes a branch: it leaves GET /branches and GET
+ * /admin/branches, so guests can't choose it and staff can't open it. The admin keeps at least
+ * one branch, and a branch with orders today still to finish or pay stays until they're done.
+ * 204. Errors: 401, 403, 409 last_branch / branch_in_use.
+ */
+export interface CreateBranchRequest {
+  details: BranchDetails;
+  copyFrom: string;
 }
 
 /* ---------- Admin: floor service ---------- */
@@ -835,9 +884,9 @@ export interface OrderListResponse {
 /* ---------- Payments ---------- */
 
 /** A new order, the guest's bill, a round on a running order, or the difference after a change. */
-export type PaymentPurpose = 'order' | 'bill' | 'round' | 'change';
+export type PaymentPurpose = PaymentPurposeCode;
 
-export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'expired';
+export type PaymentStatus = PaymentRequestStatus;
 
 /**
  * `POST /payments` — open an online payment request with the payment partner. The server

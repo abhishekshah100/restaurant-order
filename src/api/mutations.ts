@@ -17,6 +17,8 @@ import type {
   CollectPaymentRequest,
   RefundRequest,
   UpdateFloorsRequest,
+  UpdateBranchSettingsRequest,
+  CreateBranchRequest,
   CollectTableRequest,
   DishInput,
   ImageUploadRequest,
@@ -41,6 +43,7 @@ import {
   branchOrdersQuery,
   branchServiceQuery,
   branchesQuery,
+  branchSettingsQuery,
   floorLayoutQuery,
   orderQuery,
   promoQuoteQuery,
@@ -664,5 +667,48 @@ export function useSetBranchStatus() {
           client.invalidateQueries({ queryKey, exact: queryKey[0] === 'branches' }),
         ),
       ),
+  });
+}
+
+/** After a change to a branch's setup: the admin's reads and every guest screen's branch data. */
+const refreshBranches = (client: QueryClient) =>
+  Promise.all([
+    client.invalidateQueries({ queryKey: ['admin'] }),
+    client.invalidateQueries({ queryKey: branchesQuery().queryKey, exact: true }),
+  ]);
+
+/**
+ * PATCH /admin/branches/:branchId/settings (a Settings page's section): the page's draft
+ * becomes the saved settings at once, then the branch data is read again everywhere.
+ */
+export function useUpdateBranchSettings() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: UpdateBranchSettingsRequest }) =>
+      api.updateBranchSettings(requireToken(token), branchId, body),
+    onSuccess: (saved, { branchId }) =>
+      client.setQueryData(branchSettingsQuery(token, branchId).queryKey, saved),
+    onSettled: () => refreshBranches(client),
+  });
+}
+
+/** POST /admin/branches (Settings › Branches › Add branch). */
+export function useCreateBranch() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (body: CreateBranchRequest) => api.createBranch(requireToken(token), body),
+    onSettled: () => refreshBranches(client),
+  });
+}
+
+/** DELETE /admin/branches/:branchId (Settings › Branches › Remove). */
+export function useRemoveBranch() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (branchId: string) => api.removeBranch(requireToken(token), branchId),
+    onSettled: () => refreshBranches(client),
   });
 }

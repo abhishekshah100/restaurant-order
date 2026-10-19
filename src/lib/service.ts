@@ -1,3 +1,4 @@
+import { WAITER_REQUEST_REASONS } from '@/config/masters';
 import type { IconName } from '@/components/ui';
 import { amountDue, paidAmount } from '@/lib/lifecycle';
 import { isOwnOrder, isUnpaid } from '@/lib/orders';
@@ -8,12 +9,14 @@ import type { BillScope, ServiceKind, ServiceRequest, WaiterReason } from '@/typ
 export const SERVICE_NOTE_MAX = 80;
 
 /** Waiter request reasons; their words are in the service content (waiterDialog › reasons › id). */
-export const WAITER_REASONS: readonly { id: WaiterReason; icon: IconName }[] = [
-  { id: 'waiter', icon: 'bell' },
-  { id: 'water', icon: 'drop' },
-  { id: 'cutlery', icon: 'cutlery' },
-  { id: 'other', icon: 'msg' },
-];
+const WAITER_REASON_ICONS: Record<WaiterReason, IconName> = {
+  waiter: 'bell',
+  water: 'drop',
+  cutlery: 'cutlery',
+  other: 'msg',
+};
+export const WAITER_REASONS: readonly { id: WaiterReason; icon: IconName }[] =
+  WAITER_REQUEST_REASONS.map((id) => ({ id, icon: WAITER_REASON_ICONS[id] }));
 
 /** Every waiter request reason id. */
 export const WAITER_REASON_IDS: ReadonlySet<string> = new Set(WAITER_REASONS.map((r) => r.id));

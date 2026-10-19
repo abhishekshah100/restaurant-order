@@ -1,0 +1,155 @@
+/* Settings › Opening hours: a row per day of the week, then last orders and service windows. */
+
+.days {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.day {
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+
+.closed {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 8px, var(--ink-a04) 8px 16px), var(--surface);
+}
+
+.dayName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-label);
+}
+
+.dayOpen {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.closed .dayOpen {
+  color: var(--ink-3);
+}
+
+.times {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.to {
+  padding-top: 12px;
+  color: var(--ink-3);
+}
+
+@media (min-width: 768px) {
+  .day {
+    grid-template-columns: 180px 140px minmax(0, 1fr);
+  }
+
+  .times {
+    grid-column: auto;
+    max-width: 360px;
+  }
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  appearance: none;
+  border-radius: var(--r-pill);
+  background: var(--ink-a30);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) ease;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: var(--sh-1);
+  transition: transform var(--dur-fast) ease;
+}
+
+.switch:checked {
+  background: var(--success);
+}
+
+.switch:checked::after {
+  transform: translateX(18px);
+}
+
+.switch:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch,
+  .switch::after {
+    transition: none;
+  }
+}
+
+/* ---------- Service windows ---------- */
+
+.windows {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.window {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+
+.window > :first-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .window {
+    grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)) auto;
+  }
+
+  .window > :first-child {
+    grid-column: auto;
+  }
+}
+
+.remove {
+  margin-bottom: 4px;
+  color: var(--error);
+}
+
+.empty {
+  color: var(--ink-3);
+  font: var(--font-small);
+}

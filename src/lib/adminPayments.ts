@@ -1,3 +1,4 @@
+import { REFUND_REASONS as REFUND_REASON_CODES } from '@/config/masters';
 import type { Price } from '@/types/menu';
 import type { Order, PaymentTransaction, RefundReason } from '@/types/order';
 import type { BillRequest } from '@/types/service';
@@ -74,13 +75,7 @@ export function refundable(order: Order): Price {
 export const MAX_REFUND_NOTE = 200;
 
 /** Why staff refund, in the order they're offered. */
-export const REFUND_REASONS: readonly RefundReason[] = [
-  'complaint',
-  'wrongItem',
-  'overcharged',
-  'goodwill',
-  'other',
-];
+export const REFUND_REASONS: readonly RefundReason[] = REFUND_REASON_CODES;
 
 /** One payment or refund with the order it's on, for the Transactions list. */
 export interface LedgerEntry extends PaymentTransaction {

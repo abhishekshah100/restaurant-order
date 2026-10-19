@@ -16,7 +16,7 @@ import {
 import { QueryProvider } from '@/api/QueryProvider';
 import { createStorageDb } from '@/api/mock/db';
 import { HOUR_MS, TABLE_SESSION_HOURS } from '@/api/mock/rules';
-import { branchesBaseQuery, menuBaseQuery, querySeed } from '@/api/mock/seed';
+import { branchesBaseQuery, menuBaseQuery, promotionsBaseQuery, querySeed } from '@/api/mock/seed';
 import { createMockServer } from '@/api/mock/server';
 import { AppProviders } from '@/context/AppProviders';
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
@@ -109,6 +109,7 @@ export function createApiState(): DehydratedState {
     client.setQueryData(branchMenuQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
     client.setQueryData(menuBaseQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
     client.setQueryData(branchPromotionsQuery(id).queryKey, testPromotions(id));
+    client.setQueryData(promotionsBaseQuery(id).queryKey, testPromotions(id));
     client.setQueryData(
       branchFloorsQuery(id).queryKey,
       readApiJson<FloorPlanLayout>(`branches/${id}/floors`),

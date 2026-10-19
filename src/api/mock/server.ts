@@ -11,6 +11,12 @@ import {
 } from './handlers/adminService';
 import { createAdminSession, listAdminBranches, setBranchStatus } from './handlers/adminSessions';
 import {
+  branchSettings,
+  createBranch,
+  removeBranch,
+  updateBranchSettings,
+} from './handlers/adminSettings';
+import {
   branchMenu,
   listBranches,
   createDish,
@@ -56,7 +62,7 @@ import {
   listServiceRequests,
 } from './handlers/serviceRequests';
 import { deliveryQuote } from './handlers/orderPricing';
-import { validatePromo } from './handlers/promos';
+import { branchPromotions, validatePromo } from './handlers/promos';
 import { createSession, updateSession } from './handlers/sessions';
 import { querySeed } from './seed';
 
@@ -69,7 +75,11 @@ import { querySeed } from './seed';
 const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/sessions', createAdminSession],
   ['GET', 'admin/branches', listAdminBranches],
+  ['POST', 'admin/branches', createBranch],
+  ['DELETE', 'admin/branches/:branchId', removeBranch],
   ['PATCH', 'admin/branches/:branchId/status', setBranchStatus],
+  ['GET', 'admin/branches/:branchId/settings', branchSettings],
+  ['PATCH', 'admin/branches/:branchId/settings', updateBranchSettings],
   ['GET', 'admin/branches/:branchId/service', branchService],
   ['GET', 'admin/branches/:branchId/tables', branchFloorPlan],
   ['GET', 'admin/branches/:branchId/floors', branchFloors],
@@ -92,6 +102,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['PATCH', 'admin/branches/:branchId/menu/categories', updateCategories],
   ['POST', 'admin/branches/:branchId/menu/images', uploadDishImage],
   ['GET', 'branches/:branchId/menu', branchMenu],
+  ['GET', 'branches/:branchId/promotions', branchPromotions],
   ['GET', 'branches', listBranches],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],

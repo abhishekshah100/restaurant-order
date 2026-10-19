@@ -1,3 +1,4 @@
+import { CANCELLATION_REASONS } from '@/config/masters';
 import type { CancelReason } from '@/types/admin';
 import type { OrderMode } from '@/types/branch';
 import type { Price } from '@/types/menu';
@@ -116,13 +117,7 @@ export function nextAction(order: Order): OrderAction | null {
 }
 
 /** Why the restaurant may cancel an order, in the order staff are offered them. */
-export const CANCEL_REASONS: readonly CancelReason[] = [
-  'outOfStock',
-  'guestLeft',
-  'kitchenIssue',
-  'duplicate',
-  'other',
-];
+export const CANCEL_REASONS: readonly CancelReason[] = CANCELLATION_REASONS;
 
 /**
  * The round a waiter can still change: the latest one not cancelled, while the kitchen hasn't

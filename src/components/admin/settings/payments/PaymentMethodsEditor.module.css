@@ -1,0 +1,89 @@
+/* Settings › Payment methods: per screen, each of the region's methods, offered or not, in order. */
+
+.methods {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.method {
+  padding: 10px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+
+.off {
+  border-style: dashed;
+  background: var(--surface);
+}
+
+.off .title,
+.off .icon {
+  color: var(--ink-3);
+}
+
+.pick {
+  min-width: 0;
+  flex: 1 1 240px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.check {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--brand-600);
+  cursor: pointer;
+}
+
+.icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+}
+
+.text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.title {
+  font: var(--font-label);
+}
+
+.sub {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* The down chevron, turned round for up. */
+.up > span {
+  transform: rotate(180deg);
+}
+
+.error {
+  color: var(--error);
+  font: var(--font-small-strong);
+}

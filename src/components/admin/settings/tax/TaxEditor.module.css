@@ -1,0 +1,68 @@
+/* Settings › Tax & service charge: a row per tax, then the service charge, the bill rules and an example. */
+
+.lines {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.line {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+
+.lineName {
+  font: var(--font-label);
+}
+
+@media (min-width: 768px) {
+  .line {
+    grid-template-columns: minmax(0, 1fr) 180px 240px;
+    align-items: start;
+  }
+
+  .lineName {
+    padding-top: 30px;
+  }
+}
+
+.narrow {
+  max-width: 220px;
+}
+
+/* ---------- Example bill ---------- */
+
+.bill {
+  max-width: 420px;
+  display: grid;
+  gap: 8px;
+  font: var(--font-small);
+}
+
+.row,
+.total {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.row dt {
+  color: var(--ink-2);
+}
+
+.row dd,
+.total dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.total {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line-strong);
+  font: var(--font-label);
+}

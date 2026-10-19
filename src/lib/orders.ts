@@ -1,3 +1,4 @@
+import { ORDER_FLOWS } from '@/config/masters';
 import type { Branch, OrderMode } from '@/types/branch';
 import type {
   ItemStatus,
@@ -176,11 +177,7 @@ export const itemPillStatus = (status: ItemStatus): OrderStatus =>
 /* ---------- Live tracking ---------- */
 
 /** The progress steps of each mode, left to right; the last one finishes the order. */
-export const TRACK_STEPS = {
-  dineIn: ['received', 'preparing', 'ready', 'served'],
-  takeaway: ['received', 'preparing', 'ready', 'pickedUp'],
-  delivery: ['received', 'preparing', 'outForDelivery', 'delivered'],
-} as const satisfies Record<OrderMode, readonly OrderStatus[]>;
+export const TRACK_STEPS = ORDER_FLOWS satisfies Record<OrderMode, readonly OrderStatus[]>;
 
 export type TrackStep = (typeof TRACK_STEPS)[OrderMode][number];
 

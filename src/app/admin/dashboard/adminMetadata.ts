@@ -15,7 +15,14 @@ type AdminPage =
   | 'requests'
   | 'payments'
   | 'settings'
-  | 'floorPlan';
+  | 'floorPlan'
+  | 'branchDetails'
+  | 'openingHours'
+  | 'tax'
+  | 'paymentMethods'
+  | 'deliveryZones'
+  | 'pickup'
+  | 'branches';
 
 /** An admin page's title (common › adminShell.meta); staff pages are never indexed. */
 export async function adminMetadata(page: AdminPage, vars?: Vars): Promise<Metadata> {

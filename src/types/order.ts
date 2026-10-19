@@ -1,3 +1,10 @@
+import type {
+  ItemStatusCode,
+  OrderStatusCode,
+  PaymentSettlement,
+  PaymentStatusCode,
+  RefundReasonCode,
+} from '@/config/masters';
 import type { OrderMode } from './branch';
 import type { LineConfig } from './cart';
 import type { Price } from './menu';
@@ -7,25 +14,17 @@ import type { AppliedOffer, OrderDiscount } from './promotion';
  * Where an order has got to. Dine-in: received → preparing → ready → served. Takeaway: …
  * ready (for pickup) → picked up. Delivery: received → preparing → out for delivery → delivered.
  */
-export type OrderStatus =
-  | 'received'
-  | 'preparing'
-  | 'ready'
-  | 'served'
-  | 'pickedUp'
-  | 'outForDelivery'
-  | 'delivered'
-  | 'cancelled';
+export type OrderStatus = OrderStatusCode;
 
-export type ItemStatus = 'queued' | 'preparing' | 'ready' | 'served';
+export type ItemStatus = ItemStatusCode;
 
 /** How an order is settled: online, or in person (at the counter, at pickup, cash on delivery). */
-export type PaymentMethod = 'online' | 'counter' | 'pickup' | 'cod';
+export type PaymentMethod = PaymentSettlement;
 
-export type PaymentStatus = 'paid' | 'unpaid' | 'refunded' | 'refund-started';
+export type PaymentStatus = PaymentStatusCode;
 
 /** Why staff gave money back on an order that stands (POST …/orders/:id/refund). */
-export type RefundReason = 'complaint' | 'wrongItem' | 'overcharged' | 'goodwill' | 'other';
+export type RefundReason = RefundReasonCode;
 
 /**
  * One movement of money on an order, as the server recorded it: a payment (online in the app,

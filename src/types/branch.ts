@@ -3,17 +3,55 @@ import type checkout from '../../public/api/content/checkout.json';
 import type common from '../../public/api/content/common.json';
 import type service from '../../public/api/content/service.json';
 import type { Price } from './menu';
+import {
+  WEEKDAYS,
+  type BranchStatusCode,
+  type CountryCodeMaster,
+  type OrderType,
+  type PaymentMethodCode,
+  type WeekdayCode,
+} from '@/config/masters';
 
 /** Countries with a branch. Region copy in content is keyed by these (e.g. the phone-prefix error). */
-export type CountryCode = 'IN' | 'NP';
+export type CountryCode = CountryCodeMaster;
 
 /** Whether a branch is taking orders, as the (mock) server reports it. */
-export type BranchStatus = 'open' | 'closed' | 'paused';
+export type BranchStatus = BranchStatusCode;
 
 export interface ServiceWindow {
   label: string;
   /** "12:00 PM – 3:30 PM", in the branch's local time. */
   hours: string;
+}
+
+/** Days of the week, Monday first (the order Settings › Opening hours lists them). */
+export { WEEKDAYS };
+export type Weekday = WeekdayCode;
+
+/** One day's opening hours, as 24-hour local "HH:MM" (closing after opening, the same day). */
+export interface DayHours {
+  open: boolean;
+  opens: string;
+  closes: string;
+}
+
+/** A named part of the day guests are told about ("Lunch", 12:00–15:30), 24-hour local "HH:MM". */
+export interface ServiceWindowHours {
+  label: string;
+  from: string;
+  to: string;
+}
+
+/**
+ * The branch's week as staff set it (Settings › Opening hours). Today's hours, last orders and
+ * service windows (`opensAt`, `hoursToday`, `serviceWindows`…) are worked out from it; a day
+ * it's shut is a closed day.
+ */
+export interface OpeningSchedule {
+  days: Record<Weekday, DayHours>;
+  /** The kitchen takes its last order this many minutes before closing. */
+  lastOrdersMinutes: number;
+  windows: ServiceWindowHours[];
 }
 
 /** The branch's currency. Prices in the menu are in major units (rupees); bills work in minor units. */
@@ -83,8 +121,7 @@ export interface TaxConfig {
 }
 
 /** Every payment method the app knows; each branch offers some of them. */
-export type PaymentMethodId =
-  'online' | 'upi' | 'card' | 'esewa' | 'khalti' | 'fonepay' | 'counter' | 'pickup' | 'cod';
+export type PaymentMethodId = PaymentMethodCode;
 
 /** A payment method offered on a screen, with the content key of its title and descriptions. */
 export interface PaymentOption<K extends string> {
@@ -104,7 +141,7 @@ export type BillMethodKey = keyof (typeof service)['payBill']['methods'];
 export type DietaryMark = 'veg' | 'nonveg';
 
 /** How the guest gets their food: at a table, collected from the counter, or brought to them. */
-export type OrderMode = 'dineIn' | 'takeaway' | 'delivery';
+export type OrderMode = OrderType;
 
 /** A delivery zone: the areas it covers and what delivering there costs (major units). */
 export interface DeliveryZone {
@@ -214,6 +251,13 @@ export interface Branch {
    * today). Absent otherwise.
    */
   reopensTomorrow?: boolean;
+  /**
+   * Closed today by the weekly schedule: the day it opens next (`opensAt` is that day's
+   * opening time). Absent on a day it opens.
+   */
+  reopensOn?: Weekday;
+  /** The week's opening hours; the fields above are today's, worked out from it. */
+  schedule: OpeningSchedule;
   hoursToday: string;
   lastOrders: string;
   /** "30 min before close" */
