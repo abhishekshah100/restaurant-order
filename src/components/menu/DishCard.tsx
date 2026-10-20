@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { Tag, VegMark } from '@/components/ui';
 import { useContent } from '@/api/hooks';
 import { useDishOffer } from '@/hooks/useOffers';
-import { dishImage, startingPrice } from '@/lib/menu';
+import { dishHref, dishImage, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import { AddControl } from './AddControl';
 import { OfferBadge, OfferPrice } from './OfferPrice';
@@ -71,7 +71,7 @@ export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: 
         <div className={styles.top}>
           <VegMark veg={dish.veg} />
           <h3 className={styles.name}>
-            <Link href={`/dish/${dish.slug}/`} className={styles.link}>
+            <Link href={dishHref(dish.slug)} className={styles.link}>
               {dish.name}
             </Link>
           </h3>

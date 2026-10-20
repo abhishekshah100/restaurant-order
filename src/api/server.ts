@@ -5,7 +5,7 @@ import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { resolveBranch } from '@/lib/scan';
 import type { Branch } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
-import type { Category, Dish, MenuData } from '@/types/menu';
+import type { Category, MenuData } from '@/types/menu';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import {
@@ -108,21 +108,10 @@ async function getMenusServer(): Promise<MenuCatalog[]> {
   return Promise.all(ordered.map(async (b) => createMenuCatalog(await readMenu(b.id))));
 }
 
-/** Every dish slug on any branch's menu (generateStaticParams for /dish/[slug]). */
-export async function getDishSlugsServer(): Promise<string[]> {
-  const menus = await getMenusServer();
-  return [...new Set(menus.flatMap((m) => m.dishes.map((d) => d.slug)))];
-}
-
 /** Every category on any branch's menu (generateStaticParams for /menu/[category]). */
 export async function getCategoryIdsServer(): Promise<string[]> {
   const menus = await getMenusServer();
   return [...new Set(menus.flatMap((m) => m.categories.map((c) => c.id)))];
-}
-
-/** A dish for page metadata: as the default branch has it, else the first branch that does. */
-export async function getDishServer(slug: string): Promise<Dish | undefined> {
-  return (await getMenusServer()).map((m) => m.getDish(slug)).find(Boolean);
 }
 
 /** A category for page metadata: as the default branch has it, else the first branch that does. */

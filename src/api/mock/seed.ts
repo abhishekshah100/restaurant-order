@@ -10,7 +10,8 @@ import type { MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
 import { branchFloorsQuery, contentQuery, orderHistoryQuery, restaurantQuery } from '../queries';
-import { staticGet } from '../client';
+import { isBackendEnabled } from '../backend';
+import { apiGet, staticGet } from '../client';
 import { createTranslator } from '../translator';
 import type { MockDb } from './db';
 import { withStatus } from './branchStatus';
@@ -48,25 +49,38 @@ export interface MockSeed {
 }
 
 /**
- * MOCK ONLY: a branch's menu JSON as published, before staff changes. Always read over HTTP
- * (the app's GET /branches/:id/menu is the mock's own, with the changes on).
+ * How the mock reads the data it builds on. On its own: the dummy JSON as published, read once.
+ * With the backend serving branches and menus (NEXT_PUBLIC_BACKEND_URL): the backend's, live,
+ * so what the mock still serves (orders, the kitchen, the floor) prices and checks dishes as
+ * staff left them there — a dish sold out on the backend is refused in an order here too.
+ */
+const seedSource = <T>(path: string) =>
+  isBackendEnabled()
+    ? { queryFn: () => apiGet<T>(path), staleTime: BACKEND_SEED_STALE_MS }
+    : { queryFn: () => staticGet<T>(path), staleTime: Infinity };
+
+/** How long the mock reuses what it read from the backend (the guest app's own menu polls a minute). */
+const BACKEND_SEED_STALE_MS = 15_000;
+
+/**
+ * MOCK ONLY: a branch's menu before the mock's own staff changes (none once the backend owns the
+ * menu). Always read over HTTP (the app's GET /branches/:id/menu is the mock's own, unless the
+ * backend serves it).
  */
 export const menuBaseQuery = (branchId: string) =>
   queryOptions({
     queryKey: ['mock', 'menu-base', branchId] as const,
-    queryFn: () => staticGet<MenuData>(`branches/${branchId}/menu`),
-    staleTime: Infinity,
+    ...seedSource<MenuData>(`branches/${branchId}/menu`),
   });
 
 /**
- * MOCK ONLY: the branches JSON as published, before the status staff set. Always read over HTTP
- * (the app's GET /branches is the mock's own, with the status on).
+ * MOCK ONLY: the branches before the status the mock's staff set (none once the backend owns
+ * them). Always read over HTTP, like the menu.
  */
 export const branchesBaseQuery = () =>
   queryOptions({
     queryKey: ['mock', 'branches-base'] as const,
-    queryFn: () => staticGet<Branch[]>('branches'),
-    staleTime: Infinity,
+    ...seedSource<Branch[]>('branches'),
   });
 
 /**
@@ -110,7 +124,7 @@ export function querySeed(
   const sourceOf = (branchId: string) =>
     db.branchSetup.read().added.find((a) => a.id === branchId)?.copiedFrom ?? branchId;
   const branchConfigs = async () => {
-    const base = await client.ensureQueryData(branchesBaseQuery());
+    const base = await client.fetchQuery(branchesBaseQuery());
     const { saved, added, removed } = db.branchSetup.read();
     const gone = new Set(removed);
     return [
@@ -136,7 +150,7 @@ export function querySeed(
   };
   const menuData = async (branchId: string) => {
     const [base, all] = await Promise.all([
-      client.ensureQueryData(menuBaseQuery(sourceOf(branchId))),
+      client.fetchQuery(menuBaseQuery(sourceOf(branchId))),
       branchConfigs(),
     ]);
     const branch = all.find((b) => b.id === branchId);

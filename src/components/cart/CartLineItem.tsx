@@ -8,7 +8,7 @@ import { useCartActions } from '@/hooks/useCart';
 import { describeInstructions, describeOptions, describeOptionsShort } from '@/lib/cartLine';
 import { cx } from '@/lib/cx';
 import { useContent, useMenu, useRegion } from '@/api/hooks';
-import { dishImage, isCustomisable } from '@/lib/menu';
+import { dishHref, dishImage, isCustomisable } from '@/lib/menu';
 import type { CartLine } from '@/types/cart';
 import { useCartLineLabels } from '@/hooks/useCartLineLabels';
 import styles from './CartLineItem.module.css';
@@ -85,7 +85,7 @@ export function CartLineItem({ line, variant = 'page' }: CartLineItemProps) {
             (dish.image ? (
               <Link
                 className={styles.link}
-                href={`/dish/${dish.slug}/?edit=${encodeURIComponent(line.key)}`}
+                href={dishHref(dish.slug, line.key)}
                 aria-label={t('line.editLabel', { dish: dish.name })}
               >
                 {t('line.edit')}

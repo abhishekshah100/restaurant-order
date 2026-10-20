@@ -37,7 +37,14 @@ describe('which requests go to the backend', () => {
       true,
     );
     expect(isBackendRequest({ method: 'GET', path: 'branches' })).toBe(true);
-    expect(isBackendRequest({ method: 'GET', path: 'branches/blr/menu' })).toBe(false);
+    expect(isBackendRequest({ method: 'GET', path: 'branches/blr/menu' })).toBe(true);
+    expect(
+      isBackendRequest({
+        method: 'PATCH',
+        path: 'admin/branches/blr/menu/dishes/dahi-kebab/availability',
+      }),
+    ).toBe(true);
+    expect(isBackendRequest({ method: 'GET', path: 'branches/blr/promotions' })).toBe(false);
     expect(isBackendRequest({ method: 'POST', path: 'orders' })).toBe(false);
     vi.stubEnv('NEXT_PUBLIC_BACKEND_URL', '');
     expect(isBackendRequest({ method: 'GET', path: 'branches' })).toBe(false);
@@ -56,6 +63,8 @@ describe('the backend transport', () => {
       Authorization: 'Bearer t0k',
     });
     expect(init?.signal).toBeInstanceOf(AbortSignal);
+    // TanStack Query is the cache: the browser's HTTP cache must never answer for the backend.
+    expect(init?.cache).toBe('no-store');
 
     fetchMock.mockResolvedValueOnce(json({ success: true, data: { status: 'paused' } }));
     await apiPatch('admin/branches/blr/status', { status: 'paused', minutes: 15 });

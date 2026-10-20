@@ -73,7 +73,7 @@ export async function callWaiter(page: Page) {
 }
 
 /** Signs in with the demo admin and picks a branch. */
-export async function adminSignIn(page: Page, branch = 'Indiranagar') {
+export async function adminSignIn(page: Page, branch = 'Udyog Vihar') {
   await page.goto('/admin/login/');
   await page.getByRole('button', { name: 'Use demo account' }).click();
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();

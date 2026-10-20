@@ -509,11 +509,19 @@ non-JSON error page (a proxy's 502) is an `ApiError` without a code. `401 unauth
 request ends the staff session on this device and the admin guard sends them to sign in. Sign-out
 also ends the session on the server (`DELETE /admin/sessions/current`).
 
+**On the backend today:** staff sign-in and sign-out, branches and their status, settings, the
+floor plan, the guests' branches, and the menu (the guests' menu, availability, dishes added,
+edited and removed, dish order, categories, pictures). See the list in `src/api/backend.ts`.
+
 **While both run.** Staff sign in on the backend, so the admin endpoints still on the mock accept
-any token as the demo account's (MOCK ONLY, in
-[`adminSessions.ts`](../src/api/mock/handlers/adminSessions.ts)). The two don't share data: a
-branch added, paused or re-planned on the backend isn't seen by the mock's orders, tables and
-menu until those modules move to the backend too.
+any token as the demo account's, at any branch the backend lists (MOCK ONLY, in
+[`adminSessions.ts`](../src/api/mock/handlers/adminSessions.ts)). What the mock still serves
+(orders, the kitchen, the floor, service) builds on the backend's **live** branches and menus
+(`seedSource` in [`seed.ts`](../src/api/mock/seed.ts), re-read every 15 s): a dish sold out on the
+backend is refused in an order, and a dish added there can be ordered. Floor plans saved on the
+backend are what the mock's tables pages show. The dummy `branches.json` and `menu.json` are then
+not read at run time; they stay for the mock-only mode, the build (`/menu/[category]` pages and
+the first paint) and the unit tests.
 
 ## Switching to a real backend
 

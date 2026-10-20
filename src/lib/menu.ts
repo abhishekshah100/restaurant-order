@@ -46,6 +46,15 @@ export function createMenuCatalog(data: MenuData): MenuCatalog {
   return catalog;
 }
 
+/**
+ * A dish's page: `/dish/?slug=paneer-tikka` (`&edit=<cart line>` to change a line). One page
+ * serves every dish, read from the live menu, so a dish staff add opens without a new build.
+ */
+export function dishHref(slug: string, editLine?: string): string {
+  const query = new URLSearchParams({ slug, ...(editLine ? { edit: editLine } : {}) });
+  return `/dish/?${query.toString()}`;
+}
+
 export const isAvailable = (dish: Dish) => dish.availability.status === 'available';
 
 /** Something to choose: more than one size, an option group or add-ons. A single size alone isn't a choice. */

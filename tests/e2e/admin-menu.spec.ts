@@ -48,7 +48,7 @@ test('sold out, back on, and a new dish, as guests see them', async ({ page }) =
   const row = page.getByRole('listitem').filter({ hasText: 'Dahi Kebab' }).first();
   await expect(row).toContainText(/sold out/i);
   await expect(page.getByRole('button', { name: 'Add Dahi Kebab' })).toHaveCount(0);
-  await page.goto('/dish/dahi-kebab/');
+  await page.goto('/dish/?slug=dahi-kebab');
   await expect(page.getByText(new RegExp(`back ${time}`, 'i')).first()).toBeVisible();
 
   // Back on with one tap.
@@ -110,7 +110,7 @@ test("a thali's choices, the order of dishes, and removing a dish", async ({ pag
   await expect(page.getByRole('status').filter({ hasText: 'Veg Thali saved' })).toBeVisible();
 
   // The guest picks a curry and sees the new price.
-  await page.goto('/dish/veg-thali/');
+  await page.goto('/dish/?slug=veg-thali');
   await expect(page.getByText(/Dal Makhani/).first()).toBeVisible();
   await expect(page.getByText('+₹25').first()).toBeVisible();
 

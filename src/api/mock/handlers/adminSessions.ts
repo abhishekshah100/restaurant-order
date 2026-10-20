@@ -105,6 +105,9 @@ export async function managedBranches(
   account: { branchIds: readonly string[] },
 ): Promise<Branch[]> {
   const branches = await ctx.seed.branches();
+  // MOCK ONLY, while the backend is partly built: it decides who works where, so every branch it
+  // lists (opened there too) is open to the endpoints still served here.
+  if (backendBaseUrl()) return branches;
   const ids = new Set([...account.branchIds, ...ctx.db.branchSetup.read().added.map((a) => a.id)]);
   return [...ids].flatMap((id) => branches.filter((b) => b.id === id));
 }

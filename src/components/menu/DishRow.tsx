@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { memo } from 'react';
 import { Icon } from '@/components/ui';
 import { cx } from '@/lib/cx';
-import { dishImage, highlight, isAvailable, startingPrice } from '@/lib/menu';
+import { dishHref, dishImage, highlight, isAvailable, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import { AddControl } from './AddControl';
 import { DishTags } from './DishTags';
@@ -46,7 +46,7 @@ export const DishRow = memo(function DishRow({
         <div className={styles.body}>
           <DishTags dish={dish} showCategory={searchResult} />
           <h3 className={styles.name}>
-            <Link href={`/dish/${dish.slug}/`} className={styles.link}>
+            <Link href={dishHref(dish.slug)} className={styles.link}>
               {query
                 ? highlight(dish.name, query).map((part, i) =>
                     part.match ? (

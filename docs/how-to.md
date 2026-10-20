@@ -53,34 +53,22 @@ Mock behaviour is configured with environment variables read in
 The app is a static export (`output: 'export'` in [`next.config.ts`](../next.config.ts)), so every
 route must be known at build time. Choose one of two patterns.
 
-**Pattern A: a fixed set of paths** (for example `/dish/[slug]/`, `/menu/[category]/`). Use it
-when the values come from reference data available at build time.
+**Pattern A: a fixed set of paths** (for example `/menu/[category]/`). Use it only when the
+values are fixed at build time and staff can't add more (the menu's categories).
 
 1. Create `src/app/<segment>/[param]/page.tsx`.
 2. Export `dynamicParams = false` and `generateStaticParams`, reading the dummy JSON through a
-   build-time reader in [`src/api/server.ts`](../src/api/server.ts) (add one beside
-   `getDishSlugsServer` if needed).
+   build-time reader in [`src/api/server.ts`](../src/api/server.ts) (like `getCategoryIdsServer`).
 3. Export `generateMetadata`, taking words from content with `getContent`.
 4. Render a client component from `src/components/<area>/` and pass it the param. Branch-specific
    data (prices, availability) is read on the client.
 
-Following [`src/app/(guest)/dish/[slug]/page.tsx`](<../src/app/(guest)/dish/[slug]/page.tsx>):
-
-```tsx
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
-  return (await getDishSlugsServer()).map((slug) => ({ slug }));
-}
-
-export default async function DishPage({ params }: Props) {
-  return <DishDetail slug={(await params).slug} />;
-}
-```
+Following [`src/app/(guest)/menu/[category]/page.tsx`](<../src/app/(guest)/menu/[category]/page.tsx>).
 
 **Pattern B: one page that reads a query string** (for example `/order/track/?id=A105`,
-`/admin/dashboard/tables/view/?table=5`). Use it when the value is created at run time (order ids,
-tables added in Settings), so no new build is needed.
+`/dish/?slug=paneer-tikka`, `/admin/dashboard/tables/view/?table=5`). Use it when the value is
+created at run time (order ids, dishes staff add, tables added in Settings), so no new build is
+needed.
 
 1. Create `src/app/<segment>/page.tsx` with `generateMetadata` and a client component, as in
    [`src/app/(guest)/order/track/page.tsx`](<../src/app/(guest)/order/track/page.tsx>).
@@ -88,8 +76,9 @@ tables added in Settings), so no new build is needed.
    [`src/hooks/useQueryParam.ts`](../src/hooks/useQueryParam.ts). It returns `null` during
    prerender and hydration, so the page needs no `Suspense` boundary (which `useSearchParams`
    would require). Handle `null` as "not yet known".
-3. Add a path helper that builds the URL with its query string, as `tablePath` and
-   `reservationsPath` do in [`src/lib/adminNav.ts`](../src/lib/adminNav.ts).
+3. Add a path helper that builds the URL with its query string, as `dishHref` does in
+   [`src/lib/menu.ts`](../src/lib/menu.ts) and `tablePath` in
+   [`src/lib/adminNav.ts`](../src/lib/adminNav.ts); links use it, never a hand-written path.
 
 For either pattern:
 
@@ -393,7 +382,8 @@ Settings › Branches (stored by the mock server); this recipe adds one to the d
 6. Run `npm test`. [`tests/unit/masters.test.ts`](../tests/unit/masters.test.ts) checks that the
    branch and its promotions use master codes only (country, status, tax lines allowed in the
    country, payment methods, discount types, order types, weekdays). Then run `npm run build`:
-   `/dish/[slug]/` and `/menu/[category]/` are generated from every branch's menu.
+   `/menu/[category]/` is generated from every branch's menu (dishes need no build: `/dish/`
+   reads its `?slug=`).
 
 ## Related
 

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Button, EmptyState } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import { useContent, useMenu, useRegion } from '@/api/hooks';
-import { dishImage } from '@/lib/menu';
+import { dishHref, dishImage } from '@/lib/menu';
 import styles from './CartView.module.css';
 
 /** Empty cart with popular suggestions (s06 · ws06). */
@@ -39,7 +39,7 @@ export function EmptyCart() {
             return (
               <Link
                 key={item.slug}
-                href={`/dish/${dish.slug}/`}
+                href={dishHref(dish.slug)}
                 className={cx(styles.popularCard, i === 2 && styles.popularThird)}
               >
                 <Image

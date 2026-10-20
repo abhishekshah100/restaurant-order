@@ -242,8 +242,9 @@ The static pages are rendered with real data, so they show content before any Ja
    after the page opens. Staff change the menu and branch status during service.
 4. Data needed by only one area is prefetched by that area's layout. For example
    [`src/app/(guest)/help/layout.tsx`](<../src/app/(guest)/help/layout.tsx>) calls `prefetchHelp`.
-5. Dynamic routes list their pages at build time: `/dish/[slug]` uses `getDishSlugsServer` and
-   `/menu/[category]` uses `getCategoryIdsServer`, both with `dynamicParams = false`.
+5. Dynamic routes list their pages at build time: `/menu/[category]` uses `getCategoryIdsServer`
+   with `dynamicParams = false` (the categories are fixed). Dishes, which staff add at any time,
+   have one page, `/dish/?slug=…`, read on the client (`lib/menu › dishHref`).
 
 Because the reference data is always in the cache, the reference hooks use `useSuspenseQuery` and
 never return `undefined`. Server-owned reads use `useQuery` and are pending until the first
@@ -361,7 +362,7 @@ Link to them only through `orderPath(id, page)` ([`src/lib/orders.ts`](../src/li
 flowchart LR
   ROOT["/ (welcome or start)"] --> GUEST
   subgraph GUEST["Guest app"]
-    MENU["/menu, /menu/[category], /dish/[slug], /search"]
+    MENU["/menu, /menu/[category], /dish/?slug=, /search"]
     CART["/cart"]
     CHECKOUT["/checkout/details, verify, payment, processing"]
     ORDER["/order, /order/track, /order/confirmed, /orders"]
@@ -388,7 +389,7 @@ flowchart LR
 | `/start`                           | `start/StartView`                       |
 | `/menu`                            | `menu/MenuHome`                         |
 | `/menu/[category]`                 | `menu/CategoryView`                     |
-| `/dish/[slug]` (`?edit=<lineKey>`) | `menu/DishDetail`                       |
+| `/dish` (`?slug=…&edit=<lineKey>`) | `menu/DishPage` → `menu/DishDetail`     |
 | `/search` (`?q=`)                  | `menu/SearchView`                       |
 | `/cart`                            | `cart/CartView`                         |
 | `/checkout/details`                | `checkout/DetailsStep`                  |

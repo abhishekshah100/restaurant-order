@@ -23,12 +23,24 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   // What guests read of the branches.
   ['GET', 'branches'],
   ['GET', 'branches/:branchId/floors'],
+  // The menu: what everyone reads, and staff changing it.
+  ['GET', 'branches/:branchId/menu'],
+  ['PATCH', 'admin/branches/:branchId/menu/dishes/:slug/availability'],
+  ['POST', 'admin/branches/:branchId/menu/dishes'],
+  ['PATCH', 'admin/branches/:branchId/menu/dishes/:slug'],
+  ['DELETE', 'admin/branches/:branchId/menu/dishes/:slug'],
+  ['PATCH', 'admin/branches/:branchId/menu/categories/:categoryId/order'],
+  ['PATCH', 'admin/branches/:branchId/menu/categories'],
+  ['POST', 'admin/branches/:branchId/menu/images'],
 ];
+
+/** Whether the backend is configured (NEXT_PUBLIC_BACKEND_URL). */
+export const isBackendEnabled = (): boolean => backendBaseUrl() !== '';
 
 /** Whether the backend is configured and serves this request. */
 export function isBackendRequest({ method, path }: Pick<ApiRequest, 'method' | 'path'>): boolean {
   return (
-    backendBaseUrl() !== '' &&
+    isBackendEnabled() &&
     BACKEND_ROUTES.some(([m, pattern]) => m === method && matchPath(pattern, path) !== null)
   );
 }

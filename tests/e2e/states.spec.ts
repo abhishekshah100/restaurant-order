@@ -48,7 +48,7 @@ test('closed: the menu stays browsable but read-only, and checkout is blocked', 
   // ADD is replaced by a disabled "Closed" label ("Dahi Kebab: Closed" for screen readers).
   await expect(visible(page, 'Dahi Kebab: Closed')).toBeVisible();
 
-  await page.goto('/dish/truffle-mushroom-pasta/');
+  await page.goto('/dish/?slug=truffle-mushroom-pasta');
   await expect(page.getByRole('button', { name: /Closed now/ })).toBeDisabled();
 
   await page.goto('/checkout/details/');

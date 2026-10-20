@@ -125,9 +125,13 @@ async function http<T>(
 const viaFetch = <T>(request: ApiRequest, init?: RequestInit): Promise<T> =>
   http(apiUrl(request.path), request, init, unwrap<T>);
 
-/** The backend, for the endpoints it serves (api/backend.ts). */
+/**
+ * The backend, for the endpoints it serves (api/backend.ts). Never from the browser's HTTP
+ * cache: TanStack Query is the app's cache, and a stale HTTP copy would show staff the data from
+ * before their own change.
+ */
 const viaBackend = <T>(request: ApiRequest, init?: RequestInit): Promise<T> =>
-  http(backendUrl(request.path), request, init, unwrapEnvelope<T>);
+  http(backendUrl(request.path), request, { cache: 'no-store', ...init }, unwrapEnvelope<T>);
 
 /**
  * The transport. Endpoints the backend serves go to it when NEXT_PUBLIC_BACKEND_URL is set

@@ -6,7 +6,7 @@ import { useId } from 'react';
 import { Chip, Icon, VegMark } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import { useContent, useMenu, useRegion } from '@/api/hooks';
-import { dishImage, startingPrice } from '@/lib/menu';
+import { dishHref, dishImage, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import styles from './SearchSuggestions.module.css';
 
@@ -48,7 +48,7 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
               return (
                 <li key={dish.slug} className={styles.trend}>
                   <Link
-                    href={`/dish/${dish.slug}/`}
+                    href={dishHref(dish.slug)}
                     className={styles.trendLink}
                     onClick={onNavigate}
                   >

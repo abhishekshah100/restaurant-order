@@ -37,7 +37,7 @@ requests) goes through `src/api`; in this build the in-browser mock server in
 | `/start`                 | Choose outlet and mode; `?next=` returns afterwards       | `start/StartView`         |
 | `/menu`                  | Menu home                                                 | `menu/MenuHome`           |
 | `/menu/[category]`       | Category list (one page per category id on any menu)      | `menu/CategoryView`       |
-| `/dish/[slug]`           | Food detail; `?edit=<lineKey>` edits a cart line          | `menu/DishDetail`         |
+| `/dish/?slug=…`          | Food detail; `&edit=<lineKey>` edits a cart line          | `menu/DishDetail`         |
 | `/search`                | Search and suggestions; `?q=`                             | `menu/SearchView`         |
 | `/cart`                  | Cart, also "Adding to order" and "Editing order"          | `cart/CartView`           |
 | `/checkout/details`      | Name, mobile, pickup time or delivery address             | `checkout/DetailsStep`    |
@@ -79,7 +79,7 @@ flowchart TD
     Welcome --> Menu["Menu /menu"]
     Menu --> Category["Category /menu/[category]"]
     Menu --> Search["Search /search"]
-    Category --> Dish["Food detail /dish/[slug]"]
+    Category --> Dish["Food detail /dish/?slug="]
     Search --> Dish
     Menu --> Cart["Cart /cart"]
     Category --> Cart
