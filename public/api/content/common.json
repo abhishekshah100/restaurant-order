@@ -164,6 +164,7 @@
     "submit": "Sign in",
     "errors": {
       "invalidCredentials": "That email, mobile number or password isn't right. Check them and try again.",
+      "tooManyAttempts": "Too many attempts. Wait a few minutes, then try again.",
       "requestFailed": "We couldn't reach the server. Check your connection and try again."
     },
     "validation": {

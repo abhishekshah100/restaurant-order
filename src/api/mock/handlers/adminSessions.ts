@@ -4,6 +4,7 @@ import type { Branch, OrderMode } from '@/types/branch';
 import type { AdminBranchesResponse, AdminSignInResponse } from '../../contracts';
 import { fail, objectBody, ok, stringField, type Handler, type MockContext } from '../context';
 import { statusUntil, type BranchStatusChange } from '../branchStatus';
+import { backendBaseUrl } from '../../config';
 import { DEMO_ADMIN } from '../demoAdmin';
 import { ADMIN_SESSION_HOURS, HOUR_MS } from '../rules';
 
@@ -45,9 +46,27 @@ export const createAdminSession: Handler = async (ctx, { body: raw }) => {
   return ok(session, 201);
 };
 
-/** The account behind the request's `Authorization: Bearer <token>`, or 401 unauthorized. */
+/** DELETE /admin/sessions/current */
+export const endAdminSession: Handler = (ctx, { headers }) => {
+  signedInAccount(ctx, headers);
+  const token = bearerToken(headers);
+  ctx.db.adminSessions.write(ctx.db.adminSessions.read().filter((s) => s.token !== token));
+  return Promise.resolve(ok(undefined, 204));
+};
+
+const bearerToken = (headers: Record<string, string>) =>
+  /^Bearer\s+(\S+)$/i.exec(headers.authorization ?? '')?.[1];
+
+/**
+ * The account behind the request's `Authorization: Bearer <token>`, or 401 unauthorized.
+ *
+ * MOCK ONLY, while the backend is partly built (NEXT_PUBLIC_BACKEND_URL set): staff sign in on
+ * the backend, so the endpoints still served here can't check its tokens. They accept any
+ * token as the demo account's; the backend checks tokens properly on everything it serves.
+ */
 export function signedInAccount(ctx: MockContext, headers: Record<string, string>) {
-  const token = /^Bearer\s+(\S+)$/i.exec(headers.authorization ?? '')?.[1];
+  const token = bearerToken(headers);
+  if (token && backendBaseUrl()) return DEMO_ADMIN;
   const session = token && ctx.db.adminSessions.read().find((s) => s.token === token);
   const account = session && ACCOUNTS.find((a) => a.email === session.email);
   if (!session || session.expiresAt <= ctx.now() || !account) fail(401, 'unauthorized');

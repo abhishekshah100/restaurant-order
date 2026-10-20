@@ -21,7 +21,7 @@ const eslintConfig = defineConfig([
     // No hard-coded copy in components: every user-visible or screen-reader string comes from
     // the content API (public/api/content/*.json via useContent / getContent).
     files: ['src/**/*.tsx'],
-    ignores: ['src/app/styleguide/**'], // internal design board with demo content
+    ignores: ['src/app/(guest)/styleguide/**'], // internal design board with demo content
     rules: {
       'react/jsx-no-literals': [
         'error',

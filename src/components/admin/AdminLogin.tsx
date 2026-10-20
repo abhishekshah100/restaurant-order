@@ -98,11 +98,14 @@ export function AdminLogin() {
             <Banner tone="err" icon="alert" live="assertive" className={styles.alert}>
               {isApiError(login.error, 'invalid_credentials')
                 ? t('adminLogin.errors.invalidCredentials')
-                : t('adminLogin.errors.requestFailed')}
+                : isApiError(login.error, 'rate_limited')
+                  ? t('adminLogin.errors.tooManyAttempts')
+                  : t('adminLogin.errors.requestFailed')}
             </Banner>
           )}
 
-          <form className={styles.form} onSubmit={handleSubmit(onSubmit)} noValidate>
+          {/* POST: a submit before the page's script runs must never put the password in the URL. */}
+          <form className={styles.form} method="post" onSubmit={handleSubmit(onSubmit)} noValidate>
             <Input
               id="admin-identity"
               label={t('adminLogin.identity')}

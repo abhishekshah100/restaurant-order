@@ -1,6 +1,12 @@
 import type { ApiErrorBody, ApiErrorCode } from './contracts';
-import { apiUrl, isMockApi } from './config';
+import { backendUrl, isBackendRequest } from './backend';
+import { REQUEST_TIMEOUT_MS, apiUrl, isMockApi } from './config';
 
+/**
+ * A request that failed. `status` is the HTTP status, or 0 when no answer came back (offline,
+ * the server unreachable, or it took too long). Screens branch on `code`, the contract's error
+ * code, and read its extras from `body` (`tables`, `shortBy`…).
+ */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -8,12 +14,21 @@ export class ApiError extends Error {
     /** The error body the server sent (see api/contracts), if any. */
     readonly body?: ApiErrorBody,
   ) {
-    super(`Request to ${url} failed with ${status}${body ? ` (${body.error})` : ''}`);
+    super(
+      status === 0
+        ? `Request to ${url} got no answer`
+        : `Request to ${url} failed with ${status}${body ? ` (${body.error})` : ''}`,
+    );
     this.name = 'ApiError';
   }
 
   get code(): ApiErrorCode | undefined {
     return this.body?.error;
+  }
+
+  /** No answer came back: worth trying again. */
+  get isNetworkError(): boolean {
+    return this.status === 0;
   }
 }
 
@@ -48,28 +63,80 @@ function unwrap<T>({ status, body }: ApiResponse, url: string): T {
   return body as T;
 }
 
-async function viaFetch<T>({ method, path, body }: ApiRequest, init?: RequestInit): Promise<T> {
-  const url = apiUrl(path);
-  const res = await fetch(url, {
-    method,
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...init?.headers,
-    },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
-  const text = res.status === 204 ? '' : await res.text();
-  return unwrap<T>({ status: res.status, body: text ? JSON.parse(text) : undefined }, url);
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * The backend's envelope (restaurant-backend › docs/decisions.md › ADR-004) read into the
+ * shapes the screens use: `{ success: true, data }` → `data`; `{ success: false, error: { code,
+ * details } }` → an ApiError whose body is the contract's `{ error: code, ...extras }`.
+ */
+function unwrapEnvelope<T>({ status, body }: ApiResponse, url: string): T {
+  if (status >= 200 && status <= 299) {
+    return (isObject(body) ? body.data : undefined) as T;
+  }
+  const error = isObject(body) && isObject(body.error) ? body.error : undefined;
+  const code = typeof error?.code === 'string' ? error.code : undefined;
+  const extras = isObject(error?.details) ? error.details : {};
+  throw new ApiError(status, url, code ? ({ ...extras, error: code } as ApiErrorBody) : undefined);
+}
+
+/** JSON text, or undefined for an empty or non-JSON body (a proxy's HTML error page). */
+function parseJson(text: string): unknown {
+  if (!text) return undefined;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 /**
- * The transport. With the mock on (NEXT_PUBLIC_API_MOCK, default), the in-browser mock server
- * answers the endpoints it owns; everything else (and everything with the mock off) is a
- * real HTTP request. The mock is loaded on first use, so a backend build never runs it.
+ * One HTTP request. It gives up after REQUEST_TIMEOUT_MS unless the caller passed its own
+ * signal; no answer at all (offline, unreachable, timed out) is an ApiError with status 0.
+ */
+async function http<T>(
+  url: string,
+  { method, body }: ApiRequest,
+  init: RequestInit | undefined,
+  read: (response: ApiResponse, url: string) => T,
+): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      ...init,
+      signal: init?.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      headers: {
+        Accept: 'application/json',
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...init?.headers,
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+  } catch {
+    throw new ApiError(0, url);
+  }
+  const text = res.status === 204 ? '' : await res.text().catch(() => '');
+  return read({ status: res.status, body: parseJson(text) }, url);
+}
+
+/** The dummy JSON (or a server answering the contract's bare shapes). */
+const viaFetch = <T>(request: ApiRequest, init?: RequestInit): Promise<T> =>
+  http(apiUrl(request.path), request, init, unwrap<T>);
+
+/** The backend, for the endpoints it serves (api/backend.ts). */
+const viaBackend = <T>(request: ApiRequest, init?: RequestInit): Promise<T> =>
+  http(backendUrl(request.path), request, init, unwrapEnvelope<T>);
+
+/**
+ * The transport. Endpoints the backend serves go to it when NEXT_PUBLIC_BACKEND_URL is set
+ * (api/backend.ts). Otherwise, with the mock on (NEXT_PUBLIC_API_MOCK, default), the in-browser
+ * mock server answers the endpoints it owns; everything else is a plain HTTP request for the
+ * dummy JSON. The mock is loaded on first use, so a backend build never runs it.
  */
 async function send<T>(request: ApiRequest, init?: RequestInit): Promise<T> {
+  if (isBackendRequest(request)) return viaBackend<T>(request, init);
   if (isMockApi()) {
     const { handleMockRequest } = await import('./mock/server');
     const headers = Object.fromEntries(new Headers(init?.headers).entries());

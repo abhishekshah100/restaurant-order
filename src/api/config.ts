@@ -28,3 +28,15 @@ export function mockLatencyRange(): [number, number] {
   const [min, max = min] = raw.split('-').map((n) => Math.max(0, Number(n) || 0));
   return [min, Math.max(min, max)];
 }
+
+/*
+ * The real backend (restaurant-backend), e.g. "http://localhost:4000/v1". While it's being
+ * built, it answers the endpoints listed in api/backend.ts and everything else stays on the
+ * mock or the dummy JSON. Unset: the app runs entirely as before. Read per call, like the mock
+ * switch.
+ */
+export const backendBaseUrl = (): string =>
+  (process.env.NEXT_PUBLIC_BACKEND_URL ?? '').replace(/\/+$/, '');
+
+/** Requests to the backend give up after this long (the server answers well within it). */
+export const REQUEST_TIMEOUT_MS = 15_000;

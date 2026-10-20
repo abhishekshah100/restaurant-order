@@ -18,6 +18,7 @@ Query hooks components use. The endpoint-by-endpoint contract for backend develo
 - [Mock server internals](#mock-server-internals)
 - [Screen copy (content API)](#screen-copy-content-api)
 - [Branches and regions](#branches-and-regions)
+- [Connecting restaurant-backend, area by area](#connecting-restaurant-backend-area-by-area)
 - [Switching to a real backend](#switching-to-a-real-backend)
 - [Related](#related)
 
@@ -326,8 +327,10 @@ The static export has no runtime server, so [`src/api/server.ts`](../src/api/ser
 same JSON from disk at build time (`readApiFile(endpoint)` reads `public/api/<endpoint>.json`).
 
 - `prefetchAppData(client)` runs in `app/layout.tsx` and fills the cache with every content
-  namespace, the restaurant, the branches and the **default** branch's menu and promotions. The
-  root layout dehydrates it into every page, so it stays small.
+  namespace, the restaurant and the branches. The root layout dehydrates it into every page, so
+  it stays small.
+- `prefetchGuestData(client)` runs in `app/(guest)/layout.tsx` and adds the **default** branch's
+  menu and promotions to the guest pages only.
 - The branches and the menu are stored with `updatedAt: 0`: already stale in the page, so the
   browser reads the live status and staff menu changes once the page opens.
 - Another branch's menu and promotions are read in the browser; `GuestSessionProvider` waits for
@@ -481,6 +484,36 @@ exists.
 Components read the active branch with `useBranch()` and its formatters with `useRegion()`; pure
 lib functions take a `Branch`, `Money` or `Clock` argument. The price filter lives in the branch's
 menu (`priceFilter`), and promo codes and offers in its promotions file.
+
+## Connecting restaurant-backend, area by area
+
+The backend (`restaurant-backend`) is built module by module. Set `NEXT_PUBLIC_BACKEND_URL`
+(for example `http://localhost:4000/v1`, see `.env.example`) and the endpoints it already serves
+go to it; everything else keeps using the mock server and the dummy JSON. Unset, the app runs on
+the mock alone, exactly as before.
+
+| Piece                                                      | Role                                                               |
+| ---------------------------------------------------------- | ------------------------------------------------------------------ |
+| [`src/api/backend.ts`](../src/api/backend.ts)              | The routes the backend serves; add a module's routes as it lands   |
+| [`src/api/client.ts`](../src/api/client.ts) › `viaBackend` | Unwraps the backend's envelope into the contract's shapes          |
+| [`src/api/queryClient.ts`](../src/api/queryClient.ts)      | Retries no-answer and 5xx once; any `unauthorized` signs staff out |
+
+**Responses.** The backend answers `{ "success": true, "data": … }` and
+`{ "success": false, "error": { "code", "message", "details" } }`. The client returns `data`, and
+turns an error into the same `ApiError` the mock throws: `code` is the contract's error code and
+`body` carries its extras (`details.tables` becomes `body.tables`), so screens don't change.
+
+**Failures.** A request that gets no answer (offline, unreachable, or over 15 s) is an `ApiError`
+with `status` 0 (`isNetworkError`); queries retry it once, like a 5xx, and never a 4xx. A
+non-JSON error page (a proxy's 502) is an `ApiError` without a code. `401 unauthorized` from any
+request ends the staff session on this device and the admin guard sends them to sign in. Sign-out
+also ends the session on the server (`DELETE /admin/sessions/current`).
+
+**While both run.** Staff sign in on the backend, so the admin endpoints still on the mock accept
+any token as the demo account's (MOCK ONLY, in
+[`adminSessions.ts`](../src/api/mock/handlers/adminSessions.ts)). The two don't share data: a
+branch added, paused or re-planned on the backend isn't seen by the mock's orders, tables and
+menu until those modules move to the backend too.
 
 ## Switching to a real backend
 

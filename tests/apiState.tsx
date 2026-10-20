@@ -19,6 +19,7 @@ import { HOUR_MS, TABLE_SESSION_HOURS } from '@/api/mock/rules';
 import { branchesBaseQuery, menuBaseQuery, promotionsBaseQuery, querySeed } from '@/api/mock/seed';
 import { createMockServer } from '@/api/mock/server';
 import { AppProviders } from '@/context/AppProviders';
+import { GuestProviders } from '@/context/GuestProviders';
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
 import { createTranslator } from '@/api/translator';
 import type { ContentMap } from '@/api/queries';
@@ -146,10 +147,17 @@ export function createTestServer(
   });
 }
 
-/** Wraps a component or hook under test in every app provider, with the API data loaded. */
+/**
+ * Wraps a component or hook under test in every provider a guest page has (the app's and the
+ * guest layout's), with the API data loaded.
+ */
 export function TestProviders({ children }: { children: ReactNode }) {
   const [state] = useState(createApiState);
-  return <AppProviders state={state}>{children}</AppProviders>;
+  return (
+    <AppProviders state={state}>
+      <GuestProviders>{children}</GuestProviders>
+    </AppProviders>
+  );
 }
 
 /** Just the query cache with the API data loaded, for providers and hooks tested on their own. */

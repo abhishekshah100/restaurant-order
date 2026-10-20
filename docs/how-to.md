@@ -64,7 +64,7 @@ when the values come from reference data available at build time.
 4. Render a client component from `src/components/<area>/` and pass it the param. Branch-specific
    data (prices, availability) is read on the client.
 
-Following [`src/app/dish/[slug]/page.tsx`](../src/app/dish/[slug]/page.tsx):
+Following [`src/app/(guest)/dish/[slug]/page.tsx`](<../src/app/(guest)/dish/[slug]/page.tsx>):
 
 ```tsx
 export const dynamicParams = false;
@@ -83,7 +83,7 @@ export default async function DishPage({ params }: Props) {
 tables added in Settings), so no new build is needed.
 
 1. Create `src/app/<segment>/page.tsx` with `generateMetadata` and a client component, as in
-   [`src/app/order/track/page.tsx`](../src/app/order/track/page.tsx).
+   [`src/app/(guest)/order/track/page.tsx`](<../src/app/(guest)/order/track/page.tsx>).
 2. In the component, read the value with `useQueryParam(name)` from
    [`src/hooks/useQueryParam.ts`](../src/hooks/useQueryParam.ts). It returns `null` during
    prerender and hydration, so the page needs no `Suspense` boundary (which `useSearchParams`
@@ -95,8 +95,9 @@ For either pattern:
 
 - Add the page's title and description to the namespace's `meta` object in content (for
   example `orders › meta.tracking`).
-- Shared data (content, branches, the default branch's menu) is already in the query cache:
-  the root layout calls `prefetchAppData`.
+- Shared data (content, branches) is already in the query cache: the root layout calls
+  `prefetchAppData`; guest pages also get the default branch's menu (`prefetchGuestData`, in
+  `app/(guest)/layout.tsx`). A guest page goes under `src/app/(guest)/`.
 - `trailingSlash: true` is set, so link to paths ending in `/`.
 - Add an end-to-end test under `tests/e2e/`.
 

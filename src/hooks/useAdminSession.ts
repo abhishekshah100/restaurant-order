@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useSyncExternalStore } from 'react';
+import { api } from '@/api/endpoints';
 import {
   adminToken,
   adminUsername,
@@ -30,10 +31,16 @@ export const useAdminName = (): string | undefined =>
 export const useSelectedAdminBranchId = (): string | null =>
   useSyncExternalStore(subscribeAdminSession, selectedAdminBranchId, none);
 
-/** Signs out: forgets the session and the selected branch, and drops cached admin data. */
+/**
+ * Signs out: ends the session on the server (so its token stops working everywhere), forgets
+ * it and the selected branch here, and drops cached admin data. Signing out never waits for the
+ * server or fails because of it: the device forgets the session either way.
+ */
 export function useSignOutAdmin(): () => void {
   const client = useQueryClient();
   return useCallback(() => {
+    const token = adminToken();
+    if (token) void api.endAdminSession(token).catch(() => undefined);
     signOutAdmin();
     client.removeQueries({ queryKey: ['admin'] });
   }, [client]);

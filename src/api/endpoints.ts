@@ -80,6 +80,7 @@ const bearer = (token: string): RequestInit => ({ headers: { Authorization: `Bea
 export const api = {
   createAdminSession: (body: AdminSignInRequest) =>
     apiPost<AdminSignInResponse>('admin/sessions', body),
+  endAdminSession: (token: string) => apiDelete('admin/sessions/current', bearer(token)),
   adminBranches: (token: string) => apiGet<AdminBranchesResponse>('admin/branches', bearer(token)),
   setBranchStatus: (token: string, branchId: string, body: SetBranchStatusRequest) =>
     apiPatch<AdminBranch>(`admin/branches/${seg(branchId)}/status`, body, bearer(token)),

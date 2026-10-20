@@ -63,7 +63,7 @@ Gotchas:
 - Order pages are three static pages that read the id from `?id=` on the client
   (`components/order/useOrderId`), so any id the API returns opens. Always link with
   `orderPath(id, 'details' | 'track' | 'confirmed')` from [`src/lib/orders.ts`](../src/lib/orders.ts).
-- `/checkout/*` is wrapped by [`src/app/checkout/layout.tsx`](../src/app/checkout/layout.tsx),
+- `/checkout/*` is wrapped by [`src/app/(guest)/checkout/layout.tsx`](<../src/app/(guest)/checkout/layout.tsx>),
   which renders `OrderingGate`: while ordering is unavailable the status screen replaces the step.
 - A guest without a session who opens any ordering page is sent to `/start/?next=…` by
   [`StartRedirect`](../src/components/start/StartRedirect.tsx); `/`, `/start`, `/styleguide` and

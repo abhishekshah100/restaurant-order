@@ -1,4 +1,5 @@
 import type { ApiRequest, ApiResponse, HttpMethod } from '../client';
+import { matchPath } from '../paths';
 import { mockLatencyRange } from '../config';
 import { getQueryClient } from '../queryClient';
 import { MockHttpError, randomId, type Handler, type MockContext } from './context';
@@ -9,7 +10,12 @@ import {
   markOrderServed,
   resolveServiceRequest,
 } from './handlers/adminService';
-import { createAdminSession, listAdminBranches, setBranchStatus } from './handlers/adminSessions';
+import {
+  createAdminSession,
+  endAdminSession,
+  listAdminBranches,
+  setBranchStatus,
+} from './handlers/adminSessions';
 import {
   branchSettings,
   createBranch,
@@ -74,6 +80,7 @@ import { querySeed } from './seed';
 
 const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/sessions', createAdminSession],
+  ['DELETE', 'admin/sessions/current', endAdminSession],
   ['GET', 'admin/branches', listAdminBranches],
   ['POST', 'admin/branches', createBranch],
   ['DELETE', 'admin/branches/:branchId', removeBranch],
@@ -133,18 +140,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['GET', 'sessions/:id/service-requests', listServiceRequests],
 ];
 
-/** The route's `:params` if `path` matches `pattern`, else null. */
-export function matchPath(pattern: string, path: string): Record<string, string> | null {
-  const want = pattern.split('/');
-  const got = path.split('?')[0].split('/');
-  if (want.length !== got.length) return null;
-  const params: Record<string, string> = {};
-  for (const [i, part] of want.entries()) {
-    if (part.startsWith(':')) params[part.slice(1)] = decodeURIComponent(got[i]);
-    else if (part !== got[i]) return null;
-  }
-  return params;
-}
+export { matchPath };
 
 /** A JSON round trip: handlers and callers never share objects, just like over the wire. */
 const wire = <T>(value: T): T => (value === undefined ? value : JSON.parse(JSON.stringify(value)));

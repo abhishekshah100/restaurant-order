@@ -68,12 +68,14 @@ All variables are read at build time, like every `NEXT_PUBLIC_` variable.
 
 | Variable                          | Default   | Purpose                                                 |
 | --------------------------------- | --------- | ------------------------------------------------------- |
+| `NEXT_PUBLIC_BACKEND_URL`         | unset     | restaurant-backend (`…/v1`) for the endpoints it serves |
 | `NEXT_PUBLIC_API_MOCK`            | on        | `false` sends every request to the real backend         |
 | `NEXT_PUBLIC_API_BASE_URL`        | `/api`    | Base URL of the API                                     |
 | `NEXT_PUBLIC_API_SUFFIX`          | `.json`   | Appended to endpoint paths; set to empty for a real API |
 | `NEXT_PUBLIC_API_MOCK_LATENCY_MS` | `200-400` | Mock response time: a range or a single number          |
 
-Connecting a real backend: [docs/data-and-api.md](docs/data-and-api.md#switching-to-a-real-backend).
+Connecting restaurant-backend while it's being built (copy `.env.example` to `.env.local`):
+[docs/data-and-api.md](docs/data-and-api.md#connecting-restaurant-backend-area-by-area).
 
 ## Apps and entry points
 

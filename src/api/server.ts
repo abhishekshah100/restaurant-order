@@ -38,27 +38,40 @@ const readMenu = (branchId: string) => readApiFile<MenuData>(`branches/${branchI
 
 /**
  * Fills the query cache with what every page needs, for the root layout to dehydrate: the copy,
- * the brand, the branches, and the default branch's menu and promotions. It's built into every
- * page, so it stays small: another branch's menu is read in the browser when a guest's session
- * is there (GuestSessionProvider waits for it), and data for a single screen is prefetched by
- * that screen's layout (help) or read on demand (the admin's order history).
+ * the brand and the branches (staff pages use their region rules too). It's built into every
+ * page, so it stays small: what only guests need is prefetchGuestData's.
  */
 export async function prefetchAppData(client: QueryClient): Promise<void> {
   const [branches, restaurant] = await Promise.all([
     readBranches(),
     readApiFile<Restaurant>('restaurant'),
   ]);
-  const { id: branchId } = resolveBranch(branches, restaurant.defaultBranchId);
   client.setQueryData(restaurantQuery().queryKey, restaurant);
   // Already out of date in the page, like the menu: the browser reads the live status once.
   client.setQueryData(branchesQuery().queryKey, branches, { updatedAt: 0 });
-  await Promise.all([
-    ...CONTENT_NAMESPACES.map((ns) =>
+  await Promise.all(
+    CONTENT_NAMESPACES.map((ns) =>
       client.prefetchQuery({
         ...contentQuery(ns),
         queryFn: () => readApiFile<ContentMap[typeof ns]>(`content/${ns}`),
       }),
     ),
+  );
+}
+
+/**
+ * Fills the query cache with what the guest pages need besides, for the guest layout to
+ * dehydrate: the default branch's menu and promotions. Another branch's menu is read in the
+ * browser when a guest's session is there (GuestSessionProvider waits for it), and data for a
+ * single screen is prefetched by that screen's layout (help) or read on demand.
+ */
+export async function prefetchGuestData(client: QueryClient): Promise<void> {
+  const [branches, restaurant] = await Promise.all([
+    readBranches(),
+    readApiFile<Restaurant>('restaurant'),
+  ]);
+  const { id: branchId } = resolveBranch(branches, restaurant.defaultBranchId);
+  await Promise.all([
     // Built into the page as already out of date: staff change the menu during service (sold
     // out, back on), so the browser reads the live one once the page opens.
     readMenu(branchId).then((menu) =>

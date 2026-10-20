@@ -172,7 +172,7 @@ These rules keep the layers independent. Code review enforces them.
 Every screen follows the same path from route to data. The layers, top to bottom:
 
 1. **Route** ([`src/app`](../src/app)): a thin server component. For example
-   [`src/app/menu/page.tsx`](../src/app/menu/page.tsx) sets the title from
+   [`src/app/(guest)/menu/page.tsx`](<../src/app/(guest)/menu/page.tsx>) sets the title from
    `getContent('menu')` and renders `<MenuHome />`.
 2. **View component** ([`src/components`](../src/components)): a client component that calls hooks
    and lays out primitives from `components/ui`.
@@ -231,15 +231,17 @@ The static pages are rendered with real data, so they show content before any Ja
 
 1. [`src/app/layout.tsx`](../src/app/layout.tsx) creates a query client (`makeQueryClient`) and
    calls `prefetchAppData` from [`src/api/server.ts`](../src/api/server.ts). That reads
-   `public/api` from disk (`readApiFile`) and fills the cache with every content namespace, the
-   restaurant, the branches, and the default branch's menu and promotions.
+   `public/api` from disk (`readApiFile`) and fills the cache with what every page needs: every
+   content namespace, the restaurant and the branches (staff pages use their region rules too).
+   The guest pages' layout, [`src/app/(guest)/layout.tsx`](<../src/app/(guest)/layout.tsx>),
+   adds the default branch's menu and promotions (`prefetchGuestData`).
 2. The layout passes `dehydrate(queryClient)` to `AppProviders`, which hands it to `QueryProvider`
    ([`src/api/QueryProvider.tsx`](../src/api/QueryProvider.tsx)). `HydrationBoundary` puts it in
    the browser's single query client.
 3. The branches and the menu are stored with `updatedAt: 0`, so the browser refetches them once
    after the page opens. Staff change the menu and branch status during service.
 4. Data needed by only one area is prefetched by that area's layout. For example
-   [`src/app/help/layout.tsx`](../src/app/help/layout.tsx) calls `prefetchHelp`.
+   [`src/app/(guest)/help/layout.tsx`](<../src/app/(guest)/help/layout.tsx>) calls `prefetchHelp`.
 5. Dynamic routes list their pages at build time: `/dish/[slug]` uses `getDishSlugsServer` and
    `/menu/[category]` uses `getCategoryIdsServer`, both with `dynamicParams = false`.
 
@@ -247,9 +249,16 @@ Because the reference data is always in the cache, the reference hooks use `useS
 never return `undefined`. Server-owned reads use `useQuery` and are pending until the first
 response.
 
-`AppProviders` ([`src/context/AppProviders.tsx`](../src/context/AppProviders.tsx)) nests the
-providers in this order: Query (outermost), Toast, GuestSession, Cart, Checkout, Filters, Search,
-ServiceRequest, QuickAdd. `StartRedirect` renders inside them.
+Providers come in two layers, so staff pages never load the guest's session or menu:
+
+- `AppProviders` ([`src/context/AppProviders.tsx`](../src/context/AppProviders.tsx)), in the root
+  layout, for every page: Query (outermost), then Toast.
+- `GuestProviders` ([`src/context/GuestProviders.tsx`](../src/context/GuestProviders.tsx)), in
+  the guest pages' layout (the `app/(guest)` route group; it adds nothing to the URLs):
+  GuestSession, Cart, Checkout, Filters, Search, ServiceRequest, QuickAdd, with `StartRedirect`
+  inside them. Staff and kitchen pages (`app/admin`) sit outside the group.
+
+A new guest page goes under `src/app/(guest)/`; a new staff page under `src/app/admin/`.
 
 ## State management
 
@@ -397,7 +406,7 @@ flowchart LR
 | `/help/bill-requested`             | `service/BillRequested`                 |
 | `/styleguide`                      | `app/styleguide/Styleguide`             |
 
-All checkout steps sit under [`src/app/checkout/layout.tsx`](../src/app/checkout/layout.tsx),
+All checkout steps sit under [`src/app/(guest)/checkout/layout.tsx`](<../src/app/(guest)/checkout/layout.tsx>),
 which wraps them in `OrderingGate`: while ordering is closed, paused or offline the restaurant
 state screen replaces the step. The quick-add dialog and the request-waiter dialog are not routes;
 they open from `QuickAddContext` and `useServiceRequest().openRequest('waiter')`.

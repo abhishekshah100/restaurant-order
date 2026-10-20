@@ -106,6 +106,8 @@ export type ApiErrorCode =
   | 'promo_limit_reached'
   /** 401: no admin account matches this email or mobile number and password. */
   | 'invalid_credentials'
+  /** 429: too many requests from this device (sign-in: too many wrong passwords); try later. */
+  | 'rate_limited'
   /** 401: an admin request without a session token, or its session has expired; sign in again. */
   | 'unauthorized'
   /** 403: the signed-in admin doesn't manage this branch (or the order or request's branch). */
@@ -167,6 +169,11 @@ export interface AdminSignInRequest {
 }
 
 export type AdminSignInResponse = AdminSession;
+
+/**
+ * `DELETE /admin/sessions/current` — signs out: the session's token stops working at once, on
+ * every device that holds it. No body. 204. Errors: 401 unauthorized.
+ */
 
 /**
  * `GET /admin/branches` — the branches the signed-in admin manages (not every branch), with
