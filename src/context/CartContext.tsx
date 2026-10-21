@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -9,10 +10,11 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { CartAction, CartLine, CartState, LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
-import { useBranch, useContent, useMenu } from '@/api/hooks';
-import type { ContentMap } from '@/api/queries';
+import { useBranch, useContent, useMenuIfNeeded } from '@/api/hooks';
+import { branchMenuQuery, type ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
 import type { MenuCatalog } from '@/lib/menu';
 import { calculateBill, type Bill } from '@/lib/pricing';
@@ -155,6 +157,10 @@ function repriceLines(lines: readonly CartLine[], menu: MenuCatalog): CartLine[]
   });
 }
 
+/** Whether a cart has dishes to price: its own, or the ones put aside while editing an order. */
+const hasDishes = (cart: CartState) =>
+  cart.lines.length > 0 || (cart.editing?.stash.lines.length ?? 0) > 0;
+
 /** A saved cart (and the one put aside while editing an order) on the current menu. */
 function reconcile(saved: CartState, menu: MenuCatalog): CartState {
   const cart: CartState = {
@@ -170,17 +176,19 @@ function reconcile(saved: CartState, menu: MenuCatalog): CartState {
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 
-/** The saved cart if it belongs to this guest session; another session's cart is discarded. */
-function readSavedCart(menu: MenuCatalog, sessionId: string): CartState {
+/**
+ * The saved cart if it belongs to this guest session (not yet on the current menu); another
+ * session's cart is discarded.
+ */
+function readSavedCart(sessionId: string): CartState {
   const saved = readJSON(STORAGE_KEYS.cart, isObject);
-  const cart = saved?.sessionId === sessionId ? parseCart(saved) : null;
-  return cart ? reconcile(cart, menu) : EMPTY_CART;
+  return (saved?.sessionId === sessionId ? parseCart(saved) : null) ?? EMPTY_CART;
 }
 
 function createActions(
   store: CartStore,
   showToast: ReturnType<typeof useToast>['showToast'],
-  menu: MenuCatalog,
+  menu: MenuCatalog | null,
   t: Translator<ContentMap['cart']>,
 ): CartActions {
   const { dispatch } = store;
@@ -193,7 +201,7 @@ function createActions(
     const line = lines[index];
     if (!line) return;
     dispatch({ type: 'remove', key });
-    const dishName = menu.getDish(line.dishSlug)?.name ?? t('toast.unknownItem');
+    const dishName = menu?.getDish(line.dishSlug)?.name ?? t('toast.unknownItem');
     showToast(t('toast.removed', { dish: dishName }), {
       actionLabel: t('toast.undo'),
       onAction: () => dispatch({ type: 'restore', line, index }),
@@ -247,7 +255,14 @@ const CartStoreContext = createContext<{ store: CartStore; actions: CartActions 
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
-  const menu = useMenu();
+  const guestId = useGuestSession()?.id;
+  // The menu only re-prices a saved cart with dishes in it: an empty one (a fresh scan) needs
+  // none, so the page doesn't wait for or download it. Pages that add dishes have read it.
+  const savedDishes = useMemo(
+    () => (guestId ? hasDishes(readSavedCart(guestId)) : false),
+    [guestId],
+  );
+  const menu = useMenuIfNeeded(savedDishes);
   const t = useContent('cart');
   const branch = useBranch();
   const [store] = useState(createCartStore);
@@ -257,13 +272,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
   const { cart, sessionId } = useSyncExternalStore(store.subscribe, store.getState, store.getState);
   const hydrated = sessionId !== null;
-  const guestId = useGuestSession()?.id;
+
+  /** The saved cart on the current menu; one with dishes waits for the menu (read here). */
+  const queryClient = useQueryClient();
+  const restore = useCallback(
+    (id: string) => {
+      const saved = readSavedCart(id);
+      if (!hasDishes(saved)) store.hydrate(id, saved);
+      else if (menu) store.hydrate(id, reconcile(saved, menu));
+      // Restored again once it's in (`menu` changes).
+      else void queryClient.prefetchQuery(branchMenuQuery(branch.id));
+    },
+    [store, menu, queryClient, branch.id],
+  );
 
   // Read the saved cart once the guest session is known (after mount, so server HTML and
   // the first client render match), and again whenever the session changes.
   useEffect(() => {
-    if (guestId) store.hydrate(guestId, readSavedCart(menu, guestId));
-  }, [store, menu, guestId]);
+    if (guestId) restore(guestId);
+  }, [restore, guestId]);
 
   useEffect(() => {
     if (sessionId) writeJSON(STORAGE_KEYS.cart, { sessionId, ...cart });
@@ -273,11 +300,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!guestId) return;
     const onStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEYS.cart) store.hydrate(guestId, readSavedCart(menu, guestId));
+      if (event.key === STORAGE_KEYS.cart) restore(guestId);
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, [store, menu, guestId]);
+  }, [restore, guestId]);
 
   const storeValue = useMemo(() => ({ store, actions }), [store, actions]);
 

@@ -61,6 +61,15 @@
   font: var(--font-label);
 }
 
+/* The full link, on screen only: long (it carries the signed token), so it wraps anywhere. */
+.link {
+  max-width: 100%;
+  color: var(--ink-3);
+  font: var(--font-meta);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
 .where {
   color: var(--ink-3);
   font: var(--font-meta);
@@ -74,5 +83,9 @@
 
   .table {
     font-size: 40px;
+  }
+
+  .link {
+    display: none;
   }
 }

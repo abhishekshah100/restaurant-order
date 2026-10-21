@@ -52,6 +52,6 @@ test('the demo account signs in and opens branch selection', async ({ page }) =>
   await signIn(page).click();
   await expect(page).toHaveURL(/\/admin\/select-branch\/$/);
   await expect(page.getByRole('heading', { level: 2 })).toHaveCount(2);
-  await expect(page.getByRole('heading', { name: 'Indiranagar' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Udyog Vihar' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Thamel' })).toBeVisible();
 });

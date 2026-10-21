@@ -4,6 +4,7 @@ import { mockLatencyRange } from '../config';
 import { getQueryClient } from '../queryClient';
 import { MockHttpError, randomId, type Handler, type MockContext } from './context';
 import { createStorageDb } from './db';
+import { mirrorBackendAnswer } from './mirror';
 import {
   acknowledgeServiceRequest,
   branchService,
@@ -25,6 +26,7 @@ import {
 import {
   branchMenu,
   listBranches,
+  branchStatus,
   createDish,
   removeDish,
   reorderDishes,
@@ -111,6 +113,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['GET', 'branches/:branchId/menu', branchMenu],
   ['GET', 'branches/:branchId/promotions', branchPromotions],
   ['GET', 'branches', listBranches],
+  ['GET', 'branches/:branchId/status', branchStatus],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round/status', setKitchenStatus],
@@ -182,12 +185,16 @@ export function latencyFor({ method, path }: ApiRequest, [min, max] = mockLatenc
 }
 
 let server: ReturnType<typeof createMockServer> | undefined;
+let storage: ReturnType<typeof createStorageDb> | undefined;
+
+/** The mock's tables in Web Storage, one set per tab. */
+const mockDb = () => (storage ??= createStorageDb());
 
 /** The app's mock server: Web Storage tables, the dummy JSON as seed, the real clock. */
 export async function handleMockRequest(request: ApiRequest): Promise<ApiResponse | null> {
   if (!route(request)) return null;
   if (!server) {
-    const db = createStorageDb();
+    const db = mockDb();
     server = createMockServer({
       db,
       seed: querySeed(getQueryClient(), db),
@@ -198,4 +205,9 @@ export async function handleMockRequest(request: ApiRequest): Promise<ApiRespons
   const delay = latencyFor(request);
   if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
   return server(request);
+}
+
+/** MOCK ONLY: a backend answer the mock's own endpoints depend on, copied into its tables. */
+export function mirrorBackend(request: ApiRequest, data: unknown): void {
+  mirrorBackendAnswer(mockDb(), request, data);
 }

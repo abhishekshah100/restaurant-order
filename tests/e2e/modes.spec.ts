@@ -41,7 +41,7 @@ test('India takeaway, as soon as possible, paid at pickup', async ({ page }) => 
   );
   await visible(page, 'Continue with Takeaway').click();
   await expect(page).toHaveURL(/\/menu\/$/);
-  await expect(visible(page, /Takeaway from Indiranagar/).first()).toBeVisible();
+  await expect(visible(page, /Takeaway from Udyog Vihar/).first()).toBeVisible();
 
   await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
   await waitForSavedCart(page, 'dahi-kebab');
@@ -165,13 +165,13 @@ test('switching mode at the same outlet keeps the cart', async ({ page }) => {
   await expect(page).toHaveURL(/\/menu\/$/);
 
   // From takeaway to delivery in the header.
-  await visible(page, /Takeaway from Indiranagar/)
+  await visible(page, /Takeaway from Udyog Vihar/)
     .first()
     .click();
   const dialog = page.getByRole('dialog', { name: 'How would you like to order?' });
   await dialog.getByRole('radio', { name: /^Delivery/ }).click();
   await expect(page.getByText('Now ordering delivery. Your cart is kept.')).toBeVisible();
-  await expect(visible(page, /Delivery from Indiranagar/).first()).toBeVisible();
+  await expect(visible(page, /Delivery from Udyog Vihar/).first()).toBeVisible();
 
   await page.goto('/cart/');
   await expect(page.getByText('Dahi Kebab').filter({ visible: true }).first()).toBeVisible();
@@ -181,7 +181,7 @@ test('switching outlet empties the cart, after asking', async ({ page }) => {
   await page.goto('/?branch=blr-indiranagar&mode=takeaway');
   await expect(page.getByText('Takeaway', { exact: true }).first()).toBeVisible();
   await page.goto('/menu/starters/');
-  await expect(visible(page, /Takeaway from Indiranagar/).first()).toBeVisible();
+  await expect(visible(page, /Takeaway from Udyog Vihar/).first()).toBeVisible();
   await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
   await waitForSavedCart(page, 'dahi-kebab');
 

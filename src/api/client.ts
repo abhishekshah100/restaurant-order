@@ -1,6 +1,7 @@
 import type { ApiErrorBody, ApiErrorCode } from './contracts';
 import { backendUrl, isBackendRequest } from './backend';
 import { REQUEST_TIMEOUT_MS, apiUrl, isMockApi } from './config';
+import { deviceClockOffset, toDeviceTimes } from './serverClock';
 
 /**
  * A request that failed. `status` is the HTTP status, or 0 when no answer came back (offline,
@@ -51,6 +52,8 @@ export interface ApiRequest {
 export interface ApiResponse {
   status: number;
   body?: unknown;
+  /** The server's `Date` header, when the answer came over HTTP. */
+  date?: string | null;
 }
 
 const isErrorBody = (v: unknown): v is ApiErrorBody =>
@@ -71,13 +74,15 @@ const isObject = (v: unknown): v is Record<string, unknown> =>
  * shapes the screens use: `{ success: true, data }` → `data`; `{ success: false, error: { code,
  * details } }` → an ApiError whose body is the contract's `{ error: code, ...extras }`.
  */
-function unwrapEnvelope<T>({ status, body }: ApiResponse, url: string): T {
+function unwrapEnvelope<T>({ status, body, date }: ApiResponse, url: string): T {
+  // Its times on the device's clock (api/serverClock), as the screens compare them with it.
+  const offset = deviceClockOffset(date, Date.now());
   if (status >= 200 && status <= 299) {
-    return (isObject(body) ? body.data : undefined) as T;
+    return toDeviceTimes((isObject(body) ? body.data : undefined) as T, offset);
   }
   const error = isObject(body) && isObject(body.error) ? body.error : undefined;
   const code = typeof error?.code === 'string' ? error.code : undefined;
-  const extras = isObject(error?.details) ? error.details : {};
+  const extras = isObject(error?.details) ? toDeviceTimes(error.details, offset) : {};
   throw new ApiError(status, url, code ? ({ ...extras, error: code } as ApiErrorBody) : undefined);
 }
 
@@ -118,7 +123,7 @@ async function http<T>(
     throw new ApiError(0, url);
   }
   const text = res.status === 204 ? '' : await res.text().catch(() => '');
-  return read({ status: res.status, body: parseJson(text) }, url);
+  return read({ status: res.status, body: parseJson(text), date: res.headers.get('date') }, url);
 }
 
 /** The dummy JSON (or a server answering the contract's bare shapes). */
@@ -140,7 +145,12 @@ const viaBackend = <T>(request: ApiRequest, init?: RequestInit): Promise<T> =>
  * dummy JSON. The mock is loaded on first use, so a backend build never runs it.
  */
 async function send<T>(request: ApiRequest, init?: RequestInit): Promise<T> {
-  if (isBackendRequest(request)) return viaBackend<T>(request, init);
+  if (isBackendRequest(request)) {
+    const data = await viaBackend<T>(request, init);
+    // While the mock still serves orders, it needs the sessions the backend opened.
+    if (isMockApi()) (await import('./mock/server')).mirrorBackend(request, data);
+    return data;
+  }
   if (isMockApi()) {
     const { handleMockRequest } = await import('./mock/server');
     const headers = Object.fromEntries(new Headers(init?.headers).entries());

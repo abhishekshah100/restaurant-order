@@ -3,9 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button, Icon, StatusPill } from '@/components/ui';
-import { useBranch, useContent } from '@/api/hooks';
+import { useBranch, useContent, usePrefetchMenuWhenIdle } from '@/api/hooks';
 import { MODE_ICON } from '@/components/start/ModeOptions';
-import { useVisit } from '@/context/GuestSessionContext';
+import { useGuestSession, useVisit } from '@/context/GuestSessionContext';
 import { useTableLabel } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
 import { BrandPanel } from './BrandPanel';
@@ -53,7 +53,10 @@ export function Welcome() {
   const branch = useBranch();
   const { mode } = useVisit();
   const table = useTableLabel();
+  const floor = useGuestSession()?.floor;
   const t = useContent('home');
+  // The guest's next page is the menu: read it once this one is up, so it opens at once.
+  usePrefetchMenuWhenIdle();
 
   // Only shown while ordering is open: OrderingGate swaps in the closed / paused / offline screen.
   const kitchen = (
@@ -114,20 +117,13 @@ export function Welcome() {
                 <span className={styles.tableNo}>{t('welcome.tableNumber', { table })}</span>
               </div>
             </div>
-            {branch.tableLocation && (
+            {/* The table's area on the floor plan, as the session (POST /sessions) names it. */}
+            {floor && (
               <>
                 <span className={styles.perforation} aria-hidden="true" />
                 <div className={styles.cardStub}>
                   <Icon name="pin" size="sm" className={styles.stubIcon} />
-                  <span className={styles.stubText}>
-                    {branch.tableLocation.split(' · ').map((part, i) => (
-                      <span key={part} className={i === 0 ? styles.stubPrimary : undefined}>
-                        {part}
-                        {/* Keep the original "Ground floor · Garden side" for screen readers */}
-                        {i === 0 && <span className="visually-hidden"> · </span>}
-                      </span>
-                    ))}
-                  </span>
+                  <span className={cx(styles.stubText, styles.stubPrimary)}>{floor}</span>
                 </div>
               </>
             )}

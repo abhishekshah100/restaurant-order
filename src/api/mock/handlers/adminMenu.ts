@@ -1,4 +1,5 @@
 import { createClock } from '@/lib/clock';
+import { liveStatusOf } from '@/lib/restaurantStatus';
 import type { Branch } from '@/types/branch';
 import type {
   AddOn,
@@ -373,6 +374,13 @@ const dishIn = (menu: MenuData, slug: string): Dish =>
 
 /** GET /branches: the branch data with the status staff set (paused, closed for the day). */
 export const listBranches: Handler = async (ctx) => ok(await ctx.seed.branches());
+
+/** GET /branches/:branchId/status */
+export const branchStatus: Handler = async (ctx, { params }) => {
+  const branch = (await ctx.seed.branches()).find((b) => b.id === params.branchId);
+  if (!branch) fail(404, 'not_found');
+  return ok(liveStatusOf(branch));
+};
 
 /** GET /branches/:branchId/menu */
 export const branchMenu: Handler = async (ctx, { params }) => {

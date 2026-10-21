@@ -31,7 +31,6 @@ export interface BranchDetails {
   /** The guest Wi-Fi's name (the offline screen); empty when there's none. */
   wifiName: string;
   /** Where the tables are, told on the welcome screen: "Ground floor · Garden side". */
-  tableLocation: string;
   /**
    * The country (config/masters › COUNTRY_CODES). Moving a branch to another country gives it
    * that country's phone rules, taxes and payment methods (config/regions).

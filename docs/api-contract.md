@@ -38,6 +38,7 @@ endpoint.
 | POST   | [`/otp/verify`](#post-otpverify)                                                                                           | Guest session and OTP            |
 | GET    | [`/restaurant`](#get-restaurant)                                                                                           | Menu and reference data          |
 | GET    | [`/branches`](#get-branches)                                                                                               | Menu and reference data          |
+| GET    | [`/branches/:id/status`](#get-branchesidstatus)                                                                            | Menu and reference data          |
 | GET    | [`/branches/:id/menu`](#get-branchesidmenu)                                                                                | Menu and reference data          |
 | GET    | [`/branches/:id/promotions`](#get-branchesidpromotions)                                                                    | Menu and reference data          |
 | GET    | [`/branches/:id/floors`](#get-branchesidfloors)                                                                            | Menu and reference data          |
@@ -212,7 +213,8 @@ from an outlet.
 - **Request:** [`CreateSessionRequest`](../src/api/contracts.ts) (`SessionStart`):
   `{ branchId, mode: 'dineIn', table, qrToken? }` or `{ branchId, mode, deliveryArea? }`.
 - **Response:** `201` [`CreateSessionResponse`](../src/api/contracts.ts) (`GuestSession`:
-  `{ id, branchId, mode, table?, deliveryArea?, startedAt, expiresAt, qrToken? }`).
+  `{ id, branchId, mode, table?, floor?, deliveryArea?, startedAt, expiresAt, qrToken? }`;
+  `floor` is the floor plan's area the table is in, shown on the welcome screen).
 - **Errors:** `400 invalid_request`, `409 table_disabled`, `422 area_not_served`.
 - **Rules:**
   - Verify the signed `qrToken` when sent (issued by `GET /admin/branches/:branchId/tables/qr-codes`).
@@ -293,7 +295,23 @@ Every branch with its hours, live status and region rules (mock-owned).
     schedule, taxes, payment methods, delivery zones, pickup, added and removed branches.
   - Reports the status staff set (`status`, `pausedForMinutes`, `reopensTomorrow`).
   - `tables` covers every table on the saved floor plan and lists `outOfService` tables.
-  - The app re-reads it every 60 s and on window focus.
+  - The app reads it once per visit, again after 10 minutes or on window focus; the status
+    alone is polled with `GET /branches/:id/status`.
+
+### GET /branches/:id/status
+
+Just a branch's status now: what changes during service, without its settings.
+
+- **Auth:** none.
+- **Request:** none.
+- **Response:** `200` `BranchLiveStatus` ([`src/types/branch.ts`](../src/types/branch.ts)):
+  `{ id, status, opensAt, opensIn, pausedForMinutes, reopensTomorrow?, reopensOn? }`.
+- **Errors:** `404 not_found` (unknown or removed branch).
+- **Rules:**
+  - The same values as the branch in `GET /branches` at that moment.
+  - Polled every 60 s only on pages where guests order (menu, dish, search, cart, checkout:
+    `BranchStatusWatch`), so a pause or close reaches them within a minute. The newer of this and
+    the branch list wins (`withLiveStatus`).
 
 ### GET /branches/:id/menu
 

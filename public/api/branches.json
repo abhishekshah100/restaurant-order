@@ -96,7 +96,6 @@
       "first": 1,
       "last": 999
     },
-    "tableLocation": "Ground floor · Garden side",
     "locale": "en-IN",
     "currency": {
       "code": "INR",
@@ -340,7 +339,6 @@
       "first": 1,
       "last": 40
     },
-    "tableLocation": "First floor · Courtyard side",
     "locale": "en-NP",
     "localeFallback": "en-IN",
     "currency": {

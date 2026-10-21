@@ -36,7 +36,6 @@ const FIELD_OF: Partial<Record<SettingsError, keyof BranchDetails>> = {
   phoneInvalid: 'phone',
   phoneRegion: 'phone',
   wifiLong: 'wifiName',
-  tableLocationLong: 'tableLocation',
   country: 'country',
   timezone: 'timezone',
   locale: 'locale',
@@ -131,14 +130,6 @@ export function BranchDetailsEditor() {
                   {...field('wifiName')}
                   label={t('adminSettings.details.wifiName')}
                   hint={t('adminSettings.details.wifiHint')}
-                  optional
-                  autoComplete="off"
-                />
-                <Input
-                  {...field('tableLocation')}
-                  label={t('adminSettings.details.tableLocation')}
-                  hint={t('adminSettings.details.tableLocationHint')}
-                  placeholder={t('adminSettings.details.tableLocationPlaceholder')}
                   optional
                   autoComplete="off"
                 />

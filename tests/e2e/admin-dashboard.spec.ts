@@ -11,7 +11,7 @@ import {
 /**
  * The waiter home (/admin/dashboard/) against the mock server, in the same browser as a guest:
  * the guest at table 12 orders at the counter and calls a waiter; the demo admin signs in,
- * picks Indiranagar and sees the call; Done clears it (and the guest's request); once the
+ * picks Udyog Vihar and sees the call; Done clears it (and the guest's request); once the
  * kitchen has the order ready (Playwright's clock) Mark served clears that too and the guest's
  * tracking says Served. Then the shared navigation: the bottom tab bar and More at 390px, the
  * sidebar at 1280px, Switch branch and Sign out.

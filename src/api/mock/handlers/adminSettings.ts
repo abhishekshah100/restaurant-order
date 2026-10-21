@@ -61,7 +61,6 @@ function detailsBody(v: unknown): BranchDetails {
     address: str(d.address),
     phone: str(d.phone),
     wifiName: str(d.wifiName),
-    tableLocation: str(d.tableLocation),
     country: str(d.country) as BranchDetails['country'],
     timezone: str(d.timezone),
     locale: str(d.locale),

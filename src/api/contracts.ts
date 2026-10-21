@@ -120,6 +120,8 @@ export type ApiErrorCode =
   | 'reservation_closed'
   /** 409: a table the new floor plan leaves out has an open bill, food on the way or a booking. */
   | 'table_in_use'
+  /** 403: a table scan's QR token is missing, forged or for another table: scan the code again. */
+  | 'qr_invalid'
   /** 409: the table is out of service (Settings › Floor plan): nobody can order at it or book it. */
   | 'table_disabled'
   /** 409: the admin's only branch can't be removed: there must always be at least one. */
@@ -655,10 +657,11 @@ export type SetKitchenStatusResponse = Order;
 /**
  * `POST /sessions` — open a guest session: dine-in at a branch's table (one per QR scan and
  * device: `{ branchId, mode: 'dineIn', table, qrToken? }`), or takeaway / delivery from an outlet
- * (`{ branchId, mode, deliveryArea? }`). The server checks the signed `qrToken` (when sent),
- * opens the session and decides when it expires. 201 → the session. Errors: 400
- * invalid_request (unknown branch, table outside its range, a mode the branch doesn't offer,
- * an area it doesn't deliver to).
+ * (`{ branchId, mode, deliveryArea? }`). A table scan must carry the table's signed `qrToken`
+ * (GET /admin/branches/:id/tables/qr-codes): editing the table in the link breaks the signature.
+ * The server opens the session and decides when it expires. 201 → the session. Errors: 400
+ * invalid_request (unknown branch, table outside its range, a mode the branch doesn't offer),
+ * 403 qr_invalid (no token, or not this table's), 409 table_disabled, 422 area_not_served.
  */
 export type CreateSessionRequest = SessionStart;
 export type CreateSessionResponse = GuestSession;

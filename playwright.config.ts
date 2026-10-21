@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 4173;
-// Run `npm run build` first: the tests serve the static export in out/.
+// Run `npm run build` first: the tests serve the static export in out/. Built with
+// NEXT_PUBLIC_BACKEND_URL, run them with E2E_BACKEND=true (tests/e2e/helpers.ts › againstBackend).
 
 export default defineConfig({
   testDir: './tests/e2e',

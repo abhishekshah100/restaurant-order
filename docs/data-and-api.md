@@ -510,13 +510,33 @@ request ends the staff session on this device and the admin guard sends them to 
 also ends the session on the server (`DELETE /admin/sessions/current`).
 
 **On the backend today:** staff sign-in and sign-out, branches and their status, settings, the
-floor plan, the guests' branches, and the menu (the guests' menu, availability, dishes added,
-edited and removed, dish order, categories, pictures). See the list in `src/api/backend.ts`.
+floor plan, the guests' branches, the menu (the guests' menu, availability, dishes added,
+edited and removed, dish order, categories, pictures), guests' sessions and one-time codes, and
+the signed table QR links. See the list in `src/api/backend.ts`.
+
+**Table links are signed.** A dine-in session needs the `qr=` token from the link staff print
+(Settings › Tables › QR codes). An edited or forged link is refused (`403 qr_invalid`) and the
+guest lands on the start screen with a message (`lib/scan › refusedScan`); a table out of service
+likewise (`409 table_disabled`). For hand-typed links in local testing, run the backend with
+`QR_TOKEN_REQUIRED=false`.
+
+**A device's clock can be wrong.** The screens compare a session's expiry and when a code can
+be re-sent with the device's clock, so the backend's `startedAt`, `expiresAt`, `sentAt` and
+`resendAt` are moved onto it by how far it is from the server's `Date` header
+([`serverClock.ts`](../src/api/serverClock.ts)); clocks within 5 s are left alone. The server
+still checks every session and code on its own clock.
+
+**Browser tests against the backend.** Build with `NEXT_PUBLIC_BACKEND_URL` and run
+`E2E_BACKEND=true npx playwright test`, against a database of their own, reset before each spec
+file. A check that needs a module the backend doesn't have yet (open bills: Orders) is skipped
+then (`againstBackend` in `tests/e2e/helpers.ts`).
 
 **While both run.** Staff sign in on the backend, so the admin endpoints still on the mock accept
 any token as the demo account's, at any branch the backend lists (MOCK ONLY, in
 [`adminSessions.ts`](../src/api/mock/handlers/adminSessions.ts)). What the mock still serves
-(orders, the kitchen, the floor, service) builds on the backend's **live** branches and menus
+(orders, the kitchen, the floor, service) finds the sessions and verified numbers the backend
+answered with (copied into its tables: [`mirror.ts`](../src/api/mock/mirror.ts)), and builds on the
+backend's **live** branches and menus
 (`seedSource` in [`seed.ts`](../src/api/mock/seed.ts), re-read every 15 s): a dish sold out on the
 backend is refused in an order, and a dish added there can be ordered. Floor plans saved on the
 backend are what the mock's tables pages show. The dummy `branches.json` and `menu.json` are then

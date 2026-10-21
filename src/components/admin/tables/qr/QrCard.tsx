@@ -9,22 +9,27 @@ import styles from './QrCard.module.css';
 
 /**
  * The card printed on a table: the restaurant, the table number large, the QR code (drawn as SVG,
- * sharp at any size), "Scan to order & pay", and the area and branch.
+ * sharp at any size), "Scan to order & pay", and the area and branch. On screen it can also show
+ * the full link (`showLink`), for staff to check or copy; never on paper.
  */
 export function QrCard({
   code,
   origin,
   className,
+  showLink = false,
 }: {
   code: TableQrCode;
   /** This app's address, put in front of the API's path. */
   origin: string;
   className?: string;
+  /** The full link under the code: on screen only, not printed. */
+  showLink?: boolean;
 }) {
   const t = useContent('common');
   const restaurant = useRestaurant();
   const { branch } = useAdminWorkspace();
-  const { size, d } = useMemo(() => qrPath(tableLink(origin, code.path)), [origin, code.path]);
+  const link = tableLink(origin, code.path);
+  const { size, d } = useMemo(() => qrPath(link), [link]);
   return (
     <article className={cx(styles.card, className)}>
       <header className={styles.brand}>
@@ -44,6 +49,11 @@ export function QrCard({
         <rect x={-2} y={-2} width={size + 4} height={size + 4} className={styles.qrBack} />
         <path d={d} className={styles.qrModules} />
       </svg>
+      {showLink && (
+        <p className={styles.link} aria-label={t('adminQr.card.link', { table: code.table })}>
+          {link}
+        </p>
+      )}
       <p className={styles.scan}>{t('adminQr.card.scan')}</p>
       <p className={styles.where}>
         {t('adminQr.card.where', { floor: code.floor.name, branch: branch.shortName })}

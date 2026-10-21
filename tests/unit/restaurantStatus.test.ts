@@ -3,12 +3,15 @@ import {
   applyPreview,
   compactTimeRange,
   parseStatusPreview,
+  pausedMinutes,
+  withLiveStatus,
   resolveOrdering,
   statusTone,
 } from '@/lib/restaurantStatus';
 import { createTranslator } from '@/api/translator';
 import type { ContentMap } from '@/api/queries';
 import { readApiJson, testBranch } from '../apiState';
+import type { Branch } from '@/types/branch';
 
 const { closesAt } = testBranch();
 const t = createTranslator(readApiJson<ContentMap['status']>('content/status'));
@@ -89,6 +92,37 @@ describe('applyPreview', () => {
 
   it('still reports a real loss of connection under a status preview', () => {
     expect(applyPreview('paused', { status: 'open', online: false }).state).toBe('offline');
+  });
+});
+
+describe('withLiveStatus', () => {
+  const branch = { ...testBranch(), reopensTomorrow: true } as Branch;
+  const paused = {
+    id: branch.id,
+    status: 'paused',
+    opensAt: branch.opensAt,
+    opensIn: branch.opensIn,
+    pausedForMinutes: 12,
+  } as const;
+
+  it("takes the polled status when it's newer than the branch list, and only its own", () => {
+    expect(withLiveStatus(branch, 1000, paused, 2000)).toMatchObject({
+      name: branch.name,
+      status: 'paused',
+      pausedForMinutes: 12,
+    });
+    // reopensTomorrow is part of the status: gone when the newer status doesn't have it.
+    expect(withLiveStatus(branch, 1000, paused, 2000)).not.toHaveProperty('reopensTomorrow');
+    expect(withLiveStatus(branch, 3000, paused, 2000)).toBe(branch);
+    expect(withLiveStatus(branch, 1000, { ...paused, id: 'ktm-thamel' }, 2000)).toBe(branch);
+    expect(withLiveStatus(branch, 1000, undefined, 0)).toBe(branch);
+  });
+});
+
+describe('pausedMinutes', () => {
+  it("is a paused branch's minutes left, or the shortest pause for a preview", () => {
+    expect(pausedMinutes({ pausedForMinutes: 42 })).toBe(42);
+    expect(pausedMinutes({ pausedForMinutes: 0 })).toBe(15);
   });
 });
 

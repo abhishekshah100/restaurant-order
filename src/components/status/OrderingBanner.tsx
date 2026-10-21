@@ -4,6 +4,7 @@ import { Banner } from '@/components/ui';
 import { useBranch, useContent } from '@/api/hooks';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
 import { cx } from '@/lib/cx';
+import { pausedMinutes } from '@/lib/restaurantStatus';
 import type { OrderingState } from '@/types/restaurant';
 import styles from './OrderingBanner.module.css';
 
@@ -27,7 +28,7 @@ export function StateBanner({ state, className }: StateBannerProps) {
   if (state === 'paused') {
     return (
       <Banner tone="warn" icon="clock" live="polite" className={className}>
-        {t('banner.paused', { minutes: branch.pausedForMinutes })}
+        {t('banner.paused', { minutes: pausedMinutes(branch) })}
       </Banner>
     );
   }

@@ -38,7 +38,6 @@ export const LIMITS = {
   city: 40,
   address: 160,
   wifiName: 40,
-  tableLocation: 60,
   windowLabel: 30,
   windows: 6,
   lastOrdersMinutes: 180,
@@ -72,7 +71,6 @@ export type SettingsError =
   | 'phoneInvalid'
   | 'phoneRegion'
   | 'wifiLong'
-  | 'tableLocationLong'
   | 'country'
   | 'timezone'
   | 'locale'
@@ -115,7 +113,7 @@ export type SettingsError =
 export const cleanPhone = (phone: string) => phone.replace(/[\s()-]/g, '');
 
 export function detailsOf(branch: Branch): BranchDetails {
-  const { name, shortName, city, address, phone, wifiName, tableLocation } = branch;
+  const { name, shortName, city, address, phone, wifiName } = branch;
   const { country, timezone, locale } = branch;
   return {
     name,
@@ -124,7 +122,6 @@ export function detailsOf(branch: Branch): BranchDetails {
     address,
     phone,
     wifiName,
-    tableLocation,
     country,
     timezone,
     locale,
@@ -265,7 +262,6 @@ export function detailsErrors(
         ? (['phoneRegion'] as const)
         : []),
     ...textErrors(d.wifiName, LIMITS.wifiName, null, 'wifiLong'),
-    ...textErrors(d.tableLocation, LIMITS.tableLocation, null, 'tableLocationLong'),
     ...(!dialCode ? (['country'] as const) : []),
     ...(!isTimeZone(d.timezone) ? (['timezone'] as const) : []),
     ...(!isMasterValue('locales', d.locale) ? (['locale'] as const) : []),
@@ -474,7 +470,6 @@ export function withDetails(branch: Branch, d: BranchDetails): Branch {
     phone,
     phoneHref: `tel:${phone}`,
     wifiName: trimmed(d.wifiName),
-    tableLocation: trimmed(d.tableLocation),
   };
 }
 

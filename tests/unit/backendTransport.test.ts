@@ -37,6 +37,7 @@ describe('which requests go to the backend', () => {
       true,
     );
     expect(isBackendRequest({ method: 'GET', path: 'branches' })).toBe(true);
+    expect(isBackendRequest({ method: 'GET', path: 'branches/blr/status' })).toBe(true);
     expect(isBackendRequest({ method: 'GET', path: 'branches/blr/menu' })).toBe(true);
     expect(
       isBackendRequest({
@@ -45,6 +46,9 @@ describe('which requests go to the backend', () => {
       }),
     ).toBe(true);
     expect(isBackendRequest({ method: 'GET', path: 'branches/blr/promotions' })).toBe(false);
+    expect(isBackendRequest({ method: 'POST', path: 'sessions' })).toBe(true);
+    expect(isBackendRequest({ method: 'POST', path: 'otp/verify' })).toBe(true);
+    expect(isBackendRequest({ method: 'POST', path: 'orders' })).toBe(false);
     expect(isBackendRequest({ method: 'POST', path: 'orders' })).toBe(false);
     vi.stubEnv('NEXT_PUBLIC_BACKEND_URL', '');
     expect(isBackendRequest({ method: 'GET', path: 'branches' })).toBe(false);
@@ -121,6 +125,64 @@ describe('the backend transport', () => {
   });
 });
 
+describe('a device whose clock is off', () => {
+  const HOUR = 3_600_000;
+  const SERVER_NOW = Date.parse('2026-10-20T10:00:00Z');
+  const fromServer = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json', Date: new Date(SERVER_NOW).toUTCString() },
+    });
+
+  it("moves a session's times onto the device's clock, a day behind the server's", async () => {
+    vi.useFakeTimers({ now: SERVER_NOW - 24 * HOUR, toFake: ['Date'] });
+    fetchMock.mockResolvedValueOnce(
+      fromServer({
+        success: true,
+        data: { id: 't', table: 5, startedAt: SERVER_NOW, expiresAt: SERVER_NOW + 6 * HOUR },
+      }),
+    );
+    try {
+      await expect(apiPost('sessions', { mode: 'takeaway' })).resolves.toEqual({
+        id: 't',
+        table: 5,
+        startedAt: SERVER_NOW - 24 * HOUR,
+        expiresAt: SERVER_NOW - 18 * HOUR,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("moves an error's resend time too, and leaves clocks a few seconds apart alone", async () => {
+    vi.useFakeTimers({ now: SERVER_NOW + HOUR, toFake: ['Date'] });
+    fetchMock.mockResolvedValueOnce(
+      fromServer(
+        {
+          success: false,
+          error: { code: 'otp_wrong_code', message: '', details: { resendAt: SERVER_NOW } },
+        },
+        422,
+      ),
+    );
+    try {
+      const error = await apiPost('otp/verify', { code: '000000' }).catch((e: unknown) => e);
+      expect((error as ApiError).body).toMatchObject({ resendAt: SERVER_NOW + HOUR });
+
+      vi.setSystemTime(SERVER_NOW + 2_000);
+      fetchMock.mockResolvedValueOnce(
+        fromServer({ success: true, data: { sentAt: SERVER_NOW, resendAt: SERVER_NOW } }),
+      );
+      await expect(apiPost('otp', { phone: '9876543210' })).resolves.toEqual({
+        sentAt: SERVER_NOW,
+        resendAt: SERVER_NOW,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('staff sessions across the app', () => {
   it('signs staff out when any request answers unauthorized', async () => {
     signInAdmin({
@@ -148,5 +210,42 @@ describe('staff sessions across the app', () => {
     expect(retry(0, new ApiError(503, 'x'))).toBe(true);
     expect(retry(1, new ApiError(503, 'x'))).toBe(false);
     expect(retry(0, new ApiError(404, 'x'))).toBe(false);
+  });
+});
+
+describe('while the mock still serves orders', () => {
+  it('keeps the sessions and verified numbers the backend answers with, for the mock', async () => {
+    const { createStorageDb } = await import('@/api/mock/db');
+    const session = {
+      id: 'tok-123',
+      branchId: 'blr-indiranagar',
+      mode: 'dineIn',
+      table: 5,
+      startedAt: Date.now(),
+      expiresAt: Date.now() + 3_600_000,
+    };
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: session }, 201));
+    await apiPost('sessions', {
+      branchId: 'blr-indiranagar',
+      mode: 'dineIn',
+      table: 5,
+      qrToken: 'v1.x',
+    });
+    const db = createStorageDb();
+    expect(db.sessions.read()).toContainEqual(session);
+
+    const challenge = {
+      phone: '9876543210',
+      sentAt: 1,
+      resendAt: 2,
+      attemptsLeft: 3,
+      maxAttempts: 3,
+      verified: false,
+    };
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: challenge }));
+    await apiPost('otp', { sessionId: 'tok-123', phone: '9876543210' });
+    fetchMock.mockResolvedValueOnce(json({ success: true, data: { verified: true } }));
+    await apiPost('otp/verify', { sessionId: 'tok-123', phone: '9876543210', code: '123456' });
+    expect(db.otp.read()['tok-123']).toMatchObject({ phone: '9876543210', verified: true });
   });
 });

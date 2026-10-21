@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { CheckoutProvider, useCheckout } from '@/context/CheckoutContext';
+import { CheckoutProvider, useCheckout, type SendResult } from '@/context/CheckoutContext';
 import { GuestSessionProvider } from '@/context/GuestSessionContext';
 import { useCountdown } from '@/hooks/useCountdown';
 import { useQueryParam } from '@/hooks/useQueryParam';
@@ -61,11 +61,11 @@ describe('OTP (CheckoutProvider over the mock server)', () => {
   it('sends a code and refuses a resend during the cooldown, until a wrong code', async () => {
     vi.useFakeTimers({ now: sentAt, toFake: ['Date'] });
     const { result } = await renderCheckout();
-    let sent = false;
+    let sent: SendResult | undefined;
     await act(async () => {
       sent = await result.current.submitDetails('Ananya', '9876543210');
     });
-    expect(sent).toBe(true);
+    expect(sent).toEqual({ status: 'sent' });
     expect(result.current.session).toMatchObject({
       name: 'Ananya',
       phone: '9876543210',
@@ -113,6 +113,38 @@ describe('OTP (CheckoutProvider over the mock server)', () => {
     });
     expect(check).toEqual({ status: 'verified' });
     expect(result.current.session.verified).toBe(true);
+  });
+
+  it('says when a number that has had too many codes can have another', async () => {
+    const { result } = await renderCheckout();
+    // The backend caps the codes a number gets in an hour.
+    const resendAt = Date.now() + 20 * 60_000;
+    vi.stubEnv('NEXT_PUBLIC_BACKEND_URL', 'http://localhost:4000/v1');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              success: false,
+              error: { code: 'otp_resend_too_soon', message: '', details: { resendAt } },
+            }),
+            { status: 429 },
+          ),
+        ),
+      ),
+    );
+    try {
+      let sent: SendResult | undefined;
+      await act(async () => {
+        sent = await result.current.submitDetails('Ananya', '9876543210');
+      });
+      expect(sent).toEqual({ status: 'tooSoon', resendAt });
+      expect(result.current.session.otp).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+    }
   });
 });
 

@@ -140,13 +140,12 @@ describe('the Reservations page', () => {
     expect(filterReservations(day, 'all', '12').map((r) => r.id)).toEqual(['R1003']);
   });
 
-  it('offers three days in the branch calendar, a calendar to 60 days ahead, and the day in the address', () => {
+  it('offers today and tomorrow in the branch calendar, a calendar to 60 days ahead, and the day in the address', () => {
     const late = new Date('2026-10-15T19:00:00Z'); // 12:30 AM on the 16th in Bengaluru
     const days = bookingDays(clock, late);
     expect(days).toEqual([
       { key: '2026-10-16', offset: 0 },
       { key: '2026-10-17', offset: 1 },
-      { key: '2026-10-18', offset: 2 },
     ]);
     expect(bookingRange(clock, late)).toEqual({ min: '2026-10-16', max: '2026-12-15' });
     expect(addDays('2026-12-30', 3)).toBe('2027-01-02');

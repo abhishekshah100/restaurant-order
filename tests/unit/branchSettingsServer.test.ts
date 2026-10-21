@@ -213,7 +213,6 @@ describe('POST and DELETE /admin/branches (mock)', () => {
     address: 'Sector 29, Gurgaon',
     phone: '+91 98111 22233',
     wifiName: '',
-    tableLocation: '',
     country: 'IN',
     timezone: 'Asia/Kolkata',
     locale: 'en-IN',

@@ -120,3 +120,14 @@ export function resolveScan(
   }
   return sameBranch ? { keep: saved } : { choose: { branchId } };
 }
+
+/**
+ * A table scan the server refused for good: the start screen says why (takeaway still works).
+ * Any other failure (offline, the server busy) is tried again on the next load.
+ */
+export function refusedScan(request: SessionStart, code: string | undefined): StartChoice | null {
+  if (request.mode !== 'dineIn') return null;
+  if (code === 'qr_invalid') return { branchId: request.branchId, invalidTable: request.table };
+  if (code === 'table_disabled') return { branchId: request.branchId, closedTable: request.table };
+  return null;
+}

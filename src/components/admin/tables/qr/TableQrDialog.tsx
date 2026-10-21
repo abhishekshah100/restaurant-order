@@ -41,7 +41,7 @@ export function TableQrDialog({ table, onClose }: { table: number; onClose: () =
     >
       <div className={styles.dialogBody}>
         {code && origin ? (
-          <QrCard code={code} origin={origin} />
+          <QrCard code={code} origin={origin} showLink />
         ) : (
           <div className={styles.skeleton} role="status" aria-label={t('adminQr.loading')} />
         )}

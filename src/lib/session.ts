@@ -27,6 +27,7 @@ export function isSavedSession(v: unknown): v is SavedSession {
     (s.table === undefined || Number.isInteger(s.table)) &&
     // Dine-in is at a table.
     (mode !== 'dineIn' || s.table !== undefined) &&
+    isOptional(s.floor, 'string') &&
     isOptional(s.deliveryArea, 'string') &&
     isFiniteNumber(s.startedAt) &&
     isFiniteNumber(s.expiresAt) &&
@@ -46,8 +47,14 @@ export const fromSaved = (saved: SavedSession, defaultBranchId: string): GuestSe
 export const isGuestSession = (v: unknown): v is GuestSession =>
   isSavedSession(v) && typeof v.branchId === 'string' && v.mode !== undefined;
 
+/**
+ * How far a device's clock may run behind the server's: a session the server opened a moment
+ * ago mustn't look "not started yet" on a phone a few seconds slow.
+ */
+const CLOCK_SKEW_MS = 5 * 60_000;
+
 /** Between its start and its expiry. */
 export const isLiveSession = (
   session: Pick<GuestSession, 'startedAt' | 'expiresAt'>,
   now: number,
-) => now >= session.startedAt && now < session.expiresAt;
+) => now >= session.startedAt - CLOCK_SKEW_MS && now < session.expiresAt;

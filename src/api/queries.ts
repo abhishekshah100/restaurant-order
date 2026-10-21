@@ -1,7 +1,7 @@
 import { queryOptions, skipToken } from '@tanstack/react-query';
 import { TRACK_REFRESH_MS } from '@/lib/orders';
 import type { FloorPlanLayout } from '@/types/admin';
-import type { Branch } from '@/types/branch';
+import type { Branch, BranchLiveStatus } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
@@ -67,16 +67,35 @@ export const restaurantQuery = () =>
     staleTime: Infinity,
   });
 
-/** GET /branches: every location with its hours, region rules and live status, which can change at any time. */
+/**
+ * GET /branches: every location with its hours, region rules and status. Read once per visit
+ * (again after 10 minutes, or when the guest comes back to the tab); the status, which staff
+ * change during service, is polled on its own (branchStatusQuery).
+ */
 export const branchesQuery = () =>
   queryOptions({
     queryKey: ['branches'] as const,
     queryFn: () => apiGet<Branch[]>('branches'),
-    staleTime: 60_000,
+    staleTime: BRANCHES_REFRESH_MS,
     refetchOnWindowFocus: true,
-    // Staff pause or close ordering during service: guests see it within a minute.
-    refetchInterval: 60_000,
   });
+
+/** How long the branches' details are trusted before they're read again. */
+export const BRANCHES_REFRESH_MS = 10 * 60_000;
+
+/**
+ * GET /branches/:id/status: just whether the branch is open, paused or closed, and until when.
+ * Pages where guests order poll it (BranchStatusWatch), so a pause reaches them within a minute.
+ */
+export const branchStatusQuery = (branchId: string) =>
+  queryOptions({
+    queryKey: ['branches', branchId, 'status'] as const,
+    queryFn: () => apiGet<BranchLiveStatus>(`branches/${branchId}/status`),
+    staleTime: BRANCH_STATUS_REFRESH_MS,
+  });
+
+/** How often pages where guests order check the branch's status. */
+export const BRANCH_STATUS_REFRESH_MS = 60_000;
 
 /** GET /branches/:id/menu: one branch's categories, dishes (in its currency) and curated lists. */
 export const branchMenuQuery = (branchId: string) =>

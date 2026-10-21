@@ -15,7 +15,15 @@ import type { UpdateSessionRequest } from '@/api/contracts';
 import { useBranchDataLoaded, useBranches, useRestaurant } from '@/api/hooks';
 import { useStartSession, useUpdateSession } from '@/api/mutations';
 import { isOrderMode } from '@/lib/fulfilment';
-import { fitsBranches, parseScan, resolveBranch, resolveScan, type ScanOutcome } from '@/lib/scan';
+import { ApiError } from '@/api/client';
+import {
+  fitsBranches,
+  parseScan,
+  refusedScan,
+  resolveBranch,
+  resolveScan,
+  type ScanOutcome,
+} from '@/lib/scan';
 import { fromSaved, isLiveSession, isSavedSession } from '@/lib/session';
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage';
 import type { Branch, OrderMode } from '@/types/branch';
@@ -179,11 +187,20 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
       const mine = opening;
       mine.promise.then(
         (session) => {
-          if (opening === mine) saveSession(session);
+          if (opening !== mine) return;
+          opening = null;
+          saveSession(session);
         },
-        () => {
-          // Couldn't open one: the next page load tries again with the kept request.
-          if (opening === mine) opening = null;
+        (error: unknown) => {
+          if (opening !== mine) return;
+          opening = null;
+          // Refused for good (a forged or edited table link, a table out of service): the start
+          // screen says why. Otherwise the next page load tries again with the kept request.
+          const refused = refusedScan(request, error instanceof ApiError ? error.code : undefined);
+          if (refused) {
+            removeKey(STORAGE_KEYS.pendingScan, 'session');
+            setState({ session: null, opening: null, choosing: refused });
+          }
         },
       );
       return mine.promise;
@@ -212,8 +229,9 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
       void open(outcome.start).catch(() => undefined);
       return;
     }
-    // A session still opening from before is no longer wanted.
-    opening = null;
+    // A session on its way (the guest's choice on the start screen) settles the visit itself:
+    // this run (the branches refreshed meanwhile) mustn't drop it.
+    if (opening) return;
     removeKey(STORAGE_KEYS.pendingScan, 'session');
     if ('choose' in outcome) {
       setState({ session: null, opening: null, choosing: outcome.choose });

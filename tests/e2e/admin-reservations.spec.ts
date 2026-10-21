@@ -94,7 +94,7 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
   ).toBeVisible();
 });
 
-test('three days as tiles, any later day from the calendar', async ({ page }) => {
+test('today and tomorrow as tiles, any later day from the calendar', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-10-15T12:45:00Z') });
   await adminSignIn(page);
   await page.goto('/admin/dashboard/reservations/');
@@ -102,7 +102,6 @@ test('three days as tiles, any later day from the calendar', async ({ page }) =>
   await expect(days.getByRole('button')).toHaveText([
     /^Today/,
     /^Tomorrow/,
-    /^Sat/,
     '', // the calendar
   ]);
 

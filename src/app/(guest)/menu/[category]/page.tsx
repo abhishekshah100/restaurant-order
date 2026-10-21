@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { CategoryView } from '@/components/menu/CategoryView';
 import { getCategoryIdsServer, getCategoryServer, getContent } from '@/api/server';
+import { BranchStatusWatch } from '@/components/status/BranchStatusWatch';
 
 interface Props {
   params: Promise<{ category: string }>;
@@ -27,5 +28,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 /** The category's dishes come from the guest's branch menu on the client. */
 export default async function CategoryPage({ params }: Props) {
-  return <CategoryView categoryId={(await params).category} />;
+  return (
+    <>
+      <CategoryView categoryId={(await params).category} />
+      <BranchStatusWatch />
+    </>
+  );
 }

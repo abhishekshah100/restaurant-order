@@ -24,6 +24,9 @@ import { OrderSummaryPanel } from './OrderSummaryPanel';
 import { PickupTimePicker } from './PickupTimePicker';
 import styles from './Checkout.module.css';
 
+/** Whole minutes (at least one) from now until a time. */
+const minutesUntil = (time: number) => Math.max(1, Math.ceil((time - Date.now()) / 60_000));
+
 /** Step 1 — name and mobile number (09 · w09); the pickup time or delivery address when ordering that way. */
 export function DetailsStep() {
   const ready = useCheckoutGuard('details');
@@ -65,6 +68,8 @@ function DetailsForm({ initialName, initialPhone }: { initialName: string; initi
   const [phone, setPhone] = useState(initialPhone);
   const [touched, setTouched] = useState({ name: false, phone: false });
   const [submitted, setSubmitted] = useState(false);
+  // This number has had too many codes lately: about how many minutes until it can have another.
+  const [codesWait, setCodesWait] = useState<number | null>(null);
   const sending = useRef(false);
   const requestFailed = useRequestFailed();
 
@@ -92,7 +97,9 @@ function DetailsForm({ initialName, initialPhone }: { initialName: string; initi
   };
   const show = (field: 'name' | 'phone') => {
     const error = errors[field];
-    return (submitted || touched[field]) && error ? message(error) : undefined;
+    if ((submitted || touched[field]) && error) return message(error);
+    if (field !== 'phone' || codesWait === null) return undefined;
+    return t('details.errors.tooManyCodes', { minutes: codesWait });
   };
 
   /** Saves the pickup time or address; false if the delivery area couldn't be changed. */
@@ -127,10 +134,18 @@ function DetailsForm({ initialName, initialPhone }: { initialName: string; initi
     // One code at a time: taps while it's being sent are ignored.
     if (sending.current) return;
     sending.current = true;
-    const sent = (await saveFulfilment()) && (await submitDetails(name, phone));
+    const result = (await saveFulfilment())
+      ? await submitDetails(name, phone)
+      : ({ status: 'failed' } as const);
     sending.current = false;
-    if (sent) router.push('/checkout/verify/');
-    else requestFailed();
+    if (result.status === 'sent') {
+      router.push('/checkout/verify/');
+    } else if (result.status === 'tooSoon') {
+      setCodesWait(minutesUntil(result.resendAt));
+      document.getElementById('checkout-phone')?.focus();
+    } else {
+      requestFailed();
+    }
   };
 
   const sendLabel = t('details.submit');
@@ -164,7 +179,10 @@ function DetailsForm({ initialName, initialPhone }: { initialName: string; initi
           showCountryCode={mobile.showDialCode}
           withIcon
           value={phone}
-          onChange={setPhone}
+          onChange={(value) => {
+            setPhone(value);
+            setCodesWait(null);
+          }}
           onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
           error={show('phone')}
           hint={

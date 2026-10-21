@@ -272,7 +272,6 @@ export interface Branch {
    * scanning one of those opens the start screen saying so, not a visit at the table.
    */
   tables: { first: number; last: number; outOfService?: number[] };
-  tableLocation: string;
   /** BCP 47 locale for numbers and times, e.g. "en-IN". */
   locale: string;
   /** Used for number formatting when the runtime has no data for `locale` (en-NP → en-IN). */
@@ -296,3 +295,12 @@ export interface Branch {
   /** Running orders, and changing or cancelling an order just placed. */
   ordering: OrderingRules;
 }
+
+/**
+ * What changes about a branch during the day (GET /branches/:branchId/status): open, paused or
+ * closed and until when. Pages where guests order poll it instead of every branch's details.
+ */
+export type BranchLiveStatus = Pick<
+  Branch,
+  'id' | 'status' | 'opensAt' | 'opensIn' | 'pausedForMinutes' | 'reopensTomorrow' | 'reopensOn'
+>;

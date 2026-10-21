@@ -145,6 +145,11 @@ export function StartView() {
               {t('start.closedTable', { table: visit.choice.closedTable })}
             </Banner>
           )}
+          {visit.choice.invalidTable !== undefined && (
+            <Banner tone="warn" icon="table" live="polite">
+              {t('start.invalidTable', { table: visit.choice.invalidTable })}
+            </Banner>
+          )}
 
           <section className={styles.section} aria-labelledby="start-outlets">
             <h2 id="start-outlets" className={styles.sectionTitle}>

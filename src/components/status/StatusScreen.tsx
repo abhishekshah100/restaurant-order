@@ -8,7 +8,7 @@ import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { useBranch, useContent } from '@/api/hooks';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
 import { cx } from '@/lib/cx';
-import { compactTimeRange } from '@/lib/restaurantStatus';
+import { compactTimeRange, pausedMinutes } from '@/lib/restaurantStatus';
 import type { OrderingState } from '@/types/restaurant';
 import { StateBanner } from './OrderingBanner';
 import styles from './StatusScreen.module.css';
@@ -146,7 +146,7 @@ function PausedCard() {
             {t.rich(
               'paused.ledeMobile',
               { b: (c) => <b className={styles.ink}>{c}</b> },
-              { minutes: branch.pausedForMinutes },
+              { minutes: pausedMinutes(branch) },
             )}
           </span>
           <span className="hide-mobile">{t('paused.ledeDesktop')}</span>

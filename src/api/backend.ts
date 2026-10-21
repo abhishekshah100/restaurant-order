@@ -22,6 +22,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/floors'],
   // What guests read of the branches.
   ['GET', 'branches'],
+  ['GET', 'branches/:branchId/status'],
   ['GET', 'branches/:branchId/floors'],
   // The menu: what everyone reads, and staff changing it.
   ['GET', 'branches/:branchId/menu'],
@@ -32,6 +33,12 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/menu/categories/:categoryId/order'],
   ['PATCH', 'admin/branches/:branchId/menu/categories'],
   ['POST', 'admin/branches/:branchId/menu/images'],
+  // Guests' visits, their one-time codes, and the signed table QR links staff print.
+  ['POST', 'sessions'],
+  ['PATCH', 'sessions/:id'],
+  ['POST', 'otp'],
+  ['POST', 'otp/verify'],
+  ['GET', 'admin/branches/:branchId/tables/qr-codes'],
 ];
 
 /** Whether the backend is configured (NEXT_PUBLIC_BACKEND_URL). */

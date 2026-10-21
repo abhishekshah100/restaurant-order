@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fitsBranches, parseScan, resolveBranch, resolveScan } from '@/lib/scan';
+import { fitsBranches, parseScan, refusedScan, resolveBranch, resolveScan } from '@/lib/scan';
+import { isLiveSession } from '@/lib/session';
 import type { GuestSession } from '@/types/session';
 import { testBranches, testRestaurant } from '../apiState';
 
@@ -130,5 +131,34 @@ describe('fitsBranches', () => {
     expect(fitsBranches(session({ branchId: 'gone' }), branches)).toBe(false);
     expect(fitsBranches(session({ branchId: 'ktm-thamel', table: 500 }), branches)).toBe(false);
     expect(fitsBranches(session({ mode: 'takeaway', table: undefined }), branches)).toBe(true);
+  });
+});
+
+describe('refusedScan', () => {
+  const scan = { branchId: 'blr-indiranagar', mode: 'dineIn' as const, table: 5, qrToken: 'v1.x' };
+
+  it('sends a forged or edited table link, or a table out of service, to the start screen', () => {
+    expect(refusedScan(scan, 'qr_invalid')).toEqual({
+      branchId: 'blr-indiranagar',
+      invalidTable: 5,
+    });
+    expect(refusedScan(scan, 'table_disabled')).toEqual({
+      branchId: 'blr-indiranagar',
+      closedTable: 5,
+    });
+  });
+
+  it('leaves any other failure to be tried again', () => {
+    expect(refusedScan(scan, undefined)).toBeNull();
+    expect(refusedScan(scan, 'invalid_request')).toBeNull();
+    expect(refusedScan({ branchId: 'blr-indiranagar', mode: 'takeaway' }, 'qr_invalid')).toBeNull();
+  });
+});
+
+describe('isLiveSession', () => {
+  it("takes a session the server just opened, on a device a little behind the server's clock", () => {
+    const opened = { startedAt: 1_000_000, expiresAt: 1_000_000 + 3_600_000 };
+    expect(isLiveSession(opened, 1_000_000 - 30_000)).toBe(true);
+    expect(isLiveSession(opened, opened.expiresAt)).toBe(false);
   });
 });

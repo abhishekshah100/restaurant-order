@@ -102,7 +102,7 @@ export function TableQrCodes() {
                     aria-label={t('adminQr.select', { table: code.table })}
                   />
                 </label>
-                <QrCard code={code} origin={origin} />
+                <QrCard code={code} origin={origin} showLink />
                 <Button
                   size="sm"
                   variant="secondary"

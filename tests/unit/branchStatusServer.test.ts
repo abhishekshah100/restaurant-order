@@ -82,6 +82,16 @@ describe('PATCH /admin/branches/:branchId/status (mock)', () => {
     expect(await guestBranch()).toMatchObject({ status: 'paused', pausedForMinutes: 30 });
     now += 10 * 60_000;
     expect((await guestBranch())?.pausedForMinutes).toBe(20);
+    // What guests' ordering pages poll: the status alone, as in the whole list.
+    const status = await call('GET', 'branches/blr-indiranagar/status');
+    expect(status.body).toEqual({
+      id: 'blr-indiranagar',
+      status: 'paused',
+      opensAt: (await guestBranch())?.opensAt,
+      opensIn: (await guestBranch())?.opensIn,
+      pausedForMinutes: 20,
+    });
+    expect((await call('GET', 'branches/nowhere/status')).status).toBe(404);
     expect((await adminBranch()).status).toBe('paused');
     now += 21 * 60_000;
     expect((await guestBranch())?.status).toBe('open');

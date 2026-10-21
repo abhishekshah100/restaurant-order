@@ -398,7 +398,7 @@ in [`public/api/branches.json`](../public/api/branches.json) (typed `Branch` in
 Per branch, `branches.json` holds:
 
 - identity and contact: `id`, `name`, `shortName`, `city`, `address`, `image`, `mapUrl`, `phone`,
-  `phoneHref`, `wifiName`, `tableLocation`, `paymentPartner`;
+  `phoneHref`, `wifiName`, `paymentPartner`;
 - region: `country`, `locale`, `localeFallback`, `currency`, `timezone`, `mobile`;
 - hours: `schedule` (the week), plus today's derived fields (`opensAt`, `closesAt`, `hours`,
   `hoursToday`, `lastOrders`, `serviceWindows`, …) and `status`;

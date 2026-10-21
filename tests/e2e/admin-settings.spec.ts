@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { adminSignIn } from './helpers';
+import { adminSignIn, againstBackend } from './helpers';
 
 /**
- * Settings beyond the floor plan, against the mock server: opening hours, tax & service
+ * Settings beyond the floor plan, on the mock server or the backend: opening hours, tax & service
  * charge, payment methods, delivery zones and pickup save as drafts and reach guests; branches
  * are added as a copy of another and removed, never the last one or one with bills open.
  */
@@ -143,9 +143,7 @@ test('services switch on and off; the region is editable on Branch details', asy
   await expect(page.getByLabel('Currency')).toHaveValue('USD');
 });
 
-test('add a branch as a copy, then remove it; never the last or one with open bills', async ({
-  page,
-}) => {
+test('add a branch as a copy, then remove it; never the last one', async ({ page }) => {
   test.slow();
   await adminSignIn(page, 'Udyog Vihar');
   await openSetting(page, 'Branches', 'branches');
@@ -170,14 +168,7 @@ test('add a branch as a copy, then remove it; never the last or one with open bi
   await page.goto('/start/');
   await expect(page.getByText('Sector 29').first()).toBeVisible();
 
-  // Udyog Vihar has bills open today: it stays.
   await page.goto('/admin/dashboard/settings/branches/');
-  await page.getByRole('button', { name: 'Remove Udyog Vihar' }).click();
-  const remove = page.getByRole('dialog', { name: 'Remove Udyog Vihar?' });
-  await remove.getByRole('button', { name: 'Remove branch' }).click();
-  await expect(remove).toContainText('orders today still to finish or pay');
-  await remove.getByRole('button', { name: 'Keep branch' }).click();
-
   for (const name of ['Sector 29', 'Thamel']) {
     await page.getByRole('button', { name: `Remove ${name}` }).click();
     await page
@@ -189,4 +180,18 @@ test('add a branch as a copy, then remove it; never the last or one with open bi
   await expect(page.getByRole('heading', { level: 2 })).toHaveCount(1);
   await expect(page.getByText('This is your only branch.')).toBeVisible();
   await expect(page.getByRole('button', { name: /can't be removed/ })).toBeDisabled();
+});
+
+test('a branch with bills open today stays', async ({ page }) => {
+  // The backend knows of open bills once it has the Orders module (Module 5).
+  test.skip(againstBackend, 'open bills need the Orders module on the backend');
+  await adminSignIn(page, 'Udyog Vihar');
+  await openSetting(page, 'Branches', 'branches');
+  await page.getByRole('button', { name: 'Remove Udyog Vihar' }).click();
+  const remove = page.getByRole('dialog', { name: 'Remove Udyog Vihar?' });
+  await remove.getByRole('button', { name: 'Remove branch' }).click();
+  await expect(remove).toContainText('orders today still to finish or pay');
+  await remove.getByRole('button', { name: 'Keep branch' }).click();
+  await expect(remove).toBeHidden();
+  await expect(page.getByRole('heading', { level: 2 })).toHaveCount(2);
 });

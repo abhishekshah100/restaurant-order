@@ -174,8 +174,8 @@ describe('branch details', () => {
     expect(detailsErrors(details, ['Thamel', details.shortName.toUpperCase()])).toEqual([
       'shortNameTaken',
     ]);
-    // Wi-Fi and where the tables are may be left empty.
-    expect(detailsErrors({ ...details, wifiName: '', tableLocation: '' })).toEqual([]);
+    // The Wi-Fi name may be left empty.
+    expect(detailsErrors({ ...details, wifiName: '' })).toEqual([]);
   });
 
   it('writes them back tidied, with the phone link, and a new map link for a new address', () => {

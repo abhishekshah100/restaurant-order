@@ -58,7 +58,8 @@
       "phonePrefix": {
         "IN": "Indian mobile numbers start with 6, 7, 8 or 9",
         "NP": "Nepali mobile numbers start with 97 or 98"
-      }
+      },
+      "tooManyCodes": "Too many codes have been sent to this number. Please try again in about {minutes} min."
     },
     "pickup": {
       "title": "Pickup time",

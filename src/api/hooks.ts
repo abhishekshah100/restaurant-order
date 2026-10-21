@@ -1,11 +1,12 @@
 'use client';
 
-import { useQueries, useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney, type Money } from '@/lib/money';
+import { withLiveStatus } from '@/lib/restaurantStatus';
 import { resolveBranch } from '@/lib/scan';
 import type { Branch, MobileRules } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
@@ -15,7 +16,9 @@ import { useActiveBranchId } from './activeBranch';
 import { isMockApi } from './config';
 import type { AdminSignInRequest, OrderLineRequest } from './contracts';
 import {
+  BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
+  branchStatusQuery,
   branchMenuQuery,
   branchOrdersQuery,
   branchSettingsQuery,
@@ -72,9 +75,28 @@ export function useBranches(): Branch[] {
  * client render.
  */
 export function useBranch(): Branch {
-  const branches = useBranches();
+  const { data: branches, dataUpdatedAt: listedAt } = useSuspenseQuery(branchesQuery());
   const { defaultBranchId } = useRestaurant();
-  return resolveBranch(branches, useActiveBranchId() ?? defaultBranchId);
+  const branch = resolveBranch(branches, useActiveBranchId() ?? defaultBranchId);
+  // Its latest status, when a page polls it (BranchStatusWatch); this only reads the cache.
+  const { data: live, dataUpdatedAt: liveAt } = useQuery({
+    ...branchStatusQuery(branch.id),
+    enabled: false,
+  });
+  return useMemo(
+    () => withLiveStatus(branch, listedAt, live, liveAt),
+    [branch, listedAt, live, liveAt],
+  );
+}
+
+/**
+ * Keeps the guest's branch status fresh while mounted: GET /branches/:id/status every minute
+ * (not in a background tab). For pages where guests order; mount it once per page.
+ */
+export function useBranchStatusPolling(): void {
+  const { defaultBranchId } = useRestaurant();
+  const branchId = useActiveBranchId() ?? defaultBranchId;
+  useQuery({ ...branchStatusQuery(branchId), refetchInterval: BRANCH_STATUS_REFRESH_MS });
 }
 
 /** The active branch's menu with its lookups (getDish, dishesIn, searchDishes…). The same object until the menu changes. */
@@ -84,13 +106,46 @@ export function useMenu(): MenuCatalog {
 }
 
 /**
+ * The active branch's menu without waiting for it: read when `needed` (and kept fresh like
+ * useMenu), else whatever is already cached; null until then. For code on every page (the cart),
+ * so a page that doesn't show the menu never waits for it or downloads it.
+ */
+export function useMenuIfNeeded(needed: boolean): MenuCatalog | null {
+  const { data } = useQuery({ ...branchMenuQuery(useBranch().id), enabled: needed });
+  return useMemo(() => (data ? createMenuCatalog(data) : null), [data]);
+}
+
+/**
+ * Reads the active branch's menu once the browser is idle, so the guest's next page (almost
+ * always the menu) opens at once without this page waiting for it.
+ */
+export function usePrefetchMenuWhenIdle(): void {
+  const branchId = useBranch().id;
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const prefetch = () => void queryClient.prefetchQuery(branchMenuQuery(branchId));
+    if (typeof window.requestIdleCallback !== 'function') {
+      const timer = window.setTimeout(prefetch, 1500);
+      return () => window.clearTimeout(timer);
+    }
+    const idle = window.requestIdleCallback(prefetch, { timeout: 3000 });
+    return () => window.cancelIdleCallback(idle);
+  }, [branchId, queryClient]);
+}
+
+/**
  * Whether a branch's menu and promotions are in the cache (or failed to load, for the suspense
  * hooks to throw to the error page), so it can become the active branch without suspending.
  * Only the default branch's are built into the page; another's are read here first.
  */
 export function useBranchDataLoaded(branchId: string): boolean {
   return useQueries({
-    queries: [branchMenuQuery(branchId), branchPromotionsQuery(branchId)],
+    // Any copy will do (the one built into the page too): this only waits for one to exist.
+    // Pages that show the menu read it again when they open; others never download it.
+    queries: [
+      { ...branchMenuQuery(branchId), staleTime: Infinity },
+      { ...branchPromotionsQuery(branchId), staleTime: Infinity },
+    ],
     combine: (results) => results.every((r) => r.data !== undefined || r.isError),
   });
 }

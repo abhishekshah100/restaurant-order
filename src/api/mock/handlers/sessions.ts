@@ -1,4 +1,5 @@
 import { deliveryAreas, isOrderMode } from '@/lib/fulfilment';
+import { areaOf } from '@/lib/floorLayout';
 import { isTableAt } from '@/lib/scan';
 import { assertTableInService } from '../tableService';
 import { isLiveSession } from '@/lib/session';
@@ -38,12 +39,15 @@ export const createSession: Handler = async (ctx, { body: raw }) => {
   }
   if (mode === 'dineIn') await assertTableInService(ctx, branch.id, table as number);
   const area = servedArea(branch, deliveryArea);
+  const floor =
+    mode === 'dineIn' ? areaOf(await ctx.seed.floors(branch.id), table as number)?.name : undefined;
   const now = ctx.now();
   const session: GuestSession = {
     id: ctx.newId(),
     branchId,
     mode,
     ...(mode === 'dineIn' ? { table: table as number } : {}),
+    ...(floor ? { floor } : {}),
     ...(area ? { deliveryArea: area } : {}),
     startedAt: now,
     expiresAt: now + TABLE_SESSION_HOURS * HOUR_MS,

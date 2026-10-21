@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { SearchView } from '@/components/menu/SearchView';
 import { getContent } from '@/api/server';
+import { BranchStatusWatch } from '@/components/status/BranchStatusWatch';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getContent('menu');
@@ -8,5 +9,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function SearchPage() {
-  return <SearchView />;
+  return (
+    <>
+      <SearchView />
+      <BranchStatusWatch />
+    </>
+  );
 }

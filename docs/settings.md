@@ -217,8 +217,9 @@ Purpose: the branch's identity, what guests are told at the table, and its regio
 
 Fields:
 
-- Name, short name (how staff and guests tell branches apart), city, address, phone, guest Wi-Fi
-  name, and table location.
+- Name, short name (how staff and guests tell branches apart), city, address, phone and guest
+  Wi-Fi name. Where a table is comes from the floor plan: the welcome screen shows the table's
+  area (`floor` from `POST /sessions`).
 - A changed address gets a new maps link (`mapUrlFor`); the phone is stored without spaces.
 
 Region (editable):

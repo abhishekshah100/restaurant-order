@@ -149,14 +149,21 @@ function isSavedCheckout(v: unknown): v is SavedCheckout {
 export type VerifyResult =
   { status: 'verified' } | { status: 'wrong'; attemptsLeft: number } | { status: 'failed' };
 
+/**
+ * What sending the first code came to: sent, refused until `resendAt` (this number has had too
+ * many codes lately), or no answer.
+ */
+export type SendResult =
+  { status: 'sent' } | { status: 'tooSoon'; resendAt: number } | { status: 'failed' };
+
 /** What a resend came to: sent, refused (cooldown still running) or no answer. */
 export type ResendResult = 'sent' | 'tooSoon' | 'failed';
 
 interface CheckoutContextValue {
   session: CheckoutSession;
   hydrated: boolean;
-  /** Saves the name and number and texts a code (POST /otp); false if it couldn't be sent. */
-  submitDetails: (name: string, phone: string) => Promise<boolean>;
+  /** Saves the name and number and texts a code (POST /otp). */
+  submitDetails: (name: string, phone: string) => Promise<SendResult>;
   /** Sends a new code; refused (and nothing changes) while the resend cooldown is running. */
   resendOtp: () => Promise<ResendResult>;
   /** Checks the code with the server (POST /otp/verify). */
@@ -217,8 +224,8 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const submitDetails = useCallback(
-    async (name: string, phone: string) => {
-      if (!guestId) return false;
+    async (name: string, phone: string): Promise<SendResult> => {
+      if (!guestId) return { status: 'failed' };
       try {
         const challenge = await sendOtp({ sessionId: guestId, phone });
         dispatch({
@@ -228,9 +235,12 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
           otp: otpState(challenge),
           verified: challenge.verified,
         });
-        return true;
-      } catch {
-        return false;
+        return { status: 'sent' };
+      } catch (error) {
+        const resendAt = isApiError(error, 'otp_resend_too_soon')
+          ? error.body?.resendAt
+          : undefined;
+        return resendAt ? { status: 'tooSoon', resendAt } : { status: 'failed' };
       }
     },
     [guestId, sendOtp],

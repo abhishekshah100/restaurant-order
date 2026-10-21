@@ -12,6 +12,8 @@ export interface GuestSession {
   mode: OrderMode;
   /** The table the QR code was scanned at; only a session with a table can order dine-in. */
   table?: number;
+  /** Dine-in: the floor plan's area the table is in ("First floor"), when it's on the plan. */
+  floor?: string;
   /** Delivery: the area (from the branch's zones) the guest is ordering to. */
   deliveryArea?: string;
   /** Epoch ms. */
@@ -40,4 +42,6 @@ export interface StartChoice {
   mode?: Exclude<OrderMode, 'dineIn'>;
   /** The table QR code scanned is for a table out of service: the start screen says so. */
   closedTable?: number;
+  /** The table's QR link couldn't be verified (edited, or not this table's): scan it again. */
+  invalidTable?: number;
 }

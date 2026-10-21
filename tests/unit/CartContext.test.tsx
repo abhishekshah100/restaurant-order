@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { HydrationBoundary, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { branchMenuQuery } from '@/api/queries';
 import { CartProvider } from '@/context/CartContext';
 import { GuestSessionProvider } from '@/context/GuestSessionContext';
 import { ToastProvider } from '@/context/ToastContext';
@@ -8,7 +10,13 @@ import { useCart, useCartActions, useDishLines, useDishQuantity } from '@/hooks/
 import { defaultConfig } from '@/lib/cartLine';
 import { STORAGE_KEYS } from '@/lib/storage';
 import type { Dish } from '@/types/menu';
-import { ApiTestProvider, seedGuestSession, testMenu } from '../apiState';
+import {
+  ApiTestProvider,
+  createApiState,
+  seedGuestSession,
+  testBranch,
+  testMenu,
+} from '../apiState';
 
 const menu = testMenu();
 const kebab = menu.getDish('dahi-kebab') as Dish;
@@ -151,5 +159,62 @@ describe('CartProvider', () => {
       window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEYS.cart }));
     });
     expect(result.current.count).toBe(0);
+  });
+
+  describe('the menu, which only a cart with dishes needs', () => {
+    const menuKey = branchMenuQuery(testBranch().id).queryKey;
+    /**
+     * The app's providers over the cache a page starts with: the menus built in, out of date
+     * (so a reader with a staleTime downloads them again).
+     */
+    function freshPage() {
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const state = createApiState();
+      const outdated = {
+        ...state,
+        queries: state.queries.map((q) =>
+          q.queryKey[2] === 'menu' ? { ...q, state: { ...q.state, dataUpdatedAt: 0 } } : q,
+        ),
+      };
+      const Wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>
+          <HydrationBoundary state={outdated}>
+            <GuestSessionProvider>
+              <ToastProvider>
+                <CartProvider>{children}</CartProvider>
+              </ToastProvider>
+            </GuestSessionProvider>
+          </HydrationBoundary>
+        </QueryClientProvider>
+      );
+      return { client, Wrapper };
+    }
+
+    it('is not downloaded for an empty cart (a fresh scan)', async () => {
+      seedGuestSession();
+      const { client, Wrapper } = freshPage();
+      const { result } = renderHook(() => useCart(), { wrapper: Wrapper });
+      await waitFor(() => expect(result.current.hydrated).toBe(true));
+      expect(client.getQueryState(menuKey)).toMatchObject({
+        dataUpdatedAt: 0,
+        fetchStatus: 'idle',
+      });
+    });
+
+    it('is read again to re-price a saved cart with dishes', async () => {
+      const { id: sessionId } = seedGuestSession();
+      const line = { ...defaultConfig(kebab), key: 'k', quantity: 2, unitPrice: 0 };
+      window.localStorage.setItem(
+        STORAGE_KEYS.cart,
+        JSON.stringify({ sessionId, kitchenNote: '', lines: [line] }),
+      );
+      const { client, Wrapper } = freshPage();
+      const { result } = renderHook(() => useCart(), { wrapper: Wrapper });
+      await waitFor(() => expect(result.current.hydrated).toBe(true));
+      expect(result.current.lines[0]?.unitPrice).toBe(kebab.price);
+      await waitFor(() => expect(client.getQueryState(menuKey)?.dataUpdatedAt).toBeGreaterThan(0), {
+        timeout: 5000,
+      });
+    });
   });
 });

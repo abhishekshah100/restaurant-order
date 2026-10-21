@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { TABLE_SESSION_HOURS } from '@/api/mock/rules';
+import { branchesQuery } from '@/api/queries';
 import { STORAGE_KEYS } from '@/lib/storage';
 import type { GuestSession } from '@/types/session';
 import { ApiTestProvider, seedGuestSession, testBranch } from '../apiState';
@@ -70,6 +72,8 @@ describe('GuestSessionProvider', () => {
     expect(session).toMatchObject({
       branchId: defaultBranchId,
       table: 7,
+      // The table's area on the floor plan.
+      floor: 'Ground floor',
       startedAt: Date.now(),
       expiresAt: Date.now() + TABLE_SESSION_HOURS * HOUR,
     });
@@ -208,5 +212,38 @@ describe('GuestSessionProvider', () => {
     const { session } = await openPage('/menu/');
     expect(session.table).toBe(7);
     expect(window.sessionStorage.getItem(STORAGE_KEYS.pendingScan)).toBeNull();
+  });
+
+  it("keeps the session the guest chose while the branches refresh before it's open", async () => {
+    window.history.replaceState(null, '', '/?mode=takeaway');
+    vi.resetModules();
+    const { GuestSessionProvider, useGuestSession, useVisitActions } =
+      await import('@/context/GuestSessionContext');
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <ApiTestProvider>
+        <GuestSessionProvider>{children}</GuestSessionProvider>
+      </ApiTestProvider>
+    );
+    const { result } = renderHook(
+      () => ({
+        session: useGuestSession(),
+        actions: useVisitActions(),
+        queryClient: useQueryClient(),
+      }),
+      { wrapper },
+    );
+    let started: Promise<boolean> | undefined;
+    act(() => {
+      started = result.current.actions.start({ branchId: defaultBranchId, mode: 'takeaway' });
+      // A refresh brings the branches (changed) while POST /sessions is on its way.
+      result.current.queryClient.setQueryData(branchesQuery().queryKey, (branches) =>
+        branches?.map((branch) => ({ ...branch, wifiName: 'refreshed' })),
+      );
+    });
+    await act(async () => {
+      await expect(started).resolves.toBe(true);
+    });
+    expect(result.current.session).toMatchObject({ mode: 'takeaway', branchId: defaultBranchId });
+    expect(stored()).toMatchObject({ mode: 'takeaway' });
   });
 });

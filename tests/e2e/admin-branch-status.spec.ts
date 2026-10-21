@@ -23,7 +23,7 @@ test('pause, close for today and open again, as guests see it', async ({ page })
   const status = visible(page, 'button', /^Branch status: Open/);
   await status.click();
   const dialog = page.getByRole('dialog', { name: 'Taking orders?' });
-  await expect(dialog).toContainText('Indiranagar is open');
+  await expect(dialog).toContainText('Udyog Vihar is open');
   await dialog.getByRole('radio', { name: /Pause new orders/ }).click();
   await dialog.getByRole('button', { name: '15 min' }).click();
   await dialog.getByRole('button', { name: 'Save' }).click();
@@ -37,7 +37,7 @@ test('pause, close for today and open again, as guests see it', async ({ page })
 
   await page.goto('/admin/dashboard/');
   await visible(page, 'button', /^Branch status: Paused/).click();
-  await expect(dialog).toContainText(/Indiranagar is paused until/);
+  await expect(dialog).toContainText(/Udyog Vihar is paused until/);
   await dialog.getByRole('radio', { name: /Close for the rest of today/ }).click();
   await dialog.getByRole('button', { name: 'Save' }).click();
   await expect(visible(page, 'button', /^Branch status: Closed/)).toBeVisible();
@@ -50,7 +50,7 @@ test('pause, close for today and open again, as guests see it', async ({ page })
   await dialog.getByRole('radio', { name: /^Open/ }).click();
   await dialog.getByRole('button', { name: 'Save' }).click();
   await expect(
-    page.getByRole('status').filter({ hasText: 'Indiranagar is open again' }),
+    page.getByRole('status').filter({ hasText: 'Udyog Vihar is open again' }),
   ).toBeVisible();
   await page.goto('/menu/');
   await expect(page.getByText(/paused|closed for the rest/i)).toHaveCount(0);

@@ -1,6 +1,13 @@
 import { expect, type Page } from '@playwright/test';
 
 /**
+ * The site in out/ was built with NEXT_PUBLIC_BACKEND_URL (`E2E_BACKEND=true npx playwright
+ * test`): what restaurant-backend serves goes to it. A check that needs a module the backend
+ * doesn't have yet runs on the mock only.
+ */
+export const againstBackend = process.env.E2E_BACKEND === 'true';
+
+/**
  * Waits until the cart holding this dish is saved on the device. A new guest session is opened
  * by the server (POST /sessions, a few hundred ms with the mock), and the cart is saved once
  * it's there; a full page load before that would start over.

@@ -68,7 +68,6 @@ export function AddBranchDialog({
     address: '',
     phone: source?.mobile.dialCode ?? '',
     wifiName: '',
-    tableLocation: '',
     ...regionOf(source),
   }));
   const dialCode = dialCodeOf(details.country);
