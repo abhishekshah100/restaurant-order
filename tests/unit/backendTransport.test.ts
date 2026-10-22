@@ -45,11 +45,14 @@ describe('which requests go to the backend', () => {
         path: 'admin/branches/blr/menu/dishes/dahi-kebab/availability',
       }),
     ).toBe(true);
-    expect(isBackendRequest({ method: 'GET', path: 'branches/blr/promotions' })).toBe(false);
+    expect(isBackendRequest({ method: 'GET', path: 'branches/blr/promotions' })).toBe(true);
+    expect(isBackendRequest({ method: 'POST', path: 'promos/validate' })).toBe(true);
+    expect(isBackendRequest({ method: 'POST', path: 'delivery/quote' })).toBe(true);
     expect(isBackendRequest({ method: 'POST', path: 'sessions' })).toBe(true);
     expect(isBackendRequest({ method: 'POST', path: 'otp/verify' })).toBe(true);
+    // Orders move once staff and the kitchen are on the backend too (Module 5c).
     expect(isBackendRequest({ method: 'POST', path: 'orders' })).toBe(false);
-    expect(isBackendRequest({ method: 'POST', path: 'orders' })).toBe(false);
+    expect(isBackendRequest({ method: 'POST', path: 'payments' })).toBe(false);
     vi.stubEnv('NEXT_PUBLIC_BACKEND_URL', '');
     expect(isBackendRequest({ method: 'GET', path: 'branches' })).toBe(false);
   });

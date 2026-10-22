@@ -33,6 +33,10 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/menu/categories/:categoryId/order'],
   ['PATCH', 'admin/branches/:branchId/menu/categories'],
   ['POST', 'admin/branches/:branchId/menu/images'],
+  // Pricing: promotions, and the quotes the cart and checkout ask for.
+  ['GET', 'branches/:branchId/promotions'],
+  ['POST', 'promos/validate'],
+  ['POST', 'delivery/quote'],
   // Guests' visits, their one-time codes, and the signed table QR links staff print.
   ['POST', 'sessions'],
   ['PATCH', 'sessions/:id'],

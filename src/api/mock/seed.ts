@@ -84,14 +84,14 @@ export const branchesBaseQuery = () =>
   });
 
 /**
- * MOCK ONLY: a branch's promotions JSON as published. Always read over HTTP (the app's GET
- * /branches/:id/promotions is the mock's own, so branches staff add have promotions too).
+ * MOCK ONLY: a branch's promotions, as published or (with the backend) as the backend has them,
+ * so the orders the mock still prices take the same discounts the backend's quotes do. Read over
+ * HTTP, like the menu.
  */
 export const promotionsBaseQuery = (branchId: string) =>
   queryOptions({
     queryKey: ['mock', 'promotions-base', branchId] as const,
-    queryFn: () => staticGet<BranchPromotions>(`branches/${branchId}/promotions`),
-    staleTime: Infinity,
+    ...seedSource<BranchPromotions>(`branches/${branchId}/promotions`),
   });
 
 /**
@@ -180,7 +180,7 @@ export function querySeed(
     },
     menuData,
     menu: async (branchId) => createMenuCatalog(await menuData(branchId)),
-    promotions: (branchId) => client.ensureQueryData(promotionsBaseQuery(sourceOf(branchId))),
+    promotions: (branchId) => client.fetchQuery(promotionsBaseQuery(sourceOf(branchId))),
     floors: async (branchId) =>
       db.floorLayouts.read()[branchId] ??
       client.ensureQueryData(branchFloorsQuery(sourceOf(branchId))),

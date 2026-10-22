@@ -511,8 +511,12 @@ also ends the session on the server (`DELETE /admin/sessions/current`).
 
 **On the backend today:** staff sign-in and sign-out, branches and their status, settings, the
 floor plan, the guests' branches, the menu (the guests' menu, availability, dishes added,
-edited and removed, dish order, categories, pictures), guests' sessions and one-time codes, and
-the signed table QR links. See the list in `src/api/backend.ts`.
+edited and removed, dish order, categories, pictures), guests' sessions and one-time codes, the
+signed table QR links, and pricing: the branches' promotions, promo-code quotes and delivery
+quotes. See the list in `src/api/backend.ts`. Orders stay on the mock until staff orders and the
+kitchen are on the backend too (Module 5c); meanwhile the mock prices them with the backend's
+live promotions. Until orders are on the backend, it counts no earlier uses of a code, so
+`promo_limit_reached` comes from the mock's `POST /orders` rather than the quote.
 
 **Table links are signed.** A dine-in session needs the `qr=` token from the link staff print
 (Settings › Tables › QR codes). An edited or forged link is refused (`403 qr_invalid`) and the
