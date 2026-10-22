@@ -147,9 +147,8 @@ const viaBackend = <T>(request: ApiRequest, init?: RequestInit): Promise<T> =>
 async function send<T>(request: ApiRequest, init?: RequestInit): Promise<T> {
   if (isBackendRequest(request)) {
     const data = await viaBackend<T>(request, init);
-    // While the mock still serves orders, it needs the sessions the backend opened.
-    if (isMockApi()) (await import('./mock/server')).mirrorBackend(request, data);
-    return data;
+    // Orders come back as data; the app words them (loaded on first use, like the mock).
+    return (await import('./backendAnswers')).adaptBackendAnswer(request, data);
   }
   if (isMockApi()) {
     const { handleMockRequest } = await import('./mock/server');

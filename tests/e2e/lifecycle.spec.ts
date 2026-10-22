@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
-import { dishSlug, scan, waitForSavedCart } from './helpers';
+import {
+  againstBackend,
+  dishSlug,
+  fastForward,
+  installClock,
+  scan,
+  waitForSavedCart,
+} from './helpers';
 
 /**
  * After an order is placed: a running dine-in order takes more rounds without a new checkout
@@ -60,7 +67,7 @@ test('dine-in: a second round goes on the order without checkout, and the bill s
 }) => {
   test.slow();
   // 8:30 PM in Bengaluru: after the drawn "today" orders (7:42 PM), so the new one lists first.
-  await page.clock.install({ time: new Date('2026-10-08T15:00:00Z') });
+  await installClock(page, new Date('2026-10-08T15:00:00Z'));
   await scan(page, 'table=12');
   // Dahi Kebab ₹289 → ₹303 with 5% GST, at the counter.
   await addDish(page, 'starters', 'Dahi Kebab');
@@ -122,9 +129,9 @@ test('cancel within the window', async ({ page }) => {
   await expect(text(page, 'Cancelled by you')).toBeVisible();
   await expect(text(page, 'Refund of ₹303 started to your UPI account')).toBeVisible();
 
-  // It's off the table's bill.
+  // It's off the table's bill (the mock's table has an earlier order, #A104, still on it).
   await page.goto('/help/bill/');
-  await expect(text(page, '#A104')).toBeVisible();
+  if (!againstBackend) await expect(text(page, '#A104')).toBeVisible();
   await expect(page.getByRole('listitem').filter({ hasText: '₹303' })).toHaveCount(0);
 });
 
@@ -161,14 +168,14 @@ test('change within the window updates the items and the total', async ({ page }
 });
 
 test('after the window the actions are gone', async ({ page }) => {
-  await page.clock.install();
+  await installClock(page);
   await scan(page, 'table=12');
   await addDish(page, 'starters', 'Dahi Kebab');
   await checkout(page, '9876543210', 'counter');
   await expect(visible(page, 'button', 'Change order')).toBeVisible();
 
   // Two minutes on: the window has closed and the kitchen has started.
-  await page.clock.fastForward('02:05');
+  await fastForward(page, '02:05');
   // Whichever the page learns first: the countdown ran out, or the kitchen started (a poll).
   await expect(
     text(page, /^(The time to change or cancel it has passed|The kitchen has started on it)/),
@@ -177,14 +184,22 @@ test('after the window the actions are gone', async ({ page }) => {
   await expect(visible(page, 'button', 'Cancel order')).toHaveCount(0);
 
   await page.getByRole('link', { name: 'Track order' }).filter({ visible: true }).click();
+  // The mock's kitchen starts by itself; the backend's waits for staff, so the window has passed.
   await expect(
-    text(page, 'The kitchen has started on it, so it can no longer be changed or cancelled.'),
+    text(
+      page,
+      againstBackend
+        ? 'The time to change or cancel it has passed.'
+        : 'The kitchen has started on it, so it can no longer be changed or cancelled.',
+    ),
   ).toBeVisible();
   await expect(text(page, 'Need something changed? Call a waiter.')).toBeVisible();
   await expect(visible(page, 'button', 'Cancel order')).toHaveCount(0);
 });
 
 test('order again from My orders fills the cart', async ({ page }) => {
+  // MOCK ONLY: it puts orders on the device and reads the mock's drawn history (#A061).
+  test.skip(againstBackend, "Uses the mock's stored orders");
   await scan(page, 'table=12');
   // An earlier order on this device with a dish that's off the menu today.
   await page.evaluate(() => {
@@ -247,7 +262,7 @@ test('order again from My orders fills the cart', async ({ page }) => {
 test('Nepal: a second round on the tab, then taking it back', async ({ page }) => {
   test.slow();
   // 7:45 PM in Kathmandu: after happy hour, so the chai is at its menu price.
-  await page.clock.install({ time: new Date('2026-10-03T14:00:00Z') });
+  await installClock(page, new Date('2026-10-03T14:00:00Z'));
   await scan(page, 'branch=ktm-thamel&table=5');
   // Dahi Kebab रू 460 + 10% service + 13% VAT = रू 572, at the counter.
   await addDish(page, 'starters', 'Dahi Kebab');

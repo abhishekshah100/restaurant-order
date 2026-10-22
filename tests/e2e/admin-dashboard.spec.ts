@@ -2,14 +2,18 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   addDish,
   adminSignIn,
+  againstBackend,
+  markReadyInKitchen,
   callWaiter,
   expectBranchOpen,
+  fastForward,
+  installClock,
   orderAtCounter,
   scan,
 } from './helpers';
 
 /**
- * The waiter home (/admin/dashboard/) against the mock server, in the same browser as a guest:
+ * The waiter home (/admin/dashboard/), in the same browser as a guest:
  * the guest at table 12 orders at the counter and calls a waiter; the demo admin signs in,
  * picks Udyog Vihar and sees the call; Done clears it (and the guest's request); once the
  * kitchen has the order ready (Playwright's clock) Mark served clears that too and the guest's
@@ -35,7 +39,7 @@ test('a waiter call and a ready order, from the guest to Done and Mark served', 
 }) => {
   test.slow();
   // 8:30 PM in Bengaluru.
-  await page.clock.install({ time: new Date('2026-10-08T15:00:00Z') });
+  await installClock(page, new Date('2026-10-08T15:00:00Z'));
   await scan(page, 'table=12');
   await addDish(page, 'starters', 'Dahi Kebab');
   const orderId = await orderAtCounter(page);
@@ -58,7 +62,12 @@ test('a waiter call and a ready order, from the guest to Done and Mark served', 
   await expect(queue).toContainText('All caught up');
 
   // The kitchen has it ready 18 minutes after it was ordered; the home polls every 15 s.
-  await page.clock.fastForward('18:30');
+  await fastForward(page, '18:30');
+  if (againstBackend) {
+    // The backend's kitchen moves only when staff mark it.
+    await markReadyInKitchen(page, orderId);
+    await page.goto('/admin/dashboard/');
+  }
   const ready = queue.getByRole('listitem').filter({ hasText: `Order ${orderId} is ready` });
   await expect(ready).toBeVisible();
   await expect(ready).toContainText('Ananya Rao');

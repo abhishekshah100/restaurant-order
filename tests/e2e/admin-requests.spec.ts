@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { adminSignIn, callWaiter, scan, visible } from './helpers';
+import { adminSignIn, againstBackend, callWaiter, scan, visible } from './helpers';
 
 /**
  * The Requests page against the mock server, in the same browser as a guest: the guest at
@@ -36,9 +36,11 @@ test('a waiter call from Waiting to On the way to Done', async ({ page }) => {
   await expect(coming).toContainText("You're on the way");
   await expect(waiting).toHaveCount(0);
   // MOCK ONLY: the screen updates at once; wait until the in-browser server has saved it.
-  await expect
-    .poll(() => page.evaluate(() => localStorage.getItem('olive.service.v1') ?? ''))
-    .toContain('"acknowledgedBy":"Abhishek Saha"');
+  if (!againstBackend) {
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('olive.service.v1') ?? ''))
+      .toContain('"acknowledgedBy":"Abhishek Saha"');
+  }
 
   // The guest's page says who's coming.
   await page.goto('/help/waiter-requested/');

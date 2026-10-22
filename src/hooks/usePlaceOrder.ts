@@ -63,6 +63,8 @@ export function usePlaceOrderState(): {
           fulfilment,
           ...(paymentId ? { paymentId } : {}),
           ...(promoCode ? { promoCode } : {}),
+          // One per press: a retry of this request places nothing twice.
+          idempotencyKey: crypto.randomUUID(),
         });
         writeJSON(STORAGE_KEYS.justPlaced, order.id, 'session');
         router.replace(orderPath(order.id, 'confirmed'));

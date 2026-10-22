@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { adminSignIn } from './helpers';
+import { adminSignIn, installClock } from './helpers';
 
 /**
  * Reservations: a table booked for tonight from the Reservations page (the form's checks, the
@@ -12,7 +12,7 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
 }) => {
   test.slow();
   // 6:15 PM in Bengaluru, so 7:00 PM is within the hour.
-  await page.clock.install({ time: new Date('2026-10-15T12:45:00Z') });
+  await installClock(page, new Date('2026-10-15T12:45:00Z'));
   await adminSignIn(page);
   await page.goto('/admin/dashboard/reservations/');
   await expect(page.getByText('No bookings')).toBeVisible();
@@ -95,7 +95,7 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
 });
 
 test('today and tomorrow as tiles, any later day from the calendar', async ({ page }) => {
-  await page.clock.install({ time: new Date('2026-10-15T12:45:00Z') });
+  await installClock(page, new Date('2026-10-15T12:45:00Z'));
   await adminSignIn(page);
   await page.goto('/admin/dashboard/reservations/');
   const days = page.getByRole('group', { name: 'Day' });
@@ -155,6 +155,6 @@ test('today and tomorrow as tiles, any later day from the calendar', async ({ pa
   ).toBeVisible();
   await page.goto('/admin/dashboard/reservations/?day=2026-10-24');
   await expect(
-    page.getByRole('button', { name: /^Booking R1001: Asha Rao, 8:00 PM/ }),
+    page.getByRole('button', { name: /^Booking R\d+: Asha Rao, 8:00 PM/ }),
   ).toBeVisible();
 });

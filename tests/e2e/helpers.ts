@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /**
  * The site in out/ was built with NEXT_PUBLIC_BACKEND_URL (`E2E_BACKEND=true npx playwright
@@ -6,6 +6,54 @@ import { expect, type Page } from '@playwright/test';
  * doesn't have yet runs on the mock only.
  */
 export const againstBackend = process.env.E2E_BACKEND === 'true';
+
+/* ---------- One clock for the browser and the server ---------- */
+
+/** The backend the site was built against (its test clock is on: TEST_CLOCK=true). */
+const BACKEND_URL = process.env.E2E_BACKEND_URL ?? 'http://localhost:4001/v1';
+
+async function serverClock(path: '' | '/advance', method: 'PUT' | 'POST', body: object) {
+  if (!againstBackend) return;
+  const res = await fetch(`${BACKEND_URL}/test/clock${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`The backend's test clock answered ${res.status}`);
+}
+
+/** "18:30" (mm:ss) or "01:02:05" → ms, as page.clock.fastForward reads it. */
+const durationMs = (duration: string) =>
+  duration
+    .split(':')
+    .map(Number)
+    .reduce((total, part) => total * 60 + part, 0) * 1000;
+
+/**
+ * The browser's clock at `time` (running on), and the server's too against the backend, so
+ * what the server works out from "now" (pickup times, bookings, offers) agrees with the page.
+ */
+export async function installClock(page: Page, time?: Date) {
+  await page.clock.install(time ? { time } : undefined);
+  await serverClock('', 'PUT', { now: time?.toISOString() ?? null });
+}
+
+/** Both clocks jump ahead ("18:30": 18 minutes 30 seconds). */
+export async function fastForward(page: Page, duration: string) {
+  await page.clock.fastForward(duration);
+  await serverClock('/advance', 'POST', { ms: durationMs(duration) });
+}
+
+/** The browser's clock stopped at `time`; the server's set to it. */
+export async function fixClock(page: Page, time: Date) {
+  await page.clock.setFixedTime(time);
+  await serverClock('', 'PUT', { now: time.toISOString() });
+}
+
+// Each test starts on the real time on the server too.
+test.afterEach(async () => {
+  await serverClock('', 'PUT', { now: null });
+});
 
 /**
  * Waits until the cart holding this dish is saved on the device. A new guest session is opened
@@ -87,6 +135,25 @@ export async function adminSignIn(page: Page, branch = 'Udyog Vihar') {
   await expect(page).toHaveURL(/\/admin\/select-branch\/$/);
   await page.getByRole('button', { name: branch, exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
+}
+
+/**
+ * The kitchen has the order ready, as staff mark it on the Kitchen board (a member of staff is
+ * signed in at its branch). Against the backend that's the only way it moves; the mock's kitchen
+ * moves by itself on its timing, so tests call this only `againstBackend`.
+ */
+export async function markReadyInKitchen(page: Page, orderId: string) {
+  await page.goto('/admin/kitchen-dashboard/');
+  const ready = page
+    .getByRole('button', { name: new RegExp(`^Mark order #?${orderId} ready`) })
+    .filter({ visible: true })
+    .first();
+  await ready.click();
+  await expect(
+    page
+      .getByRole('button', { name: new RegExp(`^Mark order #?${orderId} ready`) })
+      .filter({ visible: true }),
+  ).toHaveCount(0);
 }
 
 /**

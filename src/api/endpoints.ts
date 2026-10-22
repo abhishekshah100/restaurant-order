@@ -2,6 +2,7 @@ import type { AdminBranch, FloorPlanLayout, Reservation } from '@/types/admin';
 import type { MenuData } from '@/types/menu';
 import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
+import { guestQuery } from './guestQuery';
 import type {
   AcknowledgeRequestResponse,
   AddRoundRequest,
@@ -270,7 +271,7 @@ export const api = {
   verifyOtp: (body: VerifyOtpRequest) => apiPost<VerifyOtpResponse>('otp/verify', body),
 
   placeOrder: (body: PlaceOrderRequest) => apiPost<OrderResponse>('orders', body),
-  getOrder: (id: string) => apiGet<OrderResponse>(`orders/${seg(id)}`),
+  getOrder: (id: string) => apiGet<OrderResponse>(`orders/${seg(id)}${guestQuery()}`),
   addRound: (id: string, body: AddRoundRequest) =>
     apiPost<OrderResponse>(`orders/${seg(id)}/rounds`, body),
   changeOrder: (id: string, body: ChangeOrderRequest) =>
@@ -280,15 +281,16 @@ export const api = {
   sessionOrders: (sessionId: string) =>
     apiGet<OrderListResponse>(`sessions/${seg(sessionId)}/orders`),
   tableOrders: (branchId: string, table: number) =>
-    apiGet<OrderListResponse>(`tables/${seg(branchId)}/${table}/orders`),
+    apiGet<OrderListResponse>(`tables/${seg(branchId)}/${table}/orders${guestQuery()}`),
 
   createPayment: (body: CreatePaymentRequest) => apiPost<Payment>('payments', body),
   simulatePayment: (id: string, body: SimulatePaymentRequest) =>
-    apiPost<SettledPaymentResponse>(`payments/${seg(id)}/simulate`, body),
+    apiPost<SettledPaymentResponse>(`payments/${seg(id)}/simulate${guestQuery()}`, body),
 
   createServiceRequest: (body: CreateServiceRequestRequest) =>
     apiPost<CreateServiceRequestResponse>('service-requests', body),
-  cancelServiceRequest: (id: string) => apiDelete(`service-requests/${seg(id)}`),
+  cancelServiceRequest: (id: string, sessionId: string) =>
+    apiDelete(`service-requests/${seg(id)}?sessionId=${seg(sessionId)}`),
   serviceRequests: (sessionId: string) =>
     apiGet<ServiceRequestListResponse>(`sessions/${seg(sessionId)}/service-requests`),
 };

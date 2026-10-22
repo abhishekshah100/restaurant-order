@@ -4,7 +4,6 @@ import { mockLatencyRange } from '../config';
 import { getQueryClient } from '../queryClient';
 import { MockHttpError, randomId, type Handler, type MockContext } from './context';
 import { createStorageDb } from './db';
-import { mirrorBackendAnswer } from './mirror';
 import {
   acknowledgeServiceRequest,
   branchService,
@@ -205,9 +204,4 @@ export async function handleMockRequest(request: ApiRequest): Promise<ApiRespons
   const delay = latencyFor(request);
   if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
   return server(request);
-}
-
-/** MOCK ONLY: a backend answer the mock's own endpoints depend on, copied into its tables. */
-export function mirrorBackend(request: ApiRequest, data: unknown): void {
-  mirrorBackendAnswer(mockDb(), request, data);
 }

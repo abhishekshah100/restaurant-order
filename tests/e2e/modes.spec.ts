@@ -1,5 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
-import { scan, waitForSavedCart } from './helpers';
+import {
+  addDish,
+  adminSignIn,
+  againstBackend,
+  fastForward,
+  installClock,
+  markReadyInKitchen,
+  scan,
+  waitForSavedCart,
+} from './helpers';
 
 /**
  * Order modes: takeaway and delivery from the start screen (no table QR code), the delivery
@@ -12,7 +21,7 @@ const visible = (page: Page, name: string | RegExp) =>
   page.getByRole('button', { name }).filter({ visible: true });
 
 test.beforeEach(async ({ page }) => {
-  await page.clock.install({ time: new Date('2026-10-03T13:30:00Z') });
+  await installClock(page, new Date('2026-10-03T13:30:00Z'));
 });
 
 async function verify(page: Page, name: string, phone: string) {
@@ -66,7 +75,7 @@ test('India takeaway, as soon as possible, paid at pickup', async ({ page }) => 
   await page.getByRole('radio', { name: /Pay at pickup/ }).click();
   await visible(page, /^Place order · ₹303$/).click();
 
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A105$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
   await expect(page.getByText('Pickup at').filter({ visible: true })).toBeVisible();
   await expect(page.getByText('7:20 PM').filter({ visible: true }).first()).toBeVisible();
   await page.getByRole('link', { name: 'Track order' }).filter({ visible: true }).click();
@@ -85,10 +94,8 @@ test('Nepal delivery: zone fee, minimum order, eSewa and tracking to out for del
 }) => {
   await page.goto('/?branch=ktm-thamel&mode=delivery');
   await expect(page.getByText('Delivery', { exact: true }).first()).toBeVisible();
-  await page.goto('/menu/starters/');
+  await addDish(page, 'starters', 'Dahi Kebab');
   await expect(visible(page, /Delivery from Thamel/).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
-  await waitForSavedCart(page, 'dahi-kebab');
 
   await page.goto('/cart/');
   const checkout = page.getByRole('link', { name: 'Checkout' }).filter({ visible: true });
@@ -126,21 +133,30 @@ test('Nepal delivery: zone fee, minimum order, eSewa and tracking to out for del
   // 2 × 460 = 920 + fee 60 + service 92 + VAT 131.56 = 1,203.56 → रू 1,204
   await visible(page, 'Pay रू 1,204').click();
   await visible(page, 'Prototype: success').click();
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A105$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  const orderId = new URL(page.url()).searchParams.get('id') ?? '';
   await expect(page.getByText('Deliver to').filter({ visible: true })).toBeVisible();
   await expect(page.getByText('Lazimpat').filter({ visible: true }).first()).toBeVisible();
 
   // The rider sets off 25 minutes after the order.
-  await page.clock.fastForward('26:00');
-  await page.goto('/order/track/?id=A105');
+  await fastForward(page, '26:00');
+  if (againstBackend) {
+    // The backend's kitchen hands it to the rider when staff mark it ready.
+    await adminSignIn(page, 'Thamel');
+    await markReadyInKitchen(page, orderId);
+  }
+  await page.goto(`/order/track/?id=${orderId}`);
   await expect(page.getByText('Out for delivery').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByText('Arriving in about')).toBeVisible();
-  await expect(page.getByRole('link', { name: /Call .*, your rider/ })).toHaveAttribute(
-    'href',
-    /^tel:/,
-  );
+  // MOCK ONLY: the mock assigns a rider; the backend has no riders yet.
+  if (!againstBackend) {
+    await expect(page.getByRole('link', { name: /Call .*, your rider/ })).toHaveAttribute(
+      'href',
+      /^tel:/,
+    );
+  }
 
-  await page.goto('/order/?id=A105');
+  await page.goto(`/order/?id=${orderId}`);
   await expect(page.getByText('Delivery fee').filter({ visible: true }).first()).toBeVisible();
   await page.goto('/orders/');
   await expect(
@@ -150,9 +166,7 @@ test('Nepal delivery: zone fee, minimum order, eSewa and tracking to out for del
 
 test('switching mode at the same outlet keeps the cart', async ({ page }) => {
   await scan(page, 'table=12');
-  await page.goto('/menu/starters/');
-  await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
-  await waitForSavedCart(page, 'dahi-kebab');
+  await addDish(page, 'starters', 'Dahi Kebab');
 
   // From dine-in to takeaway on the start screen: dine-in stays available (the table was scanned).
   await page.goto('/start/');
@@ -180,10 +194,8 @@ test('switching mode at the same outlet keeps the cart', async ({ page }) => {
 test('switching outlet empties the cart, after asking', async ({ page }) => {
   await page.goto('/?branch=blr-indiranagar&mode=takeaway');
   await expect(page.getByText('Takeaway', { exact: true }).first()).toBeVisible();
-  await page.goto('/menu/starters/');
+  await addDish(page, 'starters', 'Dahi Kebab');
   await expect(visible(page, /Takeaway from Udyog Vihar/).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
-  await waitForSavedCart(page, 'dahi-kebab');
 
   await page.goto('/start/');
   await page.locator('[data-branch="ktm-thamel"]').click();

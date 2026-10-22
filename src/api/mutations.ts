@@ -209,7 +209,8 @@ export function useCreateServiceRequest() {
 export function useCancelServiceRequest() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (request: ServiceRequest) => api.cancelServiceRequest(request.id),
+    mutationFn: (request: ServiceRequest) =>
+      api.cancelServiceRequest(request.id, request.sessionId),
     onMutate: async (request) => {
       const { queryKey } = serviceRequestsQuery(request.sessionId);
       await client.cancelQueries({ queryKey });

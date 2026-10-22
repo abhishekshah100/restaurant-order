@@ -6,7 +6,7 @@
  */
 
 /** The backend's timestamps the screens compare with the device's clock. */
-const SERVER_TIMES = ['startedAt', 'expiresAt', 'sentAt', 'resendAt'] as const;
+const SERVER_TIMES = ['startedAt', 'expiresAt', 'sentAt', 'resendAt', 'createdAt'] as const;
 
 /** Clocks closer than this agree (the `Date` header has whole seconds, and the answer travels). */
 const AGREE_MS = 5_000;

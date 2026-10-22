@@ -43,6 +43,43 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['POST', 'otp'],
   ['POST', 'otp/verify'],
   ['GET', 'admin/branches/:branchId/tables/qr-codes'],
+  // Orders: the guest's checkout, rounds, changes and cancellations, their orders and bill.
+  ['POST', 'orders'],
+  ['GET', 'orders/:id'],
+  ['POST', 'orders/:id/rounds'],
+  ['PATCH', 'orders/:id'],
+  ['POST', 'orders/:id/cancel'],
+  ['GET', 'sessions/:id/orders'],
+  ['GET', 'tables/:branchId/:table/orders'],
+  // Paying online (the simulator stands in for the payment partner in development).
+  ['POST', 'payments'],
+  ['POST', 'payments/:id/simulate'],
+  // Calling a waiter, asking for the bill.
+  ['POST', 'service-requests'],
+  ['DELETE', 'service-requests/:id'],
+  ['GET', 'sessions/:id/service-requests'],
+  // Staff: today's orders, the waiter's orders and rounds, the kitchen, payments in person.
+  ['GET', 'admin/branches/:branchId/orders'],
+  ['POST', 'admin/branches/:branchId/tables/:table/orders'],
+  ['POST', 'admin/branches/:branchId/orders/:id/rounds'],
+  ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round'],
+  ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round/status'],
+  ['POST', 'admin/orders/:id/served'],
+  ['POST', 'admin/branches/:branchId/orders/:id/payment'],
+  ['POST', 'admin/branches/:branchId/tables/:table/payment'],
+  ['POST', 'admin/branches/:branchId/orders/:id/cancel'],
+  ['POST', 'admin/branches/:branchId/orders/:id/refund'],
+  // Staff: the floor, requests and bookings.
+  ['GET', 'admin/branches/:branchId/service'],
+  ['GET', 'admin/branches/:branchId/tables'],
+  ['GET', 'admin/branches/:branchId/tables/:table'],
+  ['POST', 'admin/branches/:branchId/tables/:table/free'],
+  ['POST', 'admin/service-requests/:id/acknowledge'],
+  ['POST', 'admin/service-requests/:id/resolve'],
+  ['GET', 'admin/branches/:branchId/reservations'],
+  ['POST', 'admin/branches/:branchId/reservations'],
+  ['PATCH', 'admin/branches/:branchId/reservations/:id'],
+  ['PATCH', 'admin/branches/:branchId/reservations/:id/status'],
 ];
 
 /** Whether the backend is configured (NEXT_PUBLIC_BACKEND_URL). */

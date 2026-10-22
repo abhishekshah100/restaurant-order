@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { dishSlug, scan, waitForSavedCart } from './helpers';
+import { dishSlug, installClock, scan, waitForSavedCart } from './helpers';
 
 /**
  * Promotions: promo codes in the cart (applied, refused below the minimum, carried through
@@ -56,7 +56,7 @@ test.beforeEach(async ({ page }) => {
 
 test('India: WELCOME10 off the cart, through checkout to the receipt', async ({ page }) => {
   test.slow();
-  await page.clock.install({ time: EVENING });
+  await installClock(page, EVENING);
   await scan(page, 'table=12');
   await addDish(page, 'mains', 'Dal Makhani');
   await addDish(page, 'mains', 'Palak Paneer');
@@ -95,7 +95,7 @@ test('India: WELCOME10 off the cart, through checkout to the receipt', async ({ 
 });
 
 test('India: a code below its minimum says how much more to add', async ({ page }) => {
-  await page.clock.install({ time: EVENING });
+  await installClock(page, EVENING);
   await scan(page, 'table=12');
   await addDish(page, 'starters', 'Dahi Kebab');
   await page.goto('/cart/');
@@ -115,7 +115,7 @@ test('India: a code below its minimum says how much more to add', async ({ page 
 test('Nepal: NAMASTE15 with the service charge and VAT on the discounted items', async ({
   page,
 }) => {
-  await page.clock.install({ time: EVENING });
+  await installClock(page, EVENING);
   await scan(page, 'branch=ktm-thamel&table=5');
   await addDish(page, 'mains', 'Dal Makhani');
   await page.goto('/cart/');
@@ -134,7 +134,7 @@ test('Nepal: NAMASTE15 with the service charge and VAT on the discounted items',
 });
 
 test('happy hour: drinks at 20% off inside the window (India, branch time)', async ({ page }) => {
-  await page.clock.install({ time: HAPPY_HOUR });
+  await installClock(page, HAPPY_HOUR);
   await scan(page, 'table=12');
   await page.goto('/menu/');
   await expect(text(page, /20% off drinks till 7:00 PM/)).toBeVisible();
@@ -152,7 +152,7 @@ test('happy hour: drinks at 20% off inside the window (India, branch time)', asy
 
 test('happy hour: Nepal prices at 4:05 PM in Kathmandu', async ({ page }) => {
   // 10:20 UTC is 4:05 PM in Kathmandu (+5:45), 3:50 PM in Bengaluru.
-  await page.clock.install({ time: new Date('2026-10-08T10:20:00Z') });
+  await installClock(page, new Date('2026-10-08T10:20:00Z'));
   await scan(page, 'branch=ktm-thamel&table=5');
   await page.goto('/menu/beverages/');
   // रू 285 − 57 = रू 228.
@@ -161,7 +161,7 @@ test('happy hour: Nepal prices at 4:05 PM in Kathmandu', async ({ page }) => {
 });
 
 test('no happy-hour pricing outside the window', async ({ page }) => {
-  await page.clock.install({ time: EVENING });
+  await installClock(page, EVENING);
   await scan(page, 'table=12');
   await page.goto('/menu/beverages/');
   await expect(page.getByText(/Happy hour/)).toHaveCount(0);

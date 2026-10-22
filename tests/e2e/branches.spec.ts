@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { waitForSavedCart, scan } from './helpers';
+import { fixClock, scan, waitForSavedCart } from './helpers';
 
 /**
  * Branches and regions: a QR code for the Nepal branch (Thamel, Kathmandu) gives NPR prices,
@@ -27,7 +27,7 @@ test('a Nepal QR code: NPR prices, service charge + VAT, +977 and Nepali payment
   page,
 }) => {
   // Kathmandu is UTC+5:45: 14:00 UTC is 7:45 PM there (7:30 PM in India).
-  await page.clock.setFixedTime(new Date('2026-10-03T14:00:00Z'));
+  await fixClock(page, new Date('2026-10-03T14:00:00Z'));
 
   await scan(page, 'branch=ktm-thamel&table=5');
   await expect(visible(page, 'Table 5')).toBeVisible();

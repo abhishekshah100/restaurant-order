@@ -1,4 +1,4 @@
-import { scan } from './helpers';
+import { againstBackend, scan } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -81,6 +81,8 @@ test('request a waiter, see it pending, then cancel it', async ({ page }) => {
 });
 
 test('request the bill for the whole table', async ({ page }) => {
+  // MOCK ONLY: the mock's table 12 has other guests' orders (₹1,074); the backend's starts empty.
+  test.skip(againstBackend, "Reads the mock's orders at table 12");
   await page.goto('/help/');
   await visible(page, 'button', /Request (the )?bill/).click();
   await expect(page).toHaveURL(/\/help\/bill\/$/);

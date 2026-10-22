@@ -118,8 +118,9 @@ test('a waiter takes an order at a free table, then adds to it', async ({ page }
 
 test('paying first, changing the order, adding more and paying the rest', async ({ page }) => {
   test.slow();
+  // Its own table: the backend keeps the previous test's orders at table 6.
   await adminSignIn(page);
-  await page.goto('/admin/dashboard/tables/view/?table=6');
+  await page.goto('/admin/dashboard/tables/view/?table=7');
   await page.getByRole('button', { name: 'Take order' }).click();
   const pad = page.getByRole('dialog');
   await pad.getByRole('button', { name: 'Add Dahi Kebab' }).click();
@@ -129,7 +130,7 @@ test('paying first, changing the order, adding more and paying the rest', async 
   await expect(pad).toHaveCount(0);
 
   // The guest pays before the food arrives.
-  const card = page.getByRole('article').filter({ hasText: 'Table 6 guest' });
+  const card = page.getByRole('article').filter({ hasText: 'Table 7 guest' });
   await card.getByRole('button', { name: /^Collect payment for order/ }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('radio', { name: 'UPI' }).click();
@@ -157,7 +158,7 @@ test('paying first, changing the order, adding more and paying the rest', async 
   await expect(dialog).toContainText('1 order to pay');
   await dialog.getByRole('radio', { name: 'Cash' }).click();
   await dialog.getByRole('button', { name: /^Collect ₹/ }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Table 6 paid' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Table 7 paid' })).toBeVisible();
   await expect(card).toContainText('paid');
 });
 

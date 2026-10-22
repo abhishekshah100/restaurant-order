@@ -1,4 +1,4 @@
-import { scan } from './helpers';
+import { againstBackend, scan } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -20,6 +20,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('my orders → tracking → details', async ({ page }) => {
+  // MOCK ONLY: the mock's drawn order history (or orders put on the device); the backend's
+  // orders are covered from placing them (happy-path, lifecycle, modes).
+  test.skip(againstBackend, "Reads the mock's order history");
   await page.goto('/orders/');
   await expect(page.getByRole('heading', { level: 1, name: 'My orders' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /This visit · Today/ })).toBeVisible();
@@ -57,6 +60,9 @@ test('my orders → tracking → details', async ({ page }) => {
 });
 
 test('a cancelled order explains the refund', async ({ page }) => {
+  // MOCK ONLY: the mock's drawn order history (or orders put on the device); the backend's
+  // orders are covered from placing them (happy-path, lifecycle, modes).
+  test.skip(againstBackend, "Reads the mock's order history");
   for (const path of ['/order/?id=A098', '/order/track/?id=A098']) {
     await page.goto(path);
     await expect(
@@ -73,6 +79,9 @@ test('a cancelled order explains the refund', async ({ page }) => {
 });
 
 test('an order placed on this device moves along live', async ({ page }) => {
+  // MOCK ONLY: the mock's drawn order history (or orders put on the device); the backend's
+  // orders are covered from placing them (happy-path, lifecycle, modes).
+  test.skip(againstBackend, "Reads the mock's order history");
   await page.evaluate(() => {
     const order = {
       id: 'A105',
@@ -127,6 +136,9 @@ test('an order from another device is not found', async ({ page }) => {
 test('any order id opens from a deep link; unknown or missing ids are not found', async ({
   page,
 }) => {
+  // MOCK ONLY: the mock's drawn order history (or orders put on the device); the backend's
+  // orders are covered from placing them (happy-path, lifecycle, modes).
+  test.skip(againstBackend, "Reads the mock's order history");
   // Far past the 20 ids the old pre-rendered pages allowed.
   await page.evaluate(() => {
     const order = {

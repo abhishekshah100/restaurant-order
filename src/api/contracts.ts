@@ -771,6 +771,11 @@ export interface PlaceOrderRequest {
   paymentId?: string;
   /** A promo code the guest applied in the cart (`POST /promos/validate` accepted it). */
   promoCode?: string;
+  /**
+   * The client's key for this checkout: the same key again (a retried request) returns the order
+   * already placed instead of placing another. One per press of "Place order".
+   */
+  idempotencyKey?: string;
 }
 
 /* ---------- Promotions ---------- */

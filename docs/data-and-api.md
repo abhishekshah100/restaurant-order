@@ -509,14 +509,26 @@ non-JSON error page (a proxy's 502) is an `ApiError` without a code. `401 unauth
 request ends the staff session on this device and the admin guard sends them to sign in. Sign-out
 also ends the session on the server (`DELETE /admin/sessions/current`).
 
-**On the backend today:** staff sign-in and sign-out, branches and their status, settings, the
-floor plan, the guests' branches, the menu (the guests' menu, availability, dishes added,
-edited and removed, dish order, categories, pictures), guests' sessions and one-time codes, the
-signed table QR links, and pricing: the branches' promotions, promo-code quotes and delivery
-quotes. See the list in `src/api/backend.ts`. Orders stay on the mock until staff orders and the
-kitchen are on the backend too (Module 5c); meanwhile the mock prices them with the backend's
-live promotions. Until orders are on the backend, it counts no earlier uses of a code, so
-`promo_limit_reached` comes from the mock's `POST /orders` rather than the quote.
+**On the backend today: everything the app reads or changes**, the dummy reference JSON aside
+(`GET /restaurant`, `/help`, `/content/*`, the drawn order history). Staff sign-in, branches,
+settings, the floor plan, the menu, guests' sessions and codes, signed table links, pricing and
+promotions, orders (placing, rounds, changes, cancellations, the bill), online payments, waiter
+and bill requests, today's orders for staff, the kitchen, payments in person, refunds, the floor
+views and bookings. See the list in `src/api/backend.ts`.
+
+**Orders are worded here.** The backend answers orders as data: what was chosen, ISO times,
+codes (restaurant-backend › docs/decisions.md › ADR-018). One adapter turns them into the
+screens' `Order` with the app's own words, as the mock wrote them: option lines from the
+branch's menu, times on its clock, notes and payment names from content
+([`orderAdapter.ts`](../src/api/orderAdapter.ts), applied per route in
+[`backendAnswers.ts`](../src/api/backendAnswers.ts)). Screens, hooks and mutations read one shape
+whichever server answers. An order's `sessionId` is the asking guest's own token only on orders
+from their session (theirs to pay); the backend never shows another guest's.
+
+**The guest's session as a cookie.** Reads the backend answers only to the guest who may see
+them (one of their orders, their table's bill, a payment) add `?sessionId=` with the session
+saved on the device ([`guestQuery.ts`](../src/api/guestQuery.ts)). Checkout sends an
+`idempotencyKey` per press of "Place order", so a retried request never places a second order.
 
 **Table links are signed.** A dine-in session needs the `qr=` token from the link staff print
 (Settings › Tables › QR codes). An edited or forged link is refused (`403 qr_invalid`) and the
@@ -532,20 +544,15 @@ still checks every session and code on its own clock.
 
 **Browser tests against the backend.** Build with `NEXT_PUBLIC_BACKEND_URL` and run
 `E2E_BACKEND=true npx playwright test`, against a database of their own, reset before each spec
-file. A check that needs a module the backend doesn't have yet (open bills: Orders) is skipped
-then (`againstBackend` in `tests/e2e/helpers.ts`).
+file (`againstBackend` in `tests/e2e/helpers.ts` says which build a spec runs against). Start
+the server with `TEST_CLOCK=true`: `installClock`, `fastForward` and `fixClock` set its clock to
+the browser's, and its `Date` header follows, so the two agree. The backend keeps a spec's data
+from one test to the next (the mock starts each test afresh), so tests read order and booking
+numbers as they come (`A\d+`) and use a table of their own. Checks that read the mock's drawn
+history or its device storage run on the mock only.
 
-**While both run.** Staff sign in on the backend, so the admin endpoints still on the mock accept
-any token as the demo account's, at any branch the backend lists (MOCK ONLY, in
-[`adminSessions.ts`](../src/api/mock/handlers/adminSessions.ts)). What the mock still serves
-(orders, the kitchen, the floor, service) finds the sessions and verified numbers the backend
-answered with (copied into its tables: [`mirror.ts`](../src/api/mock/mirror.ts)), and builds on the
-backend's **live** branches and menus
-(`seedSource` in [`seed.ts`](../src/api/mock/seed.ts), re-read every 15 s): a dish sold out on the
-backend is refused in an order, and a dish added there can be ordered. Floor plans saved on the
-backend are what the mock's tables pages show. The dummy `branches.json` and `menu.json` are then
-not read at run time; they stay for the mock-only mode, the build (`/menu/[category]` pages and
-the first paint) and the unit tests.
+**The mock** answers only in the mock-only build (no `NEXT_PUBLIC_BACKEND_URL`): with the
+backend set, every endpoint it served goes to the backend.
 
 ## Switching to a real backend
 
