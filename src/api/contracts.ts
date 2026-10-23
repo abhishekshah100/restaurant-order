@@ -302,6 +302,8 @@ export interface TakeTableOrderRequest {
   customerName: string;
   kitchenNote?: string;
   lines: OrderLineRequest[];
+  /** The pad's key for this order (8–64 of A–Z a–z 0–9 _ -): sent again, it's placed once. */
+  idempotencyKey?: string;
 }
 
 /* ---------- The branch's status (staff) ---------- */
@@ -682,8 +684,9 @@ export interface UpdateSessionRequest {
 /**
  * `POST /otp` — text a one-time code to the guest's mobile number for this session.
  * A first send (or a new number) always goes out; `resend: true` re-sends to the same number
- * and is refused until the cooldown is over, unless a wrong code was entered.
- * 200 → the challenge. Errors: 404 session_not_found, 429 otp_resend_too_soon (`resendAt`).
+ * and is refused until the cooldown is over, unless a wrong code was entered (with no code on
+ * record, it's a first send). 200 → the challenge. Errors: 404 session_not_found, 409
+ * otp_not_sent (`resend` to another number), 429 otp_resend_too_soon (`resendAt`).
  */
 export interface SendOtpRequest {
   sessionId: string;

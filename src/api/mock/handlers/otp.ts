@@ -40,8 +40,9 @@ export const sendOtp: Handler = async (ctx, { body: raw }) => {
   const table = ctx.db.otp.read();
   const previous = table[session.id];
   let record: OtpRecord;
-  if (body.resend) {
-    if (previous?.phone !== phone) fail(409, 'otp_not_sent');
+  // With no code on record, a resend is a first send (as the backend: a code can be lost).
+  if (body.resend && previous) {
+    if (previous.phone !== phone) fail(409, 'otp_not_sent');
     if (!canResendOtp(previous, now))
       fail(429, 'otp_resend_too_soon', { resendAt: resendAt(previous) });
     record = { ...previous, sentAt: now, attemptsLeft: OTP_ATTEMPTS };

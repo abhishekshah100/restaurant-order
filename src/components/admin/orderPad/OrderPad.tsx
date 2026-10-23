@@ -64,6 +64,8 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
   const addRound = useAddStaffRound();
   const editRound = useEditStaffRound();
   const sending = take.isPending || addRound.isPending || editRound.isPending;
+  // One order per pad: sent again after a lost answer, the server returns the one it took.
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   // A change starts from the round's items as they can be ordered today (the rest come off).
   const [start] = useState(() =>
@@ -150,6 +152,7 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
             customerName: guest.trim() || t('adminOrderPad.guest.default', { table: target.table }),
             kitchenNote: note,
             lines: padRequest(lines),
+            idempotencyKey,
           },
         },
         { onSuccess: done, onError: failed },
