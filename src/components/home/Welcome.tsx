@@ -2,11 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Button, Icon, StatusPill } from '@/components/ui';
-import { useBranch, useContent, usePrefetchMenuWhenIdle } from '@/api/hooks';
+import { Button, Icon, Skeleton, StatusPill } from '@/components/ui';
+import { useBranch, useContent } from '@/api/hooks';
 import { MODE_ICON } from '@/components/start/ModeOptions';
 import { useGuestSession, useVisit } from '@/context/GuestSessionContext';
-import { useTableLabel } from '@/hooks/useTable';
+import { UNKNOWN_TABLE, useTableLabel } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
 import { BrandPanel } from './BrandPanel';
 import styles from './Welcome.module.css';
@@ -55,8 +55,6 @@ export function Welcome() {
   const table = useTableLabel();
   const floor = useGuestSession()?.floor;
   const t = useContent('home');
-  // The guest's next page is the menu: read it once this one is up, so it opens at once.
-  usePrefetchMenuWhenIdle();
 
   // Only shown while ordering is open: OrderingGate swaps in the closed / paused / offline screen.
   const kitchen = (
@@ -114,7 +112,14 @@ export function Welcome() {
               </div>
               <div className={styles.cardText}>
                 <span className={styles.cardLabel}>{t('welcome.seatedAt')}</span>
-                <span className={styles.tableNo}>{t('welcome.tableNumber', { table })}</span>
+                {table === UNKNOWN_TABLE ? (
+                  // Until the server confirms the scanned table.
+                  <span className={styles.tableNo} aria-busy="true">
+                    <Skeleton shape="title" width="5em" />
+                  </span>
+                ) : (
+                  <span className={styles.tableNo}>{t('welcome.tableNumber', { table })}</span>
+                )}
               </div>
             </div>
             {/* The table's area on the floor plan, as the session (POST /sessions) names it. */}

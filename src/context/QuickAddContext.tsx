@@ -1,9 +1,16 @@
 'use client';
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { QuickAddDialog } from '@/components/menu/QuickAddDialog';
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import type { Dish } from '@/types/menu';
 import { useCart } from '@/hooks/useCart';
+
+// Downloaded the first time a dish is quick-added.
+const QuickAddDialog = dynamic(
+  () => import('@/components/menu/QuickAddDialog').then((m) => m.QuickAddDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
 
 interface QuickAddContextValue {
   /** Open quick-add for a dish; pass a cart line key to edit that line. */

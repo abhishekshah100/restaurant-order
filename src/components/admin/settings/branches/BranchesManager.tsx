@@ -1,10 +1,10 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useState } from 'react';
-import { isApiError } from '@/api/client';
 import { useAdminBranches, useContent } from '@/api/hooks';
-import { useRemoveBranch } from '@/api/mutations';
-import { Button, Dialog, IconButton, Tag, type TagVariant } from '@/components/ui';
+import { Button, IconButton, Tag, type TagVariant } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { selectAdminBranch } from '@/lib/adminAuth';
 import { settingsHref } from '@/lib/adminSettings';
@@ -13,8 +13,17 @@ import type { BranchStatus } from '@/types/branch';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { SettingsNote, SettingsSkeleton } from '../shared/SettingsEditor';
 import editor from '../shared/SettingsEditor.module.css';
-import { AddBranchDialog } from './AddBranchDialog';
 import styles from './BranchesManager.module.css';
+
+// Popups: each downloaded the first time it opens.
+const RemoveBranchDialog = dynamic(
+  () => import('./RemoveBranchDialog').then((m) => m.RemoveBranchDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
+const AddBranchDialog = dynamic(() => import('./AddBranchDialog').then((m) => m.AddBranchDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
 
 const STATUS_TAG: Record<BranchStatus, TagVariant> = { open: 'ok', paused: 'warn', closed: 'err' };
 
@@ -143,75 +152,5 @@ export function BranchesManager() {
         />
       )}
     </div>
-  );
-}
-
-/** "Remove Thamel?": what happens, then Keep or Remove; why the server said no, if it did. */
-function RemoveBranchDialog({
-  branch,
-  next,
-  current,
-  onClose,
-}: {
-  branch: AdminBranch;
-  /** The branch to work in if this is the current one. */
-  next: AdminBranch | undefined;
-  current: boolean;
-  onClose: () => void;
-}) {
-  const t = useContent('common');
-  const { showToast } = useToast();
-  const remove = useRemoveBranch();
-  const refused = isApiError(remove.error, 'last_branch')
-    ? t('adminSettings.errors.lastBranch')
-    : isApiError(remove.error, 'branch_in_use')
-      ? t('adminSettings.errors.branchInUse')
-      : remove.isError
-        ? t('adminSettings.branches.removeFailed')
-        : undefined;
-
-  return (
-    <Dialog
-      open
-      onClose={onClose}
-      presentation="adaptive"
-      title={t('adminSettings.branches.removeTitle', { branch: branch.shortName })}
-      footer={
-        <div className={styles.footer}>
-          <Button variant="secondary" onClick={onClose}>
-            {t('adminSettings.branches.keep')}
-          </Button>
-          <Button
-            iconStart="trash"
-            loading={remove.isPending}
-            onClick={() =>
-              remove.mutate(branch.id, {
-                onSuccess: () => {
-                  if (current && next) selectAdminBranch(next.id);
-                  showToast(t('adminSettings.branches.removed', { branch: branch.shortName }), {
-                    tone: 'success',
-                  });
-                  onClose();
-                },
-              })
-            }
-          >
-            {t('adminSettings.branches.confirmRemove')}
-          </Button>
-        </div>
-      }
-    >
-      <div className={styles.dialogBody}>
-        <p>{t('adminSettings.branches.removeBody', { branch: branch.name })}</p>
-        {current && next && (
-          <p>{t('adminSettings.branches.removeCurrent', { next: next.shortName })}</p>
-        )}
-        {refused && (
-          <p className={styles.refused} role="alert">
-            {refused}
-          </p>
-        )}
-      </div>
-    </Dialog>
   );
 }

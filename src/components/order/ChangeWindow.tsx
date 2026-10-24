@@ -1,15 +1,22 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useContent } from '@/api/hooks';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Button, Icon } from '@/components/ui';
 import { useCancelOrderAction, useChangeWindow, useEditOrder } from '@/hooks/useOrderChanges';
 import { cx } from '@/lib/cx';
 import { formatCountdown } from '@/lib/format';
 import { isFinished } from '@/lib/orders';
 import type { Order } from '@/types/order';
-import { CancelOrderDialog } from './CancelOrderDialog';
 import styles from './ChangeWindow.module.css';
+
+// Downloaded the first time the guest asks to cancel.
+const CancelOrderDialog = dynamic(
+  () => import('./CancelOrderDialog').then((m) => m.CancelOrderDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
 
 /**
  * "You can change or cancel for 1:42" with Change and Cancel, on the guest's own order while
@@ -58,17 +65,19 @@ export function ChangeWindow({ order, className }: { order: Order; className?: s
           {isTab ? t('change.cancelRound', { round }) : t('change.cancel')}
         </Button>
       </div>
-      <CancelOrderDialog
-        open={confirming}
-        order={order}
-        round={round}
-        isTab={isTab}
-        cancelling={cancelling}
-        onClose={() => setConfirming(false)}
-        onConfirm={async () => {
-          if (await cancel(round)) setConfirming(false);
-        }}
-      />
+      {confirming && (
+        <CancelOrderDialog
+          open
+          order={order}
+          round={round}
+          isTab={isTab}
+          cancelling={cancelling}
+          onClose={() => setConfirming(false)}
+          onConfirm={async () => {
+            if (await cancel(round)) setConfirming(false);
+          }}
+        />
+      )}
     </section>
   );
 }

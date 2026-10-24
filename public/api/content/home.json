@@ -81,6 +81,10 @@
       "cancel": "Keep my cart"
     },
     "closedTable": "Table {table} isn't taking orders right now. Please ask a member of staff to seat you, or order takeaway below.",
+    "tableError": {
+      "title": "Couldn't open your table",
+      "ok": "OK"
+    },
     "invalidTable": "We couldn't check the QR code for table {table}. Please scan the code on your table again, or ask a member of staff."
   },
   "modeSwitch": {

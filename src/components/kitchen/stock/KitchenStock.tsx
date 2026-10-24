@@ -1,10 +1,11 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useState } from 'react';
 import { useBranchMenu } from '@/api/adminDashboard';
 import { useContent } from '@/api/hooks';
 import { useSetDishAvailability } from '@/api/mutations';
-import { AvailabilityDialog } from '@/components/admin/menu/AvailabilityDialog';
 import { MenuDishRow } from '@/components/admin/menu/MenuDishRow';
 import { useAdminWorkspace } from '@/components/admin/shell/AdminWorkspace';
 import { Chip, EmptyState, Icon, SearchField } from '@/components/ui';
@@ -18,6 +19,15 @@ import {
 import type { CategoryId, Dish } from '@/types/menu';
 import { StatTiles, type StatTile } from '../StatTiles';
 import styles from './KitchenStock.module.css';
+
+// Popups: each downloaded the first time it opens.
+const AvailabilityDialog = dynamic(
+  () => import('@/components/admin/menu/AvailabilityDialog').then((m) => m.AvailabilityDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
 
 /**
  * /admin/kitchen-dashboard/stock/: what the kitchen can make. Every dish by station with whether

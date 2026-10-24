@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useBranch, useContent } from '@/api/hooks';
@@ -7,8 +8,14 @@ import { Icon, TablePill } from '@/components/ui';
 import { MODE_ICON } from '@/components/start/ModeOptions';
 import { useVisit } from '@/context/GuestSessionContext';
 import { cx } from '@/lib/cx';
-import { ModeSwitchDialog } from './ModeSwitchDialog';
+import { LoadingSignal } from './GlobalLoader';
 import styles from './VisitPill.module.css';
+
+// Downloaded the first time the guest opens it.
+const ModeSwitchDialog = dynamic(
+  () => import('./ModeSwitchDialog').then((m) => m.ModeSwitchDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
 
 export interface VisitPillProps {
   /** Text before the table, e.g. "The Olive Table · " (dine-in only, as drawn). */
@@ -59,7 +66,7 @@ export function VisitPill({ prefix, className }: VisitPillProps) {
         <span className={styles.text}>{t('visit.pill', { mode, branch: branch.shortName })}</span>
         <Icon name="chevd" size="xs" />
       </button>
-      <ModeSwitchDialog open={open} onClose={() => setOpen(false)} />
+      {open && <ModeSwitchDialog open onClose={() => setOpen(false)} />}
     </>
   );
 }

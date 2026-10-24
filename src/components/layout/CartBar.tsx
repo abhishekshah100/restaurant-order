@@ -4,13 +4,20 @@ import Link from 'next/link';
 import { useEffect, useState, type MouseEvent } from 'react';
 import { useContent, useRegion } from '@/api/hooks';
 import { Icon } from '@/components/ui';
-import { CartSlideOver } from '@/components/cart/CartSlideOver';
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useCart } from '@/hooks/useCart';
 import { useCartItemTotal } from '@/hooks/useOffers';
 import { useRegionCopy } from '@/hooks/useRegionCopy';
 import { TABLET_QUERY, useMediaQuery } from '@/hooks/useMediaQuery';
 import { cx } from '@/lib/cx';
 import styles from './CartBar.module.css';
+
+// Downloaded the first time the panel opens.
+const CartSlideOver = dynamic(
+  () => import('@/components/cart/CartSlideOver').then((m) => m.CartSlideOver),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
 
 export interface CartBarProps {
   /** The page has no bottom nav, so the bar sits lower. */
@@ -79,7 +86,7 @@ export function CartBar({ noNav }: CartBarProps) {
           <Icon name="arrow" size="sm" />
         </span>
       </Link>
-      <CartSlideOver open={panelOpen} onClose={() => setPanelOpen(false)} />
+      {panelOpen && <CartSlideOver open onClose={() => setPanelOpen(false)} />}
     </>
   );
 }

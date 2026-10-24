@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useBranchOrders, useContent } from '@/api/hooks';
@@ -23,11 +25,24 @@ import {
 } from '@/lib/adminOrders';
 import { cx } from '@/lib/cx';
 import type { Order } from '@/types/order';
-import { OrderPad, type PadTarget } from '../orderPad/OrderPad';
+import type { PadTarget } from '../orderPad/OrderPad';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { OrderDetailDialog, type OrderDialogView } from './OrderDetailDialog';
+import type { OrderDialogView } from './OrderDetailDialog';
 import { OrderListItem } from './OrderListItem';
 import styles from './OrdersBoard.module.css';
+
+// Popups: each downloaded the first time it opens.
+const OrderPad = dynamic(() => import('../orderPad/OrderPad').then((m) => m.OrderPad), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+const OrderDetailDialog = dynamic(
+  () => import('./OrderDetailDialog').then((m) => m.OrderDetailDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
 
 /** Ages ("12 min ago") move on this often. */
 const AGE_REFRESH_MS = 20_000;
@@ -151,16 +166,18 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
           )}
         </section>
 
-        <OrderDetailDialog
-          order={openOrder}
-          initialView={open?.view}
-          onClose={() => setOpen(null)}
-          onAddItems={(order) => {
-            setOpen(null);
-            if (order.table !== undefined) setPad({ kind: 'add', table: order.table, order });
-          }}
-        />
-        <OrderPad target={pad} onClose={() => setPad(null)} />
+        {openOrder && (
+          <OrderDetailDialog
+            order={openOrder}
+            initialView={open?.view}
+            onClose={() => setOpen(null)}
+            onAddItems={(order) => {
+              setOpen(null);
+              if (order.table !== undefined) setPad({ kind: 'add', table: order.table, order });
+            }}
+          />
+        )}
+        {pad && <OrderPad target={pad} onClose={() => setPad(null)} />}
       </>
     );
   } else if (orders.isError) {

@@ -1,8 +1,9 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useMemo, useState } from 'react';
 import { useContent } from '@/api/hooks';
-import { AvailabilityDialog } from '@/components/admin/menu/AvailabilityDialog';
 import { Button, Chip, Dialog, EmptyState, Icon, SearchField } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
 import { MODE_FILTERS, type ModeFilter } from '@/lib/adminOrders';
@@ -24,6 +25,15 @@ import { BoardStats } from './BoardStats';
 import { TicketCard } from './TicketCard';
 import { useArrivals, useTicketActions } from './useTicketActions';
 import styles from './KitchenBoard.module.css';
+
+// Popups: each downloaded the first time it opens.
+const AvailabilityDialog = dynamic(
+  () => import('@/components/admin/menu/AvailabilityDialog').then((m) => m.AvailabilityDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
 
 /** Urgency and "due in" move on this often (each ticket's clock ticks on its own). */
 const BOARD_REFRESH_MS = 15_000;
@@ -199,15 +209,19 @@ export function KitchenBoard() {
           </aside>
         </div>
 
-        <Dialog
-          open={allDayOpen}
-          onClose={() => setAllDayOpen(false)}
-          title={t('board.allDay.title')}
-          description={t('board.allDay.subtitle')}
-          presentation="panel"
-        >
-          <AllDayList groups={view.allDay} categories={categories} />
-        </Dialog>
+        {/* Its list is already on the page (the side column), so nothing to download: it's
+            only rendered while open. */}
+        {allDayOpen && (
+          <Dialog
+            open
+            onClose={() => setAllDayOpen(false)}
+            title={t('board.allDay.title')}
+            description={t('board.allDay.subtitle')}
+            presentation="panel"
+          >
+            <AllDayList groups={view.allDay} categories={categories} />
+          </Dialog>
+        )}
 
         {outOfStock && (
           <AvailabilityDialog

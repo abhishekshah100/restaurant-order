@@ -1,8 +1,10 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Page } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { Icon } from '@/components/ui';
@@ -13,10 +15,15 @@ import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
 import { orderPath } from '@/lib/orders';
 import type { HelpTopic } from '@/types/help';
-import { HelpTopicDialog } from './HelpTopicDialog';
 import { SocialFollow } from './SocialFollow';
 import { useTableVisit } from './useTableVisit';
 import styles from './HelpView.module.css';
+
+// Downloaded the first time the guest opens a topic.
+const HelpTopicDialog = dynamic(() => import('./HelpTopicDialog').then((m) => m.HelpTopicDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
 
 /** Takeaway and delivery: no waiter or bill to call; directions, tracking and the phone instead. */
 function ModeActions({ mode }: { mode: 'takeaway' | 'delivery' }) {
@@ -225,11 +232,9 @@ export function HelpView() {
         </div>
       </main>
       <BottomNav />
-      <HelpTopicDialog
-        topic={topics[topicId]}
-        open={topicOpen}
-        onClose={() => setTopicOpen(false)}
-      />
+      {topicOpen && (
+        <HelpTopicDialog topic={topics[topicId]} open onClose={() => setTopicOpen(false)} />
+      )}
     </Page>
   );
 }

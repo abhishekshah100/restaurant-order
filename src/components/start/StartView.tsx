@@ -1,11 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { useBranches, useContent, useRestaurant } from '@/api/hooks';
 import { BrandPanel } from '@/components/home/BrandPanel';
-import { Banner, Button, Icon } from '@/components/ui';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
+import { Button, Dialog, Icon } from '@/components/ui';
 import { useGuestSession, useVisit, useVisitActions } from '@/context/GuestSessionContext';
 import { useCart } from '@/hooks/useCart';
 import { useQueryParam } from '@/hooks/useQueryParam';
@@ -16,8 +18,13 @@ import type { OrderMode } from '@/types/branch';
 import { DeliveryAreaSelect } from './DeliveryAreaSelect';
 import { ModeOptions } from './ModeOptions';
 import { OutletList } from './OutletList';
-import { SwitchOutletDialog } from './SwitchOutletDialog';
 import styles from './StartView.module.css';
+
+// Downloaded the first time it's needed.
+const SwitchOutletDialog = dynamic(
+  () => import('./SwitchOutletDialog').then((m) => m.SwitchOutletDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
 
 /** Where to go once the guest has chosen: `?next=` (a path in the app) or the menu. */
 const safeNext = (next: string | null) =>
@@ -50,6 +57,12 @@ export function StartView() {
   const [areaError, setAreaError] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [tableErrorSeen, setTableErrorSeen] = useState(false);
+
+  const { closedTable, invalidTable } = visit.choice;
+  let tableError: string | null = null;
+  if (invalidTable !== undefined) tableError = t('start.invalidTable', { table: invalidTable });
+  else if (closedTable !== undefined) tableError = t('start.closedTable', { table: closedTable });
 
   const branchId =
     pickedBranch ??
@@ -140,17 +153,6 @@ export function StartView() {
             <p className={cx('t-body c2', styles.lede)}>{t('start.lede')}</p>
           </div>
 
-          {visit.choice.closedTable !== undefined && (
-            <Banner tone="warn" icon="table" live="polite">
-              {t('start.closedTable', { table: visit.choice.closedTable })}
-            </Banner>
-          )}
-          {visit.choice.invalidTable !== undefined && (
-            <Banner tone="warn" icon="table" live="polite">
-              {t('start.invalidTable', { table: visit.choice.invalidTable })}
-            </Banner>
-          )}
-
           <section className={styles.section} aria-labelledby="start-outlets">
             <h2 id="start-outlets" className={styles.sectionTitle}>
               {t('start.outletsTitle')}
@@ -204,9 +206,24 @@ export function StartView() {
         </form>
       </main>
 
-      {branch && (
+      {/* A table scan the server refused (bad QR token, table out of service). */}
+      <Dialog
+        open={tableError !== null && !tableErrorSeen}
+        onClose={() => setTableErrorSeen(true)}
+        title={t('start.tableError.title')}
+        presentation="modal"
+        footer={
+          <Button block onClick={() => setTableErrorSeen(true)}>
+            {t('start.tableError.ok')}
+          </Button>
+        }
+      >
+        <p className="t-body c2">{tableError}</p>
+      </Dialog>
+
+      {branch && confirming && (
         <SwitchOutletDialog
-          open={confirming}
+          open
           branch={branch}
           items={count}
           onCancel={() => setConfirming(false)}

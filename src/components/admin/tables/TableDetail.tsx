@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ApiError } from '@/api/client';
@@ -14,18 +16,50 @@ import { cx } from '@/lib/cx';
 import { editableRound } from '@/lib/adminOrders';
 import type { AdminTableDetail } from '@/types/admin';
 import type { Order } from '@/types/order';
-import { OrderPad, type PadTarget } from '../orderPad/OrderPad';
-import { OrderDetailDialog, type OrderDialogView } from '../orders/OrderDetailDialog';
-import { ReservationEditor, type EditorTarget } from '../reservations/ReservationEditor';
+import type { PadTarget } from '../orderPad/OrderPad';
+import type { OrderDialogView } from '../orders/OrderDetailDialog';
+import type { EditorTarget } from '../reservations/ReservationEditor';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { FreeTableDialog } from './FreeTableDialog';
-import { TableQrDialog } from './qr/TableQrDialog';
 import { TableBookings } from './TableBookings';
-import { TableCollectDialog } from './TableCollectDialog';
 import { TableOrderCard } from './TableOrderCard';
 import { TableRequests } from './TableRequests';
 import { useSeatedLabel } from './useSeatedLabel';
 import styles from './TableDetail.module.css';
+
+// Popups: each downloaded the first time it opens.
+const OrderPad = dynamic(() => import('../orderPad/OrderPad').then((m) => m.OrderPad), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+const OrderDetailDialog = dynamic(
+  () => import('../orders/OrderDetailDialog').then((m) => m.OrderDetailDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
+const ReservationEditor = dynamic(
+  () => import('../reservations/ReservationEditor').then((m) => m.ReservationEditor),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
+const FreeTableDialog = dynamic(() => import('./FreeTableDialog').then((m) => m.FreeTableDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+const TableQrDialog = dynamic(() => import('./qr/TableQrDialog').then((m) => m.TableQrDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+const TableCollectDialog = dynamic(
+  () => import('./TableCollectDialog').then((m) => m.TableCollectDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
 
 /** Seated time and request ages move on this often. */
 const AGE_REFRESH_MS = 20_000;
@@ -282,20 +316,22 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
         )}
       </section>
 
-      <OrderDetailDialog
-        order={openOrder}
-        initialView={open?.view}
-        onClose={() => setOpen(null)}
-        onAddItems={addItems}
-        onChangeItems={(order) => changeItems(order)?.()}
-      />
-      <OrderPad target={pad} onClose={() => setPad(null)} />
+      {openOrder && (
+        <OrderDetailDialog
+          order={openOrder}
+          initialView={open?.view}
+          onClose={() => setOpen(null)}
+          onAddItems={addItems}
+          onChangeItems={(order) => changeItems(order)?.()}
+        />
+      )}
+      {pad && <OrderPad target={pad} onClose={() => setPad(null)} />}
       {collectingTable && (
         <TableCollectDialog detail={detail} onClose={() => setCollectingTable(false)} />
       )}
       {freeing && <FreeTableDialog detail={detail} onClose={() => setFreeing(false)} />}
       {showingQr && <TableQrDialog table={detail.table} onClose={() => setShowingQr(false)} />}
-      <ReservationEditor target={booking} onClose={() => setBooking(null)} />
+      {booking && <ReservationEditor target={booking} onClose={() => setBooking(null)} />}
     </>
   );
 }

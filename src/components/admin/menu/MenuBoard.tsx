@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useState } from 'react';
 import { useBranchMenu } from '@/api/adminDashboard';
 import { useContent } from '@/api/hooks';
@@ -15,11 +17,28 @@ import {
 } from '@/lib/adminMenu';
 import type { CategoryId, Dish } from '@/types/menu';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { AvailabilityDialog } from './AvailabilityDialog';
-import { CategoriesDialog } from './CategoriesDialog';
-import { DishEditor } from './DishEditor';
 import { MenuDishRow } from './MenuDishRow';
 import styles from './MenuBoard.module.css';
+
+// Popups: each downloaded the first time it opens.
+const AvailabilityDialog = dynamic(
+  () => import('./AvailabilityDialog').then((m) => m.AvailabilityDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
+const CategoriesDialog = dynamic(
+  () => import('./CategoriesDialog').then((m) => m.CategoriesDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
+const DishEditor = dynamic(() => import('./DishEditor').then((m) => m.DishEditor), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
 
 type Open =
   | { kind: 'availability'; dish: Dish; offFirst: boolean }

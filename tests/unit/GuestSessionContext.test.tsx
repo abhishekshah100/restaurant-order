@@ -205,8 +205,8 @@ describe('GuestSessionProvider', () => {
       () => ({ session: useGuestSession(), table: useTableContext() }),
       { wrapper },
     );
-    // Before POST /sessions answers: the scanned table, no session yet.
-    expect(result.current).toEqual({ session: null, table: 7 });
+    // Before POST /sessions answers: no session, and no table until the server confirms it.
+    expect(result.current).toEqual({ session: null, table: null });
     // The page is left before the answer: the next load (without the link) opens it.
     unmount();
     const { session } = await openPage('/menu/');

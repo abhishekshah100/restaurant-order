@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useBranchOrders, useBranchService, useContent } from '@/api/hooks';
@@ -23,16 +25,31 @@ import {
 import type { Order } from '@/types/order';
 import type { BillRequest } from '@/types/service';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { CollectDialog, type CollectTarget } from './CollectDialog';
+import type { CollectTarget } from './CollectDialog';
 import { DueCard } from './DueCard';
 import { LedgerRow } from './LedgerRow';
 import { MethodBreakdown } from './MethodBreakdown';
-import { PaymentOrderDialog } from './PaymentOrderDialog';
 import { usePaymentPrint } from './PaymentPrint';
-import { RefundDialog } from './RefundDialog';
 import { TakingsSummary } from './TakingsSummary';
 import { usePaymentText } from './usePaymentText';
 import styles from './PaymentsBoard.module.css';
+
+// Popups: each downloaded the first time it opens.
+const CollectDialog = dynamic(() => import('./CollectDialog').then((m) => m.CollectDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+const PaymentOrderDialog = dynamic(
+  () => import('./PaymentOrderDialog').then((m) => m.PaymentOrderDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
+const RefundDialog = dynamic(() => import('./RefundDialog').then((m) => m.RefundDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
 
 /** Ages ("4 min ago") move on this often. */
 const AGE_REFRESH_MS = 20_000;
@@ -107,6 +124,7 @@ export function PaymentsBoard() {
       }
     }
     const refundOrder = byId(refundId) ?? null;
+    const openOrder = byId(openId);
 
     const exportCsv = () => {
       const c = (key: Parameters<typeof t>[0]) => t(key);
@@ -316,25 +334,29 @@ export function PaymentsBoard() {
           </aside>
         </div>
 
-        <PaymentOrderDialog
-          order={byId(openId)}
-          onClose={() => setOpenId(null)}
-          onCollect={(order) => {
-            setOpenId(null);
-            setCollectKey({ kind: 'order', id: order.id });
-          }}
-          onRefund={(order) => {
-            setOpenId(null);
-            setRefundId(order.id);
-          }}
-          onPrint={(order) => print.bill([order])}
-        />
-        <CollectDialog
-          target={collectTarget}
-          onClose={() => setCollectKey(null)}
-          onPrint={(target) => print.bill(ordersOf(target))}
-        />
-        <RefundDialog order={refundOrder} onClose={() => setRefundId(null)} />
+        {openOrder && (
+          <PaymentOrderDialog
+            order={openOrder}
+            onClose={() => setOpenId(null)}
+            onCollect={(order) => {
+              setOpenId(null);
+              setCollectKey({ kind: 'order', id: order.id });
+            }}
+            onRefund={(order) => {
+              setOpenId(null);
+              setRefundId(order.id);
+            }}
+            onPrint={(order) => print.bill([order])}
+          />
+        )}
+        {collectTarget && (
+          <CollectDialog
+            target={collectTarget}
+            onClose={() => setCollectKey(null)}
+            onPrint={(target) => print.bill(ordersOf(target))}
+          />
+        )}
+        {refundOrder && <RefundDialog order={refundOrder} onClose={() => setRefundId(null)} />}
         {print.sheet}
       </>
     );

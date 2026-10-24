@@ -1,8 +1,10 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useState } from 'react';
 import { useContent } from '@/api/hooks';
-import { Button, Dialog, IconButton } from '@/components/ui';
+import { Button, IconButton } from '@/components/ui';
 import { deliveryErrors, uniqueId, zoneErrors } from '@/lib/branchSettings';
 import type { DeliveryZone } from '@/types/branch';
 import type { DeliverySettings } from '@/types/branchSettings';
@@ -10,8 +12,17 @@ import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { NumberField } from '../shared/NumberField';
 import { SettingsCard, SettingsEditor, SettingsNote, ToggleRow } from '../shared/SettingsEditor';
 import { ServiceStatus } from '../shared/ServiceStatus';
-import { ZoneDialog } from './ZoneDialog';
 import styles from './DeliveryZonesEditor.module.css';
+
+// Popups: each downloaded the first time it opens.
+const RemoveZoneDialog = dynamic(
+  () => import('./RemoveZoneDialog').then((m) => m.RemoveZoneDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
+const ZoneDialog = dynamic(() => import('./ZoneDialog').then((m) => m.ZoneDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
 
 type ZoneTarget = { mode: 'add' } | { mode: 'edit'; id: string };
 
@@ -197,33 +208,16 @@ function DeliveryForm({
           onSave={saveZone}
         />
       )}
-      <Dialog
-        open={removing !== null}
-        onClose={() => setRemoving(null)}
-        presentation="adaptive"
-        title={t('adminSettings.delivery.removeTitle', { zone: removing?.name ?? '' })}
-        footer={
-          <div className={styles.dialogFooter}>
-            <Button variant="secondary" onClick={() => setRemoving(null)}>
-              {t('adminSettings.delivery.keepZone')}
-            </Button>
-            <Button
-              iconStart="trash"
-              onClick={() => {
-                if (removing)
-                  set({ ...value, zones: value.zones.filter((z) => z.id !== removing.id) });
-                setRemoving(null);
-              }}
-            >
-              {t('adminSettings.delivery.confirmRemove')}
-            </Button>
-          </div>
-        }
-      >
-        <p className={styles.dialogText}>
-          {t('adminSettings.delivery.removeBody', { areas: removing?.areas.join(', ') ?? '' })}
-        </p>
-      </Dialog>
+      {removing && (
+        <RemoveZoneDialog
+          zone={removing}
+          onClose={() => setRemoving(null)}
+          onConfirm={() => {
+            set({ ...value, zones: value.zones.filter((z) => z.id !== removing.id) });
+            setRemoving(null);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -104,6 +104,7 @@
   "dialog": {
     "close": "Close"
   },
+  "globalLoader": "Loading…",
   "lightbox": {
     "label": "Photo",
     "labelWithCaption": "Photo: {caption}",

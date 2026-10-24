@@ -1,0 +1,35 @@
+/* A thin bar across the top of the screen, above every overlay (dialogs, lightbox). */
+.loader {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 3px;
+  overflow: hidden;
+  background: var(--brand-tint);
+  z-index: var(--z-toast);
+  pointer-events: none;
+}
+
+.bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: var(--brand-600);
+  animation: ot-global-loader 1.1s ease-in-out infinite;
+}
+
+@keyframes ot-global-loader {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+/* Reduced motion: a still, full bar instead of the sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    width: 100%;
+    animation: none;
+  }
+}

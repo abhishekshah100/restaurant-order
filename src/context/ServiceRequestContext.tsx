@@ -9,10 +9,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { usePathname, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { useContent, useServiceRequests } from '@/api/hooks';
+import { serviceRequestsQuery } from '@/api/queries';
 import { useCancelServiceRequest, useCreateServiceRequest } from '@/api/mutations';
-import { WaiterRequestDialog } from '@/components/service/WaiterRequestDialog';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useRequestFailed } from '@/hooks/useRequestFailed';
 import { useTableLabel } from '@/hooks/useTable';
 import { useGuestSession } from './GuestSessionContext';
@@ -31,7 +34,7 @@ export type { ServiceKind, ServiceRequest } from '@/types/service';
 
 interface ServiceRequestContextValue {
   /** Opens the waiter dialog, or the bill page; shows the pending request instead if one exists. */
-  openRequest: (kind: ServiceKind) => void;
+  openRequest: (kind: ServiceKind) => Promise<void>;
   /** The most recent pending request, if any. */
   active: ServiceRequest | null;
   /** Pending requests by kind (at most one of each). */
@@ -48,6 +51,14 @@ interface ServiceRequestContextValue {
 
 const ServiceRequestContext = createContext<ServiceRequestContextValue | null>(null);
 
+// Downloaded the first time a guest calls a waiter.
+const WaiterRequestDialog = dynamic(
+  () => import('@/components/service/WaiterRequestDialog').then((m) => m.WaiterRequestDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
+
+/** /help/ and the pages under it (with or without the trailing slash). */
+const HELP_PAGES = /^\/help(\/|$)/;
 const BILL_PATH = '/help/bill/';
 
 /**
@@ -61,7 +72,11 @@ export function ServiceRequestProvider({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
   const requestFailed = useRequestFailed();
   const t = useContent('service');
-  const { data } = useServiceRequests(sessionId);
+  const queryClient = useQueryClient();
+  // Read (and polled) only on the help pages, which show the requests; elsewhere the waiter and
+  // bill buttons read them once when tapped.
+  const onHelpPages = HELP_PAGES.test(usePathname() ?? '');
+  const { data } = useServiceRequests(onHelpPages ? sessionId : undefined);
   const { mutateAsync: create } = useCreateServiceRequest();
   const { mutate: cancel } = useCancelServiceRequest();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -69,12 +84,20 @@ export function ServiceRequestProvider({ children }: { children: ReactNode }) {
   const requests = useMemo(() => byKind(data?.requests ?? []), [data]);
 
   const openRequest = useCallback(
-    (kind: ServiceKind) => {
-      if (requests[kind]) router.push(SERVICE_PATHS[kind]);
+    async (kind: ServiceKind) => {
+      let pending = requests;
+      if (!data && sessionId) {
+        // Not read on this page: one read, so a pending request is shown instead of a new one.
+        pending = await queryClient.fetchQuery(serviceRequestsQuery(sessionId)).then(
+          (read) => byKind(read.requests),
+          () => pending,
+        );
+      }
+      if (pending[kind]) router.push(SERVICE_PATHS[kind]);
       else if (kind === 'bill') router.push(BILL_PATH);
       else setDialogOpen(true);
     },
-    [router, requests],
+    [router, requests, data, sessionId, queryClient],
   );
 
   const cancelRequest = useCallback(

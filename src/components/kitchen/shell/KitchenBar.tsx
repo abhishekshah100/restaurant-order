@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -7,7 +8,8 @@ import { useContent, useRestaurant } from '@/api/hooks';
 import { useAdminWorkspace } from '@/components/admin/shell/AdminWorkspace';
 import { BranchStatusControl } from '@/components/admin/shell/BranchStatusControl';
 import { useShellActions } from '@/components/admin/shell/useShellActions';
-import { Dialog, Icon } from '@/components/ui';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
+import { Icon } from '@/components/ui';
 import { useAdminName } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
@@ -15,6 +17,12 @@ import { cx } from '@/lib/cx';
 import { KITCHEN_NAV, KITCHEN_PATHS, activeKitchenNavId } from '@/lib/kitchenNav';
 import { useFullscreen } from './useFullscreen';
 import styles from './KitchenBar.module.css';
+
+// Downloaded the first time it opens.
+const KitchenAccountDialog = dynamic(
+  () => import('./KitchenAccountDialog').then((m) => m.KitchenAccountDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
 
 /** The clock in the bar moves on this often. */
 const CLOCK_REFRESH_MS = 15_000;
@@ -123,57 +131,15 @@ export function KitchenBar() {
         </button>
       </div>
 
-      <Dialog open={menuOpen} onClose={close} title={t('account.title')} presentation="adaptive">
-        <div className={styles.menu}>
-          {adminName && (
-            <p className={styles.account}>
-              <span className={styles.menuAvatar} aria-hidden="true">
-                {adminName.charAt(0).toUpperCase()}
-              </span>
-              {t('account.signedIn', { name: adminName })}
-            </p>
-          )}
-          <Link href={ADMIN_PATHS.dashboard} className={styles.row} onClick={close}>
-            <span className={styles.rowIcon}>
-              <Icon name="home" size="sm" />
-            </span>
-            <span className={styles.rowText}>
-              <span className={styles.rowLabel}>{t('account.admin')}</span>
-              <span className={styles.rowSub}>{t('account.adminSub')}</span>
-            </span>
-            <Icon name="chev" size="xs" className={styles.chev} />
-          </Link>
-          {canSwitch && (
-            <button
-              type="button"
-              className={styles.row}
-              onClick={() => {
-                close();
-                switchBranch();
-              }}
-            >
-              <span className={styles.rowIcon}>
-                <Icon name="swap" size="sm" />
-              </span>
-              <span className={styles.rowLabel}>{t('account.switch')}</span>
-              <Icon name="chev" size="xs" className={styles.chev} />
-            </button>
-          )}
-          <button
-            type="button"
-            className={cx(styles.row, styles.signOut)}
-            onClick={() => {
-              close();
-              signOut();
-            }}
-          >
-            <span className={styles.rowIcon}>
-              <Icon name="logout" size="sm" />
-            </span>
-            <span className={styles.rowLabel}>{t('account.signOut')}</span>
-          </button>
-        </div>
-      </Dialog>
+      {menuOpen && (
+        <KitchenAccountDialog
+          adminName={adminName}
+          canSwitch={canSwitch}
+          onClose={close}
+          onSwitchBranch={switchBranch}
+          onSignOut={signOut}
+        />
+      )}
     </header>
   );
 }

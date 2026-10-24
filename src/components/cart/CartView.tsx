@@ -1,7 +1,9 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Button, Icon, Skeleton } from '@/components/ui';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Columns } from '@/components/layout/Shells';
@@ -20,10 +22,15 @@ import { MinimumOrderNotice } from './MinimumOrderNotice';
 import { EmptyCart } from './EmptyCart';
 import { CartSuggestions } from './CartSuggestions';
 import { KitchenNote } from './KitchenNote';
-import { OrderPaymentDialog } from './OrderPaymentDialog';
 import { PriceSummary } from './PriceSummary';
 import { PromoCard } from './PromoCard';
 import styles from './CartView.module.css';
+
+// Downloaded the first time a payment is asked for.
+const OrderPaymentDialog = dynamic(
+  () => import('./OrderPaymentDialog').then((m) => m.OrderPaymentDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
 
 /** Cart (08 · w08) and empty cart (s06 · ws06); takeaway and delivery add their ETA, area, fee and minimum. */
 export function CartView() {
@@ -192,7 +199,7 @@ export function CartView() {
         </div>
         {checkout}
       </div>
-      <OrderPaymentDialog {...payment} />
+      {payment.prompt !== null && <OrderPaymentDialog {...payment} />}
     </>
   );
 }

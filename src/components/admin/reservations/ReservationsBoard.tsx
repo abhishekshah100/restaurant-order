@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useContent, useReservations } from '@/api/hooks';
@@ -23,11 +25,26 @@ import {
 import type { Reservation } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { DayStrip } from './DayStrip';
-import { ReservationDialog } from './ReservationDialog';
-import { ReservationEditor, type EditorTarget } from './ReservationEditor';
+import type { EditorTarget } from './ReservationEditor';
 import { ReservationRow } from './ReservationRow';
 import { useReservationStatus } from './useReservationStatus';
 import styles from './ReservationsBoard.module.css';
+
+// Popups: each downloaded the first time it opens.
+const ReservationDialog = dynamic(
+  () => import('./ReservationDialog').then((m) => m.ReservationDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
+const ReservationEditor = dynamic(
+  () => import('./ReservationEditor').then((m) => m.ReservationEditor),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
 
 /** Late / arriving states move on this often. */
 const STATE_REFRESH_MS = 30_000;
@@ -179,15 +196,17 @@ export function ReservationsBoard() {
           )}
         </section>
 
-        <ReservationDialog
-          reservation={open}
-          now={now}
-          onClose={() => setOpenId(null)}
-          onEdit={(r) => {
-            setOpenId(null);
-            setEditor({ kind: 'edit', reservation: r });
-          }}
-        />
+        {open && (
+          <ReservationDialog
+            reservation={open}
+            now={now}
+            onClose={() => setOpenId(null)}
+            onEdit={(r) => {
+              setOpenId(null);
+              setEditor({ kind: 'edit', reservation: r });
+            }}
+          />
+        )}
       </>
     );
   } else if (reservations.isError) {
@@ -221,7 +240,7 @@ export function ReservationsBoard() {
       {/* The bar above already names the page; the heading is for screen readers. */}
       <h1 className="visually-hidden">{t('adminReservations.title')}</h1>
       {content}
-      <ReservationEditor target={editor} onClose={() => setEditor(null)} />
+      {editor && <ReservationEditor target={editor} onClose={() => setEditor(null)} />}
     </div>
   );
 }

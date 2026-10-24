@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueries, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useQueries, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { createClock, type Clock } from '@/lib/clock';
@@ -116,34 +116,16 @@ export function useMenuIfNeeded(needed: boolean): MenuCatalog | null {
 }
 
 /**
- * Reads the active branch's menu once the browser is idle, so the guest's next page (almost
- * always the menu) opens at once without this page waiting for it.
+ * Whether a branch's menu (when `withMenu`) and promotions are in the cache (or failed to load,
+ * for the suspense hooks to throw to the error page), so it can become the active branch without
+ * suspending. Only the default branch's are built into the page; another's are read here first.
  */
-export function usePrefetchMenuWhenIdle(): void {
-  const branchId = useBranch().id;
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    const prefetch = () => void queryClient.prefetchQuery(branchMenuQuery(branchId));
-    if (typeof window.requestIdleCallback !== 'function') {
-      const timer = window.setTimeout(prefetch, 1500);
-      return () => window.clearTimeout(timer);
-    }
-    const idle = window.requestIdleCallback(prefetch, { timeout: 3000 });
-    return () => window.cancelIdleCallback(idle);
-  }, [branchId, queryClient]);
-}
-
-/**
- * Whether a branch's menu and promotions are in the cache (or failed to load, for the suspense
- * hooks to throw to the error page), so it can become the active branch without suspending.
- * Only the default branch's are built into the page; another's are read here first.
- */
-export function useBranchDataLoaded(branchId: string): boolean {
+export function useBranchDataLoaded(branchId: string, withMenu: boolean): boolean {
   return useQueries({
     // Any copy will do (the one built into the page too): this only waits for one to exist.
     // Pages that show the menu read it again when they open; others never download it.
     queries: [
-      { ...branchMenuQuery(branchId), staleTime: Infinity },
+      ...(withMenu ? [{ ...branchMenuQuery(branchId), staleTime: Infinity }] : []),
       { ...branchPromotionsQuery(branchId), staleTime: Infinity },
     ],
     combine: (results) => results.every((r) => r.data !== undefined || r.isError),

@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useState } from 'react';
 import { ApiError } from '@/api/client';
 import type { TableInUse } from '@/api/contracts';
@@ -25,9 +27,23 @@ import { cx } from '@/lib/cx';
 import type { FloorLayout, FloorPlanLayout } from '@/types/admin';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { useLeaveGuard } from '../shared/useLeaveGuard';
-import { AreaDialog, RemoveAreaDialog, type AreaDialogTarget } from './AreaDialog';
-import { TableDialog, type TableDialogTarget } from './TableDialog';
+import type { AreaDialogTarget } from './AreaDialog';
+import type { TableDialogTarget } from './TableDialog';
 import styles from './FloorPlanEditor.module.css';
+
+// Popups: each downloaded the first time it opens.
+const AreaDialog = dynamic(() => import('./AreaDialog').then((m) => m.AreaDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+const RemoveAreaDialog = dynamic(() => import('./AreaDialog').then((m) => m.RemoveAreaDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+const TableDialog = dynamic(() => import('./TableDialog').then((m) => m.TableDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
 
 /**
  * Settings › Floor plan: the branch's areas (floors, a terrace, a private room…) in the order
@@ -252,44 +268,50 @@ function Editor({ saved }: { saved: FloorPlanLayout }) {
         </div>
       )}
 
-      <AreaDialog
-        target={areaDialog}
-        layout={layout}
-        onClose={() => setAreaDialog(null)}
-        onDone={(name) => {
-          edit(
-            areaDialog?.mode === 'rename'
-              ? renameArea(layout, areaDialog.id, name)
-              : addArea(layout, name),
-          );
-          setAreaDialog(null);
-        }}
-      />
-      <RemoveAreaDialog
-        area={removingArea}
-        onClose={() => setRemoving(null)}
-        onConfirm={() => {
-          if (removing) edit(removeArea(layout, removing));
-          setRemoving(null);
-        }}
-      />
-      <TableDialog
-        target={tableDialog}
-        layout={layout}
-        onClose={() => setTableDialog(null)}
-        onAdd={(areaId, numbers, seats) => {
-          edit(addTables(layout, areaId, numbers, seats));
-          setTableDialog(null);
-        }}
-        onUpdate={(number, next) => {
-          edit(updateTable(layout, number, next));
-          setTableDialog(null);
-        }}
-        onRemove={(number) => {
-          edit(removeTable(layout, number));
-          setTableDialog(null);
-        }}
-      />
+      {areaDialog && (
+        <AreaDialog
+          target={areaDialog}
+          layout={layout}
+          onClose={() => setAreaDialog(null)}
+          onDone={(name) => {
+            edit(
+              areaDialog.mode === 'rename'
+                ? renameArea(layout, areaDialog.id, name)
+                : addArea(layout, name),
+            );
+            setAreaDialog(null);
+          }}
+        />
+      )}
+      {removingArea && (
+        <RemoveAreaDialog
+          area={removingArea}
+          onClose={() => setRemoving(null)}
+          onConfirm={() => {
+            if (removing) edit(removeArea(layout, removing));
+            setRemoving(null);
+          }}
+        />
+      )}
+      {tableDialog && (
+        <TableDialog
+          target={tableDialog}
+          layout={layout}
+          onClose={() => setTableDialog(null)}
+          onAdd={(areaId, numbers, seats) => {
+            edit(addTables(layout, areaId, numbers, seats));
+            setTableDialog(null);
+          }}
+          onUpdate={(number, next) => {
+            edit(updateTable(layout, number, next));
+            setTableDialog(null);
+          }}
+          onRemove={(number) => {
+            edit(removeTable(layout, number));
+            setTableDialog(null);
+          }}
+        />
+      )}
     </div>
   );
 }

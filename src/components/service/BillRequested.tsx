@@ -1,17 +1,24 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Button } from '@/components/ui';
 import { useContent, useHelpTopics, useRegion } from '@/api/hooks';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
 import { PAY_BILL_PATH, billFor, firstName } from '@/lib/service';
 import { BillTotals } from './BillTotals';
-import { HelpTopicDialog } from './HelpTopicDialog';
 import { NoRequest, RequestLoading, RequestStatus } from './RequestStatus';
 import { useTableVisit } from './useTableVisit';
 import styles from './Summary.module.css';
 import { useDineInOnly } from '@/hooks/useDineInOnly';
+
+// Downloaded the first time the guest opens it.
+const HelpTopicDialog = dynamic(() => import('./HelpTopicDialog').then((m) => m.HelpTopicDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
 
 /** Bill requested (21 · w21). */
 export function BillRequested() {
@@ -94,11 +101,9 @@ export function BillRequested() {
           </>
         )}
       />
-      <HelpTopicDialog
-        topic={helpTopics.payment}
-        open={helpOpen}
-        onClose={() => setHelpOpen(false)}
-      />
+      {helpOpen && (
+        <HelpTopicDialog topic={helpTopics.payment} open onClose={() => setHelpOpen(false)} />
+      )}
     </>
   );
 }

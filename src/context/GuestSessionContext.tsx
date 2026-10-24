@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { usePathname } from 'next/navigation';
 import { ActiveBranchContext } from '@/api/activeBranch';
 import type { UpdateSessionRequest } from '@/api/contracts';
 import { useBranchDataLoaded, useBranches, useRestaurant } from '@/api/hooks';
@@ -271,11 +272,15 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
   );
   const value = useMemo<GuestSessionValue>(() => {
     const now = session ?? request;
-    const table = (now?.mode === 'dineIn' ? now.table : session?.table) ?? null;
+    // The table is the one the server opened the session at (POST /sessions checks the QR
+    // token), never the link's own number.
+    const table = session?.table ?? null;
     const mode = now?.mode ?? 'dineIn';
-    // Until the link and storage are read (prerendered HTML and the first client render), the
-    // table isn't known: report null so screens show a placeholder, never the default table.
-    const known = session !== null || request !== null || choosing !== null;
+    // Until the link and storage are read (prerendered HTML and the first client render), or
+    // while a table scan is being checked, the table isn't known: report null so screens show
+    // a placeholder, never the default table.
+    const known =
+      session !== null || (request !== null && request.mode !== 'dineIn') || choosing !== null;
     const current = known ? (table ?? defaultTable) : null;
     return {
       session,
@@ -305,13 +310,18 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Pages that never show the menu: the welcome (`/`) and the start screen. */
+const PAGES_WITHOUT_MENU = /^\/(start\/?)?$/;
+
 /**
  * The session's branch id once its menu and promotions are loaded (`resolvedId` is the branch
  * it stands for); until then the branch shown before (the default one at first), so screens
- * keep their content instead of suspending while another branch's menu is read.
+ * keep their content instead of suspending while another branch's menu is read. Pages without
+ * the menu don't download it; the menu page reads it when the guest opens it.
  */
 function useLoadedBranchId(branchId: string | null, resolvedId: string): string | null {
-  const loaded = useBranchDataLoaded(resolvedId);
+  const withMenu = !PAGES_WITHOUT_MENU.test(usePathname() ?? '');
+  const loaded = useBranchDataLoaded(resolvedId, withMenu);
   const [shown, setShown] = useState<string | null>(null);
   if (loaded && shown !== branchId) setShown(branchId);
   return loaded ? branchId : shown;
