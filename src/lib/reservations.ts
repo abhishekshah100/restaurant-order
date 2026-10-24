@@ -1,6 +1,7 @@
 import type { ReservationInput } from '@/api/contracts';
 import type { AdminFloor, Reservation, ReservationStatus } from '@/types/admin';
 import type { Branch, MobileRules } from '@/types/branch';
+import { sessionMinutes, sessionsOn, weekdayAt } from './branchHours';
 import { createClock, type Clock } from './clock';
 import { mobileError, type PhoneError } from './phone';
 
@@ -229,37 +230,40 @@ export const onDay = (reservations: readonly Reservation[], clock: Clock, key: s
   reservations.filter((r) => clock.dayKey(r.at) === key);
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const minutesOf = (hhmm: string) => {
-  const [h, m] = hhmm.split(':').map(Number);
-  return h * 60 + m;
-};
 
 /**
- * The times a booking can start `offset` days from today: every 15 minutes from opening until
- * an hour before closing (past midnight when the branch closes after it), and today only from
- * now on. ISO with the branch's offset: "2026-10-15T19:30:00+05:30".
+ * The times a booking can start `offset` days from today: every 15 minutes in each of that day's
+ * sessions, from its opening until an hour before it closes (past midnight when it runs on), and
+ * today only from now on; none on a closed day. ISO with the branch's offset:
+ * "2026-10-15T19:30:00+05:30".
  */
 export function timeSlots(
-  region: Pick<Branch, 'hours' | 'locale' | 'timezone'>,
+  region: Pick<Branch, 'schedule' | 'locale' | 'timezone'>,
   offset: number,
   now: Date,
 ): string[] {
   const clock = createClock(region);
-  const opens = minutesOf(region.hours.opens);
-  let closes = minutesOf(region.hours.closes);
-  if (closes <= opens) closes += 24 * 60;
+  // That day's sessions: a special date's, or its weekday's.
+  const day = sessionsOn(
+    region.schedule,
+    clock.localTimestamp(-offset, '00:00', now).slice(0, 10),
+    weekdayAt(new Date(now.getTime() + offset * DAY), region.timezone),
+  );
   const slots: string[] = [];
-  for (let m = opens; m <= closes - 60; m += SLOT_MINUTES) {
-    const day = Math.floor(m / (24 * 60));
-    const time = m % (24 * 60);
-    const at = clock.localTimestamp(
-      -(offset + day),
-      `${pad(Math.floor(time / 60))}:${pad(time % 60)}`,
-      now,
-    );
-    if (Date.parse(at) >= now.getTime()) slots.push(at);
+  for (const { opens, closes } of day.map((s) => sessionMinutes(s))) {
+    for (let m = opens; m <= closes - 60; m += SLOT_MINUTES) {
+      // Past midnight, the next day's time.
+      const ahead = Math.floor(m / (24 * 60));
+      const time = m % (24 * 60);
+      const at = clock.localTimestamp(
+        -(offset + ahead),
+        `${pad(Math.floor(time / 60))}:${pad(time % 60)}`,
+        now,
+      );
+      if (Date.parse(at) >= now.getTime()) slots.push(at);
+    }
   }
-  return slots;
+  return slots.sort();
 }
 
 /* ---------- The booking form ---------- */

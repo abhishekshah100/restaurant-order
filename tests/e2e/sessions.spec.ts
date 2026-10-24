@@ -1,5 +1,5 @@
-import { expect, test, type Browser, type Page, type TestInfo } from '@playwright/test';
-import { dishSlug, waitForSavedCart, scan } from './helpers';
+import type { Browser, Page, TestInfo } from '@playwright/test';
+import { expect, test, dishSlug, waitForSavedCart, scan, startAtLunchtime } from './helpers';
 
 /**
  * Guest sessions: every guest who scans a table's QR code gets their own session, so two
@@ -11,6 +11,7 @@ import { dishSlug, waitForSavedCart, scan } from './helpers';
 async function newGuest(browser: Browser, testInfo: TestInfo): Promise<Page> {
   const { baseURL, viewport } = testInfo.project.use;
   const context = await browser.newContext({ baseURL, viewport });
+  await startAtLunchtime(context);
   return context.newPage();
 }
 

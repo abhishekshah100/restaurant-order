@@ -6,7 +6,7 @@ import { useCreateBranch } from '@/api/mutations';
 import { Button, Dialog, Input, Select, Textarea } from '@/components/ui';
 import { COUNTRY_CODES, COUNTRY_DEFAULTS } from '@/config/masters';
 import { LIMITS, detailsErrors, dialCodeOf, type SettingsError } from '@/lib/branchSettings';
-import type { Branch } from '@/types/branch';
+import type { BranchSummary } from '@/types/branch';
 import type { AdminBranch } from '@/types/admin';
 import type { BranchDetails } from '@/types/branchSettings';
 import styles from './BranchesManager.module.css';
@@ -29,14 +29,15 @@ const FIELD_OF: Partial<Record<SettingsError, Field>> = {
 
 /** A branch's region (the source's, for a copy), else India's defaults. */
 const regionOf = (
-  branch: Branch | undefined,
+  branch: BranchSummary | undefined,
 ): Pick<BranchDetails, 'country' | 'timezone' | 'locale' | 'currency'> =>
   branch
     ? {
         country: branch.country,
         timezone: branch.timezone,
         locale: branch.locale,
-        currency: branch.currency.code,
+        // The source's country brings its currency (a branch's is its country's).
+        currency: COUNTRY_DEFAULTS[branch.country].currency,
       }
     : { country: 'IN', ...COUNTRY_DEFAULTS.IN };
 
@@ -66,7 +67,7 @@ export function AddBranchDialog({
     shortName: '',
     city: source?.city ?? '',
     address: '',
-    phone: source?.mobile.dialCode ?? '',
+    phone: source ? dialCodeOf(source.country) : '',
     wifiName: '',
     ...regionOf(source),
   }));

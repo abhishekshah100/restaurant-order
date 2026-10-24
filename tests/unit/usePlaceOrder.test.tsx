@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { MOCK_KEYS } from '@/api/mock/db';
 import { useCart } from '@/hooks/useCart';
@@ -36,6 +36,15 @@ async function setup() {
   await waitFor(() => expect(view.result.current.cart.hydrated).toBe(true));
   return view;
 }
+
+// Orders are taken inside a branch's sessions (11:00-21:00 here): pin the clock to 1 PM in India,
+// so the tests don't depend on the time they run.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-15T07:30:00Z') });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('usePlaceOrder', () => {
   beforeEach(() => replace.mockClear());

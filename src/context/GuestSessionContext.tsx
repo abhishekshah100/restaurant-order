@@ -27,7 +27,7 @@ import {
 } from '@/lib/scan';
 import { fromSaved, isLiveSession, isSavedSession } from '@/lib/session';
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage';
-import type { Branch, OrderMode } from '@/types/branch';
+import type { BranchSummary, OrderMode } from '@/types/branch';
 import type { GuestSession, SessionStart, StartChoice } from '@/types/session';
 
 /**
@@ -106,7 +106,7 @@ function isSessionStart(v: unknown): v is SessionStart {
 /** The saved session (the in-memory one when storage is blocked) if it's live and still fits the branches. */
 function liveSavedSession(
   now: number,
-  branches: readonly Branch[],
+  branches: readonly BranchSummary[],
   defaultBranchId: string,
 ): GuestSession | null {
   const stored = readJSON(STORAGE_KEYS.session, isSavedSession);
@@ -121,7 +121,7 @@ function liveSavedSession(
 function loadOutcome(
   search: string,
   saved: GuestSession | null,
-  branches: readonly Branch[],
+  branches: readonly BranchSummary[],
   defaultBranchId: string,
 ): ScanOutcome {
   const linked = parseScan(search, branches, defaultBranchId);
@@ -258,7 +258,6 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
   }, [branches, defaultBranchId]);
 
   const { session, opening: request, choosing } = state;
-  const { defaultTable } = resolveBranch(branches, defaultBranchId);
   const actions = useMemo<VisitActions>(
     () => ({
       start: (next) =>
@@ -273,21 +272,17 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<GuestSessionValue>(() => {
     const now = session ?? request;
     // The table is the one the server opened the session at (POST /sessions checks the QR
-    // token), never the link's own number.
+    // token), never the link's own number and never a made-up one. Until the session is read
+    // (prerendered HTML, the first client render) or while a scan is being checked it's null,
+    // so screens show a placeholder.
     const table = session?.table ?? null;
     const mode = now?.mode ?? 'dineIn';
-    // Until the link and storage are read (prerendered HTML and the first client render), or
-    // while a table scan is being checked, the table isn't known: report null so screens show
-    // a placeholder, never the default table.
-    const known =
-      session !== null || (request !== null && request.mode !== 'dineIn') || choosing !== null;
-    const current = known ? (table ?? defaultTable) : null;
     return {
       session,
-      table: current,
+      table,
       visit: {
         mode,
-        table: mode === 'dineIn' ? current : null,
+        table: mode === 'dineIn' ? table : null,
         scannedTable: table,
         deliveryArea:
           session?.deliveryArea ??
@@ -297,7 +292,7 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
       },
       actions,
     };
-  }, [session, request, choosing, defaultTable, actions]);
+  }, [session, request, choosing, actions]);
   const branchId = session?.branchId ?? request?.branchId ?? choosing?.branchId ?? null;
   const activeBranchId = useLoadedBranchId(
     branchId,

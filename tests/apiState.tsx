@@ -8,6 +8,7 @@ import {
   branchFloorsQuery,
   branchMenuQuery,
   branchPromotionsQuery,
+  branchConfigQuery,
   branchesQuery,
   helpQuery,
   orderHistoryQuery,
@@ -24,6 +25,7 @@ import { cartLineLabels } from '@/hooks/useCartLineLabels';
 import { createTranslator } from '@/api/translator';
 import type { ContentMap } from '@/api/queries';
 import type { CartLineLabels } from '@/lib/cartLine';
+import { toBranchConfig, toBranchSummary } from '@/lib/branchParts';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney } from '@/lib/money';
 import { resolveBranch } from '@/lib/scan';
@@ -70,7 +72,8 @@ export const testOrderHistory = (now?: Date): OrderHistory =>
  * (The mock server adopts the device's saved session, so the API accepts it.)
  */
 export function seedGuestSession(over: Partial<GuestSession> = {}): GuestSession {
-  const { id: branchId, defaultTable: table } = testBranch();
+  const { id: branchId } = testBranch();
+  const table = 12;
   const now = Date.now();
   const session: GuestSession = {
     id: `guest-${now}-${Math.random().toString(36).slice(2)}`,
@@ -96,6 +99,15 @@ export const testLineLabels = (): CartLineLabels =>
  * The same cache the root layout builds at build time, from the dummy JSON, so components
  * under test read their data and copy without any network.
  */
+/** Branches as the app's cache holds them: every one in brief, and each one's rules. */
+function setBranches(client: QueryClient, branches: Branch[]) {
+  client.setQueryData(branchesQuery().queryKey, branches.map(toBranchSummary));
+  for (const branch of branches) {
+    client.setQueryData(branchConfigQuery(branch.id).queryKey, toBranchConfig(branch));
+  }
+  client.setQueryData(branchesBaseQuery().queryKey, branches);
+}
+
 export function createApiState(): DehydratedState {
   const client = new QueryClient();
   for (const ns of CONTENT_NAMESPACES) {
@@ -104,8 +116,7 @@ export function createApiState(): DehydratedState {
   }
   client.setQueryData(restaurantQuery().queryKey, testRestaurant());
   const branches = testBranches();
-  client.setQueryData(branchesQuery().queryKey, branches);
-  client.setQueryData(branchesBaseQuery().queryKey, branches);
+  setBranches(client, branches);
   for (const { id } of branches) {
     client.setQueryData(branchMenuQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
     client.setQueryData(menuBaseQuery(id).queryKey, readApiJson<MenuData>(`branches/${id}/menu`));
@@ -133,9 +144,7 @@ export function createTestServer(
   const client = new QueryClient();
   hydrate(client, createApiState());
   if (branches) {
-    const changed = branches(testBranches());
-    client.setQueryData(branchesQuery().queryKey, changed);
-    client.setQueryData(branchesBaseQuery().queryKey, changed);
+    setBranches(client, branches(testBranches()));
   }
   let count = 0;
   const db = createStorageDb();

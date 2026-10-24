@@ -13,6 +13,7 @@ import { OrderCancelled } from './OrderCancelled';
 import { useLiveOrder } from './useLiveOrders';
 import { useOrderId } from './useOrderId';
 import styles from './OrderConfirmed.module.css';
+import { usePrepTime } from '@/hooks/useBranchTimes';
 
 function PaymentTag({ order }: { order: Order }) {
   const t = useContent('orders');
@@ -27,7 +28,7 @@ function PaymentTag({ order }: { order: Order }) {
 
 /** The first and last summary wells: the table and kitchen time (dine-in), the pickup time, or the delivery area and ETA. */
 function useModeWells(order: Order): { first: [string, string]; last: [string, string] } {
-  const branch = useBranch();
+  const prepTime = usePrepTime();
   const { clock } = useRegion();
   const t = useContent('orders');
   const common = useContent('common');
@@ -45,7 +46,7 @@ function useModeWells(order: Order): { first: [string, string]; last: [string, s
   }
   return {
     first: [t('shared.tableLabel'), t('shared.table', { table: order.table ?? '' })],
-    last: [t('confirmed.readyIn'), order.estimate ?? branch.prepTime],
+    last: [t('confirmed.readyIn'), order.estimate ?? prepTime],
   };
 }
 

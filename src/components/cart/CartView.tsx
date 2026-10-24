@@ -25,6 +25,7 @@ import { KitchenNote } from './KitchenNote';
 import { PriceSummary } from './PriceSummary';
 import { PromoCard } from './PromoCard';
 import styles from './CartView.module.css';
+import { usePrepTime } from '@/hooks/useBranchTimes';
 
 // Downloaded the first time a payment is asked for.
 const OrderPaymentDialog = dynamic(
@@ -39,12 +40,13 @@ export function CartView() {
   const { action, payment } = useCartAction();
   const t = useContent('cart');
   const branch = useBranch();
+  const prepTime = usePrepTime();
   const { money } = useRegion();
   const eta =
     mode === 'dineIn'
       ? {
-          now: t('page.eta', { time: branch.prepTime }),
-          after: t('page.etaAfterOrder', { time: branch.prepTime }),
+          now: t('page.eta', { time: prepTime }),
+          after: t('page.etaAfterOrder', { time: prepTime }),
         }
       : {
           now: t(`page.etaMode.${mode}`, { minutes: etaMinutes(branch, mode, quote) }),

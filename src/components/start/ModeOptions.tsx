@@ -3,6 +3,9 @@
 import { useRef, type KeyboardEvent } from 'react';
 import { useContent } from '@/api/hooks';
 import { Icon, type IconName } from '@/components/ui';
+import { useNow } from '@/hooks/useNow';
+import { statusFor } from '@/lib/branchHours';
+import { createClock } from '@/lib/clock';
 import { branchModes, deliverySummary } from '@/lib/fulfilment';
 import { createMoney } from '@/lib/money';
 import { cx } from '@/lib/cx';
@@ -51,7 +54,13 @@ export function ModeOptions({
   const available = (mode: OrderMode) => mode !== 'dineIn' || scannedTable !== null;
   const choosable = modes.filter(available);
 
+  const now = useNow();
   const sub = (mode: OrderMode): string => {
+    // Takeaway or delivery closed on hours of its own: when it opens (first client render on).
+    const own = mode === 'dineIn' ? null : statusFor(branch, mode);
+    if (now && own?.status === 'closed' && own.statusUntil) {
+      return t('start.modes.opensAt', { time: createClock(branch).time(own.statusUntil) });
+    }
     if (mode === 'dineIn') {
       return scannedTable === null
         ? t('start.modes.dineIn.unavailable')

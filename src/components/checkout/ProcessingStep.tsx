@@ -436,13 +436,12 @@ interface ProcessingFootProps {
 }
 
 function ProcessingFoot({ disabled, onCancel, onSuccess, onFailure }: ProcessingFootProps) {
-  const { paymentPartner } = useBranch();
   const t = useContent('checkout');
   return (
     <>
       <p className={cx('t-small c3', styles.secure)}>
         <Icon name="shield" size="xs" />
-        {t('processing.secure', { partner: paymentPartner })}
+        {t('processing.secure')}
       </p>
       <Button variant="ghost" onClick={onCancel} disabled={disabled}>
         {t('processing.cancel')}

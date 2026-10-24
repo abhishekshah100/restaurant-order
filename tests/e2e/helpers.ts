@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test as base, type BrowserContext, type Page } from '@playwright/test';
 
 /**
  * The site in out/ was built with NEXT_PUBLIC_BACKEND_URL (`E2E_BACKEND=true npx playwright
@@ -30,12 +30,68 @@ const durationMs = (duration: string) =>
     .reduce((total, part) => total * 60 + part, 0) * 1000;
 
 /**
- * The browser's clock at `time` (running on), and the server's too against the backend, so
- * what the server works out from "now" (pickup times, bookings, offers) agrees with the page.
+ * Where every test starts on the clock: Thursday 15 Oct 2026, 1:00 PM in India (1:15 PM in
+ * Nepal), inside every demo branch's opening hours, so a test that orders passes whenever it
+ * runs (branches take orders only inside their sessions, until last orders).
  */
-export async function installClock(page: Page, time?: Date) {
-  await page.clock.install(time ? { time } : undefined);
-  await serverClock('', 'PUT', { now: time?.toISOString() ?? null });
+export const LUNCHTIME = new Date('2026-10-15T07:30:00Z');
+
+/**
+ * Every page in the context starts with its Date moved to lunchtime and running on; timers are
+ * left alone (a test that needs them installs the clock: installClock). For contexts a test
+ * opens itself (a second guest's phone).
+ */
+export async function startAtLunchtime(context: BrowserContext) {
+  // One offset for the whole test (set here, not per page), so time runs on across page loads.
+  await context.addInitScript((offset: number) => {
+    const RealDate = Date;
+    (window as { e2eRealDate?: DateConstructor }).e2eRealDate = RealDate;
+    class LunchDate extends RealDate {
+      constructor(...args: ConstructorParameters<DateConstructor> | []) {
+        if (args.length === 0) super(RealDate.now() + offset);
+        else super(...(args as [number]));
+      }
+      static now() {
+        return RealDate.now() + offset;
+      }
+    }
+    window.Date = LunchDate as DateConstructor;
+  }, LUNCHTIME.getTime() - Date.now());
+}
+
+/**
+ * The tests' `test`: each starts at lunchtime, in the browser and (against the backend) on the
+ * server, whose clock goes back to the real time afterwards. Specs import it from here, so the
+ * fixture holds in every file (a hook in this module would only reach the first that loads it).
+ */
+export const test = base.extend<{ lunchtime: void }>({
+  lunchtime: [
+    async ({ context }, use) => {
+      await startAtLunchtime(context);
+      await serverClock('', 'PUT', { now: LUNCHTIME.toISOString() });
+      await use();
+      await serverClock('', 'PUT', { now: null });
+    },
+    { auto: true },
+  ],
+});
+
+export { expect };
+
+/**
+ * The browser's clock at `time` (running on; lunchtime when none), and the server's too against
+ * the backend, so what the server works out from "now" (pickup times, bookings, offers) agrees
+ * with the page.
+ */
+export async function installClock(page: Page, time: Date = LUNCHTIME) {
+  // Playwright's clock takes over from the lunchtime Date: the real one goes back first (init
+  // scripts run in the order they're added), so the two don't stack.
+  await page.context().addInitScript(() => {
+    const real = (window as { e2eRealDate?: DateConstructor }).e2eRealDate;
+    if (real) window.Date = real;
+  });
+  await page.clock.install({ time });
+  await serverClock('', 'PUT', { now: time.toISOString() });
 }
 
 /** Both clocks jump ahead ("18:30": 18 minutes 30 seconds). */
@@ -49,11 +105,6 @@ export async function fixClock(page: Page, time: Date) {
   await page.clock.setFixedTime(time);
   await serverClock('', 'PUT', { now: time.toISOString() });
 }
-
-// Each test starts on the real time on the server too.
-test.afterEach(async () => {
-  await serverClock('', 'PUT', { now: null });
-});
 
 /**
  * Waits until the cart holding this dish is saved on the device. A new guest session is opened

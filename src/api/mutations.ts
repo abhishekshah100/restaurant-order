@@ -676,6 +676,10 @@ const refreshBranches = (client: QueryClient) =>
   Promise.all([
     client.invalidateQueries({ queryKey: ['admin'] }),
     client.invalidateQueries({ queryKey: branchesQuery().queryKey, exact: true }),
+    // Each branch's rules (taxes, payments, delivery) are read on their own.
+    client.invalidateQueries({
+      predicate: ({ queryKey }) => queryKey[0] === 'branches' && queryKey[2] === 'config',
+    }),
   ]);
 
 /**

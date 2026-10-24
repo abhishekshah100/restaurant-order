@@ -1,7 +1,7 @@
 import { ORDER_TYPES } from '@/config/masters';
-import type { Branch, DeliveryZone, OrderMode } from '@/types/branch';
+import type { Branch, BranchModeFlags, DeliveryZone, OrderMode } from '@/types/branch';
 import type { Price } from '@/types/menu';
-import { createClock } from './clock';
+import { sessionsBetween } from './branchHours';
 
 /*
  * Order modes: which a branch offers, takeaway pickup slots and delivery zones. Pure: the
@@ -18,7 +18,7 @@ export const isOrderMode = (v: unknown): v is OrderMode =>
   typeof v === 'string' && (ORDER_MODES as readonly string[]).includes(v);
 
 /** The modes a branch takes orders in. */
-export const branchModes = (branch: Pick<Branch, 'modes'>): OrderMode[] =>
+export const branchModes = (branch: { modes: BranchModeFlags }): OrderMode[] =>
   ORDER_MODES.filter((mode) => branch.modes[mode].enabled);
 
 /** The checkout payment methods for a mode: dine-in's own list, or the mode's. */
@@ -118,33 +118,40 @@ export interface PickupOptions {
 
 /**
  * Pickup times for an order placed at `now`, in the branch's time zone: as soon as possible
- * (`prepMinutes` from now, while open) and the slots after that until closing.
+ * (`prepMinutes` from now, inside a session that's on) and the slots after that, every
+ * `slotMinutes` from each of today's sessions' opening until it closes (one still running from
+ * last night included). None in a break between sessions or on a closed day.
  */
 export function pickupOptions(
-  branch: Pick<Branch, 'hours' | 'modes' | 'locale' | 'timezone'>,
+  branch: Pick<Branch, 'schedule' | 'modes' | 'locale' | 'timezone'>,
   now: Date,
 ): PickupOptions {
   const { prepMinutes, slotMinutes, asap } = branch.modes.takeaway;
-  const clock = createClock(branch);
-  const today = (time: string) => Date.parse(clock.localTimestamp(0, time, now));
-  const opens = today(branch.hours.opens);
-  const closes = today(branch.hours.closes);
+  const at = now.getTime();
+  // Takeaway's own hours when it has them, special dates included.
+  const sessions = sessionsBetween(branch, now, -1, 0, 'takeaway').filter(
+    (s) => s.closes.getTime() > at,
+  );
   const prep = prepMinutes * MINUTE_MS;
-  const ready = now.getTime() + prep;
-  const earliest = Math.max(ready, opens + prep);
+  const ready = at + prep;
   const step = slotMinutes * MINUTE_MS;
   const slots: Date[] = [];
-  for (let at = opens + Math.ceil((earliest - opens) / step) * step; at <= closes; at += step) {
-    // A slot right on top of "as soon as possible" adds nothing.
-    if (at > ready) slots.push(new Date(at));
+  for (const session of sessions) {
+    const opens = session.opens.getTime();
+    const closes = session.closes.getTime();
+    const earliest = Math.max(ready, opens + prep);
+    for (let t = opens + Math.ceil((earliest - opens) / step) * step; t <= closes; t += step) {
+      // A slot right on top of "as soon as possible" adds nothing.
+      if (t > ready) slots.push(new Date(t));
+    }
   }
-  const open = now.getTime() >= opens && ready <= closes;
+  const open = sessions.some((s) => s.opens.getTime() <= at && ready <= s.closes.getTime());
   return { asap: asap && open ? new Date(ready) : null, slots };
 }
 
 /** Whether `at` (ISO) is one of the pickup slots offered at `now`. */
 export function isPickupSlot(
-  branch: Pick<Branch, 'hours' | 'modes' | 'locale' | 'timezone'>,
+  branch: Pick<Branch, 'schedule' | 'modes' | 'locale' | 'timezone'>,
   now: Date,
   at: string,
 ): boolean {

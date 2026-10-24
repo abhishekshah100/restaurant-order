@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { adminSignIn, againstBackend } from './helpers';
+import type { Page } from '@playwright/test';
+import { expect, test, adminSignIn, againstBackend } from './helpers';
 
 /**
  * Settings beyond the floor plan, on the mock server or the backend: opening hours, tax & service
@@ -42,18 +42,21 @@ test('opening hours, tax, payments, delivery and pickup save and show on Setting
     'Open 7 days a week',
   );
 
-  // Opening hours: Sunday off, a window that ends before it starts is refused.
+  // Opening hours: Sunday off; a second Monday session that overlaps the first is refused, a
+  // late one after it is fine; and a special date (a holiday, closed).
   await openSetting(page, 'Opening hours', 'hours');
-  await page.getByRole('switch', { name: 'Open on Sunday' }).uncheck();
-  await page.getByRole('button', { name: 'Add window' }).click();
+  await page.getByRole('switch', { name: 'Open on Sunday' }).first().uncheck();
+  // Monday's Add session (the week lists Monday first).
+  await page.getByRole('button', { name: 'Add session' }).first().click();
   const bar = page.getByRole('region', { name: 'Unsaved changes' });
-  await expect(bar).toContainText('Name each service window');
-  await page.getByLabel('Name', { exact: true }).last().fill('Tea');
-  await page.getByLabel('From').last().fill('17:00');
-  await page.getByLabel('To').last().fill('16:00');
-  await expect(bar).toContainText('A service window must end after it starts.');
+  await page.locator('#opening-mon-1-opens').fill('20:00');
+  await expect(bar).toContainText("Sessions can't overlap");
   await expect(bar.getByRole('button', { name: 'Save changes' })).toBeDisabled();
-  await page.getByLabel('To').last().fill('18:00');
+  await page.locator('#opening-mon-1-label').fill('Late night');
+  await page.locator('#opening-mon-1-opens').fill('21:30');
+  await page.locator('#opening-mon-1-closes').fill('23:00');
+  await page.getByRole('button', { name: 'Add special date' }).click();
+  await page.locator('#special-0-label').fill('Diwali');
   await saveChanges(page, 'Opening hours saved');
 
   // Tax: a 10% service charge, shown on the example bill.

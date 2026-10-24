@@ -102,11 +102,15 @@ describe('GET and PATCH /admin/branches/:branchId/floors (mock)', () => {
       },
       admin,
     );
-    const branches = (await call('GET', 'branches')).body as Branch[];
-    expect(branches.find((b) => b.id === 'ktm-thamel')?.tables).toMatchObject({
-      first: 1,
-      last: 55,
+    const scan = await call('POST', 'sessions', {
+      branchId: 'ktm-thamel',
+      mode: 'dineIn',
+      table: 55,
     });
+    expect(scan.status).toBe(201);
+    // Guests aren't sent the table numbers: the server checks them.
+    const branches = (await call('GET', 'branches')).body as Branch[];
+    expect(branches.find((b) => b.id === 'ktm-thamel')).not.toHaveProperty('tables');
   });
 
   it('refuses a layout that is malformed or breaks the rules', async () => {
@@ -175,9 +179,6 @@ describe('GET and PATCH /admin/branches/:branchId/floors (mock)', () => {
       status: 'outOfService',
       disabled: true,
     });
-    const branches = (await call('GET', 'branches')).body as Branch[];
-    expect(branches.find((b) => b.id === 'blr-indiranagar')?.tables.outOfService).toEqual([3]);
-
     // Guests, waiters and bookings are turned away.
     const scan = await call('POST', 'sessions', {
       branchId: 'blr-indiranagar',

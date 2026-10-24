@@ -3,18 +3,19 @@
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
-import { useBranches, useContent, useRestaurant } from '@/api/hooks';
+import { Suspense, useState, type FormEvent, type ReactNode } from 'react';
+import { useBranchConfig, useBranches, useContent, useRestaurant } from '@/api/hooks';
 import { BrandPanel } from '@/components/home/BrandPanel';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
-import { Button, Dialog, Icon } from '@/components/ui';
+import { Button, Dialog, Icon, Skeleton } from '@/components/ui';
 import { useGuestSession, useVisit, useVisitActions } from '@/context/GuestSessionContext';
 import { useCart } from '@/hooks/useCart';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { useRequestFailed } from '@/hooks/useRequestFailed';
 import { cx } from '@/lib/cx';
+import { joinBranch } from '@/lib/branchParts';
 import { branchModes } from '@/lib/fulfilment';
-import type { OrderMode } from '@/types/branch';
+import type { Branch, BranchSummary, OrderMode } from '@/types/branch';
 import { DeliveryAreaSelect } from './DeliveryAreaSelect';
 import { ModeOptions } from './ModeOptions';
 import { OutletList } from './OutletList';
@@ -25,6 +26,17 @@ const SwitchOutletDialog = dynamic(
   () => import('./SwitchOutletDialog').then((m) => m.SwitchOutletDialog),
   { ssr: false, loading: () => <LoadingSignal /> },
 );
+
+/** A branch with its rules (GET /branches/:id/config), for what's shown of the chosen outlet. */
+function WithRules({
+  branch,
+  children,
+}: {
+  branch: BranchSummary;
+  children: (branch: Branch) => ReactNode;
+}) {
+  return children(joinBranch(branch, useBranchConfig(branch.id)));
+}
 
 /** Where to go once the guest has chosen: `?next=` (a path in the app) or the menu. */
 const safeNext = (next: string | null) =>
@@ -170,26 +182,35 @@ export function StartView() {
               <h2 id="start-modes" className={styles.sectionTitle}>
                 {t('start.modesTitle')}
               </h2>
-              <ModeOptions
-                branch={branch}
-                value={validMode}
-                onChange={setPickedMode}
-                scannedTable={scannedTable}
-                label={t('start.modesLabel')}
-                current={sameBranch ? session.mode : undefined}
-              />
-              {validMode === 'delivery' && (
-                <DeliveryAreaSelect
-                  id="start-area"
-                  branch={branch}
-                  value={area}
-                  onChange={(next) => {
-                    setPickedArea(next);
-                    setAreaError(false);
-                  }}
-                  error={areaError ? t('start.areaRequired') : undefined}
-                />
-              )}
+              {/* The outlet's rules (kitchen time, delivery zones) are read once it's chosen. */}
+              <Suspense fallback={<Skeleton shape="block" height={120} />}>
+                <WithRules branch={branch}>
+                  {(rules) => (
+                    <>
+                      <ModeOptions
+                        branch={rules}
+                        value={validMode}
+                        onChange={setPickedMode}
+                        scannedTable={scannedTable}
+                        label={t('start.modesLabel')}
+                        current={sameBranch ? session.mode : undefined}
+                      />
+                      {validMode === 'delivery' && (
+                        <DeliveryAreaSelect
+                          id="start-area"
+                          branch={rules}
+                          value={area}
+                          onChange={(next) => {
+                            setPickedArea(next);
+                            setAreaError(false);
+                          }}
+                          error={areaError ? t('start.areaRequired') : undefined}
+                        />
+                      )}
+                    </>
+                  )}
+                </WithRules>
+              </Suspense>
             </section>
           )}
 

@@ -1,6 +1,5 @@
 import { deliveryAreas, isOrderMode } from '@/lib/fulfilment';
 import { areaOf } from '@/lib/floorLayout';
-import { isTableAt } from '@/lib/scan';
 import { assertTableInService } from '../tableService';
 import { isLiveSession } from '@/lib/session';
 import type { Branch } from '@/types/branch';
@@ -25,7 +24,13 @@ export const createSession: Handler = async (ctx, { body: raw }) => {
   const branchId = stringField(body, 'branchId');
   const { table, qrToken, mode, deliveryArea } = body;
   const branch = (await ctx.seed.branches()).find((b) => b.id === branchId);
-  const atTable = typeof table === 'number' && branch !== undefined && isTableAt(branch, table);
+  const range = branch && (await ctx.seed.tables(branch.id));
+  const atTable =
+    typeof table === 'number' &&
+    range !== undefined &&
+    Number.isInteger(table) &&
+    table >= range.first &&
+    table <= range.last;
   if (
     !branch ||
     !isOrderMode(mode) ||

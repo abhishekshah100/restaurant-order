@@ -9,6 +9,7 @@ import { cx } from '@/lib/cx';
 import type { AdminBranch } from '@/types/admin';
 import type { OrderMode } from '@/types/branch';
 import styles from './BranchCard.module.css';
+import { useBranchTimes } from '@/hooks/useBranchTimes';
 
 const MODE_ICONS: Record<OrderMode, IconName> = {
   dineIn: 'cutlery',
@@ -44,6 +45,7 @@ function BranchThumb({ branch }: { branch: AdminBranch }) {
  */
 export function BranchCard({ branch, now, lastUsed = false, onSelect }: BranchCardProps) {
   const t = useContent('common');
+  const hoursToday = useBranchTimes(branch)?.hoursToday ?? '';
   const id = useId();
   const ids = {
     lastUsed: `${id}-last`,
@@ -93,7 +95,7 @@ export function BranchCard({ branch, now, lastUsed = false, onSelect }: BranchCa
       <div id={ids.details} className={styles.details}>
         <p className={styles.row}>
           <Icon name="clock" size="xs" />
-          <span>{t('adminSelectBranch.card.hoursToday', { hours: branch.hoursToday })}</span>
+          <span>{t('adminSelectBranch.card.hoursToday', { hours: hoursToday })}</span>
           {localTime && (
             <span className={styles.now}>
               <span aria-hidden="true">{t('adminSelectBranch.card.now', { time: localTime })}</span>

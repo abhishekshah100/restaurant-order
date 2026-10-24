@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectBranchOpen, visible } from './helpers';
+import type { Page } from '@playwright/test';
+import { expect, test, expectBranchOpen, visible } from './helpers';
 
 /**
  * Admin branch picker (/admin/select-branch/), on the mock server or the backend: the demo admin manages

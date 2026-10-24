@@ -11,6 +11,7 @@ import { NumberField } from '../shared/NumberField';
 import { SettingsCard, SettingsEditor, ToggleRow } from '../shared/SettingsEditor';
 import { ServiceStatus } from '../shared/ServiceStatus';
 import styles from './PickupEditor.module.css';
+import { useBranchTimes } from '@/hooks/useBranchTimes';
 
 /** The preview lists this many of today's slots. */
 const PREVIEW_SLOTS = 8;
@@ -101,13 +102,14 @@ function SlotPreview({ value }: { value: PickupSettings }) {
   const t = useContent('common');
   const { region, clock } = useAdminWorkspace();
   const now = useNow(60_000);
+  const hoursToday = useBranchTimes(region)?.hoursToday ?? '';
   if (!now) return null;
   const { asap, slots } = pickupOptions(withPickup(region, value), now);
   const shown = slots.slice(0, PREVIEW_SLOTS);
   return (
     <SettingsCard
       title={t('adminSettings.pickup.preview')}
-      hint={t('adminSettings.pickup.previewHint', { hours: region.hoursToday })}
+      hint={t('adminSettings.pickup.previewHint', { hours: hoursToday })}
     >
       {asap || shown.length > 0 ? (
         <ul className={styles.preview}>

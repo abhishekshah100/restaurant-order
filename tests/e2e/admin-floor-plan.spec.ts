@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { adminSignIn } from './helpers';
+import { expect, test, adminSignIn } from './helpers';
 
 /**
  * Settings › Floor plan against the mock server: staff add an area with three tables, change a

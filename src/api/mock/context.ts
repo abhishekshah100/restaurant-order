@@ -6,6 +6,8 @@ import type { ApiResponse } from '../client';
 import type { ApiErrorBody, ApiErrorCode } from '../contracts';
 import type { MockDb } from './db';
 import type { MockSeed } from './seed';
+import { statusFor, type BranchTimesInput } from '@/lib/branchHours';
+import type { OrderMode } from '@/types/branch';
 
 /** Everything a handler works with. Tests pass their own clock, ids, tables and seed. */
 export interface MockContext {
@@ -46,11 +48,12 @@ export function fail(
 export const ok = (body?: unknown, status = 200): ApiResponse => ({ status, body });
 
 /**
- * 409 ordering_unavailable while the branch is paused or closed: guests can't order on their
- * phones then (staff still can, at the table).
+ * 409 ordering_unavailable unless the branch takes orders this way now: dine-in by its status,
+ * takeaway and delivery by theirs (their own hours). Guests can't order on their phones then
+ * (staff still can, at the table).
  */
-export function assertOrdering(branch: { status: string }) {
-  if (branch.status !== 'open') fail(409, 'ordering_unavailable');
+export function assertOrdering(branch: BranchTimesInput, mode: OrderMode = 'dineIn') {
+  if (statusFor(branch, mode).status !== 'open') fail(409, 'ordering_unavailable');
 }
 
 export const isObject = (v: unknown): v is Record<string, unknown> =>

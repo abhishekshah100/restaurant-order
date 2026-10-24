@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { addDish, adminSignIn, orderAtCounter, scan } from './helpers';
+import type { Page } from '@playwright/test';
+import { expect, test, addDish, adminSignIn, orderAtCounter, scan } from './helpers';
 
 /**
  * The Payments page against the mock server, in the same browser as the guests: guests at

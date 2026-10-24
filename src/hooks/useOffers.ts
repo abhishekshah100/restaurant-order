@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useSyncExternalStore } from 'react';
-import { useBranch, useMenu, usePromotions } from '@/api/hooks';
+import { useBranch, useMenu, useMenuIfNeeded, usePromotions } from '@/api/hooks';
 import { activeOffers, applyOffers, bestOffer, offerDiscounts } from '@/lib/promotions';
 import type { CartLine } from '@/types/cart';
 import type { Dish, Price } from '@/types/menu';
@@ -91,7 +91,19 @@ export function useOfferLines(lines: readonly CartLine[]): (CartLine & { offer?:
 export function useCartItemTotal(): Price {
   const { lines, bill } = useCart();
   const { minorUnit } = useBranch().currency;
-  const offerLines = useOfferLines(lines);
-  const offMinor = offerDiscounts(offerLines, minorUnit).reduce((n, d) => n + d.amountMinor, 0);
+  // The menu only when there's something to price: an empty cart (the header on any page)
+  // never downloads it.
+  const menu = useMenuIfNeeded(lines.length > 0);
+  const offers = useActiveOffers();
+  const offMinor = useMemo(
+    () =>
+      menu
+        ? offerDiscounts(applyOffers(lines, menu, offers), minorUnit).reduce(
+            (n, d) => n + d.amountMinor,
+            0,
+          )
+        : 0,
+    [lines, menu, offers, minorUnit],
+  );
   return bill.itemTotal - offMinor / minorUnit;
 }

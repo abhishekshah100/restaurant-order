@@ -191,7 +191,7 @@ function PayForm({
   onPay,
 }: PayFormProps) {
   const t = useContent('service');
-  const { paymentPartner, payments } = useBranch();
+  const { payments } = useBranch();
   const { money } = useRegion();
   const methodsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -223,7 +223,7 @@ function PayForm({
   const secured = (
     <p className={cx('t-small c3', styles.fine)}>
       <Icon name="shield" size="xs" />
-      {t('payBill.secured', { partner: paymentPartner })}
+      {t('payBill.secured')}
     </p>
   );
 

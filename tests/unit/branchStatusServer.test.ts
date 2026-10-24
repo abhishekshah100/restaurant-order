@@ -79,34 +79,45 @@ describe('PATCH /admin/branches/:branchId/status (mock)', () => {
       status: 'paused',
       statusUntil: '2026-10-15T13:30:00.000Z',
     });
-    expect(await guestBranch()).toMatchObject({ status: 'paused', pausedForMinutes: 30 });
+    expect(await guestBranch()).toMatchObject({
+      status: 'paused',
+      statusUntil: '2026-10-15T13:30:00.000Z',
+    });
     now += 10 * 60_000;
-    expect((await guestBranch())?.pausedForMinutes).toBe(20);
     // What guests' ordering pages poll: the status alone, as in the whole list.
     const status = await call('GET', 'branches/blr-indiranagar/status');
+    // The pause holds for every way of ordering.
+    const paused = { status: 'paused', statusUntil: '2026-10-15T13:30:00.000Z' };
     expect(status.body).toEqual({
       id: 'blr-indiranagar',
-      status: 'paused',
-      opensAt: (await guestBranch())?.opensAt,
-      opensIn: (await guestBranch())?.opensIn,
-      pausedForMinutes: 20,
+      ...paused,
+      modeStatus: { takeaway: paused, delivery: paused },
     });
     expect((await call('GET', 'branches/nowhere/status')).status).toBe(404);
     expect((await adminBranch()).status).toBe('paused');
     now += 21 * 60_000;
-    expect((await guestBranch())?.status).toBe('open');
-    expect(await adminBranch()).not.toHaveProperty('statusUntil');
+    // The pause is over: the week again, open until last orders at 8:30 PM (15:00 UTC).
+    expect(await guestBranch()).toMatchObject({
+      status: 'open',
+      statusUntil: '2026-10-15T15:00:00.000Z',
+    });
+    expect((await adminBranch()).statusUntil).toBe('2026-10-15T15:00:00.000Z');
   });
 
   it('closes for the rest of today: open again the next day (branch time)', async () => {
     await setStatus({ status: 'closed' });
-    expect(await guestBranch()).toMatchObject({ status: 'closed', reopensTomorrow: true });
-    // Opens again at tomorrow's opening time.
+    // Opens again at tomorrow's opening time: guests and staff are told the same moment.
+    expect(await guestBranch()).toMatchObject({
+      status: 'closed',
+      statusUntil: '2026-10-16T05:30:00.000Z',
+    });
     const until = (await adminBranch()).statusUntil ?? '';
     expect(new Date(until).toISOString()).toBe('2026-10-16T05:30:00.000Z');
     now = Date.parse('2026-10-15T18:00:00Z'); // 11:30 PM: still today
     expect((await guestBranch())?.status).toBe('closed');
-    now = Date.parse('2026-10-15T19:00:00Z'); // 12:30 AM the next day
+    now = Date.parse('2026-10-15T19:00:00Z'); // 12:30 AM the next day: before it opens
+    expect((await guestBranch())?.status).toBe('closed');
+    now = Date.parse('2026-10-16T05:30:00Z'); // 11:00 AM: the closure is over, and it opens
     expect((await guestBranch())?.status).toBe('open');
   });
 

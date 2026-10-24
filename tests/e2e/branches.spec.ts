@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { fixClock, scan, waitForSavedCart } from './helpers';
+import type { Page } from '@playwright/test';
+import { expect, test, fixClock, scan, waitForSavedCart } from './helpers';
 
 /**
  * Branches and regions: a QR code for the Nepal branch (Thamel, Kathmandu) gives NPR prices,

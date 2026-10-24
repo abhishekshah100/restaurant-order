@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { waitForSavedCart, scan } from './helpers';
+import { waitForSavedCart, scan, expect, test } from './helpers';
 import path from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import type { Branch } from '../../src/types/branch';
 
 /**
@@ -87,7 +87,8 @@ test('paused: guests can keep building the cart, and checkout offers a waiter', 
 
   // ?status=open ends the preview.
   await page.goto('/menu/?status=open');
-  await expect(visible(page, `Open · until ${restaurant.closesAt}`)).toBeVisible();
+  // When orders stop: last orders, 30 minutes before the 9:00 PM close (11:00–21:00 every day).
+  await expect(visible(page, 'Open · orders until 8:30 PM')).toBeVisible();
   await expect(page.getByText('Online ordering is paused')).toHaveCount(0);
 });
 

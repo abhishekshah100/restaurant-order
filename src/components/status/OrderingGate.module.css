@@ -1,0 +1,7 @@
+/* While the branch's status is read: a spinner in the middle of the screen, nothing else. */
+.checking {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+}

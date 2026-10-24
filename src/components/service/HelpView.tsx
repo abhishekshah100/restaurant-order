@@ -75,7 +75,7 @@ function ModeActions({ mode }: { mode: 'takeaway' | 'delivery' }) {
   return (
     <div className={styles.actions}>
       {track}
-      <a className={cx(styles.action, styles.actionSand)} href={branch.phoneHref}>
+      <a className={cx(styles.action, styles.actionSand)} href={`tel:${branch.phone}`}>
         <span className={cx(styles.actionIcon, styles.dark)} aria-hidden="true">
           <Icon name="phone" />
         </span>
@@ -193,7 +193,7 @@ export function HelpView() {
             </h2>
             <ul className={styles.list}>
               <li>
-                <a className={styles.row} href={branch.phoneHref}>
+                <a className={styles.row} href={`tel:${branch.phone}`}>
                   <RowContent icon="phone" title={t('help.more.call')} sub={branch.phone} />
                 </a>
               </li>

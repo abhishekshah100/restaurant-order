@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { addDish, adminSignIn, orderAtCounter, scan, visible } from './helpers';
+import { expect, test, addDish, adminSignIn, orderAtCounter, scan, visible } from './helpers';
 
 /**
  * The Orders page against the mock server, in the same browser as a guest: the guest at table

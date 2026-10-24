@@ -112,6 +112,40 @@ describe('pickup slots (branch time zone)', () => {
     const late = pickupOptions(india, new Date('2026-10-03T16:30:00Z')); // 10:00 PM IST
     expect(late).toEqual({ asap: null, slots: [] });
   });
+
+  it('split shifts: no pickup in the afternoon break, dinner slots later today', () => {
+    const split = {
+      ...india,
+      schedule: {
+        ...india.schedule,
+        days: {
+          ...india.schedule.days,
+          sat: [
+            { label: 'Lunch', opens: '12:00', closes: '15:00' },
+            { label: 'Dinner', opens: '19:00', closes: '22:00' },
+          ],
+        },
+      },
+    };
+    const clock = createClock(india);
+    // Saturday 3 Oct, 4:00 PM IST: in the break.
+    const { asap, slots } = pickupOptions(split, new Date('2026-10-03T10:30:00Z'));
+    expect(asap).toBeNull();
+    expect(clock.time(slots[0])).toBe('7:30 PM');
+    expect(slots.every((s) => s.getTime() >= Date.parse('2026-10-03T14:00:00Z'))).toBe(true);
+  });
+
+  it('takeaway on hours of its own: pickup only in them', () => {
+    const evenings = { opens: '18:00', closes: '22:00' };
+    const own = Object.fromEntries(
+      Object.keys(india.schedule.days).map((d) => [d, [evenings]]),
+    ) as typeof india.schedule.days;
+    const branch = { ...india, schedule: { ...india.schedule, takeaway: own } };
+    // Saturday 1:00 PM IST: the dining room is open, takeaway isn't yet.
+    const { asap, slots } = pickupOptions(branch, new Date('2026-10-03T07:30:00Z'));
+    expect(asap).toBeNull();
+    expect(createClock(india).time(slots[0])).toBe('6:30 PM');
+  });
 });
 
 describe('delivery fee in the bill', () => {

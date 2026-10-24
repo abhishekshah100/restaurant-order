@@ -7,8 +7,9 @@ import { createClock, type Clock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney, type Money } from '@/lib/money';
 import { withLiveStatus } from '@/lib/restaurantStatus';
+import { joinBranch } from '@/lib/branchParts';
 import { resolveBranch } from '@/lib/scan';
-import type { Branch, MobileRules } from '@/types/branch';
+import type { Branch, BranchConfig, BranchSummary, MobileRules } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
@@ -18,6 +19,7 @@ import type { AdminSignInRequest, OrderLineRequest } from './contracts';
 import {
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
+  branchConfigQuery,
   branchStatusQuery,
   branchMenuQuery,
   branchOrdersQuery,
@@ -64,17 +66,17 @@ export function useRestaurant(): Restaurant {
   return useSuspenseQuery(restaurantQuery()).data;
 }
 
-/** Every branch. */
-export function useBranches(): Branch[] {
+/** Every branch, in brief (GET /branches). */
+export function useBranches(): BranchSummary[] {
   return useSuspenseQuery(branchesQuery()).data;
 }
 
 /**
- * The branch the guest is at (their session's): hours, live status and region rules. The
- * default branch until the session has been read, so prerendered HTML matches the first
- * client render.
+ * The branch the guest is at (their session's) in brief: where it is, its week and its live
+ * status. The default branch until the session has been read, so prerendered HTML matches the
+ * first client render.
  */
-export function useBranch(): Branch {
+export function useBranchSummary(): BranchSummary {
   const { data: branches, dataUpdatedAt: listedAt } = useSuspenseQuery(branchesQuery());
   const { defaultBranchId } = useRestaurant();
   const branch = resolveBranch(branches, useActiveBranchId() ?? defaultBranchId);
@@ -90,6 +92,35 @@ export function useBranch(): Branch {
 }
 
 /**
+ * The guest's branch with its rules (GET /branches/:id/config): money, taxes, payments, each
+ * mode's rules. GuestSessionProvider makes a branch active only once its config is read, so this
+ * never waits on the network in practice.
+ */
+export function useBranch(): Branch {
+  const summary = useBranchSummary();
+  const config = useSuspenseQuery(branchConfigQuery(summary.id)).data;
+  return useMemo(() => joinBranch(summary, config), [summary, config]);
+}
+
+/** Another branch's rules, read when a screen needs them (the start screen's chosen outlet). */
+export function useBranchConfig(branchId: string): BranchConfig {
+  return useSuspenseQuery(branchConfigQuery(branchId)).data;
+}
+
+/**
+ * Whether this visit has read the guest's branch status from the server (the list, or the
+ * status poll), not just the copy built into the page, which can be hours old. True as well
+ * when reading the list failed: the page goes on with what it has then.
+ */
+export function useBranchStatusKnown(): boolean {
+  const { dataUpdatedAt: listedAt, isError } = useSuspenseQuery(branchesQuery());
+  const { defaultBranchId } = useRestaurant();
+  const branchId = useActiveBranchId() ?? defaultBranchId;
+  const { dataUpdatedAt: liveAt } = useQuery({ ...branchStatusQuery(branchId), enabled: false });
+  return listedAt > 0 || liveAt > 0 || isError;
+}
+
+/**
  * Keeps the guest's branch status fresh while mounted: GET /branches/:id/status every minute
  * (not in a background tab). For pages where guests order; mount it once per page.
  */
@@ -101,7 +132,7 @@ export function useBranchStatusPolling(): void {
 
 /** The active branch's menu with its lookups (getDish, dishesIn, searchDishes…). The same object until the menu changes. */
 export function useMenu(): MenuCatalog {
-  const { data } = useSuspenseQuery(branchMenuQuery(useBranch().id));
+  const { data } = useSuspenseQuery(branchMenuQuery(useBranchSummary().id));
   return useMemo(() => createMenuCatalog(data), [data]);
 }
 
@@ -111,12 +142,12 @@ export function useMenu(): MenuCatalog {
  * so a page that doesn't show the menu never waits for it or downloads it.
  */
 export function useMenuIfNeeded(needed: boolean): MenuCatalog | null {
-  const { data } = useQuery({ ...branchMenuQuery(useBranch().id), enabled: needed });
+  const { data } = useQuery({ ...branchMenuQuery(useBranchSummary().id), enabled: needed });
   return useMemo(() => (data ? createMenuCatalog(data) : null), [data]);
 }
 
 /**
- * Whether a branch's menu (when `withMenu`) and promotions are in the cache (or failed to load,
+ * Whether a branch's config, menu (when `withMenu`) and promotions are in the cache (or failed to load,
  * for the suspense hooks to throw to the error page), so it can become the active branch without
  * suspending. Only the default branch's are built into the page; another's are read here first.
  */
@@ -125,6 +156,7 @@ export function useBranchDataLoaded(branchId: string, withMenu: boolean): boolea
     // Any copy will do (the one built into the page too): this only waits for one to exist.
     // Pages that show the menu read it again when they open; others never download it.
     queries: [
+      { ...branchConfigQuery(branchId), staleTime: Infinity },
       ...(withMenu ? [{ ...branchMenuQuery(branchId), staleTime: Infinity }] : []),
       { ...branchPromotionsQuery(branchId), staleTime: Infinity },
     ],
@@ -134,7 +166,7 @@ export function useBranchDataLoaded(branchId: string, withMenu: boolean): boolea
 
 /** The active branch's promo codes and automatic offers (GET /branches/:id/promotions). */
 export function usePromotions(): BranchPromotions {
-  return useSuspenseQuery(branchPromotionsQuery(useBranch().id)).data;
+  return useSuspenseQuery(branchPromotionsQuery(useBranchSummary().id)).data;
 }
 
 /** How the active branch writes money, times and mobile numbers. */
@@ -218,7 +250,7 @@ export const useTableDetail = (branchId: string | undefined, table: number) =>
 
 /** POST /delivery/quote at the active branch: idle until there's an area. */
 export function useDeliveryQuote(area: string | undefined, itemTotal: number) {
-  return useQuery(deliveryQuoteQuery(useBranch().id, area, itemTotal));
+  return useQuery(deliveryQuoteQuery(useBranchSummary().id, area, itemTotal));
 }
 
 /** POST /promos/validate for the guest's session: idle until there's a session and a code. */

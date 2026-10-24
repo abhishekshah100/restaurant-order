@@ -8,6 +8,8 @@ import { useToast } from '@/context/ToastContext';
 import type { BranchStatus as Status } from '@/types/branch';
 import { useAdminWorkspace } from './AdminWorkspace';
 import styles from './BranchStatusControl.module.css';
+import { useNow } from '@/hooks/useNow';
+import { nextOpeningAfterToday } from '@/lib/branchHours';
 
 const STATUSES: readonly Status[] = ['open', 'paused', 'closed'];
 const PAUSE_MINUTES = [15, 30, 45, 60, 90] as const;
@@ -21,6 +23,10 @@ export function BranchStatusDialog({ onClose }: { onClose: () => void }) {
   const save = useSetBranchStatus();
   const [status, setStatus] = useState<Status>(branch.status);
   const [minutes, setMinutes] = useState<PauseMinutes>(30);
+  // Closing for the rest of today waits for the next day the week opens.
+  const today = useNow();
+  const next = today ? nextOpeningAfterToday(region, today) : null;
+  const reopensAt = next ? clock.time(next.at) : '';
   const until = branch.statusUntil ? clock.time(branch.statusUntil) : '';
   const now = t(`adminShell.statusControl.now.${branch.status}`, {
     branch: branch.shortName,
@@ -69,7 +75,7 @@ export function BranchStatusDialog({ onClose }: { onClose: () => void }) {
           choices={STATUSES.map((s) => ({
             id: s,
             label: t(`adminShell.statusControl.options.${s}`),
-            sub: t(`adminShell.statusControl.options.${s}Sub`, { time: region.opensAt }),
+            sub: t(`adminShell.statusControl.options.${s}Sub`, { time: reopensAt }),
           }))}
         />
         {status === 'paused' && (

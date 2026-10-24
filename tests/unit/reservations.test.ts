@@ -173,13 +173,19 @@ describe('the Reservations page', () => {
   });
 
   it('offers times every 15 minutes while open, until an hour before closing; today from now', () => {
+    // Friday's hours (the day booked), from the week.
+    const [friday] = branch.schedule.days.fri;
     const tomorrow = timeSlots(branch, 1, new Date(NOW));
-    expect(clock.time(tomorrow[0])).toBe(branch.opensAt);
+    expect(clock.time(tomorrow[0])).toBe(
+      clock.time(clock.localTimestamp(-1, friday.opens, new Date(NOW))),
+    );
     expect(tomorrow.every((s) => clock.dayKey(s) === '2026-10-16')).toBe(true);
     expect(Date.parse(tomorrow[1]) - Date.parse(tomorrow[0])).toBe(15 * MIN);
     const today = timeSlots(branch, 0, new Date(NOW));
     expect(clock.time(today[0])).toBe('6:30 PM');
-    const closes = Date.parse(clock.localTimestamp(0, branch.hours.closes, new Date(NOW)));
+    const closes = Date.parse(
+      clock.localTimestamp(0, branch.schedule.days.thu[0].closes, new Date(NOW)),
+    );
     expect(Date.parse(today.at(-1) ?? '')).toBe(closes - 60 * MIN);
   });
 });

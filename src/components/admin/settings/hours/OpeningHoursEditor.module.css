@@ -1,4 +1,4 @@
-/* Settings › Opening hours: a row per day of the week, then last orders and service windows. */
+/* Settings › Opening hours: a row per day of the week with its sessions, then last orders. */
 
 .days {
   display: grid;
@@ -42,27 +42,15 @@
   color: var(--ink-3);
 }
 
-.times {
+.sessions {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: start;
   gap: 8px;
-}
-
-.to {
-  padding-top: 12px;
-  color: var(--ink-3);
 }
 
 @media (min-width: 768px) {
   .day {
-    grid-template-columns: 180px 140px minmax(0, 1fr);
-  }
-
-  .times {
-    grid-column: auto;
-    max-width: 360px;
+    grid-template-columns: 180px minmax(0, 1fr);
   }
 }
 
@@ -111,42 +99,103 @@
   }
 }
 
-/* ---------- Service windows ---------- */
+/* ---------- Sessions ---------- */
 
-.windows {
+.sessionList {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.session {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: start;
+  gap: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.session > :first-child {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .session {
+    grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)) auto;
+  }
+
+  .session > :first-child {
+    grid-column: auto;
+  }
+}
+
+.remove {
+  margin-top: 26px;
+  color: var(--error);
+}
+
+.add {
+  justify-self: start;
+}
+
+/* ---------- Takeaway and delivery hours ---------- */
+
+.mode {
+  display: grid;
+  gap: 10px;
+}
+
+.mode + .mode {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- Special dates ---------- */
+
+.specials {
   display: grid;
   gap: 10px;
   list-style: none;
 }
 
-.window {
+.special {
   padding: 12px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
-  align-items: end;
   gap: 10px;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--bg);
 }
 
-.window > :first-child {
+.specialHead {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: start;
+  gap: 8px 10px;
+}
+
+.specialHead > :first-child {
   grid-column: 1 / -1;
 }
 
 @media (min-width: 768px) {
-  .window {
+  .specialHead {
     grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)) auto;
   }
 
-  .window > :first-child {
+  .specialHead > :first-child {
     grid-column: auto;
   }
 }
 
-.remove {
-  margin-bottom: 4px;
-  color: var(--error);
+.specialState {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .empty {

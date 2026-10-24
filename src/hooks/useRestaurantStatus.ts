@@ -11,6 +11,9 @@ import {
   type StatusPreview,
 } from '@/lib/restaurantStatus';
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage';
+import { useVisit } from '@/context/GuestSessionContext';
+import { statusFor } from '@/lib/branchHours';
+import { useBranchTimes } from './useBranchTimes';
 import { recheckOnline, useOnlineStatus } from './useOnlineStatus';
 import { useQueryParam } from './useQueryParam';
 
@@ -61,7 +64,8 @@ export interface OrderingAvailabilityResult extends OrderingAvailability {
  * navigator.onLine. Matches the prerendered HTML until hydration has finished.
  */
 export function useOrderingAvailability(): OrderingAvailabilityResult {
-  const { status } = useBranch();
+  // The guest's way of ordering: takeaway and delivery can keep hours of their own.
+  const { status } = statusFor(useBranch(), useVisit().mode);
   const preview = useStatusPreview();
   const online = useOnlineStatus();
 
@@ -83,10 +87,14 @@ export function useOrderingAvailability(): OrderingAvailabilityResult {
   );
 }
 
-/** The header subline ("Open · until 11:00 PM", "Closed now", "Ordering paused") and its colour. */
+/** The header subline ("Open · orders until 8:30 PM", "Closed now", "Ordering paused") and its colour. */
 export function useStatusLine(): { text: string; tone: 'error' | 'warn' | null } {
-  const { closesAt } = useBranch();
+  const ordersUntil = useBranchTimes(useBranch(), useVisit().mode)?.ordersUntil;
   const { status } = useOrderingAvailability();
   const t = useContent('status');
-  return { text: t(`line.${status}`, { time: closesAt }), tone: statusTone(status) };
+  const text =
+    status === 'open' && !ordersUntil
+      ? t('line.openNow')
+      : t(`line.${status}`, { time: ordersUntil ?? '' });
+  return { text, tone: statusTone(status) };
 }

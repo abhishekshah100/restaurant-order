@@ -1,7 +1,7 @@
 import { queryOptions, skipToken } from '@tanstack/react-query';
 import { TRACK_REFRESH_MS } from '@/lib/orders';
 import type { FloorPlanLayout } from '@/types/admin';
-import type { Branch, BranchLiveStatus } from '@/types/branch';
+import type { BranchConfig, BranchLiveStatus, BranchSummary } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
 import type { MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
@@ -68,14 +68,26 @@ export const restaurantQuery = () =>
   });
 
 /**
- * GET /branches: every location with its hours, region rules and status. Read once per visit
- * (again after 10 minutes, or when the guest comes back to the tab); the status, which staff
- * change during service, is polled on its own (branchStatusQuery).
+ * GET /branches: every location in brief (where, its week and status, its modes). Read once per
+ * visit (again after 10 minutes, or when the guest comes back to the tab); the status, which
+ * staff change during service, is polled on its own (branchStatusQuery).
  */
 export const branchesQuery = () =>
   queryOptions({
     queryKey: ['branches'] as const,
-    queryFn: () => apiGet<Branch[]>('branches'),
+    queryFn: () => apiGet<BranchSummary[]>('branches'),
+    staleTime: BRANCHES_REFRESH_MS,
+    refetchOnWindowFocus: true,
+  });
+
+/**
+ * GET /branches/:id/config: one branch's rules for ordering there (money, taxes, payments, each
+ * mode's rules), read for the guest's own branch only, and trusted as long as the list.
+ */
+export const branchConfigQuery = (branchId: string) =>
+  queryOptions({
+    queryKey: ['branches', branchId, 'config'] as const,
+    queryFn: () => apiGet<BranchConfig>(`branches/${branchId}/config`),
     staleTime: BRANCHES_REFRESH_MS,
     refetchOnWindowFocus: true,
   });

@@ -67,7 +67,7 @@ export const createPayment: Handler = async (ctx, { body: raw }) => {
   const { session, branch } = await liveSession(ctx, stringField(body, 'sessionId'));
   // Paying for new food needs the branch taking orders; settling a bill doesn't.
   if (purpose === 'order' || purpose === 'round') {
-    assertOrdering(branch);
+    assertOrdering(branch, session.mode);
     if (session.mode === 'dineIn') await assertTableInService(ctx, branch.id, session.table);
   }
   if (

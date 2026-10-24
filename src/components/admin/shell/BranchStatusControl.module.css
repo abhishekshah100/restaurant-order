@@ -68,3 +68,20 @@
   color: var(--ink-3);
   font: var(--font-meta);
 }
+
+/* "Last orders 8:30 PM" beside the pill; a warning in the last minutes. */
+.lastOrders {
+  margin-inline-start: 8px;
+  color: var(--ink-3);
+  font: var(--font-small);
+  white-space: nowrap;
+}
+
+.lastOrders.soon {
+  color: var(--warn);
+  font: var(--font-small-strong);
+}
+
+.lastOrders.onDark.soon {
+  color: var(--warn-tint);
+}

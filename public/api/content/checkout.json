@@ -192,7 +192,7 @@
     },
     "payOnline": "Pay {total}",
     "placeOrder": "Place order · {total}",
-    "secured": "Secured by {partner} · Card details are never stored",
+    "secured": "Card details are never stored",
     "placeError": "Couldn't place the order on this device. Please ask a waiter."
   },
   "processing": {
@@ -216,7 +216,7 @@
     "timeLeft": " left",
     "sendingMobile": "Sending order to the kitchen",
     "sendingDesktop": "Sending to the kitchen",
-    "secure": "Encrypted payment · Secured by {partner}",
+    "secure": "Encrypted payment",
     "cancel": "Cancel payment",
     "protoSuccess": "Prototype: success",
     "protoFailure": "Prototype: failure"

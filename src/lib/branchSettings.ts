@@ -1,4 +1,11 @@
-import type { Branch, DeliveryZone, OpeningSchedule, PaymentOption } from '@/types/branch';
+import type {
+  Branch,
+  DeliveryZone,
+  OpeningSchedule,
+  PaymentOption,
+  Session,
+  WeekSessions,
+} from '@/types/branch';
 import { WEEKDAYS } from '@/types/branch';
 import type {
   BranchDetails,
@@ -23,7 +30,7 @@ import {
 } from '@/config/masters';
 import { REGION_PRESETS } from '@/config/regions';
 import { ORDER_MODES } from './fulfilment';
-import { isTime, openMinutes, toMinutes } from './branchHours';
+import { isCloseTime, isTime, sessionMinutes } from './branchHours';
 
 /*
  * A branch's settings (Settings › Branch details, Opening hours, Tax & service charge, Payment
@@ -38,8 +45,12 @@ export const LIMITS = {
   city: 40,
   address: 160,
   wifiName: 40,
-  windowLabel: 30,
-  windows: 6,
+  sessionLabel: 30,
+  sessionsPerDay: 4,
+  specialDays: 50,
+  specialLabel: 40,
+  /** Days one special entry can cover (a festival month at most). */
+  specialSpan: 62,
   lastOrdersMinutes: 180,
   /** Tax and service rates, in basis points: 50%. */
   taxBp: 5000,
@@ -78,14 +89,15 @@ export type SettingsError =
   | 'noService'
   | 'deliveryNeedsZones'
   | 'noOpenDay'
-  | 'dayTime'
-  | 'dayOrder'
+  | 'sessionTime'
+  | 'sessionOverlap'
+  | 'tooManySessions'
+  | 'sessionLabel'
   | 'lastOrders'
-  | 'windowLabel'
-  | 'windowLabelTaken'
-  | 'windowTime'
-  | 'windowOrder'
-  | 'tooManyWindows'
+  | 'specialDates'
+  | 'specialOverlap'
+  | 'tooManySpecialDays'
+  | 'specialLabel'
   | 'taxRate'
   | 'serviceRate'
   | 'taxLines'
@@ -277,25 +289,86 @@ export function servicesErrors(s: ServicesSettings, deliveryZones: number): Sett
   ];
 }
 
-export function hoursErrors(s: OpeningSchedule): SettingsError[] {
-  const errors: SettingsError[] = [];
-  const open = WEEKDAYS.map((d) => s.days[d]).filter((d) => d.open);
-  if (open.length === 0) errors.push('noOpenDay');
-  if (open.some((d) => !isTime(d.opens) || !isTime(d.closes))) errors.push('dayTime');
-  else if (open.some((d) => toMinutes(d.closes) <= toMinutes(d.opens))) errors.push('dayOrder');
-  else if (
-    !isWhole(s.lastOrdersMinutes, 0, LIMITS.lastOrdersMinutes) ||
-    open.some((d) => s.lastOrdersMinutes >= openMinutes(d))
-  ) {
-    errors.push('lastOrders');
+/**
+ * What's wrong with some days of sessions (a week, or a special date's day repeated): times,
+ * overlaps (a session past midnight runs into the next day's first), how many a day, names, and
+ * sessions shorter than last orders.
+ */
+function sessionsErrors(days: readonly (readonly Session[])[], lastOrders: number, wraps: boolean) {
+  const errors = new Set<SettingsError>();
+  if (days.some((sessions) => sessions.length > LIMITS.sessionsPerDay))
+    errors.add('tooManySessions');
+  const all = days.flat();
+  if (all.some((x) => (x.label?.trim().length ?? 0) > LIMITS.sessionLabel)) {
+    errors.add('sessionLabel');
   }
-  if (s.windows.length > LIMITS.windows) errors.push('tooManyWindows');
-  const labels = s.windows.map((w) => w.label.trim().toLowerCase());
-  if (labels.some((l) => !l || l.length > LIMITS.windowLabel)) errors.push('windowLabel');
-  else if (new Set(labels).size !== labels.length) errors.push('windowLabelTaken');
-  if (s.windows.some((w) => !isTime(w.from) || !isTime(w.to))) errors.push('windowTime');
-  else if (s.windows.some((w) => toMinutes(w.to) <= toMinutes(w.from))) errors.push('windowOrder');
+  if (!all.every((x) => isTime(x.opens) && isCloseTime(x.closes))) {
+    errors.add('sessionTime');
+    return errors;
+  }
+  // Each day's sessions in order, in minutes after its midnight (past midnight beyond 1440).
+  const week = days.map((sessions) =>
+    sessions.map((x) => sessionMinutes(x)).sort((a, b) => a.opens - b.opens),
+  );
+  const overlaps = week.some((sessions, i) => {
+    const next = wraps || i + 1 < week.length ? week[(i + 1) % week.length][0] : undefined;
+    return sessions.some((x, j) => {
+      const after = sessions[j + 1];
+      return after ? x.closes > after.opens : next !== undefined && x.closes - 1440 > next.opens;
+    });
+  });
+  if (overlaps) errors.add('sessionOverlap');
+  if (week.flat().some((x) => lastOrders >= x.closes - x.opens)) errors.add('lastOrders');
   return errors;
+}
+
+/** "2026-11-08", a real calendar day. */
+export function isDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [y, m, d] = value.split('-').map(Number);
+  const at = new Date(Date.UTC(y, m - 1, d));
+  return at.getUTCFullYear() === y && at.getUTCMonth() === m - 1 && at.getUTCDate() === d;
+}
+
+const daysBetween = (from: string, to: string) =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+
+export function hoursErrors(s: OpeningSchedule): SettingsError[] {
+  const errors = new Set<SettingsError>();
+  if (WEEKDAYS.every((d) => s.days[d].length === 0)) errors.add('noOpenDay');
+  if (!isWhole(s.lastOrdersMinutes, 0, LIMITS.lastOrdersMinutes)) errors.add('lastOrders');
+  const lead = s.lastOrdersMinutes;
+  // The opening hours, and takeaway's and delivery's own weeks (which may be closed all week).
+  for (const week of [s.days, s.takeaway, s.delivery]) {
+    if (week)
+      sessionsErrors(
+        WEEKDAYS.map((d) => week[d]),
+        lead,
+        true,
+      ).forEach((e) => errors.add(e));
+  }
+  if (s.specialDays.length > LIMITS.specialDays) errors.add('tooManySpecialDays');
+  if (s.specialDays.some((d) => (d.label?.trim().length ?? 0) > LIMITS.specialLabel)) {
+    errors.add('specialLabel');
+  }
+  const dated = s.specialDays.every(
+    (d) =>
+      isDate(d.from) &&
+      isDate(d.to) &&
+      d.from <= d.to &&
+      daysBetween(d.from, d.to) < LIMITS.specialSpan,
+  );
+  if (!dated) errors.add('specialDates');
+  else {
+    const sorted = [...s.specialDays].sort((a, b) => a.from.localeCompare(b.from));
+    if (sorted.some((d, i) => i > 0 && d.from <= sorted[i - 1].to)) errors.add('specialOverlap');
+  }
+  for (const d of s.specialDays) {
+    // A range repeats its day: a session past midnight runs into the next day's first.
+    const span = isDate(d.from) && isDate(d.to) && d.from < d.to;
+    sessionsErrors([d.sessions], lead, span).forEach((e) => errors.add(e));
+  }
+  return [...errors];
 }
 
 /** `current`: the branch's tax lines now (staff change their rates, not which there are). */
@@ -468,20 +541,41 @@ export function withDetails(branch: Branch, d: BranchDetails): Branch {
     address,
     mapUrl: address === branch.address ? branch.mapUrl : mapUrlFor(address),
     phone,
-    phoneHref: `tel:${phone}`,
     wifiName: trimmed(d.wifiName),
   };
 }
+
+/** Sessions tidied: names trimmed (none when blank), earliest first. */
+const tidySessions = (sessions: readonly Session[]): Session[] =>
+  sessions
+    .map(({ label, opens, closes }) => {
+      const name = label?.trim();
+      return { ...(name ? { label: name } : {}), opens, closes };
+    })
+    .sort((a, b) => sessionMinutes(a).opens - sessionMinutes(b).opens);
+
+const tidyWeek = (week: WeekSessions): WeekSessions =>
+  Object.fromEntries(WEEKDAYS.map((d) => [d, tidySessions(week[d])])) as WeekSessions;
 
 export function withHours(branch: Branch, s: OpeningSchedule): Branch {
   return {
     ...branch,
     schedule: {
-      days: Object.fromEntries(
-        WEEKDAYS.map((d) => [d, { ...s.days[d] }]),
-      ) as OpeningSchedule['days'],
+      days: tidyWeek(s.days),
       lastOrdersMinutes: s.lastOrdersMinutes,
-      windows: s.windows.map((w) => ({ label: w.label.trim(), from: w.from, to: w.to })),
+      takeaway: s.takeaway ? tidyWeek(s.takeaway) : null,
+      delivery: s.delivery ? tidyWeek(s.delivery) : null,
+      specialDays: s.specialDays
+        .map((d) => {
+          const name = d.label?.trim();
+          return {
+            from: d.from,
+            to: d.to,
+            ...(name ? { label: name } : {}),
+            sessions: tidySessions(d.sessions),
+          };
+        })
+        .sort((a, b) => a.from.localeCompare(b.from)),
     },
   };
 }

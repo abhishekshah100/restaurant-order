@@ -45,11 +45,13 @@ describe('GET /admin/branches (mock)', () => {
       city: 'Kathmandu',
       country: 'NP',
       address: source.address,
-      status: source.status,
-      hoursToday: source.hoursToday,
+      // Its week says (the mock's clock is during opening hours), and until when.
+      status: 'open',
+      statusUntil: expect.any(String) as unknown,
+      schedule: source.schedule,
       timezone: 'Asia/Kathmandu',
       locale: source.locale,
-      tables: source.tables,
+      tables: { first: 1, last: 40 },
       modes: ['dineIn', 'takeaway', 'delivery'],
       currencyCode: 'NPR',
       image: source.image,
@@ -81,6 +83,8 @@ describe('GET /admin/branches (mock)', () => {
   });
 
   it("reports a tester's branch status override (mock only)", async () => {
+    // 1:00 PM in India: both branches are open by their week.
+    now = Date.parse('2026-10-14T13:00:00+05:30');
     window.localStorage.setItem(
       MOCK_KEYS.branchStatus,
       JSON.stringify({ 'ktm-thamel': { status: 'closed' } }),

@@ -1,11 +1,14 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAdminBranches, useBranchService, useBranches, useContent } from '@/api/hooks';
 import { useAdminName, useSelectedAdminBranchId } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
+import { branchConfigQuery } from '@/api/queries';
 import { activeNavId } from '@/lib/adminNav';
+import { joinBranch } from '@/lib/branchParts';
 import { AdminAccess } from '../AdminAccess';
 import { AdminWorkspaceProvider, useAdminWorkspace } from './AdminWorkspace';
 import { MobileNav } from './MobileNav';
@@ -67,7 +70,13 @@ function Workspace({ children, fallback }: { children: ReactNode; fallback: Reac
   const adminBranches = useAdminBranches().data;
   const regions = useBranches();
   const selectedId = useSelectedAdminBranchId();
-  const region = regions.find((b) => b.id === selectedId);
+  const summary = regions.find((b) => b.id === selectedId);
+  // Its rules (currency, taxes, payments) for every admin page: read before the frame shows.
+  const config = useQuery({ ...branchConfigQuery(summary?.id ?? ''), enabled: !!summary }).data;
+  const region = useMemo(
+    () => (summary && config ? joinBranch(summary, config) : undefined),
+    [summary, config],
+  );
   // Through a failed refresh of the admin's branches, the region data stands in.
   const branch = adminBranches?.find((b) => b.id === selectedId) ?? region;
   if (!branch || !region) return fallback;

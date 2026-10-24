@@ -1,5 +1,5 @@
 import type { CancellationReason, ReservationStatusCode } from '@/config/masters';
-import type { BranchImage, BranchStatus, CountryCode, OrderMode } from './branch';
+import type { BranchImage, BranchStatus, CountryCode, OpeningSchedule, OrderMode } from './branch';
 import type { Price } from './menu';
 import type { Order, OrderStatus, PaymentStatus } from './order';
 import type { ServiceRequest } from './service';
@@ -35,8 +35,8 @@ export interface AdminBranch {
   status: BranchStatus;
   /** ISO: when a pause ends, or a branch closed for the day opens again (back to open by itself). */
   statusUntil?: string;
-  /** Today's opening hours as shown, in the branch's local time: "11:00 AM – 10:00 PM". */
-  hoursToday: string;
+  /** The week's opening hours (24-hour local "HH:MM"); the card shows today's from it. */
+  schedule: OpeningSchedule;
   /** IANA time zone, for the branch's current local time ("Now 7:45 PM"). */
   timezone: string;
   /** BCP 47 locale the branch writes times in. */

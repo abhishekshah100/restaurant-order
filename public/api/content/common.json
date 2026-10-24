@@ -101,6 +101,7 @@
     "veg": "Vegetarian",
     "nonVeg": "Non-vegetarian"
   },
+  "prepTime": "{min}–{max} min",
   "dialog": {
     "close": "Close"
   },
@@ -331,7 +332,9 @@
         "closed": "{branch} is closed for the rest of today"
       },
       "failed": "Couldn't change the status. Try again."
-    }
+    },
+    "lastOrders": "Last orders {time}",
+    "lastOrdersSoon": "Last orders in {minutes} min"
   },
   "adminHome": {
     "greeting": {
@@ -1476,7 +1479,7 @@
       },
       "hours": {
         "title": "Opening hours",
-        "description": "Each day's hours, closed days, last orders and service windows.",
+        "description": "Each day's sessions, takeaway and delivery hours, special dates and last orders.",
         "summary": "{days} · today {today}"
       },
       "floorPlan": {
@@ -1693,14 +1696,7 @@
       "phoneRegion": "Use a number starting {dialCode}, this branch's country code",
       "wifiLong": "Keep the Wi-Fi name to 40 characters",
       "noOpenDay": "Open the branch on at least one day.",
-      "dayTime": "Give each open day an opening and a closing time.",
-      "dayOrder": "Closing time must be after opening time.",
-      "lastOrders": "Last orders must fall within every open day's hours.",
-      "windowLabel": "Name each service window (up to 30 characters).",
-      "windowLabelTaken": "Each service window needs a name of its own.",
-      "windowTime": "Give each service window a start and an end time.",
-      "windowOrder": "A service window must end after it starts.",
-      "tooManyWindows": "Keep it to 6 service windows.",
+      "lastOrders": "Each session must be longer than the last-orders time.",
       "taxRate": "Use a rate from 0 to 50%, with up to two decimals.",
       "serviceRate": "Use a service charge from 0.01 to 30%.",
       "taxLines": "The taxes changed meanwhile. Discard and try again.",
@@ -1728,7 +1724,15 @@
       "locale": "Choose how numbers and times are written.",
       "currency": "Choose a currency.",
       "noService": "Keep at least one way to order switched on.",
-      "deliveryNeedsZones": "Add a delivery zone before switching delivery on."
+      "deliveryNeedsZones": "Add a delivery zone before switching delivery on.",
+      "sessionTime": "Give each session an opening and a closing time.",
+      "sessionOverlap": "Sessions can't overlap, including one running past midnight into the next day's first.",
+      "tooManySessions": "Keep it to 4 sessions a day.",
+      "sessionLabel": "Keep each session name to 30 characters.",
+      "specialDates": "Give each special date a real start and end date: the end on or after the start, up to 62 days.",
+      "specialOverlap": "Special dates can't overlap.",
+      "tooManySpecialDays": "Keep it to 50 special dates.",
+      "specialLabel": "Keep each special date's name to 40 characters."
     },
     "details": {
       "subtitle": "Who and where this branch is. Guests see these on the start screen, the welcome screen and the Help page.",
@@ -1761,10 +1765,10 @@
       "timezoneSearch": "Type a city or region to find it, e.g. Kathmandu."
     },
     "hours": {
-      "subtitle": "When this branch is open. Guests see today's hours; on a closed day the branch shows as closed until it next opens.",
+      "subtitle": "When this branch takes orders. A day can have several sessions, such as lunch and dinner, and a session can run past midnight. Outside them, and from last orders, guests see the branch as closed until the next session.",
       "week": "The week",
-      "weekHint": "Opening and closing time each day, in the branch's local time.",
-      "copyAll": "Use {day}'s hours every day",
+      "weekHint": "Each day's sessions, in the branch's local time. A day without any is closed.",
+      "copyAll": "Use {day}'s sessions every day",
       "days": {
         "mon": "Monday",
         "tue": "Tuesday",
@@ -1778,24 +1782,37 @@
       "open": "Open",
       "closed": "Closed",
       "openOn": "Open on {day}",
-      "opensOn": "{day} opens at",
-      "closesOn": "{day} closes at",
-      "closedNote": "Staff can still pause or close ordering for the day from the bar at the top of every admin page.",
+      "closedNote": "Staff can still pause, close for the day or open late from the bar at the top of every admin page.",
       "lastOrders": "Last orders",
-      "lastOrdersHint": "When the kitchen takes its last order. Guests see it on the closed screen.",
+      "lastOrdersHint": "Orders stop this long before each session closes. Seated guests can still ask for the bill and pay.",
       "lastOrdersLabel": "Last order",
-      "atClosing": "At closing time",
-      "beforeClosing": "{minutes} min before closing",
-      "windows": "Service windows",
-      "windowsHint": "Parts of the day guests are told about, such as Lunch and Dinner.",
-      "addWindow": "Add window",
-      "noWindows": "No service windows: guests see just the opening hours.",
-      "windowN": "Window {n}",
-      "windowLabel": "Name",
-      "windowPlaceholder": "e.g. Lunch",
-      "from": "From",
-      "to": "To",
-      "removeWindow": "Remove {name}"
+      "atClosing": "When each session closes",
+      "beforeClosing": "{minutes} min before each session closes",
+      "addSession": "Add session",
+      "sessionLabel": "Name (optional)",
+      "sessionPlaceholder": "e.g. Lunch",
+      "opens": "Opens",
+      "closes": "Closes",
+      "nextDay": "next day",
+      "allDay": "all day",
+      "sessionOn": "{day}, session {n}",
+      "removeSession": "Remove {day} session {n}",
+      "closedDay": "Closed all day",
+      "modes": "Takeaway and delivery hours",
+      "modesHint": "Each follows the opening hours, unless you give it hours of its own (delivering later than the dining room, say).",
+      "sameAsOpening": "Same as opening hours",
+      "modeHours": "{mode}: own hours",
+      "special": "Special dates",
+      "specialHint": "Holidays and festivals: close for the day, or open in other sessions. They replace the week for every way of ordering.",
+      "addSpecial": "Add special date",
+      "noSpecial": "No special dates.",
+      "specialFrom": "From",
+      "specialTo": "To",
+      "specialName": "Name (optional)",
+      "specialPlaceholder": "e.g. Diwali",
+      "specialClosed": "Closed all day",
+      "removeSpecial": "Remove special date {n}",
+      "past": "Past"
     },
     "tax": {
       "subtitle": "How this branch's bills are worked out. New bills use these straight away.",

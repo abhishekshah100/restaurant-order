@@ -17,7 +17,7 @@ import {
 import { createClock } from '@/lib/clock';
 import { amountDue } from '@/lib/lifecycle';
 import { isFinished, isToday } from '@/lib/orders';
-import type { Branch, DeliveryZone, OpeningSchedule, Weekday } from '@/types/branch';
+import type { Branch, DeliveryZone, OpeningSchedule, Session, WeekSessions } from '@/types/branch';
 import { WEEKDAYS } from '@/types/branch';
 import type {
   BranchDetails,
@@ -68,20 +68,39 @@ function detailsBody(v: unknown): BranchDetails {
   };
 }
 
+function sessionsBody(v: unknown): Session[] {
+  return arr(v, 20).map((x) => {
+    const s = obj(x);
+    const label = s.label === undefined ? undefined : str(s.label);
+    return {
+      ...(label !== undefined ? { label } : {}),
+      opens: str(s.opens),
+      closes: str(s.closes),
+    };
+  });
+}
+
+function weekBody(v: unknown): WeekSessions {
+  const days = obj(v);
+  return Object.fromEntries(WEEKDAYS.map((day) => [day, sessionsBody(days[day])])) as WeekSessions;
+}
+
 function hoursBody(v: unknown): OpeningSchedule {
   const h = obj(v);
-  const days = obj(h.days);
   return {
-    days: Object.fromEntries(
-      WEEKDAYS.map((day): [Weekday, OpeningSchedule['days'][Weekday]] => {
-        const d = obj(days[day]);
-        return [day, { open: bool(d.open), opens: str(d.opens), closes: str(d.closes) }];
-      }),
-    ) as OpeningSchedule['days'],
+    days: weekBody(h.days),
     lastOrdersMinutes: num(h.lastOrdersMinutes),
-    windows: arr(h.windows, 20).map((w) => {
-      const x = obj(w);
-      return { label: str(x.label), from: str(x.from), to: str(x.to) };
+    takeaway: h.takeaway === null ? null : weekBody(h.takeaway),
+    delivery: h.delivery === null ? null : weekBody(h.delivery),
+    specialDays: arr(h.specialDays, 200).map((x) => {
+      const d = obj(x);
+      const label = d.label === undefined ? undefined : str(d.label);
+      return {
+        from: str(d.from),
+        to: str(d.to),
+        ...(label !== undefined ? { label } : {}),
+        sessions: sessionsBody(d.sessions),
+      };
     }),
   };
 }
@@ -298,12 +317,7 @@ export const createBranch: Handler = async (ctx, { body, headers }) => {
     ...Object.keys(setup.saved),
   ]);
   const id = uniqueId(`${details.city} ${details.shortName}`, taken, 'branch');
-  const {
-    image: _image,
-    reopensOn: _reopensOn,
-    reopensTomorrow: _reopensTomorrow,
-    ...copy
-  } = structuredClone(source);
+  const { image: _image, statusUntil: _statusUntil, ...copy } = structuredClone(source);
   const branch = withDetails({ ...copy, id, status: 'open' }, details);
   // The source's menu, promotions and floor plan are read from the branch it was built on.
   const copiedFrom = setup.added.find((a) => a.id === source.id)?.copiedFrom ?? source.id;
@@ -319,7 +333,7 @@ export const createBranch: Handler = async (ctx, { body, headers }) => {
   if (menu) ctx.db.menuChanges.write({ ...ctx.db.menuChanges.read(), [id]: menu });
 
   const created = (await ctx.seed.branches()).find((b) => b.id === id) ?? branch;
-  return ok(toAdminBranch(created), 201);
+  return ok(toAdminBranch(created, await ctx.seed.tables(id)), 201);
 };
 
 /** Whether a branch has orders today still to finish or pay. */

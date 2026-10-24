@@ -80,7 +80,7 @@ function backendOrder(over: Partial<BackendOrder> = {}): BackendOrder {
         changeableUntil: '2026-10-15T14:17:00.000Z',
       },
     ],
-    estimate: '18–22 min',
+    estimateMinutes: { min: 18, max: 22 },
     live: true,
     ...over,
   };

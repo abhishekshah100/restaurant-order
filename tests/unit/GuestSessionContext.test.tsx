@@ -9,7 +9,6 @@ import type { GuestSession } from '@/types/session';
 import { ApiTestProvider, seedGuestSession, testBranch } from '../apiState';
 
 const { id: defaultBranchId } = testBranch();
-const nepal = testBranch('ktm-thamel');
 
 const HOUR = 3_600_000;
 
@@ -51,7 +50,8 @@ async function openStart(url = '/') {
   const { result } = renderHook(() => ({ session: useGuestSession(), visit: useVisit() }), {
     wrapper,
   });
-  await waitFor(() => expect(result.current.visit.needsStart).toBe(true));
+  // A table link reaches the server first (it says whether the branch has that table).
+  await waitFor(() => expect(result.current.visit.needsStart).toBe(true), { timeout: 5000 });
   expect(result.current.session).toBeNull();
   return result.current.visit;
 }
@@ -174,9 +174,10 @@ describe('GuestSessionProvider', () => {
     expect(session).toMatchObject({ branchId: defaultBranchId, table: 7 });
   });
 
-  it("ignores a table outside the branch's range", async () => {
-    const visit = await openStart(`/?branch=ktm-thamel&table=${nepal.tables.last + 1}`);
-    expect(visit.choice).toEqual({ branchId: 'ktm-thamel' });
+  it("says the QR code couldn't be checked for a table the branch doesn't have", async () => {
+    // Thamel's tables go up to 40: the server refuses 41, and the guest is told (no endless wait).
+    const visit = await openStart('/?branch=ktm-thamel&table=41');
+    expect(visit.choice).toEqual({ branchId: 'ktm-thamel', invalidTable: 41 });
   });
 
   it('keeps a session saved before branches, at the default branch', async () => {

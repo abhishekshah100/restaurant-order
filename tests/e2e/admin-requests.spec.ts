@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { adminSignIn, againstBackend, callWaiter, scan, visible } from './helpers';
+import { expect, test, adminSignIn, againstBackend, callWaiter, scan, visible } from './helpers';
 
 /**
  * The Requests page against the mock server, in the same browser as a guest: the guest at

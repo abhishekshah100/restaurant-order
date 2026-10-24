@@ -1,5 +1,5 @@
-import { againstBackend, scan } from './helpers';
-import { expect, test, type Page } from '@playwright/test';
+import { againstBackend, scan, expect, test } from './helpers';
+import type { Page } from '@playwright/test';
 
 /**
  * Service: help page, request a waiter (with duplicate guard and cancel), request the bill.

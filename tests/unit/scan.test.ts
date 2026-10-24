@@ -7,7 +7,6 @@ import { testBranches, testRestaurant } from '../apiState';
 const branches = testBranches();
 const { defaultBranchId } = testRestaurant();
 const india = resolveBranch(branches, defaultBranchId);
-const nepal = resolveBranch(branches, 'ktm-thamel');
 
 const parse = (search: string) => parseScan(search, branches, defaultBranchId);
 const session = (over: Partial<GuestSession> = {}): GuestSession => ({
@@ -39,13 +38,15 @@ describe('parseScan', () => {
     expect(parse('?branch=nowhere&table=5')).toEqual({ branchId: india.id, table: 5, mode: null });
   });
 
-  it("ignores tables outside the branch's range", () => {
-    expect(parse(`?branch=ktm-thamel&table=${nepal.tables.last + 1}`)).toEqual({
+  it("passes any table number on for the server to check, and ignores what isn't one", () => {
+    // Thamel has 40 tables: whether 41 is one of them is the server's to say (refusedScan).
+    expect(parse('?branch=ktm-thamel&table=41')).toEqual({
       branchId: 'ktm-thamel',
-      table: null,
+      table: 41,
       mode: null,
     });
     expect(parse('?table=0')).toBeNull();
+    expect(parse('?table=12345')).toBeNull();
     expect(parse('?table=abc')).toBeNull();
     expect(parse('')).toBeNull();
   });
@@ -78,15 +79,6 @@ describe('resolveScan', () => {
     expect(resolve(saved, '')).toEqual({ keep: saved });
     const there = session({ branchId: 'ktm-thamel', table: 3 });
     expect(resolve(there, '?branch=ktm-thamel')).toEqual({ keep: there });
-  });
-
-  it('sends a scan of a table out of service to the start screen, saying so', () => {
-    const closed = branches.map((b) =>
-      b.id === india.id ? { ...b, tables: { ...b.tables, outOfService: [8] } } : b,
-    );
-    const at = (search: string) => resolveScan(session(), parse(search), closed, defaultBranchId);
-    expect(at('?table=8')).toEqual({ choose: { branchId: india.id, closedTable: 8 } });
-    expect(at('?table=9')).toEqual({ start: { branchId: india.id, mode: 'dineIn', table: 9 } });
   });
 
   it('starts a dine-in session for another table or another branch', () => {
@@ -126,10 +118,9 @@ describe('resolveScan', () => {
 });
 
 describe('fitsBranches', () => {
-  it("needs a known branch that has the session's table", () => {
+  it('needs a branch that is still there (its tables are the server’s to check)', () => {
     expect(fitsBranches(session(), branches)).toBe(true);
     expect(fitsBranches(session({ branchId: 'gone' }), branches)).toBe(false);
-    expect(fitsBranches(session({ branchId: 'ktm-thamel', table: 500 }), branches)).toBe(false);
     expect(fitsBranches(session({ mode: 'takeaway', table: undefined }), branches)).toBe(true);
   });
 });
@@ -137,8 +128,12 @@ describe('fitsBranches', () => {
 describe('refusedScan', () => {
   const scan = { branchId: 'blr-indiranagar', mode: 'dineIn' as const, table: 5, qrToken: 'v1.x' };
 
-  it('sends a forged or edited table link, or a table out of service, to the start screen', () => {
+  it('sends a forged or edited table link, a table out of service, or one the branch doesn’t have, to the start screen', () => {
     expect(refusedScan(scan, 'qr_invalid')).toEqual({
+      branchId: 'blr-indiranagar',
+      invalidTable: 5,
+    });
+    expect(refusedScan(scan, 'invalid_request')).toEqual({
       branchId: 'blr-indiranagar',
       invalidTable: 5,
     });
@@ -150,7 +145,7 @@ describe('refusedScan', () => {
 
   it('leaves any other failure to be tried again', () => {
     expect(refusedScan(scan, undefined)).toBeNull();
-    expect(refusedScan(scan, 'invalid_request')).toBeNull();
+    expect(refusedScan(scan, 'server_error')).toBeNull();
     expect(refusedScan({ branchId: 'blr-indiranagar', mode: 'takeaway' }, 'qr_invalid')).toBeNull();
   });
 });

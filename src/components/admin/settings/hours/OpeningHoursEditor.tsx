@@ -3,33 +3,46 @@
 import { useContent } from '@/api/hooks';
 import { Button, IconButton, Input, Select, Tag } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
-import { isTime, toMinutes, weekdayAt } from '@/lib/branchHours';
+import { weekdayAt } from '@/lib/branchHours';
 import { LIMITS, hoursErrors } from '@/lib/branchSettings';
 import { cx } from '@/lib/cx';
-import { WEEKDAYS, type DayHours, type OpeningSchedule, type Weekday } from '@/types/branch';
+import {
+  WEEKDAYS,
+  type OpeningSchedule,
+  type Session,
+  type SpecialDay,
+  type WeekSessions,
+} from '@/types/branch';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { SettingsCard, SettingsEditor, SettingsNote } from '../shared/SettingsEditor';
+import { SessionsEditor, WeekEditor } from './SessionsEditor';
 import styles from './OpeningHoursEditor.module.css';
 
-/** Last orders: this many minutes before closing. */
+/** Last orders: this many minutes before each session closes. */
 const LAST_ORDERS = [0, 15, 30, 45, 60, 90, 120] as const;
 
-/** A new service window starts like this (staff name it and set its times). */
-const NEW_WINDOW = { label: '', from: '12:00', to: '15:00' };
+/** A day opened without another to copy starts like this. */
+const NEW_SESSION: Session = { opens: '11:00', closes: '21:00' };
 
-const dayProblem = (d: DayHours) =>
-  d.open && (!isTime(d.opens) || !isTime(d.closes) || toMinutes(d.closes) <= toMinutes(d.opens));
+/** Takeaway and delivery: the ways of ordering that can keep hours of their own. */
+const OWN_HOURS = ['takeaway', 'delivery'] as const;
+
+const copyWeek = (week: WeekSessions) =>
+  Object.fromEntries(WEEKDAYS.map((d) => [d, week[d].map((s) => ({ ...s }))])) as WeekSessions;
 
 /**
- * Settings › Opening hours: each day of the week open (from, to) or closed, when the kitchen
- * takes its last order, and the service windows guests are told about (Lunch, Dinner). Guests
- * see today's hours; on a closed day the branch shows as closed until its next opening day.
+ * Settings › Opening hours: the week's sessions (lunch, dinner; one may run past midnight or all
+ * day; a day without any is closed), when before each closes the kitchen takes its last order,
+ * takeaway's and delivery's own hours (or the opening hours), and special dates (holidays,
+ * festivals) that replace the week for every way of ordering. Guests can order inside a session
+ * until its last orders; otherwise the branch shows as closed until the next one.
  */
 export function OpeningHoursEditor() {
   const t = useContent('common');
-  const { region } = useAdminWorkspace();
+  const { region, clock } = useAdminWorkspace();
   const now = useNow(60_000);
   const today = now ? weekdayAt(now, region.timezone) : null;
+  const todayKey = now ? clock.dayKey(now) : null;
 
   return (
     <SettingsEditor
@@ -39,21 +52,15 @@ export function OpeningHoursEditor() {
       check={hoursErrors}
     >
       {({ value, set }) => {
-        const setDay = (day: Weekday, next: Partial<DayHours>) =>
-          set({ ...value, days: { ...value.days, [day]: { ...value.days[day], ...next } } });
-        const copyToAll = (day: Weekday) =>
+        const firstOpen = WEEKDAYS.find((d) => value.days[d].length > 0);
+        /** A day opened again starts with the first open day's sessions. */
+        const opening = () =>
+          firstOpen ? value.days[firstOpen].map((s) => ({ ...s })) : [{ ...NEW_SESSION }];
+        const setSpecial = (index: number, next: Partial<SpecialDay>) =>
           set({
             ...value,
-            days: Object.fromEntries(
-              WEEKDAYS.map((d) => [d, { ...value.days[day] }]),
-            ) as OpeningSchedule['days'],
+            specialDays: value.specialDays.map((d, i) => (i === index ? { ...d, ...next } : d)),
           });
-        const setWindow = (index: number, next: Partial<OpeningSchedule['windows'][number]>) =>
-          set({
-            ...value,
-            windows: value.windows.map((w, i) => (i === index ? { ...w, ...next } : w)),
-          });
-        const firstOpen = WEEKDAYS.find((d) => value.days[d].open);
 
         return (
           <>
@@ -66,7 +73,15 @@ export function OpeningHoursEditor() {
                     variant="secondary"
                     size="sm"
                     iconStart="swap"
-                    onClick={() => copyToAll(firstOpen)}
+                    onClick={() => {
+                      const sessions = value.days[firstOpen];
+                      set({
+                        ...value,
+                        days: Object.fromEntries(
+                          WEEKDAYS.map((d) => [d, sessions.map((s) => ({ ...s }))]),
+                        ) as OpeningSchedule['days'],
+                      });
+                    }}
                   >
                     {t('adminSettings.hours.copyAll', {
                       day: t(`adminSettings.hours.days.${firstOpen}`),
@@ -75,66 +90,13 @@ export function OpeningHoursEditor() {
                 )
               }
             >
-              <ul className={styles.days}>
-                {WEEKDAYS.map((day) => {
-                  const hours = value.days[day];
-                  const name = t(`adminSettings.hours.days.${day}`);
-                  const problem = dayProblem(hours);
-                  return (
-                    <li key={day} className={cx(styles.day, !hours.open && styles.closed)}>
-                      <div className={styles.dayName}>
-                        <span>{name}</span>
-                        {day === today && (
-                          <Tag variant="plain" icon={null}>
-                            {t('adminSettings.hours.today')}
-                          </Tag>
-                        )}
-                      </div>
-                      <label className={styles.dayOpen}>
-                        <input
-                          type="checkbox"
-                          role="switch"
-                          className={styles.switch}
-                          checked={hours.open}
-                          aria-label={t('adminSettings.hours.openOn', { day: name })}
-                          onChange={(event) => setDay(day, { open: event.target.checked })}
-                        />
-                        <span>
-                          {hours.open
-                            ? t('adminSettings.hours.open')
-                            : t('adminSettings.hours.closed')}
-                        </span>
-                      </label>
-                      {hours.open && (
-                        <div className={styles.times}>
-                          <Input
-                            id={`opens-${day}`}
-                            type="time"
-                            step={300}
-                            label={t('adminSettings.hours.opensOn', { day: name })}
-                            hideLabel
-                            value={hours.opens}
-                            error={problem ? t('adminSettings.errors.dayOrder') : undefined}
-                            onChange={(event) => setDay(day, { opens: event.target.value })}
-                          />
-                          <span className={styles.to} aria-hidden="true">
-                            –
-                          </span>
-                          <Input
-                            id={`closes-${day}`}
-                            type="time"
-                            step={300}
-                            label={t('adminSettings.hours.closesOn', { day: name })}
-                            hideLabel
-                            value={hours.closes}
-                            onChange={(event) => setDay(day, { closes: event.target.value })}
-                          />
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+              <WeekEditor
+                value={value.days}
+                onChange={(days) => set({ ...value, days })}
+                idPrefix="opening"
+                today={today}
+                opening={opening}
+              />
               <SettingsNote>{t('adminSettings.hours.closedNote')}</SettingsNote>
             </SettingsCard>
 
@@ -160,70 +122,161 @@ export function OpeningHoursEditor() {
               </Select>
             </SettingsCard>
 
+            {OWN_HOURS.some((m) => region.modes[m].enabled) && (
+              <SettingsCard
+                title={t('adminSettings.hours.modes')}
+                hint={t('adminSettings.hours.modesHint')}
+              >
+                {OWN_HOURS.filter((m) => region.modes[m].enabled).map((mode) => {
+                  const week = value[mode];
+                  const name = t(`modes.${mode}`);
+                  return (
+                    <div key={mode} className={styles.mode}>
+                      <label className={styles.dayOpen}>
+                        <input
+                          type="checkbox"
+                          role="switch"
+                          className={styles.switch}
+                          checked={week === null}
+                          onChange={(event) =>
+                            set({
+                              ...value,
+                              [mode]: event.target.checked ? null : copyWeek(value.days),
+                            })
+                          }
+                        />
+                        <span>
+                          {week === null
+                            ? `${name}: ${t('adminSettings.hours.sameAsOpening')}`
+                            : t('adminSettings.hours.modeHours', { mode: name })}
+                        </span>
+                      </label>
+                      {week && (
+                        <WeekEditor
+                          value={week}
+                          onChange={(next) => set({ ...value, [mode]: next })}
+                          idPrefix={mode}
+                          today={today}
+                          opening={opening}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </SettingsCard>
+            )}
+
             <SettingsCard
-              title={t('adminSettings.hours.windows')}
-              hint={t('adminSettings.hours.windowsHint')}
+              title={t('adminSettings.hours.special')}
+              hint={t('adminSettings.hours.specialHint')}
               action={
                 <Button
                   variant="secondary"
                   size="sm"
                   iconStart="plus"
-                  disabled={value.windows.length >= LIMITS.windows}
-                  onClick={() => set({ ...value, windows: [...value.windows, { ...NEW_WINDOW }] })}
+                  disabled={!todayKey || value.specialDays.length >= LIMITS.specialDays}
+                  onClick={() =>
+                    todayKey &&
+                    set({
+                      ...value,
+                      specialDays: [
+                        ...value.specialDays,
+                        { from: todayKey, to: todayKey, sessions: [] },
+                      ],
+                    })
+                  }
                 >
-                  {t('adminSettings.hours.addWindow')}
+                  {t('adminSettings.hours.addSpecial')}
                 </Button>
               }
             >
-              {value.windows.length === 0 ? (
-                <p className={styles.empty}>{t('adminSettings.hours.noWindows')}</p>
+              {value.specialDays.length === 0 ? (
+                <p className={styles.empty}>{t('adminSettings.hours.noSpecial')}</p>
               ) : (
-                <ul className={styles.windows}>
-                  {value.windows.map((w, i) => {
-                    const name = w.label.trim() || t('adminSettings.hours.windowN', { n: i + 1 });
-                    const order =
-                      isTime(w.from) && isTime(w.to) && toMinutes(w.to) <= toMinutes(w.from);
+                <ul className={styles.specials}>
+                  {value.specialDays.map((d, i) => {
+                    const n = i + 1;
+                    const closed = d.sessions.length === 0;
+                    const past = todayKey !== null && d.to < todayKey;
+                    const name = d.label?.trim() || t('adminSettings.hours.special');
                     return (
-                      // Windows have no id; their place in the list is theirs while editing.
-                      <li key={i} className={styles.window}>
-                        <Input
-                          id={`window-${i}-label`}
-                          label={t('adminSettings.hours.windowLabel')}
-                          placeholder={t('adminSettings.hours.windowPlaceholder')}
-                          value={w.label}
-                          maxLength={LIMITS.windowLabel + 10}
-                          error={
-                            !w.label.trim() ? t('adminSettings.errors.windowLabel') : undefined
-                          }
-                          onChange={(event) => setWindow(i, { label: event.target.value })}
-                        />
-                        <Input
-                          id={`window-${i}-from`}
-                          type="time"
-                          step={300}
-                          label={t('adminSettings.hours.from')}
-                          value={w.from}
-                          error={order ? t('adminSettings.errors.windowOrder') : undefined}
-                          onChange={(event) => setWindow(i, { from: event.target.value })}
-                        />
-                        <Input
-                          id={`window-${i}-to`}
-                          type="time"
-                          step={300}
-                          label={t('adminSettings.hours.to')}
-                          value={w.to}
-                          onChange={(event) => setWindow(i, { to: event.target.value })}
-                        />
-                        <IconButton
-                          icon="trash"
-                          variant="soft"
-                          size="sm"
-                          className={styles.remove}
-                          label={t('adminSettings.hours.removeWindow', { name })}
-                          onClick={() =>
-                            set({ ...value, windows: value.windows.filter((_, j) => j !== i) })
-                          }
-                        />
+                      // Special dates have no id; their place in the list is theirs while editing.
+                      <li key={i} className={cx(styles.special, closed && styles.closed)}>
+                        <div className={styles.specialHead}>
+                          <Input
+                            id={`special-${i}-label`}
+                            label={t('adminSettings.hours.specialName')}
+                            placeholder={t('adminSettings.hours.specialPlaceholder')}
+                            value={d.label ?? ''}
+                            maxLength={LIMITS.specialLabel}
+                            onChange={(event) => setSpecial(i, { label: event.target.value })}
+                          />
+                          <Input
+                            id={`special-${i}-from`}
+                            type="date"
+                            label={t('adminSettings.hours.specialFrom')}
+                            value={d.from}
+                            onChange={(event) =>
+                              setSpecial(i, {
+                                from: event.target.value,
+                                // A single day by default: the end follows an earlier one.
+                                ...(d.to < event.target.value ? { to: event.target.value } : {}),
+                              })
+                            }
+                          />
+                          <Input
+                            id={`special-${i}-to`}
+                            type="date"
+                            label={t('adminSettings.hours.specialTo')}
+                            value={d.to}
+                            onChange={(event) => setSpecial(i, { to: event.target.value })}
+                          />
+                          <IconButton
+                            icon="trash"
+                            variant="soft"
+                            size="sm"
+                            className={styles.remove}
+                            label={t('adminSettings.hours.removeSpecial', { n })}
+                            onClick={() =>
+                              set({
+                                ...value,
+                                specialDays: value.specialDays.filter((_, j) => j !== i),
+                              })
+                            }
+                          />
+                        </div>
+                        <div className={styles.specialState}>
+                          <label className={styles.dayOpen}>
+                            <input
+                              type="checkbox"
+                              role="switch"
+                              className={styles.switch}
+                              checked={!closed}
+                              aria-label={t('adminSettings.hours.openOn', { day: name })}
+                              onChange={(event) =>
+                                setSpecial(i, { sessions: event.target.checked ? opening() : [] })
+                              }
+                            />
+                            <span>
+                              {closed
+                                ? t('adminSettings.hours.specialClosed')
+                                : t('adminSettings.hours.open')}
+                            </span>
+                          </label>
+                          {past && (
+                            <Tag variant="plain" icon={null}>
+                              {t('adminSettings.hours.past')}
+                            </Tag>
+                          )}
+                        </div>
+                        {!closed && (
+                          <SessionsEditor
+                            sessions={d.sessions}
+                            onChange={(sessions) => setSpecial(i, { sessions })}
+                            idPrefix={`special-${i}`}
+                            dayName={name}
+                          />
+                        )}
                       </li>
                     );
                   })}

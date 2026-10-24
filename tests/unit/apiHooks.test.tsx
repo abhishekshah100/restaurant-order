@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useLiveOrder, useLiveOrderList } from '@/components/order/useLiveOrders';
 import { usePayBill } from '@/components/service/usePayBill';
@@ -45,6 +45,15 @@ async function guestWithOrder(): Promise<Order> {
 }
 
 beforeEach(() => push.mockClear());
+
+// Orders are taken inside a branch's sessions (11:00-21:00 here): pin the clock to 1 PM in India,
+// so the tests don't depend on the time they run.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-15T07:30:00Z') });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('order reads', () => {
   it('useLiveOrder: loading, then the live order; unknown ids are missing', async () => {

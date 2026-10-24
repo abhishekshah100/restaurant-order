@@ -2,7 +2,7 @@
 
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { SiteHeader } from '@/components/layout/SiteHeader';
-import { useBranch, useContent, useRegion } from '@/api/hooks';
+import { useContent, useRegion } from '@/api/hooks';
 import { Button, EmptyState, Icon, Spinner } from '@/components/ui';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount';
 import { cx } from '@/lib/cx';
@@ -92,12 +92,11 @@ function ProcessingFoot({
   onFailure,
 }: Omit<ProcessingProps, 'payment' | 'table'>) {
   const t = useContent('service');
-  const { paymentPartner } = useBranch();
   return (
     <>
       <p className={cx('t-small c3', styles.secure)}>
         <Icon name="shield" size="xs" />
-        {t('payBill.processing.secure', { partner: paymentPartner })}
+        {t('payBill.processing.secure')}
       </p>
       <Button variant="ghost" onClick={onCancel}>
         {t('payBill.processing.cancel')}

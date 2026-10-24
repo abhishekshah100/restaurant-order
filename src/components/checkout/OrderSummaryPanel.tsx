@@ -13,6 +13,7 @@ import { useBranch, useContent, useMenu, useRegion } from '@/api/hooks';
 import { dishImage } from '@/lib/menu';
 import { useCartLineLabels } from '@/hooks/useCartLineLabels';
 import styles from './Checkout.module.css';
+import { usePrepTime } from '@/hooks/useBranchTimes';
 
 export interface OrderSummaryPanelProps {
   variant?: PriceSummaryVariant;
@@ -33,6 +34,7 @@ export function OrderSummaryPanel({
   const { bill, mode, quote } = useOrderBill();
   const menu = useMenu();
   const branch = useBranch();
+  const prepTime = usePrepTime();
   const t = useContent('checkout');
   const { money } = useRegion();
   const labels = useCartLineLabels();
@@ -94,7 +96,7 @@ export function OrderSummaryPanel({
       <span className={styles.etaPill}>
         <Icon name="clock" size="xs" />
         {mode === 'dineIn'
-          ? t('summary.eta', { time: branch.prepTime })
+          ? t('summary.eta', { time: prepTime })
           : t(`summary.etaMode.${mode}`, { minutes: etaMinutes(branch, mode, quote) })}
       </span>
       {footnote && <p className="t-small c3">{footnote}</p>}

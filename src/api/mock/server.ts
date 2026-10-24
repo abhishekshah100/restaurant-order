@@ -25,6 +25,7 @@ import {
 import {
   branchMenu,
   listBranches,
+  branchConfig,
   branchStatus,
   createDish,
   removeDish,
@@ -112,6 +113,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['GET', 'branches/:branchId/menu', branchMenu],
   ['GET', 'branches/:branchId/promotions', branchPromotions],
   ['GET', 'branches', listBranches],
+  ['GET', 'branches/:branchId/config', branchConfig],
   ['GET', 'branches/:branchId/status', branchStatus],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', addStaffRound],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', editStaffRound],

@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { waitForSavedCart, scan } from './helpers';
+import type { Page } from '@playwright/test';
+import { expect, test, waitForSavedCart, scan } from './helpers';
 
 /**
  * Happy path: menu → dish → cart → checkout → confirmation.

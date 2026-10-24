@@ -4,8 +4,10 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Banner, Button, Icon, type IconName } from '@/components/ui';
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { useVisit } from '@/context/GuestSessionContext';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { useBranch, useContent } from '@/api/hooks';
+import { useBranchTimes } from '@/hooks/useBranchTimes';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
 import { cx } from '@/lib/cx';
 import { compactTimeRange, pausedMinutes } from '@/lib/restaurantStatus';
@@ -78,40 +80,54 @@ function StatusCard({
 
 function ClosedCard() {
   const branch = useBranch();
+  const { mode } = useVisit();
+  const times = useBranchTimes(branch, mode);
   const t = useContent('status');
+  const common = useContent('common');
+  // Takeaway or delivery closed on hours of its own: say which, and when it opens.
+  const modeName = mode === 'dineIn' ? null : common(`modes.${mode}`);
+  const time = times?.opensAt ?? '';
+  const day = times?.reopensOn ? t(`hours.weekdays.${times.reopensOn}`) : '';
   return (
     <StatusCard
       icon="store"
       tone="neutral"
-      title={t('closed.title')}
+      title={modeName ? t('closed.titleMode', { mode: modeName }) : t('closed.title')}
       wide
-      lede={t.rich(
-        // Closed by staff for the rest of the day, or today isn't an opening day: it opens again
-        // tomorrow or on a later day, not later today.
-        branch.reopensTomorrow
-          ? 'closed.ledeTomorrow'
-          : branch.reopensOn
-            ? 'closed.ledeOn'
-            : 'closed.lede',
-        { b: (c) => <b className={styles.ink}>{c}</b> },
-        {
-          time: branch.opensAt,
-          opensIn: branch.opensIn,
-          day: branch.reopensOn ? t(`hours.weekdays.${branch.reopensOn}`) : '',
-        },
-      )}
+      lede={
+        // The times are worked out on the device: from the first client render.
+        times &&
+        (modeName
+          ? times.reopensTomorrow
+            ? t('banner.modeClosedTomorrow', { mode: modeName, time })
+            : times.reopensOn
+              ? t('banner.modeClosedOn', { mode: modeName, time, day })
+              : t('banner.modeClosed', { mode: modeName, time })
+          : t.rich(
+              // Opens again later today, tomorrow (closed by staff for the rest of the day, or the
+              // week), or on a later day (the week is shut till then).
+              times.reopensTomorrow
+                ? 'closed.ledeTomorrow'
+                : times.reopensOn
+                  ? 'closed.ledeOn'
+                  : 'closed.lede',
+              { b: (c) => <b className={styles.ink}>{c}</b> },
+              { time, opensIn: times.opensIn, day },
+            ))
+      }
       actions={
         <>
           <Button href="/menu/">{t('closed.browse')}</Button>
-          <Button href={branch.phoneHref} variant="secondary" iconStart="phone">
+          <Button href={`tel:${branch.phone}`} variant="secondary" iconStart="phone">
             {t('closed.call')}
           </Button>
         </>
       }
     >
       <dl className={styles.hours} aria-label={t('closed.hoursLabel')}>
-        {branch.serviceWindows.map((w) => (
-          <div key={w.label} className={styles.hour}>
+        {times?.sessions.map((w, i) => (
+          // Sessions can share a label ("Open"): their order is theirs.
+          <div key={i} className={styles.hour}>
             <dt className={styles.hourLabel}>{w.label}</dt>
             <dd className={styles.hourValue}>
               <span className="hide-desktop">{w.hours}</span>
@@ -124,7 +140,9 @@ function ClosedCard() {
             <span className="hide-desktop">{t('closed.lastOrderMobile')}</span>
             <span className="hide-mobile">{t('closed.lastOrderDesktop')}</span>
           </dt>
-          <dd className={styles.hourValue}>{branch.lastOrdersNote}</dd>
+          <dd className={styles.hourValue}>
+            {t('hours.lastOrdersNote', { minutes: branch.schedule.lastOrdersMinutes })}
+          </dd>
         </div>
       </dl>
     </StatusCard>
@@ -132,7 +150,7 @@ function ClosedCard() {
 }
 
 function PausedCard() {
-  const branch = useBranch();
+  const times = useBranchTimes(useBranch(), useVisit().mode);
   const { openRequest } = useServiceRequest();
   const t = useContent('status');
   return (
@@ -146,7 +164,7 @@ function PausedCard() {
             {t.rich(
               'paused.ledeMobile',
               { b: (c) => <b className={styles.ink}>{c}</b> },
-              { minutes: pausedMinutes(branch) },
+              { minutes: pausedMinutes(times?.pausedForMinutes ?? 0) },
             )}
           </span>
           <span className="hide-mobile">{t('paused.ledeDesktop')}</span>

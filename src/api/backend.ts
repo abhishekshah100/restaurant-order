@@ -22,6 +22,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/floors'],
   // What guests read of the branches.
   ['GET', 'branches'],
+  ['GET', 'branches/:branchId/config'],
   ['GET', 'branches/:branchId/status'],
   ['GET', 'branches/:branchId/floors'],
   // The menu: what everyone reads, and staff changing it.

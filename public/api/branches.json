@@ -13,88 +13,61 @@
     },
     "mapUrl": "https://www.google.com/maps/search/?api=1&query=Udyog%20Vihar%20Phase%203%2C%20Gurgaon%2C%20India",
     "phone": "+918826314093",
-    "phoneHref": "tel:+918826314093",
     "wifiName": "hathway-wifi",
-    "paymentPartner": "[PAYMENT PARTNER]",
     "status": "open",
-    "opensAt": "11:00 AM",
-    "closesAt": "9:00 PM",
-    "hours": {
-      "opens": "11:00",
-      "closes": "21:00"
-    },
-    "opensIn": "in about 1 hr 20 min",
-    "pausedForMinutes": 15,
     "schedule": {
       "days": {
-        "mon": {
-          "open": true,
-          "opens": "11:00",
-          "closes": "21:00"
-        },
-        "tue": {
-          "open": true,
-          "opens": "11:00",
-          "closes": "21:00"
-        },
-        "wed": {
-          "open": true,
-          "opens": "11:00",
-          "closes": "21:00"
-        },
-        "thu": {
-          "open": true,
-          "opens": "11:00",
-          "closes": "21:00"
-        },
-        "fri": {
-          "open": true,
-          "opens": "11:00",
-          "closes": "21:00"
-        },
-        "sat": {
-          "open": true,
-          "opens": "11:00",
-          "closes": "21:00"
-        },
-        "sun": {
-          "open": true,
-          "opens": "11:00",
-          "closes": "21:00"
-        }
+        "mon": [
+          {
+            "opens": "11:00",
+            "closes": "21:00"
+          }
+        ],
+        "tue": [
+          {
+            "opens": "11:00",
+            "closes": "21:00"
+          }
+        ],
+        "wed": [
+          {
+            "opens": "11:00",
+            "closes": "21:00"
+          }
+        ],
+        "thu": [
+          {
+            "opens": "11:00",
+            "closes": "21:00"
+          }
+        ],
+        "fri": [
+          {
+            "opens": "11:00",
+            "closes": "21:00"
+          }
+        ],
+        "sat": [
+          {
+            "opens": "11:00",
+            "closes": "21:00"
+          }
+        ],
+        "sun": [
+          {
+            "opens": "11:00",
+            "closes": "21:00"
+          }
+        ]
       },
       "lastOrdersMinutes": 30,
-      "windows": [
-        {
-          "label": "Lunch",
-          "from": "11:00",
-          "to": "15:30"
-        },
-        {
-          "label": "Dinner",
-          "from": "18:30",
-          "to": "21:00"
-        }
-      ]
+      "takeaway": null,
+      "delivery": null,
+      "specialDays": []
     },
-    "hoursToday": "11:00 AM – 9:00 PM",
-    "lastOrders": "8:30 PM",
-    "lastOrdersNote": "30 min before close",
-    "serviceWindows": [
-      {
-        "label": "Lunch",
-        "hours": "11:00 AM – 3:30 PM"
-      },
-      {
-        "label": "Dinner",
-        "hours": "6:30 PM – 9:00 PM"
-      }
-    ],
-    "prepTime": "18–22 min",
-    "defaultTable": 12,
-    "tables": {
-      "first": 1,
-      "last": 999
+    "prepMinutes": {
+      "min": 18,
+      "max": 22
     },
     "locale": "en-IN",
     "currency": {
@@ -240,6 +213,14 @@
     "ordering": {
       "dineInPayment": "endOfMeal",
       "cancelWindowSeconds": 120
+    },
+    "modeStatus": {
+      "takeaway": {
+        "status": "open"
+      },
+      "delivery": {
+        "status": "open"
+      }
     }
   },
   {
@@ -256,88 +237,61 @@
     },
     "mapUrl": "https://www.google.com/maps/search/?api=1&query=Thamel%2C%20Kathmandu",
     "phone": "+9779852024631",
-    "phoneHref": "tel:+9779852024631",
     "wifiName": "worldlink",
-    "paymentPartner": "[PAYMENT PARTNER]",
     "status": "open",
-    "opensAt": "10:00 AM",
-    "closesAt": "10:00 PM",
-    "hours": {
-      "opens": "10:00",
-      "closes": "22:00"
-    },
-    "opensIn": "in about 1 hr",
-    "pausedForMinutes": 15,
     "schedule": {
       "days": {
-        "mon": {
-          "open": true,
-          "opens": "10:00",
-          "closes": "22:00"
-        },
-        "tue": {
-          "open": true,
-          "opens": "10:00",
-          "closes": "22:00"
-        },
-        "wed": {
-          "open": true,
-          "opens": "10:00",
-          "closes": "22:00"
-        },
-        "thu": {
-          "open": true,
-          "opens": "10:00",
-          "closes": "22:00"
-        },
-        "fri": {
-          "open": true,
-          "opens": "10:00",
-          "closes": "22:00"
-        },
-        "sat": {
-          "open": true,
-          "opens": "10:00",
-          "closes": "22:00"
-        },
-        "sun": {
-          "open": true,
-          "opens": "10:00",
-          "closes": "22:00"
-        }
+        "mon": [
+          {
+            "opens": "10:00",
+            "closes": "22:00"
+          }
+        ],
+        "tue": [
+          {
+            "opens": "10:00",
+            "closes": "22:00"
+          }
+        ],
+        "wed": [
+          {
+            "opens": "10:00",
+            "closes": "22:00"
+          }
+        ],
+        "thu": [
+          {
+            "opens": "10:00",
+            "closes": "22:00"
+          }
+        ],
+        "fri": [
+          {
+            "opens": "10:00",
+            "closes": "22:00"
+          }
+        ],
+        "sat": [
+          {
+            "opens": "10:00",
+            "closes": "22:00"
+          }
+        ],
+        "sun": [
+          {
+            "opens": "10:00",
+            "closes": "22:00"
+          }
+        ]
       },
       "lastOrdersMinutes": 30,
-      "windows": [
-        {
-          "label": "Lunch",
-          "from": "10:00",
-          "to": "15:00"
-        },
-        {
-          "label": "Dinner",
-          "from": "18:00",
-          "to": "22:00"
-        }
-      ]
+      "takeaway": null,
+      "delivery": null,
+      "specialDays": []
     },
-    "hoursToday": "10:00 AM – 10:00 PM",
-    "lastOrders": "9:30 PM",
-    "lastOrdersNote": "30 min before close",
-    "serviceWindows": [
-      {
-        "label": "Lunch",
-        "hours": "10:00 AM – 3:00 PM"
-      },
-      {
-        "label": "Dinner",
-        "hours": "6:00 PM – 10:00 PM"
-      }
-    ],
-    "prepTime": "20–25 min",
-    "defaultTable": 1,
-    "tables": {
-      "first": 1,
-      "last": 40
+    "prepMinutes": {
+      "min": 20,
+      "max": 25
     },
     "locale": "en-NP",
     "localeFallback": "en-IN",
@@ -520,6 +474,14 @@
     "ordering": {
       "dineInPayment": "endOfMeal",
       "cancelWindowSeconds": 120
+    },
+    "modeStatus": {
+      "takeaway": {
+        "status": "open"
+      },
+      "delivery": {
+        "status": "open"
+      }
     }
   }
 ]

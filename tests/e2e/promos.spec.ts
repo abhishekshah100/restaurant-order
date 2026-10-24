@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { dishSlug, installClock, scan, waitForSavedCart } from './helpers';
+import type { Page } from '@playwright/test';
+import { expect, test, dishSlug, installClock, scan, waitForSavedCart } from './helpers';
 
 /**
  * Promotions: promo codes in the cart (applied, refused below the minimum, carried through

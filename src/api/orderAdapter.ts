@@ -1,4 +1,5 @@
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
+import { joinBranch } from '@/lib/branchParts';
 import { describeInstructions, describeOptions } from '@/lib/cartLine';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
@@ -18,7 +19,7 @@ import type {
   PaymentMethod,
   PaymentTransaction,
 } from '@/types/order';
-import { branchMenuQuery, branchesQuery, contentQuery } from './queries';
+import { branchConfigQuery, branchMenuQuery, branchesQuery, contentQuery } from './queries';
 import { getQueryClient } from './queryClient';
 import { createTranslator, type Translator } from './translator';
 import type { ContentMap } from './queries';
@@ -92,7 +93,8 @@ export interface BackendOrder {
   rounds: BackendRound[];
   cancelledBy?: Order['cancelledBy'];
   cancelReason?: string;
-  estimate?: string;
+  /** Dine-in: the kitchen's usual time, in minutes. */
+  estimateMinutes?: { min: number; max: number };
   kitchenNote?: string;
   live: boolean;
 }
@@ -118,8 +120,9 @@ async function wordsFor(branchId: string): Promise<Words> {
     client.ensureQueryData(contentQuery('common')),
     client.ensureQueryData(contentQuery('cart')),
   ]);
-  const branch = branches.find((b) => b.id === branchId) ?? branches[0];
-  if (!branch) throw new Error(`Unknown branch ${branchId}`);
+  const summary = branches.find((b) => b.id === branchId) ?? branches[0];
+  if (!summary) throw new Error(`Unknown branch ${branchId}`);
+  const branch = joinBranch(summary, await client.ensureQueryData(branchConfigQuery(summary.id)));
   return {
     branch,
     clock: createClock(branch),
@@ -209,9 +212,8 @@ const eventOf = (event: BackendEvent, order: BackendOrder, words: Words): OrderE
 function awaitedAt(round: BackendRound, order: BackendOrder, words: Words): number {
   if (order.mode === 'takeaway' && order.pickup) return Date.parse(order.pickup.at);
   if (order.mode === 'delivery' && order.delivery) return Date.parse(order.delivery.expectedAt);
-  // Dine-in: the branch's usual kitchen time, at most ("18–22 min" → 22).
-  const minutes = Math.max(...(words.branch.prepTime.match(/\d+/g) ?? ['20']).map(Number));
-  return Date.parse(round.placedAt) + minutes * MINUTE_MS;
+  // Dine-in: the branch's usual kitchen time, at most.
+  return Date.parse(round.placedAt) + words.branch.prepMinutes.max * MINUTE_MS;
 }
 
 function roundOf(round: BackendRound, order: BackendOrder, words: Words, now: number): OrderRound {
@@ -308,7 +310,7 @@ export function toAppOrder(
         }
       : {}),
     timeline: latest?.timeline ?? [],
-    ...(order.estimate ? { estimate: order.estimate } : {}),
+    ...(order.estimateMinutes ? { estimate: words.common('prepTime', order.estimateMinutes) } : {}),
     ...(latest?.etaMinutes !== undefined ? { etaMinutes: latest.etaMinutes } : {}),
     ...(latest?.readyBy ? { readyBy: latest.readyBy } : {}),
     ...(order.kitchenNote ? { kitchenNote: order.kitchenNote } : {}),

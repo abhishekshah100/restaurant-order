@@ -1,5 +1,13 @@
-import { expect, test } from '@playwright/test';
-import { addDish, adminSignIn, callWaiter, orderAtCounter, scan, visible } from './helpers';
+import {
+  expect,
+  test,
+  addDish,
+  adminSignIn,
+  callWaiter,
+  orderAtCounter,
+  scan,
+  visible,
+} from './helpers';
 
 /**
  * The floor plan (/admin/dashboard/tables/) and a table's page against the mock server, in the

@@ -1,3 +1,4 @@
+import { toBranchConfig, toBranchSummary } from '@/lib/branchParts';
 import { createClock } from '@/lib/clock';
 import { liveStatusOf } from '@/lib/restaurantStatus';
 import type { Branch } from '@/types/branch';
@@ -372,8 +373,16 @@ const dishIn = (menu: MenuData, slug: string): Dish =>
 
 /* ---------- Handlers ---------- */
 
-/** GET /branches: the branch data with the status staff set (paused, closed for the day). */
-export const listBranches: Handler = async (ctx) => ok(await ctx.seed.branches());
+/** GET /branches: every branch in brief, with the status staff set (paused, closed for the day). */
+export const listBranches: Handler = async (ctx) =>
+  ok((await ctx.seed.branches()).map(toBranchSummary));
+
+/** GET /branches/:branchId/config */
+export const branchConfig: Handler = async (ctx, { params }) => {
+  const branch = (await ctx.seed.branches()).find((b) => b.id === params.branchId);
+  if (!branch) fail(404, 'not_found');
+  return ok(toBranchConfig(branch));
+};
 
 /** GET /branches/:branchId/status */
 export const branchStatus: Handler = async (ctx, { params }) => {

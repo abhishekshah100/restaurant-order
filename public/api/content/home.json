@@ -4,7 +4,7 @@
     "description": "Browse the menu and order directly from your table."
   },
   "welcome": {
-    "openUntil": "Restaurant open until {time}",
+    "openUntil": "Taking orders until {time}",
     "staffOnCall": "Staff on call at your table",
     "eyebrow": "Welcome to",
     "lede": "Browse our menu and order directly from your table.",
@@ -46,7 +46,7 @@
     "modesTitle": "How would you like your food?",
     "modesLabel": "Ways to order",
     "localTime": "Local time {time}",
-    "openUntil": "Open · until {time}",
+    "openUntil": "Open · orders until {time}",
     "closedOpens": "Closed · opens {time}",
     "paused": "Ordering paused",
     "hours": "{opens} – {closes}",
@@ -65,7 +65,8 @@
       "delivery": {
         "title": "Delivery",
         "sub": "{min}–{max} min · delivery from {fee}"
-      }
+      },
+      "opensAt": "Opens at {time}"
     },
     "areaLabel": "Delivery area",
     "areaPlaceholder": "Choose your area",
@@ -85,7 +86,8 @@
       "title": "Couldn't open your table",
       "ok": "OK"
     },
-    "invalidTable": "We couldn't check the QR code for table {table}. Please scan the code on your table again, or ask a member of staff."
+    "invalidTable": "We couldn't check the QR code for table {table}. Please scan the code on your table again, or ask a member of staff.",
+    "openNow": "Open now"
   },
   "modeSwitch": {
     "title": "How would you like to order?",

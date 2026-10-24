@@ -1,11 +1,11 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
-import { withSchedule, type ScheduleLabels } from '@/lib/branchHours';
+import { joinBranch } from '@/lib/branchParts';
 import { createClock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney } from '@/lib/money';
 import type { FloorPlanLayout } from '@/types/admin';
-import type { Branch } from '@/types/branch';
+import type { Branch, BranchConfig, BranchSummary } from '@/types/branch';
 import type { MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
@@ -27,12 +27,16 @@ import type { OrderLabels } from './orderBuilder';
 export interface MockSeed {
   /**
    * GET /branches: the branches as staff set them up (branches.json with their changes, the
-   * ones they added, less the ones they removed), with today's hours from each one's week and
-   * the status staff set on top.
+   * ones they added, less the ones they removed), with the status their week and staff set.
    */
   branches(): Promise<Branch[]>;
-  /** The same branches before today's hours and the status: what staff saved. */
+  /** The same branches before the status: what staff saved. */
   branchConfigs(): Promise<Branch[]>;
+  /**
+   * The table numbers a branch's QR links may carry (what a backend stores per branch), widened
+   * to every table on the floor plan staff saved. Guests aren't sent it.
+   */
+  tables(branchId: string): Promise<{ first: number; last: number }>;
   defaultBranchId(): Promise<string>;
   /** GET /branches/:id/menu: the dummy JSON with staff changes on top. */
   menuData(branchId: string): Promise<MenuData>;
@@ -80,7 +84,20 @@ export const menuBaseQuery = (branchId: string) =>
 export const branchesBaseQuery = () =>
   queryOptions({
     queryKey: ['mock', 'branches-base'] as const,
-    ...seedSource<Branch[]>('branches'),
+    // The published file has whole branches; the backend sends each one's rules on their own.
+    ...(isBackendEnabled()
+      ? {
+          queryFn: async () => {
+            const summaries = await apiGet<BranchSummary[]>('branches');
+            return Promise.all(
+              summaries.map(async (s) =>
+                joinBranch(s, await apiGet<BranchConfig>(`branches/${s.id}/config`)),
+              ),
+            );
+          },
+          staleTime: BACKEND_SEED_STALE_MS,
+        }
+      : { queryFn: () => staticGet<Branch[]>('branches'), staleTime: Infinity }),
   });
 
 /**
@@ -95,25 +112,14 @@ export const promotionsBaseQuery = (branchId: string) =>
   });
 
 /**
- * A branch whose table numbers (the ones guests can scan, `tables`) take in every table on the
- * floor plan staff saved, so a table added in Settings works with its QR code at once, and
- * say which are out of service.
+ * MOCK ONLY: the table numbers each demo branch's QR links may carry, as a backend stores them
+ * per branch (its floor plan widens them). A branch staff add gets the default.
  */
-function withTables(branch: Branch, layout: FloorPlanLayout | undefined): Branch {
-  const tables = layout?.floors.flatMap((f) => f.tables) ?? [];
-  if (tables.length === 0) return branch;
-  const numbers = tables.map((t) => t.number);
-  const outOfService = tables.filter((t) => t.disabled).map((t) => t.number);
-  return {
-    ...branch,
-    tables: {
-      ...branch.tables,
-      first: Math.min(branch.tables.first, ...numbers),
-      last: Math.max(branch.tables.last, ...numbers),
-      ...(outOfService.length > 0 ? { outOfService } : {}),
-    },
-  };
-}
+const TABLE_RANGES: Record<string, { first: number; last: number }> = {
+  'blr-indiranagar': { first: 1, last: 999 },
+  'ktm-thamel': { first: 1, last: 40 },
+};
+const DEFAULT_TABLE_RANGE = { first: 1, last: 40 };
 
 export function querySeed(
   client: QueryClient,
@@ -135,19 +141,11 @@ export function querySeed(
   const branches = async () => {
     const at = new Date(now());
     const changes = db.branchStatus.read();
-    const layouts = db.floorLayouts.read();
-    const [configs, status] = await Promise.all([branchConfigs(), content('status')]);
-    const labels: ScheduleLabels = {
-      lastOrdersNote: (minutes) => status('hours.lastOrdersNote', { minutes }),
-      closedToday: status('hours.closedToday'),
-    };
-    return configs.map((b) =>
-      withTables(
-        withStatus(withSchedule(b, at, labels), changes[b.id], at, createClock(b)),
-        layouts[b.id],
-      ),
-    );
+    return (await branchConfigs()).map((b) => withStatus(b, changes[b.id], at));
   };
+  const floors = async (branchId: string) =>
+    db.floorLayouts.read()[branchId] ??
+    client.ensureQueryData(branchFloorsQuery(sourceOf(branchId)));
   const menuData = async (branchId: string) => {
     const [base, all] = await Promise.all([
       client.fetchQuery(menuBaseQuery(sourceOf(branchId))),
@@ -181,9 +179,15 @@ export function querySeed(
     menuData,
     menu: async (branchId) => createMenuCatalog(await menuData(branchId)),
     promotions: (branchId) => client.fetchQuery(promotionsBaseQuery(sourceOf(branchId))),
-    floors: async (branchId) =>
-      db.floorLayouts.read()[branchId] ??
-      client.ensureQueryData(branchFloorsQuery(sourceOf(branchId))),
+    floors,
+    tables: async (branchId) => {
+      const base = TABLE_RANGES[sourceOf(branchId)] ?? DEFAULT_TABLE_RANGE;
+      const numbers = (await floors(branchId)).floors.flatMap((f) => f.tables.map((t) => t.number));
+      return {
+        first: Math.min(base.first, ...numbers),
+        last: Math.max(base.last, ...numbers),
+      };
+    },
     orders: () => client.ensureQueryData(orderHistoryQuery()),
     orderLabels: async (branch) => {
       const [orders, common, cart] = await Promise.all([
@@ -204,7 +208,7 @@ export function querySeed(
         cancelReason: (reason) => orders(`restaurantCancel.${reason}`),
         methodName: (method) => common(`paymentMethods.${method}`),
         lineLabels: cartLineLabels(cart, createMoney(branch)),
-        estimate: branch.prepTime,
+        estimate: common('prepTime', branch.prepMinutes),
       };
     },
   };

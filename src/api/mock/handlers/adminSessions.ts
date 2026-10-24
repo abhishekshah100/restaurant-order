@@ -3,7 +3,7 @@ import type { AdminBranch } from '@/types/admin';
 import type { Branch, OrderMode } from '@/types/branch';
 import type { AdminBranchesResponse, AdminSignInResponse } from '../../contracts';
 import { fail, objectBody, ok, stringField, type Handler, type MockContext } from '../context';
-import { statusUntil, type BranchStatusChange } from '../branchStatus';
+import type { BranchStatusChange } from '../branchStatus';
 import { backendBaseUrl } from '../../config';
 import { DEMO_ADMIN } from '../demoAdmin';
 import { ADMIN_SESSION_HOURS, HOUR_MS } from '../rules';
@@ -76,7 +76,10 @@ export function signedInAccount(ctx: MockContext, headers: Record<string, string
 const MODE_ORDER: OrderMode[] = ['dineIn', 'takeaway', 'delivery'];
 
 /** A branch as the admin picker needs it (with when the status staff set ends, if it does). */
-export function toAdminBranch(branch: Branch, statusUntil?: string): AdminBranch {
+export function toAdminBranch(
+  branch: Branch,
+  tables: { first: number; last: number },
+): AdminBranch {
   return {
     id: branch.id,
     name: branch.name,
@@ -85,11 +88,11 @@ export function toAdminBranch(branch: Branch, statusUntil?: string): AdminBranch
     country: branch.country,
     address: branch.address,
     status: branch.status,
-    ...(statusUntil ? { statusUntil } : {}),
-    hoursToday: branch.hoursToday,
+    ...(branch.statusUntil ? { statusUntil: branch.statusUntil } : {}),
+    schedule: branch.schedule,
     timezone: branch.timezone,
     locale: branch.locale,
-    tables: branch.tables,
+    tables,
     modes: MODE_ORDER.filter((mode) => branch.modes[mode].enabled),
     currencyCode: branch.currency.code,
     ...(branch.image ? { image: branch.image } : {}),
@@ -115,11 +118,11 @@ export async function managedBranches(
 /** GET /admin/branches */
 export const listAdminBranches: Handler = async (ctx, { headers }) => {
   const account = signedInAccount(ctx, headers);
-  const changes = ctx.db.branchStatus.read();
-  const now = new Date(ctx.now());
   const body: AdminBranchesResponse = {
-    branches: (await managedBranches(ctx, account)).map((branch) =>
-      toAdminBranch(branch, statusUntil(branch, changes[branch.id], now, createClock(branch))),
+    branches: await Promise.all(
+      (await managedBranches(ctx, account)).map(async (branch) =>
+        toAdminBranch(branch, await ctx.seed.tables(branch.id)),
+      ),
     ),
   };
   return ok(body);
@@ -149,7 +152,7 @@ export const setBranchStatus: Handler = async (ctx, { params, body, headers }) =
   const now = new Date(ctx.now());
   const clock = createClock(branch);
   let change: BranchStatusChange;
-  if (raw.status === 'open') change = { status: 'open' };
+  if (raw.status === 'open') change = { status: 'open', day: clock.dayKey(now) };
   else if (raw.status === 'closed') change = { status: 'closed', day: clock.dayKey(now) };
   else if (raw.status === 'paused' && PAUSE_MINUTES.some((m) => m === raw.minutes)) {
     change = {
@@ -161,5 +164,5 @@ export const setBranchStatus: Handler = async (ctx, { params, body, headers }) =
   }
   ctx.db.branchStatus.write({ ...ctx.db.branchStatus.read(), [branch.id]: change });
   const updated = (await ctx.seed.branches()).find((b) => b.id === branch.id) ?? branch;
-  return ok(toAdminBranch(updated, statusUntil(updated, change, now, clock)));
+  return ok(toAdminBranch(updated, await ctx.seed.tables(updated.id)));
 };

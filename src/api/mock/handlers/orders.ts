@@ -107,7 +107,7 @@ function placeOrderBody(raw: unknown) {
 export const placeOrder: Handler = async (ctx, { body: raw }) => {
   const body = placeOrderBody(raw);
   const { session, branch } = await liveSession(ctx, body.sessionId);
-  assertOrdering(branch);
+  assertOrdering(branch, session.mode);
   if (session.mode === 'dineIn') await assertTableInService(ctx, branch.id, session.table);
   const [menu, promotions, labels, seedOrders] = await Promise.all([
     ctx.seed.menu(branch.id),

@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './helpers';
 
 /**
  * Admin sign-in (/admin/login/) against the mock server: field errors, the invalid-credentials

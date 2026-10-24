@@ -10,6 +10,7 @@ import { formatRate } from '@/lib/pricing';
 import { WEEKDAYS } from '@/types/branch';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './SettingsHome.module.css';
+import { useBranchTimes } from '@/hooks/useBranchTimes';
 
 /**
  * /admin/dashboard/settings/: every setting by group, each as a card with what it holds now
@@ -70,6 +71,7 @@ function useSummaries(): Partial<Record<SettingsSectionId, string>> {
   const t = useContent('common');
   const cart = useContent('cart');
   const { branch, region } = useAdminWorkspace();
+  const hoursToday = useBranchTimes(region)?.hoursToday ?? '';
   const layout = useFloorLayout(branch.id).data;
   const settings = useBranchSettings(branch.id).data?.settings;
   const branches = useAdminBranches().data;
@@ -89,14 +91,14 @@ function useSummaries(): Partial<Record<SettingsSectionId, string>> {
     summaries.services = on.length
       ? t('adminSettings.sections.services.summary', { modes: on.join(' · ') })
       : t('adminSettings.sections.services.none');
-    const openDays = WEEKDAYS.filter((d) => hours.days[d].open).length;
+    const openDays = WEEKDAYS.filter((d) => hours.days[d].length > 0).length;
     summaries.details = t('adminSettings.sections.details.summary', {
       area: details.shortName,
       city: details.city,
     });
     summaries.hours = t('adminSettings.sections.hours.summary', {
       days: t.plural('adminSettings.counts.openDays', openDays),
-      today: region.hoursToday,
+      today: hoursToday,
     });
     summaries.tax = t('adminSettings.sections.tax.summary', {
       taxes: tax.lines

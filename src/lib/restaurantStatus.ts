@@ -1,39 +1,33 @@
-import type { Branch, BranchLiveStatus, BranchStatus } from '@/types/branch';
+import type { BranchLiveStatus, BranchStatus } from '@/types/branch';
 import type { OrderingState } from '@/types/restaurant';
 
 /** A branch's status now, as GET /branches/:branchId/status answers it. */
 export const liveStatusOf = ({
   id,
   status,
-  opensAt,
-  opensIn,
-  pausedForMinutes,
-  reopensTomorrow,
-  reopensOn,
-}: Branch): BranchLiveStatus => ({
+  statusUntil,
+  modeStatus,
+}: BranchLiveStatus): BranchLiveStatus => ({
   id,
   status,
-  opensAt,
-  opensIn,
-  pausedForMinutes,
-  ...(reopensTomorrow ? { reopensTomorrow } : {}),
-  ...(reopensOn ? { reopensOn } : {}),
+  ...(statusUntil ? { statusUntil } : {}),
+  modeStatus,
 });
 
 /**
  * The branch with the newer of its two reads: the whole list (read once per visit) or its
  * status (polled while guests order). An older status never overrides a newer list.
  */
-export function withLiveStatus(
-  branch: Branch,
+export function withLiveStatus<B extends BranchLiveStatus>(
+  branch: B,
   listedAt: number,
   live: BranchLiveStatus | undefined,
   liveAt: number,
-): Branch {
+): B {
   if (!live || live.id !== branch.id || liveAt < listedAt) return branch;
-  // The schedule fields the status leaves out are dropped with it, so they can't go stale.
-  const { reopensTomorrow: _tomorrow, reopensOn: _on, ...rest } = branch;
-  return { ...rest, ...live };
+  // A status without `statusUntil` ends the list's: the newer status says it no longer holds.
+  const { statusUntil: _until, ...rest } = branch;
+  return { ...rest, ...live } as B;
 }
 
 /** Colour of the header subline: error when closed, warning when paused, default when open. */
@@ -60,7 +54,7 @@ const PREVIEW_PAUSE_MINUTES = 15;
  * About how long ordering stays paused. A paused branch always has a minute or more left; a
  * `?status=paused` preview of one that isn't paused reads like the shortest real pause.
  */
-export const pausedMinutes = ({ pausedForMinutes }: { pausedForMinutes: number }) =>
+export const pausedMinutes = (pausedForMinutes: number) =>
   pausedForMinutes > 0 ? pausedForMinutes : PREVIEW_PAUSE_MINUTES;
 
 export interface OrderingAvailability {

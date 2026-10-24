@@ -1,5 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import {
+  expect,
+  test,
   againstBackend,
   dishSlug,
   fastForward,
@@ -67,7 +69,8 @@ test('dine-in: a second round goes on the order without checkout, and the bill s
 }) => {
   test.slow();
   // 8:30 PM in Bengaluru: after the drawn "today" orders (7:42 PM), so the new one lists first.
-  await installClock(page, new Date('2026-10-08T15:00:00Z'));
+  // 7:30 PM in India: inside the 11:00-21:00 session, before last orders at 8:30.
+  await installClock(page, new Date('2026-10-08T14:00:00Z'));
   await scan(page, 'table=12');
   // Dahi Kebab ₹289 → ₹303 with 5% GST, at the counter.
   await addDish(page, 'starters', 'Dahi Kebab');

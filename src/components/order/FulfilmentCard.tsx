@@ -45,7 +45,7 @@ export function FulfilmentCard({ order, className }: { order: Order; className?:
             <Icon name="pin" size="xs" />
             {t('fulfilment.directions')}
           </a>
-          <a className={styles.call} href={branch.phoneHref}>
+          <a className={styles.call} href={`tel:${branch.phone}`}>
             <Icon name="phone" size="xs" />
             {t('fulfilment.callRestaurant')}
           </a>

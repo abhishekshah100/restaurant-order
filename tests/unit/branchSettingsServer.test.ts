@@ -9,7 +9,8 @@ import type {
 import { DEMO_ADMIN } from '@/api/mock/demoAdmin';
 import { defaultConfig, orderLine, unitPrice } from '@/lib/cartLine';
 import type { AdminBranch, FloorPlanLayout } from '@/types/admin';
-import type { Branch } from '@/types/branch';
+import { joinBranch } from '@/lib/branchParts';
+import type { Branch, BranchConfig, BranchSummary } from '@/types/branch';
 import type { BranchDetails } from '@/types/branchSettings';
 import type { Dish, MenuData } from '@/types/menu';
 import type { BranchPromotions } from '@/types/promotion';
@@ -48,9 +49,12 @@ beforeEach(async () => {
 const settings = async (base = BLR) =>
   (await call('GET', `${base}/settings`, undefined, admin)).body as BranchSettingsResponse;
 const save = (body: unknown, base = BLR) => call('PATCH', `${base}/settings`, body, admin);
-const guestBranches = async () => (await call('GET', 'branches')).body as Branch[];
-const guestBranch = async (id = 'blr-indiranagar') =>
-  (await guestBranches()).find((b) => b.id === id) as Branch;
+const guestBranches = async () => (await call('GET', 'branches')).body as BranchSummary[];
+/** A branch as the guest app puts it together: its summary and its rules (GET …/config). */
+const guestBranch = async (id = 'blr-indiranagar'): Promise<Branch> => {
+  const summary = (await guestBranches()).find((b) => b.id === id) as BranchSummary;
+  return joinBranch(summary, (await call('GET', `branches/${id}/config`)).body as BranchConfig);
+};
 const adminBranches = async () =>
   ((await call('GET', 'admin/branches', undefined, admin)).body as AdminBranchesResponse).branches;
 
@@ -76,7 +80,7 @@ describe('GET and PATCH /admin/branches/:branchId/settings (mock)', () => {
   it("reads the branch's settings and the region's payment choices, for its admins only", async () => {
     const { settings: s, choices } = await settings();
     expect(s.details.shortName).toBe('Udyog Vihar');
-    expect(s.hours.days.thu).toEqual({ open: true, opens: '11:00', closes: '21:00' });
+    expect(s.hours.days.thu).toEqual([{ opens: '11:00', closes: '21:00' }]);
     expect(s.tax.lines.map((l) => l.rateBp)).toEqual([500]);
     expect(s.delivery.zones).toHaveLength(3);
     expect(choices.payments.checkout.map((c) => c.id)).toEqual(['online', 'counter']);
@@ -97,23 +101,41 @@ describe('GET and PATCH /admin/branches/:branchId/settings (mock)', () => {
 
     const branch = await guestBranch();
     expect(branch.tax.serviceCharge).toEqual({ labelKey: 'serviceCharge', rateBp: 750 });
-    // Still today's hours and status on top.
-    expect(branch.hoursToday).toBe('11:00 AM – 9:00 PM');
+    // Still the week, with the status on top.
+    expect(branch.schedule.days.thu).toEqual([{ opens: '11:00', closes: '21:00' }]);
+    expect(branch.status).toBe('open');
+  });
+
+  it('saves special dates and delivery hours of its own; guests get each mode’s status', async () => {
+    const { settings: s } = await settings();
+    const shut = Object.fromEntries(
+      Object.keys(s.hours.days).map((d) => [d, []]),
+    ) as unknown as typeof s.hours.days;
+    const hours = {
+      ...s.hours,
+      delivery: shut,
+      specialDays: [{ from: '2026-11-08', to: '2026-11-09', label: 'Diwali', sessions: [] }],
+    };
+    expect((await save({ hours })).status).toBe(200);
+    const branch = await guestBranch();
+    expect(branch.schedule.specialDays).toEqual(hours.specialDays);
+    // Dine-in open (6:30 PM), delivery closed all week on its own hours.
+    expect(branch.status).toBe('open');
+    expect(branch.modeStatus.delivery.status).toBe('closed');
+    expect(branch.modeStatus.takeaway.status).toBe('open');
   });
 
   it("closes the branch on a day it's shut, and guests' orders are refused", async () => {
     const { settings: s } = await settings();
     const hours = {
       ...s.hours,
-      days: { ...s.hours.days, thu: { ...s.hours.days.thu, open: false } },
+      days: { ...s.hours.days, thu: [] },
     };
     expect((await save({ hours })).status).toBe(200);
-    expect(await guestBranch()).toMatchObject({
-      status: 'closed',
-      reopensOn: 'fri',
-      reopensTomorrow: true,
-      hoursToday: 'Closed today',
-    });
+    // Closed by the week until Friday's session (11:00 in Bengaluru).
+    const shut = await guestBranch();
+    expect(shut).toMatchObject({ status: 'closed', statusUntil: '2026-10-16T05:30:00.000Z' });
+    expect(shut.schedule.days.thu).toEqual([]);
     const refused = await guestOrder();
     expect(refused.status).toBe(409);
     expect((refused.body as ApiErrorBody).error).toBe('ordering_unavailable');

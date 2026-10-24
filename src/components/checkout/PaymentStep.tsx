@@ -81,7 +81,7 @@ function PaymentForm() {
   const total = money.format(bill.total);
   const payLabel = online ? t('payment.payOnline', { total }) : t('payment.placeOrder', { total });
   const payIcon = online ? 'lock' : undefined;
-  const secured = t('payment.secured', { partner: branch.paymentPartner });
+  const secured = t('payment.secured');
 
   return (
     <form className={styles.stack} onSubmit={onSubmit} noValidate>

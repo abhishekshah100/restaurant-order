@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { adminSignIn, scan } from './helpers';
+import { expect, test, adminSignIn, scan } from './helpers';
 
 /**
  * Table QR codes: from Tables to a card per table with its full link, two selected and printed

@@ -13,12 +13,12 @@ import type { ContentMap } from '@/api/queries';
 import { readApiJson, testBranch } from '../apiState';
 import type { Branch } from '@/types/branch';
 
-const { closesAt } = testBranch();
+const ordersUntil = '8:30 PM';
 const t = createTranslator(readApiJson<ContentMap['status']>('content/status'));
 
 describe('status line / statusTone', () => {
   it('describes each restaurant status', () => {
-    expect(t('line.open', { time: closesAt })).toBe(`Open · until ${closesAt}`);
+    expect(t('line.open', { time: ordersUntil })).toBe(`Open · orders until ${ordersUntil}`);
     expect(t('line.closed')).toBe('Closed now');
     expect(t('line.paused')).toBe('Ordering paused');
   });
@@ -96,23 +96,32 @@ describe('applyPreview', () => {
 });
 
 describe('withLiveStatus', () => {
-  const branch = { ...testBranch(), reopensTomorrow: true } as Branch;
+  const branch = {
+    ...testBranch(),
+    status: 'closed',
+    statusUntil: '2026-10-16T05:30:00.000Z',
+  } as Branch;
+  const pause = { status: 'paused', statusUntil: '2026-10-15T13:30:00.000Z' } as const;
   const paused = {
     id: branch.id,
-    status: 'paused',
-    opensAt: branch.opensAt,
-    opensIn: branch.opensIn,
-    pausedForMinutes: 12,
+    ...pause,
+    modeStatus: { takeaway: pause, delivery: pause },
+  } as const;
+  const open = {
+    id: branch.id,
+    status: 'open',
+    modeStatus: { takeaway: { status: 'open' }, delivery: { status: 'open' } },
   } as const;
 
   it("takes the polled status when it's newer than the branch list, and only its own", () => {
     expect(withLiveStatus(branch, 1000, paused, 2000)).toMatchObject({
       name: branch.name,
       status: 'paused',
-      pausedForMinutes: 12,
+      statusUntil: '2026-10-15T13:30:00.000Z',
+      modeStatus: { delivery: pause },
     });
-    // reopensTomorrow is part of the status: gone when the newer status doesn't have it.
-    expect(withLiveStatus(branch, 1000, paused, 2000)).not.toHaveProperty('reopensTomorrow');
+    // statusUntil is part of the status: gone when the newer status doesn't have it.
+    expect(withLiveStatus(branch, 1000, open, 2000)).not.toHaveProperty('statusUntil');
     expect(withLiveStatus(branch, 3000, paused, 2000)).toBe(branch);
     expect(withLiveStatus(branch, 1000, { ...paused, id: 'ktm-thamel' }, 2000)).toBe(branch);
     expect(withLiveStatus(branch, 1000, undefined, 0)).toBe(branch);
@@ -121,8 +130,8 @@ describe('withLiveStatus', () => {
 
 describe('pausedMinutes', () => {
   it("is a paused branch's minutes left, or the shortest pause for a preview", () => {
-    expect(pausedMinutes({ pausedForMinutes: 42 })).toBe(42);
-    expect(pausedMinutes({ pausedForMinutes: 0 })).toBe(15);
+    expect(pausedMinutes(42)).toBe(42);
+    expect(pausedMinutes(0)).toBe(15);
   });
 });
 

@@ -1,7 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
+import type { ReactNode } from 'react';
+import { GuestSessionProvider } from '@/context/GuestSessionContext';
 import { ApiTestProvider } from '../apiState';
+
+/** The data, and the guest's visit (whose way of ordering the status is for). */
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <ApiTestProvider>
+    <GuestSessionProvider>{children}</GuestSessionProvider>
+  </ApiTestProvider>
+);
 
 const PREVIEW_KEY = 'olive.status-preview.v1';
 
@@ -17,13 +26,13 @@ afterEach(() => {
 
 describe('useOrderingAvailability', () => {
   it('is open by default (status from GET /restaurant)', () => {
-    const { result } = renderHook(() => useOrderingAvailability(), { wrapper: ApiTestProvider });
+    const { result } = renderHook(() => useOrderingAvailability(), { wrapper });
     expect(result.current).toMatchObject({ state: 'open', canAdd: true, canCheckout: true });
   });
 
   it('follows ?status= and remembers it for the tab', async () => {
     window.history.replaceState(null, '', '/menu/?status=paused');
-    const { result } = renderHook(() => useOrderingAvailability(), { wrapper: ApiTestProvider });
+    const { result } = renderHook(() => useOrderingAvailability(), { wrapper });
     expect(result.current.state).toBe('paused');
     await waitFor(() => expect(window.sessionStorage.getItem(PREVIEW_KEY)).toBe('"paused"'));
 
@@ -38,7 +47,7 @@ describe('useOrderingAvailability', () => {
   });
 
   it('goes offline with the connection and back with "Try again"', () => {
-    const { result } = renderHook(() => useOrderingAvailability(), { wrapper: ApiTestProvider });
+    const { result } = renderHook(() => useOrderingAvailability(), { wrapper });
     act(() => setOnline(false));
     expect(result.current).toMatchObject({ state: 'offline', canCheckout: false });
 
@@ -49,7 +58,7 @@ describe('useOrderingAvailability', () => {
 
   it('"Try again" ends an offline preview and drops it from the URL', async () => {
     window.history.replaceState(null, '', '/menu/?status=offline');
-    const { result } = renderHook(() => useOrderingAvailability(), { wrapper: ApiTestProvider });
+    const { result } = renderHook(() => useOrderingAvailability(), { wrapper });
     expect(result.current.state).toBe('offline');
 
     act(() => result.current.retry());

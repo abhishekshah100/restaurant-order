@@ -18,40 +18,57 @@ export type CountryCode = CountryCodeMaster;
 /** Whether a branch is taking orders, as the (mock) server reports it. */
 export type BranchStatus = BranchStatusCode;
 
-export interface ServiceWindow {
-  label: string;
-  /** "12:00 PM – 3:30 PM", in the branch's local time. */
-  hours: string;
-}
-
 /** Days of the week, Monday first (the order Settings › Opening hours lists them). */
 export { WEEKDAYS };
 export type Weekday = WeekdayCode;
 
-/** One day's opening hours, as 24-hour local "HH:MM" (closing after opening, the same day). */
-export interface DayHours {
-  open: boolean;
+/**
+ * One session the branch is open in, 24-hour local "HH:MM": a closing time at or before the
+ * opening is the next day's ("18:00"–"02:00"), "24:00" the end of the day ("00:00"–"24:00": all
+ * day). Its label ("Lunch", "Dinner") is optional.
+ */
+export interface Session {
+  label?: string;
   opens: string;
   closes: string;
 }
 
-/** A named part of the day guests are told about ("Lunch", 12:00–15:30), 24-hour local "HH:MM". */
-export interface ServiceWindowHours {
-  label: string;
+/** A week of sessions: each day's, in order; a day without any is closed. */
+export type WeekSessions = Record<Weekday, Session[]>;
+
+/**
+ * Special dates (a holiday, a festival week): from one of the branch's calendar days to another
+ * ("2026-11-08", inclusive) it opens in these sessions instead of its week, for every way of
+ * ordering; none is closed.
+ */
+export interface SpecialDay {
   from: string;
   to: string;
+  label?: string;
+  sessions: Session[];
 }
 
 /**
- * The branch's week as staff set it (Settings › Opening hours). Today's hours, last orders and
- * service windows (`opensAt`, `hoursToday`, `serviceWindows`…) are worked out from it; a day
- * it's shut is a closed day.
+ * The branch's hours as staff set them (Settings › Opening hours). Orders are taken inside a
+ * session until its last orders.
  */
 export interface OpeningSchedule {
-  days: Record<Weekday, DayHours>;
-  /** The kitchen takes its last order this many minutes before closing. */
+  /** The opening hours (dine-in, and takeaway or delivery without hours of their own). */
+  days: WeekSessions;
+  /** The kitchen takes its last order this many minutes before each session closes. */
   lastOrdersMinutes: number;
-  windows: ServiceWindowHours[];
+  /** Takeaway's own week; null: it follows the opening hours. */
+  takeaway: WeekSessions | null;
+  /** Delivery's own week; null: it follows the opening hours. */
+  delivery: WeekSessions | null;
+  /** Special dates, earliest first (guests are sent today's and later ones). */
+  specialDays: SpecialDay[];
+}
+
+/** A way of ordering's status now, and its next change (ISO). */
+export interface ModeStatus {
+  status: BranchStatus;
+  statusUntil?: string;
 }
 
 /** The branch's currency. Prices in the menu are in major units (rupees); bills work in minor units. */
@@ -219,8 +236,14 @@ export interface BranchImage {
   height: number;
 }
 
-/** GET /branches: one restaurant location, with everything that differs by place. */
-export interface Branch {
+/** Which ways a branch takes orders (GET /branches); their rules are in its config. */
+export type BranchModeFlags = Record<OrderMode, { enabled: boolean }>;
+
+/**
+ * GET /branches: one restaurant location in brief, for the outlet picker and the guest's own
+ * branch: where it is, how to reach it, its week and status, and which ways it takes orders.
+ */
+export interface BranchSummary {
   id: string;
   name: string;
   /** "Indiranagar", "Thamel". */
@@ -232,53 +255,45 @@ export interface Branch {
   image?: BranchImage;
   /** A maps search for the address (a plain link, opened in the guest's maps app). */
   mapUrl: string;
-  /** Contact number as shown, and its tel: link. */
+  /** Contact number as shown ("+918826314093"); calls go to `tel:` it. */
   phone: string;
-  phoneHref: string;
   wifiName: string;
-  paymentPartner: string;
+  /** Open, paused or closed now: what staff set, else what the week says about today. */
   status: BranchStatus;
-  /** "11:00 AM", local time. */
-  opensAt: string;
-  closesAt: string;
-  /** Today's opening hours as 24-hour local "HH:MM", for working out pickup slots. */
-  hours: { opens: string; closes: string };
-  /** "in about 1 hr 20 min" */
-  opensIn: string;
-  pausedForMinutes: number;
   /**
-   * Closed for the rest of the day by staff: ordering opens again at `opensAt` tomorrow (not
-   * today). Absent otherwise.
+   * ISO 8601, only while staff have it paused (when ordering resumes) or closed (when it opens
+   * again). A day the week is shut has none: `schedule` says when it opens next.
    */
-  reopensTomorrow?: boolean;
+  statusUntil?: string;
   /**
-   * Closed today by the weekly schedule: the day it opens next (`opensAt` is that day's
-   * opening time). Absent on a day it opens.
+   * Takeaway's and delivery's status, by their own hours when they have them (else as `status`);
+   * what staff set holds for them too.
    */
-  reopensOn?: Weekday;
-  /** The week's opening hours; the fields above are today's, worked out from it. */
+  modeStatus: Record<'takeaway' | 'delivery', ModeStatus>;
+  /**
+   * The week's opening hours, last orders and service windows, in 24-hour local "HH:MM". Every
+   * time a screen shows ("Open until 9:00 PM", "Opens Tuesday at 11:00 AM") is worked out from
+   * it, `status` and `statusUntil` (lib/branchHours › branchTimes).
+   */
   schedule: OpeningSchedule;
-  hoursToday: string;
-  lastOrders: string;
-  /** "30 min before close" */
-  lastOrdersNote: string;
-  serviceWindows: ServiceWindow[];
-  /** Usual kitchen time, shown in the cart, checkout and on new orders: "18–22 min". */
-  prepTime: string;
-  /** Table a session starts at when the link has none. */
-  defaultTable: number;
-  /**
-   * Table numbers a QR link may carry, and those out of service now (Settings › Floor plan):
-   * scanning one of those opens the start screen saying so, not a visit at the table.
-   */
-  tables: { first: number; last: number; outOfService?: number[] };
   /** BCP 47 locale for numbers and times, e.g. "en-IN". */
   locale: string;
   /** Used for number formatting when the runtime has no data for `locale` (en-NP → en-IN). */
   localeFallback?: string;
-  currency: CurrencyConfig;
   /** IANA time zone: "today" and every displayed time are in it. */
   timezone: string;
+  /** Dine-in, takeaway and delivery: which are offered. */
+  modes: BranchModeFlags;
+}
+
+/**
+ * GET /branches/:branchId/config: one branch's rules for ordering there, read once a guest
+ * orders at it (and by staff working there): money, mobile numbers, taxes, payment methods,
+ * dietary marks, each mode's rules and the kitchen time.
+ */
+export interface BranchConfig {
+  id: string;
+  currency: CurrencyConfig;
   mobile: MobileRules;
   tax: TaxConfig;
   payments: {
@@ -294,13 +309,15 @@ export interface Branch {
   modes: BranchModes;
   /** Running orders, and changing or cancelling an order just placed. */
   ordering: OrderingRules;
+  /** The kitchen's usual time for an order, in minutes (shown as "18–22 min"). */
+  prepMinutes: { min: number; max: number };
 }
+
+/** A branch as the screens use it: its summary and its rules together (api/hooks › useBranch). */
+export type Branch = Omit<BranchSummary, 'modes'> & BranchConfig;
 
 /**
  * What changes about a branch during the day (GET /branches/:branchId/status): open, paused or
  * closed and until when. Pages where guests order poll it instead of every branch's details.
  */
-export type BranchLiveStatus = Pick<
-  Branch,
-  'id' | 'status' | 'opensAt' | 'opensIn' | 'pausedForMinutes' | 'reopensTomorrow' | 'reopensOn'
->;
+export type BranchLiveStatus = Pick<BranchSummary, 'id' | 'status' | 'statusUntil' | 'modeStatus'>;

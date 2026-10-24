@@ -2,13 +2,13 @@
 
 import { useContent } from '@/api/hooks';
 import { Button, Dialog } from '@/components/ui';
-import type { Branch } from '@/types/branch';
+import type { BranchSummary } from '@/types/branch';
 import styles from './SwitchOutletDialog.module.css';
 
 export interface SwitchOutletDialogProps {
   open: boolean;
   /** The outlet the guest is switching to. */
-  branch: Branch;
+  branch: BranchSummary;
   /** Items in the cart that would be emptied. */
   items: number;
   onConfirm: () => void;

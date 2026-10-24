@@ -1,5 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import {
+  expect,
+  test,
   addDish,
   adminSignIn,
   againstBackend,
@@ -38,8 +40,8 @@ test('a waiter call and a ready order, from the guest to Done and Mark served', 
   page,
 }) => {
   test.slow();
-  // 8:30 PM in Bengaluru.
-  await installClock(page, new Date('2026-10-08T15:00:00Z'));
+  // 7:30 PM in India: inside the session, before last orders at 8:30.
+  await installClock(page, new Date('2026-10-08T14:00:00Z'));
   await scan(page, 'table=12');
   await addDish(page, 'starters', 'Dahi Kebab');
   const orderId = await orderAtCounter(page);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTranslator } from '@/api/translator';
 import type { ContentMap } from '@/api/queries';
+import { joinBranch, toBranchConfig, toBranchSummary } from '@/lib/branchParts';
 import { PAYMENT_METHODS } from '@/lib/payments';
 import { readApiJson, testBranches, testMenu, testPromotions, testRestaurant } from '../apiState';
 
@@ -51,15 +52,10 @@ describe('GET /branches', () => {
     }
   });
 
-  it.each(branches.map((b) => [b.id, b] as const))(
-    '%s: its default table is in range and phone groups cover the number',
-    (_, b) => {
-      expect(b.defaultTable).toBeGreaterThanOrEqual(b.tables.first);
-      expect(b.defaultTable).toBeLessThanOrEqual(b.tables.last);
-      expect(b.mobile.groups.reduce((a, n) => a + n, 0)).toBe(b.mobile.length);
-      expect(() => new RegExp(b.mobile.pattern)).not.toThrow();
-    },
-  );
+  it.each(branches.map((b) => [b.id, b] as const))('%s: phone groups cover the number', (_, b) => {
+    expect(b.mobile.groups.reduce((a, n) => a + n, 0)).toBe(b.mobile.length);
+    expect(() => new RegExp(b.mobile.pattern)).not.toThrow();
+  });
 
   it('every branch serves the same dishes, priced in its own currency', () => {
     const [first, ...rest] = branches.map((b) => testMenu(b.id));
@@ -88,6 +84,24 @@ describe('GET /branches', () => {
         expect(offer.from).toMatch(/^\d{2}:\d{2}$/);
         expect(offer.to).toMatch(/^\d{2}:\d{2}$/);
       }
+    },
+  );
+});
+
+describe('a branch in two parts (lib/branchParts)', () => {
+  it.each(branches.map((b) => [b.id, b] as const))(
+    '%s: the list has no ordering rules, and the two parts join back into the branch',
+    (_, b) => {
+      const summary = toBranchSummary(b);
+      for (const rules of ['tax', 'payments', 'currency', 'mobile', 'dietary', 'prepMinutes']) {
+        expect(summary).not.toHaveProperty(rules);
+      }
+      expect(summary.modes).toEqual({
+        dineIn: { enabled: b.modes.dineIn.enabled },
+        takeaway: { enabled: b.modes.takeaway.enabled },
+        delivery: { enabled: b.modes.delivery.enabled },
+      });
+      expect(joinBranch(summary, toBranchConfig(b))).toEqual(b);
     },
   );
 });

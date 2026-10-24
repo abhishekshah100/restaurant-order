@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { weekdayAt, withSchedule, type ScheduleLabels } from '@/lib/branchHours';
+import { branchTimes, nextOpeningAfterToday, scheduleStatus, weekdayAt } from '@/lib/branchHours';
 import {
   deliveryErrors,
   detailsErrors,
@@ -23,7 +23,7 @@ import {
   withTax,
 } from '@/lib/branchSettings';
 import { calculateBill } from '@/lib/pricing';
-import type { Branch, OpeningSchedule } from '@/types/branch';
+import type { Branch, OpeningSchedule, Session } from '@/types/branch';
 import { WEEKDAYS } from '@/types/branch';
 import { testBranch } from '../apiState';
 
@@ -34,21 +34,24 @@ import { testBranch } from '../apiState';
 
 const india = testBranch('blr-indiranagar');
 const nepal = testBranch('ktm-thamel');
-const labels: ScheduleLabels = {
-  lastOrdersNote: (minutes) => `${minutes} min before close`,
-  closedToday: 'Closed today',
-};
 // Thursday 15 Oct 2026, 6:30 PM in Bengaluru.
 const THURSDAY = new Date('2026-10-15T13:00:00Z');
 
 const week = (over: Partial<OpeningSchedule> = {}): OpeningSchedule => ({
   days: Object.fromEntries(
-    WEEKDAYS.map((d) => [d, { open: true, opens: '11:00', closes: '21:00' }]),
+    WEEKDAYS.map((d) => [d, [{ opens: '11:00', closes: '21:00' }]]),
   ) as OpeningSchedule['days'],
   lastOrdersMinutes: 30,
-  windows: [{ label: 'Lunch', from: '12:00', to: '15:30' }],
+  takeaway: null,
+  delivery: null,
+  specialDays: [],
   ...over,
 });
+/** The week with Monday's sessions set. */
+const withMonday = (mon: OpeningSchedule['days']['mon'], over: Partial<OpeningSchedule> = {}) => {
+  const base = week(over);
+  return { ...base, days: { ...base.days, mon } };
+};
 
 describe('opening hours (lib/branchHours)', () => {
   it("knows the day of the week in the branch's time zone", () => {
@@ -57,107 +60,230 @@ describe('opening hours (lib/branchHours)', () => {
     expect(weekdayAt(new Date('2026-10-15T19:00:00Z'), nepal.timezone)).toBe('fri');
   });
 
-  it("works out today's hours, last orders and service windows from the week", () => {
-    const branch = withSchedule(
-      { ...india, schedule: week({ lastOrdersMinutes: 45 }) },
-      THURSDAY,
-      labels,
-    );
-    expect(branch.hours).toEqual({ opens: '11:00', closes: '21:00' });
-    expect(branch.opensAt).toBe('11:00 AM');
-    expect(branch.closesAt).toBe('9:00 PM');
-    expect(branch.hoursToday).toBe('11:00 AM – 9:00 PM');
-    expect(branch.lastOrders).toBe('8:15 PM');
-    expect(branch.lastOrdersNote).toBe('45 min before close');
-    expect(branch.serviceWindows).toEqual([{ label: 'Lunch', hours: '12:00 PM – 3:30 PM' }]);
-    expect(branch.status).toBe('open');
-    expect(branch.reopensOn).toBeUndefined();
+  it('takes orders inside a session until its last orders', () => {
+    // 6:30 PM: open, orders until 8:30 PM (15:00 UTC).
+    const times = branchTimes({ ...india, status: 'open', schedule: week() }, THURSDAY);
+    expect(times).toEqual({
+      today: [{ opens: '11:00', closes: '21:00' }],
+      ordersUntil: new Date('2026-10-15T15:00:00.000Z'),
+      reopens: null,
+      pausedMinutes: 0,
+    });
+    // 8:45 PM: after last orders, closed until tomorrow's 11:00.
+    expect(
+      scheduleStatus({ ...india, schedule: week() }, new Date('2026-10-15T15:15:00Z')),
+    ).toEqual({ status: 'closed', until: new Date('2026-10-16T05:30:00.000Z') });
+  });
+
+  it('closes between sessions, and keeps a session open past midnight', () => {
+    const split = {
+      ...week(),
+      days: {
+        ...week().days,
+        thu: [
+          { label: 'Lunch', opens: '12:00', closes: '15:30' },
+          { label: 'Dinner', opens: '19:00', closes: '23:30' },
+        ],
+      },
+    };
+    // 6:30 PM: the afternoon break, closed until dinner at 7:00 PM.
+    expect(scheduleStatus({ ...india, schedule: split }, THURSDAY)).toEqual({
+      status: 'closed',
+      until: new Date('2026-10-15T13:30:00.000Z'),
+    });
+    // Thursday 18:00 to Friday 02:00; at 1:00 AM Friday orders run until 1:30 AM.
+    const late = {
+      ...week(),
+      days: { ...week().days, thu: [{ opens: '18:00', closes: '02:00' }] },
+    };
+    expect(scheduleStatus({ ...india, schedule: late }, new Date('2026-10-15T19:30:00Z'))).toEqual({
+      status: 'open',
+      until: new Date('2026-10-15T20:00:00.000Z'),
+    });
   });
 
   it('is closed on a day it shuts, until its next opening day', () => {
-    const shut = { open: false, opens: '11:00', closes: '21:00' };
     const schedule = week();
-    const thursdayOff = withSchedule(
-      { ...india, schedule: { ...schedule, days: { ...schedule.days, thu: shut } } },
-      THURSDAY,
-      labels,
-    );
-    expect(thursdayOff).toMatchObject({
-      status: 'closed',
-      reopensOn: 'fri',
-      reopensTomorrow: true,
-      opensAt: '11:00 AM',
-      hoursToday: 'Closed today',
-    });
-
-    const longWeekend = withSchedule(
+    const thursdayOff = branchTimes(
       {
         ...india,
+        status: 'closed',
+        schedule: { ...schedule, days: { ...schedule.days, thu: [] } },
+      },
+      THURSDAY,
+    );
+    expect(thursdayOff.today).toEqual([]);
+    // Friday 11:00 AM in Bengaluru.
+    expect(thursdayOff.reopens).toEqual({
+      at: new Date('2026-10-16T05:30:00.000Z'),
+      daysAhead: 1,
+      day: 'fri',
+    });
+
+    const longWeekend = branchTimes(
+      {
+        ...india,
+        status: 'closed',
         schedule: {
           ...schedule,
-          days: {
-            ...schedule.days,
-            thu: shut,
-            fri: shut,
-            sat: { open: true, opens: '09:30', closes: '14:00' },
-          },
+          days: { ...schedule.days, thu: [], fri: [], sat: [{ opens: '09:30', closes: '14:00' }] },
         },
       },
       THURSDAY,
-      labels,
     );
-    expect(longWeekend).toMatchObject({ status: 'closed', reopensOn: 'sat', opensAt: '9:30 AM' });
-    expect(longWeekend.reopensTomorrow).toBeUndefined();
+    expect(longWeekend.reopens).toEqual({
+      at: new Date('2026-10-17T04:00:00.000Z'),
+      daysAhead: 2,
+      day: 'sat',
+    });
   });
 
-  it('refuses a week that never opens, days that close before they open, and late last orders', () => {
-    expect(hoursErrors(week())).toEqual([]);
-    const shut = Object.fromEntries(
-      WEEKDAYS.map((d) => [d, { open: false, opens: '11:00', closes: '21:00' }]),
+  it('opens later today when closed before opening time', () => {
+    // 9:30 AM in Bengaluru, before 11:00.
+    const morning = new Date('2026-10-15T04:00:00Z');
+    const times = branchTimes({ ...india, status: 'closed', schedule: week() }, morning);
+    expect(times.reopens).toEqual({
+      at: new Date('2026-10-15T05:30:00.000Z'),
+      daysAhead: 0,
+      day: 'thu',
+    });
+  });
+
+  it('follows what the server says: a pause counts down, a day closed opens at statusUntil', () => {
+    const paused = branchTimes(
+      {
+        ...india,
+        status: 'paused',
+        statusUntil: new Date(THURSDAY.getTime() + 19.5 * 60_000).toISOString(),
+        schedule: week(),
+      },
+      THURSDAY,
+    );
+    expect(paused.pausedMinutes).toBe(20);
+    expect(paused.reopens).toBeNull();
+
+    const closedForTheDay = branchTimes(
+      { ...india, status: 'closed', statusUntil: '2026-10-16T05:30:00.000Z', schedule: week() },
+      THURSDAY,
+    );
+    expect(closedForTheDay.today).toEqual([{ opens: '11:00', closes: '21:00' }]);
+    expect(closedForTheDay.reopens).toMatchObject({ daysAhead: 1, day: 'fri' });
+    // The same moment closing for the rest of today waits for.
+    expect(nextOpeningAfterToday({ ...india, schedule: week() }, THURSDAY)?.at).toEqual(
+      closedForTheDay.reopens?.at,
+    );
+  });
+
+  it("follows special dates (for every way of ordering), and delivery's own week", () => {
+    // Thursday a holiday; Friday opens late.
+    const holiday = week({
+      specialDays: [
+        { from: '2026-10-15', to: '2026-10-15', label: 'Holiday', sessions: [] },
+        { from: '2026-10-16', to: '2026-10-16', sessions: [{ opens: '17:00', closes: '23:00' }] },
+      ],
+    });
+    expect(scheduleStatus({ ...india, schedule: holiday }, THURSDAY)).toEqual({
+      status: 'closed',
+      until: new Date('2026-10-16T11:30:00.000Z'), // Friday 5:00 PM
+    });
+    expect(scheduleStatus({ ...india, schedule: holiday }, THURSDAY, 'delivery').status).toBe(
+      'closed',
+    );
+    // Delivery on its own hours until 11 PM: at 9:00 PM the dining room's last orders have gone.
+    const late = Object.fromEntries(
+      WEEKDAYS.map((d) => [d, [{ opens: '11:00', closes: '23:00' }]]),
     ) as OpeningSchedule['days'];
-    expect(hoursErrors(week({ days: shut }))).toContain('noOpenDay');
-    const base = week();
-    expect(
-      hoursErrors(
-        week({ days: { ...base.days, mon: { open: true, opens: '22:00', closes: '10:00' } } }),
-      ),
-    ).toContain('dayOrder');
-    expect(
-      hoursErrors(
-        week({ days: { ...base.days, mon: { open: true, opens: '', closes: '10:00' } } }),
-      ),
-    ).toContain('dayTime');
-    expect(
-      hoursErrors(
-        week({
-          lastOrdersMinutes: 120,
-          days: { ...base.days, sun: { open: true, opens: '12:00', closes: '13:30' } },
-        }),
-      ),
-    ).toContain('lastOrders');
-    // A closed day's times don't matter.
-    expect(
-      hoursErrors(week({ days: { ...base.days, sun: { open: false, opens: '', closes: '' } } })),
-    ).toEqual([]);
+    const nine = new Date('2026-10-15T15:30:00Z');
+    const branch = { ...india, status: 'closed' as const, schedule: week({ delivery: late }) };
+    expect(branchTimes(branch, nine).reopens?.daysAhead).toBe(1);
+    // Delivery open, with no time from the server: its own hours say until 10:30 PM.
+    const delivering = {
+      ...branch,
+      modeStatus: {
+        takeaway: { status: 'closed' as const },
+        delivery: { status: 'open' as const },
+      },
+    };
+    expect(branchTimes(delivering, nine, 'delivery').ordersUntil).toEqual(
+      new Date('2026-10-15T17:00:00.000Z'),
+    );
   });
 
-  it('refuses unnamed, repeated or back-to-front service windows', () => {
-    expect(hoursErrors(week({ windows: [{ label: ' ', from: '12:00', to: '15:00' }] }))).toContain(
-      'windowLabel',
-    );
+  it('checks special dates and the modes’ own weeks', () => {
+    const diwali = { from: '2026-11-08', to: '2026-11-09', label: 'Diwali', sessions: [] };
+    expect(hoursErrors(week({ specialDays: [diwali] }))).toEqual([]);
+    expect(hoursErrors(week({ specialDays: [{ ...diwali, to: '2026-11-07' }] }))).toEqual([
+      'specialDates',
+    ]);
+    expect(
+      hoursErrors(
+        week({ specialDays: [diwali, { ...diwali, from: '2026-11-09', to: '2026-11-11' }] }),
+      ),
+    ).toEqual(['specialOverlap']);
+    const closed = Object.fromEntries(
+      WEEKDAYS.map((d) => [d, [] as Session[]]),
+    ) as OpeningSchedule['days'];
+    expect(hoursErrors(week({ takeaway: closed }))).toEqual([]);
     expect(
       hoursErrors(
         week({
-          windows: [
-            { label: 'Lunch', from: '12:00', to: '15:00' },
-            { label: 'lunch', from: '13:00', to: '16:00' },
-          ],
+          takeaway: {
+            ...closed,
+            mon: [
+              { opens: '11:00', closes: '15:00' },
+              { opens: '14:00', closes: '18:00' },
+            ],
+          },
         }),
       ),
-    ).toContain('windowLabelTaken');
+    ).toEqual(['sessionOverlap']);
+  });
+
+  it('takes split shifts, a session past midnight and one all day', () => {
+    expect(hoursErrors(week())).toEqual([]);
     expect(
-      hoursErrors(week({ windows: [{ label: 'Dinner', from: '22:00', to: '19:00' }] })),
-    ).toContain('windowOrder');
+      hoursErrors(
+        withMonday([
+          { label: 'Lunch', opens: '12:00', closes: '15:30' },
+          { label: 'Dinner', opens: '19:00', closes: '23:30' },
+        ]),
+      ),
+    ).toEqual([]);
+    expect(hoursErrors(withMonday([{ opens: '18:00', closes: '02:00' }]))).toEqual([]);
+    expect(hoursErrors(withMonday([{ opens: '00:00', closes: '24:00' }]))).toEqual([]);
+    expect(hoursErrors(withMonday([]))).toEqual([]);
+  });
+
+  it('refuses a week that never opens, bad times, overlaps and late last orders', () => {
+    const shut = Object.fromEntries(
+      WEEKDAYS.map((d) => [d, [] as Session[]]),
+    ) as OpeningSchedule['days'];
+    expect(hoursErrors(week({ days: shut }))).toEqual(['noOpenDay']);
+    expect(hoursErrors(withMonday([{ opens: '', closes: '10:00' }]))).toEqual(['sessionTime']);
+    expect(
+      hoursErrors(
+        withMonday([
+          { opens: '12:00', closes: '16:00' },
+          { opens: '15:00', closes: '22:00' },
+        ]),
+      ),
+    ).toEqual(['sessionOverlap']);
+    // Past midnight into Tuesday's 11:00 opening.
+    expect(hoursErrors(withMonday([{ opens: '18:00', closes: '12:00' }]))).toEqual([
+      'sessionOverlap',
+    ]);
+    expect(
+      hoursErrors(
+        withMonday(Array.from({ length: 5 }, () => ({ opens: '11:00', closes: '12:00' }))),
+      ),
+    ).toContain('tooManySessions');
+    expect(
+      hoursErrors(withMonday([{ label: 'x'.repeat(31), opens: '11:00', closes: '21:00' }])),
+    ).toEqual(['sessionLabel']);
+    // A 90-minute session can't have last orders 2 hours before it ends.
+    expect(
+      hoursErrors(withMonday([{ opens: '12:00', closes: '13:30' }], { lastOrdersMinutes: 120 })),
+    ).toEqual(['lastOrders']);
   });
 });
 
@@ -178,7 +304,7 @@ describe('branch details', () => {
     expect(detailsErrors({ ...details, wifiName: '' })).toEqual([]);
   });
 
-  it('writes them back tidied, with the phone link, and a new map link for a new address', () => {
+  it('writes them back tidied, and a new map link for a new address', () => {
     const next = withDetails(india, {
       ...detailsOf(india),
       name: '  The Olive Table  ',
@@ -186,7 +312,6 @@ describe('branch details', () => {
     });
     expect(next.name).toBe('The Olive Table');
     expect(next.phone).toBe('+919826314093');
-    expect(next.phoneHref).toBe('tel:+919826314093');
     expect(next.mapUrl).toBe(india.mapUrl);
     const moved = withDetails(india, { ...detailsOf(india), address: 'MG Road, Bengaluru' });
     expect(moved.mapUrl).toBe(
@@ -321,7 +446,7 @@ describe('delivery zones and pickup', () => {
   });
 });
 
-it('reads every section off a branch and the branch data agrees with its week', () => {
+it('reads every section off a branch, and the branch data carries only its week', () => {
   const settings = settingsOf(india);
   expect(Object.keys(settings)).toEqual([
     'details',
@@ -333,13 +458,12 @@ it('reads every section off a branch and the branch data agrees with its week', 
     'pickup',
   ]);
   expect(hoursErrors(settings.hours)).toEqual([]);
-  // The published strings are what the week works out to (prerendered pages match).
+  // The published data has the week only: every time a screen shows is worked out from it.
   for (const branch of [india, nepal] as Branch[]) {
-    const today = withSchedule(branch, THURSDAY, labels);
-    expect(today.hoursToday).toBe(branch.hoursToday);
-    expect(today.lastOrders).toBe(branch.lastOrders);
-    expect(today.serviceWindows).toEqual(branch.serviceWindows);
-    expect(today.lastOrdersNote).toBe(branch.lastOrdersNote);
+    expect(hoursErrors(branch.schedule)).toEqual([]);
+    for (const gone of ['hoursToday', 'opensAt', 'closesAt', 'lastOrdersNote', 'tables']) {
+      expect(branch).not.toHaveProperty(gone);
+    }
   }
 });
 

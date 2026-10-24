@@ -32,6 +32,7 @@ import { TrackStepper, type StepperEntry } from './TrackStepper';
 import { useLiveOrder } from './useLiveOrders';
 import { useOrderId } from './useOrderId';
 import styles from './OrderTracking.module.css';
+import { usePrepTime } from '@/hooks/useBranchTimes';
 
 const STEP_ICON: Record<TrackStep, IconName> = {
   received: 'check',
@@ -206,7 +207,7 @@ function TrackingView({
   const t = useContent('orders');
   const steps = trackSteps(order);
   const branch = useBranch();
-  const { prepTime } = branch;
+  const prepTime = usePrepTime();
   const { money, clock } = useRegion();
   const visitWords = useVisitWords();
   const arrival = useArrivalMinutes(order);

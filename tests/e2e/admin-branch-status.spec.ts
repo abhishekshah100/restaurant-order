@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { adminSignIn, scan, visible } from './helpers';
+import { expect, test, adminSignIn, scan, visible } from './helpers';
 
 /**
  * The branch's status from the admin bar, in the same browser as a guest: staff pause new

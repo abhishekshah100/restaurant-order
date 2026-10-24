@@ -184,7 +184,7 @@
       }
     },
     "pay": "Pay {amount}",
-    "secured": "Secured by {partner} · Card details are never stored",
+    "secured": "Card details are never stored",
     "hint": "Only orders placed on this phone can be paid here. Your server can settle anything else.",
     "offline": "You're offline. Reconnect to pay your bill.",
     "tryAgain": "Try again",
@@ -202,7 +202,7 @@
       "requestSent": "Payment request sent",
       "waiting": "Waiting for approval",
       "settling": "Marking your orders as paid",
-      "secure": "Encrypted payment · Secured by {partner}",
+      "secure": "Encrypted payment",
       "cancel": "Cancel payment",
       "protoSuccess": "Prototype: success",
       "protoFailure": "Prototype: failure"

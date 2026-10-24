@@ -17,7 +17,7 @@ const labels = {
   payInPerson: { counter: 'Pay at counter', pickup: 'Pay at pickup', cod: 'Cash on delivery' },
   methodName: (method: string) => (method === 'esewa' ? 'eSewa' : 'UPI'),
   lineLabels: testLineLabels(),
-  estimate: branch.prepTime,
+  estimate: `${branch.prepMinutes.min}–${branch.prepMinutes.max} min`,
   onBill: 'On your bill',
   takenBy: (name: string) => `Taken by ${name}`,
   atTableName: (method: string) => method,

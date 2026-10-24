@@ -6,6 +6,7 @@ import { Button, Icon, Skeleton, StatusPill } from '@/components/ui';
 import { useBranch, useContent } from '@/api/hooks';
 import { MODE_ICON } from '@/components/start/ModeOptions';
 import { useGuestSession, useVisit } from '@/context/GuestSessionContext';
+import { useBranchTimes } from '@/hooks/useBranchTimes';
 import { UNKNOWN_TABLE, useTableLabel } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
 import { BrandPanel } from './BrandPanel';
@@ -57,9 +58,12 @@ export function Welcome() {
   const t = useContent('home');
 
   // Only shown while ordering is open: OrderingGate swaps in the closed / paused / offline screen.
-  const kitchen = (
-    <StatusPill status="served">{t('welcome.openUntil', { time: branch.closesAt })}</StatusPill>
-  );
+  // When ordering stops is worked out on the device, so the pill waits for the first client
+  // render.
+  const ordersUntil = useBranchTimes(branch, mode)?.ordersUntil;
+  const kitchen = ordersUntil ? (
+    <StatusPill status="served">{t('welcome.openUntil', { time: ordersUntil })}</StatusPill>
+  ) : null;
 
   const staffOnCall = (
     <span className={cx('t-small c2', styles.footNote)}>

@@ -4,15 +4,16 @@ import { useRef, type KeyboardEvent } from 'react';
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
+import { branchTimes } from '@/lib/branchHours';
 import { createClock } from '@/lib/clock';
 import { cx } from '@/lib/cx';
 import { branchModes } from '@/lib/fulfilment';
-import type { Branch } from '@/types/branch';
+import type { BranchSummary } from '@/types/branch';
 import { MODE_ICON } from './ModeOptions';
 import styles from './OutletList.module.css';
 
 export interface OutletListProps {
-  branches: readonly Branch[];
+  branches: readonly BranchSummary[];
   value: string | null;
   onChange: (branchId: string) => void;
   /** Accessible name of the radio group. */
@@ -22,15 +23,28 @@ export interface OutletListProps {
 const NEXT_KEYS = ['ArrowDown', 'ArrowRight'];
 const PREV_KEYS = ['ArrowUp', 'ArrowLeft'];
 
-/** "Open · until 9:00 PM", "Closed · opens 11:00 AM" or "Ordering paused", with its tone. */
+/**
+ * "Open · orders until 8:30 PM", "Closed · opens 11:00 AM" or "Ordering paused", with its tone,
+ * in the branch's own time. Until the time is known (the first client render) only "Ordering
+ * paused".
+ */
 function useOutletStatus() {
   const t = useContent('home');
-  return (branch: Branch) => {
-    if (branch.status === 'open') {
-      return { tone: styles.open, text: t('start.openUntil', { time: branch.closesAt }) };
-    }
+  return (branch: BranchSummary, now: Date | null) => {
     if (branch.status === 'paused') return { tone: styles.paused, text: t('start.paused') };
-    return { tone: styles.closed, text: t('start.closedOpens', { time: branch.opensAt }) };
+    const tone = branch.status === 'open' ? styles.open : styles.closed;
+    if (!now) return { tone, text: '' };
+    const clock = createClock(branch);
+    const { ordersUntil, reopens } = branchTimes(branch, now);
+    if (branch.status === 'open') {
+      return {
+        tone,
+        text: ordersUntil
+          ? t('start.openUntil', { time: clock.time(ordersUntil) })
+          : t('start.openNow'),
+      };
+    }
+    return { tone, text: t('start.closedOpens', { time: reopens ? clock.time(reopens.at) : '' }) };
   };
 }
 
@@ -59,7 +73,7 @@ export function OutletList({ branches, value, onChange, label }: OutletListProps
     <div ref={groupRef} role="radiogroup" aria-label={label} className={styles.list}>
       {branches.map((branch, i) => {
         const on = branch.id === value;
-        const { tone, text } = status(branch);
+        const { tone, text } = status(branch, now);
         return (
           <button
             key={branch.id}
@@ -79,7 +93,7 @@ export function OutletList({ branches, value, onChange, label }: OutletListProps
               <span className={styles.name}>{branch.name}</span>
               <span className={styles.address}>{branch.address}</span>
               <span className={styles.meta}>
-                <span className={cx(styles.status, tone)}>{text}</span>
+                {text && <span className={cx(styles.status, tone)}>{text}</span>}
                 {now && (
                   <span className={styles.time}>
                     <Icon name="clock" size="xs" />

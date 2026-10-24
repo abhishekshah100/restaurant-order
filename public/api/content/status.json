@@ -1,8 +1,9 @@
 {
   "line": {
-    "open": "Open · until {time}",
+    "open": "Open · orders until {time}",
     "closed": "Closed now",
-    "paused": "Ordering paused"
+    "paused": "Ordering paused",
+    "openNow": "Open now"
   },
   "banner": {
     "offlineMobile": "You're offline. Reconnecting…",
@@ -10,7 +11,11 @@
     "paused": "Online ordering is paused for about {minutes} minutes while the kitchen catches up. Your cart is saved.",
     "closed": "We're closed right now. Ordering opens again at {time} — you can still browse the menu.",
     "closedTomorrow": "We're closed for the rest of today. Ordering opens again at {time} tomorrow — you can still browse the menu.",
-    "closedOn": "We're closed today. Ordering opens again on {day} at {time} — you can still browse the menu."
+    "closedOn": "We're closed today. Ordering opens again on {day} at {time} — you can still browse the menu.",
+    "closingSoon": "Last orders in {minutes} min — place your order soon.",
+    "modeClosed": "{mode} opens again at {time} — you can still browse the menu.",
+    "modeClosedTomorrow": "{mode} opens again at {time} tomorrow — you can still browse the menu.",
+    "modeClosedOn": "{mode} opens again on {day} at {time} — you can still browse the menu."
   },
   "closed": {
     "title": "We're closed right now",
@@ -21,7 +26,8 @@
     "hoursLabel": "Opening hours",
     "lastOrderMobile": "Last kitchen order",
     "lastOrderDesktop": "Last order",
-    "ledeOn": "We're closed today. Ordering opens again on <b>{day} at {time}</b>. You can still browse the menu."
+    "ledeOn": "We're closed today. Ordering opens again on <b>{day} at {time}</b>. You can still browse the menu.",
+    "titleMode": "{mode} isn't available right now"
   },
   "paused": {
     "title": "Our kitchen needs a moment",
@@ -49,6 +55,13 @@
       "fri": "Friday",
       "sat": "Saturday",
       "sun": "Sunday"
-    }
-  }
+    },
+    "opensIn": {
+      "minutes": "in about {minutes} min",
+      "hours": "in about {hours} hr",
+      "hoursMinutes": "in about {hours} hr {minutes} min"
+    },
+    "session": "Open"
+  },
+  "checking": "Checking whether we're taking orders…"
 }

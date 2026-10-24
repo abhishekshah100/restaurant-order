@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { QueryClient } from '@tanstack/react-query';
+import { toBranchConfig, toBranchSummary } from '@/lib/branchParts';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { resolveBranch } from '@/lib/scan';
 import type { Branch } from '@/types/branch';
@@ -10,6 +11,7 @@ import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import {
   CONTENT_NAMESPACES,
+  branchConfigQuery,
   branchMenuQuery,
   branchPromotionsQuery,
   branchesQuery,
@@ -38,8 +40,9 @@ const readMenu = (branchId: string) => readApiFile<MenuData>(`branches/${branchI
 
 /**
  * Fills the query cache with what every page needs, for the root layout to dehydrate: the copy,
- * the brand and the branches (staff pages use their region rules too). It's built into every
- * page, so it stays small: what only guests need is prefetchGuestData's.
+ * the brand, every branch in brief and the default branch's rules (guests and staff both start
+ * there). It's built into every page, so it stays small: another branch's rules are read in the
+ * browser when they're needed, and what only guests need is prefetchGuestData's.
  */
 export async function prefetchAppData(client: QueryClient): Promise<void> {
   const [branches, restaurant] = await Promise.all([
@@ -48,7 +51,11 @@ export async function prefetchAppData(client: QueryClient): Promise<void> {
   ]);
   client.setQueryData(restaurantQuery().queryKey, restaurant);
   // Already out of date in the page, like the menu: the browser reads the live status once.
-  client.setQueryData(branchesQuery().queryKey, branches, { updatedAt: 0 });
+  client.setQueryData(branchesQuery().queryKey, branches.map(toBranchSummary), { updatedAt: 0 });
+  const first = resolveBranch(branches, restaurant.defaultBranchId);
+  client.setQueryData(branchConfigQuery(first.id).queryKey, toBranchConfig(first), {
+    updatedAt: 0,
+  });
   await Promise.all(
     CONTENT_NAMESPACES.map((ns) =>
       client.prefetchQuery({

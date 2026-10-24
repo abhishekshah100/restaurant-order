@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { adminSignIn, installClock } from './helpers';
+import { expect, test, adminSignIn, installClock } from './helpers';
 
 /**
  * Reservations: a table booked for tonight from the Reservations page (the form's checks, the
