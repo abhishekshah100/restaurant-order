@@ -2,6 +2,7 @@ import type { IconName } from '@/components/ui/Icon/iconNames';
 import type { AdminServiceCounts } from '@/types/admin';
 import type { OrderView } from './adminOrders';
 import type { PaymentsView } from './adminPayments';
+import type { DayRange } from './dayRange';
 import { ADMIN_PATHS } from './adminBranches';
 
 /*
@@ -110,8 +111,17 @@ export function ordersPath(view: OrderView): string {
   return view === 'active' ? base : `${base}?view=${view}`;
 }
 
-/** The Payments page on a view: To collect is the page itself, the others ?view=. */
-export function paymentsPath(view: PaymentsView = 'collect'): string {
-  const base = section('payments');
-  return view === 'collect' ? base : `${base}?view=${view}`;
+/**
+ * The Payments page on a view (To collect is the page itself, the others ?view=), on today or
+ * on the days given (?from=&to=).
+ */
+export function paymentsPath(view: PaymentsView = 'collect', days?: DayRange): string {
+  const search = new URLSearchParams();
+  if (view !== 'collect') search.set('view', view);
+  if (days) {
+    search.set('from', days.from);
+    search.set('to', days.to);
+  }
+  const query = search.toString();
+  return query ? `${section('payments')}?${query}` : section('payments');
 }

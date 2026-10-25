@@ -24,6 +24,8 @@ import {
 } from '@/lib/adminPayments';
 import type { Order } from '@/types/order';
 import type { BillRequest } from '@/types/service';
+import { inDayRange, isTodayOnly, ordersFilter, parseDayRange } from '@/lib/dayRange';
+import { DateRangeFilter } from '../DateRangeFilter';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { CollectTarget } from './CollectDialog';
 import { DueCard } from './DueCard';
@@ -54,13 +56,17 @@ const RefundDialog = dynamic(() => import('./RefundDialog').then((m) => m.Refund
 /** Ages ("4 min ago") move on this often. */
 const AGE_REFRESH_MS = 20_000;
 
+/** A calendar day as the branch writes dates: "2026-10-20" → "20 Oct 2026". */
+const dayLabelOf = (date: (at: string) => string) => (key: string) => date(`${key}T12:00:00Z`);
+
 /** The collect dialog follows the latest data: an order by id, a table by number. */
 type CollectKey = { kind: 'order'; id: string } | { kind: 'table'; table: number };
 
 const CHANNELS: readonly ChannelFilter[] = ['all', 'online', 'inPerson'];
 
 /**
- * /admin/dashboard/payments/: the branch's money today, for every member of staff. Today's
+ * /admin/dashboard/payments/: the branch's money today (or on the days picked, ?from=&to=, up to
+ * 90 days back), for every member of staff. Today's
  * takings (net, online and in person, to collect, tips, average bill, refunds) with the day
  * report and a CSV export; by payment method with the cash in the drawer; and three views (in
  * the address): To collect (open bills by table, bill requests first: collect in full, split or
@@ -73,7 +79,13 @@ export function PaymentsBoard() {
   const t = useContent('common');
   const router = useRouter();
   const { branch, clock } = useAdminWorkspace();
-  const orders = useBranchOrders(branch.id);
+  const now = useNow(AGE_REFRESH_MS);
+  const today = clock.dayKey(now ?? new Date());
+  const days = parseDayRange(useQueryParam('from'), useQueryParam('to'), today);
+  const onToday = isTodayOnly(days, today);
+  // Days up to today keep being polled; past ones don't change on their own.
+  const live = days.to === today;
+  const orders = useBranchOrders(branch.id, ordersFilter(days, today), live);
   const service = useBranchService(branch.id);
   const text = usePaymentText();
   const view = parsePaymentsView(useQueryParam('view'));
@@ -83,21 +95,35 @@ export function PaymentsBoard() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [collectKey, setCollectKey] = useState<CollectKey | null>(null);
   const [refundId, setRefundId] = useState<string | null>(null);
-  const now = useNow(AGE_REFRESH_MS);
   const print = usePaymentPrint();
+  const dayLabel = dayLabelOf(clock.date);
 
-  const goTo = (next: (typeof PAYMENTS_VIEWS)[number]) =>
-    router.replace(paymentsPath(next), { scroll: false });
+  const goTo = (next: (typeof PAYMENTS_VIEWS)[number], range = days) =>
+    router.replace(paymentsPath(next, isTodayOnly(range, today) ? undefined : range), {
+      scroll: false,
+    });
+  /** The days, as the summary's heading and the report write them. */
+  const period = onToday
+    ? t('adminPayments.today.eyebrow', { date: clock.date(now ?? new Date()) })
+    : days.from === days.to
+      ? t('adminPayments.today.eyebrowDay', { date: dayLabel(days.from) })
+      : t('adminPayments.today.eyebrowRange', {
+          from: dayLabel(days.from),
+          to: dayLabel(days.to),
+        });
 
   let content;
   if (orders.data) {
+    // Up to today the list also has yesterday's bills still to pay: they're to collect, but
+    // their money counts on the day they were placed.
     const all = orders.data.orders;
-    const day = daySummary(all);
-    const billRequests = (service.data?.requests ?? []).filter(
-      (r): r is BillRequest => r.kind === 'bill',
-    );
+    const placed = all.filter((o) => inDayRange(clock.dayKey(o.placedAt), days));
+    const day = daySummary(placed);
+    const billRequests = live
+      ? (service.data?.requests ?? []).filter((r): r is BillRequest => r.kind === 'bill')
+      : [];
     const groups = dueGroups(all, billRequests);
-    const entries = ledgerEntries(all);
+    const entries = ledgerEntries(placed);
     const refunds = entries.filter((e) => e.kind === 'refund');
     const shownGroups = filterGroups(groups, query);
     const filters = { method, channel, query };
@@ -173,7 +199,7 @@ export function PaymentsBoard() {
       link.href = url;
       link.download = t('adminPayments.actions.exportFile', {
         branch: branch.id,
-        date: clock.dayKey(now ?? new Date(orders.data.generatedAt)),
+        date: onToday ? today : days.from === days.to ? days.from : `${days.from}_${days.to}`,
       });
       link.click();
       URL.revokeObjectURL(url);
@@ -255,9 +281,9 @@ export function PaymentsBoard() {
       <>
         <TakingsSummary
           day={day}
-          date={clock.date(now ?? new Date(orders.data.generatedAt))}
+          period={period}
           onCollect={() => goTo('collect')}
-          onReport={() => print.report(all, groups)}
+          onReport={() => print.report(placed, groups, period)}
           onExport={exportCsv}
         />
 
@@ -330,7 +356,7 @@ export function PaymentsBoard() {
           </section>
 
           <aside className={styles.side}>
-            <MethodBreakdown day={day} />
+            <MethodBreakdown day={day} live={live} />
           </aside>
         </div>
 
@@ -389,6 +415,12 @@ export function PaymentsBoard() {
     <div className={styles.page}>
       {/* The bar above already names the page; the heading is for screen readers. */}
       <h1 className="visually-hidden">{t('adminPayments.title')}</h1>
+      <DateRangeFilter
+        id="payments-days"
+        range={days}
+        today={today}
+        onChange={(range) => goTo(view, range)}
+      />
       {content}
     </div>
   );

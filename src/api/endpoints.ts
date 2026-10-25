@@ -7,6 +7,7 @@ import type {
   AcknowledgeRequestResponse,
   AddRoundRequest,
   AdminBranchesResponse,
+  AdminOrdersFilter,
   AdminOrdersResponse,
   AdminSignInRequest,
   AdminSignInResponse,
@@ -74,6 +75,16 @@ import type {
  */
 
 const seg = encodeURIComponent;
+
+/** "?from=…&to=…" from the fields that are set ("" with none). */
+function searchOf(fields: object): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(fields) as [string, string | number | undefined][]) {
+    if (value !== undefined) search.set(key, String(value));
+  }
+  const text = search.toString();
+  return text ? `?${text}` : '';
+}
 
 /** Admin requests carry the staff session's token. */
 const bearer = (token: string): RequestInit => ({ headers: { Authorization: `Bearer ${token}` } });
@@ -174,8 +185,11 @@ export const api = {
       body,
       bearer(token),
     ),
-  branchOrders: (token: string, branchId: string) =>
-    apiGet<AdminOrdersResponse>(`admin/branches/${seg(branchId)}/orders`, bearer(token)),
+  branchOrders: (token: string, branchId: string, filter: AdminOrdersFilter = {}) =>
+    apiGet<AdminOrdersResponse>(
+      `admin/branches/${seg(branchId)}/orders${searchOf(filter)}`,
+      bearer(token),
+    ),
   collectPayment: (token: string, branchId: string, orderId: string, body: CollectPaymentRequest) =>
     apiPost<OrderResponse>(
       `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/payment`,

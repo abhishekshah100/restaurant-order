@@ -19,11 +19,14 @@ import { useRequestFailed } from './useRequestFailed';
  * The guest's running dine-in order in this session (GET /sessions/:id/orders): once they've
  * ordered at the table, the cart adds rounds to it instead of checking out again. Null when
  * there's none (or the guest isn't dining in); undefined until their orders have been read.
+ * Read only once the cart has a dish: it decides what the cart's button does, so a guest who
+ * only browses never asks.
  */
 export function useOpenTab(): Order | null | undefined {
   const session = useGuestSession();
+  const { count } = useCart();
   const dineIn = session?.mode === 'dineIn';
-  const { data } = useSessionOrders(dineIn ? session.id : undefined);
+  const { data } = useSessionOrders(dineIn && count > 0 ? session.id : undefined);
   if (session && !dineIn) return null;
   if (!session || !data) return undefined;
   return openTab(data.orders, session.id);

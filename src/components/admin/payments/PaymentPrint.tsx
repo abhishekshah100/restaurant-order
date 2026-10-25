@@ -16,12 +16,13 @@ import styles from './PaymentPrint.module.css';
 const PRINTING = 'printing-payments';
 
 type Printable =
-  { kind: 'bill'; orders: Order[] } | { kind: 'report'; orders: Order[]; due: DueGroup[] };
+  | { kind: 'bill'; orders: Order[] }
+  | { kind: 'report'; orders: Order[]; due: DueGroup[]; period: string };
 
 /**
  * Printing from the Payments page: `bill(orders)` prints the bill for an order or a table (a
- * receipt once it's paid: what was paid, how and when); `report(orders, due)` prints the day
- * report (the day's money, by method, every payment and refund, what's still to collect). The
+ * receipt once it's paid: what was paid, how and when); `report(orders, due, period)` prints the
+ * day report for the days written in `period` (the day's money, by method, every payment and refund, what's still to collect). The
  * page is put in the document, the browser's print dialog opens, and it's taken away after.
  */
 export function usePaymentPrint() {
@@ -51,7 +52,7 @@ export function usePaymentPrint() {
         {doc.kind === 'bill' ? (
           <BillDoc orders={doc.orders} />
         ) : (
-          <ReportDoc orders={doc.orders} due={doc.due} />
+          <ReportDoc orders={doc.orders} due={doc.due} period={doc.period} />
         )}
       </div>,
       document.body,
@@ -59,7 +60,8 @@ export function usePaymentPrint() {
 
   return {
     bill: (orders: Order[]) => setDoc({ kind: 'bill', orders }),
-    report: (orders: Order[], due: DueGroup[]) => setDoc({ kind: 'report', orders, due }),
+    report: (orders: Order[], due: DueGroup[], period: string) =>
+      setDoc({ kind: 'report', orders, due, period }),
     sheet,
   };
 }
@@ -201,7 +203,7 @@ function BillDoc({ orders }: { orders: Order[] }) {
 }
 
 /** The day report: the day's money, by method, every payment and refund, and what's still due. */
-function ReportDoc({ orders, due }: { orders: Order[]; due: DueGroup[] }) {
+function ReportDoc({ orders, due, period }: { orders: Order[]; due: DueGroup[]; period: string }) {
   const t = useContent('common');
   const { branch, clock } = useAdminWorkspace();
   const { amount, methodName, where } = usePaymentText();
@@ -215,7 +217,7 @@ function ReportDoc({ orders, due }: { orders: Order[]; due: DueGroup[] }) {
     <article className={styles.report}>
       <PrintHead title={t('adminPayments.report.title')} />
       <p className={styles.muted}>
-        {t('adminPayments.report.branch', { branch: branch.shortName, date: clock.date(now) })}
+        {t('adminPayments.report.branch', { branch: branch.shortName, date: period })}
       </p>
       <p className={styles.muted}>
         {t('adminPayments.report.printed', { time: clock.time(now), name: name ?? '' })}

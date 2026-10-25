@@ -1,0 +1,18 @@
+/* From and To side by side (wrapping on narrow screens), Today on the same line. */
+
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+}
+
+.field {
+  flex: 1 1 140px;
+  min-width: 0;
+  max-width: 200px;
+}
+
+.today {
+  flex: none;
+}

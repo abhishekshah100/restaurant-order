@@ -70,11 +70,14 @@ export function OrderSummary({ order }: { order: Order }) {
                   <span className={styles.qty}>{item.quantity}</span>
                   <span className={styles.itemBody}>
                     <span className={styles.itemName}>{item.name}</span>
-                    {[item.variant, ...item.details].filter(Boolean).map((line) => (
-                      <span key={line} className={styles.itemLine}>
-                        {line}
-                      </span>
-                    ))}
+                    {/* details already open with the variant; it stands alone only without them */}
+                    {(item.details.length ? item.details : [item.variant])
+                      .filter(Boolean)
+                      .map((line, i) => (
+                        <span key={`${line}-${i}`} className={styles.itemLine}>
+                          {line}
+                        </span>
+                      ))}
                     {item.note && (
                       <span className={styles.itemNote}>
                         {t('adminOrder.itemNote', { note: item.note })}

@@ -15,7 +15,7 @@ import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { useActiveBranchId } from './activeBranch';
 import { isMockApi } from './config';
-import type { AdminSignInRequest, OrderLineRequest } from './contracts';
+import type { AdminOrdersFilter, AdminSignInRequest, OrderLineRequest } from './contracts';
 import {
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
@@ -121,13 +121,35 @@ export function useBranchStatusKnown(): boolean {
 }
 
 /**
- * Keeps the guest's branch status fresh while mounted: GET /branches/:id/status every minute
- * (not in a background tab). For pages where guests order; mount it once per page.
+ * Keeps the guest's branch status fresh while mounted: GET /branches/:id/status at the time the
+ * server says it next changes (`statusUntil`: last orders, the next session, a pause's end; for
+ * dine-in, takeaway and delivery), and every 3 minutes for what staff change without notice. Not
+ * in a background tab. For pages where guests order; mount it once per page.
  */
 export function useBranchStatusPolling(): void {
-  const { defaultBranchId } = useRestaurant();
-  const branchId = useActiveBranchId() ?? defaultBranchId;
-  useQuery({ ...branchStatusQuery(branchId), refetchInterval: BRANCH_STATUS_REFRESH_MS });
+  const branch = useBranchSummary();
+  const { refetch } = useQuery({
+    ...branchStatusQuery(branch.id),
+    refetchInterval: BRANCH_STATUS_REFRESH_MS,
+  });
+  const dineIn = branch.statusUntil;
+  const takeaway = branch.modeStatus.takeaway.statusUntil;
+  const delivery = branch.modeStatus.delivery.statusUntil;
+  useEffect(() => {
+    // The next scheduled change, of any way of ordering, still to come.
+    const now = Date.now();
+    const next = [dineIn, takeaway, delivery]
+      .map((at) => (at ? Date.parse(at) : NaN))
+      .filter((at) => at > now)
+      .sort((a, b) => a - b)[0];
+    if (next === undefined) return;
+    // A second after, so the server's answer has moved on. Timers can't wait beyond ~24 days.
+    const timer = window.setTimeout(
+      () => void refetch(),
+      Math.min(next - now + 1000, 2_147_000_000),
+    );
+    return () => window.clearTimeout(timer);
+  }, [dineIn, takeaway, delivery, refetch]);
 }
 
 /** The active branch's menu with its lookups (getDish, dishesIn, searchDishes…). The same object until the menu changes. */
@@ -220,9 +242,15 @@ export const useAdminBranches = () => useQuery(adminBranchesQuery(useAdminToken(
 export const useBranchService = (branchId: string | undefined) =>
   useQuery(branchServiceQuery(useAdminToken(), branchId));
 
-/** GET /admin/branches/:branchId/orders: today's orders in full; polled like the service. */
-export const useBranchOrders = (branchId: string | undefined) =>
-  useQuery(branchOrdersQuery(useAdminToken(), branchId));
+/**
+ * GET /admin/branches/:branchId/orders: today's orders in full, or the filter's days and table;
+ * polled like the service while `live` (the days reach today).
+ */
+export const useBranchOrders = (
+  branchId: string | undefined,
+  filter?: AdminOrdersFilter,
+  live?: boolean,
+) => useQuery(branchOrdersQuery(useAdminToken(), branchId, filter, live));
 
 /** GET /admin/branches/:branchId/tables: every area with its tables; polled like the service. */
 export const useFloorPlan = (branchId: string | undefined) =>

@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider, hydrate } from '@tanstack/react-query';
 import { useBranchStatusKnown } from '@/api/hooks';
-import { branchesQuery } from '@/api/queries';
+import { branchesQuery, sessionOrdersQuery } from '@/api/queries';
+import { getQueryClient } from '@/api/queryClient';
 import { useCartItemTotal } from '@/hooks/useOffers';
-import { TestProviders, createApiState } from '../apiState';
+import { useOpenTab } from '@/hooks/useRunningOrder';
+import { TestProviders, createApiState, seedGuestSession } from '../apiState';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
@@ -49,5 +51,17 @@ describe('useCartItemTotal', () => {
   it('is 0 for an empty cart, without reading the menu', () => {
     const { result } = renderHook(() => useCartItemTotal(), { wrapper: TestProviders });
     expect(result.current).toBe(0);
+  });
+});
+
+describe('useOpenTab', () => {
+  it("doesn't ask for the guest's orders while the cart is empty", async () => {
+    const session = seedGuestSession();
+    const { result } = renderHook(() => useOpenTab(), { wrapper: TestProviders });
+    // Not read: whether there's a running order only matters once there's a dish to send.
+    await waitFor(() => expect(result.current).toBeUndefined());
+    const state = getQueryClient().getQueryState(sessionOrdersQuery(session.id).queryKey);
+    expect(state?.dataUpdatedAt ?? 0).toBe(0);
+    expect(state?.fetchStatus ?? 'idle').toBe('idle');
   });
 });

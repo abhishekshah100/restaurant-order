@@ -8,7 +8,7 @@ import styles from './MethodBreakdown.module.css';
  * Today's payments by method (cash, card, UPI, eSewa…), the most taken first, each with its
  * share of the day, how many and anything refunded; then the cash that should be in the drawer.
  */
-export function MethodBreakdown({ day }: { day: DaySummary }) {
+export function MethodBreakdown({ day, live = true }: { day: DaySummary; live?: boolean }) {
   const t = useContent('common');
   const { amount, methodName } = usePaymentText();
   const largest = Math.max(1, ...day.byMethod.map((m) => m.amount));
@@ -55,7 +55,9 @@ export function MethodBreakdown({ day }: { day: DaySummary }) {
           ))}
         </ul>
       ) : (
-        <p className={styles.empty}>{t('adminPayments.methods.empty')}</p>
+        <p className={styles.empty}>
+          {t(live ? 'adminPayments.methods.empty' : 'adminPayments.methods.emptyPast')}
+        </p>
       )}
       <div className={styles.drawer}>
         <span className={styles.drawerIcon} aria-hidden="true">

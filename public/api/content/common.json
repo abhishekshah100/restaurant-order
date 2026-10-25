@@ -534,6 +534,22 @@
       "takeOrder": "Take order",
       "newOrder": "New order",
       "collectTable": "Collect {amount}",
+      "history": {
+        "action": "Order history",
+        "title": "Table {table} · Order history",
+        "subtitle": "Completed and cancelled orders",
+        "loading": "Loading orders",
+        "failed": "Couldn't load the orders. Try again.",
+        "retry": "Try again",
+        "empty": "No completed orders on these days.",
+        "row": "#{order} · {name}",
+        "when": "{date}, {time}",
+        "items": {
+          "one": "{count} item",
+          "other": "{count} items"
+        },
+        "back": "Back to history"
+      },
       "free": {
         "action": "Free table",
         "title": "Free Table {table}?",
@@ -1225,6 +1241,12 @@
       }
     }
   },
+  "adminDateRange": {
+    "label": "Dates",
+    "from": "From",
+    "to": "To",
+    "today": "Today"
+  },
   "adminPayments": {
     "title": "Payments",
     "orderId": "#{order}",
@@ -1233,6 +1255,8 @@
     "today": {
       "label": "Today's takings",
       "eyebrow": "Today · {date}",
+      "eyebrowDay": "{date}",
+      "eyebrowRange": "{from} – {to}",
       "net": "Net takings",
       "netHint": "{collected} collected · {refunds} refunded",
       "online": "Online",
@@ -1258,6 +1282,7 @@
     "methods": {
       "title": "By payment method",
       "empty": "No payments yet today.",
+      "emptyPast": "No payments on these days.",
       "row": "{method}: {amount} from {count}",
       "count": {
         "one": "{count} payment",

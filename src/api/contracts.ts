@@ -492,11 +492,21 @@ export interface ImageUploadResponse {
 /**
  * `GET /admin/branches/:branchId/orders` — today's orders at the branch (its time zone), every
  * mode and state, in full (items, rounds, payment, timeline, pickup or delivery details), newest
- * first. Authorised like GET /admin/branches. 200 → `AdminOrdersResponse`. Errors: 401, 403.
- * Poll it like the service (every 15 s). Mock: this device's orders, the drawn history and, in
- * dev, the demo floor.
+ * first. With `?from=YYYY-MM-DD&to=YYYY-MM-DD` (branch calendar days, up to 90 days back and 31
+ * long), that range's instead; with `&table=N`, one table's only. A range up to today also has
+ * yesterday's orders still to pay. Authorised like GET /admin/branches. 200 →
+ * `AdminOrdersResponse`. Errors: 400 invalid_request (details: field from | to | table), 401,
+ * 403. Poll it like the service (every 15 s). Mock: this device's orders, the drawn history
+ * and, in dev, the demo floor; today only.
  */
 export type AdminOrdersResponse = AdminOrders;
+
+/** The days (branch calendar, "2026-10-25") and table GET /admin/branches/:branchId/orders reads. */
+export interface AdminOrdersFilter {
+  from?: string;
+  to?: string;
+  table?: number;
+}
 
 /**
  * `POST /admin/branches/:branchId/orders/:id/payment` — staff took the payment in person, at any

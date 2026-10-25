@@ -217,6 +217,9 @@ describe('collecting', () => {
     expect(parsePaymentsView('nope')).toBe('collect');
     expect(paymentsPath()).toBe('/admin/dashboard/payments/');
     expect(paymentsPath('transactions')).toBe('/admin/dashboard/payments/?view=transactions');
+    expect(paymentsPath('refunds', { from: '2026-10-20', to: '2026-10-25' })).toBe(
+      '/admin/dashboard/payments/?view=refunds&from=2026-10-20&to=2026-10-25',
+    );
   });
 });
 

@@ -1,0 +1,105 @@
+/* A table's order history: the days, then one row per order (opens it), total and payment. */
+
+.body {
+  width: min(560px, 100%);
+}
+
+.list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  width: 100%;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    border-color: var(--line-strong);
+  }
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.name {
+  font: var(--font-body);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.side {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.total {
+  font: var(--font-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  flex: none;
+  color: var(--ink-3);
+}
+
+.empty {
+  margin: 12px 0 0;
+  padding: 24px 12px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  color: var(--ink-3);
+  font: var(--font-body);
+  text-align: center;
+}
+
+.loading {
+  margin-top: 12px;
+  height: 160px;
+  border-radius: var(--r-md);
+  background: var(--ink-a05);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading {
+    animation: none;
+  }
+}

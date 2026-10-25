@@ -8,7 +8,7 @@ import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { apiGet } from './client';
-import type { AdminBranchesResponse, OrderLineRequest } from './contracts';
+import type { AdminBranchesResponse, AdminOrdersFilter, OrderLineRequest } from './contracts';
 import { api } from './endpoints';
 import type common from '../../public/api/content/common.json';
 import type home from '../../public/api/content/home.json';
@@ -106,8 +106,12 @@ export const branchStatusQuery = (branchId: string) =>
     staleTime: BRANCH_STATUS_REFRESH_MS,
   });
 
-/** How often pages where guests order check the branch's status. */
-export const BRANCH_STATUS_REFRESH_MS = 60_000;
+/**
+ * How often pages where guests order check the branch's status, for what staff change without
+ * notice (a pause, a close). Scheduled changes (last orders, the next session) are checked at
+ * their time (useBranchStatusPolling).
+ */
+export const BRANCH_STATUS_REFRESH_MS = 3 * 60_000;
 
 /** GET /branches/:id/menu: one branch's categories, dishes (in its currency) and curated lists. */
 export const branchMenuQuery = (branchId: string) =>
@@ -308,15 +312,27 @@ export const tableDetailQuery = (
     refetchInterval: BRANCH_SERVICE_REFRESH_MS,
   });
 
-/** GET /admin/branches/:branchId/orders: today's orders; idle while signed out or without a branch. */
-export const branchOrdersQuery = (token: string | null, branchId: string | undefined) =>
+/**
+ * GET /admin/branches/:branchId/orders: today's orders, or the filter's days and table; idle
+ * while signed out or without a branch. Polled while `live` (the days reach today); past days
+ * don't change on their own, so they're read once and kept.
+ */
+export const branchOrdersQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  filter: AdminOrdersFilter = {},
+  live = true,
+) =>
   queryOptions({
-    queryKey: ['admin', 'service', 'orders', branchId, token] as const,
-    queryFn: token && branchId ? () => api.branchOrders(token, branchId) : skipToken,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+    queryKey: ['admin', 'service', 'orders', branchId, token, filter] as const,
+    queryFn: token && branchId ? () => api.branchOrders(token, branchId, filter) : skipToken,
+    staleTime: live ? 0 : PAST_ORDERS_STALE_MS,
+    refetchOnWindowFocus: live,
+    refetchInterval: live ? BRANCH_SERVICE_REFRESH_MS : false,
   });
+
+/** How long past days' orders are trusted (a refund there is refetched by the mutation). */
+const PAST_ORDERS_STALE_MS = 5 * 60_000;
 
 /**
  * GET /admin/branches/:branchId/reservations: bookings from today on. Keyed like the floor, so

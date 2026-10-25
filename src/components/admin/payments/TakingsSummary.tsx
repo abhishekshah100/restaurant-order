@@ -6,20 +6,20 @@ import { usePaymentText } from './usePaymentText';
 import styles from './TakingsSummary.module.css';
 
 /**
- * Today's money at a glance: net takings (collected less refunded) with how it split between
+ * The day's money (today's, or the days picked) at a glance: net takings (collected less refunded) with how it split between
  * online and in person, the day report and CSV export; then what's still to collect (opens To
  * collect), tips, the average bill and refunds.
  */
 export function TakingsSummary({
   day,
-  date,
+  period,
   onCollect,
   onReport,
   onExport,
 }: {
   day: DaySummary;
-  /** Today, as the branch writes it. */
-  date: string;
+  /** The days, written out: "Today · 26 Oct 2026", "20 Oct 2026 – 25 Oct 2026". */
+  period: string;
   onCollect: () => void;
   onReport: () => void;
   onExport: () => void;
@@ -32,7 +32,7 @@ export function TakingsSummary({
   return (
     <section className={styles.summary} aria-labelledby="takings-title">
       <div className={styles.hero}>
-        <p className={styles.eyebrow}>{t('adminPayments.today.eyebrow', { date })}</p>
+        <p className={styles.eyebrow}>{period}</p>
         <h2 id="takings-title" className={styles.heroLabel}>
           {t('adminPayments.today.net')}
         </h2>
