@@ -8,6 +8,7 @@
     "myOrders": "My orders",
     "orderNumber": "Order #{id}",
     "orderRef": "#{id}",
+    "token": "Token {token}",
     "table": "Table {table}",
     "tableLabel": "Table",
     "browseMenu": "Browse menu",

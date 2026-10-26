@@ -42,6 +42,13 @@ export interface BranchDetails {
   locale: string;
   /** ISO 4217 code (config/masters › CURRENCIES). Menu prices keep their numbers. */
   currency: string;
+  /**
+   * Orders are numbered "BLR-001": one to five capital letters, then a number counting up from
+   * `orderStart` (a new prefix starts there again; a lower start never reuses a number). The
+   * server sends both; a new branch left without them takes its short name's letters, from 1.
+   */
+  orderPrefix?: string;
+  orderStart?: number;
 }
 
 /** Settings › Services: the ways guests can order at the branch (at least one). */

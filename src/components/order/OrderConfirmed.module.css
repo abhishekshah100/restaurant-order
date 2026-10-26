@@ -374,3 +374,10 @@
     line-height: 34px;
   }
 }
+
+/* The day's token ("Token 12"): what staff call out when it's ready. */
+.token {
+  margin: 4px 0 0;
+  font: var(--font-h3);
+  color: var(--ink);
+}

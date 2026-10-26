@@ -1,5 +1,5 @@
 import { useContent } from '@/api/hooks';
-import { StatusPill, VegMark } from '@/components/ui';
+import { StatusPill, Tag, VegMark } from '@/components/ui';
 import { amountDue } from '@/lib/lifecycle';
 import type { Order } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
@@ -29,6 +29,11 @@ export function OrderSummary({ order }: { order: Order }) {
   return (
     <div className={styles.detail}>
       <div className={styles.statuses}>
+        {order.token !== undefined && (
+          <Tag variant="plain" icon={null}>
+            {t('adminOrder.token', { token: order.token })}
+          </Tag>
+        )}
         <StatusPill status={order.status} />
         <PaymentBadge status={order.payment.status}>
           {t(`adminDashboard.paymentStatus.${order.payment.status}`)}

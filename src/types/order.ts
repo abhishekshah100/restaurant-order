@@ -179,7 +179,10 @@ export interface OrderRound {
 }
 
 export interface Order {
+  /** "BLR-001": the branch's prefix and number ("A105" on orders from before prefixes). */
   id: string;
+  /** The day's token at the branch ("#12"), from 1 every day; none on older orders. */
+  token?: number;
   /** The branch it was placed at (GET /branches). */
   branchId: string;
   /** Dine-in, takeaway or delivery. */

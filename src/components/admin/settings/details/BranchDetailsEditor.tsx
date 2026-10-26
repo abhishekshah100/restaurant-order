@@ -15,7 +15,13 @@ import {
   timeZonesWith,
 } from '@/config/masters';
 import { useNow } from '@/hooks/useNow';
-import { LIMITS, detailsErrors, dialCodeOf, type SettingsError } from '@/lib/branchSettings';
+import {
+  LIMITS,
+  detailsErrors,
+  dialCodeOf,
+  orderCodeOf,
+  type SettingsError,
+} from '@/lib/branchSettings';
 import { createClock } from '@/lib/clock';
 import { createMoney } from '@/lib/money';
 import type { BranchDetails } from '@/types/branchSettings';
@@ -36,6 +42,8 @@ const FIELD_OF: Partial<Record<SettingsError, keyof BranchDetails>> = {
   phoneInvalid: 'phone',
   phoneRegion: 'phone',
   wifiLong: 'wifiName',
+  orderPrefix: 'orderPrefix',
+  orderStart: 'orderStart',
   country: 'country',
   timezone: 'timezone',
   locale: 'locale',
@@ -45,8 +53,9 @@ const FIELD_OF: Partial<Record<SettingsError, keyof BranchDetails>> = {
 /**
  * Settings › Branch details: the branch's name, the short name staff and guests tell it apart
  * by, its city, address and phone, and what guests at the table are told (the Wi-Fi, where the
- * tables are); and its region — country, time zone, locale and currency. Another country brings
- * its phone rules, taxes and payment methods on saving.
+ * tables are); how its orders are numbered (prefix and starting number, "BLR-001"); and its
+ * region — country, time zone, locale and currency. Another country brings its phone rules,
+ * taxes and payment methods on saving.
  */
 export function BranchDetailsEditor() {
   const t = useContent('common');
@@ -135,6 +144,52 @@ export function BranchDetailsEditor() {
                 />
               </FieldGrid>
             </SettingsCard>
+
+            {value.orderPrefix !== undefined && value.orderStart !== undefined && (
+              <SettingsCard
+                title={t('adminSettings.details.orders')}
+                hint={t('adminSettings.details.ordersHint')}
+              >
+                <FieldGrid>
+                  <Input
+                    id="branch-orderPrefix"
+                    label={t('adminSettings.details.orderPrefix')}
+                    hint={t('adminSettings.details.orderPrefixHint')}
+                    value={value.orderPrefix}
+                    error={errorFor('orderPrefix')}
+                    maxLength={5}
+                    autoComplete="off"
+                    spellCheck={false}
+                    onChange={(event) =>
+                      set({
+                        ...value,
+                        orderPrefix: event.target.value.toUpperCase().replace(/[^A-Z]/g, ''),
+                      })
+                    }
+                  />
+                  <Input
+                    id="branch-orderStart"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={LIMITS.orderStart}
+                    step={1}
+                    label={t('adminSettings.details.orderStart')}
+                    hint={t('adminSettings.details.orderStartHint')}
+                    value={Number.isNaN(value.orderStart) ? '' : value.orderStart}
+                    error={errorFor('orderStart')}
+                    onChange={(event) => set({ ...value, orderStart: event.target.valueAsNumber })}
+                  />
+                </FieldGrid>
+                {value.orderPrefix && (
+                  <p className="t-small c2">
+                    {t('adminSettings.details.orderExample', {
+                      example: orderCodeOf(value.orderPrefix, value.orderStart || 1),
+                    })}
+                  </p>
+                )}
+              </SettingsCard>
+            )}
 
             <RegionCard value={value} saved={saved} set={set} errorFor={errorFor} />
           </>

@@ -116,6 +116,9 @@ export const TicketCard = memo(function TicketCard({
         <div className={styles.title}>
           <h3 className={styles.order}>
             {t('ticket.order', { order: ticket.orderId })}
+            {ticket.token !== undefined && (
+              <span className={styles.token}>{t('ticket.token', { token: ticket.token })}</span>
+            )}
             {fresh && <span className={styles.fresh}>{t('ticket.fresh')}</span>}
           </h3>
           <p className={styles.meta}>

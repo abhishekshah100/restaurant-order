@@ -48,6 +48,9 @@ export function TableOrderCard({
           aria-label={t('adminTables.detail.order.open', { order: order.id })}
         >
           {t('adminTables.detail.order.title', { order: order.id })}
+          {order.token !== undefined && (
+            <span className={styles.token}>{t('adminOrder.token', { token: order.token })}</span>
+          )}
         </button>
         <StatusPill status={order.status} />
       </span>

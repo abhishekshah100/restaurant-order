@@ -104,6 +104,9 @@ describe('orders page', () => {
     expect(parseView('nope')).toBe('active');
     expect(ordersPath('active')).toBe('/admin/dashboard/orders/');
     expect(ordersPath('completed')).toBe('/admin/dashboard/orders/?view=completed');
+    expect(ordersPath('all', { from: '2026-10-20', to: '2026-10-25' })).toBe(
+      '/admin/dashboard/orders/?view=all&from=2026-10-20&to=2026-10-25',
+    );
   });
 });
 

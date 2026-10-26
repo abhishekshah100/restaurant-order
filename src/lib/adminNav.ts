@@ -103,12 +103,19 @@ export const floorPath = (floorId: string) =>
   `${ADMIN_LINKS.tables}?floor=${encodeURIComponent(floorId)}`;
 
 /**
- * An Orders view on the Orders page (?view=), so switching views keeps the page and its filters.
- * The home's counters link to the ready/ and unpaid/ pages, which open on those views.
+ * An Orders view on the Orders page (?view=), so switching views keeps the page and its filters,
+ * on today or on the days given (?from=&to=). The home's counters link to the ready/ and unpaid/
+ * pages, which open on those views.
  */
-export function ordersPath(view: OrderView): string {
-  const base = section('orders');
-  return view === 'active' ? base : `${base}?view=${view}`;
+export function ordersPath(view: OrderView, days?: DayRange): string {
+  const search = new URLSearchParams();
+  if (view !== 'active') search.set('view', view);
+  if (days) {
+    search.set('from', days.from);
+    search.set('to', days.to);
+  }
+  const query = search.toString();
+  return query ? `${section('orders')}?${query}` : section('orders');
 }
 
 /**

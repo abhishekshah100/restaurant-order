@@ -45,6 +45,7 @@ export const LIMITS = {
   city: 40,
   address: 160,
   wifiName: 40,
+  orderStart: 999_999,
   sessionLabel: 30,
   sessionsPerDay: 4,
   specialDays: 50,
@@ -82,6 +83,8 @@ export type SettingsError =
   | 'phoneInvalid'
   | 'phoneRegion'
   | 'wifiLong'
+  | 'orderPrefix'
+  | 'orderStart'
   | 'country'
   | 'timezone'
   | 'locale'
@@ -278,8 +281,18 @@ export function detailsErrors(
     ...(!isTimeZone(d.timezone) ? (['timezone'] as const) : []),
     ...(!isMasterValue('locales', d.locale) ? (['locale'] as const) : []),
     ...(!isMasterValue('currencies', d.currency) ? (['currency'] as const) : []),
+    ...(d.orderPrefix !== undefined && !/^[A-Z]{1,5}$/.test(d.orderPrefix)
+      ? (['orderPrefix'] as const)
+      : []),
+    ...(d.orderStart !== undefined && !isWhole(d.orderStart, 1, LIMITS.orderStart)
+      ? (['orderStart'] as const)
+      : []),
   ];
 }
+
+/** An order's code as the branch's settings make it: ("BLR", 1) → "BLR-001". */
+export const orderCodeOf = (prefix: string, number: number): string =>
+  `${prefix}-${String(number).padStart(3, '0')}`;
 
 /** At least one way to order; delivery only with a zone to deliver to. */
 export function servicesErrors(s: ServicesSettings, deliveryZones: number): SettingsError[] {

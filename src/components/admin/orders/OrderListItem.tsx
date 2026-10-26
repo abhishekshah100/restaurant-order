@@ -68,7 +68,12 @@ export function OrderListItem({
           onClick={onOpen}
           aria-label={t('adminOrders.row.open', { order: order.id })}
         >
-          <span className={styles.id}>{t('adminOrders.row.title', { order: order.id })}</span>
+          <span className={styles.id}>
+            {t('adminOrders.row.title', { order: order.id })}
+            {order.token !== undefined && (
+              <span className={styles.token}>{t('adminOrder.token', { token: order.token })}</span>
+            )}
+          </span>
           <span className={styles.guest}>{order.customerName}</span>
         </button>
         <p className={styles.items}>

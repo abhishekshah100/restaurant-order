@@ -96,6 +96,7 @@
   "ticket": {
     "label": "Order {order}, {where}",
     "order": "#{order}",
+    "token": "Token {token}",
     "round": "Round {round} of {count}",
     "where": {
       "table": "Table {table}",

@@ -424,3 +424,15 @@
     color: var(--error);
   }
 }
+
+/* The day's token ("Token 12"): what staff call out. */
+.token {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--ink-a06);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  vertical-align: middle;
+}

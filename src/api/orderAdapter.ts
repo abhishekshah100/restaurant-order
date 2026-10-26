@@ -66,6 +66,7 @@ interface BackendRound {
 
 export interface BackendOrder {
   id: string;
+  token?: number;
   branchId: string;
   mode: OrderMode;
   table?: number;
@@ -276,6 +277,7 @@ export function toAppOrder(
         : undefined;
   return {
     id: order.id,
+    ...(order.token !== undefined ? { token: order.token } : {}),
     branchId: order.branchId,
     mode: order.mode,
     ...(order.table !== undefined ? { table: order.table } : {}),

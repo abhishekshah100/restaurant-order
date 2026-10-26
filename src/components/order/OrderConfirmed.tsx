@@ -121,6 +121,9 @@ function Confirmed({ order }: { order: Order }) {
         <div className={styles.head} role="status">
           <p className={cx('t-caption', styles.placed)}>{t('confirmed.placed')}</p>
           <h1 className={styles.title}>{t('shared.orderNumber', { id: order.id })}</h1>
+          {order.token !== undefined && (
+            <p className={styles.token}>{t('shared.token', { token: order.token })}</p>
+          )}
           <p className={cx('t-body c2', styles.lede)}>{t('confirmed.lede')}</p>
         </div>
 

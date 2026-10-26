@@ -75,6 +75,8 @@ export interface KitchenTicket {
   /** Unique on the board: "A105:2". */
   key: string;
   orderId: string;
+  /** The order's token today ("Token 12"), what the pass calls out; none on older orders. */
+  token?: number;
   /** The round's number (1 for an order of one round). */
   round: number;
   /** Rounds on the order, not cancelled (the ticket says "Round 2 of 3" when more than one). */
@@ -173,6 +175,7 @@ export function kitchenTickets(
       return {
         key: `${order.id}:${round.number}`,
         orderId: order.id,
+        ...(order.token !== undefined ? { token: order.token } : {}),
         round: round.number,
         roundCount,
         mode: order.mode,
@@ -268,6 +271,7 @@ function matchesQuery(ticket: KitchenTicket, query: string): boolean {
   if (!q) return true;
   return (
     ticket.orderId.toLowerCase().includes(q) ||
+    (ticket.token !== undefined && String(ticket.token) === q.replace(/^#/, '')) ||
     ticket.customerName.toLowerCase().includes(q) ||
     (ticket.table !== undefined && String(ticket.table) === q) ||
     ticket.items.some((item) => item.name.toLowerCase().includes(q))

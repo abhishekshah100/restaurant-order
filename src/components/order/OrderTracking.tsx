@@ -249,6 +249,9 @@ function TrackingView({
           <StatusPill status={order.status} className={styles.heroPill} />
           {!finished && <Freshness live={live} now={now} />}
           <div className={styles.eta}>
+            {order.token !== undefined && (
+              <span className={styles.token}>{t('shared.token', { token: order.token })}</span>
+            )}
             {round && (
               <span className={cx('t-caption c3', styles.round)}>
                 {t('rounds.latest', { number: round.number, count: rounds.length })}
