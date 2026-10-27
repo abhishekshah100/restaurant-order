@@ -65,3 +65,36 @@
     translate: 0 12px;
   }
 }
+
+/* A dish just went in: the name for a moment, with a small bump and the tick popping in. */
+.bump {
+  animation: bump 0.32s ease-out;
+}
+.icon {
+  display: inline-flex;
+}
+.pop {
+  animation: pop 0.32s ease-out;
+}
+@keyframes pop {
+  from {
+    scale: 0.4;
+    opacity: 0;
+  }
+}
+.added {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@keyframes bump {
+  40% {
+    scale: 1.03;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bump,
+  .pop {
+    animation: none;
+  }
+}

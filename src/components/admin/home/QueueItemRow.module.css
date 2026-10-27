@@ -38,6 +38,10 @@
   --tone: var(--gold);
 }
 
+.kitchen {
+  --tone: var(--reserved);
+}
+
 .ready {
   --tone: var(--success);
 }

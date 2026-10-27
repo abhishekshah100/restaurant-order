@@ -4,7 +4,7 @@ import type {
   AdminReadyRound,
   AdminServiceRequest,
 } from '@/types/admin';
-import type { BillRequest, WaiterRequest } from '@/types/service';
+import type { BillRequest, KitchenMessage, WaiterRequest } from '@/types/service';
 
 /*
  * The waiter home's logic, pure: the "Needs you now" queue from GET
@@ -16,6 +16,7 @@ import type { BillRequest, WaiterRequest } from '@/types/service';
 export type QueueItem =
   | { key: string; kind: 'waiter'; since: string; request: WaiterRequest }
   | { key: string; kind: 'bill'; since: string; request: BillRequest }
+  | { key: string; kind: 'kitchen'; since: string; request: KitchenMessage }
   | {
       key: string;
       kind: 'ready';
@@ -24,15 +25,18 @@ export type QueueItem =
       ready: AdminReadyRound;
     };
 
-/** Waiter calls, bill requests and rounds ready to serve, in one list, oldest first. */
+/** Waiter calls, bill requests, the kitchen's messages and rounds ready to serve, oldest first. */
 export function serviceQueue(
   service: Pick<AdminBranchService, 'requests' | 'orders'>,
 ): QueueItem[] {
   const requests = service.requests.map((request): QueueItem => {
     const key = `request:${request.id}`;
-    return request.kind === 'waiter'
-      ? { key, kind: 'waiter', since: request.requestedAt, request }
-      : { key, kind: 'bill', since: request.requestedAt, request };
+    if (request.kind === 'waiter')
+      return { key, kind: 'waiter', since: request.requestedAt, request };
+    if (request.kind === 'kitchen') {
+      return { key, kind: 'kitchen', since: request.requestedAt, request };
+    }
+    return { key, kind: 'bill', since: request.requestedAt, request };
   });
   const ready = service.orders.flatMap((order) =>
     order.readyRounds.map((round): QueueItem => ({
@@ -53,7 +57,11 @@ export const minutesSince = (since: string, now: Date): number =>
   Math.max(0, Math.floor((now.getTime() - Date.parse(since)) / 60_000));
 
 const countKey = (request: AdminServiceRequest) =>
-  request.kind === 'waiter' ? 'waiterCalls' : 'billRequests';
+  request.kind === 'waiter'
+    ? 'waiterCalls'
+    : request.kind === 'kitchen'
+      ? 'kitchenMessages'
+      : 'billRequests';
 
 /** The service without this request (Done, before the server confirms). */
 export function withoutRequest(service: AdminBranchService, id: string): AdminBranchService {
@@ -63,7 +71,7 @@ export function withoutRequest(service: AdminBranchService, id: string): AdminBr
   return {
     ...service,
     requests: service.requests.filter((r) => r !== request),
-    counts: { ...service.counts, [key]: Math.max(0, service.counts[key] - 1) },
+    counts: { ...service.counts, [key]: Math.max(0, (service.counts[key] ?? 0) - 1) },
   };
 }
 

@@ -10,6 +10,7 @@ import type { Restaurant } from '@/types/restaurant';
 import { apiGet } from './client';
 import type { AdminBranchesResponse, AdminOrdersFilter, OrderLineRequest } from './contracts';
 import { api } from './endpoints';
+import { liveRefresh } from './liveState';
 import type common from '../../public/api/content/common.json';
 import type home from '../../public/api/content/home.json';
 import type menu from '../../public/api/content/menu.json';
@@ -280,7 +281,7 @@ export const branchServiceQuery = (token: string | null, branchId: string | unde
     queryFn: token && branchId ? () => api.branchService(token, branchId) : skipToken,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
   });
 
 /*
@@ -295,7 +296,7 @@ export const floorPlanQuery = (token: string | null, branchId: string | undefine
     queryFn: token && branchId ? () => api.floorPlan(token, branchId) : skipToken,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
   });
 
 /** GET /admin/branches/:branchId/tables/:table; idle while signed out or without a branch. */
@@ -309,7 +310,7 @@ export const tableDetailQuery = (
     queryFn: token && branchId ? () => api.tableDetail(token, branchId, table) : skipToken,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
   });
 
 /**
@@ -328,7 +329,7 @@ export const branchOrdersQuery = (
     queryFn: token && branchId ? () => api.branchOrders(token, branchId, filter) : skipToken,
     staleTime: live ? 0 : PAST_ORDERS_STALE_MS,
     refetchOnWindowFocus: live,
-    refetchInterval: live ? BRANCH_SERVICE_REFRESH_MS : false,
+    refetchInterval: live ? liveRefresh(BRANCH_SERVICE_REFRESH_MS) : false,
   });
 
 /** How long past days' orders are trusted (a refund there is refetched by the mutation). */
@@ -344,7 +345,7 @@ export const reservationsQuery = (token: string | null, branchId: string | undef
     queryFn: token && branchId ? () => api.reservations(token, branchId) : skipToken,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: BRANCH_SERVICE_REFRESH_MS,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
   });
 
 /** GET /admin/branches/:branchId/floors: the floor plan to edit; it changes rarely. */

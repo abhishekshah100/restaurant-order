@@ -23,9 +23,12 @@ export interface OrderSummaryPanelProps {
   footnote?: string;
 }
 
-/** Desktop checkout aside: line summary and bill (w09–w11). */
+/**
+ * Desktop checkout aside: line summary and bill (w09–w11). The bill shows its total; ⌄ opens
+ * every charge on it, as the cart lists them.
+ */
 export function OrderSummaryPanel({
-  variant = 'compact',
+  variant = 'split',
   totalLabel,
   editable = true,
   footnote,
@@ -92,7 +95,7 @@ export function OrderSummaryPanel({
         })}
       </ul>
       <hr className={styles.hr} />
-      <PriceSummary bill={bill} variant={variant} totalLabel={totalLabel} />
+      <PriceSummary bill={bill} variant={variant} totalLabel={totalLabel} collapsible />
       <span className={styles.etaPill}>
         <Icon name="clock" size="xs" />
         {mode === 'dineIn'

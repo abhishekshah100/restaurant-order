@@ -6,9 +6,10 @@ import type { ServiceKind } from '@/types/service';
  * the ones done recently, a filter by kind with its counts, and how long a request took.
  */
 
-export type RequestFilter = 'all' | ServiceKind;
+/** All, a guest's kind (waiter calls, bills), or the kitchen's messages. */
+export type RequestFilter = 'all' | ServiceKind | 'kitchen';
 
-export const REQUEST_FILTERS: readonly RequestFilter[] = ['all', 'waiter', 'bill'];
+export const REQUEST_FILTERS: readonly RequestFilter[] = ['all', 'waiter', 'bill', 'kitchen'];
 
 const matches = (filter: RequestFilter) => (r: AdminServiceRequest) =>
   filter === 'all' || r.kind === filter;
@@ -32,6 +33,7 @@ export function requestCounts(requests: readonly AdminServiceRequest[]) {
     all: requests.length,
     waiter: requests.filter((r) => r.kind === 'waiter').length,
     bill: requests.filter((r) => r.kind === 'bill').length,
+    kitchen: requests.filter((r) => r.kind === 'kitchen').length,
   } satisfies Record<RequestFilter, number>;
 }
 

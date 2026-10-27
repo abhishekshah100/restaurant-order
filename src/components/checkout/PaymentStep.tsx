@@ -34,7 +34,6 @@ export function PaymentStep() {
       ready={ready}
       aside={
         <OrderSummaryPanel
-          variant="combined"
           totalLabel={t('payment.amountPayable')}
           editable={false}
           footnote={t('lines.nameVisit', { name: session.name, visit })}
@@ -101,12 +100,7 @@ function PaymentForm() {
           </span>
           <span className="t-small c2">{cartText.plural('itemCount', bill.itemCount)}</span>
         </div>
-        <PriceSummary
-          bill={bill}
-          variant="combined"
-          totalLabel={t('payment.amountPayable')}
-          tight
-        />
+        <PriceSummary bill={bill} totalLabel={t('payment.amountPayable')} tight collapsible />
       </section>
 
       <PaymentMethods

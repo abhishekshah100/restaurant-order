@@ -229,7 +229,18 @@ export async function floorActivity(ctx: MockContext, branch: Branch) {
 /** GET /admin/branches/:branchId/service */
 export const branchService: Handler = async (ctx, { params, headers }) => {
   const branch = await adminBranch(ctx, headers, params.branchId);
-  return ok(floorService({ ...(await floorActivity(ctx, branch)), branch }));
+  // The mock has no kitchen messages.
+  const activity = await floorActivity(ctx, branch);
+  const guests = (requests: typeof activity.requests) =>
+    requests.filter((r): r is ServiceRequest => r.kind !== 'kitchen');
+  return ok(
+    floorService({
+      ...activity,
+      requests: guests(activity.requests),
+      done: guests(activity.done),
+      branch,
+    }),
+  );
 };
 
 /**

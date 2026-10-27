@@ -657,10 +657,58 @@ export type MarkServedResponse = Order;
  */
 export interface SetKitchenStatusRequest {
   status: KitchenStep;
+  /**
+   * An undo or a recall: the round goes back to New (`received`) or to Cooking (`preparing`)
+   * from further along (a round already there or behind answers the same). Without it a step
+   * only goes forward.
+   */
+  back?: boolean;
 }
 
-/** What the kitchen can mark a round as. */
-export type KitchenStep = 'preparing' | 'ready';
+/** What the kitchen can mark a round as (`received` only going back). */
+export type KitchenStep = 'received' | 'preparing' | 'ready';
+
+/**
+ * `PATCH /admin/branches/:branchId/orders/:id/rounds/:round/items/:position/plated` — the kitchen
+ * ticks an item off as plated (or unticks it), so every kitchen screen shows it. `position` is
+ * the item's index in the round (0 first). Needs `kitchen.update`. 200 → the order. Errors: 404
+ * not_found (no such item), 409 order_closed (cancelled, or the round handed over).
+ */
+export interface SetPlatedRequest {
+  plated: boolean;
+}
+
+/**
+ * `PATCH /admin/branches/:branchId/orders/:id/rush` — a waiter marks the order rush (first in the
+ * kitchen's lanes) or not. Needs `orders.take`. 200 → the order (`rush: true` while it is). Errors:
+ * 404 not_found, 409 order_closed (cancelled).
+ */
+export interface SetRushRequest {
+  rush: boolean;
+}
+
+/**
+ * `POST /admin/branches/:branchId/orders/:id/messages` — the kitchen tells the waiters about an
+ * order: a request of the `kitchen` kind on their board, dealt with like a guest's call. Needs
+ * `kitchen.update`. 201 → `{ request }`. Errors: 400 invalid_request, 404 not_found.
+ */
+export interface KitchenMessageRequest {
+  reason: 'runningLate' | 'unavailable' | 'question';
+  /** Up to 80 characters. */
+  note?: string;
+}
+
+/**
+ * `GET /admin/branches/:branchId/events` — Server-Sent Events: what changes at the branch, for as
+ * long as the screen keeps it open (`orders.view`). `event:` orders | service | menu | resync,
+ * `data:` this; the screen reads again through the usual endpoints. A heartbeat comment every
+ * 25 s; closed when the session ends. 429 rate_limited past six streams for one sign-in.
+ */
+export interface BranchEvent {
+  kind: 'orders' | 'service' | 'menu' | 'resync';
+  orderId?: string;
+  at: string;
+}
 
 export type SetKitchenStatusResponse = Order;
 

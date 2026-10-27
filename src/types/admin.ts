@@ -2,7 +2,7 @@ import type { CancellationReason, ReservationStatusCode } from '@/config/masters
 import type { BranchImage, BranchStatus, CountryCode, OpeningSchedule, OrderMode } from './branch';
 import type { Price } from './menu';
 import type { Order, OrderStatus, PaymentStatus } from './order';
-import type { ServiceRequest } from './service';
+import type { KitchenMessage, ServiceRequest } from './service';
 
 /** The signed-in staff member, as `POST /admin/sessions` returns them. */
 export interface AdminProfile {
@@ -52,7 +52,8 @@ export interface AdminBranch {
 /* ---------- Floor service (GET /admin/branches/:branchId/service) ---------- */
 
 /** An open waiter call or bill request at one of the branch's tables, as staff see it. */
-export type AdminServiceRequest = ServiceRequest;
+/** What the floor staff answer: a guest's call or bill request, or a message from the kitchen. */
+export type AdminServiceRequest = ServiceRequest | KitchenMessage;
 
 /** A round of an order the kitchen has ready that nobody has served (or handed over) yet. */
 export interface AdminReadyRound {
@@ -109,6 +110,8 @@ export interface AdminServiceCounts {
   waiterCalls: number;
   /** Open bill requests. */
   billRequests: number;
+  /** Messages from the kitchen about an order, still to deal with (none from the mock). */
+  kitchenMessages?: number;
   /** Rounds ready to serve or hand over. */
   readyToServe: number;
   /** Today's orders not yet paid in full. */

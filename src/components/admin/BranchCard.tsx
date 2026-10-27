@@ -24,10 +24,12 @@ export interface BranchCardProps {
   /** The branch the admin worked in last on this device. */
   lastUsed?: boolean;
   onSelect: (branchId: string) => void;
+  /** In the first row, above the fold: its photo loads at once (it's the page's largest image). */
+  eager?: boolean;
 }
 
 /** The branch's photo at a size its file covers, or its initial on a brand tile. */
-function BranchThumb({ branch }: { branch: AdminBranch }) {
+function BranchThumb({ branch, eager }: { branch: AdminBranch; eager: boolean }) {
   if (!branch.image) {
     return (
       <span className={cx(styles.thumb, styles.monogram)} aria-hidden="true">
@@ -36,14 +38,29 @@ function BranchThumb({ branch }: { branch: AdminBranch }) {
     );
   }
   const { src, width, height } = branch.image;
-  return <Image className={styles.thumb} src={src} width={width} height={height} alt="" />;
+  return (
+    <Image
+      className={styles.thumb}
+      src={src}
+      width={width}
+      height={height}
+      alt=""
+      loading={eager ? 'eager' : 'lazy'}
+    />
+  );
 }
 
 /**
  * One branch in the admin branch picker. The whole card is one target: the name's button
  * stretches over it, and the rest of the card describes it to screen readers.
  */
-export function BranchCard({ branch, now, lastUsed = false, onSelect }: BranchCardProps) {
+export function BranchCard({
+  branch,
+  now,
+  lastUsed = false,
+  onSelect,
+  eager = false,
+}: BranchCardProps) {
   const t = useContent('common');
   const hoursToday = useBranchTimes(branch)?.hoursToday ?? '';
   const id = useId();
@@ -61,7 +78,7 @@ export function BranchCard({ branch, now, lastUsed = false, onSelect }: BranchCa
 
   return (
     <article className={cx(styles.card, lastUsed && styles.isLastUsed)}>
-      <BranchThumb branch={branch} />
+      <BranchThumb branch={branch} eager={eager} />
 
       <div className={styles.head}>
         {lastUsed && (

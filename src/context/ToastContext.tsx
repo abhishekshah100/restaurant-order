@@ -11,10 +11,11 @@ import {
   type ReactNode,
 } from 'react';
 import { ToastRegion, type ToastData } from '@/components/ui';
-import { TOAST_MS } from '@/lib/constants';
+import { ACTION_TOAST_MS, ERROR_TOAST_MS, TOAST_EXIT_MS, TOAST_MS } from '@/lib/constants';
 
 interface ShowToastOptions {
   tone?: ToastData['tone'];
+  icon?: ToastData['icon'];
   actionLabel?: string;
   onAction?: () => void;
   duration?: number;
@@ -39,8 +40,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const remaining = useRef<number | null>(null);
   const currentId = useRef<number | null>(null);
 
+  // Faded out first (TOAST_EXIT_MS), then gone.
   const dismiss = useCallback((id: number) => {
-    setToasts((list) => list.filter((t) => t.id !== id));
+    setToasts((list) => list.map((t) => (t.id === id ? { ...t, leaving: true } : t)));
+    window.setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), TOAST_EXIT_MS);
     if (currentId.current !== id) return;
     window.clearTimeout(timer.current);
     currentId.current = null;
@@ -63,13 +66,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         id,
         message,
         tone: options.tone,
+        icon: options.icon,
         actionLabel: options.actionLabel,
         onAction: options.onAction,
       };
       // Newest wins: it replaces any toast on screen and keeps the bottom clear.
       setToasts([toast]);
       currentId.current = id;
-      const duration = options.duration ?? TOAST_MS;
+      const duration =
+        options.duration ??
+        (options.tone === 'error'
+          ? ERROR_TOAST_MS
+          : options.actionLabel
+            ? ACTION_TOAST_MS
+            : TOAST_MS);
       if (remaining.current !== null) remaining.current = duration;
       else schedule(id, duration);
     },

@@ -86,7 +86,7 @@ test('India: WELCOME10 off the cart, through checkout to the receipt', async ({ 
   await page.getByRole('radio', { name: /Pay at the counter/ }).click();
   await visible(page, 'button', 'Place order · ₹612').click();
 
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
   await expect(text(page, 'You saved ₹64.80 with WELCOME10')).toBeVisible();
   const id = new URL(page.url()).searchParams.get('id');
   await page.goto(`/order/?id=${id}`);

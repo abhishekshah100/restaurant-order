@@ -4,6 +4,7 @@ import type {
   OpeningSchedule,
   PaymentOption,
   Session,
+  TaxIdKey,
   WeekSessions,
 } from '@/types/branch';
 import { WEEKDAYS } from '@/types/branch';
@@ -85,6 +86,7 @@ export type SettingsError =
   | 'wifiLong'
   | 'orderPrefix'
   | 'orderStart'
+  | 'taxId'
   | 'country'
   | 'timezone'
   | 'locale'
@@ -156,8 +158,11 @@ export function servicesOf({ modes }: Pick<Branch, 'modes'>): ServicesSettings {
 export const dialCodeOf = (country: string): string =>
   isMasterValue('countries', country) ? REGION_PRESETS[country].mobile.dialCode : '';
 
+/** The tax settings a guest branch implies (the mock's; the server sends its own, rates kept). */
 export function taxOf({ tax }: Pick<Branch, 'tax'>): TaxSettings {
   return {
+    enabled: tax.lines.length > 0,
+    taxId: tax.taxId ?? '',
     serviceChargeBp: tax.serviceCharge?.rateBp ?? null,
     lines: tax.lines.map((line) => ({
       id: line.id,
@@ -385,8 +390,24 @@ export function hoursErrors(s: OpeningSchedule): SettingsError[] {
 }
 
 /** `current`: the branch's tax lines now (staff change their rates, not which there are). */
-export function taxErrors(t: TaxSettings, current: TaxSettings): SettingsError[] {
+/**
+ * A country's tax registration number: GSTIN in India (state code, PAN, entity number, Z, check
+ * character: "29ABCDE1234F1Z5"), PAN in Nepal (nine digits, the VAT number too); elsewhere 5–20
+ * letters, digits and dashes. The server checks the same.
+ */
+const TAX_IDS: Record<string, { key: TaxIdKey; pattern: RegExp }> = {
+  IN: { key: 'gstin', pattern: /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/ },
+  NP: { key: 'pan', pattern: /^\d{9}$/ },
+};
+export const taxIdOf = (country: string) =>
+  TAX_IDS[country] ?? { key: 'taxId' as const, pattern: /^[A-Z0-9-]{5,20}$/ };
+
+/** A registration number as stored: capitals, no spaces. */
+export const cleanTaxId = (value: string) => value.replace(/\s+/g, '').toUpperCase();
+
+export function taxErrors(t: TaxSettings, current: TaxSettings, country = ''): SettingsError[] {
   const errors: SettingsError[] = [];
+  if (t.taxId && !taxIdOf(country).pattern.test(cleanTaxId(t.taxId))) errors.push('taxId');
   const sameLines =
     t.lines.length === current.lines.length &&
     t.lines.every((l, i) => l.id === current.lines[i].id);
@@ -599,9 +620,32 @@ export function splitRate(rateBp: number, parts: number): number[] {
   return [rateBp - share * (parts - 1), ...Array.from({ length: parts - 1 }, () => share)];
 }
 
+/**
+ * What bills are called and their one-line summary under these settings, as the server words
+ * them: the region's with tax; without, "Bill of supply" (India) or "Bill", and the summary
+ * names only what's left (the service charge, the round-off). The registration number with them.
+ */
+export function taxWording(
+  country: string,
+  t: Pick<TaxSettings, 'enabled' | 'taxId' | 'serviceChargeBp'>,
+): Pick<Branch['tax'], 'compactLabelKey' | 'invoiceKey' | 'taxId' | 'taxIdKey'> {
+  const region = REGION_PRESETS[country as keyof typeof REGION_PRESETS]?.tax;
+  const taxId = cleanTaxId(t.taxId);
+  return {
+    ...(t.enabled && region
+      ? { compactLabelKey: region.compactLabelKey, invoiceKey: region.invoiceKey }
+      : {
+          compactLabelKey: t.serviceChargeBp !== null ? 'serviceOnly' : 'roundOff',
+          invoiceKey: country === 'IN' ? 'billOfSupply' : 'bill',
+        }),
+    ...(taxId ? { taxId } : {}),
+    taxIdKey: taxIdOf(country).key,
+  };
+}
+
 export function withTax(branch: Branch, t: TaxSettings): Branch {
   const { tax } = branch;
-  const { serviceCharge: _old, ...rest } = tax;
+  const { serviceCharge: _old, taxId: _oldId, ...rest } = tax;
   return {
     ...branch,
     tax: {
@@ -610,18 +654,20 @@ export function withTax(branch: Branch, t: TaxSettings): Branch {
         ? { serviceCharge: { labelKey: 'serviceCharge', rateBp: t.serviceChargeBp } }
         : {}),
       discountBeforeTax: t.discountBeforeTax,
-      lines: tax.lines.map((line, i) => {
-        const next = t.lines[i];
-        const rates = line.splitInto ? splitRate(next.rateBp, line.splitInto.length) : [];
+      // From the settings' own lines: the branch's are none while it doesn't charge tax.
+      lines: (t.enabled ? t.lines : []).map((line) => {
+        const rates = line.parts ? splitRate(line.rateBp, line.parts.length) : [];
         return {
-          ...line,
-          rateBp: next.rateBp,
-          base: next.base,
-          ...(line.splitInto
-            ? { splitInto: line.splitInto.map((p, j) => ({ ...p, rateBp: rates[j] })) }
+          id: line.id,
+          labelKey: line.labelKey,
+          rateBp: line.rateBp,
+          base: line.base,
+          ...(line.parts
+            ? { splitInto: line.parts.map((p, j) => ({ ...p, rateBp: rates[j] })) }
             : {}),
         };
       }),
+      ...taxWording(branch.country, t),
       rounding: t.roundTotal
         ? { unit: branch.currency.minorUnit, showRoundOff: true }
         : { unit: 1, showRoundOff: false },

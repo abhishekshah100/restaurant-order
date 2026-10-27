@@ -1,41 +1,45 @@
+import type { ReactNode } from 'react';
 import { useContent } from '@/api/hooks';
+import { Icon } from '@/components/ui';
+import { cx } from '@/lib/cx';
 import type { BoardStats as Stats } from '@/lib/kitchenBoard';
-import { StatTiles, type StatTile } from '../StatTiles';
+import styles from './KitchenBoard.module.css';
 
-/** The kitchen now: tickets in each lane, the late ones, items still to cook, the average ticket. */
-export function BoardStats({ stats }: { stats: Stats }) {
+/**
+ * The kitchen now, in one line beside the filters: late tickets (red while there are any), the
+ * dishes still to cook and the average ticket; then whatever the board adds (how current it
+ * is). The lanes count their own tickets.
+ */
+export function BoardStats({ stats, children }: { stats: Stats; children?: ReactNode }) {
   const t = useContent('kitchen');
-  const minutes = (count: number | null) =>
-    count === null ? t('board.stats.none') : t('board.stats.minutes', { count });
-  const tiles: StatTile[] = [
-    { id: 'new', label: t('board.stats.new'), value: String(stats.new), icon: 'bell' },
-    { id: 'cooking', label: t('board.stats.cooking'), value: String(stats.cooking), icon: 'flame' },
-    {
-      id: 'ready',
-      label: t('board.stats.ready'),
-      value: String(stats.ready),
-      icon: 'cloche',
-      tone: stats.ready > 0 ? 'ready' : undefined,
-    },
-    {
-      id: 'late',
-      label: t('board.stats.late'),
-      value: String(stats.late),
-      icon: 'alert',
-      tone: stats.late > 0 ? 'alert' : undefined,
-    },
-    {
-      id: 'items',
-      label: t('board.stats.itemsToCook'),
-      value: String(stats.itemsToCook),
-      icon: 'list',
-    },
-    {
-      id: 'average',
-      label: t('board.stats.average'),
-      value: minutes(stats.averageMinutes),
-      icon: 'clock',
-    },
-  ];
-  return <StatTiles tiles={tiles} label={t('board.stats.label')} />;
+  return (
+    <dl className={styles.stats} aria-label={t('board.stats.label')}>
+      <div className={cx(styles.stat, stats.late > 0 && styles.statAlert)}>
+        <dt>
+          <Icon name="alert" size="xs" />
+          {t('board.stats.late')}
+        </dt>
+        <dd>{stats.late}</dd>
+      </div>
+      <div className={styles.stat}>
+        <dt>
+          <Icon name="list" size="xs" />
+          {t('board.stats.itemsToCook')}
+        </dt>
+        <dd>{stats.itemsToCook}</dd>
+      </div>
+      <div className={styles.stat}>
+        <dt>
+          <Icon name="clock" size="xs" />
+          {t('board.stats.average')}
+        </dt>
+        <dd>
+          {stats.averageMinutes === null
+            ? t('board.stats.none')
+            : t('board.stats.minutes', { count: stats.averageMinutes })}
+        </dd>
+      </div>
+      {children}
+    </dl>
+  );
 }

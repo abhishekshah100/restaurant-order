@@ -45,7 +45,7 @@ export function BranchStatusControl({
         <BranchStatus status={branch.status} onDark={onDark} />
         <Icon name="chevd" size="xs" className={styles.chevron} />
       </button>
-      <LastOrders onDark={onDark} />
+      {/* <LastOrders onDark={onDark} /> */}
       {open && <BranchStatusDialog onClose={() => setOpen(false)} />}
     </>
   );

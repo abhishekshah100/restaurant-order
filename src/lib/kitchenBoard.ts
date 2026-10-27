@@ -53,7 +53,11 @@ export const nextKitchenStep = (stage: KitchenStage): KitchenStep | null =>
 
 /** The status a round has once the kitchen marks a step. */
 export const statusAfter = (step: KitchenStep, mode: OrderMode): OrderStatus =>
-  step === 'preparing' ? 'preparing' : mode === 'delivery' ? 'outForDelivery' : 'ready';
+  step === 'received' || step === 'preparing'
+    ? step
+    : mode === 'delivery'
+      ? 'outForDelivery'
+      : 'ready';
 
 /**
  * How long the kitchen has for a dine-in round, until branches carry their own: the time the
@@ -110,6 +114,12 @@ export interface KitchenTicket {
   doneAt?: string;
   /** ISO: when it was cancelled, if it was. */
   cancelledAt?: string;
+  /** The lane it was in last (a cancelled ticket shows there for a while). */
+  lastLane: KitchenLane;
+  /** ISO: when its items were last changed after it was sent. */
+  changedAt?: string;
+  /** A waiter marked the order rush: first in its lane. */
+  rush?: boolean;
   kitchen?: KitchenMarks;
   timeline: OrderEvent[];
 }
@@ -138,18 +148,26 @@ const plusMinutes = (iso: string, minutes: number) =>
   new Date(Date.parse(iso) + minutes * MINUTE_MS).toISOString();
 
 /**
- * When a round should be ready: a takeaway at its pickup time, a delivery within the branch's
- * prep time (so the rider can leave), dine-in within DINE_IN_TARGET_MINUTES.
+ * When a round should be ready: a takeaway at its pickup time; a delivery within the branch's
+ * prep time (so the rider can leave), or its slowest dish's if longer; dine-in when its slowest
+ * dish is done (the menu's prep times), DINE_IN_TARGET_MINUTES when none says.
  */
 export function ticketDueAt(
   order: Pick<Order, 'mode' | 'pickup'>,
   placedAt: string,
   branch: Pick<Branch, 'modes'>,
+  /** The minutes its slowest dish takes, from the menu. */
+  slowestDish: number | null = null,
 ): string {
   if (order.mode === 'takeaway' && order.pickup) return order.pickup.at;
-  if (order.mode === 'delivery') return plusMinutes(placedAt, branch.modes.delivery.prepMinutes);
-  return plusMinutes(placedAt, DINE_IN_TARGET_MINUTES);
+  if (order.mode === 'delivery') {
+    return plusMinutes(placedAt, Math.max(branch.modes.delivery.prepMinutes, slowestDish ?? 0));
+  }
+  return plusMinutes(placedAt, slowestDish ?? DINE_IN_TARGET_MINUTES);
 }
+
+/** How long a dish takes, by its slug (the menu's prep time), or null where none says. */
+export type PrepOf = (dishSlug: string) => number | null;
 
 /** ISO of the first event in `statuses` that says when it happened. */
 const eventAt = (timeline: readonly OrderEvent[], statuses: readonly OrderStatus[]) =>
@@ -157,10 +175,17 @@ const eventAt = (timeline: readonly OrderEvent[], statuses: readonly OrderStatus
 
 const quantity = (items: readonly OrderItem[]) => items.reduce((n, item) => n + item.quantity, 0);
 
-/** Every round of the orders as a ticket, oldest first. */
+/** The longest prep time among the items' dishes, or null where none says. */
+function slowest(items: readonly OrderItem[], prepOf: PrepOf): number | null {
+  const minutes = items.map((item) => prepOf(item.dishSlug)).filter((m) => m !== null);
+  return minutes.length > 0 ? Math.max(...minutes) : null;
+}
+
+/** Every round of the orders as a ticket, oldest first (due by its slowest dish, with `prepOf`). */
 export function kitchenTickets(
   orders: readonly Order[],
   branch: Pick<Branch, 'modes'>,
+  prepOf: PrepOf = () => null,
 ): KitchenTicket[] {
   const tickets = orders.flatMap((order) => {
     const rounds = roundsOf(order);
@@ -191,10 +216,17 @@ export function kitchenTickets(
         ...(round.kitchenNote ? { kitchenNote: round.kitchenNote } : {}),
         ...(order.pickup ? { pickupAt: order.pickup.at, asap: order.pickup.asap } : {}),
         ...(order.delivery ? { deliveryArea: order.delivery.address.area } : {}),
-        dueAt: ticketDueAt(order, round.placedAt, branch),
+        dueAt: ticketDueAt(order, round.placedAt, branch, slowest(round.items, prepOf)),
         readyAt: kitchen?.ready?.at ?? eventAt(timeline, ['ready', 'outForDelivery']),
         doneAt: round.servedAt ?? eventAt(timeline, ['served', 'pickedUp', 'delivered']),
         cancelledAt: eventAt(timeline, ['cancelled']),
+        lastLane: eventAt(timeline, ['ready', 'outForDelivery'])
+          ? 'ready'
+          : eventAt(timeline, ['preparing'])
+            ? 'cooking'
+            : 'new',
+        ...(round.changedAt ? { changedAt: round.changedAt } : {}),
+        ...(order.rush ? { rush: true } : {}),
         ...(kitchen ? { kitchen } : {}),
         timeline,
       };
@@ -285,10 +317,12 @@ export function boardTickets(
   tickets: readonly KitchenTicket[],
   { mode, station, query }: TicketFilters,
   categoryOf: CategoryOf,
+  /** With the time: tickets cancelled in the last few minutes too (the kitchen must stop). */
+  now?: Date,
 ): KitchenTicket[] {
   return tickets.filter(
     (ticket) =>
-      isOnBoard(ticket.stage) &&
+      (isOnBoard(ticket.stage) || (now !== undefined && justCancelled(ticket, now))) &&
       inMode(ticket, mode) &&
       matchesQuery(ticket, query) &&
       stationItems(ticket, station, categoryOf).length > 0,
@@ -299,12 +333,30 @@ export function boardTickets(
 export function laneTickets(
   tickets: readonly KitchenTicket[],
 ): Record<KitchenLane, KitchenTicket[]> {
-  return {
-    new: tickets.filter((t) => t.stage === 'new'),
-    cooking: tickets.filter((t) => t.stage === 'cooking'),
-    ready: tickets.filter((t) => t.stage === 'ready'),
-  };
+  // A cancelled ticket stays where the kitchen last saw it, at the top so it's seen first;
+  // then rush orders; then the rest, oldest first.
+  const lane = (t: KitchenTicket) => (t.stage === 'cancelled' ? t.lastLane : t.stage);
+  const rank = (t: KitchenTicket) => (t.stage === 'cancelled' ? 0 : t.rush ? 1 : 2);
+  const of = (l: KitchenLane) =>
+    tickets.filter((t) => lane(t) === l).sort((a, b) => rank(a) - rank(b));
+  return { new: of('new'), cooking: of('cooking'), ready: of('ready') };
 }
+
+/** How long a cancelled ticket stays on the board, and a change is flagged. */
+export const CANCELLED_SHOW_MS = 5 * MINUTE_MS;
+export const CHANGED_SHOW_MS = 5 * MINUTE_MS;
+
+/** Cancelled in the last few minutes (CANCELLED_SHOW_MS): still on the board, to stop. */
+export const justCancelled = (ticket: KitchenTicket, now: Date) =>
+  ticket.stage === 'cancelled' &&
+  ticket.cancelledAt !== undefined &&
+  now.getTime() - Date.parse(ticket.cancelledAt) < CANCELLED_SHOW_MS;
+
+/** Changed in the last few minutes (CHANGED_SHOW_MS), while it's still to cook or ready. */
+export const justChanged = (ticket: KitchenTicket, now: Date) =>
+  isOnBoard(ticket.stage) &&
+  ticket.changedAt !== undefined &&
+  now.getTime() - Date.parse(ticket.changedAt) < CHANGED_SHOW_MS;
 
 /** Board tickets of each order type, within the station and search. */
 export function modeCounts(
@@ -457,10 +509,25 @@ export function withKitchenStep(
   });
 }
 
-/** A running timer as "4:05" (minutes and seconds), or "1:04:05" from an hour. */
-export function elapsedClock(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const [h, m, s] = [Math.floor(total / 3600), Math.floor((total % 3600) / 60), total % 60];
-  const two = (n: number) => String(n).padStart(2, '0');
-  return h > 0 ? `${h}:${two(m)}:${two(s)}` : `${m}:${two(s)}`;
+/** The orders with one round's item ticked off as plated (or not), before the server answers. */
+export function withPlated(
+  orders: readonly Order[],
+  orderId: string,
+  round: number,
+  index: number,
+  plated: boolean,
+): Order[] {
+  const tick = (items: OrderItem[]) =>
+    items.map((item, i) => (i === index ? { ...item, plated } : item));
+  return orders.map((order) => {
+    if (order.id !== orderId) return order;
+    if (!order.rounds) return round === 1 ? { ...order, items: tick(order.items) } : order;
+    return {
+      ...order,
+      rounds: order.rounds.map((r) => (r.number === round ? { ...r, items: tick(r.items) } : r)),
+    };
+  });
 }
+
+/** Whole minutes a ticket has waited (what its timer shows: "12 min"); 0 before the first. */
+export const elapsedMinutes = (ms: number): number => Math.max(0, Math.floor(ms / MINUTE_MS));

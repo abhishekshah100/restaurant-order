@@ -36,8 +36,8 @@ export function DetailsSection({
 }: {
   form: DishForm;
   set: (fields: Partial<DishForm>) => void;
-  /** Problems with the meal and serves fields. */
-  errors: { meal?: string; serves?: string };
+  /** Problems with the meal, serves and prep time fields. */
+  errors: { meal?: string; serves?: string; prepTime?: string };
 }) {
   const t = useContent('common');
   const { region } = useAdminWorkspace();
@@ -99,7 +99,9 @@ export function DetailsSection({
           optional
           maxLength={20}
           placeholder={t('adminMenu.editor.prepTimePlaceholder')}
+          hint={t('adminMenu.editor.prepTimeHint')}
           value={form.prepTime}
+          error={errors.prepTime}
           onChange={(event) => set({ prepTime: event.target.value })}
         />
         <Input

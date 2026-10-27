@@ -11,6 +11,7 @@ import type {
   SpiceLevel,
 } from '@/types/menu';
 import type { MenuCatalog } from './menu';
+import { tidyPrepTime } from './prepTime';
 
 /*
  * The staff Menu page's logic, pure: each dish's state and the status filter with its counts,
@@ -309,7 +310,8 @@ export type DishFormError =
   | 'maxAddOns'
   | 'removables'
   | 'meal'
-  | 'serves';
+  | 'serves'
+  | 'prepTime';
 
 /** What's missing or wrong, if anything (one entry per part of the form). */
 export function dishFormErrors(form: DishForm): DishFormError[] {
@@ -350,6 +352,8 @@ export function dishFormErrors(form: DishForm): DishFormError[] {
     errors.push('meal');
   }
   if (form.serves.trim() && count(form.serves, 20) === null) errors.push('serves');
+  // Minutes the kitchen can read: "15 min" or "12–15 min".
+  if (form.prepTime.trim() && tidyPrepTime(form.prepTime) === null) errors.push('prepTime');
   return errors;
 }
 
@@ -401,7 +405,9 @@ export function dishInputOf(form: DishForm, current?: DishAvailability): DishInp
     veg: form.veg,
     tags: form.tags,
     ...(form.spice ? { spice: form.spice } : {}),
-    ...(form.prepTime.trim() ? { prepTime: form.prepTime.trim() } : {}),
+    ...(form.prepTime.trim()
+      ? { prepTime: tidyPrepTime(form.prepTime) ?? form.prepTime.trim() }
+      : {}),
     ...(serves ? { serves } : {}),
     ...(sized
       ? {

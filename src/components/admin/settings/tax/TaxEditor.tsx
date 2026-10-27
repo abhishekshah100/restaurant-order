@@ -1,9 +1,9 @@
 'use client';
 
 import { useContent } from '@/api/hooks';
-import { Select } from '@/components/ui';
+import { Input, Select } from '@/components/ui';
 import { formatRate, calculateBill } from '@/lib/pricing';
-import { splitRate, taxErrors, withTax } from '@/lib/branchSettings';
+import { splitRate, taxErrors, taxWording, withTax } from '@/lib/branchSettings';
 import type { TaxLineSettings, TaxSettings } from '@/types/branchSettings';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { NumberField } from '../shared/NumberField';
@@ -22,13 +22,16 @@ const toBp = (percent: number | undefined) =>
   percent === undefined ? Number.NaN : Math.round(percent * 100);
 
 /**
- * Settings › Tax & service charge: the rate of each of the region's taxes (and what it's
- * charged on), a service charge or none, whether discounts come off before tax, and rounding
- * the total. An example bill shows the result. New bills use them; placed orders keep theirs.
+ * Settings › Tax & service charge: whether the branch charges tax (GST in India, VAT in Nepal;
+ * a branch not registered bills without it, as a "Bill of supply" or a "Bill") and the GSTIN or
+ * PAN printed on bills; the rate of each of the region's taxes (and what it's charged on), a
+ * service charge or none, whether discounts come off before tax, and rounding the total. An
+ * example bill shows the result. New bills use them; placed orders keep theirs.
  */
 export function TaxEditor() {
   const t = useContent('common');
   const cart = useContent('cart');
+  const service = useContent('service');
   const { region } = useAdminWorkspace();
 
   return (
@@ -36,9 +39,15 @@ export function TaxEditor() {
       section="tax"
       title={t('adminSettings.sections.tax.title')}
       subtitle={t('adminSettings.tax.subtitle')}
-      check={(value, data) => taxErrors(value, data.settings.tax)}
+      check={(value, data) => taxErrors(value, data.settings.tax, data.settings.details.country)}
     >
       {({ value, set, saved, errors }) => {
+        // "GST" in India, "VAT" in Nepal: the region's first tax names the switch.
+        const first = value.lines[0]?.labelKey;
+        const taxName = t(
+          `adminSettings.tax.taxNames.${first === 'gst' || first === 'vat' ? first : 'tax'}`,
+        );
+        const wording = taxWording(region.country, value);
         const setLine = (index: number, next: Partial<TaxLineSettings>) =>
           set({
             ...value,
@@ -53,54 +62,89 @@ export function TaxEditor() {
         return (
           <>
             <SettingsCard
-              title={t('adminSettings.tax.taxes')}
-              hint={t('adminSettings.tax.taxesHint')}
+              title={t('adminSettings.tax.charge', { tax: taxName })}
+              hint={t('adminSettings.tax.chargeHint', { tax: taxName })}
             >
-              <ul className={styles.lines}>
-                {value.lines.map((line, i) => {
-                  const bad =
-                    !Number.isInteger(line.rateBp) || line.rateBp < 0 || line.rateBp > 5000;
-                  const parts =
-                    line.parts && !bad
-                      ? splitRate(line.rateBp, line.parts.length)
-                          .map((rate, j) =>
-                            cart(`priceSummary.lines.${line.parts![j].labelKey}`, {
-                              rate: formatRate(rate),
-                            }),
-                          )
-                          .join(' + ')
-                      : undefined;
-                  return (
-                    <li key={line.id} className={styles.line}>
-                      <p className={styles.lineName}>{lineName(line)}</p>
-                      <NumberField
-                        id={`tax-${line.id}`}
-                        label={t('adminSettings.tax.rate')}
-                        value={toPercent(line.rateBp)}
-                        error={bad ? t('adminSettings.errors.taxRate') : undefined}
-                        hint={parts && t('adminSettings.tax.parts', { parts })}
-                        onChange={(percent) => setLine(i, { rateBp: toBp(percent) })}
-                      />
-                      {serviceOn && (
-                        <Select
-                          id={`tax-${line.id}-base`}
-                          label={t('adminSettings.tax.base')}
-                          value={line.base}
-                          onChange={(event) =>
-                            setLine(i, { base: event.target.value as TaxLineSettings['base'] })
-                          }
-                        >
-                          <option value="items">{t('adminSettings.tax.baseItems')}</option>
-                          <option value="itemsPlusService">
-                            {t('adminSettings.tax.baseItemsPlusService')}
-                          </option>
-                        </Select>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+              <ToggleRow
+                id="tax-enabled"
+                label={t('adminSettings.tax.charge', { tax: taxName })}
+                hint={
+                  value.enabled
+                    ? t('adminSettings.tax.chargeOn', { tax: taxName })
+                    : t('adminSettings.tax.chargeOff', {
+                        tax: taxName,
+                        title: service(`region.taxInvoice.${wording.invoiceKey}`),
+                      })
+                }
+                checked={value.enabled}
+                onChange={(on) => set({ ...value, enabled: on })}
+              />
+              <Input
+                id="tax-id"
+                label={t(`adminSettings.tax.taxIds.${wording.taxIdKey}`)}
+                hint={t(`adminSettings.tax.taxIdHints.${wording.taxIdKey}`)}
+                value={value.taxId}
+                optional
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={24}
+                className={styles.taxId}
+                error={errors.includes('taxId') ? t('adminSettings.errors.taxId') : undefined}
+                onChange={(event) => set({ ...value, taxId: event.target.value.toUpperCase() })}
+              />
             </SettingsCard>
+
+            {value.enabled && (
+              <SettingsCard
+                title={t('adminSettings.tax.taxes')}
+                hint={t('adminSettings.tax.taxesHint')}
+              >
+                <ul className={styles.lines}>
+                  {value.lines.map((line, i) => {
+                    const bad =
+                      !Number.isInteger(line.rateBp) || line.rateBp < 0 || line.rateBp > 5000;
+                    const parts =
+                      line.parts && !bad
+                        ? splitRate(line.rateBp, line.parts.length)
+                            .map((rate, j) =>
+                              cart(`priceSummary.lines.${line.parts![j].labelKey}`, {
+                                rate: formatRate(rate),
+                              }),
+                            )
+                            .join(' + ')
+                        : undefined;
+                    return (
+                      <li key={line.id} className={styles.line}>
+                        <p className={styles.lineName}>{lineName(line)}</p>
+                        <NumberField
+                          id={`tax-${line.id}`}
+                          label={t('adminSettings.tax.rate')}
+                          value={toPercent(line.rateBp)}
+                          error={bad ? t('adminSettings.errors.taxRate') : undefined}
+                          hint={parts && t('adminSettings.tax.parts', { parts })}
+                          onChange={(percent) => setLine(i, { rateBp: toBp(percent) })}
+                        />
+                        {serviceOn && (
+                          <Select
+                            id={`tax-${line.id}-base`}
+                            label={t('adminSettings.tax.base')}
+                            value={line.base}
+                            onChange={(event) =>
+                              setLine(i, { base: event.target.value as TaxLineSettings['base'] })
+                            }
+                          >
+                            <option value="items">{t('adminSettings.tax.baseItems')}</option>
+                            <option value="itemsPlusService">
+                              {t('adminSettings.tax.baseItemsPlusService')}
+                            </option>
+                          </Select>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </SettingsCard>
+            )}
 
             <SettingsCard
               title={t('adminSettings.tax.service')}

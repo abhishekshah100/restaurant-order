@@ -66,6 +66,13 @@ export interface TaxLineSettings {
 
 /** Settings › Tax & service charge. Rates are in basis points: 250 = 2.5%. */
 export interface TaxSettings {
+  /**
+   * Whether the branch charges its taxes (registered for GST or VAT). Off, bills have no tax
+   * lines; the rates below are kept for switching it back on.
+   */
+  enabled: boolean;
+  /** The GSTIN (India) or PAN (Nepal) printed on bills; empty when there's none. */
+  taxId: string;
   /** The service charge on the item total, or null for none. */
   serviceChargeBp: number | null;
   lines: TaxLineSettings[];

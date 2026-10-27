@@ -109,16 +109,16 @@ test('a waiter takes an order at a free table, then adds to it', async ({ page }
 
   // Later: more for the same guest, on the same bill.
   await card.getByRole('button', { name: /^Add items to order/ }).click();
-  const more = page.getByRole('dialog', { name: /^Add to order A\d+$/ });
+  const more = page.getByRole('dialog', { name: /^Add to order [A-Z]+-?\d+$/ });
   await expect(more).toBeVisible();
   await expect(more).toContainText('Mr Rao · Table 6');
   await more.getByRole('button', { name: 'Add Dahi Kebab' }).click();
   await more.getByRole('button', { name: /^Review order/ }).click();
   await more.getByRole('button', { name: /^Send to kitchen/ }).click();
-  await expect(page.getByRole('status').filter({ hasText: /^Added to order A\d+$/ })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: /^Added to order [A-Z]+-?\d+$/ })).toBeVisible();
 
   await card.getByRole('button', { name: /^Open order/ }).click();
-  const details = page.getByRole('dialog', { name: /^Order A\d+$/ });
+  const details = page.getByRole('dialog', { name: /^Order [A-Z]+-?\d+$/ });
   await expect(details).toContainText('Round 2');
   await expect(details).toContainText('Taken by Abhishek Saha');
   await expect(details).toContainText('Kitchen note: Not too spicy');

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useContent } from '@/api/hooks';
-import { useCancelByStaff, useCollectPayment, useMarkServed } from '@/api/mutations';
+import { useCancelByStaff, useCollectPayment, useMarkServed, useSetRush } from '@/api/mutations';
 import { Button, Dialog } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { dueOn, editableRound } from '@/lib/adminOrders';
@@ -22,8 +22,9 @@ export type OrderDialogView = 'details' | 'collect' | 'cancel';
  * One order for staff, with what can be done to it: Mark served / Handed over when it's ready,
  * Collect payment whenever something is due (before, during or after the meal), Add items to a
  * dine-in order and Change items the kitchen hasn't finished (when the page offers them), and
- * Cancel while it isn't finished. Collecting and cancelling open their own step in the
- * dialog (how they paid; why it's cancelled), with Back to the order.
+ * Rush (the kitchen takes it first) and Cancel while it isn't finished. Collecting and
+ * cancelling open their own step in the dialog (how they paid; why it's cancelled), with Back
+ * to the order.
  */
 interface OrderDetailDialogProps {
   order: Order | undefined;
@@ -54,6 +55,7 @@ function OrderDialog({
   const serve = useMarkServed();
   const collect = useCollectPayment();
   const cancel = useCancelByStaff();
+  const rush = useSetRush();
   const [view, setView] = useState<OrderDialogView>(initialView);
   const [method, setMethod] = useState<AtTableMethodKey>(region.payments.atTable[0]);
   const [reason, setReason] = useState<CancelReason>('outOfStock');
@@ -162,6 +164,30 @@ function OrderDialog({
         )}
         {(canAdd || canChange || !finished) && (
           <div className={styles.secondary}>
+            {!finished && (
+              <Button
+                variant={order.rush ? 'primary' : 'secondary'}
+                iconStart="flame"
+                aria-pressed={order.rush === true}
+                loading={rush.isPending}
+                onClick={() =>
+                  rush.mutate(
+                    { ...target, rush: !order.rush },
+                    {
+                      onSuccess: () =>
+                        showToast(
+                          t(order.rush ? 'adminOrder.rushOff' : 'adminOrder.rushOn', {
+                            order: order.id,
+                          }),
+                        ),
+                      onError: failed,
+                    },
+                  )
+                }
+              >
+                {order.rush ? t('adminOrder.removeRush') : t('adminOrder.markRush')}
+              </Button>
+            )}
             {canAdd && (
               <Button variant="secondary" iconStart="plus" onClick={() => onAddItems(order)}>
                 {t('adminOrder.addItems')}

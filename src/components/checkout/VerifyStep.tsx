@@ -151,7 +151,22 @@ function OtpForm() {
         <p className={styles.sub}>
           {t.rich(
             'verify.sentTo',
-            { b: (chunks) => <b className={styles.phone}>{chunks}</b> },
+            {
+              // The number, with a pencil to go back and change it.
+              b: (chunks) => (
+                <span className={styles.phoneRow}>
+                  <b className={styles.phone}>{chunks}</b>
+                  <Link
+                    href="/checkout/details/"
+                    className={styles.edit}
+                    aria-label={t('verify.changeNumber')}
+                    title={t('verify.changeNumber')}
+                  >
+                    <Icon name="pencil" size="xs" />
+                  </Link>
+                </span>
+              ),
+            },
             { phone, dialCode: mobile.dialCode },
           )}
         </p>
@@ -176,11 +191,6 @@ function OtpForm() {
         <Button type="submit" block iconEnd={error ? undefined : 'arrow'} disabled={locked}>
           {t('verify.submit')}
         </Button>
-
-        <Link href="/checkout/details/" className={styles.change}>
-          <Icon name="pencil" size="xs" />
-          {t('verify.changeNumber')}
-        </Link>
 
         <p className={styles.trust}>
           <Icon name="lock" size="xs" />

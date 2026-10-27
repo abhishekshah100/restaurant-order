@@ -47,7 +47,7 @@ describe('requests page', () => {
       done: [cutlery],
     });
     expect(requestGroups(service, 'bill')).toEqual({ waiting: [], coming: [bill], done: [] });
-    expect(requestCounts(service.requests)).toEqual({ all: 2, waiter: 1, bill: 1 });
+    expect(requestCounts(service.requests)).toEqual({ all: 2, waiter: 1, bill: 1, kitchen: 0 });
   });
 
   it('says how long a request took to deal with', () => {

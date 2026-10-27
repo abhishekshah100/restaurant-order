@@ -37,6 +37,12 @@
   --tone-bg: var(--gold-tint);
 }
 
+/* From the kitchen about an order: the kitchen's violet. */
+.kitchen {
+  --tone: var(--reserved);
+  --tone-bg: var(--reserved-tint);
+}
+
 /* Someone has it: quieter, with a calm bar. */
 .coming {
   background: color-mix(in srgb, var(--info-tint) 35%, var(--surface));

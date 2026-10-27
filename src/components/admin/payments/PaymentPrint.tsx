@@ -7,7 +7,9 @@ import { useAdminName } from '@/hooks/useAdminSession';
 import { dueOn } from '@/lib/adminOrders';
 import { daySummary, ledgerEntries, ledgerOf, type DueGroup } from '@/lib/adminPayments';
 import { paidAmount } from '@/lib/lifecycle';
+import { orderBill } from '@/lib/orders';
 import type { Order } from '@/types/order';
+import { billRows } from '../../cart/PriceSummary';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { usePaymentText } from './usePaymentText';
 import styles from './PaymentPrint.module.css';
@@ -21,20 +23,30 @@ type Printable =
 
 /**
  * Printing from the Payments page: `bill(orders)` prints the bill for an order or a table (a
- * receipt once it's paid: what was paid, how and when); `report(orders, due, period)` prints the
- * day report for the days written in `period` (the day's money, by method, every payment and refund, what's still to collect). The
- * page is put in the document, the browser's print dialog opens, and it's taken away after.
+ * receipt once it's paid: what was paid, how and when); `report(orders, due, period)` prints
+ * the day report for the days in `period` (the day's money, by method, every payment and refund,
+ * what's still to collect). The page is put in the document, the browser's print dialog opens,
+ * and it's taken away after. The page has no margin, so browsers leave out their own header and
+ * footer (date, title, address); the sheet keeps its own.
  */
 export function usePaymentPrint() {
+  const t = useContent('common');
   const [doc, setDoc] = useState<Printable | null>(null);
 
   useEffect(() => {
     if (!doc) return;
     const root = document.documentElement;
+    // The tab's title names a saved PDF ("Bill BLR-001"); the page's comes back after.
+    const pageTitle = document.title;
     const done = () => {
       root.classList.remove(PRINTING);
+      document.title = pageTitle;
       setDoc(null);
     };
+    document.title =
+      doc.kind === 'bill'
+        ? t('adminPayments.receipt.fileName', { orders: doc.orders.map((o) => o.id).join(', ') })
+        : t('adminPayments.report.fileName', { period: doc.period });
     root.classList.add(PRINTING);
     window.addEventListener('afterprint', done, { once: true });
     const id = window.setTimeout(() => window.print(), 50);
@@ -42,8 +54,9 @@ export function usePaymentPrint() {
       window.clearTimeout(id);
       window.removeEventListener('afterprint', done);
       root.classList.remove(PRINTING);
+      document.title = pageTitle;
     };
-  }, [doc]);
+  }, [doc, t]);
 
   const sheet =
     doc &&
@@ -68,121 +81,176 @@ export function usePaymentPrint() {
 
 function PrintHead({ title }: { title: string }) {
   const t = useContent('common');
-  const { branch, region } = useAdminWorkspace();
+  const { region } = useAdminWorkspace();
   return (
     <header className={styles.head}>
       <p className={styles.brand}>{t('meta.applicationName')}</p>
-      <p className={styles.branch}>{branch.shortName}</p>
-      {region.address && <p className={styles.muted}>{region.address}</p>}
+      <p className={styles.branch}>{region.shortName}</p>
+      {region.address && <p className={styles.address}>{region.address}</p>}
+      {(region.phone || region.tax.taxId) && (
+        <p className={styles.contact}>
+          {region.phone && <span>{t('adminPayments.receipt.phone', { phone: region.phone })}</span>}
+          {region.tax.taxId && (
+            <span>
+              {t('adminPayments.receipt.taxId', {
+                label: t(`adminPayments.receipt.taxIdLabels.${region.tax.taxIdKey}`),
+                id: region.tax.taxId,
+              })}
+            </span>
+          )}
+        </p>
+      )}
       <h1 className={styles.title}>{title}</h1>
     </header>
   );
 }
 
-/** A bill for one order or a table: items, totals, what was paid and what's due. */
+/** What a printed bill is called: a receipt once paid; in India without GST a "Bill of supply". */
+function useBillTitle(due: number): string {
+  const t = useContent('common');
+  const { region } = useAdminWorkspace();
+  if (due <= 0) return t('adminPayments.receipt.receiptTitle');
+  return region.tax.invoiceKey === 'billOfSupply'
+    ? t('adminPayments.receipt.titleNoTax')
+    : t('adminPayments.receipt.title');
+}
+
+/**
+ * A bill for one order or a table: who and where, each order's items and every charge on it
+ * (service charge, taxes, round off, as the guest's bill lists them), the total, what was paid
+ * and what's due, and the payments taken.
+ */
 function BillDoc({ orders }: { orders: Order[] }) {
   const t = useContent('common');
-  const { clock } = useAdminWorkspace();
+  const cart = useContent('cart');
+  const { clock, region, money } = useAdminWorkspace();
   const { amount, methodName, where } = usePaymentText();
   const due = orders.reduce((s, o) => s + dueOn(o), 0);
   const total = orders.reduce((s, o) => s + o.total, 0);
   const payments = orders.flatMap((o) => ledgerOf(o).map((e) => ({ ...e, order: o })));
   const paid = orders.reduce((s, o) => s + paidAmount(o), 0);
   const refunded = payments.filter((e) => e.kind === 'refund').reduce((s, e) => s + e.amount, 0);
+  const title = useBillTitle(due);
+  const first = orders[0];
+  const guests = [...new Set(orders.map((o) => o.customerName))].join(', ');
   const now = new Date();
 
   return (
     <article className={styles.bill}>
-      <PrintHead
-        title={due > 0 ? t('adminPayments.receipt.title') : t('adminPayments.receipt.receiptTitle')}
-      />
-      <p className={styles.muted}>{clock.date(now)}</p>
+      <PrintHead title={title} />
+
+      <dl className={styles.meta}>
+        <div>
+          <dt>{t('adminPayments.receipt.billNo')}</dt>
+          <dd>{orders.map((o) => o.id).join(', ')}</dd>
+        </div>
+        <div>
+          <dt>{t('adminPayments.receipt.date')}</dt>
+          <dd>
+            {t('adminPayments.receipt.when', {
+              date: clock.date(first.placedAt),
+              time: clock.time(first.placedAt),
+            })}
+          </dd>
+        </div>
+        <div>
+          <dt>{t('adminPayments.receipt.servedAt')}</dt>
+          <dd>{where(first)}</dd>
+        </div>
+        <div>
+          <dt>{t('adminPayments.receipt.guestLabel')}</dt>
+          <dd>{guests}</dd>
+        </div>
+      </dl>
+
       {orders.map((order) => {
-        const discount = (order.discounts ?? []).reduce((s, d) => s + d.amount, 0);
+        const charges = billRows(orderBill(order, region), { t: cart, money, tax: region.tax });
         return (
           <section key={order.id} className={styles.order}>
-            <p className={styles.orderHead}>
-              <strong>{t('adminPayments.receipt.order', { order: order.id })}</strong>
-              <span>
-                {where(order)} · {clock.time(order.placedAt)}
-              </span>
-            </p>
-            <p className={styles.muted}>
-              {t('adminPayments.receipt.guest', { name: order.customerName })}
-            </p>
+            {orders.length > 1 && (
+              <p className={styles.orderHead}>
+                <strong>{t('adminPayments.receipt.order', { order: order.id })}</strong>
+                <span>{clock.time(order.placedAt)}</span>
+              </p>
+            )}
             <table className={styles.items}>
+              <thead>
+                <tr>
+                  <th>{t('adminPayments.receipt.item')}</th>
+                  <th className={styles.qty}>{t('adminPayments.receipt.qty')}</th>
+                  <th className={styles.num}>{t('adminPayments.receipt.amount')}</th>
+                </tr>
+              </thead>
               <tbody>
                 {order.items.map((item, index) => (
                   <tr key={`${item.dishSlug}-${index}`}>
-                    <td className={styles.qty}>{item.quantity}×</td>
                     <td>
-                      {item.name}
-                      {item.variant && <span className={styles.muted}> · {item.variant}</span>}
+                      <span className={styles.itemName}>{item.name}</span>
+                      {item.variant && <span className={styles.variant}>{item.variant}</span>}
                     </td>
+                    <td className={styles.qty}>{item.quantity}</td>
                     <td className={styles.num}>{amount(item.unitPrice * item.quantity)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             <dl className={styles.sums}>
-              <div>
-                <dt>{t('adminPayments.receipt.itemTotal')}</dt>
-                <dd>{amount(order.itemTotal)}</dd>
-              </div>
-              {discount > 0 && (
-                <div>
-                  <dt>{t('adminPayments.receipt.discounts')}</dt>
-                  <dd>{amount(-discount)}</dd>
+              {charges.map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+              {orders.length > 1 && (
+                <div className={styles.subtotal}>
+                  <dt>{t('adminPayments.receipt.orderTotal')}</dt>
+                  <dd>{amount(order.total)}</dd>
                 </div>
               )}
-              <div className={styles.strong}>
-                <dt>{t('adminPayments.receipt.total')}</dt>
-                <dd>{amount(order.total)}</dd>
-              </div>
             </dl>
           </section>
         );
       })}
 
-      <dl className={styles.sums}>
-        {orders.length > 1 && (
-          <div className={styles.strong}>
-            <dt>{t('adminPayments.receipt.total')}</dt>
-            <dd>{amount(total)}</dd>
+      <div className={styles.grand}>
+        <span>{t('adminPayments.receipt.total')}</span>
+        <strong>{amount(total)}</strong>
+      </div>
+
+      {(paid > 0 || refunded > 0) && (
+        <dl className={styles.sums}>
+          {paid > 0 && (
+            <div>
+              <dt>{t('adminPayments.receipt.paid')}</dt>
+              <dd>{amount(paid)}</dd>
+            </div>
+          )}
+          {refunded > 0 && (
+            <div>
+              <dt>{t('adminPayments.receipt.refunded')}</dt>
+              <dd>{amount(-refunded)}</dd>
+            </div>
+          )}
+          <div className={styles.due}>
+            <dt>{t('adminPayments.receipt.due')}</dt>
+            <dd>{amount(due)}</dd>
           </div>
-        )}
-        {paid > 0 && (
-          <div>
-            <dt>{t('adminPayments.receipt.paid')}</dt>
-            <dd>{amount(paid)}</dd>
-          </div>
-        )}
-        {refunded > 0 && (
-          <div>
-            <dt>{t('adminPayments.receipt.refunded')}</dt>
-            <dd>{amount(-refunded)}</dd>
-          </div>
-        )}
-        <div className={styles.grand}>
-          <dt>{t('adminPayments.receipt.due')}</dt>
-          <dd>{amount(due)}</dd>
-        </div>
-      </dl>
+        </dl>
+      )}
 
       {payments.length > 0 && (
-        <section className={styles.order}>
-          <p className={styles.orderHead}>
-            <strong>{t('adminPayments.receipt.payments')}</strong>
-          </p>
+        <section className={styles.payments}>
+          <p className={styles.label}>{t('adminPayments.receipt.payments')}</p>
           <table className={styles.items}>
             <tbody>
               {payments.map((e) => (
                 <tr key={e.id}>
                   <td>
-                    {clock.time(e.at)} · {methodName(e.method)}
-                    {e.transactionRef && (
-                      <span className={styles.muted}> · {e.transactionRef}</span>
-                    )}
+                    {methodName(e.method)}
+                    <span className={styles.variant}>
+                      {clock.time(e.at)}
+                      {e.transactionRef && ` · ${e.transactionRef}`}
+                    </span>
                   </td>
                   <td className={styles.num}>
                     {amount(e.kind === 'refund' ? -e.amount : e.amount)}
@@ -194,10 +262,12 @@ function BillDoc({ orders }: { orders: Order[] }) {
         </section>
       )}
 
-      <p className={styles.thanks}>{t('adminPayments.receipt.thanks')}</p>
-      <p className={styles.muted}>
-        {t('adminPayments.receipt.printed', { time: `${clock.date(now)}, ${clock.time(now)}` })}
-      </p>
+      <footer className={styles.foot}>
+        <p className={styles.thanks}>{t('adminPayments.receipt.thanks')}</p>
+        <p className={styles.printed}>
+          {t('adminPayments.receipt.printed', { time: `${clock.date(now)}, ${clock.time(now)}` })}
+        </p>
+      </footer>
     </article>
   );
 }

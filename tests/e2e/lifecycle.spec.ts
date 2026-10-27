@@ -53,7 +53,7 @@ async function checkout(page: Page, phone: string, pay: 'online' | 'counter') {
     await page.getByRole('radio', { name: /Pay at the counter/ }).click();
     await visible(page, 'button', /^Place order/).click();
   }
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -80,11 +80,11 @@ test('dine-in: a second round goes on the order without checkout, and the bill s
   // Round 2: the cart adds to the order instead of checking out.
   await addDish(page, 'starters', 'Hara Bhara Kebab');
   await page.goto('/cart/');
-  await expect(visible(page, 'heading', /^Adding to order #A\d+$/)).toBeVisible();
+  await expect(visible(page, 'heading', /^Adding to order #[A-Z]+-?\d+$/)).toBeVisible();
   await expect(visible(page, 'link', 'Checkout')).toHaveCount(0);
   await visible(page, 'button', 'Add to my order').click();
 
-  await expect(page).toHaveURL(/\/order\/track\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/track\/\?id=[A-Z]+-?\d+$/);
   await expect(
     page.getByRole('status').filter({ hasText: 'Round 2 is on its way to the kitchen' }),
   ).toBeVisible();
@@ -112,7 +112,7 @@ test('dine-in: a second round goes on the order without checkout, and the bill s
   ).toContainText('₹575');
 
   await page.goto('/orders/');
-  await expect(visible(page, 'link', /#A\d+/)).toContainText('2 rounds');
+  await expect(visible(page, 'link', /#[A-Z]+-?\d+/)).toContainText('2 rounds');
 });
 
 test('cancel within the window', async ({ page }) => {
@@ -122,7 +122,7 @@ test('cancel within the window', async ({ page }) => {
   await checkout(page, '9876543210', 'online');
 
   await visible(page, 'button', 'Cancel order').click();
-  const dialog = page.getByRole('dialog', { name: /^Cancel order #A\d+\?$/ });
+  const dialog = page.getByRole('dialog', { name: /^Cancel order #[A-Z]+-?\d+\?$/ });
   await expect(dialog).toContainText('₹303 you paid online will be refunded to your UPI account.');
   await dialog.getByRole('button', { name: 'Yes, cancel' }).click();
 
@@ -146,7 +146,7 @@ test('change within the window updates the items and the total', async ({ page }
 
   await visible(page, 'button', 'Change order').click();
   await expect(page).toHaveURL(/\/cart\/$/);
-  await expect(visible(page, 'heading', /^Editing order #A\d+$/)).toBeVisible();
+  await expect(visible(page, 'heading', /^Editing order #[A-Z]+-?\d+$/)).toBeVisible();
   await expect(text(page, /left to make changes/)).toBeVisible();
   await visible(page, 'button', 'Add one Dahi Kebab').click();
 
@@ -159,8 +159,8 @@ test('change within the window updates the items and the total', async ({ page }
   await dialog.getByRole('button', { name: 'Pay ₹304' }).click();
   await dialog.getByRole('button', { name: 'Prototype: success' }).click();
 
-  await expect(page).toHaveURL(/\/order\/track\/\?id=A\d+$/);
-  await expect(page.getByRole('status').filter({ hasText: /^Order #A\d+ updated$/ })).toBeVisible();
+  await expect(page).toHaveURL(/\/order\/track\/\?id=[A-Z]+-?\d+$/);
+  await expect(page.getByRole('status').filter({ hasText: /^Order #[A-Z]+-?\d+ updated$/ })).toBeVisible();
   await expect(text(page, '2 × Dahi Kebab')).toBeVisible();
   await expect(text(page, '₹607')).toBeVisible();
   await expect(text(page, 'Total paid')).toBeVisible();
@@ -274,7 +274,7 @@ test('Nepal: a second round on the tab, then taking it back', async ({ page }) =
   await addDish(page, 'beverages', 'Masala Chai');
   await page.goto('/cart/');
   await visible(page, 'button', 'Add to my order').click();
-  await expect(page).toHaveURL(/\/order\/track\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/track\/\?id=[A-Z]+-?\d+$/);
   // The tab as one bill: रू 620 + रू 62 service + 13% VAT (रू 88.66) = रू 770.66 → रू 771.
   await expect(text(page, 'रू 771')).toBeVisible();
 

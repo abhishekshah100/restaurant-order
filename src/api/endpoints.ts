@@ -1,4 +1,4 @@
-import type { AdminBranch, FloorPlanLayout, Reservation } from '@/types/admin';
+import type { AdminBranch, AdminServiceRequest, FloorPlanLayout, Reservation } from '@/types/admin';
 import type { MenuData } from '@/types/menu';
 import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
@@ -38,6 +38,9 @@ import type {
   MarkServedRequest,
   MarkServedResponse,
   SetKitchenStatusRequest,
+  SetPlatedRequest,
+  SetRushRequest,
+  KitchenMessageRequest,
   SetKitchenStatusResponse,
   OrderChangeResponse,
   OrderListResponse,
@@ -266,6 +269,36 @@ export const api = {
   ) =>
     apiPatch<SetKitchenStatusResponse>(
       `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/rounds/${round}/status`,
+      body,
+      bearer(token),
+    ),
+  setRush: (token: string, branchId: string, orderId: string, body: SetRushRequest) =>
+    apiPatch<SetKitchenStatusResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/rush`,
+      body,
+      bearer(token),
+    ),
+  sendKitchenMessage: (
+    token: string,
+    branchId: string,
+    orderId: string,
+    body: KitchenMessageRequest,
+  ) =>
+    apiPost<{ request: AdminServiceRequest }>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/messages`,
+      body,
+      bearer(token),
+    ),
+  setPlated: (
+    token: string,
+    branchId: string,
+    orderId: string,
+    round: number,
+    position: number,
+    body: SetPlatedRequest,
+  ) =>
+    apiPatch<SetKitchenStatusResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/rounds/${round}/items/${position}/plated`,
       body,
       bearer(token),
     ),

@@ -58,6 +58,32 @@ const service: AdminBranchService = {
 };
 
 describe('serviceQueue', () => {
+  it('puts the kitchen’s messages in the queue, and counts them off when done', () => {
+    const withMessage: AdminBranchService = {
+      ...service,
+      requests: [
+        ...service.requests,
+        {
+          id: 'k1',
+          kind: 'kitchen',
+          reason: 'unavailable',
+          orderId: 'A106',
+          mode: 'takeaway',
+          requestedAt: '2026-10-14T13:15:00.000Z',
+        },
+      ],
+      counts: { ...service.counts, kitchenMessages: 1 },
+    };
+    expect(serviceQueue(withMessage).find((item) => item.key === 'request:k1')?.kind).toBe(
+      'kitchen',
+    );
+    expect(withoutRequest(withMessage, 'k1').counts).toMatchObject({
+      kitchenMessages: 0,
+      waiterCalls: 1,
+      billRequests: 1,
+    });
+  });
+
   it('mixes requests and ready rounds, oldest first', () => {
     expect(serviceQueue(service).map((item) => item.key)).toEqual([
       'request:b1',

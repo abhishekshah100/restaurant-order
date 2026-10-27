@@ -24,7 +24,12 @@ import { normaliseConfig } from '@/lib/options';
 import { EMPTY_CART, cartReducer, parseCart } from '@/lib/cartReducer';
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage';
 import { useGuestSession } from './GuestSessionContext';
+import { DESKTOP_QUERY, matchesNow } from '@/hooks/useMediaQuery';
 import { useToast } from './ToastContext';
+
+/** How long "Paneer Tikka added" shows: on the cart bar, or as a toast without one. */
+export const ADDED_FLASH_MS = 1500;
+const ADDED_TOAST_MS = 2000;
 
 /** Cart actions. Stable for the provider's lifetime. */
 export interface CartActions {
@@ -88,6 +93,20 @@ interface CartStore {
   hydrate: (sessionId: string, cart: CartState) => void;
   /** This dish's lines; the same array until they change. */
   dishLines: (slug: string) => readonly CartLine[];
+  /** The dish just added, for the cart bar to show; its own listeners (cart ones don't wake). */
+  added: () => AddedNote | null;
+  announceAdded: (dish: string) => void;
+  subscribeAdded: (listener: () => void) => () => void;
+  /** A cart bar on screen to show adds, until the returned function (none: a toast says it). */
+  showAddsHere: () => () => void;
+  /** Whether a cart bar is on screen to show adds. */
+  showsAdds: () => boolean;
+}
+
+/** A dish just added: its name, and when (a bar mounting just after still shows it). */
+export interface AddedNote {
+  dish: string;
+  at: number;
 }
 
 const NO_LINES: readonly CartLine[] = Object.freeze([]);
@@ -98,6 +117,9 @@ const sameLines = (a: readonly CartLine[], b: readonly CartLine[]) =>
 function createCartStore(): CartStore {
   let state: StoreState = { cart: EMPTY_CART, sessionId: null };
   const listeners = new Set<() => void>();
+  const addedListeners = new Set<() => void>();
+  let added: AddedNote | null = null;
+  let addViews = 0;
   const dishCache = new Map<string, { from: CartLine[]; lines: readonly CartLine[] }>();
 
   const update = (cart: CartState, sessionId: string | null) => {
@@ -122,6 +144,22 @@ function createCartStore(): CartStore {
       );
       update(loaded, sessionId);
     },
+    added: () => added,
+    announceAdded(dish) {
+      added = { dish, at: Date.now() };
+      addedListeners.forEach((l) => l());
+    },
+    subscribeAdded(listener) {
+      addedListeners.add(listener);
+      return () => addedListeners.delete(listener);
+    },
+    showAddsHere() {
+      addViews += 1;
+      return () => {
+        addViews -= 1;
+      };
+    },
+    showsAdds: () => addViews > 0,
     dishLines(slug) {
       const all = state.cart.lines;
       const cached = dishCache.get(slug);
@@ -192,8 +230,6 @@ function createActions(
   t: Translator<ContentMap['cart']>,
 ): CartActions {
   const { dispatch } = store;
-  const quantityOf = (key: string) =>
-    store.getState().cart.lines.find((l) => l.key === key)?.quantity ?? 0;
 
   const removeLine = (key: string) => {
     const lines = store.getState().cart.lines;
@@ -203,6 +239,7 @@ function createActions(
     dispatch({ type: 'remove', key });
     const dishName = menu?.getDish(line.dishSlug)?.name ?? t('toast.unknownItem');
     showToast(t('toast.removed', { dish: dishName }), {
+      icon: 'trash',
       actionLabel: t('toast.undo'),
       onAction: () => dispatch({ type: 'restore', line, index }),
     });
@@ -215,21 +252,15 @@ function createActions(
       else dispatch({ type: 'setQuantity', key, quantity });
     },
     addItem(dish, config, quantity = 1, options = {}) {
-      const key = lineKey(config);
-      const before = quantityOf(key);
       dispatch({ type: 'add', config, unitPrice: unitPrice(dish, config), quantity });
-      const added = quantityOf(key) - before;
+      // The cart bar says it (and stays out of the way); the stepper that replaced ADD takes it
+      // back. Without a bar on screen (desktop, the cart page), a short toast says it instead.
+      store.announceAdded(dish.name);
       if (options.toast === false) return;
-      showToast(t('toast.added', { dish: dish.name }), {
-        actionLabel: t('toast.undo'),
-        // Take back only what this add put in, even if the quantity changed since.
-        onAction: () => {
-          const now = quantityOf(key);
-          if (now === 0) return;
-          if (now <= added) dispatch({ type: 'remove', key });
-          else dispatch({ type: 'setQuantity', key, quantity: now - added });
-        },
-      });
+      const barShowsIt = store.showsAdds() && !matchesNow(DESKTOP_QUERY);
+      if (!barShowsIt) {
+        showToast(t('toast.added', { dish: dish.name }), { duration: ADDED_TOAST_MS });
+      }
     },
     editLine(key, dish, config, quantity) {
       dispatch({ type: 'edit', key, config, unitPrice: unitPrice(dish, config), quantity });
@@ -366,4 +397,32 @@ export function useDishQuantity(slug: string): number {
     () => store.dishLines(slug).reduce((n, l) => n + l.quantity, 0),
     () => 0,
   );
+}
+
+/**
+ * The dish just added ("Paneer Tikka"), for ADDED_FLASH_MS after the add, then null. Counts the
+ * caller as a cart bar on screen while mounted, so adds show there instead of as a toast.
+ */
+export function useAddedFlash(): AddedNote | null {
+  const { store } = useCartStore();
+  const note = useSyncExternalStore(store.subscribeAdded, store.added, () => null);
+  // The add whose moment has passed; one from before this bar mounted counts as passed, unless
+  // it was just now (added on a dish's page, back on the menu).
+  const [doneAt, setDoneAt] = useState(() => {
+    const first = store.added();
+    return first && Date.now() - first.at >= ADDED_FLASH_MS ? first.at : null;
+  });
+
+  useEffect(() => store.showAddsHere(), [store]);
+
+  useEffect(() => {
+    if (!note) return;
+    const id = window.setTimeout(
+      () => setDoneAt(note.at),
+      Math.max(0, note.at + ADDED_FLASH_MS - Date.now()),
+    );
+    return () => window.clearTimeout(id);
+  }, [note]);
+
+  return note && doneAt !== note.at ? note : null;
 }

@@ -113,7 +113,8 @@
         "showRoundOff": true
       },
       "compactLabelKey": "gst",
-      "invoiceKey": "gst"
+      "invoiceKey": "gst",
+      "taxIdKey": "gstin"
     },
     "payments": {
       "checkout": [
@@ -330,7 +331,8 @@
         "showRoundOff": true
       },
       "compactLabelKey": "serviceAndVat",
-      "invoiceKey": "vat"
+      "invoiceKey": "vat",
+      "taxIdKey": "pan"
     },
     "payments": {
       "checkout": [

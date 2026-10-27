@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultConfig } from '@/lib/cartLine';
-import { kitchenItem, stockIssue } from '@/lib/kitchenItems';
+import { allergensIn, kitchenItem, stockIssue } from '@/lib/kitchenItems';
 import type { LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
 import type { OrderItem } from '@/types/order';
@@ -85,5 +85,24 @@ describe('stockIssue', () => {
     };
     expect(stockIssue(item, sizeOff)).toBe('sizeOff');
     expect(stockIssue(item, undefined)).toBeNull();
+  });
+});
+
+describe('allergies in notes', () => {
+  it('flags a note naming an allergen or an allergy, word by word', () => {
+    expect(allergensIn(['Less spicy, allergy to peanuts'])).toEqual({
+      flagged: true,
+      allergens: ['peanut'],
+    });
+    expect(allergensIn(['No nuts or Gluten please', 'no eggs'])).toEqual({
+      flagged: true,
+      allergens: ['nut', 'gluten', 'egg'],
+    });
+    expect(allergensIn(['Guest is allergic', undefined])).toEqual({
+      flagged: true,
+      allergens: [],
+    });
+    // Part of a word, or nothing to flag.
+    expect(allergensIn(['Extra nutmeg', 'Less spicy'])).toEqual({ flagged: false, allergens: [] });
   });
 });

@@ -52,6 +52,7 @@ interface BackendItem {
   unitPrice: number;
   config: LineConfig;
   offer?: OrderItem['offer'];
+  plated?: true;
 }
 
 interface BackendRound {
@@ -62,11 +63,14 @@ interface BackendRound {
   timeline: BackendEvent[];
   kitchenNote?: string;
   changeableUntil: string;
+  changedAt?: string;
 }
 
 export interface BackendOrder {
   id: string;
   token?: number;
+  taxCharged?: false;
+  rush?: true;
   branchId: string;
   mode: OrderMode;
   table?: number;
@@ -164,6 +168,7 @@ function itemOf(item: BackendItem, status: OrderStatus, words: Words): OrderItem
   return {
     dishSlug: item.dishSlug,
     name: item.name,
+    ...(item.plated ? { plated: true } : {}),
     veg: item.veg,
     quantity: item.quantity,
     ...(item.variantName ? { variant: item.variantName.split(' · ')[0] } : {}),
@@ -240,6 +245,7 @@ function roundOf(round: BackendRound, order: BackendOrder, words: Words, now: nu
     timeline: round.timeline.map((e) => eventOf(e, order, words)),
     ...(round.kitchenNote ? { kitchenNote: round.kitchenNote } : {}),
     changeableUntil: round.changeableUntil,
+    ...(round.changedAt ? { changedAt: round.changedAt } : {}),
     ...(done ? {} : { etaMinutes: Math.max(1, Math.ceil((awaited - now) / MINUTE_MS)) }),
     readyBy: words.clock.time(new Date(awaited)),
     ...(handedOver ? { servedAt: handedOver.at } : {}),
@@ -290,6 +296,8 @@ export function toAppOrder(
     status: order.status,
     items: active.flatMap((r) => r.items),
     itemTotal: order.itemTotal,
+    ...(order.taxCharged === false ? { taxCharged: false as const } : {}),
+    ...(order.rush ? { rush: true } : {}),
     total: order.total,
     ...(order.promoCode ? { promoCode: order.promoCode } : {}),
     ...(order.discounts ? { discounts: order.discounts } : {}),

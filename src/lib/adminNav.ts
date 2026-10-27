@@ -49,7 +49,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     href: section('requests'),
     icon: 'bell',
     tab: true,
-    badge: (counts) => counts.waiterCalls + counts.billRequests,
+    badge: (counts) => counts.waiterCalls + counts.billRequests + (counts.kitchenMessages ?? 0),
   },
   { id: 'reservations', href: section('reservations'), icon: 'calendar', tab: false },
   // The kitchen has its own workspace (lib/kitchenNav), outside this shell.

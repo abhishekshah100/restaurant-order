@@ -151,6 +151,12 @@ describe('display helpers', () => {
     }
   });
 
+  it('keeps a bill without tax so, whatever the branch charges now', () => {
+    const bill = orderBill({ ...byId('A104'), taxCharged: false }, branch);
+    expect(bill.lines).toEqual([]);
+    expect(bill.itemTotal).toBe(1356);
+  });
+
   it('formats placed times relative to today (branch time, IST)', () => {
     const now = new Date('2026-10-03T21:00:00+05:30');
     expect(formatPlaced('2026-10-03T19:42:00+05:30', now, clock)).toBe('7:42 PM');

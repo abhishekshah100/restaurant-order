@@ -63,6 +63,7 @@
   "cartBar": {
     "label": "View cart, {items}, {total} {currencyName} plus taxes",
     "taxes": "Plus taxes",
+    "added": "{dish} added",
     "viewCart": "View cart"
   },
   "checkoutSteps": {
@@ -104,6 +105,9 @@
   "prepTime": "{min}–{max} min",
   "dialog": {
     "close": "Close"
+  },
+  "toast": {
+    "dismiss": "Dismiss"
   },
   "globalLoader": "Loading…",
   "lightbox": {
@@ -391,6 +395,15 @@
         "table": "Whole table",
         "balance": "{amount} due"
       },
+      "kitchen": {
+        "title": "Kitchen · order {order}",
+        "reasons": {
+          "runningLate": "Running late",
+          "unavailable": "An item isn't available",
+          "question": "Needs to ask about it"
+        },
+        "from": "From {name}"
+      },
       "ready": {
         "title": "Order {order} is ready",
         "round": "Round {round}",
@@ -576,6 +589,11 @@
   },
   "adminOrder": {
     "title": "Order {order}",
+    "markRush": "Rush",
+    "removeRush": "Rush · on",
+    "rushOn": "Order {order} is rush: the kitchen takes it first",
+    "rushOff": "Order {order} is no longer rush",
+    "rushBadge": "Rush",
     "token": "Token {token}",
     "subtitle": "{name} · {where} · {time}",
     "items": "Items",
@@ -588,8 +606,6 @@
     "itemNote": "Note: {note}",
     "kitchenNote": "Kitchen note",
     "bill": "Bill",
-    "itemTotal": "Item total",
-    "discounts": "Discounts",
     "total": "Total",
     "paid": "Paid",
     "due": "Still to pay",
@@ -700,7 +716,8 @@
       "label": "Show",
       "all": "All",
       "waiter": "Waiter calls",
-      "bill": "Bills"
+      "bill": "Bills",
+      "kitchen": "Kitchen"
     },
     "waiting": {
       "title": "Waiting",
@@ -715,10 +732,11 @@
       "empty": "Nothing done yet in the last 30 minutes."
     },
     "tableLink": "Open Table {table}",
+    "kitchen": "Kitchen",
     "acknowledge": "On my way",
-    "acknowledgeLabel": "On my way: {what}, Table {table}",
+    "acknowledgeLabel": "On my way: {what}, {where}",
     "resolve": "Done",
-    "resolveLabel": "Done: {what}, Table {table}",
+    "resolveLabel": "Done: {what}, {where}",
     "comingYou": "You're on the way",
     "comingBy": "{name} is on the way",
     "doneBy": "{name} · {time}",
@@ -732,7 +750,8 @@
     },
     "emptyFilter": {
       "waiter": "No waiter calls right now.",
-      "bill": "No bill requests right now."
+      "bill": "No bill requests right now.",
+      "kitchen": "No messages from the kitchen right now."
     },
     "loading": "Loading requests",
     "failed": "Couldn't update that. Try again."
@@ -899,6 +918,7 @@
         "removables": "Name each ingredient once.",
         "meal": "Say what the meal includes (the saving is 0 or more).",
         "serves": "Serves must be a whole number from 1 to 20.",
+        "prepTime": "Write the minutes, e.g. 15 min or 12–15 min.",
         "fix": "Some sections need a look before saving."
       },
       "save": "Save dish",
@@ -997,6 +1017,7 @@
       },
       "prepTime": "Prep time",
       "prepTimePlaceholder": "e.g. 15–18 min",
+      "prepTimeHint": "Guests see it, and the kitchen's due time follows the longest dish.",
       "serves": "Serves",
       "allergens": "Allergens",
       "allergen": {
@@ -1443,13 +1464,26 @@
     },
     "receipt": {
       "title": "Bill",
+      "titleNoTax": "Bill of supply",
       "receiptTitle": "Receipt",
+      "taxId": "{label}: {id}",
+      "phone": "Tel. {phone}",
+      "fileName": "Bill {orders}",
+      "billNo": "Bill no.",
+      "date": "Date",
+      "when": "{date}, {time}",
+      "servedAt": "Served at",
+      "guestLabel": "Guest",
+      "item": "Item",
+      "qty": "Qty",
+      "amount": "Amount",
+      "orderTotal": "Order total",
+      "taxIdLabels": {
+        "gstin": "GSTIN",
+        "pan": "PAN",
+        "taxId": "Tax no."
+      },
       "order": "Order #{order}",
-      "table": "Table {table}",
-      "guest": "Guest: {name}",
-      "items": "Items",
-      "itemTotal": "Item total",
-      "discounts": "Discounts",
       "total": "Total",
       "paid": "Paid",
       "refunded": "Refunded",
@@ -1460,6 +1494,7 @@
     },
     "report": {
       "title": "Day report",
+      "fileName": "Day report {period}",
       "branch": "{branch} · {date}",
       "printed": "Printed {time} by {name}",
       "summary": "Summary",
@@ -1517,6 +1552,7 @@
         "title": "Tax & service charge",
         "description": "Tax rates, a service charge, discounts and rounding on the bill.",
         "summary": "{taxes} · {service}",
+        "noTax": "No tax",
         "serviceNone": "no service charge",
         "serviceRate": "service charge {rate}%"
       },
@@ -1722,6 +1758,7 @@
       "phoneRegion": "Use a number starting {dialCode}, this branch's country code",
       "wifiLong": "Keep the Wi-Fi name to 40 characters",
       "orderPrefix": "Use 1 to 5 capital letters, e.g. BLR",
+      "taxId": "This number doesn't look right. Check it against your registration.",
       "orderStart": "Use a whole number from 1 to 999999",
       "noOpenDay": "Open the branch on at least one day.",
       "lastOrders": "Each session must be longer than the last-orders time.",
@@ -1853,6 +1890,25 @@
       "subtitle": "How this branch's bills are worked out. New bills use these straight away.",
       "taxes": "Taxes",
       "taxesHint": "Your region's taxes. Change a rate when the law changes.",
+      "taxNames": {
+        "gst": "GST",
+        "vat": "VAT",
+        "tax": "tax"
+      },
+      "charge": "Charge {tax}",
+      "chargeHint": "Switch off if this branch isn't registered for {tax}.",
+      "chargeOn": "Bills add {tax} at the rates below.",
+      "chargeOff": "Bills have no {tax} and are titled \"{title}\". Your rates are kept for when you switch it back on.",
+      "taxIds": {
+        "gstin": "GSTIN",
+        "pan": "PAN / VAT number",
+        "taxId": "Tax registration number"
+      },
+      "taxIdHints": {
+        "gstin": "15 characters, e.g. 29ABCDE1234F1Z5. Printed on bills; leave empty if you don't have one.",
+        "pan": "9 digits. Printed on bills; leave empty if you don't have one.",
+        "taxId": "Printed on bills; leave empty if you don't have one."
+      },
       "rate": "Rate (%)",
       "parts": "On the bill as {parts}",
       "base": "Charged on",
@@ -1862,7 +1918,7 @@
       "serviceHint": "Added to the item total before tax.",
       "serviceOn": "Add a service charge",
       "serviceOnHint": "Every bill shows the service charge as its own line.",
-      "serviceOffHint": "Bills say \"Service charge · Not added\".",
+      "serviceOffHint": "Bills don't show a service charge.",
       "bill": "Discounts and rounding",
       "discountBeforeTax": "Take discounts off before tax",
       "discountBeforeTaxOn": "Offers and promo codes lower the amount taxes are worked out on.",

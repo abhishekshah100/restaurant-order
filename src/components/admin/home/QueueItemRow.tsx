@@ -5,6 +5,7 @@ import { Icon, type IconName } from '@/components/ui';
 import { minutesSince, type QueueItem } from '@/lib/adminService';
 import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { kitchenText } from '../requests/useRequestText';
 import { WhereBadge } from './WhereBadge';
 import styles from './QueueItemRow.module.css';
 
@@ -14,6 +15,7 @@ const WAIT_WARN_MINUTES = 5;
 const KIND_ICONS: Record<QueueItem['kind'], IconName> = {
   waiter: 'bell',
   bill: 'receipt',
+  kitchen: 'chef',
   ready: 'cloche',
 };
 
@@ -28,6 +30,7 @@ function useDescription(item: QueueItem) {
       detail: note ? t('adminHome.queue.note', { note }) : undefined,
     };
   }
+  if (item.kind === 'kitchen') return kitchenText(t, item.request);
   if (item.kind === 'bill') {
     const { scope, balance } = item.request;
     return {
@@ -69,7 +72,12 @@ export function QueueItemRow({
   // A request someone is already on the way to: who.
   const coming = item.kind === 'ready' ? undefined : item.request.acknowledgedBy;
   const table = item.kind === 'ready' ? item.order.table : item.request.table;
-  const mode = item.kind === 'ready' ? item.order.mode : 'dineIn';
+  const mode =
+    item.kind === 'ready'
+      ? item.order.mode
+      : item.kind === 'kitchen'
+        ? item.request.mode
+        : 'dineIn';
   const where =
     table !== undefined
       ? t('adminHome.queue.where.table', { table })

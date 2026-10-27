@@ -25,9 +25,9 @@ test('order a dish and pay online', async ({ page }) => {
   await page.getByRole('link', { name: 'View menu' }).filter({ visible: true }).click();
   await expect(page).toHaveURL(/\/menu\/$/);
 
-  // A simple dish adds straight away and shows an Undo toast.
+  // A simple dish adds straight away: the cart bar says so (a short toast on desktop).
   await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Dahi Kebab added' })).toBeVisible();
+  await expect(page.getByText('Dahi Kebab added').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByRole('group', { name: 'Quantity of Dahi Kebab' }).first()).toBeVisible();
 
   // Food detail: pick a size and an add-on, watch the live total.
@@ -103,7 +103,7 @@ test('a failed payment keeps the cart', async ({ page }) => {
   await page.goto('/menu/');
   await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();
   // Wait until the cart has registered the item (it's saved to the device right after).
-  await expect(page.getByRole('status').filter({ hasText: 'Dahi Kebab added' })).toBeVisible();
+  await expect(page.getByText('Dahi Kebab added').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByRole('group', { name: 'Quantity of Dahi Kebab' }).first()).toBeVisible();
   await waitForSavedCart(page, 'dahi-kebab');
   await page.goto('/checkout/details/');

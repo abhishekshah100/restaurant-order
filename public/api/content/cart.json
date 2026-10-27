@@ -87,12 +87,14 @@
     },
     "compact": {
       "gst": "GST {rate}% + round off",
-      "serviceAndVat": "Service charge, VAT + round off"
+      "serviceAndVat": "Service charge, VAT + round off",
+      "serviceOnly": "Service charge + round off",
+      "roundOff": "Round off"
     },
-    "serviceCharge": "Service charge",
-    "notAdded": "Not added",
     "roundOff": "Round off",
     "toPay": "To pay",
+    "showDetails": "Show bill details",
+    "hideDetails": "Hide bill details",
     "deliveryFee": "Delivery fee",
     "deliveryFree": "Free",
     "offers": {

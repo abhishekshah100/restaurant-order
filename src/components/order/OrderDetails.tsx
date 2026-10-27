@@ -194,6 +194,14 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
           <h2 id="bill-heading" className="t-h3">
             {t('details.bill')}
           </h2>
+          {branch.tax.taxId && (
+            <p className="t-small c3">
+              {t('details.taxId', {
+                label: t(`details.taxIdLabels.${branch.tax.taxIdKey}`),
+                id: branch.tax.taxId,
+              })}
+            </p>
+          )}
           <PriceSummary
             bill={orderBill(order, branch)}
             variant="receipt"

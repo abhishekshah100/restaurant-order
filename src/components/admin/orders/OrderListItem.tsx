@@ -73,6 +73,7 @@ export function OrderListItem({
             {order.token !== undefined && (
               <span className={styles.token}>{t('adminOrder.token', { token: order.token })}</span>
             )}
+            {order.rush && <span className={styles.rush}>{t('adminOrder.rushBadge')}</span>}
           </span>
           <span className={styles.guest}>{order.customerName}</span>
         </button>

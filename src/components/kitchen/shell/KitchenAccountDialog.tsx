@@ -6,6 +6,7 @@ import { Dialog, Icon } from '@/components/ui';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
 import { cx } from '@/lib/cx';
 import styles from './KitchenBar.module.css';
+import { useKitchenThemeClass } from './useKitchenTheme';
 
 /** The kitchen's account menu: who's signed in, the admin dashboard, switch branch, sign out. */
 export function KitchenAccountDialog({
@@ -22,8 +23,15 @@ export function KitchenAccountDialog({
   onSignOut: () => void;
 }) {
   const t = useContent('kitchen');
+  const themeClass = useKitchenThemeClass();
   return (
-    <Dialog open onClose={close} title={t('account.title')} presentation="adaptive">
+    <Dialog
+      open
+      onClose={close}
+      title={t('account.title')}
+      presentation="adaptive"
+      className={themeClass}
+    >
       <div className={styles.menu}>
         {adminName && (
           <p className={styles.account}>

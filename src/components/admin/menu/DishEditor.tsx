@@ -129,7 +129,11 @@ export function DishEditor({
           <DetailsSection
             form={form}
             set={set}
-            errors={{ meal: message('meal'), serves: message('serves') }}
+            errors={{
+              meal: message('meal'),
+              serves: message('serves'),
+              prepTime: message('prepTime'),
+            }}
           />
           <EditorSection
             title={t('adminMenu.editor.sections.availability')}

@@ -16,6 +16,7 @@ import { ShellHeader } from './ShellHeader';
 import { Sidebar } from './Sidebar';
 import { useShellActions } from './useShellActions';
 import styles from './AdminShell.module.css';
+import { useBranchEvents } from '@/api/liveEvents';
 
 /** The frame inside the workspace: navigation for every screen size, the bar and the page. */
 function ShellFrame({ children }: { children: ReactNode }) {
@@ -25,6 +26,8 @@ function ShellFrame({ children }: { children: ReactNode }) {
   const adminName = useAdminName();
   const { signOut, switchBranch } = useShellActions();
   const counts = useBranchService(branch.id).data?.counts;
+  // What changes at the branch is read again at once (and the pages poll rarely meanwhile).
+  useBranchEvents(branch.id);
   const now = useNow();
   const [moreOpen, setMoreOpen] = useState(false);
   const active = activeNavId(pathname);

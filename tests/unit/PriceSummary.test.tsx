@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { PriceSummary, type PriceSummaryVariant } from '@/components/cart/PriceSummary';
 import { GuestSessionProvider } from '@/context/GuestSessionContext';
 import { calculateBill, type BillDiscount } from '@/lib/pricing';
@@ -35,12 +35,11 @@ const INDIA = 'blr-indiranagar';
 const NEPAL = 'ktm-thamel';
 
 describe('PriceSummary', () => {
-  it('India, split: CGST, SGST, service charge not added, round off (as drawn)', () => {
+  it('India, split: CGST, SGST, round off; no service charge line without one', () => {
     expect(rows(INDIA, [549, 409, 199, 199], 'split')).toEqual([
       'Item total: ₹1,356.00',
       'CGST (2.5%): ₹33.90',
       'SGST (2.5%): ₹33.90',
-      'Service charge: Not added',
       'Round off: +₹0.20',
       'To pay: ₹1,424',
     ]);
@@ -93,6 +92,31 @@ describe('PriceSummary', () => {
       'Promo WELCOME10: −₹70.80',
       'GST 5% + round off: ₹31.80',
       'To pay: ₹669',
+    ]);
+  });
+
+  it('collapsible: the total alone until ⌄ opens every charge', () => {
+    seedGuestSession({ branchId: NEPAL, table: 5 });
+    const bill = calculateBill([{ unitPrice: 2280, quantity: 1 }], testBranch(NEPAL));
+    const { container } = render(
+      <ApiTestProvider>
+        <GuestSessionProvider>
+          <PriceSummary bill={bill} collapsible />
+        </GuestSessionProvider>
+      </ApiTestProvider>,
+    );
+    const shown = () => [...container.querySelectorAll('dt')].map((dt) => dt.textContent);
+    expect(shown()).toEqual(['To payShow bill details']);
+    const toggle = screen.getByRole('button', { name: /To pay/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(shown()).toEqual([
+      'Item total',
+      'Service charge (10%)',
+      'VAT (13%)',
+      'Round off',
+      'To payHide bill details',
     ]);
   });
 });

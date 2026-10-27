@@ -324,6 +324,8 @@ describe('tax and service charge', () => {
   it('changes rates, splits GST evenly and the bill follows', () => {
     const tax = taxOf(india);
     expect(tax).toEqual({
+      enabled: true,
+      taxId: '',
       serviceChargeBp: null,
       lines: [
         {
@@ -368,6 +370,36 @@ describe('tax and service charge', () => {
     ]);
     expect(taxErrors({ ...tax, serviceChargeBp: 0 }, tax)).toEqual(['serviceRate']);
     expect(taxErrors({ ...tax, lines: [] }, tax)).toEqual(['taxLines']);
+  });
+
+  it('bills without tax when switched off, as a Bill of supply in India and a Bill in Nepal', () => {
+    const tax = taxOf(india);
+    const off = withTax(india, { ...tax, enabled: false, taxId: '29abcde1234f1z5' });
+    expect(off.tax).toMatchObject({
+      lines: [],
+      compactLabelKey: 'roundOff',
+      invoiceKey: 'billOfSupply',
+      taxId: '29ABCDE1234F1Z5',
+      taxIdKey: 'gstin',
+    });
+    expect(calculateBill([{ unitPrice: 1000, quantity: 1 }], off).totalMinor).toBe(100000);
+    // On again: the rates come back from the settings, not the branch (which had none).
+    expect(withTax(off, tax).tax.lines.map((l) => l.rateBp)).toEqual([500]);
+
+    const nepalOff = withTax(nepal, { ...taxOf(nepal), enabled: false });
+    expect(nepalOff.tax).toMatchObject({
+      lines: [],
+      compactLabelKey: 'serviceOnly',
+      invoiceKey: 'bill',
+      taxIdKey: 'pan',
+    });
+
+    // GSTIN in India, a nine-digit PAN in Nepal.
+    expect(taxErrors({ ...tax, taxId: '29ABCDE1234F1Z5' }, tax, 'IN')).toEqual([]);
+    expect(taxErrors({ ...tax, taxId: '601234567' }, tax, 'IN')).toEqual(['taxId']);
+    const np = taxOf(nepal);
+    expect(taxErrors({ ...np, taxId: '601 234 567' }, np, 'NP')).toEqual([]);
+    expect(taxErrors({ ...np, taxId: '6012345' }, np, 'NP')).toEqual(['taxId']);
   });
 });
 

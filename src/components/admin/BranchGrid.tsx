@@ -13,17 +13,21 @@ export interface BranchGridProps {
   wide?: boolean;
 }
 
+/** Cards whose photos load at once: the first row at its widest (three columns). */
+const EAGER_CARDS = 3;
+
 /** The branch cards: one column on phones, two from 768px, three on wide screens (many branches). */
 export function BranchGrid({ branches, now, lastUsedId, onSelect, wide }: BranchGridProps) {
   return (
     <ul className={cx(styles.grid, wide && styles.wide)}>
-      {branches.map((branch) => (
+      {branches.map((branch, index) => (
         <li key={branch.id} className={styles.cell}>
           <BranchCard
             branch={branch}
             now={now}
             lastUsed={branch.id === lastUsedId}
             onSelect={onSelect}
+            eager={index < EAGER_CARDS}
           />
         </li>
       ))}

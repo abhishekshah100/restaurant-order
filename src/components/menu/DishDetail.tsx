@@ -22,6 +22,7 @@ import { DishOptionsForm } from './DishOptionsForm';
 import { NotOnMenu } from './NotOnMenu';
 import { unavailableLabel, type MenuText } from './dishTag';
 import styles from './DishDetail.module.css';
+import { DESKTOP_QUERY, matchesNow } from '@/hooks/useMediaQuery';
 
 /**
  * Food detail (06 · w06) for a dish on the guest's branch menu. `?edit=<line key>` edits an
@@ -68,7 +69,10 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
       editLine(editing.key, dish, state.config, state.quantity);
       router.push('/cart/');
     } else {
-      addItem(dish, state.config, state.quantity);
+      // Back on the menu its cart bar says it was added; desktop has no bar, so a toast does.
+      addItem(dish, state.config, state.quantity, {
+        toast: matchesNow(DESKTOP_QUERY),
+      });
       back();
     }
   };

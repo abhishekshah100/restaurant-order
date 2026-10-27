@@ -235,7 +235,9 @@
     },
     "taxInvoice": {
       "gst": "GST invoice",
-      "vat": "VAT invoice"
+      "vat": "VAT invoice",
+      "billOfSupply": "Bill of supply",
+      "bill": "Bill"
     }
   }
 }

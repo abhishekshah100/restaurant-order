@@ -20,7 +20,10 @@
     "exitFullscreen": "Exit full screen",
     "account": "Account and more",
     "admin": "Admin dashboard",
-    "adminShort": "Admin"
+    "adminShort": "Admin",
+    "soundOn": "Mute new-ticket sound",
+    "soundOff": "Turn new-ticket sound on",
+    "settings": "Screen settings"
   },
   "account": {
     "title": "Kitchen",
@@ -90,7 +93,11 @@
         "other": "{count} new tickets"
       },
       "preparing": "Order {order} started",
-      "ready": "Order {order} ready"
+      "ready": "Order {order} ready",
+      "received": "Order {order} back to New",
+      "recalled": "Order {order} back to Cooking",
+      "changed": "Order {order} changed",
+      "cancelled": "Order {order} cancelled: stop cooking"
     }
   },
   "ticket": {
@@ -113,9 +120,13 @@
       "other": "{count} items"
     },
     "timer": {
-      "open": "Open for {time}",
-      "ready": "Ready for {time}"
+      "open": "Waiting {time}",
+      "ready": "Ready for {time}",
+      "minutes": "{count} min",
+      "hours": "{hours} h {minutes} min",
+      "justNow": "Just in"
     },
+    "tokenCaption": "Token",
     "due": "Due {time}",
     "dueIn": "in {count} min",
     "late": "{count} min late",
@@ -144,7 +155,9 @@
       "skip": "Ready",
       "startLabel": "Start cooking order {order}",
       "readyLabel": "Mark order {order} ready",
-      "skipLabel": "Mark order {order} ready without starting"
+      "skipLabel": "Mark order {order} ready without starting",
+      "recall": "Back to cooking",
+      "recallLabel": "Move order {order} back to cooking"
     },
     "waiting": {
       "dineIn": "Waiting for a waiter to serve",
@@ -166,7 +179,25 @@
         "one": "{count} item can't be made now. Let the waiter tell the guest.",
         "other": "{count} items can't be made now. Let the waiter tell the guest."
       }
-    }
+    },
+    "allergy": "Allergy",
+    "allergyWith": "Allergy: {list}",
+    "open": "Open {where} large",
+    "print": "Print ticket",
+    "selected": "Picked",
+    "undo": {
+      "preparing": "Started {where}",
+      "ready": "{where} ready",
+      "action": "Undo"
+    },
+    "changed": "Changed {time}",
+    "cancelled": "Cancelled · stop cooking",
+    "dismiss": "Dismiss",
+    "dismissLabel": "Dismiss cancelled order {order}",
+    "platedFailed": "Couldn't save the tick. Try again.",
+    "rush": "Rush",
+    "message": "Message waiters",
+    "messageLabel": "Message the waiters about order {order}"
   },
   "activity": {
     "title": "Kitchen activity",
@@ -256,5 +287,87 @@
     "loading": "Loading the menu",
     "failed": "Couldn't load the menu. Try again.",
     "retry": "Try again"
+  },
+  "settings": {
+    "title": "Screen settings",
+    "subtitle": "For this screen only: each kitchen screen keeps its own.",
+    "alerts": "Alerts",
+    "sound": "Sound for new tickets",
+    "soundHint": "A chime when a ticket comes in.",
+    "test": "Play test sound",
+    "reminders": "Remind about waiting tickets",
+    "remindersHint": "A softer chime every minute while a ticket waits in New for over 2 minutes.",
+    "screen": "Screen",
+    "awake": "Keep the screen on",
+    "awakeHint": "Stops the screen dimming and locking while the kitchen is open.",
+    "awakeUnsupported": "This browser can't keep the screen on: change the device's display settings instead.",
+    "textSize": "Ticket text size",
+    "sizes": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large",
+      "xlarge": "Extra large"
+    },
+    "theme": "Theme",
+    "themes": {
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "printing": "Printing",
+    "autoPrint": "Print new tickets",
+    "autoPrintHint": "Prints a kitchen order ticket (KOT) as each order comes in. To print without the print dialog, run Chrome in kiosk printing mode.",
+    "keyboard": "Keyboard and bump bar",
+    "keys": {
+      "pick": "Pick a ticket",
+      "pickKeys": "↑ ↓ or 1–9",
+      "next": "Start cooking or mark ready",
+      "nextKeys": "Enter",
+      "undo": "Undo the last step",
+      "undoKeys": "Backspace",
+      "open": "Open large",
+      "openKeys": "F",
+      "print": "Print the ticket",
+      "printKeys": "P",
+      "clear": "Clear the pick",
+      "clearKeys": "Esc"
+    }
+  },
+  "soundBlocked": "Tap anywhere to turn on sound for new tickets",
+  "connection": {
+    "live": "Live",
+    "updated": "Updated {time}",
+    "stale": {
+      "one": "Not updated for {count} min",
+      "other": "Not updated for {count} min"
+    },
+    "offline": "Offline",
+    "offlineBanner": "You're offline. These tickets are from {time} and may have changed.",
+    "staleBanner": "Can't reach the server. These tickets are from {time} and may have changed.",
+    "label": "Connection"
+  },
+  "expanded": {
+    "title": "{where} · Order {order}"
+  },
+  "kot": {
+    "title": "Kitchen order",
+    "token": "Token {token}",
+    "order": "Order {order}",
+    "placed": "{time}",
+    "round": "Round {round}",
+    "note": "Note: {note}",
+    "printed": "Printed {time}"
+  },
+  "message": {
+    "title": "Message the waiters",
+    "subtitle": "{where} · Order {order}. It shows on the waiters' Requests page.",
+    "reasons": {
+      "runningLate": "Running late",
+      "unavailable": "An item isn't available",
+      "question": "Need to ask about it"
+    },
+    "note": "Add a note",
+    "notePlaceholder": "e.g. Out of paneer, offer the dal?",
+    "sent": "Sent to the waiters: {reason}",
+    "failed": "Couldn't send it. Try again."
   }
 }

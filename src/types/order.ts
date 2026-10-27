@@ -57,6 +57,8 @@ export interface OrderItem {
   dishSlug: string;
   name: string;
   veg: boolean;
+  /** Ticked off as plated in the kitchen (every kitchen screen shows it). */
+  plated?: boolean;
   quantity: number;
   /** Variant label, e.g. "Full". */
   variant?: string;
@@ -168,6 +170,8 @@ export interface OrderRound {
    * ordering.cancelWindowSeconds after placing), as long as the kitchen hasn't started on it.
    */
   changeableUntil: string;
+  /** ISO: when its items were last changed after it was sent (the kitchen flags it). */
+  changedAt?: string;
   /** Minutes until it's ready, while it's being made. */
   etaMinutes?: number;
   /** Expected ready time, e.g. "7:58 PM". */
@@ -204,6 +208,10 @@ export interface Order {
   items: OrderItem[];
   /** Items at menu prices, before discounts. */
   itemTotal: Price;
+  /** False when it was billed without tax (the branch didn't charge it then); absent otherwise. */
+  taxCharged?: false;
+  /** A waiter marked it rush (a VIP, a guest in a hurry): first in the kitchen's lanes. */
+  rush?: boolean;
   /** Final rounded amount. */
   total: Price;
   /**

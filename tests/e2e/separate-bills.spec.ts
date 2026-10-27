@@ -68,7 +68,7 @@ async function orderAndCheckout(page: Page, dish: string, name: string, pay: 'on
     await page.getByRole('radio', { name: /Pay at the counter/ }).click();
     await visible(page, 'button', /^Place order/).click();
   }
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
 }
 
 async function openMyBill(page: Page) {

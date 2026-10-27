@@ -113,8 +113,8 @@
   translate: -50% 0;
   padding: 4px 8px;
   border-radius: var(--r-sm);
-  background: var(--ink);
-  color: var(--on-dark);
+  background: var(--kitchen-solid);
+  color: var(--kitchen-on-solid);
   font: var(--font-meta-strong);
   white-space: nowrap;
   opacity: 0;

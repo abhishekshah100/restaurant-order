@@ -93,7 +93,7 @@ test('a Nepal QR code: NPR prices, service charge + VAT, +977 and Nepali payment
   await page.getByRole('button', { name: 'Prototype: success' }).filter({ visible: true }).click();
 
   // The order is timed in Kathmandu.
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
   await expect(visible(page, npr('572'))).toBeVisible();
   await page.goto(page.url().replace('/confirmed/', '/'));
   await expect(visible(page, /Today, 7:45 PM/)).toBeVisible();
@@ -127,7 +127,7 @@ test('Nepal: pay at the counter, then pay the bill with Khalti; the copy names N
     .getByRole('button', { name: /Place order/ })
     .filter({ visible: true })
     .click();
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
 
   // The bill hint and the payment help name Nepal's ways to pay and its VAT invoice.
   await page.goto('/help/bill/');

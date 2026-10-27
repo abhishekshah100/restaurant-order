@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { HydrationBoundary, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { branchMenuQuery } from '@/api/queries';
-import { CartProvider } from '@/context/CartContext';
+import { CartProvider, useAddedFlash } from '@/context/CartContext';
 import { GuestSessionProvider } from '@/context/GuestSessionContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { useCart, useCartActions, useDishLines, useDishQuantity } from '@/hooks/useCart';
@@ -63,24 +63,37 @@ describe('CartProvider', () => {
     expect(result.current.lines[0].unitPrice).toBe(kebab.price);
   });
 
-  it('undo of an add takes back only what was added', () => {
-    const { result } = renderHook(() => useCart(), { wrapper });
-    act(() => result.current.addItem(kebab, defaultConfig(kebab), 2));
-    const key = result.current.lines[0].key;
-    act(() => result.current.setQuantity(key, 5));
-    undo();
-    expect(result.current.lines[0].quantity).toBe(3);
+  it('says an add on the cart bar for a moment, or in a short toast without one', () => {
+    vi.useFakeTimers();
+    try {
+      const alone = renderHook(() => useCart(), { wrapper });
+      act(() => alone.result.current.addItem(kebab, defaultConfig(kebab)));
+      expect(document.body.textContent).toContain('Dahi Kebab added');
+      expect(document.querySelector('button')?.textContent).not.toBe('Undo');
+      act(() => vi.advanceTimersByTime(2000));
+      alone.unmount();
+
+      const { result } = renderHook(() => ({ cart: useCart(), added: useAddedFlash() }), {
+        wrapper,
+      });
+      act(() => result.current.cart.addItem(paneer, defaultConfig(paneer)));
+      expect(result.current.added?.dish).toBe('Paneer Tikka');
+      expect(document.body.textContent).not.toContain('Paneer Tikka added');
+      act(() => vi.advanceTimersByTime(1500));
+      expect(result.current.added).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('reads the latest cart on back-to-back actions', () => {
     const { result } = renderHook(() => useCart(), { wrapper });
-    // Two adds in one tick: the second toast's undo must know the line existed.
     act(() => {
       result.current.addItem(kebab, defaultConfig(kebab));
       result.current.addItem(kebab, defaultConfig(kebab));
     });
     expect(result.current.lines[0].quantity).toBe(2);
-    undo();
+    act(() => result.current.setQuantity(result.current.lines[0].key, 1));
     expect(result.current.lines[0].quantity).toBe(1);
 
     // Remove right after adding another dish: the removed line is restored intact.

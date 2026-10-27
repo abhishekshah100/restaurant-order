@@ -77,7 +77,7 @@ test('India takeaway, as soon as possible, paid at pickup', async ({ page }) => 
   await page.getByRole('radio', { name: /Pay at pickup/ }).click();
   await visible(page, /^Place order · ₹303$/).click();
 
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
   await expect(page.getByText('Pickup at').filter({ visible: true })).toBeVisible();
   await expect(page.getByText('7:20 PM').filter({ visible: true }).first()).toBeVisible();
   await page.getByRole('link', { name: 'Track order' }).filter({ visible: true }).click();
@@ -135,7 +135,7 @@ test('Nepal delivery: zone fee, minimum order, eSewa and tracking to out for del
   // 2 × 460 = 920 + fee 60 + service 92 + VAT 131.56 = 1,203.56 → रू 1,204
   await visible(page, 'Pay रू 1,204').click();
   await visible(page, 'Prototype: success').click();
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
   const orderId = new URL(page.url()).searchParams.get('id') ?? '';
   await expect(page.getByText('Deliver to').filter({ visible: true })).toBeVisible();
   await expect(page.getByText('Lazimpat').filter({ visible: true }).first()).toBeVisible();

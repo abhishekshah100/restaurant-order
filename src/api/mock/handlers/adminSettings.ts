@@ -9,6 +9,7 @@ import {
   paymentErrors,
   pickupErrors,
   settingsOf,
+  cleanTaxId,
   taxErrors,
   taxOf,
   uniqueId,
@@ -108,6 +109,8 @@ function hoursBody(v: unknown): OpeningSchedule {
 function taxBody(v: unknown, current: TaxSettings): TaxSettings {
   const t = obj(v);
   return {
+    enabled: t.enabled === undefined ? current.enabled : bool(t.enabled),
+    taxId: t.taxId === undefined ? current.taxId : cleanTaxId(str(t.taxId)),
     serviceChargeBp: t.serviceChargeBp === null ? null : num(t.serviceChargeBp),
     lines: arr(t.lines, 10).map((l, i) => {
       const x = obj(l);
@@ -263,7 +266,7 @@ export const updateBranchSettings: Handler = async (ctx, { params, body, headers
   if (raw.tax !== undefined) {
     const current = taxOf(next);
     const tax = taxBody(raw.tax, current);
-    if (taxErrors(tax, current).length > 0) bad();
+    if (taxErrors(tax, current, next.country).length > 0) bad();
     apply({ tax });
   }
   if (raw.payments !== undefined) {

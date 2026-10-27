@@ -1,5 +1,5 @@
 /*
- * The kitchen bar, in the admin bar's colours (espresso with a terracotta glow). Below 1024px:
+ * The kitchen bar, near black with a terracotta glow (the kitchen's dark theme). Below 1024px:
  * the mark, the branch and the account on one row, the pages under them. From 1024px one row:
  * brand, branch, pages, then the clock, full screen and the account.
  */
@@ -19,10 +19,11 @@
   background:
     radial-gradient(
       circle at 0% 0%,
-      color-mix(in srgb, var(--brand) 34%, transparent),
-      transparent 420px
+      color-mix(in srgb, var(--brand) 14%, transparent),
+      transparent 320px
     ),
-    var(--ink);
+    var(--kitchen-bar);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--on-dark);
 }
 
@@ -81,7 +82,7 @@
 .branchName {
   max-width: 100%;
   overflow: hidden;
-  font: 500 18px/22px var(--f-display);
+  font: 700 16px/22px var(--f-ui);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -165,7 +166,7 @@
 
 .adminLink:focus-visible {
   box-shadow:
-    0 0 0 2px var(--ink),
+    0 0 0 2px var(--kitchen-bar),
     0 0 0 4px var(--brand-on-dark);
 }
 
@@ -185,6 +186,36 @@
   gap: 12px;
 }
 
+.iconButton {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--on-dark) 18%, transparent);
+  border-radius: var(--r-round);
+  background: color-mix(in srgb, var(--on-dark) 5%, transparent);
+  color: var(--on-dark);
+  cursor: pointer;
+}
+
+.iconButton[aria-pressed='false'] {
+  color: color-mix(in srgb, var(--on-dark) 55%, transparent);
+}
+
+.iconButton:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--kitchen-bar),
+    0 0 0 4px var(--brand-on-dark);
+}
+
+@media (hover: hover) {
+  .iconButton:hover {
+    border-color: var(--brand-on-dark);
+    color: var(--brand-on-dark);
+  }
+}
+
 .clock {
   font: 700 17px/24px var(--f-ui);
   font-variant-numeric: tabular-nums;
@@ -194,7 +225,8 @@
 .fullscreen {
   display: none;
   min-height: 36px;
-  padding: 0 12px;
+  gap: 6px;
+  padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--on-dark) 22%, transparent);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--on-dark) 6%, transparent);
@@ -233,7 +265,7 @@
 .fullscreen:focus-visible,
 .avatar:focus-visible {
   box-shadow:
-    0 0 0 2px var(--ink),
+    0 0 0 2px var(--kitchen-bar),
     0 0 0 4px var(--brand-on-dark);
 }
 
@@ -342,13 +374,13 @@
   .bar {
     grid-template-columns: auto auto minmax(0, 1fr) auto;
     grid-template-areas: 'brand branch nav end';
-    column-gap: 24px;
+    column-gap: 16px;
     min-height: 68px;
     padding: 0 32px;
   }
 
   .brandText {
-    display: flex;
+    display: none;
   }
 
   .branch {
@@ -379,7 +411,8 @@
   }
 
   .clock {
-    font: 500 22px/28px var(--f-display);
+    font: 700 20px/26px var(--f-ui);
+    letter-spacing: 0.01em;
   }
 
   .fullscreen {
@@ -389,5 +422,47 @@
 
   .adminTop {
     display: none;
+  }
+}
+
+/* Labels that give way to their icons until there's room, from 1440px (the title names it). */
+.wideOnly {
+  display: none;
+}
+
+@media (min-width: 1440px) {
+  .bar {
+    column-gap: 24px;
+  }
+
+  .brandText {
+    display: flex;
+  }
+
+  .wideOnly {
+    display: inline;
+  }
+
+  .fullscreen,
+  .adminLink {
+    padding: 0 12px;
+  }
+}
+
+/* A phone: the way back to the admin pages as an icon, so the branch keeps its name. */
+@media (max-width: 767.98px) {
+  .adminTop {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .end {
+    gap: 8px;
+  }
+
+  .clock {
+    font-size: 15px;
   }
 }

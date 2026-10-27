@@ -1,21 +1,26 @@
 import { useContent } from '@/api/hooks';
 import { StatusPill, Tag, VegMark } from '@/components/ui';
 import { amountDue } from '@/lib/lifecycle';
+import { orderBill } from '@/lib/orders';
 import type { Order } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { BillSummary, billRows } from '../../cart/PriceSummary';
 import { PaymentBadge } from './PaymentBadge';
 import styles from './OrderDetailDialog.module.css';
 
 /**
  * Everything on one order, for staff: its kitchen and payment state, where it goes (pickup
  * time, delivery address and rider), each dish with its choices and note (by round, on a
- * running order), the kitchen note, the bill (discounts, paid, still to pay), how it's paid
- * and its progress.
+ * running order), the kitchen note, the bill (its total; ⌄ opens each charge: discounts,
+ * service charge, taxes, round off), what's paid and still to pay, how it's paid and its
+ * progress.
  */
 export function OrderSummary({ order }: { order: Order }) {
   const t = useContent('common');
-  const { money, clock } = useAdminWorkspace();
-  const discount = (order.discounts ?? []).reduce((sum, d) => sum + d.amount, 0);
+  const cart = useContent('cart');
+  const { money, clock, region } = useAdminWorkspace();
+  // The charges on it, as the guest's bill lists them (service charge, taxes, round off).
+  const billLines = billRows(orderBill(order, region), { t: cart, money, tax: region.tax });
   const due = amountDue(order);
   const paid = order.total - due;
   const itemCount = order.items.reduce((n, item) => n + item.quantity, 0);
@@ -110,21 +115,13 @@ export function OrderSummary({ order }: { order: Order }) {
         <h3 id="order-bill" className={styles.heading}>
           {t('adminOrder.bill')}
         </h3>
+        <BillSummary
+          rows={billLines}
+          totalLabel={t('adminOrder.total')}
+          total={money.format(order.total)}
+          collapsible
+        />
         <dl className={styles.bill}>
-          <div className={styles.row}>
-            <dt>{t('adminOrder.itemTotal')}</dt>
-            <dd>{money.format(order.itemTotal)}</dd>
-          </div>
-          {discount > 0 && (
-            <div className={styles.row}>
-              <dt>{t('adminOrder.discounts')}</dt>
-              <dd className={styles.saving}>{money.format(-discount)}</dd>
-            </div>
-          )}
-          <div className={styles.total}>
-            <dt>{t('adminOrder.total')}</dt>
-            <dd>{money.format(order.total)}</dd>
-          </div>
           {paid > 0 && due > 0 && (
             <div className={styles.row}>
               <dt>{t('adminOrder.paid')}</dt>

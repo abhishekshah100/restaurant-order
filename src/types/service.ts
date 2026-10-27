@@ -1,4 +1,5 @@
 import type { BillScopeCode, ServiceRequestKind, WaiterRequestReason } from '@/config/masters';
+import type { OrderMode } from './branch';
 
 export type ServiceKind = ServiceRequestKind;
 
@@ -38,3 +39,23 @@ export interface BillRequest extends BaseRequest {
 }
 
 export type ServiceRequest = WaiterRequest | BillRequest;
+
+/** Why the kitchen messages the waiters about an order. */
+export type KitchenReason = 'runningLate' | 'unavailable' | 'question';
+
+/**
+ * The kitchen telling the waiters about an order (POST /admin/branches/:branchId/orders/:id/
+ * messages): staff only, dealt with like a guest's call (On my way, Done).
+ */
+export interface KitchenMessage extends Omit<BaseRequest, 'table' | 'sessionId'> {
+  kind: 'kitchen';
+  reason: KitchenReason;
+  /** The order it's about ("UDY-012"), and how it's served (where to find it). */
+  orderId: string;
+  mode: OrderMode;
+  /** The order's table; none for takeaway and delivery. */
+  table?: number;
+  note?: string;
+  /** Who in the kitchen sent it. */
+  sentBy?: string;
+}

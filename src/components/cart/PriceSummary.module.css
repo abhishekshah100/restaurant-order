@@ -44,3 +44,47 @@
   font-variant-numeric: lining-nums tabular-nums;
   margin: 0;
 }
+.collapsible .row {
+  animation: open var(--dur-base) ease-out;
+}
+/* Only the total showing: no rule above it. */
+.alone {
+  padding-top: 0;
+  border-top: 0;
+}
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.toggle:focus-visible {
+  border-radius: var(--r-sm);
+  box-shadow: var(--focus);
+}
+.chevron {
+  color: var(--ink-3);
+  transition: rotate var(--dur-fast) ease;
+}
+.chevron.open {
+  rotate: 180deg;
+}
+@keyframes open {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .collapsible .row,
+  .chevron {
+    animation: none;
+    transition: none;
+  }
+}

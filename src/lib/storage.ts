@@ -74,4 +74,8 @@ export const STORAGE_KEYS = {
   /** Delivery addresses remembered on this device, per branch. */
   addresses: 'olive.addresses.v1',
   statusPreview: 'olive.status-preview.v1',
+  /** The kitchen screen's theme on this device: light or dark. */
+  kitchenTheme: 'olive.kitchen-theme.v1',
+  /** The kitchen screen's own settings on this device: sound, staying awake, text size… */
+  kitchenPrefs: 'olive.kitchen-prefs.v1',
 } as const;

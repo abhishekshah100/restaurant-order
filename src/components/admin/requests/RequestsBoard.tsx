@@ -191,9 +191,15 @@ function DoneList({ done }: { done: readonly AdminServiceRequest[] }) {
             const minutes = handledInMinutes(request) ?? 0;
             return (
               <li key={request.id} className={styles.doneRow}>
-                <Link href={tablePath(request.table)} className={styles.doneTable}>
-                  {request.table}
-                </Link>
+                {request.table !== undefined ? (
+                  <Link href={tablePath(request.table)} className={styles.doneTable}>
+                    {request.table}
+                  </Link>
+                ) : (
+                  <span className={styles.doneTable}>
+                    <Icon name="chef" size="xs" />
+                  </span>
+                )}
                 <span className={styles.doneText}>
                   <span className={styles.doneWhat}>{text(request).title}</span>
                   <span className={styles.doneMeta}>

@@ -29,9 +29,14 @@
   color: var(--ink-2);
   margin: 6px 0 0;
 }
-.phone {
-  display: block;
+.phoneRow {
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.phone {
   font: 700 16px/22px var(--f-ui);
   color: var(--ink);
   letter-spacing: 0.02em;
@@ -99,10 +104,21 @@
 .column > button[type='submit'] {
   margin-top: clamp(4px, 1.2dvh, 12px);
 }
-.change {
-  composes: textLink from '@/styles/patterns.module.css';
-  margin-top: 4px;
-  gap: 6px;
+.edit {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  color: var(--brand-600);
+}
+.edit:focus-visible {
+  box-shadow: var(--focus);
+}
+@media (hover: hover) {
+  .edit:hover {
+    background: var(--brand-tint);
+  }
 }
 .trust {
   margin: 8px 0 0;

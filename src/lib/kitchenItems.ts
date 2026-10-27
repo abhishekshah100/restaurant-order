@@ -75,3 +75,35 @@ export function stockIssue(item: OrderItem, dish: Dish | undefined): StockIssue 
   const size = variantId ? dish.variants?.find((v) => v.id === variantId) : undefined;
   return size?.available === false ? 'sizeOff' : null;
 }
+
+/*
+ * Allergies in what the guest or waiter wrote. Notes are free text, so a word that names an
+ * allergen (or "allergy" itself) flags the ticket: a cook can't miss "peanut" in a long note.
+ * A word, not part of one ("nut", not "nutmeg"); English, as the notes are.
+ */
+const ALLERGEN_WORDS =
+  /\b(allerg(?:y|ies|ic)|peanuts?|nuts?|cashews?|almonds?|walnuts?|pistachios?|gluten|coeliac|celiac|lactose|dairy|soya?|sesame|shellfish|mustard|eggs?)\b/gi;
+
+/** "Allergy" or "allergic" says there is one without naming it. */
+const GENERIC = /^allerg/i;
+
+/**
+ * The allergens named in these texts (lower case, singular, each once, in order), and whether
+ * any text mentions an allergy at all (`flagged`, also true for "allergic" alone).
+ */
+export function allergensIn(texts: readonly (string | undefined)[]): {
+  flagged: boolean;
+  allergens: string[];
+} {
+  const found = new Set<string>();
+  let flagged = false;
+  for (const text of texts) {
+    for (const [word] of (text ?? '').matchAll(ALLERGEN_WORDS)) {
+      flagged = true;
+      if (GENERIC.test(word)) continue;
+      const lower = word.toLowerCase();
+      found.add(lower === 'soya' ? 'soy' : lower.replace(/s$/, ''));
+    }
+  }
+  return { flagged, allergens: [...found] };
+}

@@ -133,9 +133,18 @@ export interface TaxConfig {
   };
   /** Label of the single "taxes and round off" line (checkout summary). */
   compactLabelKey: BillCompactKey;
-  /** The tax invoice guests can ask for (service › region.taxInvoice): "GST invoice". */
+  /**
+   * What the bill is called (service › region.taxInvoice): "GST invoice", "VAT invoice"; at a
+   * branch that doesn't charge tax, "Bill of supply" (India) or "Bill".
+   */
   invoiceKey: keyof (typeof service)['region']['taxInvoice'];
+  /** The registration number printed on bills (GSTIN, PAN); absent when there's none. */
+  taxId?: string;
+  /** What the number is called: GSTIN (India), PAN (Nepal). */
+  taxIdKey: TaxIdKey;
 }
+
+export type TaxIdKey = 'gstin' | 'pan' | 'taxId';
 
 /** Every payment method the app knows; each branch offers some of them. */
 export type PaymentMethodId = PaymentMethodCode;

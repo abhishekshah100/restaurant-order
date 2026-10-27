@@ -163,7 +163,7 @@ export async function orderAtCounter(page: Page): Promise<string> {
   await visible(page, 'button', 'Verify & continue').click();
   await page.getByRole('radio', { name: /Pay at the counter/ }).click();
   await visible(page, 'button', /^Place order/).click();
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A\d+$/);
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
   return new URL(page.url()).searchParams.get('id') ?? '';
 }
 

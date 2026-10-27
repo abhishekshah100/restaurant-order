@@ -1,0 +1,100 @@
+/*
+ * The kitchen's two themes, as classes: the shell wears one, and so do the kitchen's own pop-ups
+ * (they open outside the shell, at the end of the page), so they match the screen. Both are
+ * calm neutrals; colour is kept for what it means — green on time, amber due soon, red late,
+ * blue at the pass — and the brand's terracotta for the next action. They redefine the app's
+ * colour tokens, so everything inside follows.
+ */
+
+.dark,
+.light {
+  --kitchen-bar: #0b0d10;
+  color: var(--ink);
+}
+
+/* ---------- Dark ---------- */
+
+.dark {
+  color-scheme: dark;
+  --bg: #0f1115;
+  --surface: #181b21;
+  --sand: #22262e;
+  --line: #262a33;
+  --line-strong: #363c47;
+  --ink: #eceef2;
+  --ink-2: #b5bbc6;
+  --ink-3: #868d9a;
+  --ink-hover: #dfe2e8;
+  --brand: #e8775a;
+  --brand-600: #c95c3d;
+  --brand-700: #f09477;
+  --brand-tint: rgba(232, 119, 90, 0.16);
+  --brand-tint-2: rgba(232, 119, 90, 0.1);
+  --gold: #f0b429;
+  --gold-ink: #f7cf6b;
+  --gold-tint: rgba(240, 180, 41, 0.12);
+  --gold-tint-2: rgba(240, 180, 41, 0.18);
+  --veg: #3fbf7f;
+  --nonveg: #f0616d;
+  --success: #34c38f;
+  --success-tint: rgba(52, 195, 143, 0.13);
+  --error: #f0616d;
+  --error-tint: rgba(240, 97, 109, 0.13);
+  --warn: #f0b429;
+  --warn-tint: rgba(240, 180, 41, 0.13);
+  --info: #5aa9f0;
+  --info-tint: rgba(90, 169, 240, 0.13);
+  --reserved: #b39af0;
+  --disabled-ink: #6b7280;
+  --ink-a05: rgba(255, 255, 255, 0.04);
+  --ink-a06: rgba(255, 255, 255, 0.06);
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --sh-2: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--brand-700);
+  /* Solid chips (quantities, the chart's tooltip): the ink's colour, the page's on it. */
+  --kitchen-solid: #eceef2;
+  --kitchen-on-solid: #0f1115;
+}
+
+/* ---------- Light ---------- */
+
+.light {
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --sand: #eef0f3;
+  --line: #e2e5ea;
+  --line-strong: #cdd2da;
+  --ink: #161a21;
+  --ink-2: #4a5160;
+  --ink-3: #6b7280;
+  --ink-hover: #2a303b;
+  --brand: #c95c3d;
+  --brand-600: #b4502f;
+  --brand-700: #96401f;
+  --brand-tint: rgba(201, 92, 61, 0.12);
+  --brand-tint-2: rgba(201, 92, 61, 0.07);
+  --gold: #b7791f;
+  --gold-ink: #7a4f0e;
+  --gold-tint: rgba(183, 121, 31, 0.1);
+  --gold-tint-2: rgba(183, 121, 31, 0.16);
+  --veg: #1f8a5b;
+  --nonveg: #c8364a;
+  --success: #1f8a5b;
+  --success-tint: rgba(31, 138, 91, 0.1);
+  --error: #c8364a;
+  --error-tint: rgba(200, 54, 74, 0.09);
+  --warn: #b7791f;
+  --warn-tint: rgba(183, 121, 31, 0.1);
+  --info: #2b6cb0;
+  --info-tint: rgba(43, 108, 176, 0.09);
+  --reserved: #6b46c1;
+  --disabled-ink: #9ca3af;
+  --ink-a05: rgba(22, 26, 33, 0.04);
+  --ink-a06: rgba(22, 26, 33, 0.06);
+  --sh-1: 0 1px 2px rgba(22, 26, 33, 0.06), 0 2px 8px rgba(22, 26, 33, 0.04);
+  --sh-2: 0 10px 30px rgba(22, 26, 33, 0.12);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--brand-600);
+  --kitchen-solid: #161a21;
+  --kitchen-on-solid: #ffffff;
+  color-scheme: light;
+}

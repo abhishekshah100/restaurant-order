@@ -12,14 +12,18 @@ import {
   allDay,
   boardStats,
   boardTickets,
-  elapsedClock,
+  elapsedMinutes,
   isScheduled,
   kitchenStage,
   kitchenTickets,
+  justCancelled,
+  justChanged,
   laneTickets,
   ticketUrgency,
   withKitchenStep,
+  withPlated,
   type CategoryOf,
+  type KitchenTicket,
 } from '@/lib/kitchenBoard';
 import { activeKitchenNavId } from '@/lib/kitchenNav';
 import { adminPage } from '@/lib/adminBranches';
@@ -214,10 +218,74 @@ describe('kitchen tickets', () => {
     expect(sent[0]).toBe(orders[0]);
   });
 
-  it('writes running clocks as minutes and seconds', () => {
-    expect(elapsedClock(65_000)).toBe('1:05');
-    expect(elapsedClock(3_725_000)).toBe('1:02:05');
-    expect(elapsedClock(-5)).toBe('0:00');
+  it('keeps a cancelled ticket where it was for a few minutes, and flags a change', () => {
+    const cooking = round(1, 12, 'cancelled', [item('curry')]);
+    cooking.timeline = [
+      { status: 'received', time: '', at: ago(12) },
+      { status: 'preparing', time: '', at: ago(8) },
+      { status: 'cancelled', time: '', at: ago(2) },
+    ];
+    const old = round(1, 30, 'cancelled', [item('kebab')]);
+    old.timeline = [
+      { status: 'received', time: '', at: ago(30) },
+      { status: 'cancelled', time: '', at: ago(20) },
+    ];
+    const changed = { ...round(1, 6, 'received', [item('naan')]), changedAt: ago(1) };
+    const tickets = kitchenTickets(
+      [order('A1', [cooking]), order('A2', [old]), order('A3', [changed])],
+      branch,
+    );
+    const filters = { mode: 'all' as const, station: 'all' as const, query: '' };
+    // Without the time, a cancelled ticket is gone; with it, a recent one stays in its lane.
+    expect(boardTickets(tickets, filters, categoryOf).map((t) => t.key)).toEqual(['A3:1']);
+    const shown = boardTickets(tickets, filters, categoryOf, NOW);
+    expect(shown.map((t) => t.key)).toEqual(['A1:1', 'A3:1']);
+    expect(laneTickets(shown).cooking.map((t) => t.key)).toEqual(['A1:1']);
+    const cancelled = tickets.find((t) => t.key === 'A1:1') as KitchenTicket;
+    expect(justCancelled(cancelled, NOW)).toBe(true);
+    const fresh = tickets.find((t) => t.key === 'A3:1') as KitchenTicket;
+    expect(justChanged(fresh, NOW)).toBe(true);
+    expect(justChanged(fresh, new Date(NOW.getTime() + 10 * 60_000))).toBe(false);
+  });
+
+  it('ticks items off and steps back in the cache before the server answers', () => {
+    const orders = [order('A1', [round(1, 5, 'preparing', [item('naan'), item('curry')])])];
+    const ticked = withPlated(orders, 'A1', 1, 1, true);
+    expect(ticked[0]?.rounds?.[0]?.items.map((i) => i.plated ?? false)).toEqual([false, true]);
+    expect(withKitchenStep(orders, 'A1', 1, 'received')[0]?.status).toBe('received');
+  });
+
+  it('is due when its slowest dish is done, and puts rush orders first', () => {
+    const prepOf = (slug: string) => ({ naan: 6, curry: 25 })[slug] ?? null;
+    const [slow] = kitchenTickets(
+      [order('A1', [round(1, 5, 'received', [item('naan'), item('curry')])])],
+      branch,
+      prepOf,
+    );
+    expect(slow?.dueAt).toBe(new Date(Date.parse(ago(5)) + 25 * 60_000).toISOString());
+    // Nothing on the menu says: the usual 18 minutes.
+    const [usual] = kitchenTickets(
+      [order('A2', [round(1, 5, 'received', [item('kebab')])])],
+      branch,
+      prepOf,
+    );
+    expect(usual?.dueAt).toBe(new Date(Date.parse(ago(5)) + 18 * 60_000).toISOString());
+
+    const tickets = kitchenTickets(
+      [
+        order('A3', [round(1, 9, 'received', [item('naan')])]),
+        order('A4', [round(1, 2, 'received', [item('naan')])], { rush: true }),
+      ],
+      branch,
+    );
+    expect(laneTickets(tickets).new.map((t) => t.key)).toEqual(['A4:1', 'A3:1']);
+  });
+
+  it('counts the minutes a ticket has waited', () => {
+    expect(elapsedMinutes(59_000)).toBe(0);
+    expect(elapsedMinutes(65_000)).toBe(1);
+    expect(elapsedMinutes(3_725_000)).toBe(62);
+    expect(elapsedMinutes(-5)).toBe(0);
   });
 });
 

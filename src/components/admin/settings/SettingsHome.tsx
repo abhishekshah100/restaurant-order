@@ -101,9 +101,11 @@ function useSummaries(): Partial<Record<SettingsSectionId, string>> {
       today: hoursToday,
     });
     summaries.tax = t('adminSettings.sections.tax.summary', {
-      taxes: tax.lines
-        .map((l) => cart(`priceSummary.lines.${l.labelKey}`, { rate: formatRate(l.rateBp) }))
-        .join(', '),
+      taxes: tax.enabled
+        ? tax.lines
+            .map((l) => cart(`priceSummary.lines.${l.labelKey}`, { rate: formatRate(l.rateBp) }))
+            .join(', ')
+        : t('adminSettings.sections.tax.noTax'),
       service:
         tax.serviceChargeBp === null
           ? t('adminSettings.sections.tax.serviceNone')

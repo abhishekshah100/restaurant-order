@@ -1,0 +1,45 @@
+/* A message to the waiters: a note, then one large button per reason (a tap sends it). */
+
+.body {
+  display: grid;
+  gap: 16px;
+  width: min(480px, 100%);
+}
+
+.reasons {
+  display: grid;
+  gap: 10px;
+}
+
+.reason {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 16px/22px var(--f-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.reason > :first-child {
+  color: var(--reserved);
+}
+
+.reason:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.reason:disabled {
+  opacity: 0.6;
+}
+
+@media (hover: hover) {
+  .reason:not(:disabled):hover {
+    border-color: var(--reserved);
+  }
+}

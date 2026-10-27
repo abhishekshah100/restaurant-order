@@ -197,6 +197,12 @@
     "quantity": "Quantity ",
     "kitchenNote": "Note for the kitchen",
     "bill": "Bill",
+    "taxId": "{label}: {id}",
+    "taxIdLabels": {
+      "gstin": "GSTIN",
+      "pan": "PAN",
+      "taxId": "Tax no."
+    },
     "method": "Method",
     "transactionId": "Transaction ID",
     "refund": "Refund",

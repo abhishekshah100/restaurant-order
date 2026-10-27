@@ -202,3 +202,16 @@
   white-space: nowrap;
   vertical-align: middle;
 }
+
+/* Rush: the kitchen takes it first. */
+.rush {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--brand-600);
+  color: var(--white);
+  font: 800 11px/16px var(--f-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}

@@ -66,6 +66,7 @@ export const REGION_PRESETS: Record<CountryCodeMaster, RegionPreset> = {
       },
       compactLabelKey: 'gst',
       invoiceKey: 'gst',
+      taxIdKey: 'gstin',
     },
     payments: {
       checkout: [
@@ -144,6 +145,7 @@ export const REGION_PRESETS: Record<CountryCodeMaster, RegionPreset> = {
       },
       compactLabelKey: 'serviceAndVat',
       invoiceKey: 'vat',
+      taxIdKey: 'pan',
     },
     payments: {
       checkout: [

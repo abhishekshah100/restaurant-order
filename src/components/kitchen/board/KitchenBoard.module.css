@@ -1,7 +1,10 @@
 /*
- * The kitchen board: the numbers, the filters, then the lanes. Below 1024px one lane at a time
- * (the lane switch picks it; two tickets to a row from 768px). From 1024px the three lanes side
- * by side, and from 1280px the all-day counts docked on the right (a panel before that).
+ * The kitchen board: one row of tools, then the lanes (New in violet, Cooking amber, Ready blue:
+ * red is kept for late). Flat and quiet: the lanes are columns
+ * under a thin line in their colour (no panels around them), so the tickets are what stands
+ * out. Below 1024px one lane at a time (tabs pick it; two tickets to a row from 768px). From
+ * 1024px the three lanes side by side, each scrolling on its own under its pinned header, their
+ * widths following how busy they are. All day opens as a side panel.
  */
 
 .page {
@@ -10,30 +13,152 @@
   gap: 16px;
 }
 
-/* ---------- Filters ---------- */
+/* ---------- Tools: order type, station, search, the numbers, All day ---------- */
 
-.tools {
-  display: grid;
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
 }
 
-.chips {
+/* Order type as one segmented control. */
+.modes {
   display: flex;
-  gap: 8px;
+  max-width: 100%;
+  padding: 3px;
+  gap: 2px;
   overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
   scrollbar-width: none;
 }
 
-.chips::-webkit-scrollbar {
+.modes::-webkit-scrollbar {
   display: none;
 }
 
-.chips > * {
+.mode {
   flex: none;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: calc(var(--r-md) - 3px);
+  background: none;
+  color: var(--ink-2);
+  font: 600 14px/20px var(--f-ui);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast),
+    color var(--dur-fast);
+}
+
+.mode[aria-pressed='true'] {
+  background: var(--sand);
+  color: var(--ink);
+  box-shadow: var(--sh-1);
+}
+
+.modeCount {
+  color: var(--ink-3);
+  font: 700 12px/16px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.mode[aria-pressed='true'] .modeCount {
+  color: var(--brand-700);
+}
+
+.mode:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .mode:not([aria-pressed='true']):hover {
+    color: var(--ink);
+  }
+}
+
+.station {
+  flex: 1 1 130px;
+  min-width: 0;
+  max-width: 210px;
+}
+
+.search {
+  flex: 2 1 160px;
+  min-width: 0;
+  max-width: 320px;
+}
+
+/* Every tool the height of the segmented control. */
+.station :global(select),
+.search :global(input) {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  border-color: var(--line);
+  border-radius: var(--r-md);
+}
+
+/* The kitchen's numbers, quiet until something's late. */
+.stats {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  min-height: 46px;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  scrollbar-width: none;
+}
+
+.stats::-webkit-scrollbar {
+  display: none;
+}
+
+.stat {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0 14px;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--line);
+}
+
+.stat dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+  color: var(--ink-3);
+  font: 600 13px/18px var(--f-ui);
+}
+
+.stat dd {
+  margin: 0;
+  color: var(--ink);
+  font: 800 16px/20px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.statAlert dt,
+.statAlert dd {
+  color: var(--error);
 }
 
 .allDayButton {
-  justify-self: start;
+  margin-left: auto;
+  min-height: 46px;
 }
 
 /* ---------- Lanes ---------- */
@@ -45,24 +170,69 @@
   align-items: start;
 }
 
+/* Below 1024px: one lane at a time, picked from tabs pinned at the top. */
 .laneSwitch {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
 }
 
-.laneSwitch > * {
+.laneTab {
+  --lane: var(--reserved);
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: calc(var(--r-md) - 3px);
+  background: none;
+  color: var(--ink-2);
+  font: 600 14px/20px var(--f-ui);
+  cursor: pointer;
+}
+
+.laneTab[data-lane='cooking'] {
+  --lane: var(--gold);
+}
+
+.laneTab[data-lane='ready'] {
+  --lane: var(--info);
+}
+
+.laneTab[aria-pressed='true'] {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.laneTab > :first-child {
+  color: var(--lane);
+}
+
+.laneTabCount {
+  color: var(--ink-3);
+  font: 800 13px/18px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.laneTab:focus-visible {
+  box-shadow: var(--focus);
 }
 
 .lanes {
   display: grid;
-  gap: 16px;
+  gap: 20px;
 }
 
 .lane {
-  --lane: var(--brand-600);
-  --lane-tint: var(--brand-tint-2);
+  --lane: var(--reserved);
   display: none;
   min-width: 0;
   align-content: start;
@@ -71,67 +241,70 @@
 
 .lane[data-lane='cooking'] {
   --lane: var(--gold);
-  --lane-tint: var(--warn-tint);
 }
 
 .lane[data-lane='ready'] {
   --lane: var(--info);
-  --lane-tint: var(--info-tint);
 }
 
 .current {
   display: grid;
 }
 
+/* Below 1024px the tabs name the lane: its header stays for screen readers only. */
 .laneHead {
-  display: flex;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
   align-items: center;
   gap: 10px;
 }
 
 .laneIcon {
-  width: 36px;
-  height: 36px;
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: var(--r-md);
-  background: var(--lane-tint);
   color: var(--lane);
 }
 
 .laneTitle {
   flex: 1;
   min-width: 0;
-  display: grid;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
 
 .laneTitle h2 {
+  overflow: hidden;
   color: var(--ink);
-  font: var(--font-h3);
+  font: 700 16px/22px var(--f-ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .laneHint {
+  overflow: hidden;
   color: var(--ink-3);
-  font: var(--font-meta);
+  font: 500 13px/18px var(--f-ui);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .laneCount {
-  min-width: 34px;
-  height: 30px;
-  padding: 0 10px;
+  min-width: 30px;
+  height: 26px;
+  padding: 0 9px;
   display: grid;
   place-items: center;
   border-radius: var(--r-pill);
-  background: var(--lane);
-  color: var(--on-brand);
-  font: 800 15px/20px var(--f-ui);
+  background: color-mix(in srgb, var(--lane) 16%, transparent);
+  color: var(--lane);
+  font: 800 14px/18px var(--f-ui);
   font-variant-numeric: tabular-nums;
-}
-
-.lane[data-lane='cooking'] .laneCount {
-  background: var(--gold-tint-2);
-  color: var(--gold-ink);
 }
 
 .tickets {
@@ -140,38 +313,19 @@
 }
 
 .laneEmpty {
-  padding: 28px 16px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--r-card);
+  padding: 32px 12px;
   color: var(--ink-3);
-  font: var(--font-small);
+  font: 500 14px/20px var(--f-ui);
   text-align: center;
-}
-
-/* ---------- All day ---------- */
-
-.allDay {
-  display: none;
-}
-
-.allDayTitle {
-  color: var(--ink);
-  font: var(--font-h2);
-}
-
-.allDaySub {
-  margin-bottom: 14px;
-  color: var(--ink-3);
-  font: var(--font-meta);
 }
 
 /* ---------- Loading, error ---------- */
 
 .state {
   padding: 40px 16px;
-  border: 1px dashed var(--line-strong);
+  border: 1px solid var(--line);
   border-radius: var(--r-panel);
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  background: var(--surface);
 }
 
 .skeleton {
@@ -195,10 +349,6 @@
 }
 
 @media (min-width: 768px) {
-  .page {
-    gap: 20px;
-  }
-
   .tickets {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
@@ -206,67 +356,139 @@
 }
 
 @media (min-width: 1024px) {
-  .tools {
-    grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
-    align-items: center;
-  }
-
-  .stations {
-    grid-column: 1 / -1;
-  }
-
   .laneSwitch {
     display: none;
   }
 
+  /* The lanes fill the screen under the tools; each scrolls on its own. */
   .lanes {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: var(--lanes, repeat(3, minmax(0, 1fr)));
+    height: calc(100dvh - 150px);
+    min-height: 480px;
   }
 
   .lane {
-    display: grid;
-    padding: 14px 12px;
-    border: 1px solid var(--line);
-    border-top: 4px solid var(--lane);
-    border-radius: var(--r-panel);
-    background: color-mix(in srgb, var(--surface) 55%, transparent);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
   }
 
+  .laneHead {
+    display: flex;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 6px 2px 10px;
+    border-bottom: 2px solid var(--lane);
+    background: var(--bg);
+  }
+
+  .tickets,
+  .laneEmpty {
+    margin-top: 12px;
+  }
+
+  /* A wide lane lays its tickets side by side. */
   .tickets {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (min-width: 1280px) {
-  .board {
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
 
-  .allDayButton {
+  .lane[data-empty] .laneHint {
     display: none;
   }
+}
 
-  .allDay {
-    position: sticky;
-    top: 92px;
-    max-height: calc(100dvh - 116px);
-    display: block;
-    overflow-y: auto;
-    padding: 18px 16px;
-    border: 1px solid var(--line);
-    border-radius: var(--r-panel);
-    background: var(--surface);
-    box-shadow: var(--sh-1);
+/* ---------- How current the board is, banners, a ticket opened large ---------- */
+
+.connection {
+  align-self: stretch;
+  align-items: center;
+}
+
+.connection dd {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font: 700 13px/18px var(--f-ui);
+  white-space: nowrap;
+}
+
+.connectionDot {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-round);
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-tint);
+  animation: live 2s ease-in-out infinite;
+}
+
+.connection[data-state='stale'] .connectionDot {
+  background: var(--warn);
+  box-shadow: 0 0 0 3px var(--warn-tint);
+  animation: none;
+}
+
+.connection[data-state='offline'] dd {
+  color: var(--error);
+}
+
+.connection[data-state='offline'] .connectionDot {
+  background: var(--error);
+  box-shadow: 0 0 0 3px var(--error-tint);
+  animation: none;
+}
+
+@keyframes live {
+  50% {
+    box-shadow: 0 0 0 5px transparent;
   }
 }
 
-@media (min-width: 1600px) {
-  .tools {
-    grid-template-columns: minmax(240px, 360px) auto minmax(0, 1fr);
-  }
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  font: 600 14px/20px var(--f-ui);
+}
 
-  .stations {
-    grid-column: auto;
+.banner[data-tone='warn'] {
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  background: var(--warn-tint);
+  color: var(--ink);
+}
+
+.banner[data-tone='warn'] > :first-child {
+  color: var(--warn);
+}
+
+.banner[data-tone='info'] {
+  border: 1px solid color-mix(in srgb, var(--info) 40%, transparent);
+  background: var(--info-tint);
+  color: var(--ink);
+}
+
+.banner[data-tone='info'] > :first-child {
+  color: var(--info);
+}
+
+/* A ticket opened large: wide enough for the bigger type. */
+.openDialog.openDialog {
+  width: min(760px, calc(100vw - 32px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .connectionDot {
+    animation: none;
   }
 }

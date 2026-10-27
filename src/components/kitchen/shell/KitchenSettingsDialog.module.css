@@ -1,0 +1,98 @@
+/* Screen settings: sections of toggles, two segmented choices, and the keys as a list. */
+
+.sections {
+  display: grid;
+  gap: 24px;
+}
+
+.section {
+  display: grid;
+  gap: 4px;
+}
+
+.heading {
+  margin-bottom: 4px;
+  color: var(--ink-3);
+  font: 800 11px/16px var(--f-ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.test {
+  justify-self: start;
+  margin-top: 6px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.label {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.segments {
+  display: flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+
+.segment {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: calc(var(--r-md) - 3px);
+  background: none;
+  color: var(--ink-2);
+  font: 600 14px/20px var(--f-ui);
+  cursor: pointer;
+}
+
+.segment[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--sh-1);
+}
+
+.segment:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.keys {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.keys > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.keys dt {
+  min-width: 96px;
+}
+
+.keys dd {
+  margin: 0;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.keys kbd {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 12px/18px var(--f-ui);
+}

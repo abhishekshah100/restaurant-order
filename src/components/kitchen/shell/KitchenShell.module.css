@@ -1,36 +1,34 @@
 /*
- * The kitchen frame: the dark kitchen bar over a full-width page, so the ticket lanes get the
- * whole screen (kitchens run it on a wall screen or a tablet at the pass).
+ * The kitchen frame: the bar over a full-width page, so the lanes get the whole screen. Its
+ * colours are the device's kitchen theme (kitchenTheme.module.css: dark or light).
  */
 
 .shell,
 .fallback {
   min-height: 100dvh;
-  background: radial-gradient(circle at 100% 0%, var(--brand-tint) 0, transparent 420px), var(--bg);
+  background: var(--bg);
 }
 
 .fallback {
-  background:
-    linear-gradient(180deg, var(--ink) 0 64px, transparent 64px),
-    radial-gradient(circle at 100% 0%, var(--brand-tint) 0, transparent 420px), var(--bg);
+  background: linear-gradient(180deg, var(--kitchen-bar) 0 64px, var(--bg) 64px);
 }
 
 .main {
   width: 100%;
-  max-width: 1920px;
+  max-width: 2200px;
   margin: 0 auto;
-  padding: 16px max(16px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
+  padding: 12px max(12px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
 }
 
 @media (min-width: 768px) {
   .main {
-    padding: 20px 24px 40px;
+    padding: 16px 20px 24px;
   }
 }
 
 @media (min-width: 1280px) {
   .main {
-    padding: 24px 32px 40px;
+    padding: 18px 24px 24px;
   }
 }

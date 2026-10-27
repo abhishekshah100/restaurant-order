@@ -57,12 +57,11 @@ export function Sidebar({
           <BranchStatusControl onDark />
           {time && (
             <span className={styles.time}>
-              <span aria-hidden="true">{time}</span>
               <span className="visually-hidden">{t('adminShell.branch.timeLabel', { time })}</span>
             </span>
           )}
         </p>
-        <p className={styles.city}>{branch.city}</p>
+        {/* <p className={styles.city}>{branch.city}</p> */}
         {canSwitch && (
           <button type="button" className={styles.switch} onClick={onSwitchBranch}>
             <Icon name="swap" size="xs" />

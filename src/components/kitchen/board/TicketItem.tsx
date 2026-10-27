@@ -11,7 +11,8 @@ export interface TicketItemProps {
   /** The dish on the menu now (its choices' names, whether it's in stock); undefined if it's gone. */
   dish: Dish | undefined;
   plated: boolean;
-  onTogglePlated: () => void;
+  /** Ticks it off or on; none on a ticket that's been cancelled. */
+  onTogglePlated?: () => void;
   /** Offered on tickets still to cook: mark the dish out of stock. */
   onOutOfStock?: (dish: Dish) => void;
 }
@@ -35,6 +36,7 @@ export function TicketItem({ item, dish, plated, onTogglePlated, onOutOfStock }:
         aria-pressed={plated}
         aria-label={t(plated ? 'ticket.plated' : 'ticket.plate', { item: item.name })}
         onClick={onTogglePlated}
+        disabled={!onTogglePlated}
       >
         <span className={styles.qty}>{item.quantity}</span>
         <span className={styles.itemBody}>

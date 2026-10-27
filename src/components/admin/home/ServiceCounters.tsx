@@ -6,7 +6,8 @@ import { cx } from '@/lib/cx';
 import type { AdminServiceCounts } from '@/types/admin';
 import styles from './ServiceCounters.module.css';
 
-type CounterId = keyof AdminServiceCounts;
+/** The four the home counts (the kitchen's messages are in the queue and on Requests). */
+type CounterId = Exclude<keyof AdminServiceCounts, 'kitchenMessages'>;
 
 const COUNTERS: { id: CounterId; icon: IconName; href: string }[] = [
   { id: 'waiterCalls', icon: 'bell', href: ADMIN_LINKS.requests },

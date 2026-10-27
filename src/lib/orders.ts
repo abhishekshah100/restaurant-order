@@ -134,12 +134,13 @@ export function totalLabel({
  * recorded on it and its branch's tax rules.
  */
 export const orderBill = (
-  order: Pick<Order, 'items' | 'delivery' | 'discounts'>,
+  order: Pick<Order, 'items' | 'delivery' | 'discounts' | 'taxCharged'>,
   rules: BillRules & Pick<Branch, 'modes'>,
 ): Bill =>
   calculateBill(
     order.items,
-    rules,
+    // Billed without tax stays so, whatever the branch charges now.
+    order.taxCharged === false ? { ...rules, tax: { ...rules.tax, lines: [] } } : rules,
     order.delivery
       ? { fee: order.delivery.fee, taxable: rules.modes.delivery.feeTaxable }
       : undefined,
