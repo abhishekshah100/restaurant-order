@@ -253,11 +253,15 @@ in `FiltersContext` (memory, per visit); the search query lives in `SearchContex
 - Search suggestions before typing: Trending tonight, Popular searches and all categories. There
   are no recent searches, by client request.
 - Adding from a list ([`AddControl`](../src/components/menu/AddControl.tsx)): a dish with nothing
-  to choose goes straight into the cart with an Undo toast; a customisable dish opens the
-  quick-add sheet. `isCustomisable` is true for more than one size, any option group, add-ons or
-  removables.
+  to choose goes straight into the cart; a customisable dish opens the quick-add sheet.
+  `isCustomisable` is true for more than one size, any option group, add-ons or removables.
 - The food-detail page has the full options form; `?edit=<lineKey>` edits an existing cart line.
-  After adding, the guest returns to where they came from with an Undo toast.
+  After adding, the guest returns to where they came from.
+- **Add feedback:** below 1024px the sticky cart bar
+  ([`CartBar`](../src/components/layout/CartBar.tsx)) says "✓ Paneer Tikka added" for a moment
+  (`ADDED_FLASH_MS`, 1.5 s, with a small bump) instead of a toast; the stepper that replaced ADD
+  takes it back. Without a bar on screen (desktop, the cart page) a short toast says it
+  (`CartContext › addItem`, `useAddedFlash`). Removing a line still offers Undo in a toast.
 - Dishes that are sold out or off today show an unavailable label instead of ADD.
 
 ### Option types
@@ -328,10 +332,21 @@ Rules, in order:
 
 Percentages use integer maths (`percentOf`, half up), so results are exact.
 
-`PriceSummary` (`cart/PriceSummary`) renders the bill. Its variants are **split** (CGST and SGST as
-separate lines, and "Service charge · Not added" when the branch has none), **receipt** (the same
-without "Not added"), **combined** (each tax as one line) and **compact** (one line, label from
-`tax.compactLabelKey`).
+A branch that does not charge tax (Settings › Tax, `enabled` off) has no tax lines: its bills
+list only the service charge (if any) and round off, carry `taxCharged: false`, and are titled
+"Bill of supply" (India) or "Bill" (Nepal) instead of "GST invoice" / "VAT invoice"
+(`tax.invoiceKey`). See [settings.md › Tax and service charge](settings.md#tax-and-service-charge).
+
+[`PriceSummary`](../src/components/cart/PriceSummary.tsx) renders the bill. `billRows(bill, …)`
+builds the rows above the total: item total, discounts, delivery fee, then every charge that
+applies (service charge, each tax, round off). A charge the bill does not have is not listed, so
+a branch without a service charge shows no service-charge row. `BillSummary` draws rows over a
+total; staff screens and the printed bill reuse both. Variants: **split** (each tax part, CGST
+and SGST, on its own line; cart and checkout), **receipt** (the same, a placed order's details),
+**combined** (each tax as one line; the desktop cart panel) and **compact** (everything on top of
+the items on one line, label from `tax.compactLabelKey`). With `collapsible`, only the total
+shows, as a button with ⌄ that opens the rows (`aria-expanded`); the staff order popup uses it.
+The guest's cart and checkout always list every charge openly.
 
 ### Worked example (India, `blr-indiranagar`)
 
@@ -434,8 +449,11 @@ flowchart LR
 2. **Verify**: the server checks the code. The mock accepts `123456`, allows 3 attempts
    (`OTP_ATTEMPTS`) and unlocks resend after 30 s (`OTP_RESEND_SECONDS`) or after a wrong code; an
    early resend is refused with `otp_resend_too_soon`. The app only checks that six digits are
-   entered. A number verified earlier in the session stays verified.
-3. **Payment**: the methods come from `modePayments(branch, mode)`: `payments.checkout` for
+   entered. A number verified earlier in the session stays verified. The number is shown with
+   a pencil button that goes back to Details to change it.
+3. **Payment**: the bill is shown in full above the methods (the mobile pay card in
+   `PaymentStep`, the desktop aside `OrderSummaryPanel`): every charge, then the amount payable.
+   The methods come from `modePayments(branch, mode)`: `payments.checkout` for
    dine-in, the mode's own list otherwise. An online method calls `usePayCheckout().start` →
    `POST /payments { purpose: 'order', … }`; the server prices the cart and opens a 4:32 window
    (`PAYMENT_WINDOW_SECONDS`). An in-person method (`counter`, `pickup`, `cod`) places the order
@@ -514,7 +532,7 @@ configures them; both demo branches use `endOfMeal` and 120 s.
 - After a guest's first dine-in order, `useOpenTab()`
   ([`src/hooks/useRunningOrder.ts`](../src/hooks/useRunningOrder.ts)) finds their running order:
   their newest non-cancelled dine-in order in this session.
-- The cart then says "Adding to order #A105" (`cart/CartModeBanner`) and its action is **Add to my
+- The cart then says "Adding to order #UDY-001" (`cart/CartModeBanner`) and its action is **Add to my
   order** (`useCartAction`): `POST /orders/:id/rounds`, no checkout again.
 - Every round has its own `status`, `items`, `kitchenNote` and `changeableUntil`. The order's
   totals cover every non-cancelled round, priced together (taxes on the whole tab, rounded once).
@@ -530,7 +548,7 @@ configures them; both demo branches use `endOfMeal` and 120 s.
 - **Cancel** confirms first (`order/CancelOrderDialog`), then `POST /orders/:id/cancel`. The only
   round cancels the order; a later round cancels just that round and re-prices the tab, refunding
   any overpayment.
-- **Change** loads the round into the cart in editing mode ("Editing order #A105", **Cancel
+- **Change** loads the round into the cart in editing mode ("Editing order #UDY-001", **Cancel
   editing** restores the previous cart). **Update order** sends `PATCH /orders/:id`. If it now costs
   more than was paid online, the server answers `402 payment_required` with `amountDue` and the
   difference is collected first; if less, the difference is refunded.
@@ -556,8 +574,10 @@ the cart for the guest's current branch and mode at today's prices, from the rec
 - Nothing payable shows "Nothing to pay"; another tab having paid returns `nothing_to_pay` and the
   bill is re-read. Offline disables Pay; closed or paused does not.
 
-Gotcha: the mock runs in each browser, so order numbers are per device (two phones can both get
-#A105) and a table's bill only knows this device's orders plus the seeded history. A real backend
+Order numbers come from the server: the branch's prefix and a running number (`#UDY-001`), with
+the day's token on the confirmation and tracking pages ("Token 12"). Gotcha in a mock-only build:
+the mock numbers orders `A001` up with no token, and it runs in each browser, so numbers are per
+device (two phones can both get #A105) and a table's bill only knows this device's orders plus the seeded history. A real backend
 issues unique ids and knows every guest's orders.
 
 ## Help, waiter and bill requests

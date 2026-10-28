@@ -1,10 +1,12 @@
 # Backend API contract
 
-The HTTP contract the real backend must implement for The Olive Table. The in-browser mock server
-implements exactly this today, so a backend that follows it can replace the mock with a
-configuration change. [`src/api/contracts.ts`](../src/api/contracts.ts) is the authoritative
-source: its types define every body and its JSDoc every rule; this document organises it by
-endpoint.
+The HTTP contract for The Olive Table. `restaurant-backend` serves it (every route listed in
+[`src/api/backend.ts`](../src/api/backend.ts)); the in-browser mock server answers the same
+contract in a build without `NEXT_PUBLIC_BACKEND_URL`.
+[`src/api/contracts.ts`](../src/api/contracts.ts) is the authoritative source: its types define
+every body and its JSDoc every rule; this document organises it by endpoint. Where the backend
+answers differently from the mock (orders as data, its `{ success, data }` envelope), see
+[data-and-api.md](data-and-api.md#connecting-restaurant-backend-area-by-area).
 
 ## Contents
 
@@ -28,74 +30,80 @@ endpoint.
 
 ## Endpoint index
 
-63 endpoints. Paths are relative to the API base URL.
+70 endpoints. Paths are relative to the API base URL.
 
-| Method | Path                                                                                                                       | Area                             |
-| ------ | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| POST   | [`/sessions`](#post-sessions)                                                                                              | Guest session and OTP            |
-| PATCH  | [`/sessions/:id`](#patch-sessionsid)                                                                                       | Guest session and OTP            |
-| POST   | [`/otp`](#post-otp)                                                                                                        | Guest session and OTP            |
-| POST   | [`/otp/verify`](#post-otpverify)                                                                                           | Guest session and OTP            |
-| GET    | [`/restaurant`](#get-restaurant)                                                                                           | Menu and reference data          |
-| GET    | [`/branches`](#get-branches)                                                                                               | Menu and reference data          |
-| GET    | [`/branches/:id/status`](#get-branchesidstatus)                                                                            | Menu and reference data          |
-| GET    | [`/branches/:id/menu`](#get-branchesidmenu)                                                                                | Menu and reference data          |
-| GET    | [`/branches/:id/promotions`](#get-branchesidpromotions)                                                                    | Menu and reference data          |
-| GET    | [`/branches/:id/floors`](#get-branchesidfloors)                                                                            | Menu and reference data          |
-| GET    | [`/help`](#get-help)                                                                                                       | Menu and reference data          |
-| GET    | [`/content/:namespace`](#get-contentnamespace)                                                                             | Menu and reference data          |
-| GET    | [`/orders`](#get-orders)                                                                                                   | Menu and reference data          |
-| POST   | [`/orders`](#post-orders)                                                                                                  | Orders and rounds                |
-| GET    | [`/orders/:id`](#get-ordersid)                                                                                             | Orders and rounds                |
-| GET    | [`/sessions/:id/orders`](#get-sessionsidorders)                                                                            | Orders and rounds                |
-| GET    | [`/tables/:branchId/:table/orders`](#get-tablesbranchidtableorders)                                                        | Orders and rounds                |
-| POST   | [`/orders/:id/rounds`](#post-ordersidrounds)                                                                               | Orders and rounds                |
-| PATCH  | [`/orders/:id`](#patch-ordersid)                                                                                           | Orders and rounds                |
-| POST   | [`/orders/:id/cancel`](#post-ordersidcancel)                                                                               | Orders and rounds                |
-| POST   | [`/payments`](#post-payments)                                                                                              | Payments                         |
-| POST   | [`/payments/:id/simulate`](#post-paymentsidsimulate)                                                                       | Payments                         |
-| POST   | [`/service-requests`](#post-service-requests)                                                                              | Service requests                 |
-| DELETE | [`/service-requests/:id`](#delete-service-requestsid)                                                                      | Service requests                 |
-| GET    | [`/sessions/:id/service-requests`](#get-sessionsidservice-requests)                                                        | Service requests                 |
-| POST   | [`/promos/validate`](#post-promosvalidate)                                                                                 | Promotions and delivery quote    |
-| POST   | [`/delivery/quote`](#post-deliveryquote)                                                                                   | Promotions and delivery quote    |
-| POST   | [`/admin/sessions`](#post-adminsessions)                                                                                   | Admin auth and branches          |
-| GET    | [`/admin/branches`](#get-adminbranches)                                                                                    | Admin auth and branches          |
-| POST   | [`/admin/branches`](#post-adminbranches)                                                                                   | Admin auth and branches          |
-| DELETE | [`/admin/branches/:branchId`](#delete-adminbranchesbranchid)                                                               | Admin auth and branches          |
-| PATCH  | [`/admin/branches/:branchId/status`](#patch-adminbranchesbranchidstatus)                                                   | Admin auth and branches          |
-| GET    | [`/admin/branches/:branchId/settings`](#get-adminbranchesbranchidsettings)                                                 | Admin settings                   |
-| PATCH  | [`/admin/branches/:branchId/settings`](#patch-adminbranchesbranchidsettings)                                               | Admin settings                   |
-| GET    | [`/admin/branches/:branchId/service`](#get-adminbranchesbranchidservice)                                                   | Admin floor, tables and QR codes |
-| GET    | [`/admin/branches/:branchId/tables`](#get-adminbranchesbranchidtables)                                                     | Admin floor, tables and QR codes |
-| GET    | [`/admin/branches/:branchId/tables/qr-codes`](#get-adminbranchesbranchidtablesqr-codes)                                    | Admin floor, tables and QR codes |
-| GET    | [`/admin/branches/:branchId/tables/:table`](#get-adminbranchesbranchidtablestable)                                         | Admin floor, tables and QR codes |
-| POST   | [`/admin/branches/:branchId/tables/:table/free`](#post-adminbranchesbranchidtablestablefree)                               | Admin floor, tables and QR codes |
-| GET    | [`/admin/branches/:branchId/floors`](#get-adminbranchesbranchidfloors)                                                     | Admin floor, tables and QR codes |
-| PATCH  | [`/admin/branches/:branchId/floors`](#patch-adminbranchesbranchidfloors)                                                   | Admin floor, tables and QR codes |
-| GET    | [`/admin/branches/:branchId/orders`](#get-adminbranchesbranchidorders)                                                     | Admin orders and payments        |
-| POST   | [`/admin/branches/:branchId/tables/:table/orders`](#post-adminbranchesbranchidtablestableorders)                           | Admin orders and payments        |
-| POST   | [`/admin/branches/:branchId/orders/:id/rounds`](#post-adminbranchesbranchidordersidrounds)                                 | Admin orders and payments        |
-| PATCH  | [`/admin/branches/:branchId/orders/:id/rounds/:round`](#patch-adminbranchesbranchidordersidroundsround)                    | Admin orders and payments        |
-| POST   | [`/admin/branches/:branchId/orders/:id/payment`](#post-adminbranchesbranchidordersidpayment)                               | Admin orders and payments        |
-| POST   | [`/admin/branches/:branchId/tables/:table/payment`](#post-adminbranchesbranchidtablestablepayment)                         | Admin orders and payments        |
-| POST   | [`/admin/branches/:branchId/orders/:id/refund`](#post-adminbranchesbranchidordersidrefund)                                 | Admin orders and payments        |
-| POST   | [`/admin/branches/:branchId/orders/:id/cancel`](#post-adminbranchesbranchidordersidcancel)                                 | Admin orders and payments        |
-| POST   | [`/admin/orders/:id/served`](#post-adminordersidserved)                                                                    | Admin orders and payments        |
-| POST   | [`/admin/service-requests/:id/acknowledge`](#post-adminservice-requestsidacknowledge)                                      | Admin orders and payments        |
-| POST   | [`/admin/service-requests/:id/resolve`](#post-adminservice-requestsidresolve)                                              | Admin orders and payments        |
-| PATCH  | [`/admin/branches/:branchId/menu/dishes/:slug/availability`](#patch-adminbranchesbranchidmenudishesslugavailability)       | Admin menu                       |
-| POST   | [`/admin/branches/:branchId/menu/dishes`](#post-adminbranchesbranchidmenudishes)                                           | Admin menu                       |
-| PATCH  | [`/admin/branches/:branchId/menu/dishes/:slug`](#patch-adminbranchesbranchidmenudishesslug)                                | Admin menu                       |
-| DELETE | [`/admin/branches/:branchId/menu/dishes/:slug`](#delete-adminbranchesbranchidmenudishesslug)                               | Admin menu                       |
-| PATCH  | [`/admin/branches/:branchId/menu/categories/:categoryId/order`](#patch-adminbranchesbranchidmenucategoriescategoryidorder) | Admin menu                       |
-| PATCH  | [`/admin/branches/:branchId/menu/categories`](#patch-adminbranchesbranchidmenucategories)                                  | Admin menu                       |
-| POST   | [`/admin/branches/:branchId/menu/images`](#post-adminbranchesbranchidmenuimages)                                           | Admin menu                       |
-| GET    | [`/admin/branches/:branchId/reservations`](#get-adminbranchesbranchidreservations)                                         | Reservations                     |
-| POST   | [`/admin/branches/:branchId/reservations`](#post-adminbranchesbranchidreservations)                                        | Reservations                     |
-| PATCH  | [`/admin/branches/:branchId/reservations/:id`](#patch-adminbranchesbranchidreservationsid)                                 | Reservations                     |
-| PATCH  | [`/admin/branches/:branchId/reservations/:id/status`](#patch-adminbranchesbranchidreservationsidstatus)                    | Reservations                     |
-| PATCH  | [`/admin/branches/:branchId/orders/:id/rounds/:round/status`](#patch-adminbranchesbranchidordersidroundsroundstatus)       | Kitchen                          |
+| Method | Path                                                                                                                                              | Area                             |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| POST   | [`/sessions`](#post-sessions)                                                                                                                     | Guest session and OTP            |
+| PATCH  | [`/sessions/:id`](#patch-sessionsid)                                                                                                              | Guest session and OTP            |
+| POST   | [`/otp`](#post-otp)                                                                                                                               | Guest session and OTP            |
+| POST   | [`/otp/verify`](#post-otpverify)                                                                                                                  | Guest session and OTP            |
+| GET    | [`/restaurant`](#get-restaurant)                                                                                                                  | Menu and reference data          |
+| GET    | [`/branches`](#get-branches)                                                                                                                      | Menu and reference data          |
+| GET    | [`/branches/:id/config`](#get-branchesidconfig)                                                                                                   | Menu and reference data          |
+| GET    | [`/branches/:id/status`](#get-branchesidstatus)                                                                                                   | Menu and reference data          |
+| GET    | [`/branches/:id/menu`](#get-branchesidmenu)                                                                                                       | Menu and reference data          |
+| GET    | [`/branches/:id/promotions`](#get-branchesidpromotions)                                                                                           | Menu and reference data          |
+| GET    | [`/branches/:id/floors`](#get-branchesidfloors)                                                                                                   | Menu and reference data          |
+| GET    | [`/help`](#get-help)                                                                                                                              | Menu and reference data          |
+| GET    | [`/content/:namespace`](#get-contentnamespace)                                                                                                    | Menu and reference data          |
+| GET    | [`/orders`](#get-orders)                                                                                                                          | Menu and reference data          |
+| POST   | [`/orders`](#post-orders)                                                                                                                         | Orders and rounds                |
+| GET    | [`/orders/:id`](#get-ordersid)                                                                                                                    | Orders and rounds                |
+| GET    | [`/sessions/:id/orders`](#get-sessionsidorders)                                                                                                   | Orders and rounds                |
+| GET    | [`/tables/:branchId/:table/orders`](#get-tablesbranchidtableorders)                                                                               | Orders and rounds                |
+| POST   | [`/orders/:id/rounds`](#post-ordersidrounds)                                                                                                      | Orders and rounds                |
+| PATCH  | [`/orders/:id`](#patch-ordersid)                                                                                                                  | Orders and rounds                |
+| POST   | [`/orders/:id/cancel`](#post-ordersidcancel)                                                                                                      | Orders and rounds                |
+| POST   | [`/payments`](#post-payments)                                                                                                                     | Payments                         |
+| POST   | [`/payments/:id/simulate`](#post-paymentsidsimulate)                                                                                              | Payments                         |
+| POST   | [`/service-requests`](#post-service-requests)                                                                                                     | Service requests                 |
+| DELETE | [`/service-requests/:id`](#delete-service-requestsid)                                                                                             | Service requests                 |
+| GET    | [`/sessions/:id/service-requests`](#get-sessionsidservice-requests)                                                                               | Service requests                 |
+| POST   | [`/promos/validate`](#post-promosvalidate)                                                                                                        | Promotions and delivery quote    |
+| POST   | [`/delivery/quote`](#post-deliveryquote)                                                                                                          | Promotions and delivery quote    |
+| POST   | [`/admin/sessions`](#post-adminsessions)                                                                                                          | Admin auth and branches          |
+| DELETE | [`/admin/sessions/current`](#delete-adminsessionscurrent)                                                                                         | Admin auth and branches          |
+| GET    | [`/admin/branches`](#get-adminbranches)                                                                                                           | Admin auth and branches          |
+| POST   | [`/admin/branches`](#post-adminbranches)                                                                                                          | Admin auth and branches          |
+| DELETE | [`/admin/branches/:branchId`](#delete-adminbranchesbranchid)                                                                                      | Admin auth and branches          |
+| PATCH  | [`/admin/branches/:branchId/status`](#patch-adminbranchesbranchidstatus)                                                                          | Admin auth and branches          |
+| GET    | [`/admin/branches/:branchId/settings`](#get-adminbranchesbranchidsettings)                                                                        | Admin settings                   |
+| PATCH  | [`/admin/branches/:branchId/settings`](#patch-adminbranchesbranchidsettings)                                                                      | Admin settings                   |
+| GET    | [`/admin/branches/:branchId/service`](#get-adminbranchesbranchidservice)                                                                          | Admin floor, tables and QR codes |
+| GET    | [`/admin/branches/:branchId/tables`](#get-adminbranchesbranchidtables)                                                                            | Admin floor, tables and QR codes |
+| GET    | [`/admin/branches/:branchId/tables/qr-codes`](#get-adminbranchesbranchidtablesqr-codes)                                                           | Admin floor, tables and QR codes |
+| GET    | [`/admin/branches/:branchId/tables/:table`](#get-adminbranchesbranchidtablestable)                                                                | Admin floor, tables and QR codes |
+| POST   | [`/admin/branches/:branchId/tables/:table/free`](#post-adminbranchesbranchidtablestablefree)                                                      | Admin floor, tables and QR codes |
+| GET    | [`/admin/branches/:branchId/floors`](#get-adminbranchesbranchidfloors)                                                                            | Admin floor, tables and QR codes |
+| PATCH  | [`/admin/branches/:branchId/floors`](#patch-adminbranchesbranchidfloors)                                                                          | Admin floor, tables and QR codes |
+| GET    | [`/admin/branches/:branchId/orders`](#get-adminbranchesbranchidorders)                                                                            | Admin orders and payments        |
+| POST   | [`/admin/branches/:branchId/tables/:table/orders`](#post-adminbranchesbranchidtablestableorders)                                                  | Admin orders and payments        |
+| POST   | [`/admin/branches/:branchId/orders/:id/rounds`](#post-adminbranchesbranchidordersidrounds)                                                        | Admin orders and payments        |
+| PATCH  | [`/admin/branches/:branchId/orders/:id/rounds/:round`](#patch-adminbranchesbranchidordersidroundsround)                                           | Admin orders and payments        |
+| POST   | [`/admin/branches/:branchId/orders/:id/payment`](#post-adminbranchesbranchidordersidpayment)                                                      | Admin orders and payments        |
+| POST   | [`/admin/branches/:branchId/tables/:table/payment`](#post-adminbranchesbranchidtablestablepayment)                                                | Admin orders and payments        |
+| POST   | [`/admin/branches/:branchId/orders/:id/refund`](#post-adminbranchesbranchidordersidrefund)                                                        | Admin orders and payments        |
+| POST   | [`/admin/branches/:branchId/orders/:id/cancel`](#post-adminbranchesbranchidordersidcancel)                                                        | Admin orders and payments        |
+| POST   | [`/admin/orders/:id/served`](#post-adminordersidserved)                                                                                           | Admin orders and payments        |
+| POST   | [`/admin/service-requests/:id/acknowledge`](#post-adminservice-requestsidacknowledge)                                                             | Admin orders and payments        |
+| POST   | [`/admin/service-requests/:id/resolve`](#post-adminservice-requestsidresolve)                                                                     | Admin orders and payments        |
+| PATCH  | [`/admin/branches/:branchId/menu/dishes/:slug/availability`](#patch-adminbranchesbranchidmenudishesslugavailability)                              | Admin menu                       |
+| POST   | [`/admin/branches/:branchId/menu/dishes`](#post-adminbranchesbranchidmenudishes)                                                                  | Admin menu                       |
+| PATCH  | [`/admin/branches/:branchId/menu/dishes/:slug`](#patch-adminbranchesbranchidmenudishesslug)                                                       | Admin menu                       |
+| DELETE | [`/admin/branches/:branchId/menu/dishes/:slug`](#delete-adminbranchesbranchidmenudishesslug)                                                      | Admin menu                       |
+| PATCH  | [`/admin/branches/:branchId/menu/categories/:categoryId/order`](#patch-adminbranchesbranchidmenucategoriescategoryidorder)                        | Admin menu                       |
+| PATCH  | [`/admin/branches/:branchId/menu/categories`](#patch-adminbranchesbranchidmenucategories)                                                         | Admin menu                       |
+| POST   | [`/admin/branches/:branchId/menu/images`](#post-adminbranchesbranchidmenuimages)                                                                  | Admin menu                       |
+| GET    | [`/admin/branches/:branchId/reservations`](#get-adminbranchesbranchidreservations)                                                                | Reservations                     |
+| POST   | [`/admin/branches/:branchId/reservations`](#post-adminbranchesbranchidreservations)                                                               | Reservations                     |
+| PATCH  | [`/admin/branches/:branchId/reservations/:id`](#patch-adminbranchesbranchidreservationsid)                                                        | Reservations                     |
+| PATCH  | [`/admin/branches/:branchId/reservations/:id/status`](#patch-adminbranchesbranchidreservationsidstatus)                                           | Reservations                     |
+| PATCH  | [`/admin/branches/:branchId/orders/:id/rounds/:round/status`](#patch-adminbranchesbranchidordersidroundsroundstatus)                              | Kitchen                          |
+| PATCH  | [`/admin/branches/:branchId/orders/:id/rounds/:round/items/:position/plated`](#patch-adminbranchesbranchidordersidroundsrounditemspositionplated) | Kitchen                          |
+| PATCH  | [`/admin/branches/:branchId/orders/:id/rush`](#patch-adminbranchesbranchidordersidrush)                                                           | Kitchen                          |
+| POST   | [`/admin/branches/:branchId/orders/:id/messages`](#post-adminbranchesbranchidordersidmessages)                                                    | Kitchen                          |
+| GET    | [`/admin/branches/:branchId/events`](#get-adminbranchesbranchidevents)                                                                            | Kitchen                          |
 
 ## Conventions
 
@@ -140,6 +148,7 @@ where listed.
 | `invalid_credentials` | 401    | No staff account matches identity and password        |
 | `unauthorized`        | 401    | No admin token, an unknown one, or an expired session |
 | `forbidden`           | 403    | The admin does not manage this branch                 |
+| `rate_limited`        | 429    | Too many requests from this device; try later         |
 
 ### Guest session and OTP
 
@@ -151,6 +160,7 @@ where listed.
 | `otp_wrong_code`      | 422       | Wrong code; extra `attemptsLeft` (mock also `resendAt`) |
 | `otp_locked`          | 423       | No attempts left; extra `attemptsLeft: 0`               |
 | `phone_not_verified`  | 403       | The session's mobile number is not verified             |
+| `qr_invalid`          | 403       | The table link's QR token is missing, forged or another |
 
 ### Ordering
 
@@ -267,9 +277,11 @@ Checks the code.
 
 ## Menu and reference data
 
-Reference endpoints are read-only and unauthenticated. Today they are static files in
-`public/api`; the mock server answers the three marked "mock-owned" so staff changes apply. See
-[data-and-api.md](data-and-api.md#reference-data) for file contents.
+Reference endpoints are read-only and unauthenticated. The branches, their config, status,
+menus, promotions and floors come from the backend (in a mock-only build, from the mock server,
+marked "mock-owned"); `GET /restaurant`, `/help`, `/content/*` and the drawn `GET /orders` stay
+static files in `public/api`. See [data-and-api.md](data-and-api.md#reference-data) for file
+contents.
 
 ### GET /restaurant
 
@@ -284,19 +296,38 @@ The brand: name, tagline, `defaultBranchId` and social links.
 
 ### GET /branches
 
-Every branch with its hours, live status and region rules (mock-owned).
+Every branch in brief: where it is, its week and status, and which ways it takes orders.
 
 - **Auth:** none.
 - **Request:** none.
-- **Response:** `200` `Branch[]` ([`src/types/branch.ts`](../src/types/branch.ts)).
+- **Response:** `200` `BranchSummary[]` ([`src/types/branch.ts`](../src/types/branch.ts)).
 - **Errors:** none specified.
 - **Rules:**
-  - Reflects staff settings at once: details, today's hours and closed days from the weekly
-    schedule, taxes, payment methods, delivery zones, pickup, added and removed branches.
-  - Reports the status staff set (`status`, `pausedForMinutes`, `reopensTomorrow`).
-  - `tables` covers every table on the saved floor plan and lists `outOfService` tables.
-  - The app reads it once per visit, again after 10 minutes or on window focus; the status
+  - Data, not words: `schedule` (the week in 24-hour local `HH:MM`, last orders, takeaway's and
+    delivery's own weeks, special dates), `status` (what staff set, else what the week says),
+    `statusUntil` (ISO, only while staff have it paused or closed) and `modeStatus` for takeaway
+    and delivery. The screens word every time from these (`lib/branchHours › branchTimes`).
+  - `modes` says only which modes are on; their rules are in `GET /branches/:id/config`.
+  - Reflects staff settings at once: details, hours, services, added and removed branches.
+  - The app reads it once per visit (again after 10 minutes or on window focus); the status
     alone is polled with `GET /branches/:id/status`.
+
+### GET /branches/:id/config
+
+One branch's rules for ordering there, read for the guest's own branch (and by staff working
+there).
+
+- **Auth:** none.
+- **Request:** none.
+- **Response:** `200` `BranchConfig` ([`src/types/branch.ts`](../src/types/branch.ts)):
+  `{ id, currency, mobile, tax, payments, dietary, modes, ordering, prepMinutes }`.
+- **Errors:** `404 not_found` (unknown or removed branch).
+- **Rules:**
+  - `tax` carries the bill's rules: service charge, tax lines (none while the branch does not
+    charge tax), rounding, `invoiceKey` (what the bill is called: `gst`, `vat`, or
+    `billOfSupply` / `bill` with tax off), and `taxId` / `taxIdKey` (GSTIN, PAN).
+  - The screens join it to the summary as one `Branch` (`api/hooks › useBranch`). Trusted as
+    long as the branch list (10 minutes, window focus).
 
 ### GET /branches/:id/status
 
@@ -305,7 +336,7 @@ Just a branch's status now: what changes during service, without its settings.
 - **Auth:** none.
 - **Request:** none.
 - **Response:** `200` `BranchLiveStatus` ([`src/types/branch.ts`](../src/types/branch.ts)):
-  `{ id, status, opensAt, opensIn, pausedForMinutes, reopensTomorrow?, reopensOn? }`.
+  `{ id, status, statusUntil?, modeStatus }`.
 - **Errors:** `404 not_found` (unknown or removed branch).
 - **Rules:**
   - The same values as the branch in `GET /branches` at that moment.
@@ -390,6 +421,20 @@ The drawn order history and the delivery riders.
     to serve it.
 
 ## Orders and rounds
+
+What every `Order` carries beyond its items and bill (types in
+[`src/types/order.ts`](../src/types/order.ts)):
+
+- `id` is the order's number: the branch's prefix and a number counting up from its start
+  (`UDY-001`; Settings › Branch details › `orderPrefix`, `orderStart`). Orders from before
+  prefixes keep their old numbers (`A105`), and the mock server still numbers `A001` up without a
+  token (`mock/orderBuilder › nextOrderId`). Match either as `[A-Z]+-?\d+`.
+- `token`: the day's token at the branch (from 1 each day), what the pass calls out; absent on
+  older orders.
+- `taxCharged: false` when the order was billed without tax (the branch did not charge it then);
+  absent otherwise.
+- `rush: true` while a waiter has marked it rush; items carry `plated: true` once the kitchen
+  ticked them off.
 
 ### POST /orders
 
@@ -640,6 +685,18 @@ A staff member signs in.
     account and never says which part was wrong.
   - The server sets `expiresAt` (mock: 12 hours).
 
+### DELETE /admin/sessions/current
+
+Signs out: the session's token stops working at once, on every device that holds it.
+
+- **Auth:** bearer token.
+- **Request:** none.
+- **Response:** `204`.
+- **Errors:** `401 unauthorized`.
+- **Rules:**
+  - The app clears its own session either way, and any later `401` on this device signs staff
+    out (`api/queryClient`).
+
 ### GET /admin/branches
 
 The branches the signed-in admin manages.
@@ -727,6 +784,12 @@ Replaces the sections sent, each whole; the others stay.
   - `GET /branches` and the server's own checks follow at once: hours and closed days, taxes and
     service charge on new bills, payment methods, delivery zones, fees and minimums, pickup slots.
   - Orders already placed keep what they were priced with.
+  - `details.orderPrefix` (1 to 5 capital letters) and `details.orderStart` (1 to 999999) number
+    new orders (`UDY-001`). A new prefix starts at `orderStart` again; a lower start never reuses
+    a number. A branch left without them takes its short name's letters, from 1.
+  - `tax.enabled` switches the branch's taxes on or off (the rates are kept); off, new bills
+    have no tax lines and are called "Bill of supply" (India) or "Bill" (elsewhere).
+    `tax.taxId` (GSTIN in India, PAN in Nepal, `taxIdOf`) is printed on bills; empty for none.
 
 ## Admin floor, tables and QR codes
 
@@ -739,11 +802,13 @@ What the floor staff need to act on now (the waiter home).
 - **Response:** `200` [`BranchServiceResponse`](../src/api/contracts.ts) (`AdminBranchService`).
 - **Errors:** `401 unauthorized`, `403 forbidden`.
 - **Rules:**
-  - Open waiter and bill requests, oldest first, with who is on the way.
+  - Open waiter and bill requests and the kitchen's messages (`kind: 'kitchen'`, from
+    `POST …/orders/:id/messages`), oldest first, with who is on the way; `counts.kitchenMessages`.
   - `doneRequests`: those dealt with in the last 30 minutes, newest first, with who did it.
   - Today's orders still active or not paid in full, newest first, each with its rounds ready to
     serve; takeaway and delivery orders have no table.
-  - Tables with activity today and their stage; the counts. The app polls every 15 s.
+  - Tables with activity today and their stage; the counts. The app polls every 15 s (60 s while
+    the branch's events are connected).
 
 ### GET /admin/branches/:branchId/tables
 
@@ -834,15 +899,21 @@ Replaces the floor plan (Settings › Floor plan).
 
 ### GET /admin/branches/:branchId/orders
 
-Today's orders at the branch, every mode and state, in full.
+Today's orders at the branch, every mode and state, in full; or a range of days, or one table's.
 
 - **Auth:** bearer token.
-- **Request:** none.
+- **Request:** optional query [`AdminOrdersFilter`](../src/api/contracts.ts)
+  `?from=YYYY-MM-DD&to=YYYY-MM-DD&table=N`.
 - **Response:** `200` [`AdminOrdersResponse`](../src/api/contracts.ts) (`AdminOrders`).
-- **Errors:** `401 unauthorized`, `403 forbidden`.
+- **Errors:** `400 invalid_request` (`details.field`: `from`, `to` or `table`),
+  `401 unauthorized`, `403 forbidden`.
 - **Rules:**
   - Branch time zone; newest first; items, rounds, payment, timeline, pickup or delivery details.
-  - Feeds both the Orders page and the kitchen board; polled every 15 s.
+  - Without `from`/`to`, today. A range is branch calendar days, up to 90 days back and 31 days
+    long (`lib/dayRange`); a range up to today also has yesterday's orders still to pay.
+  - Feeds the Orders page, Payments, a table's Order history and the kitchen board; today's is
+    polled every 15 s (60 s while the branch's events are connected), past days are not polled.
+  - Mock: today only; it ignores the range.
 
 ### POST /admin/branches/:branchId/tables/:table/orders
 
@@ -1135,7 +1206,8 @@ Seats, cancels, marks a no-show, or restores a booking.
 
 ## Kitchen
 
-The kitchen board reads [`GET /admin/branches/:branchId/orders`](#get-adminbranchesbranchidorders).
+The kitchen board reads [`GET /admin/branches/:branchId/orders`](#get-adminbranchesbranchidorders)
+and follows [`GET /admin/branches/:branchId/events`](#get-adminbranchesbranchidevents).
 
 ### PATCH /admin/branches/:branchId/orders/:id/rounds/:round/status
 
@@ -1143,7 +1215,7 @@ The kitchen moves a round on: started cooking, or ready.
 
 - **Auth:** bearer token.
 - **Request:** [`SetKitchenStatusRequest`](../src/api/contracts.ts)
-  `{ status: 'preparing' | 'ready' }`.
+  `{ status: 'received' | 'preparing' | 'ready', back? }`.
 - **Response:** `200` [`SetKitchenStatusResponse`](../src/api/contracts.ts) (`Order`).
 - **Errors:** `400 invalid_request`, `401 unauthorized`, `403 forbidden`, `404 not_found` (no
   such order at the branch, or round), `409 order_closed`.
@@ -1156,6 +1228,65 @@ The kitchen moves a round on: started cooking, or ready.
     marker.
   - `409 order_closed` when the order is cancelled or the round already served, picked up or out
     for delivery.
+  - `back: true` is an undo or a recall: the round goes back to `received` (New) or `preparing`
+    (Cooking) from further along; a round already there or behind answers the same. Without
+    `back` a step only goes forward, and `received` is valid only with `back`.
+
+### PATCH /admin/branches/:branchId/orders/:id/rounds/:round/items/:position/plated
+
+The kitchen ticks an item off as plated (or unticks it), so every kitchen screen shows it.
+
+- **Auth:** bearer token (`kitchen.update`).
+- **Request:** [`SetPlatedRequest`](../src/api/contracts.ts) `{ plated }`.
+- **Response:** `200` `Order`.
+- **Errors:** `401 unauthorized`, `403 forbidden`, `404 not_found` (no such item),
+  `409 order_closed` (cancelled, or the round handed over).
+- **Rules:**
+  - `position` is the item's index in the round, 0 first. The item carries `plated: true`.
+
+### PATCH /admin/branches/:branchId/orders/:id/rush
+
+A waiter marks the order rush (a VIP, a guest in a hurry), or not.
+
+- **Auth:** bearer token (`orders.take`).
+- **Request:** [`SetRushRequest`](../src/api/contracts.ts) `{ rush }`.
+- **Response:** `200` `Order` (`rush: true` while it is).
+- **Errors:** `401 unauthorized`, `403 forbidden`, `404 not_found`, `409 order_closed`
+  (cancelled).
+- **Rules:**
+  - Rush tickets come first in their kitchen lane, after cancelled ones
+    (`lib/kitchenBoard › laneTickets`).
+
+### POST /admin/branches/:branchId/orders/:id/messages
+
+The kitchen tells the waiters about an order.
+
+- **Auth:** bearer token (`kitchen.update`).
+- **Request:** [`KitchenMessageRequest`](../src/api/contracts.ts)
+  `{ reason: 'runningLate' | 'unavailable' | 'question', note? }` (note up to 80 characters).
+- **Response:** `201` `{ request }` (`AdminServiceRequest` of kind `kitchen`,
+  [`KitchenMessage`](../src/types/service.ts)).
+- **Errors:** `400 invalid_request`, `401 unauthorized`, `403 forbidden`, `404 not_found`.
+- **Rules:**
+  - It lands on the waiters' Requests board (`GET /admin/branches/:branchId/service`) with the
+    order, its table or mode and who sent it, and is dealt with like a guest's call
+    (acknowledge, resolve). Staff only: guests never see it.
+
+### GET /admin/branches/:branchId/events
+
+Server-Sent Events: what changes at the branch, for as long as a staff screen keeps it open.
+
+- **Auth:** bearer token (`orders.view`), sent in the `Authorization` header.
+- **Request:** none; `Accept: text/event-stream`.
+- **Response:** `200` stream. Each event has `event:` `orders`, `service`, `menu` or `resync`
+  and `data:` a [`BranchEvent`](../src/api/contracts.ts) `{ kind, orderId?, at }`.
+- **Errors:** `401 unauthorized`, `403 forbidden`, `429 rate_limited` (past six streams for one
+  sign-in).
+- **Rules:**
+  - A notice, not data: the screen reads again through the usual endpoints.
+  - A heartbeat comment every 25 s; the stream closes when the session ends.
+  - Not in `backend.ts`: [`src/api/liveEvents.ts`](../src/api/liveEvents.ts) reads it with
+    `fetch` directly, only when the backend is configured. The mock has no events.
 
 ## Related
 

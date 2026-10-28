@@ -6,9 +6,10 @@ from the same app; Settings configure each branch.
 
 - **Stack:** Next.js 16 (App Router, static export), React 19, TypeScript, CSS Modules, TanStack
   Query. No UI framework.
-- **Backend:** none yet. All data goes through a typed API layer (`src/api`). An in-browser mock
-  server (`src/api/mock`) implements the backend contract (`src/api/contracts.ts`); pointing the
-  app at a real API is a build-time setting.
+- **Backend:** `restaurant-backend`. All data goes through a typed API layer (`src/api`) over the
+  contract in `src/api/contracts.ts`; built with `NEXT_PUBLIC_BACKEND_URL`, every server-owned
+  endpoint goes to the backend and staff screens get live updates over Server-Sent Events.
+  Without it, an in-browser mock server (`src/api/mock`) answers the same contract.
 - **Branches:** Udyog Vihar, Gurgaon (India, default; id `blr-indiranagar`) and Thamel, Kathmandu
   (Nepal; id `ktm-thamel`). Currency, time zone, taxes, phone rules and payment methods are per
   branch and editable in Settings.
@@ -43,7 +44,8 @@ npm run dev
 | http://localhost:3000/admin/login/ | Staff: choose **Use demo account**                  |
 | http://localhost:3000/styleguide/  | Design-system board                                 |
 
-The mock OTP is `123456`. Mock data lives in the browser's storage: clear site data to reset it.
+The OTP in development is `123456` (backend and mock). In a mock-only build, data lives in the
+browser's storage: clear site data to reset it.
 
 ## Scripts
 
@@ -58,6 +60,9 @@ The mock OTP is `123456`. Mock data lives in the browser's storage: clear site d
 | `npm test`           | Vitest unit and mock-server tests (`tests/unit`)      |
 | `npm run test:watch` | Vitest in watch mode                                  |
 | `npm run test:e2e`   | Playwright against `out/` (run `npm run build` first) |
+
+End-to-end tests can also run against the backend (`E2E_BACKEND=true`, its own database): see
+[docs/testing.md](docs/testing.md#end-to-end-tests-against-the-backend).
 
 Before opening a pull request: `npm run typecheck && npm run lint && npm run format:check && npm
 test`. See [docs/testing.md](docs/testing.md).
@@ -137,6 +142,7 @@ nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Polic
 
 ## Status
 
-The UI is complete for guests, staff, the kitchen and Settings. Reports are next; the admin
-dashboard redesign and role-based access come later. The app runs on the mock backend: see
-[docs/roadmap.md](docs/roadmap.md) for the production checklist and known issues.
+The UI is complete for guests, staff, the kitchen and Settings, and runs on `restaurant-backend`.
+Reports are next; the admin dashboard redesign, role-based access and the kitchen's hold and fire
+come later. See [docs/roadmap.md](docs/roadmap.md) for the production checklist and known
+issues.

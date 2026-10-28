@@ -123,7 +123,7 @@ export interface TaxConfig {
    * and taxes are worked out (true, both demo branches), or off the taxed total (false).
    */
   discountBeforeTax: boolean;
-  /** Charged on the item total before tax. No service charge: the bill says "Not added". */
+  /** Charged on the item total before tax. No service charge: the bill leaves the row out. */
   serviceCharge?: { labelKey: BillLineKey; rateBp: number };
   lines: TaxLine[];
   rounding: {

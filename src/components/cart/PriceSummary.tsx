@@ -28,7 +28,7 @@ export interface PriceSummaryProps {
   showCount?: boolean;
   /** Smaller gap above the total (payment card). */
   tight?: boolean;
-  /** Only the total, with ⌄ to open the lines above it (checkout). */
+  /** Only the total, with ⌄ to open the lines above it (staff's order popup). */
   collapsible?: boolean;
 }
 

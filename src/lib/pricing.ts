@@ -35,7 +35,7 @@ export interface Bill {
   discountMinor: number;
   /** The service charge (when the branch adds one), then each tax, in the order applied. */
   lines: BillLine[];
-  /** The branch adds a service charge (otherwise the cart says "Service charge · Not added"). */
+  /** The branch adds a service charge (otherwise the bill has no service charge row). */
   serviceCharged: boolean;
   /** Delivery orders: the delivery fee in minor units (0 when free); null for other orders. */
   deliveryFeeMinor: number | null;

@@ -136,8 +136,9 @@ Accessibility is part of the definition of done, not a later pass.
 - **Live regions:** toasts, quantity changes, filter result counts and order status changes use
   `aria-live`. Countdowns are not announced every second: announce when they start and when the
   state changes.
-- **Toasts:** hovering or focusing a toast pauses it, so its action (Undo) is reachable by
-  keyboard (WCAG 2.2.1).
+- **Toasts:** a compact pill (icon, message, its action, ✕), one at a time; it can be swiped
+  away down or sideways. Hovering or focusing a toast pauses it, so its action (Undo) is
+  reachable by keyboard (WCAG 2.2.1). Durations by kind are in `src/lib/constants.ts`.
 - **Dialogs:** use `Dialog` from `components/ui`; it provides the focus trap, Escape, scroll lock
   and focus return. Do not build ad-hoc overlays.
 - **Motion:** `prefers-reduced-motion` turns animations off globally.

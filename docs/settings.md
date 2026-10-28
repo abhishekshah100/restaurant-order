@@ -138,12 +138,16 @@ Key rules:
 - **Details:** name, short name, city and address required, within limits. The short name must
   differ (case-insensitively) from every other branch's. The phone must be `+` and 8–15 digits and
   start with the country's dial code. Country, IANA time zone, locale and currency must be known
-  values.
+  values. The order prefix, when sent, is 1 to 5 capital letters; the start number a whole number
+  from 1 to 999999 (`LIMITS.orderStart`).
 - **Hours:** at least one open day; valid `HH:MM` times with closing after opening; last orders
   0–180 minutes and shorter than every open day; up to 6 service windows with unique, non-empty
   labels (≤ 30 chars) and `to` after `from`.
 - **Tax:** the tax lines must be exactly the branch's current lines (staff change rates, not which
   taxes exist); each rate 0–50%; a service charge, when set, 0.01–30%. Rates are basis points.
+  A registration number, when given, must fit the country's form (`taxIdOf`): a GSTIN in India
+  (`29ABCDE1234F1Z5`), a nine-digit PAN in Nepal, elsewhere 5–20 letters, digits and dashes.
+  It is stored in capitals without spaces (`cleanTaxId`).
 - **Payments:** every channel (`checkout`, `bill`, `takeaway`, `delivery`) has at least one
   method, all from the region's choices, without duplicates; a recommended method must be one of
   them; at-table methods likewise non-empty and known.
@@ -175,7 +179,8 @@ by id), `added` (new branches with the branch they were copied from) and `remove
   [`src/lib/branchHours.ts`](../src/lib/branchHours.ts)), the status staff set (`withStatus`) and
   the saved floor plan's tables. This answers `GET /branches`.
 
-Guest screens read `GET /branches` (`branchesQuery`, refetched every 60 s and on focus), so a save
+Guest screens read `GET /branches` and their branch's `GET /branches/:id/config`
+(`branchesQuery`, `branchConfigQuery`: again after 10 minutes and on focus), so a save
 affects new carts and orders: today's hours and closed days, taxes on new bills, payment methods,
 services, zones and pickup slots. Orders already placed keep their prices. The server's own order
 checks read the same data, so they follow immediately.
@@ -221,6 +226,11 @@ Fields:
   Wi-Fi name. Where a table is comes from the floor plan: the welcome screen shows the table's
   area (`floor` from `POST /sessions`).
 - A changed address gets a new maps link (`mapUrlFor`); the phone is stored without spaces.
+- **Order numbers** (shown once the server sends `orderPrefix` and `orderStart`): the prefix
+  (1 to 5 capital letters, typed in any case) and the number new orders count up from, with an
+  example (`orderCodeOf`: `UDY` and 1 give `UDY-001`). A new prefix starts at the start number
+  again; numbers already used are never given again. Each order also gets a daily token (from 1
+  every day), which staff screens and the guest's confirmation and tracking show.
 
 Region (editable):
 
@@ -293,6 +303,15 @@ Purpose: rates applied to new bills.
 
 Rules:
 
+- **Charge tax** (`enabled`): a branch not registered for GST or VAT turns it off. Off, new bills
+  have no tax lines (the rates are kept for switching back on and the rates card is hidden), and
+  the bill is called "Bill of supply" in India or "Bill" elsewhere (Nepal) instead of "GST
+  invoice" / "VAT invoice". Orders billed that way carry `taxCharged: false`.
+- **Registration number** (`taxId`, optional): GSTIN in India, PAN in Nepal, printed on bills.
+  Its label and hint follow the country (`taxIdKey`).
+- `taxWording(country, tax)` in [`src/lib/branchSettings.ts`](../src/lib/branchSettings.ts)
+  works out the bill's title (`invoiceKey`, words in `service › region.taxInvoice`) and its
+  one-line summary label (`compactLabelKey`); `withTax` applies the section to the branch.
 - One rate per tax line of the region, with what it is charged on (`items` or
   `itemsPlusService`). The lines themselves come from the region and cannot be added or removed.
 - A tax split into parts (for example GST into CGST and SGST) is divided evenly by `splitRate`;

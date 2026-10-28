@@ -178,14 +178,24 @@ dialog.
 - Mock: the change is stored in `olive.mock.branchStatus.v1` and applied over the branch data by
   [`src/api/mock/branchStatus.ts`](../src/api/mock/branchStatus.ts).
 
-### Polling
+### Live updates and polling
 
-Floor data is polled, not pushed. The query options live in
+Against the backend, the staff shells (`AdminShell`, and `KitchenBar` in the kitchen) keep the
+branch's events open: `useBranchEvents` in [`src/api/liveEvents.ts`](../src/api/liveEvents.ts)
+reads `GET /admin/branches/:branchId/events` (Server-Sent Events) with `fetch` and the bearer
+token in the `Authorization` header, never in the address. Each event invalidates what it
+touches: `orders`, `service` → every `['admin', 'service', …]` query; `menu` → the branch's
+menu; `resync` (and every reconnect) → both. A dropped stream reconnects after 3 s, doubling to
+30 s. The mock has no events, so a mock-only build only polls.
+
+Polling stays as the safety net. The query options live in
 [`src/api/queries.ts`](../src/api/queries.ts).
 
-- Service, floor plan, table, orders and reservations: every 15 s
-  (`BRANCH_SERVICE_REFRESH_MS`) and on window focus. Their query keys share the prefix
-  `['admin', 'service', ...]`, so a mutation that refreshes the service refreshes all of them.
+- Service, floor plan, table, today's orders and reservations: every 15 s
+  (`BRANCH_SERVICE_REFRESH_MS`) and on window focus; while the events are connected only every
+  60 s (`liveRefresh`, `LIVE_REFRESH_MS` in [`src/api/liveState.ts`](../src/api/liveState.ts)).
+  Their query keys share the prefix `['admin', 'service', ...]`, so a mutation that refreshes the
+  service refreshes all of them. Past days' orders are not polled.
 - Settings and floor layout: stale after 60 s, no polling. QR codes: stale after 10 minutes.
 - Relative ages on screen ("3 min ago") re-render on their own timer (`useNow`, 20–30 s).
 
@@ -208,8 +218,9 @@ build; a redesign is planned (see [roadmap.md](roadmap.md)).
 Behaviour:
 
 - Four counters (waiter calls, bill requests, ready to serve, unpaid) each link to their page.
-- One queue, oldest first, merges waiter calls, bill requests and rounds ready to serve. Each row
-  has one action: Done for a request, Mark served (or Handed over for takeaway) for food.
+- One queue, oldest first, merges waiter calls, bill requests, the kitchen's messages and rounds
+  ready to serve. Each row has one action: Done for a request or message, Mark served (or
+  Handed over for takeaway) for food.
 - Actions are optimistic: the item leaves the queue at once and returns with an error toast if
   the server refuses.
 - A row's age turns amber and then red as it waits.
@@ -264,6 +275,12 @@ seated; today's bookings with Seat; open requests with Done. Actions:
   something due, at any point of the meal (`POST .../tables/:table/payment`).
 - **Reserve** opens the booking form for this table.
 - **QR code** shows the table's printable card.
+- **Order history** (`TableHistoryDialog`, loaded on demand): the table's completed and cancelled
+  orders over the days picked (today first, up to 90 days back), newest first, each opening in
+  full. Nothing is requested until the button is pressed; then
+  `GET .../orders?from=&to=&table=`.
+
+Order cards show the order number and the day's token.
 
 ### Free table
 
@@ -325,7 +342,10 @@ Rules:
 
 Behaviour:
 
-- Filter by kind: all, waiter, bill (with counts).
+- Filter by kind: all, waiter, bill, kitchen (with counts). Kitchen messages
+  (`kind: 'kitchen'`: running late, an item unavailable, a question, with an optional note) come
+  from the kitchen board about an order and name it, its table or mode and who sent it
+  (`useRequestText › kitchenText`).
 - **Waiting** (oldest first) offers On my way and Done; **On the way** shows who has it, with Done;
   **Done** lists requests resolved in the last 30 minutes with who handled them and how fast.
 - On my way records `acknowledgedBy`; the first person to claim it stays. The guest's waiter and
@@ -341,8 +361,9 @@ Behaviour:
   (`CollectPaymentView`, `CancelOrderView`), `PaymentBadge`. Logic in
   [`src/lib/adminOrders.ts`](../src/lib/adminOrders.ts).
 - **Endpoints:** `GET /admin/branches/:branchId/orders` (today's orders in the branch's time zone,
-  newest first); `POST /admin/orders/:id/served`; `POST .../orders/:id/payment`;
-  `POST .../orders/:id/cancel`; plus the order pad endpoints.
+  newest first, or `?from=&to=` for past days); `POST /admin/orders/:id/served`;
+  `POST .../orders/:id/payment`; `POST .../orders/:id/cancel`; `PATCH .../orders/:id/rush`; plus
+  the order pad endpoints.
 
 Status views (`ORDER_VIEWS`, selected by `?view=`):
 
@@ -357,12 +378,21 @@ Status views (`ORDER_VIEWS`, selected by `?view=`):
 
 Behaviour:
 
-- Today's totals (orders, sales, still to collect), a mode filter (dine-in, takeaway, delivery)
-  and search by order number, guest name or table.
+- **Days:** From and To ([`DateRangeFilter`](../src/components/admin/DateRangeFilter.tsx), rules
+  in [`src/lib/dayRange.ts`](../src/lib/dayRange.ts)), kept in the address as `?from=&to=`
+  (`ordersPath`) next to `?view=`. Branch calendar days, up to 90 days back (`HISTORY_DAYS`) and
+  31 long (`RANGE_DAYS`); a wrong or out-of-range address is corrected, and a pick that would
+  make the range wrong moves the other end. **Today** returns to the live list (no filter sent).
+- Totals (orders, sales, still to collect), a mode filter (dine-in, takeaway, delivery) and
+  search by order number, guest name or table.
+- Rows, cards and the order popup show the order number (`UDY-001`) and the day's token. The
+  popup's bill (`OrderSummary`) is collapsible: the total, with ⌄ to open every charge
+  (`BillSummary` with `collapsible`).
 - Each row shows its one next action (`nextAction`): Mark served, Handed over (takeaway) or
   Collect (finished with money due).
-- The order dialog offers Mark served, Collect payment, Add items and Change (dine-in), and
-  Cancel while the order is not finished.
+- The order dialog offers Mark served, Collect payment, Add items and Change (dine-in), **Rush**
+  (the kitchen takes it first; pressed again it is removed) and Cancel while the order is not
+  finished.
 - **Collect payment in person:** `method` from the branch's `payments.atTable`; optional
   `amount` (part of what is due) and `tip`. Recorded in `payment.transactions` with who took it.
 - **Cancel with a reason:** one of `outOfStock`, `guestLeft`, `kitchenIssue`, `duplicate`,
@@ -402,7 +432,9 @@ save.
 - Choice groups (a meal's slots, a spice level): two or more choices, the first is the default,
   optionally limited to some sizes.
 - Add-ons (free or priced, per size), leave-outs and quick kitchen notes.
-- Details: highlights, spice, prep time, serves, allergens, meal contents.
+- Details: highlights, spice, prep time, serves, allergens, meal contents. A prep time is one
+  time or a range in minutes ("15 min", "12–15 min", up to 240), tidied on save
+  (`tidyPrepTime` in [`src/lib/prepTime.ts`](../src/lib/prepTime.ts)); the kitchen plans by it.
 - Availability. An existing dish can be removed (it also leaves curated lists).
 
 ### Order and categories
@@ -452,6 +484,9 @@ Behaviour:
 
 Sections:
 
+- **Days:** the same From / To filter as Orders (`paymentsPath`, `?from=&to=`). Totals count
+  orders on the day they were placed; a range up to today also lists yesterday's bills still to
+  collect.
 - **Takings:** net (collected less refunded), online vs in person, to collect, tips, average bill,
   refunds. Then a breakdown by method with the cash expected in the drawer.
 - **To collect:** open bills grouped by table (bill requests first) or by takeaway/delivery order.
@@ -462,7 +497,14 @@ Sections:
   reason (`complaint`, `wrongItem`, `overcharged`, `goodwill`, `other`) and an optional note
   (≤ 200 chars). Online payments refund through the payment partner (`started`); in-person
   refunds are cash from the drawer (`done`). 409 `nothing_to_refund` when nothing is refundable.
-- **Printing:** bills, receipts and the day report via `usePaymentPrint`.
+- **Printing** (`usePaymentPrint` in
+  [`PaymentPrint`](../src/components/admin/payments/PaymentPrint.tsx)): a bill for an order or a
+  table, or the day report for the days picked. The bill shows the brand, branch, phone and tax
+  registration number (GSTIN or PAN), bill number, date, guest, each order's items, every
+  charge as the guest's bill lists them (`billRows`), the total, paid and due, and the payments
+  taken. It is titled "Receipt" once paid, "Bill of supply" in India without tax, else "Bill".
+  The print page has no margin (`@page { margin: 0 }`), so browsers leave out their own header
+  and footer (date, title, address); the tab's title names a saved PDF ("Bill UDY-001").
 - **CSV export:** the ledger as CSV (`ledgerCsv`), one row per payment or refund.
 
 ## QR codes
@@ -488,58 +530,117 @@ Behaviour:
 A separate full-width workspace for the kitchen display, using the same staff sign-in and
 selected branch as the admin dashboard.
 
-- **Routes:** `/admin/kitchen-dashboard/` (board), `stock/`, `activity/`; navigation in
-  [`src/lib/kitchenNav.ts`](../src/lib/kitchenNav.ts).
+- **Routes:** `/admin/kitchen-dashboard/` (board; `?station=<category>` sets this screen's
+  station), `stock/`, `activity/`; navigation in [`src/lib/kitchenNav.ts`](../src/lib/kitchenNav.ts).
 - **Shell:** [`KitchenShell`](../src/components/kitchen/shell/KitchenShell.tsx) wraps the pages in
-  `WorkspaceGate` (same guard and `AdminWorkspace` as the admin shell), then
-  [`KitchenBar`](../src/components/kitchen/shell/KitchenBar.tsx): brand, branch and its status
-  control (so the kitchen can pause ordering), the kitchen pages, a link back to the admin
-  dashboard, local time, full screen (`useFullscreen`) and the account menu.
+  `WorkspaceGate` (same guard and `AdminWorkspace` as the admin shell), in the device's theme,
+  then [`KitchenBar`](../src/components/kitchen/shell/KitchenBar.tsx): brand, branch and its
+  status control (so the kitchen can pause ordering), the kitchen pages, a link back to the admin
+  dashboard, local time, the new-ticket sound on or off, Screen settings, full screen
+  (`useFullscreen`) and the account menu. The bar keeps the branch's events open
+  (`useBranchEvents`, see [Live updates and polling](#live-updates-and-polling)).
+- **Theme:** light or dark, dark by default (less glare at the pass), chosen per device in Screen
+  settings (`useKitchenTheme`, localStorage `olive.kitchen-theme.v1`, synced across tabs). The
+  colours are tokens in [`kitchenTheme.module.css`](../src/components/kitchen/kitchenTheme.module.css)
+  (`.light`, `.dark`); dialogs opened from the kitchen take the same class.
 - **Data:** no kitchen data of its own.
   [`useKitchenTickets`](../src/components/kitchen/useKitchenTickets.ts) reads
-  `GET /admin/branches/:branchId/orders` (polled every 15 s, the same read as the Orders page) and
-  the branch menu for stations (a dish's category).
+  `GET /admin/branches/:branchId/orders` (polled every 15 s, 60 s while events are connected) and
+  the branch menu for stations (a dish's category) and prep times.
+
+### Screen settings
+
+[`KitchenSettingsDialog`](../src/components/kitchen/shell/KitchenSettingsDialog.tsx): each
+kitchen screen keeps its own (a wall screen and a station tablet differ), in localStorage
+`olive.kitchen-prefs.v1` ([`useKitchenPrefs`](../src/components/kitchen/shell/useKitchenPrefs.ts)).
+
+| Pref        | Default | Effect                                                                  |
+| ----------- | ------- | ----------------------------------------------------------------------- |
+| `sound`     | on      | A chime when a ticket comes in (with a test button)                     |
+| `reminders` | on      | A softer chime every minute while a ticket has waited in New over 2 min |
+| `awake`     | on      | Keeps the screen from dimming (Screen Wake Lock, `useWakeLock`)         |
+| `textSize`  | medium  | Tickets scaled 0.9 / 1 / 1.15 / 1.3 (`TEXT_SCALE`)                      |
+| `autoPrint` | off     | Prints each new ticket as a KOT                                         |
+| `station`   | `all`   | The station (menu category) this screen shows                           |
+
+The chimes are made in the browser ([`kitchenSound.ts`](../src/components/kitchen/shell/kitchenSound.ts),
+Web Audio, no sound file). Browsers allow sound only after a touch, so the audio context resumes
+on the first tap anywhere (`useSoundUnlock`). The wake lock is asked for again when the tab comes
+back. A station gone from the menu shows everything.
 
 ### Board
 
 - **Component:** [`src/components/kitchen/board/`](../src/components/kitchen/board/):
   `KitchenBoard`, `TicketCard`, `TicketItem`, `TicketTimer`, `BoardStats`, `AllDayList`,
-  `useTicketActions`. Logic in [`src/lib/kitchenBoard.ts`](../src/lib/kitchenBoard.ts).
-- **Endpoint:** `PATCH /admin/branches/:branchId/orders/:id/rounds/:round/status` with
-  `{ status: 'preparing' | 'ready' }`.
+  `KitchenMessageDialog`, `KotPrint`, `useTicketActions`, `useBoardKeyboard`, `useConnection`,
+  `useWaitingReminder`. Logic in [`src/lib/kitchenBoard.ts`](../src/lib/kitchenBoard.ts).
+- **Endpoints:** `PATCH /admin/branches/:branchId/orders/:id/rounds/:round/status` with
+  `{ status, back? }`; `PATCH …/rounds/:round/items/:position/plated`;
+  `POST …/orders/:id/messages`.
 
 Rules:
 
 - Every round of every order today is a ticket (`kitchenTickets`); an order without rounds is one
-  round. Tickets are sorted oldest first into three lanes: New, Cooking, Ready.
+  round. Three lanes: New, Cooking, Ready. In each lane (`laneTickets`): a ticket just cancelled
+  first (it stays where the kitchen last saw it for 5 minutes, `CANCELLED_SHOW_MS`), then rush
+  orders, then the rest oldest first.
 - Due time (`ticketDueAt`): takeaway at its pickup time; delivery within the branch's delivery
-  `prepMinutes`; dine-in within `DINE_IN_TARGET_MINUTES` (18).
+  `prepMinutes`, or the slowest dish's prep time if longer; dine-in when its slowest dish is done
+  (the menu's `prepTime`, read by `prepMinutes` in [`src/lib/prepTime.ts`](../src/lib/prepTime.ts):
+  a range's longest), `DINE_IN_TARGET_MINUTES` (18) when no dish says. A takeaway for a later
+  slot is marked scheduled until `prepMinutes` before it (`isScheduled`).
 - Urgency (`ticketUrgency`): late in red, due soon in amber; a ready ticket waiting more than
   `READY_WAIT_MINUTES` (5) is late.
 - Start cooking and Mark ready (Hand to rider for delivery) update optimistically
-  (`withKitchenStep`). `ready` may skip `preparing`; steps are idempotent and keep the first
+  (`withKitchenStep`) and offer **Undo** in a toast for a few seconds. A ready ticket has
+  **Recall** back to Cooking. Both send `back: true`. Steps are idempotent and keep the first
   person who marked them. Guest tracking and the waiters' Ready to serve follow.
+- **Plated ticks:** tapping an item ticks it off; saved on the order (`useSetPlated`), so every
+  kitchen screen shows it (optimistic, taken back if refused).
+- **Rush:** a waiter marks an order rush from its Orders popup (`useSetRush`); the ticket is
+  flagged and goes first in its lane.
+- **Message the waiters** (`KitchenMessageDialog`, `useSendKitchenMessage`): running late, an
+  item unavailable or a question, with an optional note (80 characters). It lands on the
+  Requests board and the home queue as a `kitchen` request.
+- **Large ticket:** a ticket opens large in a dialog from its place in the header, with its
+  buttons and Print.
+- **KOT print** ([`KotPrint`](../src/components/kitchen/board/KotPrint.tsx), `useKotPrint`):
+  kitchen order tickets 80 mm wide, black on white, one after another with a cut between; where
+  it goes, the token and quantities large; no prices. No page margin, so the browser adds no
+  header or footer. From a ticket's Print, the `P` key, or every new ticket with `autoPrint`.
+- **Keyboard and bump bar** (`useBoardKeyboard`): ↑ ↓ (or ← →) and 1–9 pick a ticket in the
+  order shown, Enter moves it on, Backspace takes the last step back, F opens it large, P prints
+  it, Esc clears the pick. Keys in a field or with a dialog open are left alone.
+- **New tickets** chime (`sound`), print (`autoPrint`) and are flagged New for a moment; a
+  ticket left in New over 2 minutes chimes every minute (`useWaitingReminder`, `reminders`).
+- **Connection** (`useConnection`), beside the tools: offline (no network), stale (reads failing,
+  or without events nothing new for 45 s) or live.
 - Filters by order type, station and search. The all-day list adds up dishes still to cook across
   New and Cooking tickets, grouped by station (shown in a panel below 1280px).
 - Below 1024px one lane is shown at a time.
-- Ticking an item as plated is local to that screen and never sent to the server.
 - Ticket data adds optional fields only: `OrderRound.kitchen` / `Order.kitchen`
-  (`{ started?, ready? }`, each `{ at, by }`) and `OrderEvent.at`.
+  (`{ started?, ready? }`, each `{ at, by }`), `OrderEvent.at`, `OrderItem.plated` and
+  `Order.rush`.
 - Mock: until marked, the mock kitchen's own timing applies (started at 2 min, ready at 18 min,
-  served 4 min after ready; [`src/api/mock/kitchen.ts`](../src/api/mock/kitchen.ts)).
+  served 4 min after ready; [`src/api/mock/kitchen.ts`](../src/api/mock/kitchen.ts)). The mock has
+  no events, no plated ticks shared between screens and no kitchen messages.
 
 ### Tickets
 
 [`TicketItem`](../src/components/kitchen/board/TicketItem.tsx) renders each line as a cook reads
 it, using [`src/lib/kitchenItems.ts`](../src/lib/kitchenItems.ts) (`kitchenItem`, `stockIssue`):
 
+- **Allergy flag:** an allergen named in the kitchen note or an item's note ("peanut", "gluten",
+  "dairy", or "allergy" itself) flags the ticket above everything else, listing the allergens
+  (`allergensIn`; whole words, so "nutmeg" is not "nut").
 - Quantity, dish and size; a meal's picks one per line; other choices with their group name when
   not the default; add-ons; leave-outs highlighted; the guest's note; no prices.
 - A warning when the dish has since gone off the menu (sold out, off today, or its size off).
 - **Sold out** on an item takes the dish off the menu for everyone via the Menu page's
   availability endpoint and dialog.
-- The ticket header shows where it goes, order and round, guest or waiter origin, a running clock,
-  due time and the kitchen note.
+- The ticket header shows where it goes and the day's token in large type, the minutes waited,
+  then the order and round, guest or waiter origin, due time, a Rush badge and the kitchen note.
+  With a station chosen, other stations' items are counted, not listed.
 
 ### Activity
 
@@ -567,31 +668,36 @@ response shapes are in [api-contract.md](api-contract.md) and
 [`src/api/contracts.ts`](../src/api/contracts.ts); mock handlers are in
 [`src/api/mock/handlers/`](../src/api/mock/handlers/).
 
-| Endpoint                                                | Used by                   | Mock handler file   |
-| ------------------------------------------------------- | ------------------------- | ------------------- |
-| `POST /admin/sessions`                                  | Sign-in                   | `adminSessions`     |
-| `GET /admin/branches`                                   | Guard, picker, shell      | `adminSessions`     |
-| `PATCH /admin/branches/:id/status`                      | Branch status control     | `adminSessions`     |
-| `GET /admin/branches/:id/service`                       | Home, Requests, badges    | `adminService`      |
-| `POST /admin/service-requests/:id/acknowledge`          | Requests                  | `adminService`      |
-| `POST /admin/service-requests/:id/resolve`              | Home, Requests, table     | `adminService`      |
-| `POST /admin/orders/:id/served`                         | Home, Orders              | `adminService`      |
-| `GET /admin/branches/:id/tables`                        | Floor plan                | `adminTables`       |
-| `GET /admin/branches/:id/tables/:table`                 | Table page                | `adminTables`       |
-| `POST /admin/branches/:id/tables/:table/free`           | Table page                | `adminTables`       |
-| `GET /admin/branches/:id/tables/qr-codes`               | QR codes                  | `adminTables`       |
-| `POST /admin/branches/:id/tables/:table/orders`         | Order pad                 | `adminOrders`       |
-| `POST /admin/branches/:id/tables/:table/payment`        | Table page, Payments      | `adminOrders`       |
-| `GET /admin/branches/:id/orders`                        | Orders, Payments, kitchen | `adminOrders`       |
-| `POST /admin/branches/:id/orders/:id/rounds`            | Order pad                 | `adminOrders`       |
-| `PATCH /admin/branches/:id/orders/:id/rounds/:r`        | Order pad (change)        | `adminOrders`       |
-| `POST /admin/branches/:id/orders/:id/payment`           | Orders, Payments          | `adminOrders`       |
-| `POST /admin/branches/:id/orders/:id/refund`            | Payments                  | `adminOrders`       |
-| `POST /admin/branches/:id/orders/:id/cancel`            | Orders                    | `adminOrders`       |
-| `PATCH /admin/branches/:id/orders/:id/rounds/:r/status` | Kitchen board             | `kitchen`           |
-| `GET`/`POST /admin/branches/:id/reservations`           | Reservations              | `adminReservations` |
-| `PATCH /admin/branches/:id/reservations/:id[/status]`   | Reservations              | `adminReservations` |
-| `/admin/branches/:id/menu/...` (seven endpoints)        | Menu, kitchen stock       | `adminMenu`         |
+| Endpoint                                                         | Used by                   | Mock handler file   |
+| ---------------------------------------------------------------- | ------------------------- | ------------------- |
+| `POST /admin/sessions`                                           | Sign-in                   | `adminSessions`     |
+| `DELETE /admin/sessions/current`                                 | Sign-out                  | `adminSessions`     |
+| `GET /admin/branches`                                            | Guard, picker, shell      | `adminSessions`     |
+| `PATCH /admin/branches/:id/status`                               | Branch status control     | `adminSessions`     |
+| `GET /admin/branches/:id/service`                                | Home, Requests, badges    | `adminService`      |
+| `POST /admin/service-requests/:id/acknowledge`                   | Requests                  | `adminService`      |
+| `POST /admin/service-requests/:id/resolve`                       | Home, Requests, table     | `adminService`      |
+| `POST /admin/orders/:id/served`                                  | Home, Orders              | `adminService`      |
+| `GET /admin/branches/:id/tables`                                 | Floor plan                | `adminTables`       |
+| `GET /admin/branches/:id/tables/:table`                          | Table page                | `adminTables`       |
+| `POST /admin/branches/:id/tables/:table/free`                    | Table page                | `adminTables`       |
+| `GET /admin/branches/:id/tables/qr-codes`                        | QR codes                  | `adminTables`       |
+| `POST /admin/branches/:id/tables/:table/orders`                  | Order pad                 | `adminOrders`       |
+| `POST /admin/branches/:id/tables/:table/payment`                 | Table page, Payments      | `adminOrders`       |
+| `GET /admin/branches/:id/orders`                                 | Orders, Payments, kitchen | `adminOrders`       |
+| `POST /admin/branches/:id/orders/:id/rounds`                     | Order pad                 | `adminOrders`       |
+| `PATCH /admin/branches/:id/orders/:id/rounds/:r`                 | Order pad (change)        | `adminOrders`       |
+| `POST /admin/branches/:id/orders/:id/payment`                    | Orders, Payments          | `adminOrders`       |
+| `POST /admin/branches/:id/orders/:id/refund`                     | Payments                  | `adminOrders`       |
+| `POST /admin/branches/:id/orders/:id/cancel`                     | Orders                    | `adminOrders`       |
+| `PATCH /admin/branches/:id/orders/:id/rounds/:r/status`          | Kitchen board             | `kitchen`           |
+| `PATCH /admin/branches/:id/orders/:id/rounds/:r/items/:p/plated` | Kitchen board             | backend only        |
+| `PATCH /admin/branches/:id/orders/:id/rush`                      | Orders popup              | backend only        |
+| `POST /admin/branches/:id/orders/:id/messages`                   | Kitchen board             | backend only        |
+| `GET /admin/branches/:id/events` (SSE)                           | Admin shell, kitchen bar  | backend only        |
+| `GET`/`POST /admin/branches/:id/reservations`                    | Reservations              | `adminReservations` |
+| `PATCH /admin/branches/:id/reservations/:id[/status]`            | Reservations              | `adminReservations` |
+| `/admin/branches/:id/menu/...` (seven endpoints)                 | Menu, kitchen stock       | `adminMenu`         |
 
 The settings, floor layout and branch endpoints are listed in [settings.md](settings.md).
 

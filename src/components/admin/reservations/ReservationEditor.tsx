@@ -164,7 +164,7 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
               label={t('adminReservations.editor.phone')}
               rules={region.mobile}
               value={form.phone}
-              hint={t('adminReservations.editor.phoneHint')}
+              //hint={t('adminReservations.editor.phoneHint')}
               error={errors.phone && t(`adminReservations.editor.errors.${errors.phone}`)}
               showCountryCode={region.mobile.showDialCode}
               onChange={(phone) => set({ phone })}

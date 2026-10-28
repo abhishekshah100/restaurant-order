@@ -1,8 +1,8 @@
 # Testing
 
 How the tests are organised, how to run them, and how to write new ones, in particular tests that
-exercise the in-browser mock server. It also lists the known failing tests. Read it before adding
-a feature or touching a flow covered by end-to-end tests.
+exercise the in-browser mock server, and how to run the browser tests against the backend. Read
+it before adding a feature or touching a flow covered by end-to-end tests.
 
 ## Contents
 
@@ -12,6 +12,7 @@ a feature or touching a flow covered by end-to-end tests.
 - [Writing a mock-server test](#writing-a-mock-server-test)
 - [Testing hooks and components](#testing-hooks-and-components)
 - [End-to-end tests](#end-to-end-tests)
+- [End-to-end tests against the backend](#end-to-end-tests-against-the-backend)
 - [Known issues](#known-issues)
 - [Related](#related)
 
@@ -238,37 +239,55 @@ Guidelines:
 - Clear `localStorage` in `beforeEach` when a spec depends on a fresh device.
 - Select elements by role and accessible name. The names come from the content JSON, so a copy
   change can break a test; update both together.
+- Match order numbers with `/[A-Z]+-?\d+/`: the backend numbers them with the branch's prefix
+  (`UDY-001`), the mock `A001` up. Never hard-code one.
+- Fake clocks rely on the query client's microtask scheduler
+  ([data-and-api.md › Transport](data-and-api.md#transport)); without it, screens stalled after a
+  navigation under `installClock` / `fixClock`.
+
+## End-to-end tests against the backend
+
+The same specs run against `restaurant-backend` when the export is built with
+`NEXT_PUBLIC_BACKEND_URL`. `againstBackend` (`E2E_BACKEND=true`) in
+[`tests/e2e/helpers.ts`](../tests/e2e/helpers.ts) tells a spec which build it runs against;
+checks that need the mock's drawn history or its device storage are skipped there.
+
+1. **Database.** Use a database of its own, `olive_table_e2e`, and Redis database 14. Never
+   point the tests at the development database `olive_table`: they create orders, bookings and
+   settings. Reseed it (and flush Redis database 14) before each spec file, running one file at
+   a time with `--workers=1`: the backend keeps data from one test to the next, while the mock
+   starts each test afresh.
+2. **API.** Start the backend on port 4001 with `TEST_CLOCK=true` (adds `/v1/test/clock`, which
+   `installClock`, `fastForward` and `fixClock` drive, so the server's clock and `Date` header
+   follow the browser's) and `QR_TOKEN_REQUIRED=false` (the helpers open unsigned `?table=`
+   links). The helpers reach it at `E2E_BACKEND_URL` (default `http://localhost:4001/v1`).
+3. **Build and run:**
+
+   ```bash
+   NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:4001/v1 npm run build
+   E2E_BACKEND=true npx playwright test --reporter=list
+   ```
+
+   Pass `--reporter=list` so a failure does not wait on the HTML report server.
+
+4. **Stop the API server** when the run ends (by its PID); a server left running keeps the
+   output pipe open and the run never returns.
+
+Writing specs that pass on both builds:
+
+- Read order and booking numbers as they come (`/[A-Z]+-?\d+/`, `/R\d+/`) and use a table of
+  the spec's own, since earlier tests' data is still there.
+- Set times with the clock helpers, never `page.clock` alone, so the server agrees.
+
+Last recorded run against the backend (2026-10-28): 62 passed, 7 skipped, on both the desktop
+and mobile projects.
 
 ## Known issues
 
-These failures exist on `main` and are not caused by your change. Do not add to them, and fix
-them when you touch the area.
-
-### Unit: reservations booking days
-
-`tests/unit/reservations.test.ts`, test "offers three days in the branch calendar, a calendar to
-60 days ahead, and the day in the address", fails. At 12:30 AM branch time `bookingDays` returns
-two days (`2026-10-16`, `2026-10-17`) where the test expects three (up to `2026-10-18`). All other
-unit tests pass.
-
-### End-to-end: old default-branch name
-
-Since commit `4a4499a`, the default branch `blr-indiranagar` is shown as **Udyog Vihar**,
-**Gurgaon** (`shortName` and `city` in `public/api/branches.json`). The branch id did not change.
-About 16 end-to-end tests still look for the old names "Indiranagar" or "Bengaluru" and fail:
-
-- `adminSignIn(page, branch = 'Indiranagar')` in `tests/e2e/helpers.ts` clicks a branch button
-  that no longer exists, so every spec that signs in with the default fails at sign-in.
-- Specs that assert the old names directly: `admin-login.spec.ts` (the branch heading),
-  `admin-select-branch.spec.ts` (the "Indiranagar" card and "Bengaluru, India"),
-  `admin-branch-status.spec.ts` ("Indiranagar is open", "is paused until") and `modes.spec.ts`
-  ("Takeaway from Indiranagar", "Delivery from Indiranagar").
-
-The fix is to change the default in `adminSignIn` to `'Udyog Vihar'` and update those
-assertions. The remaining mentions of "Bengaluru" (in `admin-dashboard.spec.ts`,
-`admin-reservations.spec.ts`, `lifecycle.spec.ts`, `modes.spec.ts` and `promos.spec.ts`) are
-comments about clock times in the `Asia/Kolkata` time zone, which the branch still uses; they do
-not fail but should be reworded to avoid confusion.
+None known. All unit tests pass; the earlier failures (the reservations booking-days test, and
+specs still looking for the old default-branch names "Indiranagar" / "Bengaluru") are fixed:
+`adminSignIn` defaults to `'Udyog Vihar'`. Remaining mentions of "Bengaluru" in specs are
+comments about clock times in `Asia/Kolkata`.
 
 ## Related
 

@@ -361,7 +361,10 @@ masters test, but no screen or handler reads them yet:
 | -------------------- | ----- | ---------------------------------------- |
 | `MAX_QUANTITY`       | 20    | Highest quantity on one cart line        |
 | `SEARCH_DEBOUNCE_MS` | 250   | Debounce for search-as-you-type          |
-| `TOAST_MS`           | 5000  | How long toasts stay up                  |
+| `TOAST_MS`           | 2500  | How long a toast stays up                |
+| `ACTION_TOAST_MS`    | 3000  | A toast with an action (Undo)            |
+| `ERROR_TOAST_MS`     | 4000  | An error toast                           |
+| `TOAST_EXIT_MS`      | 180   | Fade-out of a dismissed toast            |
 | `ITEM_NOTE_MAX`      | 140   | Longest note on one dish                 |
 | `KITCHEN_NOTE_MAX`   | 120   | Longest kitchen note for the whole order |
 

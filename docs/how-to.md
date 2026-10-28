@@ -229,8 +229,8 @@ smallest example; this recipe follows how it was added. Replace `services` with 
 
 ## Add an API endpoint
 
-The contract is the source of truth: the app calls the endpoint through typed functions, and the
-mock server implements it until a backend does. Follow the reservations endpoints. The names
+The contract is the source of truth: the app calls the endpoint through typed functions;
+`restaurant-backend` serves it, and the mock server answers it in a mock-only build. Follow the reservations endpoints. The names
 below (`notes`, `NoteInput`) are placeholders.
 
 1. **Contract.** In [`src/api/contracts.ts`](../src/api/contracts.ts), add the request and
@@ -308,6 +308,13 @@ below (`notes`, `NoteInput`) are placeholders.
    [`tests/unit/reservationsServer.test.ts`](../tests/unit/reservationsServer.test.ts) does: sign
    in with `DEMO_ADMIN`, call the route, and assert statuses and bodies for the success and every
    documented error.
+
+9. **Backend route.** Once `restaurant-backend` serves it, add `[method, path]` to
+   `BACKEND_ROUTES` in [`src/api/backend.ts`](../src/api/backend.ts) so a backend build sends it
+   there; if the backend's answer differs from the contract's shape, adapt it per route in
+   [`src/api/backendAnswers.ts`](../src/api/backendAnswers.ts). If the change should reach other
+   staff screens at once, have the backend publish a branch event; `liveEvents.ts` invalidates
+   by event kind.
 
 Reference data that never changes at run time (a new JSON file under `public/api/`) needs no
 handler: requests the mock server does not route fall through to the static files.

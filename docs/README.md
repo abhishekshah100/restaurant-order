@@ -15,8 +15,9 @@ the reading path for your role.
   services, delivery zones, pickup, the floor plan, and the branches themselves.
 
 The app is a **static Next.js export** with no server of its own. Every read and write goes through
-a typed API layer. Until the backend exists, an **in-browser mock server** answers exactly as the
-backend contract specifies, so connecting the real API is a configuration change.
+a typed API layer. Built with `NEXT_PUBLIC_BACKEND_URL`, it talks to **`restaurant-backend`**
+(staff screens also follow the branch's live events); without it, an **in-browser mock server**
+answers exactly as the backend contract specifies.
 
 ```mermaid
 flowchart LR
@@ -27,7 +28,7 @@ flowchart LR
     Mock --> Storage[(Web Storage)]
   end
   Client -->|everything else| Static[Static JSON<br/>public/api]
-  Client -.->|NEXT_PUBLIC_API_MOCK=false| API[Real backend<br/>contract: src/api/contracts.ts]
+  Client -->|NEXT_PUBLIC_BACKEND_URL<br/>routes in src/api/backend.ts| API[restaurant-backend<br/>contract: src/api/contracts.ts]
 ```
 
 ## Reading path
@@ -51,7 +52,7 @@ Backend developers: [API contract](api-contract.md), then [Data and API](data-an
 | ---------------------------------------------- | -------------------------------------------------------------- |
 | [architecture.md](architecture.md)             | Stack, layers, folders, routes, state, responsive strategy     |
 | [conventions.md](conventions.md)               | Code style, CSS, copy rules, accessibility, definition of done |
-| [testing.md](testing.md)                       | Unit, mock-server and end-to-end tests; commands               |
+| [testing.md](testing.md)                       | Unit, mock-server and end-to-end tests (also against backend)  |
 | [guest-app.md](guest-app.md)                   | Guest journey, sessions, modes, pricing, checkout, tracking    |
 | [staff-app.md](staff-app.md)                   | Sign-in, admin shell and pages, kitchen workspace              |
 | [settings.md](settings.md)                     | Every Settings page and its rules                              |

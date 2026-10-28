@@ -24,8 +24,10 @@ Query hooks components use. The endpoint-by-endpoint contract for backend develo
 
 ## Overview
 
-All data goes through the API layer in [`src/api`](../src/api). There is no backend yet, so two
-sources stand in for it:
+All data goes through the API layer in [`src/api`](../src/api). Built with
+`NEXT_PUBLIC_BACKEND_URL`, every server-owned endpoint goes to `restaurant-backend` (see
+[Connecting restaurant-backend](#connecting-restaurant-backend-area-by-area)). Without it, two
+sources stand in for the backend:
 
 - **Reference data** (brand, branches, menus, promotions, floor plans, help topics, screen copy) is
   dummy JSON in [`public/api`](../public/api), served by the static site like real endpoints
@@ -151,6 +153,12 @@ try {
 The query client ([`src/api/queryClient.ts`](../src/api/queryClient.ts)) retries a failed query
 once, but never on a 4xx `ApiError`. Defaults: `staleTime` 60 s, no refetch on window focus unless
 a query opts in. The browser keeps one client for the life of the tab.
+
+In the browser, `getQueryClient` also sets `notifyManager.setScheduler(queueMicrotask)`: cache
+updates reach components in a microtask instead of one `setTimeout(0)` per flush. A page with
+every dish subscribed (the menu: each dish card reads the branch's queries) makes thousands of
+those flushes on load, and under Playwright's fake clock (`page.clock`) some were never run after
+a navigation, so screens never showed the answer. Keep it when changing the client.
 
 ## Configuration
 
@@ -542,14 +550,19 @@ be re-sent with the device's clock, so the backend's `startedAt`, `expiresAt`, `
 ([`serverClock.ts`](../src/api/serverClock.ts)); clocks within 5 s are left alone. The server
 still checks every session and code on its own clock.
 
-**Browser tests against the backend.** Build with `NEXT_PUBLIC_BACKEND_URL` and run
-`E2E_BACKEND=true npx playwright test`, against a database of their own, reset before each spec
-file (`againstBackend` in `tests/e2e/helpers.ts` says which build a spec runs against). Start
-the server with `TEST_CLOCK=true`: `installClock`, `fastForward` and `fixClock` set its clock to
-the browser's, and its `Date` header follows, so the two agree. The backend keeps a spec's data
-from one test to the next (the mock starts each test afresh), so tests read order and booking
-numbers as they come (`A\d+`) and use a table of their own. Checks that read the mock's drawn
-history or its device storage run on the mock only.
+**Live updates.** The staff shells keep the branch's events open
+(`GET /admin/branches/:branchId/events`, Server-Sent Events, read with `fetch` so the token goes
+in the `Authorization` header: [`liveEvents.ts`](../src/api/liveEvents.ts)). Each event
+invalidates the queries it touches (`orders` / `service` → `['admin', 'service', …]`, `menu` →
+the branch's menu, `resync` → both), and a reconnect reads everything again. While connected,
+the branch's pages poll only every 60 s ([`liveState.ts`](../src/api/liveState.ts) ›
+`liveRefresh`) instead of 15 s; when the stream drops, polling carries on and it reconnects
+after 3 s, doubling to 30 s. See [staff-app.md › Live updates and
+polling](staff-app.md#live-updates-and-polling).
+
+**Browser tests against the backend.** Build with `NEXT_PUBLIC_BACKEND_URL` and run with
+`E2E_BACKEND=true`; the setup (port, database, test clock) is in
+[testing.md › End-to-end tests against the backend](testing.md#end-to-end-tests-against-the-backend).
 
 **The mock** answers only in the mock-only build (no `NEXT_PUBLIC_BACKEND_URL`): with the
 backend set, every endpoint it served goes to the backend.

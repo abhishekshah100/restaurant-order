@@ -14,20 +14,25 @@ the known issues. Read this before planning new work.
 
 ## Delivery status
 
-The UI phase is complete for the guest app, the staff app, the kitchen and Settings. Everything
-runs against the in-browser mock server, which implements the backend contract.
+The UI phase is complete for the guest app, the staff app, the kitchen and Settings, and the app
+runs against `restaurant-backend`: every server-owned endpoint is in
+[`src/api/backend.ts`](../src/api/backend.ts). A build without `NEXT_PUBLIC_BACKEND_URL` still runs
+on the in-browser mock server.
 
-| Area                  | Status      | Documentation                                  |
-| --------------------- | ----------- | ---------------------------------------------- |
-| Guest app             | Done        | [guest-app.md](guest-app.md)                   |
-| Staff app (waiter)    | Done        | [staff-app.md](staff-app.md)                   |
-| Kitchen workspace     | Done        | [staff-app.md](staff-app.md#kitchen-workspace) |
-| Settings              | Done        | [settings.md](settings.md)                     |
-| Master values         | Done        | [masters-and-config.md](masters-and-config.md) |
-| Reports               | Not started | [Next up](#next-up)                            |
-| Admin dashboard       | Deferred    | [Planned later](#planned-later)                |
-| Roles and permissions | Deferred    | [Planned later](#planned-later)                |
-| Real backend          | Not started | [Before production](#before-production)        |
+| Area                  | Status      | Documentation                                                                 |
+| --------------------- | ----------- | ----------------------------------------------------------------------------- |
+| Guest app             | Done        | [guest-app.md](guest-app.md)                                                  |
+| Staff app (waiter)    | Done        | [staff-app.md](staff-app.md)                                                  |
+| Kitchen workspace     | Done        | [staff-app.md](staff-app.md#kitchen-workspace)                                |
+| Settings              | Done        | [settings.md](settings.md)                                                    |
+| Master values         | Done        | [masters-and-config.md](masters-and-config.md)                                |
+| Reports               | Not started | [Next up](#next-up)                                                           |
+| Admin dashboard       | Deferred    | [Planned later](#planned-later)                                               |
+| Roles and permissions | Deferred    | [Planned later](#planned-later)                                               |
+| Real backend          | Connected   | [data-and-api.md](data-and-api.md#connecting-restaurant-backend-area-by-area) |
+| Live updates (SSE)    | Done        | [staff-app.md](staff-app.md#live-updates-and-polling)                         |
+| Order history by date | Done        | [staff-app.md](staff-app.md#orders)                                           |
+| Kitchen hold and fire | Deferred    | [Planned later](#planned-later)                                               |
 
 Delivery history, by phase:
 
@@ -43,6 +48,21 @@ Delivery history, by phase:
 - **S1–S2:** Settings: branch details and region, opening hours, tax and service charge, payment
   methods, services, delivery zones, pickup, branches.
 - **Masters:** centralised master values in `src/config/masters`.
+- **Backend:** every area moved to `restaurant-backend` (sign-in, branches and settings, menu,
+  sessions and OTP, signed table links, pricing and promotions, orders, payments, requests,
+  floor views, bookings); orders adapted to the screens' shape (`orderAdapter`). Branch API as
+  data: `GET /branches` in brief, `GET /branches/:id/config` for the rules, times worded on screen.
+- **History:** orders by date (Orders and Payments From / To, `?from=&to=`, up to 90 days back
+  and 31 long); a table's Order history.
+- **India and Nepal billing:** per-branch order numbers (`UDY-001`, prefix and start in Settings ›
+  Branch details) and a daily token; the tax switch with GSTIN / PAN (with tax off the bill is a
+  "Bill of supply" in India, a "Bill" in Nepal); every charge listed on the cart and checkout bill;
+  redesigned printed bill; compact toasts and add-to-cart feedback in the cart bar.
+- **Kitchen phases 1–3:** Phase 1 (device only): Screen settings (station per screen, text size,
+  chime, waiting reminder, wake lock, auto-print), light / dark theme, allergy flag, large ticket,
+  KOT print, keyboard and bump bar, connection status. Phase 2: live updates over SSE, undo and
+  recall (`back`), plated ticks shared by every screen. Phase 3: rush orders, kitchen → waiter
+  messages, prep time per dish (a ticket is due when its slowest dish is done).
 
 ## Next up
 
@@ -72,43 +92,43 @@ mock handler that aggregates the mock's orders.
   exist as master values.
 - **Kitchen item rejection** with reasons, and **stock by unit of measurement**: master values
   exist, features do not.
+- **Kitchen Phase 4: hold and fire** (courses held until the waiter fires them). Planned with
+  phases 1–3, deferred.
+- **Menu prices including tax:** proposed for later; today menu prices exclude tax
+  (`tax.pricesIncludeTax: false`).
 
 ## Before production
 
-This is a front-end with a mock backend. Replace these before real guests use it:
+The backend serves every server-owned endpoint; these remain before real guests use it:
 
-| Mock today                                  | Replace with                                        |
-| ------------------------------------------- | --------------------------------------------------- |
-| The mock server in `src/api/mock`           | The real API behind `src/api/contracts.ts`          |
-| OTP is always `123456`                      | An SMS OTP service with server-side rate limiting   |
-| Payments via the mock `…/simulate` endpoint | The payment partner's checkout, webhooks            |
-| Order ids numbered per device               | Globally unique ids from the order API              |
-| The mock kitchen moves orders on by time    | Live status from the kitchen (polling, SSE or WS)   |
-| `?table=` trusted; `&qr=` token not checked | Signed, expiring table tokens checked by the server |
-| Demo staff account in `demoAdmin.ts`        | Real staff accounts and authentication              |
-| Placeholders in `branches.json`             | Real phone, address and payment partner details     |
-| `?status=` preview parameter                | Remove, or restrict to staff                        |
+| Today                                                 | Replace with                                                                |
+| ----------------------------------------------------- | --------------------------------------------------------------------------- |
+| OTP is a fixed code in development (`123456`)         | An SMS OTP service (the backend refuses to start in production without one) |
+| Payments via `POST /payments/:id/simulate`            | The payment partner's checkout and webhooks                                 |
+| Demo login (shown while `NEXT_PUBLIC_API_MOCK` is on) | Real staff accounts; no demo login                                          |
+| Placeholders in the seeded branches                   | Real phone, address and payment partner details                             |
+| `?status=` preview parameter                          | Remove, or restrict to staff                                                |
+| `GET /restaurant`, `/help`, `/content/*` static       | Fine as static files, or served by the backend                              |
 
-Switching the app to a real backend is a build-time change; see
-[data-and-api.md](data-and-api.md#switching-to-a-real-backend). Hosting requirements (security
-headers, caching) are in the root [README](../README.md#deploying).
+Hosting requirements (security headers, caching) are in the root
+[README](../README.md#deploying).
 
 ## Known issues
 
-- **Stale end-to-end tests (16).** The default branch `blr-indiranagar` was renamed in the data to
-  "Udyog Vihar", Gurgaon (commit `4a4499a`), but several specs and the `adminSignIn` helper in
-  `tests/e2e/helpers.ts` still look for "Indiranagar" / "Bengaluru". Affected: admin branch status,
-  floor plan, branch picker and order modes specs. Fix: update the expected names.
-- **One failing unit test.** `tests/unit/reservations.test.ts` › "offers three days in the branch
-  calendar…" expects three bookable days late at night and gets two. It predates Settings.
+- **The mock lags the backend.** A mock-only build numbers orders `A001` up without a token,
+  answers today's orders only (it ignores `?from=&to=`), and has no events, plated ticks, rush
+  or kitchen messages (those routes exist only on the backend).
 - **Contract comments lag the mock in places.** The JSDoc in `src/api/contracts.ts` does not list
   every error the mock returns: `POST /otp` (400 `invalid_request`, 409 `otp_not_sent`),
   `POST /sessions` (422 `area_not_served`, 409 `table_disabled`), and `ordering_unavailable` /
   `table_disabled` / `item_unavailable` on order, round, change and payment endpoints.
-  [api-contract.md](api-contract.md) documents what the mock actually enforces. `GET /payments/:id`
-  is referred to as the real replacement for `…/simulate` but is not specified yet.
+  [api-contract.md](api-contract.md) documents what is enforced. `GET /payments/:id` is referred
+  to as the real replacement for `…/simulate` but is not specified yet.
 - **Branch id vs name.** `blr-indiranagar` is still the id of the Gurgaon branch. Ids are permanent
   keys (stored orders, sessions); only the display name changed. Do not rename the id.
+- **Menu page notifications.** Every dish card subscribes to the branch's queries, so the menu
+  fires thousands of query notifications on load; batched by the microtask scheduler
+  (`api/queryClient`), but a candidate for a refactor.
 
 ## Defined but not yet used
 

@@ -100,7 +100,7 @@ function PaymentForm() {
           </span>
           <span className="t-small c2">{cartText.plural('itemCount', bill.itemCount)}</span>
         </div>
-        <PriceSummary bill={bill} totalLabel={t('payment.amountPayable')} tight collapsible />
+        <PriceSummary bill={bill} totalLabel={t('payment.amountPayable')} tight />
       </section>
 
       <PaymentMethods

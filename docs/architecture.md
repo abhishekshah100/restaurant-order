@@ -30,9 +30,11 @@ It has four areas, all in one Next.js project:
 - **Settings** (`/admin/dashboard/settings/*`): branch details, hours, tax, payments, services,
   pickup, delivery, floor plan and branches.
 
-There is no backend yet. The site is exported as static files, and every piece of data goes through
-an API layer that is answered either by dummy JSON files or by an in-browser mock server that
-implements the backend contract.
+The site is exported as static files, and every piece of data goes through an API layer. Built
+with `NEXT_PUBLIC_BACKEND_URL`, server-owned data comes from `restaurant-backend` (the routes in
+[`src/api/backend.ts`](../src/api/backend.ts)) and staff screens follow the branch's live events;
+the brand, help and screen copy stay dummy JSON files. Without it, an in-browser mock server
+answers the same contract.
 
 ```mermaid
 flowchart LR
@@ -43,14 +45,14 @@ flowchart LR
     WS[("Web Storage")]
   end
   STATIC[("Static files: out/ and out/api/*.json")]
-  BACKEND[("Real backend (future)")]
+  BACKEND[("restaurant-backend")]
 
   UI --> API
   API -- "mock on (default)" --> MOCK
   MOCK --> WS
   MOCK -- "reference data" --> STATIC
   API -- "requests the mock does not own" --> STATIC
-  API -. "NEXT_PUBLIC_API_MOCK=false" .-> BACKEND
+  API -- "NEXT_PUBLIC_BACKEND_URL: routes in backend.ts, SSE events" --> BACKEND
 ```
 
 ## Tech stack
@@ -73,9 +75,9 @@ Why a static export with no server:
 - [`next.config.ts`](../next.config.ts) sets `output: 'export'` and `trailingSlash: true`. Every
   route is prerendered at build time to `out/`, which any static host can serve (`npm start` serves
   it with `serve`).
-- The backend does not exist yet. Rather than block on it, the app talks to a typed contract
-  ([`src/api/contracts.ts`](../src/api/contracts.ts)). An in-browser mock server answers that
-  contract today; switching to the real backend is a build-time environment change, not a code
+- The app talks to a typed contract ([`src/api/contracts.ts`](../src/api/contracts.ts)).
+  `restaurant-backend` serves it; the in-browser mock server answers it in a build without
+  `NEXT_PUBLIC_BACKEND_URL`. Which one answers is a build-time environment change, not a code
   change.
 - Because there is no request-time server, nothing can depend on per-request rendering. Dynamic
   data (orders, sessions, live branch status) is read in the browser after hydration.
@@ -85,6 +87,7 @@ The API is configured with `NEXT_PUBLIC_*` variables read at build time
 
 | Variable                          | Default   | Purpose                                      |
 | --------------------------------- | --------- | -------------------------------------------- |
+| `NEXT_PUBLIC_BACKEND_URL`         | unset     | restaurant-backend (`…/v1`) for its routes   |
 | `NEXT_PUBLIC_API_BASE_URL`        | `/api`    | Base URL of the API                          |
 | `NEXT_PUBLIC_API_SUFFIX`          | `.json`   | Appended to every path; empty for a real API |
 | `NEXT_PUBLIC_API_MOCK`            | on        | `false` sends every request over HTTP        |
@@ -307,6 +310,8 @@ The app's own device state is listed in `STORAGE_KEYS`
 | `olive.just-placed.v1`    | session | The order id just placed (confirmation page)     |
 | `olive.addresses.v1`      | local   | Saved delivery addresses, per branch             |
 | `olive.status-preview.v1` | session | The `?status=` preview for this tab              |
+| `olive.kitchen-theme.v1`  | local   | The kitchen screen's theme: light or dark        |
+| `olive.kitchen-prefs.v1`  | local   | The kitchen screen's own settings (sound, size…) |
 
 Staff keys are in [`src/lib/adminAuth.ts`](../src/lib/adminAuth.ts): `olive.admin.session.v1`
 (the session from `POST /admin/sessions`) and `olive.admin.branch.v1` (the selected branch). The

@@ -89,8 +89,8 @@ test('order a dish and pay online', async ({ page }) => {
   await page.getByRole('button', { name: 'Prototype: success' }).filter({ visible: true }).click();
 
   // Confirmation
-  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=A105$/);
-  await expect(page.getByRole('heading', { name: 'Order #A105' })).toBeVisible();
+  await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
+  await expect(page.getByRole('heading', { name: /^Order #[A-Z]+-?\d+$/ })).toBeVisible();
   await expect(page.getByText('Paid online').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByText('Table 7').filter({ visible: true }).first()).toBeVisible();
 

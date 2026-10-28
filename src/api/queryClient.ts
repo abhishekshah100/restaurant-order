@@ -1,4 +1,10 @@
-import { MutationCache, QueryCache, QueryClient, isServer } from '@tanstack/react-query';
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  isServer,
+  notifyManager,
+} from '@tanstack/react-query';
 import { signOutAdmin } from '@/lib/adminAuth';
 import { ApiError, isApiError } from './client';
 
@@ -35,9 +41,15 @@ export function makeQueryClient() {
 
 let browserClient: QueryClient | undefined;
 
-/** A fresh client per server render; one client for the lifetime of the browser tab. */
+/**
+ * A fresh client per server render; one client for the lifetime of the browser tab. In the
+ * browser, cache updates reach components in a microtask rather than one setTimeout each: a
+ * page with every dish subscribed makes thousands of them on load, and a fake clock in the
+ * browser tests can leave them unrun (the page then never shows the answer).
+ */
 export function getQueryClient() {
   if (isServer) return makeQueryClient();
+  if (!browserClient) notifyManager.setScheduler(queueMicrotask);
   browserClient ??= makeQueryClient();
   return browserClient;
 }
