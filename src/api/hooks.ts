@@ -19,6 +19,7 @@ import type { AdminOrdersFilter, AdminSignInRequest, OrderLineRequest } from './
 import {
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
+  adminOffersQuery,
   branchConfigQuery,
   branchStatusQuery,
   branchMenuQuery,
@@ -255,6 +256,10 @@ export const useBranchOrders = (
 /** GET /admin/branches/:branchId/tables: every area with its tables; polled like the service. */
 export const useFloorPlan = (branchId: string | undefined) =>
   useQuery(floorPlanQuery(useAdminToken(), branchId));
+
+/** GET /admin/branches/:branchId/offers: the branch's automatic offers, paused ones too. */
+export const useAdminOffers = (branchId: string | undefined) =>
+  useQuery(adminOffersQuery(useAdminToken(), branchId));
 
 /** GET /admin/branches/:branchId/reservations: bookings from today on; polled like the floor. */
 export const useReservations = (branchId: string | undefined) =>

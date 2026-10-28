@@ -36,6 +36,11 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['POST', 'admin/branches/:branchId/menu/images'],
   // Pricing: promotions, and the quotes the cart and checkout ask for.
   ['GET', 'branches/:branchId/promotions'],
+  // Settings › Offers: staff manage the automatic offers.
+  ['GET', 'admin/branches/:branchId/offers'],
+  ['POST', 'admin/branches/:branchId/offers'],
+  ['PATCH', 'admin/branches/:branchId/offers/:offerId'],
+  ['DELETE', 'admin/branches/:branchId/offers/:offerId'],
   ['POST', 'promos/validate'],
   ['POST', 'delivery/quote'],
   // Guests' visits, their one-time codes, and the signed table QR links staff print.

@@ -14,7 +14,6 @@ const branches = testBranches();
 const cart = readApiJson<ContentMap['cart']>('content/cart');
 const checkout = readApiJson<ContentMap['checkout']>('content/checkout');
 const service = readApiJson<ContentMap['service']>('content/service');
-const menuText = readApiJson<ContentMap['menu']>('content/menu');
 const common = createTranslator(readApiJson<ContentMap['common']>('content/common'));
 const checkoutText = createTranslator(checkout);
 
@@ -78,7 +77,8 @@ describe('GET /branches', () => {
       }
       for (const offer of offers) {
         expect(cart.priceSummary.offers).toHaveProperty(offer.labelKey);
-        expect(menuText.offers).toHaveProperty(offer.labelKey);
+        expect(offer.name.trim()).not.toBe('');
+        expect(offer.modes.every((m) => b.modes[m].enabled)).toBe(true);
         for (const id of offer.scope.categories ?? []) expect(menu.getCategory(id)).toBeDefined();
         for (const slug of offer.scope.dishes ?? []) expect(menu.getDish(slug)).toBeDefined();
         expect(offer.from).toMatch(/^\d{2}:\d{2}$/);

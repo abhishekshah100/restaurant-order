@@ -35,11 +35,10 @@ export function OfferPrice({ dish, price }: OfferProps) {
 /** The offer's badge ("Happy hour") on a dish it covers, while it's on; nothing otherwise. */
 export function OfferBadge({ dish, price, className }: OfferProps & { className?: string }) {
   const offer = useDishOffer(dish, price);
-  const t = useContent('menu');
   if (!offer) return null;
   return (
     <Tag variant="ok" icon="tag" className={className}>
-      {t(`offers.${offer.offer.labelKey}.badge`)}
+      {offer.offer.name}
     </Tag>
   );
 }

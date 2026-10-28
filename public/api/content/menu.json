@@ -176,10 +176,9 @@
     "body": "This branch doesn't serve it. Have a look at what's cooking today."
   },
   "offers": {
-    "happyHour": {
-      "badge": "Happy hour",
-      "banner": "<b>Happy hour</b> · {discount} off drinks till {time}",
-      "link": "See drinks"
-    }
+    "banner": "<b>{name}</b> · {discount} off {what} till {time}",
+    "bannerPrice": "<b>{name}</b> · {what} at {price} till {time}",
+    "selected": "selected dishes",
+    "link": "See {category}"
   }
 }

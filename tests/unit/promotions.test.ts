@@ -104,8 +104,16 @@ describe('happy-hour window in the branch time zone', () => {
   it('reads the weekday in the branch time zone, not UTC', () => {
     // Friday 18:20 UTC is Friday 11:50 PM in Bengaluru, Saturday 12:05 AM in Kathmandu.
     const instant = at('2026-10-02T18:20:00Z');
-    expect(localWeekTime(instant, KOLKATA)).toEqual({ day: 'fri', minutes: 23 * 60 + 50 });
-    expect(localWeekTime(instant, KATHMANDU)).toEqual({ day: 'sat', minutes: 5 });
+    expect(localWeekTime(instant, KOLKATA)).toEqual({
+      day: 'fri',
+      minutes: 23 * 60 + 50,
+      date: '2026-10-02',
+    });
+    expect(localWeekTime(instant, KATHMANDU)).toEqual({
+      day: 'sat',
+      minutes: 5,
+      date: '2026-10-03',
+    });
     const saturdayMorning = { days: ['sat' as const], from: '00:00', to: '01:00' };
     expect(isOfferActive(saturdayMorning, instant, KOLKATA)).toBe(false);
     expect(isOfferActive(saturdayMorning, instant, KATHMANDU)).toBe(true);
@@ -171,7 +179,13 @@ describe('offer prices', () => {
     );
     expect(lines.map((l) => l.offer?.discount)).toEqual([72, undefined, 20]);
     expect(offerDiscounts(lines, 100)).toEqual([
-      { kind: 'offer', id: 'happy-hour', labelKey: 'happyHour', amountMinor: 9200 },
+      {
+        kind: 'offer',
+        id: 'happy-hour',
+        labelKey: 'happyHour',
+        name: 'Happy hour',
+        amountMinor: 9200,
+      },
     ]);
     expect(applyOffers(lines, menu, [])).toEqual(lines.map(({ offer: _o, ...l }) => l));
   });
@@ -252,7 +266,13 @@ describe('promo codes', () => {
       [happyHour],
     );
     expect(discountsFor(lines, welcome10, 100)).toEqual([
-      { kind: 'offer', id: 'happy-hour', labelKey: 'happyHour', amountMinor: 7200 },
+      {
+        kind: 'offer',
+        id: 'happy-hour',
+        labelKey: 'happyHour',
+        name: 'Happy hour',
+        amountMinor: 7200,
+      },
       { kind: 'code', code: 'WELCOME10', amountMinor: 5850 },
     ]);
     expect(discountsFor(lines.slice(1), flat50, 100)).toEqual([]);
@@ -295,7 +315,13 @@ describe('tax after discount', () => {
       india,
       undefined,
       [
-        { kind: 'offer', id: 'happy-hour', labelKey: 'happyHour', amountMinor: 7200 },
+        {
+          kind: 'offer',
+          id: 'happy-hour',
+          labelKey: 'happyHour',
+          name: 'Happy hour',
+          amountMinor: 7200,
+        },
         code(welcome10, 5850),
       ],
     );

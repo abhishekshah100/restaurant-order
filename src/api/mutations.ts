@@ -12,6 +12,7 @@ import type { Order } from '@/types/order';
 import type {
   AddRoundRequest,
   CancelByStaffRequest,
+  OfferRequest,
   CancelOrderRequest,
   ChangeOrderRequest,
   CollectPaymentRequest,
@@ -42,6 +43,7 @@ import { ApiError, isApiError } from './client';
 import {
   branchMenuQuery,
   branchOrdersQuery,
+  branchPromotionsQuery,
   branchServiceQuery,
   branchesQuery,
   branchSettingsQuery,
@@ -802,5 +804,36 @@ export function useRemoveBranch() {
   return useMutation({
     mutationFn: (branchId: string) => api.removeBranch(requireToken(token), branchId),
     onSettled: () => refreshBranches(client),
+  });
+}
+
+/** Offers changed: Settings › Offers lists them again, and the menu's prices follow. */
+const refreshOffers = (client: QueryClient, branchId: string) =>
+  Promise.all([
+    client.invalidateQueries({ queryKey: ['admin', 'offers', branchId] }),
+    client.invalidateQueries({ queryKey: branchPromotionsQuery(branchId).queryKey }),
+  ]);
+
+/** POST or PATCH …/offers: a new automatic offer, or one replaced in full. */
+export function useSaveOffer() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id, body }: { branchId: string; id?: string; body: OfferRequest }) =>
+      id
+        ? api.updateOffer(requireToken(token), branchId, id, body)
+        : api.createOffer(requireToken(token), branchId, body),
+    onSettled: (_data, _error, { branchId }) => refreshOffers(client, branchId),
+  });
+}
+
+/** DELETE …/offers/:offerId. */
+export function useRemoveOffer() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id }: { branchId: string; id: string }) =>
+      api.removeOffer(requireToken(token), branchId, id),
+    onSettled: (_data, _error, { branchId }) => refreshOffers(client, branchId),
   });
 }

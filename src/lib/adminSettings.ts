@@ -14,6 +14,7 @@ export type SettingsSectionId =
   | 'floorPlan'
   | 'tax'
   | 'payments'
+  | 'offers'
   | 'services'
   | 'delivery'
   | 'pickup'
@@ -44,6 +45,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
     sections: [
       { id: 'tax', href: settingsPath('tax'), icon: 'receipt' },
       { id: 'payments', href: settingsPath('payments'), icon: 'card' },
+      { id: 'offers', href: settingsPath('offers'), icon: 'tag' },
     ],
   },
   {

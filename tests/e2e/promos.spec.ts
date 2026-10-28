@@ -137,7 +137,7 @@ test('happy hour: drinks at 20% off inside the window (India, branch time)', asy
   await installClock(page, HAPPY_HOUR);
   await scan(page, 'table=12');
   await page.goto('/menu/');
-  await expect(text(page, /20% off drinks till 7:00 PM/)).toBeVisible();
+  await expect(text(page, /20% off Beverages till 7:00 PM/)).toBeVisible();
 
   await addDish(page, 'beverages', 'Cold Coffee');
   // ₹179 − 20% (₹36, to the rupee) = ₹143.

@@ -80,14 +80,14 @@ export async function prefetchGuestData(client: QueryClient): Promise<void> {
   const { id: branchId } = resolveBranch(branches, restaurant.defaultBranchId);
   await Promise.all([
     // Built into the page as already out of date: staff change the menu during service (sold
-    // out, back on), so the browser reads the live one once the page opens.
+    // out, back on) and the offers in Settings › Offers, so the browser reads the live ones once
+    // the page opens.
     readMenu(branchId).then((menu) =>
       client.setQueryData(branchMenuQuery(branchId).queryKey, menu, { updatedAt: 0 }),
     ),
-    client.prefetchQuery({
-      ...branchPromotionsQuery(branchId),
-      queryFn: () => readApiFile<BranchPromotions>(`branches/${branchId}/promotions`),
-    }),
+    readApiFile<BranchPromotions>(`branches/${branchId}/promotions`).then((promotions) =>
+      client.setQueryData(branchPromotionsQuery(branchId).queryKey, promotions, { updatedAt: 0 }),
+    ),
   ]);
 }
 

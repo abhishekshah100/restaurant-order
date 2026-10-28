@@ -348,6 +348,13 @@ export const reservationsQuery = (token: string | null, branchId: string | undef
     refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
   });
 
+/** GET /admin/branches/:branchId/offers: every automatic offer, to manage (Settings › Offers). */
+export const adminOffersQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'offers', branchId, token] as const,
+    queryFn: token && branchId ? () => api.offers(token, branchId) : skipToken,
+  });
+
 /** GET /admin/branches/:branchId/floors: the floor plan to edit; it changes rarely. */
 export const floorLayoutQuery = (token: string | null, branchId: string | undefined) =>
   queryOptions({

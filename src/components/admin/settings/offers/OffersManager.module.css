@@ -1,0 +1,304 @@
+/* Settings › Offers: a card per offer (paused ones faded) and the offer dialog. */
+
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.headText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.offer {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.offer[data-paused] {
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.offer[data-paused] .icon {
+  background: var(--line);
+  color: var(--ink-3);
+}
+
+.icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+}
+
+.text {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.name {
+  font: var(--font-h3);
+}
+
+.meta {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.detail {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .offer {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .actions {
+    grid-column: auto;
+  }
+}
+
+.remove {
+  color: var(--error);
+}
+
+/* ---------- The dialogs ---------- */
+
+@media (min-width: 1024px) {
+  .dialog {
+    width: min(620px, calc(100vw - 48px));
+  }
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.row {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 560px) {
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: 8px;
+  font: var(--font-label);
+}
+
+.subLegend {
+  margin-top: 4px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.hint {
+  display: block;
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.error {
+  color: var(--error);
+  font: var(--font-small-strong);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.switchRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.switch {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  flex: none;
+  accent-color: var(--brand-600);
+}
+
+.switchLabel {
+  display: block;
+  font: var(--font-label);
+}
+
+.picked {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.pickedDish {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--brand-600);
+  border-radius: var(--r-pill);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+}
+
+/* Scrolled into view clear of the dialog's sticky footer (the Add offer button). */
+.matchArea {
+  scroll-margin-bottom: 96px;
+}
+
+.matches {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+  list-style: none;
+}
+
+.matches > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.match {
+  min-height: 52px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+@media (hover: hover) {
+  .match:hover {
+    background: var(--brand-tint-2);
+  }
+}
+
+.match:focus-visible {
+  outline: 2px solid var(--brand-600);
+  outline-offset: -2px;
+}
+
+.matchText {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.matchName {
+  overflow: hidden;
+  font: var(--font-label);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.matchCategory {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.matchPrice {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.matchAdd {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-600);
+  color: var(--on-dark);
+}
+
+.noMatch {
+  padding: 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.footer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.danger {
+  background: var(--error);
+  border-color: var(--error);
+}

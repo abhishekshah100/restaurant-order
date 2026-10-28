@@ -20,6 +20,7 @@ type AdminPage =
   | 'openingHours'
   | 'tax'
   | 'paymentMethods'
+  | 'offers'
   | 'deliveryZones'
   | 'pickup'
   | 'branches'

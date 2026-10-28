@@ -2,6 +2,7 @@
 
 import { useMemo, useSyncExternalStore } from 'react';
 import { useBranch, useMenu, useMenuIfNeeded, usePromotions } from '@/api/hooks';
+import { useVisit } from '@/context/GuestSessionContext';
 import { activeOffers, applyOffers, bestOffer, offerDiscounts } from '@/lib/promotions';
 import type { CartLine } from '@/types/cart';
 import type { Dish, Price } from '@/types/menu';
@@ -46,14 +47,18 @@ export function useMinute(): number | null {
   return useSyncExternalStore(subscribe, currentMinute, () => null);
 }
 
-/** The active branch's automatic offers that are on now (branch time); none before hydration. */
+/**
+ * The active branch's automatic offers that are on now (branch time) for how the guest is
+ * ordering (an offer can be dine-in only); none before hydration.
+ */
 export function useActiveOffers(): AutoOffer[] {
   const { offers } = usePromotions();
   const { timezone } = useBranch();
+  const { mode } = useVisit();
   const minute = useMinute();
   return useMemo(
-    () => (minute === null ? [] : activeOffers(offers, new Date(minute), timezone)),
-    [offers, timezone, minute],
+    () => (minute === null ? [] : activeOffers(offers, new Date(minute), timezone, mode)),
+    [offers, timezone, mode, minute],
   );
 }
 

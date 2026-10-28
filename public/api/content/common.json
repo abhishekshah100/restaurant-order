@@ -266,7 +266,8 @@
       "deliveryZones": "Delivery zones · Settings · Admin",
       "pickup": "Pickup · Settings · Admin",
       "branches": "Branches · Settings · Admin",
-      "services": "Services · Settings · Admin"
+      "services": "Services · Settings · Admin",
+      "offers": "Offers · Settings · Admin"
     },
     "loading": "Loading your workspace",
     "descriptor": "Admin",
@@ -1555,6 +1556,10 @@
         "description": "How guests pay at checkout, on their bill, for takeaway and delivery.",
         "summary": "{count} at checkout · {bill} on the bill"
       },
+      "offers": {
+        "title": "Offers",
+        "description": "Happy hours and other automatic discounts: when they run, on what, and how much."
+      },
       "delivery": {
         "title": "Delivery zones",
         "description": "Where you deliver, the fee, free delivery and minimum order per zone.",
@@ -2081,6 +2086,104 @@
       "stateOn": "on",
       "stateOff": "off",
       "openServices": "Open Services"
+    },
+    "offers": {
+      "subtitle": "Automatic discounts guests get without a code, such as happy hour. Each runs on its days and hours (branch time), within its dates if you set them, for the ways of ordering you choose. Prices on the menu, in the cart and on the bill follow at once.",
+      "add": "Add offer",
+      "loading": "Loading offers",
+      "failed": "Couldn't load the offers.",
+      "retry": "Try again",
+      "empty": "No offers yet. Add one, such as a happy hour on drinks.",
+      "standing": {
+        "live": "On now",
+        "paused": "Paused",
+        "upcoming": "Starts {date}",
+        "ended": "Ended {date}",
+        "scheduled": "Active"
+      },
+      "when": "{days} · {from} – {to}",
+      "every": "Every day",
+      "weekdays": "Weekdays",
+      "weekends": "Weekends",
+      "dates": "{from} – {to}",
+      "from": "From {date}",
+      "until": "Until {date}",
+      "discount": {
+        "percent": "{value}% off",
+        "flat": "{amount} off each",
+        "priceOverride": "{amount} each"
+      },
+      "covers": "On {what}",
+      "selected": {
+        "one": "{count} dish",
+        "other": "{count} dishes"
+      },
+      "pause": "Pause {name}",
+      "resume": "Switch {name} on",
+      "edit": "Edit",
+      "remove": "Remove {name}",
+      "paused": "{name} paused: it no longer applies",
+      "resumed": "{name} is on",
+      "saved": "{name} saved",
+      "added": "{name} added",
+      "removed": "{name} removed",
+      "saveFailed": "Couldn't save the offer. Try again.",
+      "scopeUnknown": "Some dishes or categories are no longer on the menu. Check what it covers.",
+      "removeTitle": "Remove {name}?",
+      "removeBody": "Guests stop getting it at once. Orders that already had it keep it on their bills.",
+      "removeConfirm": "Remove offer",
+      "cancel": "Cancel",
+      "dialog": {
+        "addTitle": "Add offer",
+        "editTitle": "Edit {name}",
+        "description": "Times and dates are the branch's local time.",
+        "name": "Name",
+        "namePlaceholder": "e.g. Happy hour",
+        "nameHint": "Guests see it on the menu and the bill.",
+        "active": "Switched on",
+        "activeHint": "Paused offers stay here but never apply.",
+        "days": "Days",
+        "from": "From",
+        "to": "Until",
+        "timeHint": "Ends before it starts? It runs past midnight.",
+        "startsOn": "First day",
+        "endsOn": "Last day",
+        "datesHint": "Optional. Leave empty to run with no end.",
+        "modes": "Applies to",
+        "discount": "Discount",
+        "types": {
+          "percent": "% off",
+          "flat": "Amount off",
+          "priceOverride": "Fixed price"
+        },
+        "value": {
+          "percent": "Percent off each item",
+          "flat": "Off each item ({symbol})",
+          "priceOverride": "Each item costs ({symbol})"
+        },
+        "covers": "What it covers",
+        "coversHint": "Whole categories, single dishes, or both.",
+        "categories": "Categories",
+        "addDish": "Add a single dish",
+        "removeDish": "Remove {dish}",
+        "save": "Save offer",
+        "addSubmit": "Add offer",
+        "dishSearchPlaceholder": "Type a dish name, e.g. lassi",
+        "matches": "Matching dishes",
+        "noMatches": "No dish matches. Dishes in a picked category are already covered."
+      },
+      "errors": {
+        "name": "Give it a name (up to 40 characters).",
+        "days": "Pick at least one day.",
+        "sameTime": "It can't end when it starts.",
+        "dates": "The last day can't be before the first.",
+        "modes": "Pick at least one way of ordering.",
+        "scope": "Pick at least one category or dish.",
+        "value": "Enter an amount above 0.",
+        "percent": "A percentage can't be over 100."
+      },
+      "pauseShort": "Pause",
+      "resumeShort": "Switch on"
     }
   },
   "masters": {

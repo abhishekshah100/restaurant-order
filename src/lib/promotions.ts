@@ -17,8 +17,11 @@ const WEEKDAYS: readonly Weekday[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 
 
 const localFormats = new Map<string, Intl.DateTimeFormat>();
 
-/** The weekday and minutes past midnight of `at` in a time zone. */
-export function localWeekTime(at: Date, timeZone: string): { day: Weekday; minutes: number } {
+/** The weekday, minutes past midnight and calendar day ("2026-11-01") of `at` in a time zone. */
+export function localWeekTime(
+  at: Date,
+  timeZone: string,
+): { day: Weekday; minutes: number; date: string } {
   let format = localFormats.get(timeZone);
   if (!format) {
     format = new Intl.DateTimeFormat('en-US', {
@@ -27,12 +30,16 @@ export function localWeekTime(at: Date, timeZone: string): { day: Weekday; minut
       hour: '2-digit',
       minute: '2-digit',
       hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     });
     localFormats.set(timeZone, format);
   }
   const parts = Object.fromEntries(format.formatToParts(at).map((p) => [p.type, p.value]));
   const day = WEEKDAYS.find((d) => d === parts.weekday.slice(0, 3).toLowerCase()) ?? 'sun';
-  return { day, minutes: Number(parts.hour) * 60 + Number(parts.minute) };
+  const date = `${parts.year}-${parts.month}-${parts.day}`;
+  return { day, minutes: Number(parts.hour) * 60 + Number(parts.minute), date };
 }
 
 /** "16:30" → 990. */
@@ -43,29 +50,46 @@ const toMinutes = (time: string) => {
 
 const dayBefore = (day: Weekday) => WEEKDAYS[(WEEKDAYS.indexOf(day) + 6) % 7];
 
+/** The calendar day before "2026-11-01". */
+const previousDate = (date: string) =>
+  new Date(Date.parse(`${date}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+
+/** Whether a calendar day is inside the offer's dates (none set: no limit). */
+const withinDates = (offer: Pick<AutoOffer, 'startsOn' | 'endsOn'>, date: string) =>
+  (!offer.startsOn || date >= offer.startsOn) && (!offer.endsOn || date <= offer.endsOn);
+
 /**
- * Whether an offer is on at `at`, in the branch's time zone: on one of its days, from `from`
- * up to (not including) `to`. A window that ends at or before it starts runs past midnight, so
- * it belongs to the day it started on.
+ * Whether an offer is on at `at`, in the branch's time zone: switched on, on one of its days and
+ * inside its dates, from `from` up to (not including) `to`. A window that ends at or before it
+ * starts runs past midnight, so it belongs to the day it started on (that day's dates count).
  */
 export function isOfferActive(
-  offer: Pick<AutoOffer, 'days' | 'from' | 'to'>,
+  offer: Pick<AutoOffer, 'days' | 'from' | 'to'> &
+    Partial<Pick<AutoOffer, 'active' | 'startsOn' | 'endsOn'>>,
   at: Date,
   timeZone: string,
 ): boolean {
-  const { day, minutes } = localWeekTime(at, timeZone);
+  if (offer.active === false) return false;
+  const { day, minutes, date } = localWeekTime(at, timeZone);
   const from = toMinutes(offer.from);
   const to = toMinutes(offer.to);
-  if (from < to) return offer.days.includes(day) && minutes >= from && minutes < to;
-  return (
-    (offer.days.includes(day) && minutes >= from) ||
-    (offer.days.includes(dayBefore(day)) && minutes < to)
-  );
+  const startedToday = offer.days.includes(day) && withinDates(offer, date);
+  if (from < to) return startedToday && minutes >= from && minutes < to;
+  const startedYesterday =
+    offer.days.includes(dayBefore(day)) && withinDates(offer, previousDate(date));
+  return (startedToday && minutes >= from) || (startedYesterday && minutes < to);
 }
 
-/** The offers that are on at `at` (branch time). */
-export const activeOffers = (offers: readonly AutoOffer[], at: Date, timeZone: string) =>
-  offers.filter((o) => isOfferActive(o, at, timeZone));
+/** The offers that are on at `at` (branch time), for a way of ordering when it's known. */
+export const activeOffers = (
+  offers: readonly AutoOffer[],
+  at: Date,
+  timeZone: string,
+  mode?: OrderMode,
+) =>
+  offers.filter(
+    (o) => isOfferActive(o, at, timeZone) && (!mode || !o.modes || o.modes.includes(mode)),
+  );
 
 /** Whether an offer covers a dish (its category, or the dish itself). */
 export const offerCovers = (
@@ -128,7 +152,12 @@ export function applyOffers<L extends OfferLine>(
     const { offer, unitDiscount } = found;
     return {
       ...line,
-      offer: { id: offer.id, labelKey: offer.labelKey, discount: unitDiscount * line.quantity },
+      offer: {
+        id: offer.id,
+        labelKey: offer.labelKey,
+        name: offer.name,
+        discount: unitDiscount * line.quantity,
+      },
     };
   });
 }
@@ -144,7 +173,15 @@ export function offerDiscounts(
     const amountMinor = Math.round(offer.discount * minorUnit);
     const seen = byId.get(offer.id);
     if (seen) seen.amountMinor += amountMinor;
-    else byId.set(offer.id, { kind: 'offer', id: offer.id, labelKey: offer.labelKey, amountMinor });
+    else {
+      byId.set(offer.id, {
+        kind: 'offer',
+        id: offer.id,
+        labelKey: offer.labelKey,
+        name: offer.name,
+        amountMinor,
+      });
+    }
   }
   return [...byId.values()];
 }

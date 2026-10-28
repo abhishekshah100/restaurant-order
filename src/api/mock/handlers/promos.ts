@@ -52,3 +52,13 @@ export const branchPromotions: Handler = async (ctx, { params }) => {
   if (!branch) fail(404, 'not_found');
   return ok(await ctx.seed.promotions(branch.id));
 };
+
+/**
+ * GET /admin/branches/:branchId/offers: the seed's offers, read only. Adding, changing and
+ * removing offers needs the backend (the mock has no store for them).
+ */
+export const adminOffers: Handler = async (ctx, { params }) => {
+  const branch = (await ctx.seed.branches()).find((b) => b.id === params.branchId);
+  if (!branch) fail(404, 'not_found');
+  return ok((await ctx.seed.promotions(branch.id)).offers);
+};

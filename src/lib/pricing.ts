@@ -1,6 +1,5 @@
 import type { BillLineKey, Branch, TaxConfig } from '@/types/branch';
 import type { Price } from '@/types/menu';
-import type { OfferLabelKey } from '@/types/promotion';
 
 interface PriceLine {
   unitPrice: Price;
@@ -20,7 +19,7 @@ export interface BillLine {
 
 /** A discount on the bill, in minor units: an automatic offer (happy hour) or a promo code. */
 export type BillDiscount =
-  | { kind: 'offer'; id: string; labelKey: OfferLabelKey; amountMinor: number }
+  | { kind: 'offer'; id: string; labelKey: string; name?: string; amountMinor: number }
   | { kind: 'code'; code: string; amountMinor: number };
 
 /** Bill breakdown, worked out from the branch's tax rules (GET /branches › tax). */

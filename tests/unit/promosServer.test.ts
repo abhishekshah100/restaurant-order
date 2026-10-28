@@ -217,7 +217,12 @@ describe('happy hour on the server', () => {
     now = HAPPY_HOUR;
     const session = await guest();
     const order = (await place(session, drinks())).body as Order;
-    expect(order.items[0].offer).toEqual({ id: 'happy-hour', labelKey: 'happyHour', discount: 72 });
+    expect(order.items[0].offer).toEqual({
+      id: 'happy-hour',
+      labelKey: 'happyHour',
+      name: 'Happy hour',
+      discount: 72,
+    });
     expect(order.items[1].offer).toBeUndefined();
     // ₹657 − ₹72 = ₹585 + GST ₹29.25 = ₹614.25 → ₹614.
     expect(order).toMatchObject({
@@ -239,7 +244,7 @@ describe('happy hour on the server', () => {
     const nepal = await guest('ktm-thamel', { mode: 'dineIn', table: 5 });
     const coffee = lines('ktm-thamel', ['cold-coffee', 1]);
     expect(((await place(nepal, coffee)).body as Order).discounts).toEqual([
-      { kind: 'offer', id: 'happy-hour', labelKey: 'happyHour', amount: 57 },
+      { kind: 'offer', id: 'happy-hour', labelKey: 'happyHour', name: 'Happy hour', amount: 57 },
     ]);
     const india = await guest();
     expect(

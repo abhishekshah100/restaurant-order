@@ -13,13 +13,18 @@
   "offers": [
     {
       "id": "happy-hour",
+      "name": "Happy hour",
+      "active": true,
       "days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
       "from": "16:00",
       "to": "19:00",
-      "scope": { "categories": ["beverages"] },
+      "scope": {
+        "categories": ["beverages"]
+      },
       "type": "percent",
       "value": 20,
-      "labelKey": "happyHour"
+      "labelKey": "happyHour",
+      "modes": ["dineIn", "takeaway", "delivery"]
     }
   ]
 }

@@ -36,6 +36,19 @@ export interface PriceSummaryProps {
 export type BillRow = [label: string, value: string, saving?: boolean];
 
 /**
+ * An offer's name on a bill: its own ("Happy hour", "Weekend brunch"), or for orders from before
+ * offers had names, the wording its content key had.
+ */
+export function offerLabel(
+  offer: { name?: string; labelKey: string },
+  t: Translator<ContentMap['cart']>,
+): string {
+  if (offer.name) return offer.name;
+  const words: Record<string, string> = t.get('priceSummary.offers');
+  return words[offer.labelKey] ?? offer.labelKey;
+}
+
+/**
  * A bill's lines above its total, labelled from content (cart › priceSummary) by the keys in
  * the branch's tax rules: the items, discounts, delivery fee, service charge, taxes, round off.
  * A charge the bill doesn't have isn't listed.
@@ -74,9 +87,7 @@ export function billRows(
     ],
     // Discounts come straight off the items: "Happy hour −₹40.00", "Promo WELCOME10 −₹100.00".
     ...bill.discounts.map((d): BillRow => [
-      d.kind === 'offer'
-        ? t(`priceSummary.offers.${d.labelKey}`)
-        : t('priceSummary.promoCode', { code: d.code }),
+      d.kind === 'offer' ? offerLabel(d, t) : t('priceSummary.promoCode', { code: d.code }),
       money.formatMinor(-d.amountMinor),
       true,
     ]),

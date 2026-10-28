@@ -37,6 +37,7 @@ Routes are under `/admin/dashboard/settings/`; components under
 | Branch     | Floor plan           | `floor-plan/` | `floorPlan/FloorPlanEditor`     | `PATCH .../floors` |
 | Money      | Tax & service charge | `tax/`        | `tax/TaxEditor`                 | `tax`              |
 | Money      | Payment methods      | `payments/`   | `payments/PaymentMethodsEditor` | `payments`         |
+| Money      | Offers               | `offers/`     | `offers/OffersManager`          | `.../offers`       |
 | Ordering   | Services             | `services/`   | `services/ServicesEditor`       | `services`         |
 | Ordering   | Delivery zones       | `delivery/`   | `delivery/DeliveryZonesEditor`  | `delivery`         |
 | Ordering   | Pickup               | `pickup/`     | `pickup/PickupEditor`           | `pickup`           |
@@ -337,6 +338,27 @@ Rules:
 - The available methods are the region's (`paymentChoicesFor(country)`, returned as
   `choices.payments`), so labels always match the country.
 
+## Offers
+
+Purpose: automatic discounts guests get without a code, such as happy hour.
+
+- **Route:** `/admin/dashboard/settings/offers/`.
+- **Components:** [`OffersManager`](../src/components/admin/settings/offers/OffersManager.tsx)
+  (the list) and `OfferDialog` (add and edit). Logic in
+  [`src/lib/adminOffers.ts`](../src/lib/adminOffers.ts): the form (`draftOf`, `offerErrors`,
+  `offerRequest`) and where an offer stands now (`offerStanding`: On now, Active, Starts …,
+  Ended …, Paused).
+- **Endpoints:** `GET`, `POST /admin/branches/:branchId/offers`, `PATCH` and `DELETE …/offers/:offerId`
+  (`OfferRequest` in `src/api/contracts.ts`). The mock only lists the seed's offers; saving needs
+  the backend.
+
+Each offer has a name (shown to guests on the menu badge, banner and bill), switched on or paused,
+its days, a from–until time (branch time; ending before it starts runs past midnight), optional
+first and last day, the ways of ordering it applies to, what it covers (whole categories and/or
+single dishes) and the discount: a percentage off, an amount off each item, or a fixed price
+each. Each card has Pause / Switch on, Edit and Remove. Saving refreshes the guest promotions, so
+menu prices follow at once; orders keep the offer's name as it was.
+
 ## Services
 
 Purpose: which ways of ordering the branch offers.
@@ -425,6 +447,10 @@ does not manage. Shapes are in [api-contract.md](api-contract.md) and
 | `PATCH /admin/branches/:branchId/floors`   | Replace the floor layout             | 400, 409 `table_in_use`            |
 | `POST /admin/branches`                     | Add a branch as a copy               | 400, 401, 403                      |
 | `DELETE /admin/branches/:branchId`         | Remove a branch                      | 409 `last_branch`, `branch_in_use` |
+| `GET /admin/branches/:branchId/offers`     | Every automatic offer (paused too)   | 401, 403                           |
+| `POST /admin/branches/:branchId/offers`    | Add an offer                         | 400, 422 `offer_scope_unknown`     |
+| `PATCH …/offers/:offerId`                  | Replace an offer                     | 400, 404, 422                      |
+| `DELETE …/offers/:offerId`                 | Remove an offer                      | 404                                |
 
 ## Related
 

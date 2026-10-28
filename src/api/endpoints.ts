@@ -1,5 +1,6 @@
 import type { AdminBranch, AdminServiceRequest, FloorPlanLayout, Reservation } from '@/types/admin';
 import type { MenuData } from '@/types/menu';
+import type { AutoOffer } from '@/types/promotion';
 import type { GuestSession } from '@/types/session';
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import { guestQuery } from './guestQuery';
@@ -28,6 +29,7 @@ import type {
   CreateServiceRequestResponse,
   CreateSessionRequest,
   DeliveryQuoteRequest,
+  OfferRequest,
   DishInput,
   DishResponse,
   ImageUploadRequest,
@@ -167,6 +169,14 @@ export const api = {
       body,
       bearer(token),
     ),
+  offers: (token: string, branchId: string) =>
+    apiGet<AutoOffer[]>(`admin/branches/${seg(branchId)}/offers`, bearer(token)),
+  createOffer: (token: string, branchId: string, body: OfferRequest) =>
+    apiPost<AutoOffer>(`admin/branches/${seg(branchId)}/offers`, body, bearer(token)),
+  updateOffer: (token: string, branchId: string, id: string, body: OfferRequest) =>
+    apiPatch<AutoOffer>(`admin/branches/${seg(branchId)}/offers/${seg(id)}`, body, bearer(token)),
+  removeOffer: (token: string, branchId: string, id: string) =>
+    apiDelete(`admin/branches/${seg(branchId)}/offers/${seg(id)}`, bearer(token)),
   reservations: (token: string, branchId: string) =>
     apiGet<ReservationsResponse>(`admin/branches/${seg(branchId)}/reservations`, bearer(token)),
   createReservation: (token: string, branchId: string, body: ReservationInput) =>

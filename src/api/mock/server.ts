@@ -70,7 +70,7 @@ import {
   listServiceRequests,
 } from './handlers/serviceRequests';
 import { deliveryQuote } from './handlers/orderPricing';
-import { branchPromotions, validatePromo } from './handlers/promos';
+import { adminOffers, branchPromotions, validatePromo } from './handlers/promos';
 import { createSession, updateSession } from './handlers/sessions';
 import { querySeed } from './seed';
 
@@ -112,6 +112,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/branches/:branchId/menu/images', uploadDishImage],
   ['GET', 'branches/:branchId/menu', branchMenu],
   ['GET', 'branches/:branchId/promotions', branchPromotions],
+  ['GET', 'admin/branches/:branchId/offers', adminOffers],
   ['GET', 'branches', listBranches],
   ['GET', 'branches/:branchId/config', branchConfig],
   ['GET', 'branches/:branchId/status', branchStatus],

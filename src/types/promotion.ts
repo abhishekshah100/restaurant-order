@@ -1,5 +1,4 @@
 import type cart from '../../public/api/content/cart.json';
-import type menu from '../../public/api/content/menu.json';
 import type { DiscountType, PROMO_CODE_DISCOUNT_TYPES, WeekdayCode } from '@/config/masters';
 import type { OrderMode } from './branch';
 import type { Price } from './menu';
@@ -11,11 +10,10 @@ export type Weekday = WeekdayCode;
 export type PromoDescriptionKey = keyof (typeof cart)['promo']['codes'];
 
 /**
- * Content key of an automatic offer: its bill line (cart › priceSummary.offers) and its menu
- * badge and banner (menu › offers).
+ * Content key of an automatic offer's own wording (cart › priceSummary.offers): what its bill
+ * line said before offers had names, kept for orders from then.
  */
-export type OfferLabelKey = keyof (typeof cart)['priceSummary']['offers'] &
-  keyof (typeof menu)['offers'];
+export type OfferLabelKey = keyof (typeof cart)['priceSummary']['offers'];
 
 /** A code the guest types (or picks) in the cart. */
 export interface PromoCode {
@@ -41,10 +39,15 @@ export interface PromoCode {
 
 /**
  * A discount the guest doesn't have to ask for, e.g. happy hour: dishes in its scope cost less
- * on its days between `from` and `to` (branch time).
+ * on its days between `from` and `to` (branch time), inside its dates, for its ways of ordering.
+ * Staff manage them in Settings › Offers.
  */
 export interface AutoOffer {
   id: string;
+  /** What guests and staff see: "Happy hour". */
+  name: string;
+  /** Paused (false): only staff see it; it never applies. Guests only get offers switched on. */
+  active: boolean;
   days: Weekday[];
   /** 24-hour "HH:MM" in the branch's time zone; a `to` at or before `from` ends the next day. */
   from: string;
@@ -57,7 +60,13 @@ export interface AutoOffer {
    */
   type: DiscountType;
   value: number;
-  labelKey: OfferLabelKey;
+  /** "offer" for offers staff add; "happyHour" for the demo's. */
+  labelKey: string;
+  /** The ways of ordering it applies to. */
+  modes: OrderMode[];
+  /** Calendar days (branch time, "2026-11-01") it runs between, both included. */
+  startsOn?: string;
+  endsOn?: string;
 }
 
 /** GET /branches/:id/promotions. */
@@ -69,12 +78,14 @@ export interface BranchPromotions {
 /** An automatic offer as applied to a cart line or order item: what it took off the whole line. */
 export interface AppliedOffer {
   id: string;
-  labelKey: OfferLabelKey;
+  labelKey: string;
+  /** The offer's name when applied ("Happy hour"); orders keep it as it was. */
+  name?: string;
   /** Off the line (every unit), in major units. */
   discount: Price;
 }
 
 /** A discount on a placed order, in major units (shown as a bill line). */
 export type OrderDiscount =
-  | { kind: 'offer'; id: string; labelKey: OfferLabelKey; amount: Price }
+  | { kind: 'offer'; id: string; labelKey: string; name?: string; amount: Price }
   | { kind: 'code'; code: string; amount: Price };
