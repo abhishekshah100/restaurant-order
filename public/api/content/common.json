@@ -470,6 +470,7 @@
       "seated": "Seated",
       "ordering": "Food on the way",
       "eating": "Dining",
+      "paidSeated": "Paid · still seated",
       "needsWaiter": "Needs waiter",
       "wantsBill": "Wants bill",
       "outOfService": "Out of service"
@@ -484,6 +485,7 @@
     },
     "due": "{amount} due",
     "paidUp": "Paid",
+    "freeWhenLeft": "Paid · free it when they leave",
     "seated": {
       "now": "Just seated",
       "minutes": "{count} min",
@@ -526,8 +528,10 @@
           "other": "+{count} more"
         },
         "open": "Open order {order}",
-        "addItems": "Add items",
-        "addItemsLabel": "Add items to order {order}",
+        "addItems": "Add round",
+        "addItemsLabel": "Add a round to order {order} (same bill)",
+        "newOrder": "New order",
+        "newOrderLabel": "New order for {name} (a new bill)",
         "change": "Change",
         "changeLabel": "Change items on order {order}",
         "collect": "Collect",
@@ -537,7 +541,8 @@
         "title": "No open orders",
         "body": "This table is free. Use Take order when guests sit down, or they can scan the QR code.",
         "reserved": "Reserved for {name} on {time}. Seat them when they arrive, then take their order.",
-        "outOfService": "Out of service: nothing can be ordered here until it's back in service."
+        "outOfService": "Out of service: nothing can be ordered here until it's back in service.",
+        "paidSeated": "Everything is served and paid. Free the table when the guests leave."
       },
       "notFound": {
         "title": "Table not found",
@@ -621,7 +626,7 @@
     "deliveryTitle": "Delivery",
     "landmark": "Near {landmark}",
     "rider": "Rider: {name} · {phone}",
-    "addItems": "Add items",
+    "addItems": "Add round",
     "collectPayment": "Collect payment",
     "cancelOrder": "Cancel order",
     "back": "Back",
@@ -646,12 +651,13 @@
       "confirm": "Cancel order",
       "done": "Order {order} cancelled"
     },
-    "changeItems": "Change items"
+    "changeItems": "Change items",
+    "newOrder": "New order"
   },
   "adminOrderPad": {
     "titleNew": "New order · Table {table}",
     "titleAdd": "Add to order {order}",
-    "subtitleAdd": "{name} · Table {table}",
+    "subtitleAdd": "{name} · Table {table} · same bill, a new round for the kitchen",
     "close": "Close",
     "back": "Back",
     "steps": {

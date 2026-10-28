@@ -13,19 +13,22 @@ const PREVIEW_ITEMS = 2;
 /**
  * One open order at the table: its number and kitchen status, who ordered and when, the first
  * dishes, and its total with the payment state. The card opens the order's details. Its actions:
- * Add items (a new round), Change (the round the kitchen hasn't finished, if any) and Collect
- * (while something is due — before, during or after the meal).
+ * Add round (a new round on the same bill, while something is due) or New order (paid in full: a
+ * new bill for the same guest), Change (the round the kitchen hasn't finished, if any) and
+ * Collect (while something is due — before, during or after the meal).
  */
 export function TableOrderCard({
   order,
   onOpen,
   onAddItems,
+  onNewOrder,
   onChange,
   onCollect,
 }: {
   order: Order;
   onOpen: () => void;
   onAddItems: () => void;
+  onNewOrder: () => void;
   /** Present while a round can still be changed. */
   onChange?: () => void;
   onCollect: () => void;
@@ -74,15 +77,27 @@ export function TableOrderCard({
         <strong className={styles.total}>{money.format(order.total)}</strong>
       </span>
       <span className={styles.actions}>
-        <button
-          type="button"
-          className={styles.action}
-          onClick={onAddItems}
-          aria-label={t('adminTables.detail.order.addItemsLabel', { order: order.id })}
-        >
-          <Icon name="plus" size="xs" />
-          {t('adminTables.detail.order.addItems')}
-        </button>
+        {due > 0 ? (
+          <button
+            type="button"
+            className={styles.action}
+            onClick={onAddItems}
+            aria-label={t('adminTables.detail.order.addItemsLabel', { order: order.id })}
+          >
+            <Icon name="plus" size="xs" />
+            {t('adminTables.detail.order.addItems')}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={styles.action}
+            onClick={onNewOrder}
+            aria-label={t('adminTables.detail.order.newOrderLabel', { name: order.customerName })}
+          >
+            <Icon name="plus" size="xs" />
+            {t('adminTables.detail.order.newOrder')}
+          </button>
+        )}
         {onChange && (
           <button
             type="button"

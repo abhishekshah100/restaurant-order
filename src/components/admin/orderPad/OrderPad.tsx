@@ -25,7 +25,8 @@ import styles from './OrderPad.module.css';
  * the items of an order's round (the kitchen hasn't finished it).
  */
 export type PadTarget =
-  | { kind: 'new'; table: number }
+  /** A new bill at the table; `guest` fills in the name (a new order for the same guest). */
+  | { kind: 'new'; table: number; guest?: string }
   | { kind: 'add'; table: number; order: Pick<Order, 'id' | 'customerName'> }
   | {
       kind: 'edit';
@@ -79,7 +80,7 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
   );
   const [step, setStep] = useState<'menu' | 'review'>(target.kind === 'edit' ? 'review' : 'menu');
   const [choosing, setChoosing] = useState<Choosing | null>(null);
-  const [guest, setGuest] = useState('');
+  const [guest, setGuest] = useState(target.kind === 'new' ? (target.guest ?? '') : '');
   const [kitchenNote, setKitchenNote] = useState(
     target.kind === 'edit' ? (target.round.kitchenNote ?? '') : '',
   );

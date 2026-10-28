@@ -5,7 +5,7 @@ import type { AdminFloor, AdminFloorTable, FloorTableStatus } from '@/types/admi
  * and how long guests have been seated.
  */
 
-/** The legend's groups: seated, waiting for food and eating are all "Occupied". */
+/** The legend's groups: seated, waiting for food, eating and paid-still-seated are "Occupied". */
 export type FloorLegend =
   'available' | 'reserved' | 'occupied' | 'needsWaiter' | 'wantsBill' | 'outOfService';
 
@@ -19,7 +19,9 @@ export const FLOOR_LEGEND: readonly FloorLegend[] = [
 ];
 
 export const legendOf = (status: FloorTableStatus): FloorLegend =>
-  status === 'ordering' || status === 'eating' || status === 'seated' ? 'occupied' : status;
+  status === 'ordering' || status === 'eating' || status === 'seated' || status === 'paidSeated'
+    ? 'occupied'
+    : status;
 
 /** How many tables are in each legend group. */
 export function legendCounts(tables: readonly AdminFloorTable[]): Record<FloorLegend, number> {

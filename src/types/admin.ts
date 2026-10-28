@@ -170,15 +170,17 @@ export interface FloorPlanLayout {
 
 /**
  * Where a table is now: free; reserved (a booking starts within the hour, or its guests are a
- * little late); seated (booked guests sat down, nothing ordered yet); or taken and why it needs
- * a person most (a waiter call, then a bill request, then food on the way, then eating). A
- * table is free again once every order at it today is served and paid.
+ * little late); seated (booked guests sat down, nothing ordered yet); taken and why it needs a
+ * person most (a waiter call, then a bill request, then food on the way, then eating); or paid
+ * and still seated (everything served and paid: paying isn't leaving, so it stays taken until
+ * staff free it).
  */
 export type FloorTableStatus =
   | 'available'
   | 'reserved'
   | 'seated'
   | Exclude<AdminTableStatus, 'closing'>
+  | 'paidSeated'
   /** Out of service, with nothing going on at it. */
   | 'outOfService';
 

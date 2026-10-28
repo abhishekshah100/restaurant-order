@@ -20,8 +20,10 @@ export type OrderDialogView = 'details' | 'collect' | 'cancel';
 
 /**
  * One order for staff, with what can be done to it: Mark served / Handed over when it's ready,
- * Collect payment whenever something is due (before, during or after the meal), Add items to a
- * dine-in order and Change items the kitchen hasn't finished (when the page offers them), and
+ * Collect payment whenever something is due (before, during or after the meal), Add round to a
+ * dine-in order still to pay (a running tab: same bill, a new ticket for the kitchen) or New
+ * order once it's paid in full (a new bill at the same table), Change items the kitchen hasn't
+ * finished (when the page offers them), and
  * Rush (the kitchen takes it first) and Cancel while it isn't finished. Collecting and
  * cancelling open their own step in the dialog (how they paid; why it's cancelled), with Back
  * to the order.
@@ -29,8 +31,10 @@ export type OrderDialogView = 'details' | 'collect' | 'cancel';
 interface OrderDetailDialogProps {
   order: Order | undefined;
   onClose: () => void;
-  /** Opens the order pad on this order; Add items shows only with it. */
+  /** Opens the order pad on this order; Add round shows only with it. */
   onAddItems?: (order: Order) => void;
+  /** Opens the order pad for a new order at the order's table, for the same guest. */
+  onNewOrder?: (order: Order) => void;
   /** Opens the order pad on the round the kitchen hasn't finished; Change items needs it. */
   onChangeItems?: (order: Order) => void;
   /** The step it opens on (Collect from a list's quick action). */
@@ -46,6 +50,7 @@ function OrderDialog({
   order,
   onClose,
   onAddItems,
+  onNewOrder,
   onChangeItems,
   initialView = 'details',
 }: OrderDetailDialogProps & { order: Order }) {
@@ -130,7 +135,10 @@ function OrderDialog({
     );
   } else {
     const ready = order.status === 'ready';
-    const canAdd = onAddItems && order.mode === 'dineIn' && order.status !== 'cancelled';
+    const dineIn = order.mode === 'dineIn' && order.status !== 'cancelled';
+    // Still to pay: more goes on this bill. Paid in full: more is a new order, not a reopened bill.
+    const canAdd = onAddItems && dineIn && due > 0;
+    const canNew = onNewOrder && dineIn && due === 0;
     const canChange = onChangeItems && editableRound(order) !== null;
     footer = (
       <div className={styles.actions}>
@@ -155,7 +163,7 @@ function OrderDialog({
             {t('adminOrder.collectPayment')}
           </Button>
         )}
-        {(canAdd || canChange || !finished) && (
+        {(canAdd || canNew || canChange || !finished) && (
           <div className={styles.secondary}>
             {!finished && (
               <Button
@@ -190,6 +198,16 @@ function OrderDialog({
                 onClick={() => onAddItems(order)}
               >
                 {t('adminOrder.addItems')}
+              </Button>
+            )}
+            {canNew && (
+              <Button
+                size="sm"
+                variant="secondary"
+                iconStart="plus"
+                onClick={() => onNewOrder(order)}
+              >
+                {t('adminOrder.newOrder')}
               </Button>
             )}
             {canChange && (

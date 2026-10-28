@@ -160,6 +160,11 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
     setOpen(null);
     setPad({ kind: 'add', table: detail.table, order });
   };
+  /** A paid order's guest orders more: a new bill at this table, in their name. */
+  const newOrderFor = (order: Order) => {
+    setOpen(null);
+    setPad({ kind: 'new', table: detail.table, guest: order.customerName });
+  };
   /** Changing the round the kitchen hasn't finished; undefined when there's none. */
   const changeItems = (order: Order) => {
     const round = editableRound(order);
@@ -303,6 +308,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
                   order={order}
                   onOpen={() => setOpen({ id: order.id, view: 'details' })}
                   onAddItems={() => addItems(order)}
+                  onNewOrder={() => newOrderFor(order)}
                   onChange={changeItems(order)}
                   onCollect={() => setOpen({ id: order.id, view: 'collect' })}
                 />
@@ -323,7 +329,9 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
                   })
                 : detail.disabled
                   ? t('adminTables.detail.empty.outOfService')
-                  : t('adminTables.detail.empty.body')}
+                  : detail.status === 'paidSeated'
+                    ? t('adminTables.detail.empty.paidSeated')
+                    : t('adminTables.detail.empty.body')}
             </p>
           </div>
         )}
@@ -335,6 +343,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
           initialView={open?.view}
           onClose={() => setOpen(null)}
           onAddItems={addItems}
+          onNewOrder={newOrderFor}
           onChangeItems={(order) => changeItems(order)?.()}
         />
       )}

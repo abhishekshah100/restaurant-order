@@ -81,12 +81,14 @@ export function TableCard({ table, now }: { table: AdminFloorTable; now: Date | 
         ) : (
           <>
             <span className={styles.line}>
-              {[
-                t.plural('adminTables.orders', table.orderCount),
-                table.due > 0
-                  ? t('adminTables.due', { amount: money.format(table.due) })
-                  : t('adminTables.paidUp'),
-              ].join(' · ')}
+              {table.status === 'paidSeated'
+                ? t('adminTables.freeWhenLeft')
+                : [
+                    t.plural('adminTables.orders', table.orderCount),
+                    table.due > 0
+                      ? t('adminTables.due', { amount: money.format(table.due) })
+                      : t('adminTables.paidUp'),
+                  ].join(' · ')}
             </span>
             {seated && (
               <span className={styles.line}>

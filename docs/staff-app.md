@@ -251,7 +251,12 @@ Behaviour:
 Table status rules (server side):
 
 - An order stays open until it is both served and paid.
-- A table with no open order and no open request is `available`, or `reserved` from 60 minutes
+- Paying isn't leaving: once every dine-in order at the table is served and paid, the table is
+  `paidSeated` ("Paid · still seated", counted as Occupied) until staff tap **Free table**. A new
+  order there takes it back to `ordering`. Booked guests seated after the last paid order make it
+  `seated` instead. There is no automatic freeing yet.
+- A table with no open order, no open request and nothing paid since it was last freed is
+  `available`, or `reserved` from 60 minutes
   before a booking until 30 minutes after it (`HOLD_BEFORE_MINUTES`, `HOLD_AFTER_MINUTES` in
   [`src/lib/reservations.ts`](../src/lib/reservations.ts)), or `seated` once staff seat a booking.
 - Otherwise the most urgent state wins: `needsWaiter`, `wantsBill`, `ordering`, `eating`.
@@ -272,8 +277,11 @@ seated; today's bookings with Seat; open requests with Done. Actions:
   shows the bill as the guest will see it (`calculateBill` and `billRows`: item total, service
   charge, CGST/SGST or VAT, round off, total); the send button carries that total. Offers such as
   happy hour are applied by the server on the bill.
-- **Add items**, **Change** and **Collect** on each order card (see
-  [Waiter ordering](#waiter-ordering-at-the-table)).
+- **Add round**, **Change** and **Collect** on each order card (see
+  [Waiter ordering](#waiter-ordering-at-the-table)). Add round (a running tab: same bill, a new
+  ticket for the kitchen) shows only while the order still has something to pay. Once it's paid
+  in full the card and the order dialog offer **New order** instead: a new bill at the same table
+  with the guest's name filled in, so a paid bill is never reopened.
 - **Collect from the whole table** (`TableCollectDialog`): pays every order at the table with
   something due, at any point of the meal (`POST .../tables/:table/payment`), on the shared
   collect form (see [Payments](#payments)).
@@ -288,7 +296,8 @@ Order cards show the order number and the day's token.
 
 ### Free table
 
-- Shown when the table is neither available, reserved nor out of service.
+- Shown when the table is neither available, reserved nor out of service (so also on a
+  `paidSeated` table, which keeps it taken until staff free it).
 - [`FreeTableDialog`](../src/components/admin/tables/FreeTableDialog.tsx) states what is still
   unpaid (it stays on the Orders page) and calls `POST .../tables/:table/free`.
 - The table becomes available; earlier orders and requests are left out of its state. The flag

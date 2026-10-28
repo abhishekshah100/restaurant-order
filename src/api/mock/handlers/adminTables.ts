@@ -62,6 +62,19 @@ function openDineIn({ orders, branch, now }: FloorPlanInput): Order[] {
     .sort((a, b) => b.placedAt.localeCompare(a.placedAt));
 }
 
+/** Today's dine-in orders served and paid in full: the guests may still be at the table. */
+function settledDineIn({ orders, branch, now }: FloorPlanInput): Order[] {
+  const clock = createClock(branch);
+  return orders.filter(
+    (o) =>
+      o.mode === 'dineIn' &&
+      o.status !== 'cancelled' &&
+      isToday(o.placedAt, new Date(now), clock) &&
+      isFinished(o) &&
+      amountDue(o) === 0,
+  );
+}
+
 /** What a table needs most: a waiter, the bill, food on the way, or nothing (eating, free). */
 function statusOf(orders: readonly Order[], requests: readonly AdminServiceRequest[]) {
   let status: FloorTableStatus = 'available';
@@ -134,7 +147,15 @@ function tableAt(
   let status: FloorTableStatus = statusOf(orders, asked);
   let booking = bookings.next;
   let seatedAt = orders.at(-1)?.placedAt;
-  if (status === 'available' && bookings.seated) {
+  // Paying isn't leaving: served and paid, the guests keep the table until staff free it.
+  const settled = settledDineIn(input).filter((o) => o.table === number && since(lastPlaced(o)));
+  const seatedSince = bookings.seated?.seatedAt;
+  const stillSeated =
+    settled.length > 0 && !(seatedSince && settled.every((o) => lastPlaced(o) < seatedSince));
+  if (status === 'available' && stillSeated) {
+    status = 'paidSeated';
+    seatedAt = settled.map((o) => o.placedAt).sort()[0];
+  } else if (status === 'available' && bookings.seated) {
     status = 'seated';
     booking = bookings.seated;
     seatedAt = bookings.seated.seatedAt;
@@ -145,7 +166,11 @@ function tableAt(
   if (status === 'available' && disabled) status = 'outOfService';
   const freed =
     layout.freed ||
-    (freedAt !== undefined && orders.length === 0 && asked.length === 0 && !bookings.seated);
+    (freedAt !== undefined &&
+      orders.length === 0 &&
+      asked.length === 0 &&
+      !bookings.seated &&
+      settled.length === 0);
   const table: AdminFloorTable = {
     table: number,
     seats,

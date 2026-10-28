@@ -188,6 +188,12 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
               setOpen(null);
               if (order.table !== undefined) setPad({ kind: 'add', table: order.table, order });
             }}
+            onNewOrder={(order) => {
+              setOpen(null);
+              if (order.table !== undefined) {
+                setPad({ kind: 'new', table: order.table, guest: order.customerName });
+              }
+            }}
           />
         )}
         {pad && <OrderPad target={pad} onClose={() => setPad(null)} />}
