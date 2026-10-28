@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useContent } from '@/api/hooks';
 import type { IconName } from '@/components/ui';
 import { minutesSince } from '@/lib/adminService';
+import type { Money } from '@/lib/money';
 import { PAYMENT_METHODS, isPaymentMethodId } from '@/lib/payments';
 import type { Price } from '@/types/menu';
 import type { Order } from '@/types/order';
@@ -18,8 +19,12 @@ export const methodIcon = (method: string): IconName =>
  * order is ("Table 12", "Takeaway"), and how long ago something happened ("4 min ago").
  */
 export function usePaymentText() {
+  return usePaymentWords(useAdminWorkspace().money);
+}
+
+/** The same words for any branch's money: the guest's printed invoice uses them too. */
+export function usePaymentWords(money: Money) {
   const t = useContent('common');
-  const { money } = useAdminWorkspace();
   return useMemo(() => {
     const names: Record<string, string> = t.get('paymentMethods');
     return {

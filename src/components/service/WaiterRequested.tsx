@@ -71,7 +71,7 @@ export function WaiterRequested() {
                 { b: (c) => <b>{c}</b> },
                 {
                   reason: t(`waiterDialog.reasons.${request.reason}`),
-                  time: clock.time(request.requestedAt),
+                  time: clock.dateTime(request.requestedAt),
                 },
               )}
             </span>

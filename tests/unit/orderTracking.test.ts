@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  formatOrderDay,
   formatPlaced,
   groupByVisit,
   itemLabel,
@@ -56,7 +55,7 @@ describe('simulateOrder', () => {
     expect(order.etaMinutes).toBe(10);
     expect(order.timeline.map((e) => [e.status, e.time])).toEqual([
       ['received', '7:00 PM'],
-      ['preparing', '7:02 PM'],
+      ['preparing', '3 Oct 2026, 7:02 PM'],
     ]);
     // 3 items over 16 min: first ready at 7:07:20, second starting at 7:04:40.
     expect(order.items.map((i) => i.status)).toEqual(['ready', 'preparing', 'preparing']);
@@ -157,12 +156,9 @@ describe('display helpers', () => {
     expect(bill.itemTotal).toBe(1356);
   });
 
-  it('formats placed times relative to today (branch time, IST)', () => {
-    const now = new Date('2026-10-03T21:00:00+05:30');
-    expect(formatPlaced('2026-10-03T19:42:00+05:30', now, clock)).toBe('7:42 PM');
-    expect(formatPlaced('2026-09-12T20:18:00+05:30', now, clock)).toBe('12 Sep 2026, 8:18 PM');
-    expect(formatOrderDay('2026-10-03T19:42:00+05:30', now, 'Today', clock)).toBe('Today');
-    expect(formatOrderDay('2026-08-28T13:12:00+05:30', now, 'Today', clock)).toBe('28 Aug 2026');
+  it('formats placed times with their date, today too (branch time, IST)', () => {
+    expect(formatPlaced('2026-10-03T19:42:00+05:30', clock)).toBe('3 Oct 2026, 7:42 PM');
+    expect(formatPlaced('2026-09-12T20:18:00+05:30', clock)).toBe('12 Sep 2026, 8:18 PM');
   });
 });
 

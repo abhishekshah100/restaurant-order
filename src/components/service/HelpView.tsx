@@ -142,7 +142,9 @@ export function HelpView() {
                 <span className={styles.actionSub}>
                   {requests.waiter ? (
                     <span className={styles.pending}>
-                      {t('shared.requestedAt', { time: clock.time(requests.waiter.requestedAt) })}
+                      {t('shared.requestedAt', {
+                        time: clock.dateTime(requests.waiter.requestedAt),
+                      })}
                     </span>
                   ) : (
                     <>
@@ -171,7 +173,7 @@ export function HelpView() {
                 <span className={styles.actionSub}>
                   {requests.bill ? (
                     <span className={styles.pending}>
-                      {t('shared.requestedAt', { time: clock.time(requests.bill.requestedAt) })}
+                      {t('shared.requestedAt', { time: clock.dateTime(requests.bill.requestedAt) })}
                     </span>
                   ) : (
                     <>

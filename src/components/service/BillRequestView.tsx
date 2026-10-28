@@ -138,7 +138,7 @@ export function BillRequestView() {
                 </Button>
               }
             >
-              {t('billRequest.pending', { time: clock.time(pending.requestedAt) })}
+              {t('billRequest.pending', { time: clock.dateTime(pending.requestedAt) })}
             </Banner>
           )}
 

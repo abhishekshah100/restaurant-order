@@ -272,7 +272,8 @@ seated; today's bookings with Seat; open requests with Done. Actions:
 - **Add items**, **Change** and **Collect** on each order card (see
   [Waiter ordering](#waiter-ordering-at-the-table)).
 - **Collect from the whole table** (`TableCollectDialog`): pays every order at the table with
-  something due, at any point of the meal (`POST .../tables/:table/payment`).
+  something due, at any point of the meal (`POST .../tables/:table/payment`), on the shared
+  collect form (see [Payments](#payments)).
 - **Reserve** opens the booking form for this table.
 - **QR code** shows the table's printable card.
 - **Order history** (`TableHistoryDialog`, loaded on demand): the table's completed and cancelled
@@ -393,8 +394,10 @@ Behaviour:
 - The order dialog offers Mark served, Collect payment, Add items and Change (dine-in), **Rush**
   (the kitchen takes it first; pressed again it is removed) and Cancel while the order is not
   finished.
-- **Collect payment in person:** `method` from the branch's `payments.atTable`; optional
-  `amount` (part of what is due) and `tip`. Recorded in `payment.transactions` with who took it.
+- **Collect payment in person:** the shared collect form (see [Payments](#payments)); it sends
+  `method` from the branch's `payments.atTable`. The API also takes an optional `amount` (part of
+  what is due) and `tip`, which the screens don't offer in this first phase. Recorded in
+  `payment.transactions` with who took it.
 - **Cancel with a reason:** one of `outOfStock`, `guestLeft`, `kitchenIssue`, `duplicate`,
   `other` (`CANCELLATION_REASONS` in `src/config/masters/orders.ts`). Every open round is
   cancelled with `cancelledBy: 'restaurant'`; anything already paid starts a refund; the guest's
@@ -490,8 +493,15 @@ Sections:
 - **Takings:** net (collected less refunded), online vs in person, to collect, tips, average bill,
   refunds. Then a breakdown by method with the cash expected in the drawer.
 - **To collect:** open bills grouped by table (bill requests first) or by takeaway/delivery order.
-  `CollectDialog` supports the full bill, an even split (one share at a time), or another amount;
-  the method, a tip, and for cash the amount handed over and change due.
+- **One collect form everywhere** (`CollectFields` and `useCollectChoice` in
+  `components/admin/payments/CollectFields.tsx`): the Payments page (`CollectDialog`), the order
+  dialog (Orders, Unpaid) and the table page (`TableCollectDialog`) show the same thing. The bill
+  lists every charge (item total, service charge, CGST/SGST or VAT, round off, total; a table lists
+  each order's), then paid so far and due now. Staff pick how it was paid; for cash they type the
+  cash received (or tap Exact or a round note) and see the change to return. Collect is disabled
+  while the cash is short. It always takes the full amount due. Split bills, part payments and
+  tips are left out of the first phase to keep it simple (the API still accepts `amount` and
+  `tip`).
 - **Transactions:** every payment and refund, filterable by channel and method, searchable.
 - **Refunds:** in full or in part, up to what is paid and not yet refunded (`refundable`), with a
   reason (`complaint`, `wrongItem`, `overcharged`, `goodwill`, `other`) and an optional note

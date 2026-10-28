@@ -33,8 +33,8 @@ export function BillOrderList({
         {orders.map((order) => {
           // A running order is one line on the bill, covering every round: "7:42 PM · 2 rounds".
           const time = hasRounds(order)
-            ? `${clock.time(order.placedAt)} · ${orderText.plural('rounds.count', activeRounds(order).length)}`
-            : clock.time(order.placedAt);
+            ? `${clock.dateTime(order.placedAt)} · ${orderText.plural('rounds.count', activeRounds(order).length)}`
+            : clock.dateTime(order.placedAt);
           return (
             <li key={order.id} className={styles.row}>
               <b className={styles.id}>

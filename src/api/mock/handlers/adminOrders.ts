@@ -131,7 +131,7 @@ export const addStaffRound: Handler = async (ctx, { params, body: raw, headers }
     timeline: [
       {
         status: 'received',
-        time: createClock(branch).time(now),
+        time: createClock(branch).dateTime(now),
         note: labels.takenBy(account.name),
       },
     ],
@@ -380,7 +380,7 @@ export const cancelByStaff: Handler = async (ctx, { params, body, headers }) => 
   const now = new Date(ctx.now());
   // Served, picked up, delivered or already cancelled: too late.
   if (isFinished(liveOrder(order, now.getTime(), branch))) fail(409, 'order_closed');
-  const time = createClock(branch).time(now);
+  const time = createClock(branch).dateTime(now);
   const cancelled = { status: 'cancelled' as const, time };
   const { payment, refunded } = cancelledPayment(order);
   const next: Order = {

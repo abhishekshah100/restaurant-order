@@ -17,7 +17,7 @@ export function FulfilmentCard({ order, className }: { order: Order; className?:
   const t = useContent('orders');
 
   if (order.mode === 'takeaway' && order.pickup) {
-    const time = clock.time(order.pickup.at);
+    const time = clock.dateTime(order.pickup.at);
     return (
       <section className={cx(styles.card, className)} aria-labelledby="fulfilment-title">
         <h2 id="fulfilment-title" className={styles.title}>
@@ -81,7 +81,7 @@ export function FulfilmentCard({ order, className }: { order: Order; className?:
           {order.status !== 'delivered' && (
             <p className={styles.when}>
               <Icon name="clock" size="xs" />
-              {t('fulfilment.expected', { time: clock.time(expectedAt) })}
+              {t('fulfilment.expected', { time: clock.dateTime(expectedAt) })}
             </p>
           )}
         </div>

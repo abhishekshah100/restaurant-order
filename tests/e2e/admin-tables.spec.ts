@@ -97,6 +97,10 @@ test('a waiter takes an order at a free table, then adds to it', async ({ page }
   await expect(pad.getByText('1 added')).toBeVisible();
 
   await pad.getByRole('button', { name: /^Review order/ }).click();
+  // The bill as the guest will see it: GST split into CGST and SGST, then the total.
+  await expect(pad).toContainText('Item total');
+  await expect(pad).toContainText('CGST (2.5%)');
+  await expect(pad).toContainText('SGST (2.5%)');
   await pad.getByLabel(/Guest name/).fill('Mr Rao');
   await pad.getByLabel(/Note for the kitchen/).fill('Not too spicy');
   await pad.getByRole('button', { name: /^Send to kitchen/ }).click();
@@ -115,7 +119,9 @@ test('a waiter takes an order at a free table, then adds to it', async ({ page }
   await more.getByRole('button', { name: 'Add Dahi Kebab' }).click();
   await more.getByRole('button', { name: /^Review order/ }).click();
   await more.getByRole('button', { name: /^Send to kitchen/ }).click();
-  await expect(page.getByRole('status').filter({ hasText: /^Added to order [A-Z]+-?\d+$/ })).toBeVisible();
+  await expect(
+    page.getByRole('status').filter({ hasText: /^Added to order [A-Z]+-?\d+$/ }),
+  ).toBeVisible();
 
   await card.getByRole('button', { name: /^Open order/ }).click();
   const details = page.getByRole('dialog', { name: /^Order [A-Z]+-?\d+$/ });

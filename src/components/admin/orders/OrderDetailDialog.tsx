@@ -9,10 +9,10 @@ import { dueOn, editableRound } from '@/lib/adminOrders';
 import { paidAmount } from '@/lib/lifecycle';
 import { isFinished } from '@/lib/orders';
 import type { CancelReason } from '@/types/admin';
-import type { AtTableMethodKey } from '@/types/branch';
 import type { Order } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { CancelOrderView, CollectPaymentView } from './OrderActionViews';
+import { CollectFields, useCollectChoice } from '../payments/CollectFields';
+import { CancelOrderView } from './OrderActionViews';
 import { OrderSummary } from './OrderSummary';
 import styles from './OrderDetailDialog.module.css';
 
@@ -50,14 +50,14 @@ function OrderDialog({
   initialView = 'details',
 }: OrderDetailDialogProps & { order: Order }) {
   const t = useContent('common');
-  const { branch, region, money, clock } = useAdminWorkspace();
+  const { branch, money, clock } = useAdminWorkspace();
   const { showToast } = useToast();
   const serve = useMarkServed();
   const collect = useCollectPayment();
   const cancel = useCancelByStaff();
   const rush = useSetRush();
   const [view, setView] = useState<OrderDialogView>(initialView);
-  const [method, setMethod] = useState<AtTableMethodKey>(region.payments.atTable[0]);
+  const choice = useCollectChoice([order]);
   const [reason, setReason] = useState<CancelReason>('outOfStock');
 
   const due = dueOn(order);
@@ -72,7 +72,7 @@ function OrderDialog({
       order.mode === 'dineIn' && order.table !== undefined
         ? t('adminHome.queue.where.table', { table: order.table })
         : t(`modes.${order.mode}`),
-    time: clock.time(order.placedAt),
+    time: clock.dateTime(order.placedAt),
   });
   let body = <OrderSummary order={order} />;
   let footer;
@@ -80,23 +80,16 @@ function OrderDialog({
   if (view === 'collect') {
     title = t('adminOrder.collect.title');
     description = t('adminOrder.collect.subtitle', { order: order.id, amount: money.format(due) });
-    body = (
-      <CollectPaymentView
-        order={order}
-        due={due}
-        methods={region.payments.atTable}
-        value={method}
-        onChange={setMethod}
-      />
-    );
+    body = <CollectFields orders={[order]} choice={choice} />;
     footer = (
       <Button
         block
         iconStart="check"
         loading={collect.isPending}
+        disabled={!choice.ready}
         onClick={() =>
           collect.mutate(
-            { ...target, body: { method } },
+            { ...target, body: { method: choice.method } },
             {
               onSuccess: () => {
                 showToast(t('adminOrder.collect.done', { order: order.id }), { tone: 'success' });

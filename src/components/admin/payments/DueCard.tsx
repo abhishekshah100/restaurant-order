@@ -38,17 +38,17 @@ export function DueCard({
   let meta: string;
   if (group.kind === 'table') {
     title = t('adminPayments.due.table', { table: group.table });
-    meta = `${t.plural('adminPayments.due.orders', orders.length)} · ${t('adminPayments.due.since', { time: clock.time(group.since) })}`;
+    meta = `${t.plural('adminPayments.due.orders', orders.length)} · ${t('adminPayments.due.since', { time: clock.dateTime(group.since) })}`;
   } else {
     const { order } = group;
     title = t('adminPayments.collect.orderLine', { order: order.id, name: order.customerName });
     meta = order.pickup
       ? order.pickup.asap
         ? t('adminPayments.due.pickupAsap')
-        : t('adminPayments.due.pickup', { time: clock.time(order.pickup.at) })
+        : t('adminPayments.due.pickup', { time: clock.dateTime(order.pickup.at) })
       : order.delivery
         ? t('adminPayments.due.delivery', { area: order.delivery.address.area })
-        : t('adminPayments.due.since', { time: clock.time(order.placedAt) });
+        : t('adminPayments.due.since', { time: clock.dateTime(order.placedAt) });
   }
 
   return (
@@ -86,7 +86,7 @@ export function DueCard({
                     name: order.customerName,
                   })}
                 </span>
-                <span className={styles.orderTime}>{clock.time(order.placedAt)}</span>
+                <span className={styles.orderTime}>{clock.dateTime(order.placedAt)}</span>
                 <span className={styles.orderDue}>{amount(dueOn(order))}</span>
               </button>
             </li>

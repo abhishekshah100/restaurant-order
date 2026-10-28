@@ -47,7 +47,7 @@ function OrderStatus({ order, className }: { order: Order; className?: string })
 }
 
 /** One order: a list row (or a highlighted card while active) on mobile, a table row on the web. */
-function OrderRow({ order, now, today }: { order: Order; now: Date; today: boolean }) {
+function OrderRow({ order, today }: { order: Order; today: boolean }) {
   const t = useContent('orders');
   const { money, clock } = useRegion();
   const visitWords = useVisitWords();
@@ -55,7 +55,7 @@ function OrderRow({ order, now, today }: { order: Order; now: Date; today: boole
   const payment = t(`payment.${paymentLabel(order)}`);
   // "Table 12" for dine-in (as drawn); "Takeaway" / "Delivery" otherwise, with a badge.
   const table = visitWords(order);
-  const placed = formatPlaced(order.placedAt, now, clock);
+  const placed = formatPlaced(order.placedAt, clock);
   const names = order.items.map((i) => i.name).join(', ');
   // A running order says how many rounds it has had: "Table 12 · 2 rounds".
   const rounds = hasRounds(order) ? t.plural('rounds.count', activeRounds(order).length) : '';
@@ -99,14 +99,12 @@ function VisitSection({
   title,
   summary,
   orders,
-  now,
   today,
 }: {
   id: string;
   title: ReactNode;
   summary?: string;
   orders: Order[];
-  now: Date;
   today: boolean;
 }) {
   const t = useContent('orders');
@@ -130,7 +128,7 @@ function VisitSection({
       )}
       <ul className={styles.list}>
         {orders.map((order) => (
-          <OrderRow key={order.id} order={order} now={now} today={today} />
+          <OrderRow key={order.id} order={order} today={today} />
         ))}
       </ul>
     </section>
@@ -190,7 +188,6 @@ export function MyOrders() {
             title={<VisitTitle orders={today} />}
             summary={`${t.plural('shared.orderCount', today.length)} · ${money.format(spentTotal(today))}`}
             orders={today}
-            now={data.now}
             today
           />
         )}
@@ -199,7 +196,6 @@ export function MyOrders() {
             id="earlier-visits"
             title={t('list.earlier')}
             orders={earlier}
-            now={data.now}
             today={false}
           />
         )}

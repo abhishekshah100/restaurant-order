@@ -4,14 +4,18 @@ import { useContent } from '@/api/hooks';
 import { Icon, Input, QuantityStepper, Textarea, VegMark } from '@/components/ui';
 import { describeInstructions, describeOptionsShort, type CartLineLabels } from '@/lib/cartLine';
 import type { MenuCatalog } from '@/lib/menu';
-import { padTotals, type PadLines } from '@/lib/orderPad';
+import type { PadLines } from '@/lib/orderPad';
+import { calculateBill } from '@/lib/pricing';
+import { BillSummary, billRows } from '../../cart/PriceSummary';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { PadTarget } from './OrderPad';
 import styles from './OrderPad.module.css';
 
 /**
  * The pad before it's sent: who it's for (a new order), each line with its choices and a
- * stepper (down to 0 takes it off), a note for the kitchen and the item total.
+ * stepper (down to 0 takes it off), a note for the kitchen and the bill: the item total, service
+ * charge, taxes (CGST and SGST, or VAT) and round off, as the guest's cart lists them, and the
+ * total.
  */
 export function PadReview({
   target,
@@ -41,8 +45,9 @@ export function PadReview({
   onKitchenNote: (note: string) => void;
 }) {
   const t = useContent('common');
-  const { money } = useAdminWorkspace();
-  const { total } = padTotals(lines);
+  const cart = useContent('cart');
+  const { region, money } = useAdminWorkspace();
+  const bill = calculateBill(lines, region);
 
   return (
     <div className={styles.review}>
@@ -114,10 +119,11 @@ export function PadReview({
         onChange={(event) => onKitchenNote(event.target.value)}
       />
 
-      <div className={styles.total}>
-        <span>{t('adminOrderPad.itemTotal')}</span>
-        <strong>{money.format(total)}</strong>
-      </div>
+      <BillSummary
+        rows={billRows(bill, { t: cart, money, tax: region.tax })}
+        totalLabel={t('adminOrderPad.total')}
+        total={money.format(bill.total)}
+      />
       <p className={styles.taxNote}>{t('adminOrderPad.taxNote')}</p>
     </div>
   );

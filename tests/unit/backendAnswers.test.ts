@@ -100,8 +100,8 @@ describe("a backend order in the screens' shape", () => {
       status: 'preparing',
     });
     expect(order.timeline).toEqual([
-      { status: 'received', time: '7:45 PM', at: PLACED, note: 'Paid online' },
-      { status: 'preparing', time: '7:50 PM', at: '2026-10-15T14:20:00.000Z' },
+      { status: 'received', time: '15 Oct 2026, 7:45 PM', at: PLACED, note: 'Paid online' },
+      { status: 'preparing', time: '15 Oct 2026, 7:50 PM', at: '2026-10-15T14:20:00.000Z' },
     ]);
     expect(order.rounds?.[0]?.kitchen).toEqual({
       started: { at: '2026-10-15T14:20:00.000Z', by: 'Kiran' },

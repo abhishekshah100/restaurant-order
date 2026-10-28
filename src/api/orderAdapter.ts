@@ -208,7 +208,7 @@ const eventOf = (event: BackendEvent, order: BackendOrder, words: Words): OrderE
   const note = noteOf(event, order, words);
   return {
     status: event.status,
-    time: words.clock.time(new Date(event.at)),
+    time: words.clock.dateTime(new Date(event.at)),
     at: event.at,
     ...(note ? { note } : {}),
   };

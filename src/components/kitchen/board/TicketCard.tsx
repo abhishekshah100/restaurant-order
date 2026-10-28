@@ -121,7 +121,7 @@ export const TicketCard = memo(function TicketCard({
     ticket.mode === 'takeaway' && ticket.pickupAt
       ? ticket.asap
         ? t('ticket.asap')
-        : t('ticket.pickupAt', { time: clock.time(ticket.pickupAt) })
+        : t('ticket.pickupAt', { time: clock.dateTime(ticket.pickupAt) })
       : ticket.mode === 'delivery' && ticket.deliveryArea
         ? t('ticket.deliveryTo', { area: ticket.deliveryArea })
         : null;

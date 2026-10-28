@@ -9,6 +9,8 @@ export interface Clock {
   time(at: Date | string): string;
   /** "12 Sep 2026" in the branch's local time. */
   date(at: Date | string): string;
+  /** "12 Sep 2026, 7:42 PM": when something happened or is booked, so it never reads ambiguous. */
+  dateTime(at: Date | string): string;
   /** The branch's calendar day: "2026-10-03". */
   dayKey(at: Date | string): string;
   /** Both on the same calendar day at the branch ("today" is the branch's today). */
@@ -60,6 +62,9 @@ export function createClock(region: ClockRegion): Clock {
     date(at) {
       const p = partsOf(dateParts, at);
       return `${p.day} ${p.month} ${p.year}`;
+    },
+    dateTime(at) {
+      return `${clock.date(at)}, ${clock.time(at)}`;
     },
     dayKey,
     isSameDay: (a, b) => dayKey(a) === dayKey(b),

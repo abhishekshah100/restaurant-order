@@ -32,7 +32,7 @@ export function ReservationRow({
   const text = useReservationText();
   const state = reservationState(r, now);
   const stateText = text.state(r, now);
-  const time = clock.time(r.at);
+  const time = clock.dateTime(r.at);
   const meta = [
     text.guests(r.partySize),
     ...(showTable ? [t('adminReservations.table', { table: r.table })] : []),

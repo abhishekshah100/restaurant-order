@@ -41,7 +41,7 @@ export function OrderListItem({
       ? minutesSince(order.placedAt, now)
       : null;
 
-  const when = [clock.time(order.placedAt)];
+  const when = [clock.dateTime(order.placedAt)];
   if (minutes !== null) {
     when.push(
       minutes < 1
@@ -50,7 +50,7 @@ export function OrderListItem({
     );
   }
   if (order.mode === 'takeaway' && order.pickup) {
-    when.push(t('adminOrders.row.pickupAt', { time: clock.time(order.pickup.at) }));
+    when.push(t('adminOrders.row.pickupAt', { time: clock.dateTime(order.pickup.at) }));
   }
   if (order.mode === 'delivery' && order.delivery) {
     when.push(t('adminOrders.row.deliveryTo', { area: order.delivery.address.area }));

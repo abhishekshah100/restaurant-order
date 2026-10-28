@@ -316,7 +316,7 @@
       "now": {
         "open": "{branch} is open",
         "paused": "{branch} is paused until {time}",
-        "closed": "{branch} is closed until {time} tomorrow"
+        "closed": "{branch} is closed until {time}"
       },
       "options": {
         "open": "Open",
@@ -324,7 +324,7 @@
         "paused": "Pause new orders",
         "pausedSub": "The kitchen catches up; guests can still browse",
         "closed": "Close for the rest of today",
-        "closedSub": "Opens again at {time} tomorrow"
+        "closedSub": "Opens again on {time}"
       },
       "for": "For how long?",
       "minutes": "{count} min",
@@ -536,7 +536,7 @@
       "empty": {
         "title": "No open orders",
         "body": "This table is free. Use Take order when guests sit down, or they can scan the QR code.",
-        "reserved": "Reserved for {name} at {time}. Seat them when they arrive, then take their order.",
+        "reserved": "Reserved for {name} on {time}. Seat them when they arrive, then take their order.",
         "outOfService": "Out of service: nothing can be ordered here until it's back in service."
       },
       "notFound": {
@@ -556,7 +556,6 @@
         "retry": "Try again",
         "empty": "No completed orders on these days.",
         "row": "#{order} · {name}",
-        "when": "{date}, {time}",
         "items": {
           "one": "{count} item",
           "other": "{count} items"
@@ -618,7 +617,7 @@
     "failed": "Couldn't update that. Try again.",
     "pickupTitle": "Pickup",
     "pickupAsap": "As soon as it's ready · {time}",
-    "pickupAt": "At {time}",
+    "pickupAt": "{time}",
     "deliveryTitle": "Delivery",
     "landmark": "Near {landmark}",
     "rider": "Rider: {name} · {phone}",
@@ -629,7 +628,6 @@
     "collect": {
       "title": "Collect payment",
       "subtitle": "Order {order} · {amount} to collect",
-      "method": "How did they pay?",
       "confirm": "Collect {amount}",
       "done": "Order {order} paid"
     },
@@ -695,8 +693,8 @@
       "label": "Note for the kitchen",
       "placeholder": "Allergies, timing, anything else"
     },
-    "itemTotal": "Item total",
-    "taxNote": "Offers and taxes are worked out on the bill.",
+    "total": "Total",
+    "taxNote": "Offers, such as happy hour, are worked out on the bill.",
     "remove": "Remove {dish}",
     "send": "Send to kitchen",
     "sentNew": "Order {order} sent to the kitchen",
@@ -814,8 +812,6 @@
       "one": "{count} order to pay",
       "other": "{count} orders to pay"
     },
-    "order": "Order {order} · {name}",
-    "total": "Total to collect",
     "confirm": "Collect {amount}",
     "done": "Table {table} paid",
     "failed": "Couldn't take the payment. Try again."
@@ -1187,10 +1183,10 @@
       "bookedBy": "Booked by",
       "bookedByValue": "{name} · {date}",
       "updated": {
-        "seated": "Seated by {name} at {time}",
-        "cancelled": "Cancelled by {name} at {time}",
-        "noShow": "Marked no-show by {name} at {time}",
-        "booked": "Restored by {name} at {time}"
+        "seated": "Seated by {name} on {time}",
+        "cancelled": "Cancelled by {name} on {time}",
+        "noShow": "Marked no-show by {name} on {time}",
+        "booked": "Restored by {name} on {time}"
       },
       "whenValue": "{date} · {time} – {end}",
       "seat": "Seat guests",
@@ -1203,20 +1199,20 @@
       "notYet": "You can seat the guests from an hour before their time.",
       "confirmCancel": {
         "title": "Cancel booking {id}?",
-        "body": "Table {table} will be free for others at {time}. You can restore the booking later if the table is still free.",
+        "body": "Table {table} will be free for others on {time}. You can restore the booking later if the table is still free.",
         "confirm": "Cancel booking",
         "keep": "Keep booking"
       }
     },
     "toast": {
-      "created": "Table {table} booked for {name} at {time}",
+      "created": "Table {table} booked for {name} on {time}",
       "updated": "Booking {id} saved",
       "seated": "{name} seated at table {table}",
       "cancelled": "Booking {id} cancelled",
       "noShow": "{name} marked as a no-show",
       "booked": "Booking {id} restored",
       "failed": "Couldn't save that. Try again.",
-      "taken": "Table {table} is booked for {name} at {time}. Pick another table or time.",
+      "taken": "Table {table} is booked for {name} on {time}. Pick another table or time.",
       "closed": "This booking has changed meanwhile. Check it and try again."
     },
     "tableBookings": {
@@ -1402,34 +1398,14 @@
       "orderLine": "#{order} · {name}",
       "paidSoFar": "Paid so far",
       "due": "Due now",
-      "amount": "How much",
-      "amounts": {
-        "full": "Full bill",
-        "split": "Split evenly",
-        "custom": "Other amount"
-      },
-      "people": "Paying separately",
-      "share": "Each pays {amount}",
-      "shareOf": "This share: {amount} · {left} left after",
-      "customAmount": "Amount",
-      "customHint": "Up to {amount}",
-      "customError": "Enter an amount up to {amount}",
       "method": "Paid by",
-      "tip": "Tip",
-      "tipNone": "No tip",
-      "tipPercent": "{percent}%",
-      "tipCustom": "Other",
-      "tipAmount": "Tip amount",
       "cashReceived": "Cash received",
       "exact": "Exact",
-      "change": "Change to give",
+      "change": "Change to return",
       "short": "{amount} short",
       "confirm": "Collect {amount}",
-      "confirmTip": "Collect {amount} + {tip} tip",
       "doneOrder": "{amount} collected for order #{order}",
-      "doneTable": "Table {table} settled: {amount} collected",
-      "doneShare": "{amount} collected · {left} still due",
-      "tableNote": "Everything due at the table is collected in one go. To split it, collect each order on its own."
+      "doneTable": "Table {table} settled: {amount} collected"
     },
     "refund": {
       "title": "Refund order #{order}",

@@ -337,6 +337,11 @@ list only the service charge (if any) and round off, carry `taxCharged: false`, 
 "Bill of supply" (India) or "Bill" (Nepal) instead of "GST invoice" / "VAT invoice"
 (`tax.invoiceKey`). See [settings.md › Tax and service charge](settings.md#tax-and-service-charge).
 
+The order page's **Get invoice** prints the same bill staff print from Payments (`useBillPrint` in
+`components/admin/payments/PaymentPrint.tsx`, drawn for the order's branch): the branch, address,
+phone and GSTIN/PAN, bill number and date, items, every charge, the total and payments taken,
+with no browser header or footer.
+
 [`PriceSummary`](../src/components/cart/PriceSummary.tsx) renders the bill. `billRows(bill, …)`
 builds the rows above the total: item total, discounts, delivery fee, then every charge that
 applies (service charge, each tax, round off). A charge the bill does not have is not listed, so
@@ -673,6 +678,12 @@ Gotchas:
   replaces Intl's.
 - `clock.time` always prints upper-case AM/PM, and "today" is the branch's today, not the
   device's.
+- When something happened or is booked (an order placed, a round, a timeline step, a payment, a
+  request, a reservation, a pickup, a reopening, a print), screens show `clock.dateTime`: "28 Oct
+  2026, 7:42 PM", today's too, for guests and staff alike, so history filtered over several days
+  never reads ambiguous. Time alone (`clock.time`) is kept for live clocks, today's opening hours
+  and last orders, time-slot pickers whose day is chosen beside them, and the kitchen board's due
+  and changed times.
 - Switching outlet starts a new session and empties the cart, because prices and rules change with
   the branch.
 

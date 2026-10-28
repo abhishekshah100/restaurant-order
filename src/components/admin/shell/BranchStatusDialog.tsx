@@ -26,8 +26,8 @@ export function BranchStatusDialog({ onClose }: { onClose: () => void }) {
   // Closing for the rest of today waits for the next day the week opens.
   const today = useNow();
   const next = today ? nextOpeningAfterToday(region, today) : null;
-  const reopensAt = next ? clock.time(next.at) : '';
-  const until = branch.statusUntil ? clock.time(branch.statusUntil) : '';
+  const reopensAt = next ? clock.dateTime(next.at) : '';
+  const until = branch.statusUntil ? clock.dateTime(branch.statusUntil) : '';
   const now = t(`adminShell.statusControl.now.${branch.status}`, {
     branch: branch.shortName,
     time: until,

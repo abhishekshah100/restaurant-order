@@ -35,7 +35,7 @@ export function useReservationText() {
         return t('adminReservations.toast.taken', {
           table,
           name: error.body.reservation.guestName,
-          time: clock.time(error.body.reservation.at),
+          time: clock.dateTime(error.body.reservation.at),
         });
       }
       if (isApiError(error, 'reservation_closed')) return t('adminReservations.toast.closed');

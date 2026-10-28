@@ -10,6 +10,7 @@ import { cartLineLabels } from '@/hooks/useCartLineLabels';
 import { defaultConfig } from '@/lib/cartLine';
 import { reorderLines } from '@/lib/lifecycle';
 import { addLine, padRequest, padTotals, setQuantity } from '@/lib/orderPad';
+import { calculateBill } from '@/lib/pricing';
 import type { CartLine, LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
 import type { Order, OrderRound } from '@/types/order';
@@ -83,6 +84,8 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
     target.kind === 'edit' ? (target.round.kitchenNote ?? '') : '',
   );
   const totals = padTotals(lines);
+  // What the guest pays for these lines: taxes, service charge and round off included.
+  const billTotal = calculateBill(lines, region).total;
 
   let title = t('adminOrderPad.titleNew', { table: target.table });
   if (target.kind === 'add') title = t('adminOrderPad.titleAdd', { order: target.order.id });
@@ -217,7 +220,7 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
         iconStart="check"
         loading={sending}
         disabled={totals.items === 0}
-        meta={money.format(totals.total)}
+        meta={money.format(billTotal)}
         onClick={send}
       >
         {target.kind === 'edit' ? t('adminOrderPad.save') : t('adminOrderPad.send')}
@@ -240,9 +243,7 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
         disabled={totals.items === 0}
         meta={
           totals.items > 0
-            ? [t.plural('adminOrderPad.items', totals.items), money.format(totals.total)].join(
-                ' · ',
-              )
+            ? [t.plural('adminOrderPad.items', totals.items), money.format(billTotal)].join(' · ')
             : undefined
         }
         onClick={() => setStep('review')}

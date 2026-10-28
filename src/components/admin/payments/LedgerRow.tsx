@@ -18,7 +18,7 @@ export function LedgerRow({ entry, onOpen }: { entry: LedgerEntry; onOpen: () =>
   const refund = entry.kind === 'refund';
   const kind = t(refund ? 'adminPayments.entry.refund' : 'adminPayments.entry.payment');
   const details = [
-    clock.time(entry.at),
+    clock.dateTime(entry.at),
     t(entry.channel === 'online' ? 'adminPayments.entry.online' : 'adminPayments.entry.inPerson'),
     entry.by && t('adminPayments.entry.by', { name: entry.by }),
     entry.transactionRef && t('adminPayments.entry.ref', { ref: entry.transactionRef }),

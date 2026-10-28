@@ -96,7 +96,7 @@ test('a Nepal QR code: NPR prices, service charge + VAT, +977 and Nepali payment
   await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
   await expect(visible(page, npr('572'))).toBeVisible();
   await page.goto(page.url().replace('/confirmed/', '/'));
-  await expect(visible(page, /Today, 7:45 PM/)).toBeVisible();
+  await expect(visible(page, /3 Oct 2026, 7:45 PM/)).toBeVisible();
   await expect(visible(page, 'eSewa')).toBeVisible();
 });
 

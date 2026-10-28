@@ -34,10 +34,12 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
   await form.getByLabel('Note').fill('Anniversary');
   await form.getByRole('button', { name: 'Book table' }).click();
   await expect(
-    page.getByRole('status').filter({ hasText: 'Table 6 booked for Rahul Mehta at 7:00 PM' }),
+    page
+      .getByRole('status')
+      .filter({ hasText: 'Table 6 booked for Rahul Mehta on 15 Oct 2026, 7:00 PM' }),
   ).toBeVisible();
   const row = page.getByRole('button', {
-    name: /^Booking R1001: Rahul Mehta, 7:00 PM, Arriving soon/,
+    name: /^Booking R1001: Rahul Mehta, 15 Oct 2026, 7:00 PM, Arriving soon/,
   });
   await expect(row).toBeVisible();
 
@@ -46,7 +48,7 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
   form = page.getByRole('dialog', { name: 'New reservation' });
   await form.getByLabel('Time').selectOption({ label: '7:30 PM' });
   await expect(
-    form.getByRole('button', { name: /^Table 6, 4 seats, Booked 7:00 PM/ }),
+    form.getByRole('button', { name: /^Table 6, 4 seats, Booked 15 Oct 2026, 7:00 PM/ }),
   ).toBeDisabled();
   await page.keyboard.press('Escape');
 
@@ -72,7 +74,9 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
   );
   await form.getByRole('button', { name: 'Book table' }).click();
   await expect(
-    page.getByRole('status').filter({ hasText: 'Table 6 booked for Isha Verma at 8:00 PM' }),
+    page
+      .getByRole('status')
+      .filter({ hasText: 'Table 6 booked for Isha Verma on 16 Oct 2026, 8:00 PM' }),
   ).toBeVisible();
 
   await page.goto('/admin/dashboard/reservations/?day=2026-10-16');
@@ -89,7 +93,9 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
   ).toBeVisible();
   await page.getByRole('button', { name: /^Cancelled & no-show/ }).click();
   await expect(
-    page.getByRole('button', { name: /^Booking R1002: Isha Verma, 8:00 PM, Cancelled/ }),
+    page.getByRole('button', {
+      name: /^Booking R1002: Isha Verma, 16 Oct 2026, 8:00 PM, Cancelled/,
+    }),
   ).toBeVisible();
 });
 
@@ -150,10 +156,12 @@ test('today and tomorrow as tiles, any later day from the calendar', async ({ pa
   await form.getByRole('button', { name: /^Table 2, 4 seats/ }).click();
   await form.getByRole('button', { name: 'Book table' }).click();
   await expect(
-    page.getByRole('status').filter({ hasText: 'Table 2 booked for Asha Rao at 8:00 PM' }),
+    page
+      .getByRole('status')
+      .filter({ hasText: 'Table 2 booked for Asha Rao on 24 Oct 2026, 8:00 PM' }),
   ).toBeVisible();
   await page.goto('/admin/dashboard/reservations/?day=2026-10-24');
   await expect(
-    page.getByRole('button', { name: /^Booking R\d+: Asha Rao, 8:00 PM/ }),
+    page.getByRole('button', { name: /^Booking R\d+: Asha Rao, 24 Oct 2026, 8:00 PM/ }),
   ).toBeVisible();
 });

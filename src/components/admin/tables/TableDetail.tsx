@@ -319,7 +319,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               {detail.status === 'reserved' && detail.booking
                 ? t('adminTables.detail.empty.reserved', {
                     name: detail.booking.guestName,
-                    time: clock.time(detail.booking.at),
+                    time: clock.dateTime(detail.booking.at),
                   })
                 : detail.disabled
                   ? t('adminTables.detail.empty.outOfService')

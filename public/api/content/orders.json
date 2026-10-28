@@ -117,12 +117,12 @@
     "meta": "{visit} · Placed {time} · {payment}",
     "hero": {
       "readyLabel": "Your food is",
-      "readyBody": "Your dishes were ready at {time}. They're on their way to Table {table}.",
+      "readyBody": "Your dishes were ready on {time}. They're on their way to Table {table}.",
       "servedLabel": "Enjoy your meal",
-      "servedBody": "Everything reached Table {table} at {time}. Need anything else? Call a waiter or ask for the bill.",
+      "servedBody": "Everything reached Table {table} on {time}. Need anything else? Call a waiter or ask for the bill.",
       "etaLabel": "Ready in about",
       "estimateLabel": "Usually ready in",
-      "preparingBody": "The chef started on your dishes at {time}. We'll bring them to Table {table}.",
+      "preparingBody": "The chef started on your dishes on {time}. We'll bring them to Table {table}.",
       "receivedBody": "The kitchen has your order and will start on it shortly. We'll bring it to Table {table}."
     },
     "atCounter": "At the counter",
@@ -130,19 +130,19 @@
     "takeaway": {
       "readyAtLabel": "Ready for pickup at",
       "receivedBody": "The kitchen has your order. It'll be packed and waiting at the counter.",
-      "preparingBody": "The chef started on your order at {time}. It'll be packed and waiting at the counter.",
+      "preparingBody": "The chef started on your order on {time}. It'll be packed and waiting at the counter.",
       "readyLabel": "Your order is",
       "readyBody": "Packed and waiting since {time}. Show order #{id} at the counter.",
       "pickedUpLabel": "Enjoy your meal",
-      "pickedUpBody": "Collected at {time}. Thanks for ordering from {branch}."
+      "pickedUpBody": "Collected on {time}. Thanks for ordering from {branch}."
     },
     "delivery": {
       "etaLabel": "Arriving in about",
       "receivedBody": "The kitchen has your order. It'll leave for {area} as soon as it's ready.",
-      "preparingBody": "The chef started on your order at {time}. A rider will pick it up next.",
-      "outBody": "{rider} picked up your order at {time} and is on the way to {area}.",
+      "preparingBody": "The chef started on your order on {time}. A rider will pick it up next.",
+      "outBody": "{rider} picked up your order on {time} and is on the way to {area}.",
       "deliveredLabel": "Enjoy your meal",
-      "deliveredBody": "Delivered to {area} at {time}."
+      "deliveredBody": "Delivered to {area} on {time}."
     }
   },
   "confirmed": {
@@ -152,7 +152,7 @@
     "readyIn": "Ready in",
     "trackOrder": "Track order",
     "orderMore": "Order something else",
-    "byline": "{restaurant} · Placed at {time} by {name}",
+    "byline": "{restaurant} · Placed on {time} by {name}",
     "pickupAt": "Pickup at",
     "arrivesIn": "Arrives in",
     "deliverTo": "Deliver to",
@@ -184,7 +184,6 @@
     "title": "Order details",
     "heading": "<hidden>Order </hidden>#{id}",
     "meta": "{restaurant} · {visit} · {day}, {time} · {name}",
-    "today": "Today",
     "viewTimeline": "View timeline",
     "trackLive": "Track live",
     "trackLiveEta": "Track live · ~{minutes} min",
@@ -229,7 +228,7 @@
   },
   "fulfilment": {
     "pickupTitle": "Pickup from",
-    "pickupAt": "Ready for pickup at {time}",
+    "pickupAt": "Ready for pickup on {time}",
     "pickupAsap": "As soon as possible · ready around {time}",
     "directions": "Get directions",
     "directionsLabel": "Get directions to {branch} (opens your maps app)",

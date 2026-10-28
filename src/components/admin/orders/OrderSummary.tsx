@@ -59,7 +59,7 @@ export function OrderSummary({ order }: { order: Order }) {
                 <span className={styles.roundTitle}>
                   {t('adminOrder.round', {
                     round: group.round.number,
-                    time: clock.time(group.round.placedAt),
+                    time: clock.dateTime(group.round.placedAt),
                   })}
                 </span>
                 <StatusPill status={group.round.status} />
@@ -171,7 +171,7 @@ function Fulfilment({ order }: { order: Order }) {
   const t = useContent('common');
   const { clock } = useAdminWorkspace();
   if (order.mode === 'takeaway' && order.pickup) {
-    const time = clock.time(order.pickup.at);
+    const time = clock.dateTime(order.pickup.at);
     return (
       <section className={styles.where} aria-label={t('adminOrder.pickupTitle')}>
         <span className={styles.whereTitle}>{t('adminOrder.pickupTitle')}</span>

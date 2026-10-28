@@ -73,7 +73,7 @@ function Kot({
       <p className={styles.line}>
         {ticket.token !== undefined && <strong>{t('kot.token', { token: ticket.token })}</strong>}
         <span>{t('kot.order', { order: ticket.orderId })}</span>
-        <span>{clock.time(ticket.placedAt)}</span>
+        <span>{clock.dateTime(ticket.placedAt)}</span>
       </p>
       {ticket.roundCount > 1 && (
         <p className={styles.small}>
@@ -120,7 +120,7 @@ function Kot({
           );
         })}
       </ul>
-      <p className={styles.printed}>{t('kot.printed', { time: clock.time(now) })}</p>
+      <p className={styles.printed}>{t('kot.printed', { time: clock.dateTime(now) })}</p>
     </article>
   );
 }

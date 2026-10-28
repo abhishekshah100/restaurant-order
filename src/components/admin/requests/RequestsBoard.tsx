@@ -208,7 +208,7 @@ function DoneList({ done }: { done: readonly AdminServiceRequest[] }) {
                         request.resolvedAt &&
                         t('adminRequests.doneBy', {
                           name: request.resolvedBy,
-                          time: clock.time(request.resolvedAt),
+                          time: clock.dateTime(request.resolvedAt),
                         }),
                       minutes < 1
                         ? t('adminRequests.handledIn.now')

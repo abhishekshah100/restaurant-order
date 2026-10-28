@@ -290,15 +290,6 @@
   font: var(--font-small);
 }
 
-.total {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  color: var(--ink);
-  font: var(--font-label);
-  font-variant-numeric: tabular-nums;
-}
-
 .total strong {
   font: var(--font-price);
 }

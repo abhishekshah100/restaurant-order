@@ -293,7 +293,7 @@ function TrackingView({
         <p className={cx('t-small c3', styles.meta)}>
           {t('tracking.meta', {
             visit: visitWords(order),
-            time: clock.time(order.placedAt),
+            time: clock.dateTime(order.placedAt),
             payment: t(`payment.${paymentProgress(order)}`),
           })}
         </p>

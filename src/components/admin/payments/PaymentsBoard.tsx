@@ -172,7 +172,7 @@ export function PaymentsBoard() {
           c('adminPayments.report.columns.status'),
         ],
         (e: LedgerEntry) => [
-          `${clock.date(e.at)} ${clock.time(e.at)}`,
+          clock.dateTime(e.at),
           e.order.id,
           text.where(e.order),
           e.order.customerName,

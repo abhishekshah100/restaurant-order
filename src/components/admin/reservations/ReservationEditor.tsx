@@ -111,7 +111,7 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
               : t('adminReservations.toast.created', {
                   table: saved.table,
                   name: saved.guestName,
-                  time: clock.time(saved.at),
+                  time: clock.dateTime(saved.at),
                 }),
             { tone: 'success' },
           );

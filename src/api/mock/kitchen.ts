@@ -134,7 +134,7 @@ export function simulateOrder(order: Order, now: Date, clock: Clock, branch: Bra
       // Each event says when it happened (ISO) as well as the time shown.
       return event
         ? { ...event, at: event.at ?? when.toISOString() }
-        : { status: step, time: clock.time(when), at: when.toISOString() };
+        : { status: step, time: clock.dateTime(when), at: when.toISOString() };
     }),
     items: order.items.map((item, i) => ({
       ...item,

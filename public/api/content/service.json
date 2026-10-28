@@ -108,7 +108,7 @@
     "viewRequest": "View bill request",
     "confirm": "Confirm bill request",
     "heading": "Table {table} · {orders}",
-    "pending": "You asked for the bill at {time}. Your server is on the way.",
+    "pending": "You asked for the bill on {time}. Your server is on the way.",
     "scopeTitle": "Which bill?",
     "mine": "Just my orders",
     "mineNone": "No orders from you yet",

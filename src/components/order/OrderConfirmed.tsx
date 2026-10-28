@@ -35,7 +35,7 @@ function useModeWells(order: Order): { first: [string, string]; last: [string, s
   if (order.mode === 'takeaway' && order.pickup) {
     return {
       first: [t('confirmed.mode'), common('modes.takeaway')],
-      last: [t('confirmed.pickupAt'), clock.time(order.pickup.at)],
+      last: [t('confirmed.pickupAt'), clock.dateTime(order.pickup.at)],
     };
   }
   if (order.mode === 'delivery' && order.delivery) {
@@ -107,7 +107,7 @@ function Confirmed({ order }: { order: Order }) {
   const { money, clock } = useRegion();
   const t = useContent('orders');
   const wells = useModeWells(order);
-  const placedAt = clock.time(order.placedAt);
+  const placedAt = clock.dateTime(order.placedAt);
   const trackHref = orderPath(order.id, 'track');
   const steps = TRACK_STEPS[order.mode];
 

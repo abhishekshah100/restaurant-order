@@ -103,7 +103,7 @@ test('request the bill for the whole table', async ({ page }) => {
 
   // The bill page now points to the pending request instead of asking again.
   await page.goto('/help/bill/');
-  await expect(page.getByText(/You asked for the bill at/)).toBeVisible();
+  await expect(page.getByText(/You asked for the bill on/)).toBeVisible();
   await expect(visible(page, 'link', 'View bill request')).toBeVisible();
 });
 

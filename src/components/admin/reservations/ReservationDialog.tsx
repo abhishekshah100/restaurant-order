@@ -192,7 +192,7 @@ function ReservationFacts({ reservation: r, now }: { reservation: Reservation; n
               <span>
                 {t(`adminReservations.detail.updated.${r.status}`, {
                   name: r.updatedBy,
-                  time: clock.time(r.updatedAt),
+                  time: clock.dateTime(r.updatedAt),
                 })}
               </span>
             )}
@@ -243,7 +243,7 @@ function CancelStep({
       <p className={styles.confirm}>
         {t('adminReservations.detail.confirmCancel.body', {
           table: r.table,
-          time: clock.time(r.at),
+          time: clock.dateTime(r.at),
         })}
       </p>
     </Dialog>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useBranchOrders, useContent } from '@/api/hooks';
 import { Button, Dialog, Icon, StatusPill } from '@/components/ui';
 import { dueOn } from '@/lib/adminOrders';
-import { isTodayOnly, type DayRange } from '@/lib/dayRange';
+import type { DayRange } from '@/lib/dayRange';
 import { isFinished } from '@/lib/orders';
 import type { Order } from '@/types/order';
 import { DateRangeFilter } from '../DateRangeFilter';
@@ -31,7 +31,6 @@ export function TableHistoryDialog({ table, onClose }: { table: number; onClose:
   const orders = useBranchOrders(branch.id, { ...days, table }, days.to === today);
   const completed = (orders.data?.orders ?? []).filter(isCompleted);
   const open = openId ? completed.find((o) => o.id === openId) : undefined;
-  const oneDay = isTodayOnly(days, today) || days.from === days.to;
 
   let body;
   if (open) {
@@ -51,12 +50,7 @@ export function TableHistoryDialog({ table, onClose }: { table: number; onClose:
                     })}
                   </span>
                   <span className={styles.meta}>
-                    {oneDay
-                      ? clock.time(order.placedAt)
-                      : t('adminTables.detail.history.when', {
-                          date: clock.date(order.placedAt),
-                          time: clock.time(order.placedAt),
-                        })}
+                    {clock.dateTime(order.placedAt)}
                     {' · '}
                     {t.plural(
                       'adminTables.detail.history.items',

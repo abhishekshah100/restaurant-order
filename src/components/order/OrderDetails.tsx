@@ -3,13 +3,14 @@
 import { Button, StatusPill, Tag, VegMark } from '@/components/ui';
 import { PriceSummary } from '@/components/cart/PriceSummary';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
+import { useBillPrint } from '@/components/admin/payments/PaymentPrint';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
 import type { ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
 import { cx } from '@/lib/cx';
 import { useVisitWords } from '@/hooks/useVisitLabel';
 import { amountDue, hasRounds, paidAmount } from '@/lib/lifecycle';
-import { formatOrderDay, isFinished, orderBill, orderPath, unpaidLabel } from '@/lib/orders';
+import { isFinished, orderBill, orderPath, unpaidLabel } from '@/lib/orders';
 import { itemCount } from '@/lib/pricing';
 import type { Order, OrderItem } from '@/types/order';
 import { ChangeWindow } from './ChangeWindow';
@@ -88,9 +89,11 @@ function ItemRows({ items }: { items: OrderItem[] }) {
   );
 }
 
-function DetailsView({ order, now }: { order: Order; now: Date }) {
+function DetailsView({ order }: { order: Order }) {
   const branch = useBranch();
   const { money, clock } = useRegion();
+  // The invoice prints the same bill staff print from Payments.
+  const invoice = useBillPrint({ region: branch, money, clock });
   const t = useContent('orders');
   const common = useContent('common');
   const visitWords = useVisitWords();
@@ -126,7 +129,7 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
               {t('details.meta', {
                 restaurant: branch.name,
                 visit: visitWords(order),
-                day: formatOrderDay(order.placedAt, now, t('details.today'), clock),
+                day: clock.date(order.placedAt),
                 time: clock.time(order.placedAt),
                 name: order.customerName,
               })}
@@ -164,7 +167,7 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
                 <div className={styles.roundHead}>
                   <h3 id={`round-${round.number}`} className={styles.roundTitle}>
                     {t('rounds.round', { number: round.number })}
-                    <span className={styles.roundTime}>{clock.time(round.placedAt)}</span>
+                    <span className={styles.roundTime}>{clock.dateTime(round.placedAt)}</span>
                   </h3>
                   <StatusPill status={round.status} className={styles.roundPill} />
                 </div>
@@ -253,7 +256,12 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
 
         <OrderAgainButton order={order} block className={styles.again} />
         <div className={styles.actions}>
-          <Button variant="secondary" block iconStart="receipt" onClick={() => window.print()}>
+          <Button
+            variant="secondary"
+            block
+            iconStart="receipt"
+            onClick={() => invoice.bill([order])}
+          >
             {t('details.invoice')}
           </Button>
           <Button href="/help/" variant="ghost" block iconStart="flag">
@@ -261,6 +269,7 @@ function DetailsView({ order, now }: { order: Order; now: Date }) {
           </Button>
         </div>
       </aside>
+      {invoice.sheet}
     </OrderShell>
   );
 }
@@ -273,5 +282,5 @@ export function OrderDetails() {
   if (lookup.state === 'loading') return <OrderLoading title={t('details.title')} />;
   if (lookup.state === 'missing') return <OrderNotFound id={id ?? null} />;
   if (lookup.order.status === 'cancelled') return <OrderCancelled order={lookup.order} />;
-  return <DetailsView order={lookup.order} now={lookup.now} />;
+  return <DetailsView order={lookup.order} />;
 }

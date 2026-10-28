@@ -24,7 +24,7 @@ export function RoundList({ order }: { order: Order }) {
           <div className={styles.head}>
             <h3 className={styles.title}>
               {t('rounds.round', { number: round.number })}
-              <span className={styles.time}>{clock.time(round.placedAt)}</span>
+              <span className={styles.time}>{clock.dateTime(round.placedAt)}</span>
             </h3>
             <StatusPill status={round.status} className={styles.pill} />
           </div>

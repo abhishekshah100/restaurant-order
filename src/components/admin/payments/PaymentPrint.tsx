@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useContent } from '@/api/hooks';
 import { useAdminName } from '@/hooks/useAdminSession';
@@ -10,8 +10,8 @@ import { paidAmount } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
 import type { Order } from '@/types/order';
 import { billRows } from '../../cart/PriceSummary';
-import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { usePaymentText } from './usePaymentText';
+import { useAdminWorkspace, type AdminWorkspace } from '../shell/AdminWorkspace';
+import { usePaymentText, usePaymentWords } from './usePaymentText';
 import styles from './PaymentPrint.module.css';
 
 /** Set on <html> while a bill or the day report prints: everything else on the page is hidden. */
@@ -20,6 +20,17 @@ const PRINTING = 'printing-payments';
 type Printable =
   | { kind: 'bill'; orders: Order[] }
   | { kind: 'report'; orders: Order[]; due: DueGroup[]; period: string };
+
+/** The branch a bill is printed for, and how it writes money and times. */
+export type PrintPlace = Pick<AdminWorkspace, 'region' | 'money' | 'clock'>;
+
+const PrintPlaceContext = createContext<PrintPlace | null>(null);
+
+function usePrintPlace(): PrintPlace {
+  const place = useContext(PrintPlaceContext);
+  if (!place) throw new Error('A printed bill needs its branch (PrintPlaceContext)');
+  return place;
+}
 
 /**
  * Printing from the Payments page: `bill(orders)` prints the bill for an order or a table (a
@@ -30,6 +41,19 @@ type Printable =
  * footer (date, title, address); the sheet keeps its own.
  */
 export function usePaymentPrint() {
+  return usePrintDoc(useAdminWorkspace());
+}
+
+/**
+ * The same printed bill for a guest's order (the order page's "Get invoice"): staff and guests
+ * get one bill, drawn for the branch the order is from.
+ */
+export function useBillPrint(place: PrintPlace) {
+  const { bill, sheet } = usePrintDoc(place);
+  return { bill, sheet };
+}
+
+function usePrintDoc(place: PrintPlace) {
   const t = useContent('common');
   const [doc, setDoc] = useState<Printable | null>(null);
 
@@ -61,13 +85,15 @@ export function usePaymentPrint() {
   const sheet =
     doc &&
     createPortal(
-      <div className={styles.sheet} data-print-sheet="">
-        {doc.kind === 'bill' ? (
-          <BillDoc orders={doc.orders} />
-        ) : (
-          <ReportDoc orders={doc.orders} due={doc.due} period={doc.period} />
-        )}
-      </div>,
+      <PrintPlaceContext.Provider value={place}>
+        <div className={styles.sheet} data-print-sheet="">
+          {doc.kind === 'bill' ? (
+            <BillDoc orders={doc.orders} />
+          ) : (
+            <ReportDoc orders={doc.orders} due={doc.due} period={doc.period} />
+          )}
+        </div>
+      </PrintPlaceContext.Provider>,
       document.body,
     );
 
@@ -81,7 +107,7 @@ export function usePaymentPrint() {
 
 function PrintHead({ title }: { title: string }) {
   const t = useContent('common');
-  const { region } = useAdminWorkspace();
+  const { region } = usePrintPlace();
   return (
     <header className={styles.head}>
       <p className={styles.brand}>{t('meta.applicationName')}</p>
@@ -108,7 +134,7 @@ function PrintHead({ title }: { title: string }) {
 /** What a printed bill is called: a receipt once paid; in India without GST a "Bill of supply". */
 function useBillTitle(due: number): string {
   const t = useContent('common');
-  const { region } = useAdminWorkspace();
+  const { region } = usePrintPlace();
   if (due <= 0) return t('adminPayments.receipt.receiptTitle');
   return region.tax.invoiceKey === 'billOfSupply'
     ? t('adminPayments.receipt.titleNoTax')
@@ -123,8 +149,8 @@ function useBillTitle(due: number): string {
 function BillDoc({ orders }: { orders: Order[] }) {
   const t = useContent('common');
   const cart = useContent('cart');
-  const { clock, region, money } = useAdminWorkspace();
-  const { amount, methodName, where } = usePaymentText();
+  const { clock, region, money } = usePrintPlace();
+  const { amount, methodName, where } = usePaymentWords(money);
   const due = orders.reduce((s, o) => s + dueOn(o), 0);
   const total = orders.reduce((s, o) => s + o.total, 0);
   const payments = orders.flatMap((o) => ledgerOf(o).map((e) => ({ ...e, order: o })));
@@ -170,7 +196,7 @@ function BillDoc({ orders }: { orders: Order[] }) {
             {orders.length > 1 && (
               <p className={styles.orderHead}>
                 <strong>{t('adminPayments.receipt.order', { order: order.id })}</strong>
-                <span>{clock.time(order.placedAt)}</span>
+                <span>{clock.dateTime(order.placedAt)}</span>
               </p>
             )}
             <table className={styles.items}>
@@ -248,7 +274,7 @@ function BillDoc({ orders }: { orders: Order[] }) {
                   <td>
                     {methodName(e.method)}
                     <span className={styles.variant}>
-                      {clock.time(e.at)}
+                      {clock.dateTime(e.at)}
                       {e.transactionRef && ` · ${e.transactionRef}`}
                     </span>
                   </td>
@@ -265,7 +291,7 @@ function BillDoc({ orders }: { orders: Order[] }) {
       <footer className={styles.foot}>
         <p className={styles.thanks}>{t('adminPayments.receipt.thanks')}</p>
         <p className={styles.printed}>
-          {t('adminPayments.receipt.printed', { time: `${clock.date(now)}, ${clock.time(now)}` })}
+          {t('adminPayments.receipt.printed', { time: clock.dateTime(now) })}
         </p>
       </footer>
     </article>
@@ -290,7 +316,7 @@ function ReportDoc({ orders, due, period }: { orders: Order[]; due: DueGroup[]; 
         {t('adminPayments.report.branch', { branch: branch.shortName, date: period })}
       </p>
       <p className={styles.muted}>
-        {t('adminPayments.report.printed', { time: clock.time(now), name: name ?? '' })}
+        {t('adminPayments.report.printed', { time: clock.dateTime(now), name: name ?? '' })}
       </p>
 
       <h2 className={styles.section}>{t('adminPayments.report.summary')}</h2>
@@ -354,7 +380,7 @@ function ReportDoc({ orders, due, period }: { orders: Order[]; due: DueGroup[]; 
           <tbody>
             {entries.map((e) => (
               <tr key={e.id}>
-                <td>{clock.time(e.at)}</td>
+                <td>{clock.dateTime(e.at)}</td>
                 <td>{t('adminPayments.orderId', { order: e.order.id })}</td>
                 <td>{where(e.order)}</td>
                 <td>

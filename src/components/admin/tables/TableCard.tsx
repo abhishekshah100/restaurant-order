@@ -48,7 +48,10 @@ export function TableCard({ table, now }: { table: AdminFloorTable; now: Date | 
         {table.status === 'reserved' && booking ? (
           <>
             <span className={cx(styles.line, styles.booking)}>
-              {t('adminTables.booking', { time: clock.time(booking.at), name: booking.guestName })}
+              {t('adminTables.booking', {
+                time: clock.dateTime(booking.at),
+                name: booking.guestName,
+              })}
             </span>
             <span className={cx(styles.line, late > 0 && styles.late)}>
               {late > 0 ? t('adminTables.late', { count: late }) : guests}
@@ -70,7 +73,7 @@ export function TableCard({ table, now }: { table: AdminFloorTable; now: Date | 
           booking ? (
             <span className={cx(styles.line, styles.booking)}>
               <Icon name="calendar" size="xs" />
-              {t('adminTables.nextBooking', { time: clock.time(booking.at) })}
+              {t('adminTables.nextBooking', { time: clock.dateTime(booking.at) })}
             </span>
           ) : (
             <span>{t('adminTables.ready')}</span>
@@ -94,7 +97,7 @@ export function TableCard({ table, now }: { table: AdminFloorTable; now: Date | 
             {booking && (
               <span className={cx(styles.line, styles.booking)}>
                 <Icon name="calendar" size="xs" />
-                {t('adminTables.nextBooking', { time: clock.time(booking.at) })}
+                {t('adminTables.nextBooking', { time: clock.dateTime(booking.at) })}
               </span>
             )}
           </>

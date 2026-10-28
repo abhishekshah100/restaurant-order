@@ -43,15 +43,8 @@ export const isOwnOrder = (order: Pick<Order, 'sessionId'>, sessionId: string | 
 /** Placed on the same branch day as `now` (in the branch's time zone). */
 export const isToday = (iso: string, now: Date, clock: Clock) => clock.isSameDay(iso, now);
 
-/** `today` (the word, e.g. "Today") or "12 Sep 2026" (branch time). */
-export const formatOrderDay = (iso: string, now: Date, today: string, clock: Clock) =>
-  isToday(iso, now, clock) ? today : clock.date(iso);
-
-/** "7:42 PM" today, "12 Sep 2026, 8:18 PM" on an earlier visit (branch time). */
-export function formatPlaced(iso: string, now: Date, clock: Clock): string {
-  const time = clock.time(iso);
-  return isToday(iso, now, clock) ? time : `${clock.date(iso)}, ${time}`;
-}
+/** "12 Sep 2026, 8:18 PM", today's orders too (branch time). */
+export const formatPlaced = (iso: string, clock: Clock): string => clock.dateTime(iso);
 
 /** Splits orders into this visit (today) and earlier visits, keeping their order. */
 export function groupByVisit(orders: readonly Order[], now: Date, clock: Clock) {

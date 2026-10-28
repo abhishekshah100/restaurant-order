@@ -28,32 +28,12 @@
   font: var(--font-small);
 }
 
-/* ---------- Split ---------- */
+/* ---------- Bill: one order's charges after another (a table) ---------- */
 
-.split {
-  padding: 12px 14px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px 12px;
-  border-radius: var(--r-md);
-  background: var(--bg);
-}
-
-.splitLabel {
+.billOrder {
+  margin-top: 4px;
+  color: var(--ink-2);
   font: var(--font-small-strong);
-}
-
-.splitShare {
-  grid-column: 1 / -1;
-  font: var(--font-h3);
-  font-variant-numeric: tabular-nums;
-}
-
-.splitNote {
-  grid-column: 1 / -1;
-  color: var(--ink-3);
-  font: var(--font-meta);
 }
 
 /* ---------- Cash ---------- */

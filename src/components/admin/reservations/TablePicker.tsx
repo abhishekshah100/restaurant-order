@@ -33,7 +33,7 @@ export function TablePicker({
           <ul className={styles.grid}>
             {area.tables.map((choice) => {
               const booked = choice.clash
-                ? t('adminReservations.editor.booked', { time: clock.time(choice.clash.at) })
+                ? t('adminReservations.editor.booked', { time: clock.dateTime(choice.clash.at) })
                 : null;
               const seats = t('adminReservations.editor.seats', { count: choice.seats });
               const words = [

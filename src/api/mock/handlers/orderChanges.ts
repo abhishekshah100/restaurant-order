@@ -198,7 +198,7 @@ export function planRound(target: Target, body: Record<string, unknown>, note?: 
     placedAt: now.toISOString(),
     status: 'received',
     items,
-    timeline: [{ status: 'received', time: createClock(branch).time(now), note }],
+    timeline: [{ status: 'received', time: createClock(branch).dateTime(now), note }],
     kitchenNote: kitchenNoteOf(body) || undefined,
     changeableUntil: changeableUntil(now, branch),
   };
@@ -285,7 +285,7 @@ export const cancelOrder: Handler = async (ctx, { params, body: raw }) => {
   const target = await targetOrder(ctx, params.id, stringField(body, 'sessionId'));
   const { order, branch, now } = target;
   const { round } = openWindow(target, body);
-  const time = createClock(branch).time(now);
+  const time = createClock(branch).dateTime(now);
   const rounds = roundsOf(order).map((r) =>
     r.number === round.number
       ? {

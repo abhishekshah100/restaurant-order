@@ -253,10 +253,10 @@ function demoOrder(demo: DemoOrder, branch: Branch, menu: MenuCatalog, now: numb
   const reached = STEPS.slice(0, STEPS.findIndex(([step]) => step === demo.status) + 1);
   const timeline: OrderEvent[] = reached.map(([step, after]) => {
     const at = ago(now, Math.max(0, demo.placed - after));
-    return { status: step, time: clock.time(at), at };
+    return { status: step, time: clock.dateTime(at), at };
   });
   if (isServed) {
-    timeline.push({ status, time: clock.time(new Date(now)), at: new Date(now).toISOString() });
+    timeline.push({ status, time: clock.dateTime(new Date(now)), at: new Date(now).toISOString() });
   }
 
   return {

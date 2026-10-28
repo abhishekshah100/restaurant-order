@@ -49,7 +49,7 @@ export function PaymentOrderDialog({
           order.mode === 'dineIn' && order.table !== undefined
             ? t('adminHome.queue.where.table', { table: order.table })
             : t(`modes.${order.mode}`),
-        time: clock.time(order.placedAt),
+        time: clock.dateTime(order.placedAt),
       })}
       className={styles.dialog}
       footer={
@@ -99,7 +99,7 @@ export function PaymentOrderDialog({
                       </span>
                       <span className={styles.historyMeta}>
                         {[
-                          clock.time(entry.at),
+                          clock.dateTime(entry.at),
                           entry.by && t('adminPayments.entry.by', { name: entry.by }),
                           entry.transactionRef &&
                             t('adminPayments.entry.ref', { ref: entry.transactionRef }),

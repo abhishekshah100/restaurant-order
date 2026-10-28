@@ -289,7 +289,7 @@ describe('orders', () => {
       table: 5,
       total: 1144,
       payment: { method: 'online', status: 'paid', detail: 'eSewa', transactionRef: '•••• 4821' },
-      timeline: [{ status: 'received', time: '7:15 PM', note: 'Paid online' }],
+      timeline: [{ status: 'received', time: '3 Oct 2026, 7:15 PM', note: 'Paid online' }],
     });
     // A payment pays for one order only.
     expect(error(await call('POST', 'orders', { ...order, lines, paymentId: payment.id }))).toBe(

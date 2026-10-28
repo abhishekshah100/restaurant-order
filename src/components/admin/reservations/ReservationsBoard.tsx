@@ -135,7 +135,7 @@ export function ReservationsBoard() {
             <dt>{t('adminReservations.stats.next')}</dt>
             <dd>
               {next
-                ? [clock.time(next.at), next.guestName].join(' · ')
+                ? [clock.dateTime(next.at), next.guestName].join(' · ')
                 : t('adminReservations.stats.none')}
             </dd>
           </div>

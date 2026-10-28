@@ -167,7 +167,7 @@ export function buildOrder(
   const items = toOrderItems(input.lines, menu, labels.lineLabels);
   if (items.length === 0) return null;
   const { bill } = input;
-  const time = createClock(branch).time(input.now);
+  const time = createClock(branch).dateTime(input.now);
   const { settlement } = PAYMENT_METHODS[input.method];
   const mode = fulfilmentFields(input);
   let note = settlement === 'online' ? labels.paidOnline : labels.payInPerson[settlement];

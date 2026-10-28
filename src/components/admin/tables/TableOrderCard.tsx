@@ -57,7 +57,7 @@ export function TableOrderCard({
       <span className={styles.placed}>
         {t('adminTables.detail.order.placed', {
           name: order.customerName,
-          time: clock.time(order.placedAt),
+          time: clock.dateTime(order.placedAt),
         })}
       </span>
       <span className={styles.items}>
