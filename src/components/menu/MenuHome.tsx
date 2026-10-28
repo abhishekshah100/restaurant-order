@@ -16,7 +16,10 @@ import { MenuFilterChips } from './FilterBars';
 import { CategorySection, PicksSection } from './MenuSections';
 import styles from './MenuViews.module.css';
 
-/** Menu home (02 · w02): chef's picks, the full first category, previews of the rest. */
+/**
+ * Menu home (02 · w02): chef's picks, then every category with all its dishes, so guests scroll
+ * the whole menu without opening each category; the tabs and sidebar jump to a section.
+ */
 export function MenuHome() {
   const { categories } = useMenu();
   const t = useContent('menu');
@@ -26,7 +29,7 @@ export function MenuHome() {
       ...categories.map((c) => ({
         id: c.id,
         label: c.name,
-        href: c.id === 'starters' ? '#starters' : `/menu/${c.id}/`,
+        href: `#${c.id}`,
       })),
     ],
     [categories, t],
@@ -56,7 +59,7 @@ export function MenuHome() {
         <PicksSection />
         <CategorySection category={first} />
         {rest.map((category) => (
-          <CategorySection key={category.id} category={category} preview={2} divider />
+          <CategorySection key={category.id} category={category} divider />
         ))}
       </MenuShell>
       <CartBar />

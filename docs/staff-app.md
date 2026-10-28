@@ -268,7 +268,10 @@ Table status rules (server side):
 The page shows the area, seats and state; open orders (newest first), still to pay and time
 seated; today's bookings with Seat; open requests with Done. Actions:
 
-- **Take order / New order** opens the order pad (a new order is a separate bill).
+- **Take order / New order** opens the order pad (a new order is a separate bill). Its review step
+  shows the bill as the guest will see it (`calculateBill` and `billRows`: item total, service
+  charge, CGST/SGST or VAT, round off, total); the send button carries that total. Offers such as
+  happy hour are applied by the server on the bill.
 - **Add items**, **Change** and **Collect** on each order card (see
   [Waiter ordering](#waiter-ordering-at-the-table)).
 - **Collect from the whole table** (`TableCollectDialog`): pays every order at the table with
@@ -359,7 +362,9 @@ Behaviour:
   open on those views (the home counters link there).
 - **Components:** [`src/components/admin/orders/`](../src/components/admin/orders/):
   `OrdersBoard`, `OrderListItem`, `OrderDetailDialog`, `OrderSummary`, `OrderActionViews`
-  (`CollectPaymentView`, `CancelOrderView`), `PaymentBadge`. Logic in
+  (`CancelOrderView`), `PaymentBadge`; collecting uses the shared `CollectFields`. The dialog's
+  Rush, Add items, Change items and Cancel order are small buttons sharing one row (icon above the
+  label under 560px). Logic in
   [`src/lib/adminOrders.ts`](../src/lib/adminOrders.ts).
 - **Endpoints:** `GET /admin/branches/:branchId/orders` (today's orders in the branch's time zone,
   newest first, or `?from=&to=` for past days); `POST /admin/orders/:id/served`;

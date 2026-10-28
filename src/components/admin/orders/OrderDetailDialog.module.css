@@ -280,13 +280,35 @@
   gap: 8px;
 }
 
+/* Rush, Add items, Change items, Cancel: small buttons sharing one row. */
 .secondary {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .secondary > * {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: 8px;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* On a phone the icon sits above the label, so all four still fit on the row. */
+@media (max-width: 559px) {
+  .secondary {
+    gap: 4px;
+  }
+
+  .secondary > * {
+    height: auto;
+    min-height: 48px;
+    padding: 6px 2px;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+    line-height: 1.2;
+  }
 }
 
 .cancelLink {

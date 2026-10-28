@@ -41,9 +41,7 @@ export function CategorySidebar({ active, showAllergyNote }: CategorySidebarProp
           {categories.map((cat) => (
             <Link
               key={cat.id}
-              href={
-                cat.id === 'starters' && active === 'recommended' ? '#starters' : `/menu/${cat.id}/`
-              }
+              href={active === 'recommended' ? `#${cat.id}` : `/menu/${cat.id}/`}
               className={cx(styles.cat, active === cat.id && styles.on)}
               aria-current={active === cat.id ? 'page' : undefined}
             >

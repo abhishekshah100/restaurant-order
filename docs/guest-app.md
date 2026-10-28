@@ -35,7 +35,7 @@ requests) goes through `src/api`; in this build the in-browser mock server in
 | ------------------------ | --------------------------------------------------------- | ------------------------- |
 | `/`                      | Welcome; status screen when not open; start screen        | `home/Home`               |
 | `/start`                 | Choose outlet and mode; `?next=` returns afterwards       | `start/StartView`         |
-| `/menu`                  | Menu home                                                 | `menu/MenuHome`           |
+| `/menu`                  | Menu home: chef's picks, then every category in full      | `menu/MenuHome`           |
 | `/menu/[category]`       | Category list (one page per category id on any menu)      | `menu/CategoryView`       |
 | `/dish/?slug=…`          | Food detail; `&edit=<lineKey>` edits a cart line          | `menu/DishDetail`         |
 | `/search`                | Search and suggestions; `?q=`                             | `menu/SearchView`         |

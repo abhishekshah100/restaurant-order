@@ -159,6 +159,7 @@ function OrderDialog({
           <div className={styles.secondary}>
             {!finished && (
               <Button
+                size="sm"
                 variant={order.rush ? 'primary' : 'secondary'}
                 iconStart="flame"
                 aria-pressed={order.rush === true}
@@ -182,17 +183,28 @@ function OrderDialog({
               </Button>
             )}
             {canAdd && (
-              <Button variant="secondary" iconStart="plus" onClick={() => onAddItems(order)}>
+              <Button
+                size="sm"
+                variant="secondary"
+                iconStart="plus"
+                onClick={() => onAddItems(order)}
+              >
                 {t('adminOrder.addItems')}
               </Button>
             )}
             {canChange && (
-              <Button variant="secondary" iconStart="pencil" onClick={() => onChangeItems(order)}>
+              <Button
+                size="sm"
+                variant="secondary"
+                iconStart="pencil"
+                onClick={() => onChangeItems(order)}
+              >
                 {t('adminOrder.changeItems')}
               </Button>
             )}
             {!finished && (
               <Button
+                size="sm"
                 variant="ghost"
                 iconStart="xc"
                 className={styles.cancelLink}

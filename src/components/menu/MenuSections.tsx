@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useMemo } from 'react';
-import { Chip, Icon } from '@/components/ui';
+import { Chip } from '@/components/ui';
 import { useFilters } from '@/context/FiltersContext';
 import { cx } from '@/lib/cx';
 import { useBranch, useContent, useMenu } from '@/api/hooks';
@@ -69,25 +68,24 @@ export function PicksSection() {
 
 export interface CategorySectionProps {
   category: Category;
-  /** Show only the first N dishes with a "See all" link. */
-  preview?: number;
   /** Draw the thick divider above (mobile). */
   divider?: boolean;
 }
 
-/** A category block on the menu home: heading, count or "See all", dish list. */
-export function CategorySection({ category, preview, divider }: CategorySectionProps) {
+/** A category block on the menu home: heading, its count, and all its dishes. */
+export function CategorySection({ category, divider }: CategorySectionProps) {
   const { filters } = useFilters();
   const menu = useMenu();
   const t = useContent('menu');
-  const total = useMemo(() => menu.dishesIn(category.id), [menu, category.id]);
-  const all = useMemo(
-    () => sortDishes(applyFilters(total, filters, menu.priceFilter), 'recommended'),
-    [total, filters, menu.priceFilter],
+  const shown = useMemo(
+    () =>
+      sortDishes(
+        applyFilters(menu.dishesIn(category.id), filters, menu.priceFilter),
+        'recommended',
+      ),
+    [menu, category.id, filters],
   );
-  const shown = useMemo(() => (preview ? all.slice(0, preview) : all), [all, preview]);
   const titleId = `sec-${category.id}`;
-  const truncated = preview !== undefined && all.length > shown.length;
 
   return (
     <>
@@ -97,14 +95,7 @@ export function CategorySection({ category, preview, divider }: CategorySectionP
           <h2 id={titleId} className="t-h2">
             {category.name}
           </h2>
-          {truncated ? (
-            <Link href={`/menu/${category.id}/`} className={styles.seeAll}>
-              {t('home.seeAll', { count: total.length })}
-              <Icon name="chev" size="xs" />
-            </Link>
-          ) : (
-            <span className="t-small c3">{menu.categoryCountLabel(category)}</span>
-          )}
+          <span className="t-small c3">{menu.categoryCountLabel(category)}</span>
         </div>
         {shown.length > 0 ? (
           <DishList dishes={shown} label={category.name} />
