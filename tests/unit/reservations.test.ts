@@ -270,4 +270,27 @@ describe('the booking form and table picker', () => {
     );
     expect(own.tables.find((c) => c.table === 6)).toMatchObject({ bestFit: true });
   });
+
+  it("doesn't suggest a table with guests at it now (paid and still seated too) for a booking soon", () => {
+    const floors = [
+      {
+        id: 'ground',
+        name: 'Ground floor',
+        tables: [
+          { table: 6, seats: 4, status: 'paidSeated' },
+          { table: 7, seats: 4, status: 'available' },
+        ],
+      },
+    ] as Pick<AdminFloor, 'id' | 'name' | 'tables'>[];
+    const slot = { at: '2026-10-15T14:00:00.000Z', minutes: 90, partySize: 4 };
+    // 30 minutes before: table 6's guests are still there, so 7 is the suggestion.
+    const [soon] = tableChoices(floors, [], slot, undefined, new Date('2026-10-15T13:30:00Z'));
+    expect(soon.tables.map(({ table, inUse, bestFit }) => ({ table, inUse, bestFit }))).toEqual([
+      { table: 6, inUse: true, bestFit: false },
+      { table: 7, inUse: false, bestFit: true },
+    ]);
+    // Tonight, hours away: who sits there now doesn't matter; the smallest fit wins again.
+    const [later] = tableChoices(floors, [], slot, undefined, new Date('2026-10-15T09:00:00Z'));
+    expect(later.tables.find((c) => c.table === 6)).toMatchObject({ inUse: false, bestFit: true });
+  });
 });

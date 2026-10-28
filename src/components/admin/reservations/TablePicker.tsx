@@ -36,10 +36,12 @@ export function TablePicker({
                 ? t('adminReservations.editor.booked', { time: clock.dateTime(choice.clash.at) })
                 : null;
               const seats = t('adminReservations.editor.seats', { count: choice.seats });
+              const inUse = !booked && choice.inUse ? t('adminReservations.editor.inUse') : null;
               const words = [
                 t('adminReservations.table', { table: choice.table }),
                 seats,
                 ...(booked ? [booked] : []),
+                ...(inUse ? [inUse] : []),
                 ...(choice.bestFit ? [t('adminReservations.editor.bestFit')] : []),
               ];
               return (
@@ -62,9 +64,9 @@ export function TablePicker({
                     <span className={styles.seats} aria-hidden="true">
                       {seats}
                     </span>
-                    {(booked || choice.bestFit) && (
+                    {(booked || inUse || choice.bestFit) && (
                       <span className={styles.tag} aria-hidden="true">
-                        {booked ?? t('adminReservations.editor.bestFit')}
+                        {booked ?? inUse ?? t('adminReservations.editor.bestFit')}
                       </span>
                     )}
                   </button>

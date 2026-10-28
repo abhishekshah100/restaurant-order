@@ -1,5 +1,5 @@
 import type { ReservationInput } from '@/api/contracts';
-import type { AdminFloor, Reservation, ReservationStatus } from '@/types/admin';
+import type { AdminFloor, AdminFloorTable, Reservation, ReservationStatus } from '@/types/admin';
 import type { Branch, MobileRules } from '@/types/branch';
 import { sessionMinutes, sessionsOn, weekdayAt } from './branchHours';
 import { createClock, type Clock } from './clock';
@@ -353,26 +353,45 @@ export interface TableChoice {
   clash?: Reservation;
   /** Fewer seats than the party (it can still be picked: tables get pushed together). */
   tooSmall: boolean;
+  /**
+   * Guests are at it now (eating, waiting, or paid and still seated) and the booking starts
+   * within the hour: it can still be picked (they may leave), but it isn't suggested.
+   */
+  inUse: boolean;
   /** The smallest free table that seats the party: the suggestion. */
   bestFit: boolean;
 }
 
-/** Every table by area, with whether it's free for the party then and which fits best. */
+/** A table's guests are there now: anything but free, reserved or out of service. */
+const takenNow = (status: AdminFloorTable['status']) =>
+  status !== 'available' && status !== 'reserved' && status !== 'outOfService';
+
+/**
+ * Every table by area, with whether it's free for the party then and which fits best. For a
+ * booking within the hour of `now`, tables with guests at them now (paid and still seated too)
+ * aren't suggested.
+ */
 export function tableChoices(
   floors: readonly Pick<AdminFloor, 'id' | 'name' | 'tables'>[],
   reservations: readonly Reservation[],
   slot: { at: string; minutes: number; partySize: number },
   ignoreId?: string,
+  now?: Date,
 ): { id: string; name: string; tables: TableChoice[] }[] {
+  const soon =
+    now !== undefined &&
+    slot.at !== '' &&
+    Date.parse(slot.at) - now.getTime() < HOLD_BEFORE_MINUTES * MINUTE;
   const choices = floors.map((floor) => ({
     id: floor.id,
     name: floor.name,
     // A table out of service can't be booked: it isn't offered.
     tables: floor.tables
       .filter((t) => !t.disabled)
-      .map(({ table, seats }) => ({
+      .map(({ table, seats, status }) => ({
         table,
         seats,
+        inUse: soon && takenNow(status),
         clash: slot.at
           ? clashWith(reservations, { table, at: slot.at, minutes: slot.minutes }, ignoreId)
           : undefined,
@@ -382,7 +401,7 @@ export function tableChoices(
   }));
   const best = choices
     .flatMap((floor) => floor.tables)
-    .filter((c) => !c.clash && !c.tooSmall)
+    .filter((c) => !c.clash && !c.tooSmall && !c.inUse)
     .sort((a, b) => a.seats - b.seats)[0];
   if (best) best.bestFit = true;
   return choices;

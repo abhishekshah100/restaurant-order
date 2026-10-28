@@ -1,12 +1,12 @@
 'use client';
 
 /*
- * The kitchen's chimes, made in the browser (no sound file to download). Browsers only let a
+ * The kitchen's chimes (and the floor staff's alert), made in the browser (no sound file to download). Browsers only let a
  * page play sound after someone has touched it, so the context starts suspended and is resumed
  * on the first tap anywhere (useSoundUnlock).
  */
 
-type Chime = 'arrival' | 'reminder';
+type Chime = 'arrival' | 'reminder' | 'service';
 
 let context: AudioContext | null | undefined;
 
@@ -29,6 +29,12 @@ const NOTES: Record<Chime, { freq: number; at: number; length: number; volume: n
     { freq: 1175, at: 0.18, length: 0.38, volume: 0.32 },
   ],
   reminder: [{ freq: 659, at: 0, length: 0.35, volume: 0.18 }],
+  // Floor staff: three quick rising notes, unlike the kitchen's, so the two never get confused.
+  service: [
+    { freq: 880, at: 0, length: 0.16, volume: 0.3 },
+    { freq: 1109, at: 0.14, length: 0.16, volume: 0.3 },
+    { freq: 1319, at: 0.28, length: 0.32, volume: 0.3 },
+  ],
 };
 
 /** Plays a chime; false when sound isn't allowed yet (no tap on the page so far). */

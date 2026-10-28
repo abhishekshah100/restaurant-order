@@ -90,7 +90,7 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
   if (form.at && clock.dayKey(form.at) === form.day && !slots.some((s) => sameTime(s, form.at))) {
     slots.unshift(form.at);
   }
-  const areas = tableChoices(floors, reservations, form, editing?.id);
+  const areas = tableChoices(floors, reservations, form, editing?.id, now);
   const picked = areas.flatMap((a) => a.tables).find((c) => c.table === form.table);
   const errors = tried ? reservationErrors(form, region.mobile) : {};
 

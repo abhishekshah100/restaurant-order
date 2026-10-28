@@ -338,7 +338,18 @@
       "failed": "Couldn't change the status. Try again."
     },
     "lastOrders": "Last orders {time}",
-    "lastOrdersSoon": "Last orders in {minutes} min"
+    "lastOrdersSoon": "Last orders in {minutes} min",
+    "alerts": {
+      "on": "Alerts on: sound and vibration for food ready, waiter calls and bills. Tap to turn off.",
+      "off": "Alerts off on this device. Tap to turn on.",
+      "needsTap": "Alerts on: tap anywhere once so the browser lets the sound play.",
+      "readyTable": "Table {table} · round {round} ready to serve",
+      "readyOrder": "Order {order} ready to hand over",
+      "waiter": "Table {table} needs a waiter",
+      "bill": "Table {table} wants the bill",
+      "kitchen": "Message from the kitchen about order {order}",
+      "many": "{first} · and {count} more"
+    }
   },
   "adminHome": {
     "greeting": {
@@ -1249,6 +1260,7 @@
       "tableHint": "Free tables for the party at that time; the best fit is marked.",
       "pickTimeFirst": "Pick a time first to see which tables are free.",
       "bestFit": "Best fit",
+      "inUse": "Guests at it now",
       "booked": "Booked {time}",
       "seats": "{count} seats",
       "tooSmall": "Table {table} seats {seats}, for a party of {party}. Fine if you'll add chairs or push tables together.",

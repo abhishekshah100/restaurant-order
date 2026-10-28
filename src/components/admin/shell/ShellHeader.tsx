@@ -23,6 +23,8 @@ export interface ShellHeaderProps {
   adminName: string | undefined;
   /** Opens the More sheet (mobile: the avatar). */
   onOpenMore: () => void;
+  /** Floor alerts on this device (sound and vibration), and the switch. */
+  alerts: { on: boolean; needsTap: boolean; onToggle: () => void };
 }
 
 /**
@@ -30,7 +32,14 @@ export interface ShellHeaderProps {
  * Menu and the admin's avatar (which opens More). From 1024px, beside the sidebar: the page
  * title, Menu, the branch status and its local time.
  */
-export function ShellHeader({ title, menuActive, time, adminName, onOpenMore }: ShellHeaderProps) {
+export function ShellHeader({
+  title,
+  menuActive,
+  time,
+  adminName,
+  onOpenMore,
+  alerts,
+}: ShellHeaderProps) {
   const t = useContent('common');
   const restaurant = useRestaurant();
   const { branch } = useAdminWorkspace();
@@ -46,6 +55,25 @@ export function ShellHeader({ title, menuActive, time, adminName, onOpenMore }: 
       </Link>
     );
 
+  // The bell: on, off, or on but waiting for a tap before the browser lets it play.
+  const alertsLabel = !alerts.on
+    ? t('adminShell.alerts.off')
+    : alerts.needsTap
+      ? t('adminShell.alerts.needsTap')
+      : t('adminShell.alerts.on');
+  const bell = (className: string) => (
+    <button
+      type="button"
+      className={cx(className, alerts.on && alerts.needsTap && styles.bellWaiting)}
+      aria-pressed={alerts.on}
+      aria-label={alertsLabel}
+      title={alertsLabel}
+      onClick={alerts.onToggle}
+    >
+      <Icon name={alerts.on ? 'bell' : 'belloff'} size="sm" />
+    </button>
+  );
+
   return (
     <>
       <header className={styles.mobile}>
@@ -60,6 +88,7 @@ export function ShellHeader({ title, menuActive, time, adminName, onOpenMore }: 
           <p className={styles.branchName}>{branch.shortName}</p>
           <BranchStatusControl onDark />
         </div>
+        {bell(styles.bellMobile)}
         {menuLink(styles.menuMobile)}
         <button
           type="button"
@@ -74,6 +103,7 @@ export function ShellHeader({ title, menuActive, time, adminName, onOpenMore }: 
       <header className={styles.desktop}>
         <p className={styles.title}>{title}</p>
         <div className={styles.meta}>
+          {bell(styles.bellDesktop)}
           {menuLink(styles.menuDesktop)}
           <BranchStatusControl />
           {time && (

@@ -191,6 +191,15 @@ menu; `resync` (and every reconnect) → both. A dropped stream reconnects after
 Polling stays as the safety net. The query options live in
 [`src/api/queries.ts`](../src/api/queries.ts).
 
+**Floor alerts** (`useServiceAlerts` in `components/admin/shell/useServiceAlerts.ts`, run by
+`AdminShell`): when the service board shows something new (a round ready to serve or hand over,
+a waiter call, a bill request, a kitchen message), the device plays a three-note chime
+(`playChime('service')`, distinct from the kitchen's), vibrates where the browser can (Android;
+iPhones don't allow it) and shows a toast naming it ("Table 6 · round 2 ready to serve"). What's
+already there when a page opens doesn't alert. The bell in the bar switches it per device
+(`olive.staff-alerts.v1`, on by default); browsers only play sound after a tap on the page, so
+until then the bell pulses.
+
 - Service, floor plan, table, today's orders and reservations: every 15 s
   (`BRANCH_SERVICE_REFRESH_MS`) and on window focus; while the events are connected only every
   60 s (`liveRefresh`, `LIVE_REFRESH_MS` in [`src/api/liveState.ts`](../src/api/liveState.ts)).
@@ -479,7 +488,10 @@ Behaviour:
 - The booking form takes guest name, mobile, party size (1–20), day, time (15-minute steps),
   duration (60, 90, 120, 150 or 180 minutes; default 90) and a note (≤ 200 chars).
 - `TablePicker` blocks tables already booked at that time, fades tables that are too small (still
-  allowed) and marks the smallest free table that fits as Best fit.
+  allowed) and marks the smallest free table that fits as Best fit. For a booking within the
+  hour, tables with guests at them now (eating, waiting, needing a waiter, or paid and still
+  seated) say "Guests at it now" and aren't suggested; they can still be picked, since the guests
+  may leave. Bookings later in the day ignore who sits there now.
 - Overlapping a booked or seated booking returns 409 `table_taken` with the clashing booking.
   Back-to-back bookings are fine.
 - Status changes: seat (booked, from an hour before), no-show (booked, after its time), cancel

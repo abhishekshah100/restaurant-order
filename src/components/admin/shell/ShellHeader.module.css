@@ -92,8 +92,47 @@
   display: none;
 }
 
+/* The alerts bell: a round button beside Menu. */
+.bellMobile {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--on-dark) 22%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--on-dark) 6%, transparent);
+  color: var(--on-dark);
+}
+
+.bellMobile[aria-pressed='false'] {
+  opacity: 0.6;
+}
+
+.bellDesktop {
+  display: none;
+}
+
+/* On, but the browser waits for a tap before it plays sound: a gentle pulse asks for one. */
+.bellWaiting {
+  animation: bell-wait 1.6s ease-in-out infinite;
+}
+
+@keyframes bell-wait {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-600) 30%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bellWaiting {
+    animation: none;
+  }
+}
+
 .mark:focus-visible,
 .menuMobile:focus-visible,
+.bellMobile:focus-visible,
 .avatar:focus-visible {
   box-shadow:
     0 0 0 2px var(--ink),
@@ -158,6 +197,21 @@
     color: var(--ink);
     font: var(--font-meta-strong);
     text-decoration: none;
+  }
+
+  .bellDesktop {
+    width: 36px;
+    height: 36px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .bellDesktop[aria-pressed='false'] {
+    color: var(--ink-3);
   }
 
   .menuDesktop.menuActive {

@@ -15,6 +15,7 @@ import { MobileNav } from './MobileNav';
 import { ShellHeader } from './ShellHeader';
 import { Sidebar } from './Sidebar';
 import { useShellActions } from './useShellActions';
+import { useAlertsSetting, useServiceAlerts } from './useServiceAlerts';
 import styles from './AdminShell.module.css';
 import { useBranchEvents } from '@/api/liveEvents';
 
@@ -25,9 +26,13 @@ function ShellFrame({ children }: { children: ReactNode }) {
   const { branch, clock } = useAdminWorkspace();
   const adminName = useAdminName();
   const { signOut, switchBranch } = useShellActions();
-  const counts = useBranchService(branch.id).data?.counts;
+  const service = useBranchService(branch.id).data;
+  const counts = service?.counts;
   // What changes at the branch is read again at once (and the pages poll rarely meanwhile).
   useBranchEvents(branch.id);
+  // A chime, a vibration and a toast for what's new on the floor (food ready, a call, the bill).
+  const [alertsOn, setAlertsOn] = useAlertsSetting();
+  const alertsNeedTap = useServiceAlerts(service, alertsOn);
   const now = useNow();
   const [moreOpen, setMoreOpen] = useState(false);
   const active = activeNavId(pathname);
@@ -50,6 +55,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
           time={time}
           adminName={adminName}
           onOpenMore={() => setMoreOpen(true)}
+          alerts={{ on: alertsOn, needsTap: alertsNeedTap, onToggle: () => setAlertsOn(!alertsOn) }}
         />
         <main id="main" className={styles.main}>
           {children}
