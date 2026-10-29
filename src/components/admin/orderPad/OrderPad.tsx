@@ -260,6 +260,7 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
       onClose={onClose}
       presentation="panel"
       className={styles.pad}
+      page={choosing ? 'choose' : step}
       title={title}
       labelledBy="pad-title"
       header={

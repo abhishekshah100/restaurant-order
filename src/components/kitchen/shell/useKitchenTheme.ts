@@ -6,8 +6,8 @@ import themes from '../kitchenTheme.module.css';
 
 export type KitchenTheme = 'light' | 'dark';
 
-/** Kitchens start dark (less glare at the pass); each device keeps its own choice. */
-const DEFAULT_THEME: KitchenTheme = 'dark';
+/** Kitchens start light; each device keeps its own choice. */
+const DEFAULT_THEME: KitchenTheme = 'light';
 
 const isTheme = (value: unknown): value is KitchenTheme => value === 'light' || value === 'dark';
 
@@ -29,7 +29,7 @@ function subscribe(listener: () => void) {
 const read = (): KitchenTheme => readJSON(STORAGE_KEYS.kitchenTheme, isTheme) ?? DEFAULT_THEME;
 
 /**
- * The kitchen screen's theme, light or dark, kept on this device (dark until changed), and a way
+ * The kitchen screen's theme, light or dark, kept on this device (light until changed), and a way
  * to switch it. The server renders the default; the device's own choice follows on hydration.
  */
 export function useKitchenTheme(): [KitchenTheme, () => void] {

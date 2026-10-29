@@ -5,7 +5,6 @@ import { useContent } from '@/api/hooks';
 import { WorkspaceGate } from '@/components/admin/shell/AdminShell';
 import { KitchenBar } from './KitchenBar';
 import { cx } from '@/lib/cx';
-import themes from '../kitchenTheme.module.css';
 import { useKitchenPrefs } from './useKitchenPrefs';
 import { useKitchenThemeClass } from './useKitchenTheme';
 import { useWakeLock } from './useWakeLock';
@@ -14,8 +13,9 @@ import styles from './KitchenShell.module.css';
 /** The page's colours while the session and branch are checked, so nothing flashes. */
 function KitchenFallback() {
   const t = useContent('kitchen');
+  const themeClass = useKitchenThemeClass();
   return (
-    <div className={cx(styles.fallback, themes.dark)} aria-busy="true">
+    <div className={cx(styles.fallback, themeClass)} aria-busy="true">
       <span className="visually-hidden" role="status">
         {t('loading')}
       </span>

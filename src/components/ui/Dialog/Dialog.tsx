@@ -34,6 +34,11 @@ export interface DialogProps {
   presentation?: DialogPresentation;
   /** Fixed footer, e.g. the "Add to cart" row. */
   footer?: ReactNode;
+  /**
+   * Which page of a multi-step dialog is showing. A new page starts from the top; going back
+   * to one shown before (and left for this one) opens it where it was scrolled to.
+   */
+  page?: string;
   children: ReactNode;
   className?: string;
 }
@@ -63,6 +68,7 @@ export function Dialog({
   description,
   presentation = 'adaptive',
   footer,
+  page,
   children,
   className,
 }: DialogProps) {
@@ -103,6 +109,34 @@ export function Dialog({
     if (body.firstElementChild) observer.observe(body.firstElementChild);
     return () => observer.disconnect();
   }, [visible, updateScrollHints]);
+
+  /* ---------- Pages ---------- */
+  // Where the body was scrolled to before this render (read before a new page clamps it).
+  const lastTop = useRef(0);
+  const shownPage = useRef(page);
+  // The pages left for the one showing, oldest first, with where each was scrolled to.
+  const behind = useRef<{ page?: string; top: number }[]>([]);
+
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!body || page === shownPage.current) return;
+    const back = behind.current.findIndex((p) => p.page === page);
+    if (back >= 0) {
+      body.scrollTop = behind.current[back].top;
+      behind.current = behind.current.slice(0, back);
+    } else {
+      behind.current.push({ page: shownPage.current, top: lastTop.current });
+      body.scrollTop = 0;
+    }
+    shownPage.current = page;
+    lastTop.current = body.scrollTop;
+    updateScrollHints();
+  }, [page, updateScrollHints]);
+
+  const onBodyScroll = () => {
+    if (bodyRef.current) lastTop.current = bodyRef.current.scrollTop;
+    updateScrollHints();
+  };
 
   /* ---------- Swipe down to close (bottom sheets only) ---------- */
   const isSheetNow = () =>
@@ -191,7 +225,7 @@ export function Dialog({
           )}
         </div>
         <div className={styles.bodyWrap}>
-          <div ref={bodyRef} className={styles.body} onScroll={updateScrollHints}>
+          <div ref={bodyRef} className={styles.body} onScroll={onBodyScroll}>
             <div className={styles.content}>
               {description && (
                 <div id={descId} className="t-body c2">
