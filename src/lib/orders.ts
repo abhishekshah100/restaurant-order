@@ -3,6 +3,7 @@ import type { Branch, OrderMode } from '@/types/branch';
 import type {
   ItemStatus,
   Order,
+  OrderCharges,
   OrderItem,
   OrderStatus,
   PaymentMethod,
@@ -122,15 +123,23 @@ export function totalLabel({
   return 'total';
 }
 
+/** A bill's charges, to keep on the order it priced (the mock does as the server does). */
+export const orderCharges = (bill: Bill): OrderCharges => ({
+  lines: bill.lines,
+  roundOffMinor: bill.roundOffMinor,
+  showRoundOff: bill.showRoundOff,
+});
+
 /**
- * The bill for an order, from its line prices, its delivery fee, the discounts the server
- * recorded on it and its branch's tax rules.
+ * The bill for an order: its line prices, its delivery fee and the discounts the server recorded
+ * on it, with the charges it was priced with, so later changes to the branch's taxes never alter
+ * it. Older orders without saved charges are worked out from the branch's tax rules now.
  */
-export const orderBill = (
-  order: Pick<Order, 'items' | 'delivery' | 'discounts' | 'taxCharged'>,
+export function orderBill(
+  order: Pick<Order, 'items' | 'delivery' | 'discounts' | 'taxCharged' | 'charges'>,
   rules: BillRules & Pick<Branch, 'modes'>,
-): Bill =>
-  calculateBill(
+): Bill {
+  const bill = calculateBill(
     order.items,
     // Billed without tax stays so, whatever the branch charges now.
     order.taxCharged === false ? { ...rules, tax: { ...rules.tax, lines: [] } } : rules,
@@ -139,6 +148,23 @@ export const orderBill = (
       : undefined,
     fromOrderDiscounts(order.discounts, rules.currency.minorUnit),
   );
+  const { charges } = order;
+  if (!charges) return bill;
+  const grossMinor = charges.lines.reduce(
+    (sum, l) => sum + l.amountMinor,
+    bill.itemTotalMinor - bill.discountMinor + (bill.deliveryFeeMinor ?? 0),
+  );
+  const totalMinor = grossMinor + charges.roundOffMinor;
+  return {
+    ...bill,
+    lines: charges.lines,
+    serviceCharged: charges.lines.some((l) => l.id === 'serviceCharge'),
+    roundOffMinor: charges.roundOffMinor,
+    showRoundOff: charges.showRoundOff,
+    totalMinor,
+    total: totalMinor / rules.currency.minorUnit,
+  };
+}
 
 /** "1 × Paneer Tikka (Full)" — the size is named only when it isn't the default one. */
 export function itemLabel(item: OrderItem, menu: MenuCatalog): string {

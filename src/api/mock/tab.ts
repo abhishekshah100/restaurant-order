@@ -1,6 +1,6 @@
 import { ledgerOf } from '@/lib/adminPayments';
 import { paidAmount } from '@/lib/lifecycle';
-import { orderBill } from '@/lib/orders';
+import { orderBill, orderCharges } from '@/lib/orders';
 import { discountsFor, toOrderDiscounts } from '@/lib/promotions';
 import type { Branch, OrderMode } from '@/types/branch';
 import type { Price } from '@/types/menu';
@@ -55,6 +55,7 @@ export function withRounds(
     items,
     itemTotal: bill.itemTotal,
     total: bill.total,
+    charges: orderCharges(bill),
     discounts: discounts.length > 0 ? discounts : undefined,
     kitchenNote: rounds[0]?.kitchenNote,
   };

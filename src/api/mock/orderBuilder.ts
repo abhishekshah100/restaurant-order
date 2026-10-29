@@ -8,6 +8,7 @@ import {
 } from '@/lib/cartLine';
 import { createClock } from '@/lib/clock';
 import type { MenuCatalog } from '@/lib/menu';
+import { orderCharges } from '@/lib/orders';
 import { PAYMENT_METHODS } from '@/lib/payments';
 import type { Bill } from '@/lib/pricing';
 import { toOrderDiscounts } from '@/lib/promotions';
@@ -186,6 +187,7 @@ export function buildOrder(
     items,
     itemTotal: bill.itemTotal,
     total: bill.total,
+    charges: orderCharges(bill),
     ...(input.promoCode ? { promoCode: input.promoCode } : {}),
     ...(bill.discounts.length > 0
       ? { discounts: toOrderDiscounts(bill.discounts, branch.currency.minorUnit) }

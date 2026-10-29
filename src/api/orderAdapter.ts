@@ -12,6 +12,7 @@ import type {
   ItemStatus,
   KitchenMarks,
   Order,
+  OrderCharges,
   OrderEvent,
   OrderItem,
   OrderRound,
@@ -70,6 +71,7 @@ export interface BackendOrder {
   id: string;
   token?: number;
   taxCharged?: false;
+  charges?: OrderCharges;
   rush?: true;
   branchId: string;
   mode: OrderMode;
@@ -297,6 +299,7 @@ export function toAppOrder(
     items: active.flatMap((r) => r.items),
     itemTotal: order.itemTotal,
     ...(order.taxCharged === false ? { taxCharged: false as const } : {}),
+    ...(order.charges ? { charges: order.charges } : {}),
     ...(order.rush ? { rush: true } : {}),
     total: order.total,
     ...(order.promoCode ? { promoCode: order.promoCode } : {}),

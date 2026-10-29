@@ -1,5 +1,6 @@
-import type { BillLineKey, Branch, TaxConfig } from '@/types/branch';
+import type { Branch, TaxConfig } from '@/types/branch';
 import type { Price } from '@/types/menu';
+import type { ChargeLine } from '@/types/order';
 
 interface PriceLine {
   unitPrice: Price;
@@ -7,15 +8,7 @@ interface PriceLine {
 }
 
 /** A charge on the bill: the service charge or a tax. Amounts are in minor units (paise). */
-export interface BillLine {
-  id: string;
-  labelKey: BillLineKey;
-  /** Fills the label's {rate}: "2.5" for 250 basis points. */
-  vars: { rate: string };
-  amountMinor: number;
-  /** The line as shown on a split bill (CGST and SGST for GST); they add up to `amountMinor`. */
-  parts?: BillLine[];
-}
+export type BillLine = ChargeLine;
 
 /** A discount on the bill, in minor units: an automatic offer (happy hour) or a promo code. */
 export type BillDiscount =

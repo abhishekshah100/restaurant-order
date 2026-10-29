@@ -5,6 +5,7 @@ import {
   itemLabel,
   itemStatus,
   orderBill,
+  orderCharges,
   paymentLabel,
   paymentProgress,
   spentTotal,
@@ -154,6 +155,28 @@ describe('display helpers', () => {
     const bill = orderBill({ ...byId('A104'), taxCharged: false }, branch);
     expect(bill.lines).toEqual([]);
     expect(bill.itemTotal).toBe(1356);
+  });
+
+  it('keeps the charges an order was priced with, whatever the branch charges now', () => {
+    const order = { ...byId('A104'), charges: orderCharges(orderBill(byId('A104'), branch)) };
+    // GST goes up from 5% to 18% after the order was billed.
+    const later = {
+      ...branch,
+      tax: {
+        ...branch.tax,
+        lines: branch.tax.lines.map((l) => ({
+          ...l,
+          rateBp: 1800,
+          splitInto: l.splitInto?.map((p) => ({ ...p, rateBp: 900 })),
+        })),
+      },
+    };
+    const bill = orderBill(order, later);
+    expect(bill).toMatchObject({ itemTotal: 1356, total: 1424 });
+    expect(bill.lines).toEqual(order.charges.lines);
+    expect(bill.lines[0]?.vars.rate).toBe('5');
+    // Without saved charges (an older order) it follows the branch's taxes now.
+    expect(orderBill(byId('A104'), later).total).not.toBe(1424);
   });
 
   it('formats placed times with their date, today too (branch time, IST)', () => {

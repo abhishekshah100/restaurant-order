@@ -5,10 +5,30 @@ import type {
   PaymentStatusCode,
   RefundReasonCode,
 } from '@/config/masters';
-import type { OrderMode } from './branch';
+import type { BillLineKey, OrderMode } from './branch';
 import type { LineConfig } from './cart';
 import type { Price } from './menu';
 import type { AppliedOffer, OrderDiscount } from './promotion';
+
+/** A charge on a bill: the service charge or a tax, in minor units (paise). */
+export interface ChargeLine {
+  id: string;
+  labelKey: BillLineKey;
+  /** Fills the label's {rate}: "2.5" for 250 basis points. */
+  vars: { rate: string };
+  amountMinor: number;
+  /** The line as shown on a split bill (CGST and SGST for GST); they add up to `amountMinor`. */
+  parts?: ChargeLine[];
+}
+
+/** An order's charges as priced, in minor units (GET /orders/:id › charges). */
+export interface OrderCharges {
+  /** The service charge (when there was one), then each tax, in the order applied. */
+  lines: ChargeLine[];
+  /** Signed minor units added to reach the rounding unit. */
+  roundOffMinor: number;
+  showRoundOff: boolean;
+}
 
 /**
  * Where an order has got to. Dine-in: received → preparing → ready → served. Takeaway: …
@@ -210,6 +230,11 @@ export interface Order {
   itemTotal: Price;
   /** False when it was billed without tax (the branch didn't charge it then); absent otherwise. */
   taxCharged?: false;
+  /**
+   * Its charges as priced (the service charge, each tax, the round off), so the bill reads the
+   * same after the branch's taxes change. Absent on older orders: worked out from today's taxes.
+   */
+  charges?: OrderCharges;
   /** A waiter marked it rush (a VIP, a guest in a hurry): first in the kitchen's lanes. */
   rush?: boolean;
   /** Final rounded amount. */
