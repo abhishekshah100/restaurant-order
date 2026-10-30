@@ -124,7 +124,6 @@ export function PadReview({
         totalLabel={t('adminOrderPad.total')}
         total={money.format(bill.total)}
       />
-      <p className={styles.taxNote}>{t('adminOrderPad.taxNote')}</p>
     </div>
   );
 }

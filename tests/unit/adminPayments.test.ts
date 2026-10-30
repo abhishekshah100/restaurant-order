@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { digitsOnly, parseAmount } from '@/components/admin/payments/PaymentFields';
 import { paymentsPath } from '@/lib/adminNav';
 import {
   changeDue,
@@ -167,6 +168,22 @@ describe('the day at a glance', () => {
     // Cash taken and tipped, less cash handed back.
     expect(day.cashInDrawer).toBe(300 + 20 - 50);
   });
+  it('keeps what was left off a bill apart from the money taken', () => {
+    // ₹401 due: ₹400 taken in cash, ₹1 left (no change).
+    const waived = order('A108', {
+      total: 401,
+      payment: {
+        method: 'counter',
+        status: 'paid',
+        transactions: [tx({ id: 'A108-T1', amount: 400, waived: 1, waiveReason: 'noChange' })],
+      },
+    });
+    const day = daySummary([waived]);
+    expect(day).toMatchObject({ collected: 400, cashInDrawer: 400, waived: 1, waivedCount: 1 });
+    expect(day).toMatchObject({ toCollect: 0, paidOrders: 1 });
+    // Only what was taken can go back.
+    expect(refundable(waived)).toBe(400);
+  });
 });
 
 describe('to collect', () => {
@@ -220,6 +237,18 @@ describe('collecting', () => {
     expect(paymentsPath('refunds', { from: '2026-10-20', to: '2026-10-25' })).toBe(
       '/admin/dashboard/payments/?view=refunds&from=2026-10-20&to=2026-10-25',
     );
+  });
+});
+
+describe('amounts typed in', () => {
+  it('takes whole amounts only: letters, symbols and decimals never make one', () => {
+    expect(parseAmount('1250')).toBe(1250);
+    expect(parseAmount('1,250')).toBe(1250);
+    for (const text of ['', 'abc', '12a', '₹500', '-5', '12.50', '1e3', '@#!']) {
+      expect(parseAmount(text)).toBeNull();
+    }
+    expect(digitsOnly('a1b2-3.4₹!')).toBe('1234');
+    expect(digitsOnly('abc')).toBe('');
   });
 });
 

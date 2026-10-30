@@ -4,7 +4,7 @@ import { describeInstructions, describeOptions } from '@/lib/cartLine';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney } from '@/lib/money';
-import { finalStep } from '@/lib/orders';
+import { finalStep, roundBehind } from '@/lib/orders';
 import type { CartLineLabels } from '@/lib/cartLine';
 import type { Branch, OrderMode } from '@/types/branch';
 import type { LineConfig } from '@/types/cart';
@@ -275,7 +275,8 @@ export function toAppOrder(
 ): Order {
   const rounds = order.rounds.map((r) => roundOf(r, order, words, now));
   const active = rounds.filter((r) => r.status !== 'cancelled');
-  const latest = active.at(-1) ?? rounds.at(-1);
+  // The steps shown are those of the round the order's status follows (furthest behind).
+  const latest = roundBehind(active) ?? rounds.at(-1);
   const detail = paymentDetail(order, words);
   const sessionId =
     order.fromThisSession && sessionToken

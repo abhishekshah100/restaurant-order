@@ -40,6 +40,7 @@ test('an order from Active to paid to cancelled, as the guest sees it', async ({
   await expect(dialog).toContainText(`Order ${orderId}`);
   await dialog.getByRole('button', { name: /^Collect payment/ }).click();
   await dialog.getByRole('radio', { name: 'Cash' }).click();
+  await dialog.getByRole('button', { name: 'Exact' }).click();
   await dialog.getByRole('button', { name: /^Collect / }).click();
   await expect(page.getByRole('status').filter({ hasText: `Order ${orderId} paid` })).toBeVisible();
   await expect(row).toContainText('paid');

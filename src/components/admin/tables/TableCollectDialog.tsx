@@ -27,7 +27,6 @@ export function TableCollectDialog({
   const collect = useCollectTablePayment();
   const owing = detail.orders.filter((o) => dueOn(o) > 0);
   const choice = useCollectChoice(owing);
-  const total = choice.due;
 
   return (
     <Dialog
@@ -44,7 +43,7 @@ export function TableCollectDialog({
           disabled={!choice.ready}
           onClick={() =>
             collect.mutate(
-              { branchId: branch.id, table: detail.table, body: { method: choice.method } },
+              { branchId: branch.id, table: detail.table, body: choice.body },
               {
                 onSuccess: () => {
                   showToast(t('adminTableCollect.done', { table: detail.table }), {
@@ -57,7 +56,7 @@ export function TableCollectDialog({
             )
           }
         >
-          {t('adminTableCollect.confirm', { amount: money.format(total) })}
+          {t('adminTableCollect.confirm', { amount: money.format(choice.toCollect) })}
         </Button>
       }
     >

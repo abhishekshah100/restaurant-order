@@ -94,7 +94,7 @@ function OrderDialog({
         disabled={!choice.ready}
         onClick={() =>
           collect.mutate(
-            { ...target, body: { method: choice.method } },
+            { ...target, body: choice.body },
             {
               onSuccess: () => {
                 showToast(t('adminOrder.collect.done', { order: order.id }), { tone: 'success' });
@@ -105,7 +105,7 @@ function OrderDialog({
           )
         }
       >
-        {t('adminOrder.collect.confirm', { amount: money.format(due) })}
+        {t('adminOrder.collect.confirm', { amount: money.format(choice.toCollect) })}
       </Button>
     );
   } else if (view === 'cancel') {

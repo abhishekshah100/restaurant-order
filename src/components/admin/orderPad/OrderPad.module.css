@@ -293,9 +293,3 @@
 .total strong {
   font: var(--font-price);
 }
-
-.taxNote {
-  margin-top: -12px;
-  color: var(--ink-3);
-  font: var(--font-meta);
-}

@@ -66,6 +66,14 @@ export function LedgerRow({ entry, onOpen }: { entry: LedgerEntry; onOpen: () =>
               {t('adminPayments.entry.tip', { amount: amount(entry.tip) })}
             </span>
           ) : null}
+          {entry.waived && entry.waiveReason ? (
+            <span className={styles.left}>
+              {t('adminPayments.entry.left', {
+                amount: amount(entry.waived),
+                reason: t(`adminPayments.entry.waiveReasons.${entry.waiveReason}`),
+              })}
+            </span>
+          ) : null}
           {refund && (
             <span className={styles.status} data-status={entry.status}>
               {t(

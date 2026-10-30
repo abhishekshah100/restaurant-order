@@ -712,7 +712,6 @@
       "placeholder": "Allergies, timing, anything else"
     },
     "total": "Total",
-    "taxNote": "Offers, such as happy hour, are worked out on the bill.",
     "remove": "Remove {dish}",
     "send": "Send to kitchen",
     "sentNew": "Order {order} sent to the kitchen",
@@ -1115,7 +1114,10 @@
       "scan": "Scan to order & pay",
       "where": "{floor} · {branch}",
       "alt": "QR code for Table {table}",
-      "link": "Link for Table {table}"
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "copyFailed": "Couldn't copy",
+      "copyLabel": "Copy the link for Table {table}"
     },
     "tableButton": "QR code",
     "dialogTitle": "QR code for Table {table}",
@@ -1307,6 +1309,11 @@
       "settled": "All settled",
       "tips": "Tips",
       "tipsHint": "On top of the bills",
+      "left": "Left off bills",
+      "leftHint": {
+        "one": "On {count} payment",
+        "other": "On {count} payments"
+      },
       "average": "Average bill",
       "averageHint": {
         "one": "{count} paid bill",
@@ -1379,6 +1386,7 @@
       "by": "by {name}",
       "ref": "Ref {ref}",
       "tip": "+{amount} tip",
+      "left": "{amount} left · {reason}",
       "online": "Online",
       "inPerson": "In person",
       "refundStarted": "On its way",
@@ -1391,6 +1399,12 @@
         "other": "Other",
         "cancelled": "Order cancelled",
         "changed": "Order changed"
+      },
+      "waiveReasons": {
+        "noChange": "No change",
+        "regular": "Regular guest",
+        "complaint": "Complaint",
+        "other": "Other"
       },
       "open": "{kind} of {amount} on order {order}"
     },
@@ -1417,11 +1431,34 @@
       "orderLine": "#{order} · {name}",
       "paidSoFar": "Paid so far",
       "due": "Due now",
+      "toCollect": "To collect",
+      "summary": {
+        "bill": "Bill {amount}",
+        "paid": "{amount} paid",
+        "left": "{amount} left"
+      },
+      "viewBill": "View bill",
+      "hideBill": "Hide bill",
+      "leftRow": "Left",
       "method": "Paid by",
       "cashReceived": "Cash received",
+      "cashHint": "Enter what the guest handed over, or tap Exact",
       "exact": "Exact",
       "change": "Change to return",
+      "keepTip": "Keep {amount} as tip",
+      "tipKept": "{amount} tip · no change to return",
+      "giveChange": "Give change instead",
       "short": "{amount} short",
+      "leave": "Leave part of the bill",
+      "leaveCancel": "Don't leave",
+      "leaveAmount": "Or leave an amount",
+      "leaveShort": "Leave {amount} · No change",
+      "take": "Take {amount}",
+      "takeInstead": "Take a round amount",
+      "leaveTooMuch": "Can't leave more than {amount}",
+      "leaveReason": "Why",
+      "leaveReasonHint": "Pick a reason",
+      "leaveAll": "Nothing to take: the whole bill is left",
       "confirm": "Collect {amount}",
       "doneOrder": "{amount} collected for order #{order}",
       "doneTable": "Table {table} settled: {amount} collected"
@@ -1481,6 +1518,7 @@
       "order": "Order #{order}",
       "total": "Total",
       "paid": "Paid",
+      "left": "Left",
       "refunded": "Refunded",
       "due": "Amount due",
       "payments": "Payments",
@@ -1507,6 +1545,8 @@
         "channel": "Channel",
         "amount": "Amount",
         "tip": "Tip",
+        "left": "Left",
+        "leftReason": "Why left",
         "by": "Staff",
         "ref": "Reference",
         "reason": "Reason",

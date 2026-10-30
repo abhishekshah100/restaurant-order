@@ -29,7 +29,7 @@ import type {
   Price,
   SpiceLevel,
 } from '@/types/menu';
-import type { DeliveryAddress, Order, RefundReason } from '@/types/order';
+import type { DeliveryAddress, Order, RefundReason, WaiveReason } from '@/types/order';
 import type { AutoOffer, PromoDescriptionKey } from '@/types/promotion';
 import type { BillScope, ServiceRequest, WaiterReason } from '@/types/service';
 import type { GuestSession, SessionStart } from '@/types/session';
@@ -526,6 +526,12 @@ export interface CollectPaymentRequest {
   amount?: Price;
   /** A tip on top, recorded with the payment (not part of the bill). */
   tip?: Price;
+  /**
+   * Part of the bill left (₹1 of ₹401), with why: what's taken is then the rest of what's due
+   * (`amount`, if sent, must be exactly that), and the bill is settled. 400 when it's more than
+   * what's due.
+   */
+  waive?: Waiver;
 }
 
 /**
@@ -582,6 +588,15 @@ export interface CollectTableRequest {
   method: AtTableMethodKey;
   /** A tip on top, recorded with the payment (not part of the bill). */
   tip?: Price;
+  /** Part of the table's bill left, with why: it comes off its latest orders first. */
+  waive?: Waiver;
+}
+
+/** Part of a bill staff leave when they take the rest in person, and why. */
+export interface Waiver {
+  /** Major units, more than 0, at most what's due. */
+  amount: Price;
+  reason: WaiveReason;
 }
 
 export interface TablePaymentResponse {

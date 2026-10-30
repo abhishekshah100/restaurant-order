@@ -1,5 +1,5 @@
 import { createClock, type Clock } from '@/lib/clock';
-import { TRACK_STEPS, isFinished, type TrackStep } from '@/lib/orders';
+import { TRACK_STEPS, isFinished, roundBehind, type TrackStep } from '@/lib/orders';
 import type { Branch, OrderMode } from '@/types/branch';
 import type { ItemStatus, Order, OrderRound, StaffMark } from '@/types/order';
 import { MINUTE_MS } from './rules';
@@ -181,7 +181,7 @@ function liveRound(order: Order, round: OrderRound, now: Date, clock: Clock, bra
 
 /**
  * An order placed through the server as read at `now`: its live status, `live` while it still
- * moves. Each round moves along on its own; the order shows the latest round still on it
+ * moves. Each round moves along on its own; the order shows its round furthest behind
  * (status, timeline, ETA) and the items of every round still on it.
  */
 export function liveOrder(order: Order, now: number, branch: Branch): Order {
@@ -193,7 +193,8 @@ export function liveOrder(order: Order, now: number, branch: Branch): Order {
   }
   const live = order.rounds.map((round) => liveRound(order, round, at, clock, branch));
   const active = live.filter(({ round }) => round.status !== 'cancelled');
-  const latest = active[active.length - 1]?.order ?? order;
+  const behind = roundBehind(active.map((l) => l.round));
+  const latest = active.find((l) => l.round === behind)?.order ?? order;
   const current: Order = {
     ...latest,
     placedAt: order.placedAt,

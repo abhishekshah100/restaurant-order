@@ -50,7 +50,7 @@ function CollectForm({
   const collectTable = useCollectTablePayment();
   const orders = target.kind === 'order' ? [target.order] : target.orders;
   const choice = useCollectChoice(orders);
-  const { method, due } = choice;
+  const { body, toCollect } = choice;
 
   const busy = collect.isPending || collectTable.isPending;
   const failed = () => showToast(t('adminPayments.failed'), { tone: 'error' });
@@ -64,22 +64,25 @@ function CollectForm({
   const submit = () => {
     if (!choice.ready) return;
     if (target.kind === 'table') {
-      collectTable
-        .mutateAsync({ branchId: branch.id, table: target.table, body: { method } })
-        .then(
-          () =>
-            done(
-              t('adminPayments.collect.doneTable', { table: target.table, amount: format(due) }),
-            ),
-          failed,
-        );
+      collectTable.mutateAsync({ branchId: branch.id, table: target.table, body }).then(
+        () =>
+          done(
+            t('adminPayments.collect.doneTable', {
+              table: target.table,
+              amount: format(toCollect),
+            }),
+          ),
+        failed,
+      );
       return;
     }
     collect
-      .mutateAsync({ branchId: branch.id, orderId: target.order.id, body: { method } })
+      .mutateAsync({ branchId: branch.id, orderId: target.order.id, body })
       .then(
         (order) =>
-          done(t('adminPayments.collect.doneOrder', { amount: format(due), order: order.id })),
+          done(
+            t('adminPayments.collect.doneOrder', { amount: format(toCollect), order: order.id }),
+          ),
         failed,
       );
   };
@@ -115,7 +118,7 @@ function CollectForm({
             {t('adminPayments.due.printBill')}
           </Button>
           <Button block iconStart="check" loading={busy} disabled={!choice.ready} onClick={submit}>
-            {t('adminPayments.collect.confirm', { amount: format(due) })}
+            {t('adminPayments.collect.confirm', { amount: format(toCollect) })}
           </Button>
         </div>
       }

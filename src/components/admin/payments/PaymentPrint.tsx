@@ -154,7 +154,9 @@ function BillDoc({ orders }: { orders: Order[] }) {
   const due = orders.reduce((s, o) => s + dueOn(o), 0);
   const total = orders.reduce((s, o) => s + o.total, 0);
   const payments = orders.flatMap((o) => ledgerOf(o).map((e) => ({ ...e, order: o })));
-  const paid = orders.reduce((s, o) => s + paidAmount(o), 0);
+  // Left off the bill settles it but was never paid.
+  const left = payments.reduce((s, e) => s + (e.waived ?? 0), 0);
+  const paid = orders.reduce((s, o) => s + paidAmount(o), 0) - left;
   const refunded = payments.filter((e) => e.kind === 'refund').reduce((s, e) => s + e.amount, 0);
   const title = useBillTitle(due);
   const first = orders[0];
@@ -243,12 +245,18 @@ function BillDoc({ orders }: { orders: Order[] }) {
         <strong>{amount(total)}</strong>
       </div>
 
-      {(paid > 0 || refunded > 0) && (
+      {(paid > 0 || left > 0 || refunded > 0) && (
         <dl className={styles.sums}>
           {paid > 0 && (
             <div>
               <dt>{t('adminPayments.receipt.paid')}</dt>
               <dd>{amount(paid)}</dd>
+            </div>
+          )}
+          {left > 0 && (
+            <div>
+              <dt>{t('adminPayments.receipt.left')}</dt>
+              <dd>{amount(-left)}</dd>
             </div>
           )}
           {refunded > 0 && (
@@ -276,6 +284,12 @@ function BillDoc({ orders }: { orders: Order[] }) {
                     <span className={styles.variant}>
                       {clock.dateTime(e.at)}
                       {e.transactionRef && ` · ${e.transactionRef}`}
+                      {e.waived && e.waiveReason
+                        ? ` · ${t('adminPayments.entry.left', {
+                            amount: amount(e.waived),
+                            reason: t(`adminPayments.entry.waiveReasons.${e.waiveReason}`),
+                          })}`
+                        : ''}
                     </span>
                   </td>
                   <td className={styles.num}>
@@ -328,6 +342,7 @@ function ReportDoc({ orders, due, period }: { orders: Order[]; due: DueGroup[]; 
             [t('adminPayments.today.inPerson'), amount(day.inPerson)],
             [t('adminPayments.today.refunds'), amount(day.refunds)],
             [t('adminPayments.today.tips'), amount(day.tips)],
+            [t('adminPayments.today.left'), amount(day.waived)],
             [t('adminPayments.today.average'), amount(day.averageBill)],
             [t('adminPayments.today.toCollect'), amount(day.toCollect)],
             [t('adminPayments.methods.drawer'), amount(day.cashInDrawer)],
@@ -392,6 +407,7 @@ function ReportDoc({ orders, due, period }: { orders: Order[]; due: DueGroup[]; 
                 <td className={styles.num}>
                   {amount(e.kind === 'refund' ? -e.amount : e.amount)}
                   {e.tip ? ` +${amount(e.tip)}` : ''}
+                  {e.waived ? ` (${t('adminPayments.receipt.left')} ${amount(e.waived)})` : ''}
                 </td>
               </tr>
             ))}

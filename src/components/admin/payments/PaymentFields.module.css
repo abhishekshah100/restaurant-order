@@ -219,3 +219,25 @@
   color: var(--gold-ink);
   font: var(--font-h3);
 }
+
+/* ---------- Compact: tiles in one short row, a smaller money field ---------- */
+
+.compact .tile {
+  min-height: 44px;
+  padding: 8px 10px;
+  grid-auto-flow: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.compactBox {
+  min-height: 44px;
+}
+
+.compactBox .amountInput {
+  font: var(--font-h3);
+}
+
+.compactBox .symbol {
+  font: var(--font-label);
+}

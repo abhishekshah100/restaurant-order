@@ -51,6 +51,9 @@ export type RefundReason = RefundReasonCode;
  * or taken by staff in person) or a refund. Amounts are major units and positive. The order's
  * `payment` summary is what these add up to.
  */
+/** Why staff left part of a bill when they took the rest (₹401 due, ₹400 taken). */
+export type WaiveReason = 'noChange' | 'regular' | 'complaint' | 'other';
+
 export interface PaymentTransaction {
   id: string;
   kind: 'payment' | 'refund';
@@ -67,6 +70,9 @@ export interface PaymentTransaction {
   transactionRef?: string;
   /** In person: a tip on top of `amount` (not part of the bill). */
   tip?: Price;
+  /** In person: what staff left off the bill to settle it (not money received), and why. */
+  waived?: Price;
+  waiveReason?: WaiveReason;
   /** Refunds: why (staff refunds), and whether the money has reached the guest yet. */
   reason?: RefundReason | 'cancelled' | 'changed';
   note?: string;

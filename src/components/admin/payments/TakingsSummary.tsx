@@ -114,6 +114,20 @@ export function TakingsSummary({
             <span className={styles.kpiHint}>{t('adminPayments.today.tipsHint')}</span>
           </dd>
         </div>
+        {day.waived > 0 && (
+          <div className={styles.kpi}>
+            <dt>
+              <Icon name="minus" size="xs" />
+              {t('adminPayments.today.left')}
+            </dt>
+            <dd>
+              <span className={styles.kpiValue}>{amount(day.waived)}</span>
+              <span className={styles.kpiHint}>
+                {t.plural('adminPayments.today.leftHint', day.waivedCount)}
+              </span>
+            </dd>
+          </div>
+        )}
         <div className={styles.kpi}>
           <dt>
             <Icon name="receipt" size="xs" />

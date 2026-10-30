@@ -12,6 +12,7 @@ export const ICON_NAMES = [
   'clock',
   'bell',
   'receipt',
+  'copy',
   'phone',
   'help',
   'alert',

@@ -111,6 +111,13 @@ li:last-child > .row {
   white-space: nowrap;
 }
 
+/* Left off the bill: not money taken. */
+.left {
+  color: var(--ink-3);
+  font: var(--font-meta);
+  white-space: nowrap;
+}
+
 .status {
   padding: 1px 8px;
   border-radius: var(--r-pill);

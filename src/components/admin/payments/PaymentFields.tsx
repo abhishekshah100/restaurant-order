@@ -23,6 +23,7 @@ export function RadioTiles<T extends string>({
   value,
   onChange,
   columns = 3,
+  compact = false,
 }: {
   name: string;
   legend: ReactNode;
@@ -30,11 +31,13 @@ export function RadioTiles<T extends string>({
   value: T;
   onChange: (id: T) => void;
   columns?: 2 | 3 | 4;
+  /** One short row: icon beside the label. */
+  compact?: boolean;
 }) {
   return (
     <fieldset className={styles.fieldset}>
       <legend className={styles.legend}>{legend}</legend>
-      <div className={cx(styles.tiles, styles[`cols${columns}`])}>
+      <div className={cx(styles.tiles, styles[`cols${columns}`], compact && styles.compact)}>
         {choices.map((choice) => (
           <label key={choice.id} className={styles.tile}>
             <input
@@ -55,14 +58,17 @@ export function RadioTiles<T extends string>({
   );
 }
 
-/** A money amount as typed ("1,250.50" → 1250.5), or null when it isn't one. */
+/** A whole money amount as typed ("1,250" → 1250), or null when it isn't one. */
 export function parseAmount(text: string): Price | null {
   const clean = text.replace(/[,\s]/g, '');
-  if (!/^\d+(\.\d{0,2})?$/.test(clean)) return null;
+  if (!/^\d+$/.test(clean)) return null;
   return Number(clean);
 }
 
-/** A labelled money input with the currency's symbol in front. */
+/** Only the digits of what was typed or pasted: amounts are whole numbers. */
+export const digitsOnly = (text: string) => text.replace(/\D/g, '');
+
+/** A labelled money input with the currency's symbol in front; takes digits only. */
 export function AmountInput({
   id,
   label,
@@ -71,6 +77,7 @@ export function AmountInput({
   symbol,
   hint,
   error,
+  compact = false,
 }: {
   id: string;
   label: ReactNode;
@@ -79,6 +86,8 @@ export function AmountInput({
   symbol: string;
   hint?: ReactNode;
   error?: ReactNode;
+  /** A smaller box, for a second amount under the main one. */
+  compact?: boolean;
 }) {
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
@@ -86,19 +95,27 @@ export function AmountInput({
       <label htmlFor={id} className={styles.legend}>
         {label}
       </label>
-      <div className={cx(styles.amountBox, Boolean(error) && styles.invalid)}>
+      <div
+        className={cx(
+          styles.amountBox,
+          compact && styles.compactBox,
+          Boolean(error) && styles.invalid,
+        )}
+      >
         <span className={styles.symbol} aria-hidden="true">
           {symbol}
         </span>
         <input
           id={id}
           className={styles.amountInput}
-          inputMode="decimal"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={9}
           autoComplete="off"
           value={value}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => onChange(digitsOnly(event.target.value))}
         />
       </div>
       {error ? (

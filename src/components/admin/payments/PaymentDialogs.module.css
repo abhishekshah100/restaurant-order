@@ -8,7 +8,7 @@
 
 .form {
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 
 .block {
@@ -28,12 +28,224 @@
   font: var(--font-small);
 }
 
-/* ---------- Bill: one order's charges after another (a table) ---------- */
+/* ---------- What to collect, with the bill a tap away ---------- */
 
+.hero {
+  padding: 14px 16px;
+  display: grid;
+  gap: 2px;
+  border-radius: var(--r-card);
+  background: linear-gradient(135deg, var(--gold-tint), var(--brand-tint-2));
+  color: var(--gold-ink);
+}
+
+.heroTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroLabel {
+  font: var(--font-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.heroAmount {
+  color: var(--ink);
+  font: var(--font-price-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.heroMeta {
+  color: var(--ink-2);
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.billToggle {
+  min-height: 32px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink);
+  font: var(--font-meta-strong);
+  cursor: pointer;
+}
+
+.billToggle:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.billChev {
+  transition: transform var(--dur-fast) ease;
+}
+
+.billChev.open {
+  transform: rotate(180deg);
+}
+
+.bill {
+  margin-top: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* One order's charges after another (a table). */
 .billOrder {
   margin-top: 4px;
   color: var(--ink-2);
   font: var(--font-small-strong);
+}
+
+/* Cash handed over falls short: say by how much, and offer to leave it. */
+.shortPanel {
+  padding: 8px 8px 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-radius: var(--r-md);
+  background: var(--gold-tint);
+  color: var(--gold-ink);
+  font: var(--font-small-strong);
+}
+
+.shortLeave {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--on-dark);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.shortLeave:focus-visible {
+  box-shadow: var(--focus);
+}
+
+/* ---------- Leave part of the bill ---------- */
+
+.leaveOpen {
+  justify-self: start;
+  min-height: 36px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  color: var(--brand-600);
+  font: var(--font-label);
+  cursor: pointer;
+}
+
+.leaveOpen:focus-visible {
+  border-radius: var(--r-sm);
+  box-shadow: var(--focus);
+}
+
+.leaveCard {
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+
+.leaveHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.leaveTitle {
+  font: var(--font-label);
+}
+
+.leaveCancel {
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Round amounts to take instead: big targets, what's left under each. */
+.takes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.take {
+  min-height: 56px;
+  padding: 8px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.take strong {
+  font: var(--font-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.take span {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.take[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.take[aria-pressed='true'] span {
+  color: color-mix(in srgb, var(--on-dark) 75%, transparent);
+}
+
+.take:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.reasons {
+  display: grid;
+  gap: 8px;
+}
+
+.reasonsLabel {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font: var(--font-label);
+}
+
+.reasonsHint {
+  color: var(--error);
+  font: var(--font-meta);
 }
 
 /* ---------- Cash ---------- */
@@ -56,7 +268,8 @@
   cursor: pointer;
 }
 
-.quickButton[aria-pressed='true'] {
+.quickButton[aria-pressed='true'],
+.quickButton[aria-checked='true'] {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--on-dark);
@@ -81,6 +294,51 @@
 .change strong {
   font: var(--font-h2);
   font-variant-numeric: tabular-nums;
+}
+
+/* The change, with one tap to keep it as a tip. */
+.change:has(button) {
+  padding: 8px 8px 8px 14px;
+  align-items: center;
+}
+
+.changeAmount {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.keepTip {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--success);
+  color: var(--on-dark);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.kept {
+  font: var(--font-small-strong);
+}
+
+.changeLink {
+  min-height: 36px;
+  border: 0;
+  background: none;
+  color: var(--success);
+  font: var(--font-meta-strong);
+  text-decoration: underline;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.keepTip:focus-visible,
+.changeLink:focus-visible {
+  box-shadow: var(--focus);
 }
 
 /* ---------- Footers ---------- */

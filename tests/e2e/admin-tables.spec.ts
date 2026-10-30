@@ -175,6 +175,9 @@ test('paying first, changing the order, adding more and paying the rest', async 
   await page.getByRole('button', { name: /^Collect ₹/ }).click();
   await expect(dialog).toContainText('1 order to pay');
   await dialog.getByRole('radio', { name: 'Cash' }).click();
+  // Cash needs what was handed over before it can be collected.
+  await expect(dialog.getByRole('button', { name: /^Collect ₹/ })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Exact' }).click();
   await dialog.getByRole('button', { name: /^Collect ₹/ }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Table 7 paid' })).toBeVisible();
 });

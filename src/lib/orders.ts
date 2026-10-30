@@ -197,6 +197,28 @@ export const itemPillStatus = (status: ItemStatus): OrderStatus =>
 /* ---------- Live tracking ---------- */
 
 /** The progress steps of each mode, left to right; the last one finishes the order. */
+/** How far along each step is (handed over in any way is as far as it goes). */
+const PROGRESS: Record<OrderStatus, number> = {
+  received: 0,
+  preparing: 1,
+  ready: 2,
+  outForDelivery: 3,
+  served: 4,
+  pickedUp: 4,
+  delivered: 4,
+  cancelled: 5,
+};
+
+/**
+ * The round an order's status follows (the backend's orders.mapper › roundBehind): the one
+ * furthest behind, the latest of equals. So an order is served only once every round is.
+ */
+export const roundBehind = <T extends { status: OrderStatus }>(rounds: readonly T[]) =>
+  rounds.reduce<T | undefined>(
+    (behind, r) => (!behind || PROGRESS[r.status] <= PROGRESS[behind.status] ? r : behind),
+    undefined,
+  );
+
 export const TRACK_STEPS = ORDER_FLOWS satisfies Record<OrderMode, readonly OrderStatus[]>;
 
 export type TrackStep = (typeof TRACK_STEPS)[OrderMode][number];

@@ -1,6 +1,6 @@
 import { createClock } from '@/lib/clock';
 import { CANCEL_REASONS } from '@/lib/adminOrders';
-import { MAX_REFUND_NOTE, REFUND_REASONS, refundable } from '@/lib/adminPayments';
+import { MAX_REFUND_NOTE, REFUND_REASONS, WAIVE_REASONS, refundable } from '@/lib/adminPayments';
 import { isFinished, isToday } from '@/lib/orders';
 import { amountDue, paidAmount } from '@/lib/lifecycle';
 import { calculateBill } from '@/lib/pricing';
@@ -8,7 +8,7 @@ import { discountsFor, findPromo } from '@/lib/promotions';
 import type { AdminOrders } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 import type { Price } from '@/types/menu';
-import type { Order, OrderRound } from '@/types/order';
+import type { Order, OrderRound, WaiveReason } from '@/types/order';
 import type { OrderChangeResponse, TablePaymentResponse } from '../../contracts';
 import { fail, isObject, objectBody, ok, type Handler, type MockContext } from '../context';
 import { demoOrders, isDemoFloorOn, isDemoId } from '../demoFloor';
@@ -194,17 +194,42 @@ function amountField(branch: Branch, body: unknown, key: string): Price | undefi
   return Math.round(value * minorUnit) / minorUnit;
 }
 
+/** Part of the bill left, and why (`waive`); 400 unless it's more than nothing with a reason. */
+function waiverField(branch: Branch, body: unknown): Waived | undefined {
+  const value = isObject(body) ? body.waive : undefined;
+  if (value === undefined) return undefined;
+  const amount = amountField(branch, value, 'amount');
+  const reason = WAIVE_REASONS.find((r) => isObject(value) && r === value.reason);
+  if (amount === undefined || amount <= 0 || !reason) fail(400, 'invalid_request');
+  return { amount, reason };
+}
+
+interface Waived {
+  amount: Price;
+  reason: WaiveReason;
+}
+
 /**
  * The order with `amount` taken in person (all of what's due, or part of it for a split bill)
  * and recorded with the method, who took it and any tip.
  */
 function takenInPerson(
   order: Order,
-  taken: { amount: Price; method: string; detail: string; at: string; by: string; tip?: Price },
+  taken: {
+    amount: Price;
+    method: string;
+    detail: string;
+    at: string;
+    by: string;
+    tip?: Price;
+    /** Left off the bill: what's taken is then the rest, and the bill is settled. */
+    waived?: Waived;
+  },
 ): Order {
   const due = amountDue(order);
+  const waived = taken.waived && taken.waived.amount > 0 ? taken.waived : undefined;
   const paid =
-    taken.amount >= due
+    taken.amount + (waived?.amount ?? 0) >= due
       ? paidInFull(order, taken.detail)
       : {
           ...order,
@@ -220,6 +245,7 @@ function takenInPerson(
       at: taken.at,
       by: taken.by,
       ...(taken.tip ? { tip: taken.tip } : {}),
+      ...(waived ? { waived: waived.amount, waiveReason: waived.reason } : {}),
     },
     order,
   );
@@ -232,16 +258,23 @@ export const collectPayment: Handler = async (ctx, { params, body, headers }) =>
   const method = atTableMethod(branch, body);
   const amount = amountField(branch, body, 'amount');
   const tip = amountField(branch, body, 'tip');
+  const waived = waiverField(branch, body);
   const labels = await ctx.seed.orderLabels(branch);
   const order = await storedOrder(ctx, branch, params.id);
   const now = new Date(ctx.now());
   if (liveOrder(order, now.getTime(), branch).status === 'cancelled') fail(409, 'order_closed');
   const due = amountDue(order);
   if (due <= 0) fail(409, 'nothing_to_pay');
-  // A share of a split bill: more than nothing, and no more than what's due.
-  if (amount !== undefined && (amount <= 0 || amount > due)) fail(400, 'invalid_request');
+  // Part left settles the bill: what's taken is all the rest.
+  if (waived && waived.amount > due) fail(400, 'invalid_request');
+  const rest = due - (waived?.amount ?? 0);
+  // Otherwise a share of a split bill: more than nothing, and no more than what's due.
+  if (amount !== undefined && (waived ? amount !== rest : amount <= 0 || amount > due)) {
+    fail(400, 'invalid_request');
+  }
   const taken = takenInPerson(order, {
-    amount: amount ?? due,
+    amount: amount ?? rest,
+    waived,
     method,
     detail: labels.atTableName(method),
     at: now.toISOString(),
@@ -289,6 +322,7 @@ export const collectTablePayment: Handler = async (ctx, { params, body, headers 
   const branch = await adminBranch(ctx, headers, params.branchId);
   const method = atTableMethod(branch, body);
   const tip = amountField(branch, body, 'tip');
+  const waived = waiverField(branch, body);
   const labels = await ctx.seed.orderLabels(branch);
   const table = Number(params.table);
   const { orders, now } = await floorActivity(ctx, branch);
@@ -301,13 +335,24 @@ export const collectTablePayment: Handler = async (ctx, { params, body, headers 
       amountDue(o) > 0,
   );
   if (due.length === 0) fail(409, 'nothing_to_pay');
+  // What's left of the table's bill comes off its latest orders first.
+  let toWaive = waived?.amount ?? 0;
+  if (toWaive > due.reduce((sum, o) => sum + amountDue(o), 0)) fail(400, 'invalid_request');
+  const waivedOn = new Map<string, Price>();
+  for (const o of [...due].sort((a, b) => Date.parse(b.placedAt) - Date.parse(a.placedAt))) {
+    const part = Math.min(amountDue(o), toWaive);
+    toWaive -= part;
+    waivedOn.set(o.id, part);
+  }
   const paid: Order[] = [];
   const at = new Date(now).toISOString();
   for (const [index, { id }] of due.entries()) {
     const stored = await storedOrder(ctx, branch, id);
     // One tip for the table, recorded with the first order's payment.
+    const part = waivedOn.get(id) ?? 0;
     const order = takenInPerson(stored, {
-      amount: amountDue(stored),
+      amount: amountDue(stored) - part,
+      waived: waived && part > 0 ? { amount: part, reason: waived.reason } : undefined,
       method,
       detail: labels.atTableName(method),
       at,

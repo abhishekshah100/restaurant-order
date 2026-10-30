@@ -121,6 +121,14 @@ export function PaymentOrderDialog({
                       {entry.tip ? (
                         <small>{t('adminPayments.entry.tip', { amount: amount(entry.tip) })}</small>
                       ) : null}
+                      {entry.waived && entry.waiveReason ? (
+                        <small>
+                          {t('adminPayments.entry.left', {
+                            amount: amount(entry.waived),
+                            reason: t(`adminPayments.entry.waiveReasons.${entry.waiveReason}`),
+                          })}
+                        </small>
+                      ) : null}
                     </span>
                   </li>
                 );

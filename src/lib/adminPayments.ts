@@ -1,6 +1,6 @@
 import { REFUND_REASONS as REFUND_REASON_CODES } from '@/config/masters';
 import type { Price } from '@/types/menu';
-import type { Order, PaymentTransaction, RefundReason } from '@/types/order';
+import type { Order, PaymentTransaction, RefundReason, WaiveReason } from '@/types/order';
 import type { BillRequest } from '@/types/service';
 import { dueOn } from './adminOrders';
 import { paidAmount } from './lifecycle';
@@ -71,6 +71,9 @@ export function refundable(order: Order): Price {
   return Math.max(0, net);
 }
 
+/** Why staff leave part of a bill, in the order they're offered. */
+export const WAIVE_REASONS: readonly WaiveReason[] = ['noChange', 'regular', 'complaint', 'other'];
+
 /** The longest note a refund takes. */
 export const MAX_REFUND_NOTE = 200;
 
@@ -111,6 +114,9 @@ export interface DaySummary {
   /** Collected less refunds. */
   net: Price;
   tips: Price;
+  /** Left off bills when staff took the rest (not money received), and on how many payments. */
+  waived: Price;
+  waivedCount: number;
   payments: number;
   refundCount: number;
   online: Price;
@@ -161,6 +167,8 @@ export function daySummary(orders: readonly Order[]): DaySummary {
     refundsPending: refunds.filter((e) => e.status === 'started').reduce((t, e) => t + e.amount, 0),
     net: collected - refunded,
     tips: payments.reduce((t, e) => t + (e.tip ?? 0), 0),
+    waived: payments.reduce((t, e) => t + (e.waived ?? 0), 0),
+    waivedCount: payments.filter((e) => (e.waived ?? 0) > 0).length,
     payments: payments.length,
     refundCount: refunds.length,
     online: payments.filter((e) => e.channel === 'online').reduce((t, e) => t + e.amount, 0),
