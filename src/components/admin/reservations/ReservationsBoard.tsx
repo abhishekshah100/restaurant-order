@@ -8,7 +8,7 @@ import { useContent, useReservations } from '@/api/hooks';
 import { Button, Chip, EmptyState, Icon, SearchField } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { reservationsPath } from '@/lib/adminNav';
+import { ADMIN_LINKS, reservationsPath } from '@/lib/adminNav';
 import {
   RESERVATION_FILTERS,
   bookingDays,
@@ -54,7 +54,7 @@ const STATE_REFRESH_MS = 30_000;
  * or a day up to 60 days ahead (in the address, ?day=), see it counted (bookings, guests, seated, the next
  * arrival), filter (upcoming, seated, cancelled and no-show, all) and search; a row per booking
  * by time with Seat when the guests can sit. A row opens the booking; New reservation books a
- * table. Read from GET /admin/branches/:branchId/reservations, polled every 15 s.
+ * table; History opens the past days (reservations/history/). Read from GET /admin/branches/:branchId/reservations, polled every 15 s.
  */
 export function ReservationsBoard() {
   const t = useContent('common');
@@ -109,13 +109,18 @@ export function ReservationsBoard() {
               })
             }
           />
-          <Button
-            iconStart="plus"
-            className={styles.new}
-            onClick={() => setEditor({ kind: 'new' })}
-          >
-            {t('adminReservations.new')}
-          </Button>
+          <div className={styles.actions}>
+            <Button variant="secondary" iconStart="history" href={ADMIN_LINKS.reservationHistory}>
+              {t('adminReservations.history.open')}
+            </Button>
+            <Button
+              iconStart="plus"
+              className={styles.new}
+              onClick={() => setEditor({ kind: 'new' })}
+            >
+              {t('adminReservations.new')}
+            </Button>
+          </div>
         </div>
 
         <dl className={styles.stats} aria-label={t('adminReservations.stats.label')}>

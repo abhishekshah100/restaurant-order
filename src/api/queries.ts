@@ -8,7 +8,12 @@ import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { apiGet } from './client';
-import type { AdminBranchesResponse, AdminOrdersFilter, OrderLineRequest } from './contracts';
+import type {
+  AdminBranchesResponse,
+  AdminOrdersFilter,
+  OrderLineRequest,
+  ReservationsFilter,
+} from './contracts';
 import { api } from './endpoints';
 import { liveRefresh } from './liveState';
 import type common from '../../public/api/content/common.json';
@@ -346,6 +351,22 @@ export const reservationsQuery = (token: string | null, branchId: string | undef
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
+  });
+
+/**
+ * GET /admin/branches/:branchId/reservations?from=&to=: the bookings on past days (Reservations ›
+ * History). Under the same key as the live list, so a booking changed refreshes it too; not
+ * polled (past days don't change on their own).
+ */
+export const reservationHistoryQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  filter: ReservationsFilter,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'service', 'reservations', branchId, token, filter] as const,
+    queryFn: token && branchId ? () => api.reservations(token, branchId, filter) : skipToken,
+    staleTime: PAST_ORDERS_STALE_MS,
   });
 
 /** GET /admin/branches/:branchId/offers: every automatic offer, to manage (Settings › Offers). */

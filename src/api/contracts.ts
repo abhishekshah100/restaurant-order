@@ -146,6 +146,8 @@ export interface ApiErrorBody {
   items?: string[];
   /** table_taken: the booking holding the table then. */
   reservation?: Pick<Reservation, 'id' | 'guestName' | 'at'>;
+  /** table_taken: which of the booking's tables it holds. */
+  table?: number;
   /** table_in_use: the tables that can't go yet, and why. */
   tables?: TableInUse[];
 }
@@ -337,6 +339,16 @@ export type SetBranchStatusRequest =
 export type ReservationsResponse = AdminReservations;
 
 /**
+ * `?from=&to=` on GET …/reservations (Reservations › History): the bookings due on those days of
+ * the branch's calendar ("2026-10-01"), every status, by time; one alone means that day. Up to
+ * 92 days at once (400 `{ field: 'from' }` past that, or the wrong way round).
+ */
+export interface ReservationsFilter {
+  from?: string;
+  to?: string;
+}
+
+/**
  * `POST /admin/branches/:branchId/reservations` — a booking taken by phone or at the door — and
  * `PATCH /admin/branches/:branchId/reservations/:id` — a booking changed (only while booked).
  * The table must exist and be free for `minutes` from `at`: a booked or seated booking there
@@ -348,7 +360,13 @@ export type ReservationsResponse = AdminReservations;
  * no longer booked).
  */
 export interface ReservationInput {
+  /** The main table: the first of `tables` (servers before `tables` read only this). */
   table: number;
+  /**
+   * Every table, the main one first: all in one area, seating the whole party between them
+   * (400 `{ field: 'tables' }` otherwise). Up to 6.
+   */
+  tables: number[];
   guestName: string;
   /** National mobile digits; optional. */
   phone?: string;
@@ -494,7 +512,7 @@ export interface ImageUploadResponse {
 /**
  * `GET /admin/branches/:branchId/orders` — today's orders at the branch (its time zone), every
  * mode and state, in full (items, rounds, payment, timeline, pickup or delivery details), newest
- * first. With `?from=YYYY-MM-DD&to=YYYY-MM-DD` (branch calendar days, up to 90 days back and 31
+ * first. With `?from=YYYY-MM-DD&to=YYYY-MM-DD` (branch calendar days, up to 365 days back and 31
  * long), that range's instead; with `&table=N`, one table's only. A range up to today also has
  * yesterday's orders still to pay. Authorised like GET /admin/branches. 200 →
  * `AdminOrdersResponse`. Errors: 400 invalid_request (details: field from | to | table), 401,

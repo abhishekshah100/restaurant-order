@@ -167,6 +167,7 @@ export function createMockServer(ctx: MockContext) {
     try {
       const req = {
         params: found.params,
+        query: Object.fromEntries(new URLSearchParams(request.path.split('?')[1] ?? '')),
         body: wire(request.body),
         headers: request.headers ?? {},
       };

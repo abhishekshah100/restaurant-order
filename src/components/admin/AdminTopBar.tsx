@@ -1,6 +1,7 @@
 'use client';
 
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useContent } from '@/api/hooks';
+import { useBrandName, useBrandTitle } from '@/hooks/useBrandName';
 import { Icon } from '@/components/ui';
 import styles from './AdminTopBar.module.css';
 
@@ -13,7 +14,8 @@ export interface AdminTopBarProps {
 /** The admin app bar: the brand and "Admin" on the left, the signed-in admin and Sign out on the right. */
 export function AdminTopBar({ adminName, onSignOut }: AdminTopBarProps) {
   const t = useContent('common');
-  const restaurant = useRestaurant();
+  const brand = useBrandName();
+  useBrandTitle(brand);
   return (
     <header className={styles.bar}>
       <div className={styles.brand}>
@@ -21,7 +23,7 @@ export function AdminTopBar({ adminName, onSignOut }: AdminTopBarProps) {
           <Icon name="olive" size="md" />
         </span>
         <span className={styles.brandText}>
-          <span className={styles.brandName}>{restaurant.name}</span>
+          <span className={styles.brandName}>{brand}</span>
           <span className={styles.descriptor}>{t('adminLogin.descriptor')}</span>
         </span>
       </div>

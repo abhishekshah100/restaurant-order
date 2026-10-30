@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useBrandName, useBrandTitle } from '@/hooks/useBrandName';
 import { StartRedirect } from '@/components/start/StartRedirect';
 import { CartProvider } from './CartContext';
 import { CheckoutProvider } from './CheckoutContext';
@@ -26,6 +27,7 @@ export function GuestProviders({ children }: { children: ReactNode }) {
                 <QuickAddProvider>
                   {children}
                   <StartRedirect />
+                  <BrandTitle />
                 </QuickAddProvider>
               </ServiceRequestProvider>
             </SearchProvider>
@@ -34,4 +36,10 @@ export function GuestProviders({ children }: { children: ReactNode }) {
       </CartProvider>
     </GuestSessionProvider>
   );
+}
+
+/** The tab's title carries the name of the guest's branch. */
+function BrandTitle() {
+  useBrandTitle(useBrandName());
+  return null;
 }

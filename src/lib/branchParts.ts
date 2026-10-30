@@ -53,3 +53,10 @@ export const joinBranch = (
   ...summary,
   ...config,
 });
+
+/**
+ * The name a branch goes by on screen, in titles and on paper: its name before " — " ("The Olive
+ * Table — Thamel" is "The Olive Table"; the short name already says which), or all of it.
+ */
+export const brandName = (branchName: string): string =>
+  branchName.split(' — ')[0]?.trim() || branchName;

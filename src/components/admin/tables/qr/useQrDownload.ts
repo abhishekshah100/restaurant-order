@@ -1,6 +1,6 @@
 'use client';
 
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useContent } from '@/api/hooks';
 import { useToast } from '@/context/ToastContext';
 import { qrPng, tableLink } from '@/lib/tableQr';
 import type { TableQrCode } from '@/types/admin';
@@ -19,14 +19,13 @@ const fileSlug = (text: string) =>
  */
 export function useQrDownload(origin: string) {
   const t = useContent('common');
-  const restaurant = useRestaurant();
-  const { branch } = useAdminWorkspace();
+  const { branch, brand } = useAdminWorkspace();
   const { showToast } = useToast();
   return async (code: TableQrCode) => {
     try {
       const link = document.createElement('a');
       link.href = await qrPng(tableLink(origin, code.path), {
-        name: restaurant.name,
+        name: brand,
         table: t('adminQr.card.table', { table: code.table }),
       });
       const branchName = fileSlug(branch.shortName);

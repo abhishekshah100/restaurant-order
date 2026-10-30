@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
 import { ADMIN_NAV } from '@/lib/adminNav';
@@ -41,8 +41,7 @@ export function ShellHeader({
   alerts,
 }: ShellHeaderProps) {
   const t = useContent('common');
-  const restaurant = useRestaurant();
-  const { branch } = useAdminWorkspace();
+  const { branch, brand } = useAdminWorkspace();
   const menuLink = (className: string) =>
     MENU && (
       <Link
@@ -80,7 +79,7 @@ export function ShellHeader({
         <Link
           href={ADMIN_PATHS.dashboard}
           className={styles.mark}
-          aria-label={t('adminShell.homeLink', { name: restaurant.name })}
+          aria-label={t('adminShell.homeLink', { name: brand })}
         >
           <Icon name="olive" size="md" />
         </Link>

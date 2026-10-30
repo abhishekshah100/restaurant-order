@@ -135,11 +135,14 @@ function OrderDialog({
     );
   } else {
     const ready = order.status === 'ready';
-    const dineIn = order.mode === 'dineIn' && order.status !== 'cancelled';
+    // From an earlier day: only settled (served, paid), never changed, added to or cancelled.
+    const past = clock.dayKey(order.placedAt) < clock.dayKey(new Date());
+    const dineIn = !past && order.mode === 'dineIn' && order.status !== 'cancelled';
     // Still to pay: more goes on this bill. Paid in full: more is a new order, not a reopened bill.
     const canAdd = onAddItems && dineIn && due > 0;
     const canNew = onNewOrder && dineIn && due === 0;
-    const canChange = onChangeItems && editableRound(order) !== null;
+    const canChange = !past && onChangeItems && editableRound(order) !== null;
+    const live = !past && !finished;
     footer = (
       <div className={styles.actions}>
         {ready && (
@@ -163,9 +166,9 @@ function OrderDialog({
             {t('adminOrder.collectPayment')}
           </Button>
         )}
-        {(canAdd || canNew || canChange || !finished) && (
+        {(canAdd || canNew || canChange || live) && (
           <div className={styles.secondary}>
-            {!finished && (
+            {live && (
               <Button
                 size="sm"
                 variant={order.rush ? 'primary' : 'secondary'}
@@ -220,7 +223,7 @@ function OrderDialog({
                 {t('adminOrder.changeItems')}
               </Button>
             )}
-            {!finished && (
+            {live && (
               <Button
                 size="sm"
                 variant="ghost"

@@ -1,4 +1,12 @@
-/* From and To side by side (wrapping on narrow screens), Today on the same line. */
+/*
+ * From and To side by side (wrapping on narrow screens), Today on the same line; under them,
+ * why the days picked don't work together yet.
+ */
+
+.wrap {
+  display: grid;
+  gap: 8px;
+}
 
 .filter {
   display: flex;
@@ -15,4 +23,13 @@
 
 .today {
   flex: none;
+}
+
+.problem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--error);
+  font: var(--font-small-strong);
 }

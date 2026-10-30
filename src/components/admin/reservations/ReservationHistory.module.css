@@ -1,0 +1,89 @@
+/*
+ * Reservations › History: back to Reservations, the title with Download CSV, the days, the
+ * days counted, then the bookings under each day (the Reservations page's panel and rows).
+ */
+
+.back {
+  justify-self: start;
+  min-height: 44px;
+  margin: -8px 0 -10px -8px;
+  padding: 0 10px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  font: var(--font-label);
+  text-decoration: none;
+}
+
+.back:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h1);
+}
+
+.subtitle {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+/* Five counts: two a row on phones (the last across), five in a row on wide screens. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stats > :last-child {
+  grid-column: 1 / -1;
+}
+
+/* A day's heading between its bookings. */
+.day {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.day:not(:first-child),
+section + section > .day {
+  border-top: 1px solid var(--line);
+}
+
+@media (min-width: 720px) {
+  .stats {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .stats > :last-child {
+    grid-column: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .title {
+    font: var(--font-display);
+  }
+
+  .subtitle {
+    font: var(--font-body);
+  }
+
+  .day {
+    padding: 10px 20px;
+  }
+}

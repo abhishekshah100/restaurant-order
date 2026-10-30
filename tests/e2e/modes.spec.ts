@@ -8,6 +8,7 @@ import {
   fastForward,
   installClock,
   markReadyInKitchen,
+  pickOption,
   scan,
   waitForSavedCart,
 } from './helpers';
@@ -102,7 +103,7 @@ test('Nepal delivery: zone fee, minimum order, eSewa and tracking to out for del
   await page.goto('/cart/');
   const checkout = page.getByRole('link', { name: 'Checkout' }).filter({ visible: true });
   await expect(checkout).toHaveAttribute('aria-disabled', 'true');
-  await page.getByLabel('Deliver to').selectOption('Lazimpat');
+  await pickOption(page.getByLabel('Deliver to'), 'Lazimpat');
   await expect(page.getByText('Thamel & Lazimpat · arrives in about 35 min')).toBeVisible();
   await expect(page.getByText('Delivery fee').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByText('रू 60.00').filter({ visible: true }).first()).toBeVisible();
@@ -119,7 +120,7 @@ test('Nepal delivery: zone fee, minimum order, eSewa and tracking to out for del
   await expect(checkout).not.toHaveAttribute('aria-disabled');
   await checkout.click();
 
-  await expect(page.locator('#address-area')).toHaveValue('Lazimpat');
+  await expect(page.locator('#address-area')).toHaveText('Lazimpat');
   await page.getByLabel('Full name').fill('Sita Sharma');
   await page.getByLabel('Mobile number').fill('9841234567');
   await visible(page, 'Send OTP').click();

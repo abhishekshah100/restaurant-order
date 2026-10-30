@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test, adminSignIn, againstBackend } from './helpers';
+import { expect, test, adminSignIn, againstBackend, pickOption } from './helpers';
 
 /**
  * Settings beyond the floor plan, on the mock server or the backend: opening hours, tax & service
@@ -129,9 +129,9 @@ test('services switch on and off; the region is editable on Branch details', asy
 
   // Region: another country warns what comes with it, and the phone must follow.
   await openSetting(page, 'Branch details', 'branch');
-  await page.getByLabel('Country').selectOption('NP');
+  await pickOption(page.getByLabel('Country'), 'Nepal');
   await expect(page.getByLabel('Time zone')).toHaveValue('Asia/Kathmandu');
-  await expect(page.getByLabel('Currency')).toHaveValue('NPR');
+  await expect(page.getByLabel('Currency')).toHaveText(/^NPR/);
   await expect(page.getByText(/Moving the branch to Nepal/)).toBeVisible();
   await expect(bar).toContainText('+977');
   // The time zone is typed, with suggestions; an unknown one is refused.
@@ -139,11 +139,11 @@ test('services switch on and off; the region is editable on Branch details', asy
   await expect(page.getByText('Choose a time zone from the list').first()).toBeVisible();
   await page.getByLabel('Time zone').fill('Asia/Kathmandu');
   await expect(page.getByText(/Local time now/)).toBeVisible();
-  await page.getByLabel('Country').selectOption('IN');
-  await page.getByLabel('Currency').selectOption('USD');
+  await pickOption(page.getByLabel('Country'), 'India');
+  await pickOption(page.getByLabel('Currency'), /^USD/);
   await expect(page.getByText('Menu prices keep their numbers')).toBeVisible();
   await saveChanges(page, 'Branch details saved');
-  await expect(page.getByLabel('Currency')).toHaveValue('USD');
+  await expect(page.getByLabel('Currency')).toHaveText(/^USD/);
 });
 
 test('add a branch as a copy, then remove it; never the last one', async ({ page }) => {

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useContent } from '@/api/hooks';
 import { Button, Dialog, Icon } from '@/components/ui';
 import { tablePath } from '@/lib/adminNav';
-import { canMarkNoShow, canSeat, reservationState } from '@/lib/reservations';
+import { bookingTables, canMarkNoShow, canSeat, reservationState } from '@/lib/reservations';
 import { cx } from '@/lib/cx';
 import type { Reservation } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
@@ -154,9 +154,15 @@ function ReservationFacts({ reservation: r, now }: { reservation: Reservation; n
         <div className={styles.fact}>
           <dt>{t('adminReservations.detail.table')}</dt>
           <dd>
-            <Link href={tablePath(r.table)} className={styles.link}>
-              {t('adminReservations.table', { table: r.table })}
-            </Link>
+            {/* Each table opens its page: "Table 4 + 5". */}
+            {bookingTables(r).map((n, i) => (
+              <span key={n}>
+                {i > 0 && ' + '}
+                <Link href={tablePath(n)} className={styles.link}>
+                  {i === 0 ? t('adminReservations.table', { table: n }) : n}
+                </Link>
+              </span>
+            ))}
           </dd>
         </div>
         <div className={styles.fact}>
@@ -223,6 +229,7 @@ function CancelStep({
 }) {
   const t = useContent('common');
   const { clock } = useAdminWorkspace();
+  const text = useReservationText();
   return (
     <Dialog
       open
@@ -242,7 +249,7 @@ function CancelStep({
     >
       <p className={styles.confirm}>
         {t('adminReservations.detail.confirmCancel.body', {
-          table: r.table,
+          tables: text.tables(bookingTables(r)),
           time: clock.dateTime(r.at),
         })}
       </p>

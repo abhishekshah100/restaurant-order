@@ -5,20 +5,23 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './TablePicker.module.css';
 
 /**
- * The tables by area, each with its seats: one booked then can't be picked (it says until
- * when), one too small for the party is faded (still allowed: tables get pushed together), and
- * the smallest free table that fits is marked Best fit. Disabled until there's a time.
+ * The tables by area, each with its seats, tapped on and off: a party can have several (eight
+ * guests on two tables of four). One booked then can't be picked (it says until when), and the
+ * tables suggested are marked Best fit. Disabled
+ * until there's a time.
  */
 export function TablePicker({
   areas,
   value,
-  onChange,
+  onToggle,
   disabled,
   error,
 }: {
   areas: { id: string; name: string; tables: TableChoice[] }[];
-  value: number | null;
-  onChange: (table: number) => void;
+  /** The tables picked. */
+  value: readonly number[];
+  /** A table tapped (on or off), in its area. */
+  onToggle: (table: number, areaId: string) => void;
   disabled: boolean;
   error?: string;
 }) {
@@ -32,7 +35,14 @@ export function TablePicker({
           <p className={styles.areaName}>{area.name}</p>
           <ul className={styles.grid}>
             {area.tables.map((choice) => {
+              // On the tile the time only (it's on the day picked above), kept on one line;
+              // read out in full.
               const booked = choice.clash
+                ? t('adminReservations.editor.booked', {
+                    time: clock.time(choice.clash.at).replace(' ', '\u00a0'),
+                  })
+                : null;
+              const bookedFull = choice.clash
                 ? t('adminReservations.editor.booked', { time: clock.dateTime(choice.clash.at) })
                 : null;
               const seats = t('adminReservations.editor.seats', { count: choice.seats });
@@ -40,7 +50,7 @@ export function TablePicker({
               const words = [
                 t('adminReservations.table', { table: choice.table }),
                 seats,
-                ...(booked ? [booked] : []),
+                ...(bookedFull ? [bookedFull] : []),
                 ...(inUse ? [inUse] : []),
                 ...(choice.bestFit ? [t('adminReservations.editor.bestFit')] : []),
               ];
@@ -48,15 +58,11 @@ export function TablePicker({
                 <li key={choice.table}>
                   <button
                     type="button"
-                    className={cx(
-                      styles.table,
-                      choice.tooSmall && styles.small,
-                      choice.bestFit && styles.best,
-                    )}
-                    aria-pressed={value === choice.table}
+                    className={cx(styles.table, choice.bestFit && styles.best)}
+                    aria-pressed={value.includes(choice.table)}
                     aria-label={words.join(', ')}
                     disabled={disabled || Boolean(choice.clash)}
-                    onClick={() => onChange(choice.table)}
+                    onClick={() => onToggle(choice.table, area.id)}
                   >
                     <span className={styles.number} aria-hidden="true">
                       {choice.table}

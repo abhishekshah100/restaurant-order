@@ -1,4 +1,10 @@
-import { expect, test as base, type BrowserContext, type Page } from '@playwright/test';
+import {
+  expect,
+  test as base,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 /**
  * The site in out/ was built with NEXT_PUBLIC_BACKEND_URL (`E2E_BACKEND=true npx playwright
@@ -216,4 +222,13 @@ export async function expectBranchOpen(page: Page, shortName: string) {
   await expect(
     page.getByText(shortName, { exact: true }).filter({ visible: true }).first(),
   ).toBeVisible();
+}
+
+/**
+ * Picks an option in one of the app's dropdowns (Select: a field that opens its own list, not
+ * the browser's): opens it and presses the option named `option`.
+ */
+export async function pickOption(field: Locator, option: string | RegExp) {
+  await field.click();
+  await field.page().getByRole('listbox').getByRole('option', { name: option }).click();
 }

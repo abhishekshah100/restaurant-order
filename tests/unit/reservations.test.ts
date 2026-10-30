@@ -6,6 +6,11 @@ import {
   addMonths,
   bookingDays,
   bookingRange,
+  byDay,
+  filterHistory,
+  historyCounts,
+  historySummary,
+  isUnmarked,
   canMarkNoShow,
   canSeat,
   clashWith,
@@ -21,6 +26,7 @@ import {
   reservationForm,
   reservationInput,
   reservationState,
+  suggestTables,
   tableChoices,
   timeSlots,
 } from '@/lib/reservations';
@@ -60,7 +66,8 @@ describe('reservation rules', () => {
       reservation({ id: 'R1002', table: 7, status: 'cancelled' }),
       reservation({ id: 'R1003', table: 8, status: 'seated' }),
     ];
-    const at = (iso: string, table = 6) => clashWith(list, { table, at: iso, minutes: 60 })?.id;
+    const at = (iso: string, table = 6) =>
+      clashWith(list, { tables: [table], at: iso, minutes: 60 })?.id;
     expect(at('2026-10-15T14:30:00.000Z')).toBe('R1001'); // 8:00, inside 7:00–8:30
     expect(at('2026-10-15T12:45:00.000Z')).toBe('R1001'); // 6:15–7:15 runs into it
     expect(at('2026-10-15T15:00:00.000Z')).toBeUndefined(); // 8:30, back to back
@@ -68,7 +75,11 @@ describe('reservation rules', () => {
     expect(at('2026-10-15T13:30:00.000Z', 7)).toBeUndefined(); // cancelled
     expect(at('2026-10-15T13:30:00.000Z', 8)).toBe('R1003'); // seated
     // The booking itself, being changed, doesn't clash with itself.
-    expect(clashWith(list, reservation(), 'R1001')).toBeUndefined();
+    expect(clashWith(list, { ...reservation(), tables: [6] }, 'R1001')).toBeUndefined();
+    // A party on tables 6 and 9 clashes on either; asking for 9 finds it.
+    const party = [reservation({ id: 'R1004', table: 6, tables: [6, 9] })];
+    expect(clashWith(party, { tables: [9], at: reservation().at, minutes: 60 })?.id).toBe('R1004');
+    expect(clashWith(party, { tables: [5, 7], at: reservation().at, minutes: 60 })).toBeUndefined();
   });
 
   it('is due from an hour before until half an hour after; seated from an hour before', () => {
@@ -197,19 +208,19 @@ describe('the booking form and table picker', () => {
       partySize: 2,
       at: '',
       minutes: 90,
-      table: 5,
+      tables: [5],
     });
     expect(reservationForm(clock, new Date(NOW), reservation({ note: 'Cake' }))).toMatchObject({
       guestName: 'Rahul Mehta',
       day: '2026-10-15',
-      table: 6,
+      tables: [6],
       note: 'Cake',
     });
   });
 
   it('checks the name, mobile, time and table, and builds the request', () => {
     const empty = reservationForm(clock, new Date(NOW));
-    expect(reservationErrors({ ...empty, phone: '12345' }, branch.mobile)).toEqual({
+    expect(reservationErrors({ ...empty, phone: '12345' }, branch.mobile, 0)).toEqual({
       guestName: 'name',
       phone: 'phoneLength',
       at: 'time',
@@ -219,12 +230,17 @@ describe('the booking form and table picker', () => {
       ...empty,
       guestName: '  Rahul  ',
       at: '2026-10-15T19:00:00+05:30',
-      table: 6,
+      tables: [6, 7],
       note: '  ',
     };
-    expect(reservationErrors(filled, branch.mobile)).toEqual({});
+    expect(reservationErrors(filled, branch.mobile, 8)).toEqual({});
+    // Eight guests on tables seating six between them: held back.
+    expect(reservationErrors({ ...filled, partySize: 8 }, branch.mobile, 6)).toEqual({
+      table: 'seats',
+    });
     expect(reservationInput(filled)).toEqual({
       table: 6,
+      tables: [6, 7],
       guestName: 'Rahul',
       partySize: 2,
       at: '2026-10-15T19:00:00+05:30',
@@ -246,7 +262,7 @@ describe('the booking form and table picker', () => {
       },
     ] as Pick<AdminFloor, 'id' | 'name' | 'tables'>[];
     // The form passes itself, with the table picked so far.
-    const form = { at: '2026-10-15T14:00:00.000Z', minutes: 90, partySize: 3, table: null };
+    const form = { at: '2026-10-15T14:00:00.000Z', minutes: 90, partySize: 3, tables: [] };
     const [ground] = tableChoices(floors, [reservation()], form);
     expect(
       ground.tables.map(({ table, clash, tooSmall, bestFit }) => ({
@@ -271,6 +287,47 @@ describe('the booking form and table picker', () => {
     expect(own.tables.find((c) => c.table === 6)).toMatchObject({ bestFit: true });
   });
 
+  it('suggests the fewest free tables in one area for a party no table seats alone', () => {
+    const floors = [
+      {
+        id: 'ground',
+        name: 'Ground floor',
+        tables: [
+          { table: 1, seats: 2 },
+          { table: 2, seats: 3 },
+          { table: 4, seats: 4 },
+          { table: 5, seats: 4 },
+          { table: 6, seats: 4 },
+        ],
+      },
+      {
+        id: 'patio',
+        name: 'Patio',
+        tables: [{ table: 20, seats: 6 }],
+      },
+    ] as Pick<AdminFloor, 'id' | 'name' | 'tables'>[];
+    const slot = (partySize: number) => ({
+      at: '2026-10-15T14:00:00.000Z',
+      minutes: 90,
+      partySize,
+    });
+    const suggest = (partySize: number, reservations: Reservation[] = []) =>
+      suggestTables(tableChoices(floors, reservations, slot(partySize)), partySize);
+    // One table seats them: the smallest.
+    expect(suggest(3)).toEqual([2]);
+    // Eight: two tables of 4, side by side; never across areas.
+    expect(suggest(8)).toEqual([4, 5]);
+    // Table 5 booked then: the next two of 4.
+    expect(suggest(8, [reservation({ table: 5, tables: [5] })])).toEqual([4, 6]);
+    // Nine: three tables, the fewest seats to spare (2 + 3 + 4).
+    expect(suggest(9)).toEqual([1, 2, 4]);
+    // More than any area seats: nothing to suggest.
+    expect(suggest(20)).toEqual([]);
+    // Each table suggested is marked Best fit.
+    const [ground] = tableChoices(floors, [], slot(8));
+    expect(ground.tables.filter((c) => c.bestFit).map((c) => c.table)).toEqual([4, 5]);
+  });
+
   it("doesn't suggest a table with guests at it now (paid and still seated too) for a booking soon", () => {
     const floors = [
       {
@@ -292,5 +349,65 @@ describe('the booking form and table picker', () => {
     // Tonight, hours away: who sits there now doesn't matter; the smallest fit wins again.
     const [later] = tableChoices(floors, [], slot, undefined, new Date('2026-10-15T09:00:00Z'));
     expect(later.tables.find((c) => c.table === 6)).toMatchObject({ inUse: false, bestFit: true });
+  });
+});
+
+describe('the history', () => {
+  const LATER = Date.parse('2026-10-17T06:00:00Z'); // two days on
+  const list = [
+    reservation({ id: 'R1001', status: 'seated' }),
+    reservation({ id: 'R1002', status: 'noShow', partySize: 2 }),
+    reservation({ id: 'R1003', status: 'cancelled', guestName: 'Priya' }),
+    // Never marked: still booked, its hold long over.
+    reservation({ id: 'R1004', guestName: 'Kabir', at: '2026-10-16T14:00:00.000Z' }),
+    // Still to come today: not "not marked".
+    reservation({ id: 'R1005', at: '2026-10-17T13:30:00.000Z' }),
+  ];
+
+  it('marks a booking "not marked" only once its hold is over', () => {
+    const r = reservation(); // 7:00 PM for 90 minutes
+    expect(isUnmarked(r, Date.parse('2026-10-15T14:59:00Z'))).toBe(false);
+    expect(isUnmarked(r, Date.parse('2026-10-15T15:00:00Z'))).toBe(true);
+    expect(isUnmarked(reservation({ status: 'seated' }), LATER)).toBe(false);
+  });
+
+  it('counts and filters: came, no-shows, cancelled, not marked; the latest first', () => {
+    expect(historyCounts(list, LATER)).toEqual({
+      all: 5,
+      seated: 1,
+      noShow: 1,
+      cancelled: 1,
+      unmarked: 1,
+    });
+    expect(filterHistory(list, 'all', '', LATER).map((r) => r.id)).toEqual([
+      'R1005',
+      'R1004',
+      'R1003',
+      'R1002',
+      'R1001',
+    ]);
+    expect(filterHistory(list, 'unmarked', '', LATER).map((r) => r.id)).toEqual(['R1004']);
+    expect(filterHistory(list, 'all', 'priya', LATER).map((r) => r.id)).toEqual(['R1003']);
+  });
+
+  it('sums up the days: guests who came and the share that showed up', () => {
+    // Due: the one that came, the no-show and the one never marked; 1 of 3 came.
+    expect(historySummary(list, LATER)).toEqual({
+      bookings: 5,
+      guests: 4,
+      noShows: 1,
+      cancelled: 1,
+      showRate: 33,
+    });
+    expect(historySummary([], LATER).showRate).toBeNull();
+  });
+
+  it('puts the bookings under their day, in the order given', () => {
+    const days = byDay(filterHistory(list, 'all', '', LATER), clock);
+    expect(days.map((d) => [d.day, d.reservations.length])).toEqual([
+      ['2026-10-17', 1],
+      ['2026-10-16', 1],
+      ['2026-10-15', 3],
+    ]);
   });
 });

@@ -1,0 +1,258 @@
+/*
+ * A table's order history: back to the table, the title, the days, the days counted, then one
+ * row per order under its day (time, number and guest, items, total and payment).
+ */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.back {
+  justify-self: start;
+  min-height: 44px;
+  margin: -8px 0 -10px -8px;
+  padding: 0 10px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  font: var(--font-label);
+  text-decoration: none;
+}
+
+.back:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.title {
+  color: var(--ink);
+  font: var(--font-h1);
+}
+
+.subtitle {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+/* ---------- The days counted ---------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.stat dt {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.stat dd {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font: var(--font-h3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- The orders ---------- */
+
+.panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.tools {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filters > * {
+  flex: none;
+}
+
+.day {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+section + section > .day {
+  border-top: 1px solid var(--line);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  width: 100%;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  box-shadow: inset var(--focus);
+}
+
+@media (hover: hover) {
+  .row:hover {
+    background: color-mix(in srgb, var(--bg) 45%, var(--surface));
+  }
+}
+
+.time {
+  flex: none;
+  width: 72px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.name {
+  font: var(--font-body);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.side {
+  flex: none;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.total {
+  font: var(--font-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  flex: none;
+  color: var(--ink-3);
+}
+
+.empty {
+  margin: 0;
+  padding: 40px 20px;
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-align: center;
+}
+
+.skeleton {
+  height: 420px;
+  border-radius: var(--r-panel);
+  background: linear-gradient(90deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%) 0 0 / 200%
+    100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* The time goes above the guest on a phone. */
+  .row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .time {
+    width: 100%;
+  }
+}
+
+@media (min-width: 720px) {
+  .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .tools,
+  .day,
+  .row {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (min-width: 900px) {
+  .title {
+    font: var(--font-display);
+  }
+
+  .subtitle {
+    font: var(--font-body);
+  }
+}

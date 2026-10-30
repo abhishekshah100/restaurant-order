@@ -38,13 +38,20 @@ const endOf = (r: Pick<Reservation, 'at' | 'minutes'>) => startOf(r) + r.minutes
 export const holdsTable = (r: Pick<Reservation, 'status'>) =>
   r.status === 'booked' || r.status === 'seated';
 
+/** The most tables one booking can join (the server's limit). */
+export const MAX_TABLES = 6;
+
+/** Every table a booking has, the main one first (just `table` from servers before `tables`). */
+export const bookingTables = (r: Pick<Reservation, 'table' | 'tables'>): number[] =>
+  r.tables && r.tables.length > 0 ? r.tables : [r.table];
+
 /**
- * The booking (other than `ignoreId`) holding `table` for any part of `minutes` from `at`:
- * the clash that stops a new or changed booking. Undefined when the table is free then.
+ * The booking (other than `ignoreId`) holding any of `tables` for any part of `minutes` from
+ * `at`: the clash that stops a new or changed booking. Undefined when they're all free then.
  */
 export function clashWith(
   reservations: readonly Reservation[],
-  slot: Pick<Reservation, 'table' | 'at' | 'minutes'>,
+  slot: Pick<Reservation, 'at' | 'minutes'> & { tables: readonly number[] },
   ignoreId?: string,
 ): Reservation | undefined {
   const start = startOf(slot);
@@ -52,7 +59,7 @@ export function clashWith(
   return reservations.find(
     (r) =>
       r.id !== ignoreId &&
-      r.table === slot.table &&
+      bookingTables(r).some((t) => slot.tables.includes(t)) &&
       holdsTable(r) &&
       startOf(r) < end &&
       start < endOf(r),
@@ -148,7 +155,9 @@ export function filterReservations(
         r.guestName.toLowerCase().includes(q) ||
         r.id.toLowerCase() === q ||
         // A short number is a table ("12"); a longer one, part of a mobile number.
-        (digits.length > 0 && digits.length <= 3 && String(r.table) === digits) ||
+        (digits.length > 0 &&
+          digits.length <= 3 &&
+          bookingTables(r).map(String).includes(digits)) ||
         (digits.length > 3 && (r.phone ?? '').includes(digits)),
     )
     .sort((a, b) => startOf(a) - startOf(b));
@@ -278,7 +287,8 @@ export interface ReservationForm {
   /** ISO, one of the day's times; '' until picked. */
   at: string;
   minutes: number;
-  table: number | null;
+  /** The tables picked, in one area; none yet: []. */
+  tables: number[];
   note: string;
 }
 
@@ -297,7 +307,7 @@ export function reservationForm(
       day: clock.dayKey(from.at),
       at: from.at,
       minutes: from.minutes,
-      table: from.table,
+      tables: bookingTables(from),
       note: from.note ?? '',
     };
   }
@@ -308,7 +318,7 @@ export function reservationForm(
     day: clock.dayKey(now),
     at: '',
     minutes: DEFAULT_MINUTES,
-    table: table ?? null,
+    tables: table === undefined ? [] : [table],
     note: '',
   };
 }
@@ -318,23 +328,34 @@ export interface ReservationErrors {
   guestName?: 'name';
   phone?: PhoneError;
   at?: 'time';
-  table?: 'table';
+  /** None picked, or too few seats between them for the party. */
+  table?: 'table' | 'seats';
 }
 
-export function reservationErrors(form: ReservationForm, rules: MobileRules): ReservationErrors {
+/**
+ * The form's problems; `seats` is how many the tables picked seat between them (the picker
+ * knows), so a party bigger than that is held back.
+ */
+export function reservationErrors(
+  form: ReservationForm,
+  rules: MobileRules,
+  seats: number,
+): ReservationErrors {
   const errors: ReservationErrors = {};
   if (!form.guestName.trim()) errors.guestName = 'name';
   const phone = form.phone ? mobileError(form.phone, rules) : null;
   if (phone) errors.phone = phone;
   if (!form.at) errors.at = 'time';
-  if (form.table === null) errors.table = 'table';
+  if (form.tables.length === 0) errors.table = 'table';
+  else if (seats < form.partySize) errors.table = 'seats';
   return errors;
 }
 
-/** The request for a checked form (the table is picked by then). */
+/** The request for a checked form (the tables are picked by then). */
 export function reservationInput(form: ReservationForm): ReservationInput {
   return {
-    table: form.table ?? 0,
+    table: form.tables[0] ?? 0,
+    tables: form.tables,
     guestName: form.guestName.trim(),
     ...(form.phone ? { phone: form.phone } : {}),
     partySize: form.partySize,
@@ -351,14 +372,14 @@ export interface TableChoice {
   seats: number;
   /** The booking holding the table then: it can't be picked. */
   clash?: Reservation;
-  /** Fewer seats than the party (it can still be picked: tables get pushed together). */
+  /** Fewer seats than the party on its own (another table or two can join it). */
   tooSmall: boolean;
   /**
    * Guests are at it now (eating, waiting, or paid and still seated) and the booking starts
    * within the hour: it can still be picked (they may leave), but it isn't suggested.
    */
   inUse: boolean;
-  /** The smallest free table that seats the party: the suggestion. */
+  /** One of the tables suggested for the party (suggestTables). */
   bestFit: boolean;
 }
 
@@ -393,16 +414,160 @@ export function tableChoices(
         seats,
         inUse: soon && takenNow(status),
         clash: slot.at
-          ? clashWith(reservations, { table, at: slot.at, minutes: slot.minutes }, ignoreId)
+          ? clashWith(
+              reservations,
+              { tables: [table], at: slot.at, minutes: slot.minutes },
+              ignoreId,
+            )
           : undefined,
         tooSmall: seats < slot.partySize,
         bestFit: false,
       })),
   }));
-  const best = choices
-    .flatMap((floor) => floor.tables)
-    .filter((c) => !c.clash && !c.tooSmall && !c.inUse)
-    .sort((a, b) => a.seats - b.seats)[0];
-  if (best) best.bestFit = true;
+  const suggested = suggestTables(choices, slot.partySize);
+  for (const c of choices.flatMap((floor) => floor.tables)) {
+    c.bestFit = suggested.includes(c.table);
+  }
   return choices;
+}
+
+/** Each way to take `size` of the items, in order. */
+function* combinations<T>(items: readonly T[], size: number, from = 0): Generator<T[]> {
+  if (size === 0) {
+    yield [];
+    return;
+  }
+  for (let i = from; i <= items.length - size; i++) {
+    for (const rest of combinations(items, size - 1, i + 1)) yield [items[i], ...rest];
+  }
+}
+
+/**
+ * The tables to suggest for the party: the smallest free one that seats everyone; else the
+ * fewest free tables in one area that do between them (8 guests: two tables of 4), with the
+ * fewest seats to spare, then the closest numbers. Tables with guests at them now, or booked
+ * then, aren't suggested. Empty when no area can seat the party.
+ */
+export function suggestTables(
+  areas: readonly { tables: readonly TableChoice[] }[],
+  partySize: number,
+): number[] {
+  let best: { tables: TableChoice[]; seats: number; spread: number } | undefined;
+  for (const area of areas) {
+    const free = area.tables.filter((c) => !c.clash && !c.inUse);
+    // The fewest tables that can do it: the biggest first.
+    const bySize = [...free].sort((a, b) => b.seats - a.seats);
+    let fewest = 0;
+    for (let sum = 0; fewest < bySize.length && sum < partySize; fewest++) {
+      sum += bySize[fewest].seats;
+    }
+    const fits = bySize.slice(0, fewest).reduce((sum, c) => sum + c.seats, 0) >= partySize;
+    if (!fits || fewest === 0 || fewest > MAX_TABLES) continue;
+    if (best && fewest > best.tables.length) continue;
+    for (const tables of combinations(free, fewest)) {
+      const seats = tables.reduce((sum, c) => sum + c.seats, 0);
+      if (seats < partySize) continue;
+      const numbers = tables.map((c) => c.table);
+      const spread = Math.max(...numbers) - Math.min(...numbers);
+      const better =
+        !best ||
+        tables.length < best.tables.length ||
+        (tables.length === best.tables.length &&
+          (seats < best.seats || (seats === best.seats && spread < best.spread)));
+      if (better) best = { tables, seats, spread };
+    }
+  }
+  return best ? best.tables.map((c) => c.table).sort((a, b) => a - b) : [];
+}
+
+/* ---------- Reservations › History ---------- */
+
+/** The most days the history asks for at once (the server's limit). */
+export const RESERVATION_RANGE_DAYS = 92;
+
+/** What the history opens on: the last 30 days, today included. */
+export const HISTORY_DAYS = 30;
+
+/** Every booking, those the guests came to, no-shows, cancelled, or never marked either way. */
+export type HistoryFilter = 'all' | 'seated' | 'noShow' | 'cancelled' | 'unmarked';
+
+export const HISTORY_FILTERS: readonly HistoryFilter[] = [
+  'all',
+  'seated',
+  'noShow',
+  'cancelled',
+  'unmarked',
+];
+
+/**
+ * Still booked though the table's hold is over: nobody seated it, cancelled it or marked a
+ * no-show.
+ */
+export const isUnmarked = (r: Reservation, now: number) =>
+  r.status === 'booked' && startOf(r) + r.minutes * MINUTE <= now;
+
+const inHistory = (r: Reservation, filter: HistoryFilter, now: number) =>
+  filter === 'all' ? true : filter === 'unmarked' ? isUnmarked(r, now) : r.status === filter;
+
+/** The days' bookings, counted per filter. */
+export function historyCounts(
+  reservations: readonly Reservation[],
+  now: number,
+): Record<HistoryFilter, number> {
+  return Object.fromEntries(
+    HISTORY_FILTERS.map((f) => [f, reservations.filter((r) => inHistory(r, f, now)).length]),
+  ) as Record<HistoryFilter, number>;
+}
+
+/** The bookings in a filter matching a search (as filterReservations), the latest first. */
+export function filterHistory(
+  reservations: readonly Reservation[],
+  filter: HistoryFilter,
+  query: string,
+  now: number,
+): Reservation[] {
+  return filterReservations(reservations, 'all', query)
+    .filter((r) => inHistory(r, filter, now))
+    .reverse();
+}
+
+export interface HistorySummary {
+  bookings: number;
+  /** Guests in the parties that came. */
+  guests: number;
+  noShows: number;
+  cancelled: number;
+  /**
+   * Of the bookings whose time has come and that weren't cancelled, the share the guests came
+   * to (0–100, whole); null when there are none yet.
+   */
+  showRate: number | null;
+}
+
+export function historySummary(reservations: readonly Reservation[], now: number): HistorySummary {
+  const came = reservations.filter((r) => r.status === 'seated');
+  const noShows = reservations.filter((r) => r.status === 'noShow').length;
+  const due = came.length + noShows + reservations.filter((r) => isUnmarked(r, now)).length;
+  return {
+    bookings: reservations.length,
+    guests: came.reduce((sum, r) => sum + r.partySize, 0),
+    noShows,
+    cancelled: reservations.filter((r) => r.status === 'cancelled').length,
+    showRate: due > 0 ? Math.round((came.length / due) * 100) : null,
+  };
+}
+
+/** Bookings under their day (the branch's calendar), in the order given. */
+export function byDay(
+  reservations: readonly Reservation[],
+  clock: Clock,
+): { day: string; reservations: Reservation[] }[] {
+  const days: { day: string; reservations: Reservation[] }[] = [];
+  for (const r of reservations) {
+    const day = clock.dayKey(r.at);
+    const last = days.at(-1);
+    if (last?.day === day) last.reservations.push(r);
+    else days.push({ day, reservations: [r] });
+  }
+  return days;
 }

@@ -21,6 +21,8 @@ export interface MockContext {
 /** A request as a handler sees it: the path's `:params`, the parsed JSON body and the headers (lower-case names). */
 export interface MockRequest {
   params: Record<string, string>;
+  /** The address's ?query, read like the server reads it. */
+  query: Record<string, string>;
   body: unknown;
   headers: Record<string, string>;
 }

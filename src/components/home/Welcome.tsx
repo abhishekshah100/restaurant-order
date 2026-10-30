@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button, Icon, Skeleton, StatusPill } from '@/components/ui';
 import { useBranch, useContent } from '@/api/hooks';
+import { useBrandName } from '@/hooks/useBrandName';
 import { MODE_ICON } from '@/components/start/ModeOptions';
 import { useGuestSession, useVisit } from '@/context/GuestSessionContext';
 import { useBranchTimes } from '@/hooks/useBranchTimes';
@@ -51,6 +52,7 @@ function ModeCard({ mode }: { mode: 'takeaway' | 'delivery' }) {
 
 /** Welcome / table confirmation (01 · w01); for takeaway and delivery, what's being ordered. Wrapped in OrderingGate by the page. */
 export function Welcome() {
+  const brand = useBrandName();
   const branch = useBranch();
   const { mode } = useVisit();
   const table = useTableLabel();
@@ -78,7 +80,7 @@ export function Welcome() {
         <Image
           className={styles.heroImg}
           src="/images/pasta-hero.jpg"
-          alt={t('welcome.images.hero')}
+          alt={t('welcome.images.hero', { restaurant: brand })}
           width={780}
           height={540}
           sizes="100vw"

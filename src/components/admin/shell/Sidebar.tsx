@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
 import { ADMIN_NAV, type AdminNavId } from '@/lib/adminNav';
@@ -32,21 +32,20 @@ export function Sidebar({
   onSignOut,
 }: SidebarProps) {
   const t = useContent('common');
-  const restaurant = useRestaurant();
-  const { branch, canSwitch } = useAdminWorkspace();
+  const { branch, brand, canSwitch } = useAdminWorkspace();
 
   return (
     <aside className={styles.sidebar}>
       <Link
         href={ADMIN_PATHS.dashboard}
         className={styles.brand}
-        aria-label={t('adminShell.homeLink', { name: restaurant.name })}
+        aria-label={t('adminShell.homeLink', { name: brand })}
       >
         <span className={styles.mark} aria-hidden="true">
           <Icon name="olive" size="md" />
         </span>
         <span className={styles.brandText}>
-          <span className={styles.brandName}>{restaurant.name}</span>
+          <span className={styles.brandName}>{brand}</span>
           <span className={styles.descriptor}>{t('adminShell.descriptor')}</span>
         </span>
       </Link>

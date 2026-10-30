@@ -160,7 +160,9 @@ test('change within the window updates the items and the total', async ({ page }
   await dialog.getByRole('button', { name: 'Prototype: success' }).click();
 
   await expect(page).toHaveURL(/\/order\/track\/\?id=[A-Z]+-?\d+$/);
-  await expect(page.getByRole('status').filter({ hasText: /^Order #[A-Z]+-?\d+ updated$/ })).toBeVisible();
+  await expect(
+    page.getByRole('status').filter({ hasText: /^Order #[A-Z]+-?\d+ updated$/ }),
+  ).toBeVisible();
   await expect(text(page, '2 × Dahi Kebab')).toBeVisible();
   await expect(text(page, '₹607')).toBeVisible();
   await expect(text(page, 'Total paid')).toBeVisible();

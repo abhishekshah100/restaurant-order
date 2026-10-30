@@ -168,7 +168,7 @@
     "clear": "Clear search",
     "suggestions": {
       "trending": "Trending tonight",
-      "popular": "Popular at The Olive Table"
+      "popular": "Popular at {restaurant}"
     }
   },
   "notOnMenu": {

@@ -57,7 +57,7 @@ const AGE_REFRESH_MS = 20_000;
 
 /**
  * /admin/dashboard/orders/ (and its ready/ and unpaid/ pages): today's orders across dine-in,
- * takeaway and delivery, or those of the days picked (?from=&to=, up to 90 days back). Today's totals; a status view (in the address); type and search
+ * takeaway and delivery, or those of the days picked (?from=&to=, up to a year back). Today's totals; a status view (in the address); type and search
  * filters; a row per order with the action it needs next (Mark served, Handed over, Collect);
  * and the order itself — collect payment, add items, cancel. Read from GET
  * /admin/branches/:branchId/orders, polled every 15 s.

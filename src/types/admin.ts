@@ -274,7 +274,13 @@ export type ReservationStatus = ReservationStatusCode;
 export interface Reservation {
   /** Shown to staff: "R1004". */
   id: string;
+  /** The main table: the first of `tables`. */
   table: number;
+  /**
+   * Every table the party has, the main one first (a party of 8 on two tables of 4: [4, 5]).
+   * Read it with bookingTables (lib/reservations): servers before it send `table` alone.
+   */
+  tables?: number[];
   guestName: string;
   /** National mobile digits (the branch's mobile rules), when the guest gave one. */
   phone?: string;

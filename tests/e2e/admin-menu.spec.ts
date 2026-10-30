@@ -1,4 +1,4 @@
-import { expect, test, adminSignIn, scan } from './helpers';
+import { expect, test, adminSignIn, pickOption, scan } from './helpers';
 
 /**
  * The Menu page against the mock server, in the same browser as a guest: staff mark Dahi Kebab
@@ -62,7 +62,7 @@ test('sold out, back on, and a new dish, as guests see them', async ({ page }) =
   const editor = page.getByRole('dialog', { name: 'Add a dish' });
   await editor.getByLabel('Dish name').fill('Masala Dosa');
   await editor.getByLabel(/Short description/).fill('Crisp rice crêpe, potato masala, chutneys.');
-  await editor.getByLabel('Category').selectOption('mains');
+  await pickOption(editor.getByLabel('Category'), 'Mains');
   await editor.getByRole('button', { name: 'Sizes' }).click();
   await editor.getByRole('button', { name: /^Add dish/ }).click();
   await expect(editor).toContainText('Each size needs a name');

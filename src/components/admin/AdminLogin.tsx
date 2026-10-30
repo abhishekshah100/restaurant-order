@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { isApiError } from '@/api/client';
-import { useAdminBranches, useContent, useDemoAdminAccount, useRestaurant } from '@/api/hooks';
+import { useAdminBranches, useContent, useDemoAdminAccount } from '@/api/hooks';
+import { useBrandName, useBrandTitle } from '@/hooks/useBrandName';
 import { useAdminLogin } from '@/api/mutations';
 import { Banner, Button, Icon, Input } from '@/components/ui';
 import { selectAdminBranch, signInAdmin } from '@/lib/adminAuth';
@@ -21,7 +22,8 @@ const PHOTO_HEIGHT = 540;
 
 export function AdminLogin() {
   const t = useContent('common');
-  const restaurant = useRestaurant();
+  const brand = useBrandName();
+  useBrandTitle(brand);
   const router = useRouter();
   const login = useAdminLogin();
   // The branches of the session just started decide where to go (one: its dashboard).
@@ -67,7 +69,7 @@ export function AdminLogin() {
         <div className={styles.brand}>
           <Icon name="olive" size="lg" className={styles.brandMark} />
           <span className={styles.brandText}>
-            <span className={styles.brandName}>{restaurant.name}</span>
+            <span className={styles.brandName}>{brand}</span>
             <span className={styles.descriptor}>{t('adminLogin.descriptor')}</span>
           </span>
         </div>

@@ -1,4 +1,4 @@
-import { expect, test, adminSignIn, installClock } from './helpers';
+import { expect, test, adminSignIn, installClock, pickOption } from './helpers';
 
 /**
  * Reservations: a table booked for tonight from the Reservations page (the form's checks, the
@@ -27,7 +27,7 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
   await form.getByRole('button', { name: 'Add one guest' }).click();
   await form.getByRole('button', { name: 'Add one guest' }).click();
   await expect(form.getByText('4 guests')).toBeVisible();
-  await form.getByLabel('Time').selectOption({ label: '7:00 PM' });
+  await pickOption(form.getByLabel('Time'), '7:00 PM');
   // The smallest free table for four is suggested.
   await expect(form.getByRole('button', { name: /^Table 2, 4 seats, Best fit$/ })).toBeVisible();
   await form.getByRole('button', { name: /^Table 6, 4 seats/ }).click();
@@ -46,7 +46,7 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
   // Table 6 can't be booked again then.
   await page.getByRole('button', { name: 'New reservation' }).click();
   form = page.getByRole('dialog', { name: 'New reservation' });
-  await form.getByLabel('Time').selectOption({ label: '7:30 PM' });
+  await pickOption(form.getByLabel('Time'), '7:30 PM');
   await expect(
     form.getByRole('button', { name: /^Table 6, 4 seats, Booked 15 Oct 2026, 7:00 PM/ }),
   ).toBeDisabled();
@@ -67,7 +67,7 @@ test('book a table, see it reserved, seat the guests and cancel another booking'
   form = page.getByRole('dialog', { name: 'New reservation' });
   await form.getByLabel('Name').fill('Isha Verma');
   await form.getByRole('button', { name: /^Tomorrow/ }).click();
-  await form.getByLabel('Time').selectOption({ label: '8:00 PM' });
+  await pickOption(form.getByLabel('Time'), '8:00 PM');
   await expect(form.getByRole('button', { name: /^Table 6, 4 seats/ })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -152,7 +152,7 @@ test('today and tomorrow as tiles, any later day from the calendar', async ({ pa
     'true',
   );
   await form.getByLabel('Name').fill('Asha Rao');
-  await form.getByLabel('Time').selectOption({ label: '8:00 PM' });
+  await pickOption(form.getByLabel('Time'), '8:00 PM');
   await form.getByRole('button', { name: /^Table 2, 4 seats/ }).click();
   await form.getByRole('button', { name: 'Book table' }).click();
   await expect(

@@ -16,7 +16,6 @@ import {
   dueGroups,
   filterEntries,
   filterGroups,
-  ledgerCsv,
   ledgerEntries,
   parsePaymentsView,
   type ChannelFilter,
@@ -25,6 +24,7 @@ import {
 import type { Order } from '@/types/order';
 import type { BillRequest } from '@/types/service';
 import { inDayRange, isTodayOnly, ordersFilter, parseDayRange } from '@/lib/dayRange';
+import { downloadXlsx, toXlsx } from '@/lib/xlsx';
 import { DateRangeFilter } from '../DateRangeFilter';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { CollectTarget } from './CollectDialog';
@@ -66,9 +66,9 @@ const CHANNELS: readonly ChannelFilter[] = ['all', 'online', 'inPerson'];
 
 /**
  * /admin/dashboard/payments/: the branch's money today (or on the days picked, ?from=&to=, up to
- * 90 days back), for every member of staff. Today's
+ * a year back), for every member of staff. Today's
  * takings (net, online and in person, to collect, tips, average bill, refunds) with the day
- * report and a CSV export; by payment method with the cash in the drawer; and three views (in
+ * report and an Excel export; by payment method with the cash in the drawer; and three views (in
  * the address): To collect (open bills by table, bill requests first: collect in full, split or
  * part, with tip and change, or print the bill), Transactions (every payment and refund, by
  * channel and method, searchable) and Refunds. Each order opens with its payments, to collect,
@@ -154,7 +154,8 @@ export function PaymentsBoard() {
 
     const exportCsv = () => {
       const c = (key: Parameters<typeof t>[0]) => t(key);
-      const csv = ledgerCsv(
+      const workbook = toXlsx(
+        t('adminPayments.title'),
         [...entries].reverse(),
         [
           c('adminPayments.report.columns.time'),
@@ -197,16 +198,13 @@ export function PaymentsBoard() {
             : '',
         ],
       );
-      // A byte-order mark so spreadsheets read the currency symbols right.
-      const url = URL.createObjectURL(new Blob(['﻿', csv], { type: 'text/csv' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = t('adminPayments.actions.exportFile', {
-        branch: branch.id,
-        date: onToday ? today : days.from === days.to ? days.from : `${days.from}_${days.to}`,
-      });
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadXlsx(
+        workbook,
+        t('adminPayments.actions.exportFile', {
+          branch: branch.id,
+          date: onToday ? today : days.from === days.to ? days.from : `${days.from}_${days.to}`,
+        }),
+      );
     };
 
     const ordersOf = (target: CollectTarget): Order[] =>

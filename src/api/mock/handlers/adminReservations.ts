@@ -1,4 +1,5 @@
 import { createClock } from '@/lib/clock';
+import { isDayKey, shiftDay } from '@/lib/dayRange';
 import { mobileError } from '@/lib/phone';
 import {
   DEFAULT_MINUTES,
@@ -7,6 +8,9 @@ import {
   MAX_NAME,
   MAX_NOTE,
   MAX_PARTY,
+  MAX_TABLES,
+  bookingTables,
+  RESERVATION_RANGE_DAYS,
   canMarkNoShow,
   canSeat,
   clashWith,
@@ -58,11 +62,13 @@ function findReservation(list: readonly Reservation[], id: string | undefined) {
   return found;
 }
 
-/** 409 table_taken when another booking holds the table then. */
+/** 409 table_taken when another booking holds any of the tables then, naming which. */
 function assertFree(list: readonly Reservation[], booking: Reservation) {
-  const clash = clashWith(list, booking, booking.id);
+  const tables = bookingTables(booking);
+  const clash = clashWith(list, { ...booking, tables }, booking.id);
   if (clash) {
     fail(409, 'table_taken', {
+      table: bookingTables(clash).find((t) => tables.includes(t)),
       reservation: { id: clash.id, guestName: clash.guestName, at: clash.at },
     });
   }
@@ -72,16 +78,21 @@ const isText = (v: unknown, max: number): v is string =>
   typeof v === 'string' && v.trim() !== '' && v.length <= max;
 
 /**
- * A booking's details from the body, checked (400 invalid_request), with the table one of the
- * branch's (404 not_found).
+ * A booking's details from the body, checked (400 invalid_request): its tables the branch's
+ * (404 not_found) and in service, in one area and seating the party between them.
  */
 async function bookingFields(ctx: MockContext, branch: Branch, body: unknown) {
   const raw = objectBody(body);
   const now = ctx.now();
   const at = typeof raw.at === 'string' ? Date.parse(raw.at) : NaN;
   const minutes = raw.minutes ?? DEFAULT_MINUTES;
+  // `tables`, or one `table` from older clients.
+  const tables: unknown[] = Array.isArray(raw.tables) ? raw.tables : [raw.table];
   const valid =
-    Number.isInteger(raw.table) &&
+    tables.length >= 1 &&
+    tables.length <= MAX_TABLES &&
+    tables.every((t) => Number.isInteger(t) && Number(t) >= 1) &&
+    new Set(tables).size === tables.length &&
     isText(raw.guestName, MAX_NAME) &&
     (raw.phone === undefined ||
       (typeof raw.phone === 'string' && mobileError(raw.phone, branch.mobile) === null)) &&
@@ -93,15 +104,23 @@ async function bookingFields(ctx: MockContext, branch: Branch, body: unknown) {
     DURATIONS.some((d) => d === minutes) &&
     (raw.note === undefined || (typeof raw.note === 'string' && raw.note.length <= MAX_NOTE));
   if (!valid) fail(400, 'invalid_request');
-  const table = Number(raw.table);
+  const numbers = tables.map(Number);
   const layout = await ctx.seed.floors(branch.id);
-  if (!layout.floors.some((f) => f.tables.some((t) => t.number === table))) {
-    fail(404, 'not_found');
+  const found = numbers.map((n) => {
+    const floor = layout.floors.find((f) => f.tables.some((t) => t.number === n));
+    const table = floor?.tables.find((t) => t.number === n);
+    if (!floor || !table) return fail(404, 'not_found');
+    return { floor: floor.id, seats: table.seats };
+  });
+  for (const n of numbers) await assertTableInService(ctx, branch.id, n);
+  const seats = found.reduce((sum, t) => sum + t.seats, 0);
+  if (new Set(found.map((t) => t.floor)).size > 1 || seats < Number(raw.partySize)) {
+    fail(400, 'invalid_request');
   }
-  await assertTableInService(ctx, branch.id, table);
   const note = typeof raw.note === 'string' ? raw.note.trim() : '';
   return {
-    table,
+    table: numbers[0],
+    tables: numbers,
     guestName: String(raw.guestName).trim(),
     ...(typeof raw.phone === 'string' ? { phone: raw.phone } : {}),
     partySize: Number(raw.partySize),
@@ -114,13 +133,28 @@ async function bookingFields(ctx: MockContext, branch: Branch, body: unknown) {
 /* ---------- Handlers ---------- */
 
 /** GET /admin/branches/:branchId/reservations */
-export const listReservations: Handler = async (ctx, { params, headers }) => {
+export const listReservations: Handler = async (ctx, { params, query, headers }) => {
   const branch = await adminBranch(ctx, headers, params.branchId);
   const now = new Date(ctx.now());
-  const startOfToday = Date.parse(createClock(branch).localTimestamp(0, '00:00', now));
+  const clock = createClock(branch);
+  const startOfToday = Date.parse(clock.localTimestamp(0, '00:00', now));
+  // With ?from=&to=, the bookings due on those days (the history), as the server checks them.
+  const asked = query.from !== undefined || query.to !== undefined;
+  const to = query.to ?? query.from ?? '';
+  const from = query.from ?? to;
+  if (asked) {
+    const wrong = !isDayKey(from) || !isDayKey(to) || from > to;
+    if (wrong || from < shiftDay(to, -(RESERVATION_RANGE_DAYS - 1))) {
+      fail(400, 'invalid_request');
+    }
+  }
   const response: ReservationsResponse = {
     reservations: branchReservations(ctx, branch)
-      .filter((r) => Date.parse(r.at) >= startOfToday)
+      .filter((r) =>
+        asked
+          ? clock.dayKey(r.at) >= from && clock.dayKey(r.at) <= to
+          : Date.parse(r.at) >= startOfToday,
+      )
       .sort((a, b) => a.at.localeCompare(b.at)),
     generatedAt: now.toISOString(),
   };

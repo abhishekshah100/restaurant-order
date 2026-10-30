@@ -10,7 +10,7 @@ import { Banner, Button, EmptyState, Icon } from '@/components/ui';
 import { useHydrated } from '@/hooks/useHydrated';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { ADMIN_LINKS, floorPath, settingsPath } from '@/lib/adminNav';
+import { ADMIN_LINKS, floorPath, settingsPath, tableHistoryPath } from '@/lib/adminNav';
 import { legendOf } from '@/lib/adminTables';
 import { cx } from '@/lib/cx';
 import { editableRound } from '@/lib/adminOrders';
@@ -53,13 +53,6 @@ const TableQrDialog = dynamic(() => import('./qr/TableQrDialog').then((m) => m.T
   ssr: false,
   loading: () => <LoadingSignal />,
 });
-const TableHistoryDialog = dynamic(
-  () => import('./TableHistoryDialog').then((m) => m.TableHistoryDialog),
-  {
-    ssr: false,
-    loading: () => <LoadingSignal />,
-  },
-);
 const TableCollectDialog = dynamic(
   () => import('./TableCollectDialog').then((m) => m.TableCollectDialog),
   {
@@ -76,7 +69,7 @@ const AGE_REFRESH_MS = 20_000;
  * number from the address, so a table added in Settings › Floor plan opens without a new build.
  * Where it is and its state, what's open at it (orders, still to pay, seated for), today's
  * bookings with Seat, its open requests with Done, and its open orders, newest first; an order
- * opens with everything on it. Order history lists its completed orders over days picked.
+ * opens with everything on it. Order history opens the table's past orders (tables/history/).
  * Reserve books it. Read from GET
  * /admin/branches/:branchId/tables/:table, polled every 15 s.
  */
@@ -152,7 +145,6 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
   const [collectingTable, setCollectingTable] = useState(false);
   const [freeing, setFreeing] = useState(false);
   const [showingQr, setShowingQr] = useState(false);
-  const [showingHistory, setShowingHistory] = useState(false);
   const [booking, setBooking] = useState<EditorTarget | null>(null);
   // Looked up on every poll, so an open order shows its latest state.
   const openOrder = open ? detail.orders.find((order) => order.id === open.id) : undefined;
@@ -214,10 +206,10 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <Icon name="qr" size="xs" />
               {t('adminQr.tableButton')}
             </button>
-            <button type="button" className={styles.free} onClick={() => setShowingHistory(true)}>
+            <Link href={tableHistoryPath(detail.table)} className={styles.free}>
               <Icon name="history" size="xs" />
               {t('adminTables.detail.history.action')}
-            </button>
+            </Link>
             {detail.status !== 'available' &&
               detail.status !== 'reserved' &&
               detail.status !== 'outOfService' && (
@@ -353,9 +345,6 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
       )}
       {freeing && <FreeTableDialog detail={detail} onClose={() => setFreeing(false)} />}
       {showingQr && <TableQrDialog table={detail.table} onClose={() => setShowingQr(false)} />}
-      {showingHistory && (
-        <TableHistoryDialog table={detail.table} onClose={() => setShowingHistory(false)} />
-      )}
       {booking && <ReservationEditor target={booking} onClose={() => setBooking(null)} />}
     </>
   );

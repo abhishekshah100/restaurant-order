@@ -54,6 +54,7 @@ const booking = (fields: Partial<ReservationInput> = {}): ReservationInput => ({
   partySize: 4,
   at: '2026-10-15T13:30:00.000Z',
   ...fields,
+  tables: fields.tables ?? [fields.table ?? 6],
 });
 
 const book = (fields?: Partial<ReservationInput>, headers = admin) =>
@@ -97,6 +98,7 @@ describe('POST /admin/branches/:branchId/reservations (mock)', () => {
     expect(res.body as Reservation).toEqual({
       id: 'R1001',
       table: 6,
+      tables: [6],
       guestName: 'Rahul Mehta',
       phone: '9876501234',
       partySize: 4,
@@ -117,6 +119,7 @@ describe('POST /admin/branches/:branchId/reservations (mock)', () => {
     expect(clash.status).toBe(409);
     expect(clash.body as ApiErrorBody).toEqual({
       error: 'table_taken',
+      table: 6,
       reservation: { id: 'R1001', guestName: 'Rahul Mehta', at: '2026-10-15T13:30:00.000Z' },
     });
     // An earlier booking running into it clashes too.
@@ -156,6 +159,25 @@ describe('POST /admin/branches/:branchId/reservations (mock)', () => {
   });
 });
 
+describe('GET /admin/branches/:branchId/reservations?from=&to= (mock)', () => {
+  it('lists the days asked for, for the history, and refuses a wrong range', async () => {
+    await book();
+    await book({ table: 7, at: '2026-10-16T13:30:00.000Z' });
+    now = Date.parse('2026-10-18T06:00:00Z');
+    await signIn();
+    const between = async (query: string) =>
+      call('GET', `${BASE}/reservations${query}`, undefined, admin);
+    const ids = async (query: string) =>
+      ((await between(query)).body as ReservationsResponse).reservations.map((r) => r.id);
+
+    expect(await list()).toEqual([]);
+    expect(await ids('?from=2026-10-15&to=2026-10-16')).toEqual(['R1001', 'R1002']);
+    expect(await ids('?from=2026-10-16')).toEqual(['R1002']);
+    expect((await between('?from=2026-10-16&to=2026-10-15')).status).toBe(400);
+    expect((await between('?from=2026-01-01&to=2026-10-15')).status).toBe(400);
+  });
+});
+
 describe('PATCH /admin/branches/:branchId/reservations/:id (mock)', () => {
   it('changes a booking, clearing what was left out, and checks the table is free', async () => {
     await book({ note: 'Window seat' });
@@ -163,11 +185,11 @@ describe('PATCH /admin/branches/:branchId/reservations/:id (mock)', () => {
     const res = await call(
       'PATCH',
       `${BASE}/reservations/R1001`,
-      { table: 6, guestName: 'Rahul M.', partySize: 5, at: '2026-10-15T14:00:00.000Z' },
+      { table: 6, guestName: 'Rahul M.', partySize: 3, at: '2026-10-15T14:00:00.000Z' },
       admin,
     );
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ id: 'R1001', guestName: 'Rahul M.', partySize: 5 });
+    expect(res.body).toMatchObject({ id: 'R1001', guestName: 'Rahul M.', partySize: 3 });
     expect(res.body).not.toHaveProperty('note');
     expect(res.body).not.toHaveProperty('phone');
     const moved = await call('PATCH', `${BASE}/reservations/R1001`, booking({ table: 7 }), admin);
@@ -177,6 +199,21 @@ describe('PATCH /admin/branches/:branchId/reservations/:id (mock)', () => {
     await setStatus('R1001', 'cancelled');
     const closed = await call('PATCH', `${BASE}/reservations/R1001`, booking(), admin);
     expect((closed.body as ApiErrorBody).error).toBe('reservation_closed');
+  });
+});
+
+describe('a party on several tables (mock)', () => {
+  it('books them together, in one area, seating everyone; either is then taken', async () => {
+    const party = await book({ table: 6, tables: [6, 7], partySize: 8, guestName: 'Office party' });
+    expect(party.status).toBe(201);
+    expect(party.body).toMatchObject({ table: 6, tables: [6, 7], partySize: 8 });
+    const taken = await book({ table: 7 });
+    expect(taken.body as ApiErrorBody).toMatchObject({ error: 'table_taken', table: 7 });
+    // More guests than the table seats: refused.
+    expect((await book({ table: 8, tables: [8], partySize: 16 })).status).toBe(400);
+    // The floor plan shows the party at both tables.
+    expect(await tableOnFloor(6)).toMatchObject({ booking: { id: 'R1001' } });
+    expect(await tableOnFloor(7)).toMatchObject({ booking: { id: 'R1001' } });
   });
 });
 

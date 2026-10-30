@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useContent } from '@/api/hooks';
 import { useBranchEvents } from '@/api/liveEvents';
 import { useAdminWorkspace } from '@/components/admin/shell/AdminWorkspace';
 import { BranchStatusControl } from '@/components/admin/shell/BranchStatusControl';
@@ -43,9 +43,8 @@ const CLOCK_REFRESH_MS = 15_000;
  */
 export function KitchenBar() {
   const t = useContent('kitchen');
-  const restaurant = useRestaurant();
   const pathname = usePathname();
-  const { branch, clock, canSwitch } = useAdminWorkspace();
+  const { branch, brand, clock, canSwitch } = useAdminWorkspace();
   // What changes at the branch reaches the kitchen at once (every kitchen page has the bar).
   useBranchEvents(branch.id);
   const adminName = useAdminName();
@@ -64,13 +63,13 @@ export function KitchenBar() {
       <Link
         href={KITCHEN_PATHS.board}
         className={styles.brand}
-        aria-label={t('homeLink', { name: restaurant.name })}
+        aria-label={t('homeLink', { name: brand })}
       >
         <span className={styles.mark} aria-hidden="true">
           <Icon name="chef" size="md" />
         </span>
         <span className={styles.brandText}>
-          <span className={styles.brandName}>{restaurant.name}</span>
+          <span className={styles.brandName}>{brand}</span>
           <span className={styles.descriptor}>{t('descriptor')}</span>
         </span>
       </Link>

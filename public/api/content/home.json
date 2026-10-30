@@ -13,7 +13,7 @@
     "tableNumber": "Table {table}",
     "viewMenu": "View menu",
     "images": {
-      "hero": "Truffle mushroom pasta at The Olive Table",
+      "hero": "Truffle mushroom pasta at {restaurant}",
       "pasta": "Truffle Mushroom Pasta",
       "prawns": "Chilli Garlic Prawns",
       "pizza": "Wood-fired Margherita"

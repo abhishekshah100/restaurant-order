@@ -1,6 +1,6 @@
 /*
  * Tables as small tiles, by area. Picked: the reserved plum fill. Best fit: a brand tag. Booked
- * then: hatched and disabled, saying until when. Too small: faded.
+ * then: hatched and disabled, saying until when.
  */
 
 .picker {
@@ -33,6 +33,7 @@
   min-height: 72px;
   padding: 8px 6px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: center;
   justify-items: center;
   gap: 1px;
@@ -60,12 +61,15 @@
 .tag {
   margin-top: 3px;
   padding: 1px 7px;
-  border-radius: var(--r-pill);
+  border-radius: 8px;
   background: var(--ink-a06);
   color: var(--ink-2);
   font: var(--font-meta-strong);
   font-size: 11px;
-  white-space: nowrap;
+  line-height: 1.3;
+  /* A long tag wraps inside the tile, never past its edge. */
+  max-width: 100%;
+  text-align: center;
 }
 
 .best {
@@ -75,15 +79,6 @@
 .best .tag {
   background: var(--brand-tint);
   color: var(--brand-700);
-}
-
-.small:not([aria-pressed='true']) {
-  border-style: dashed;
-}
-
-.small:not([aria-pressed='true']) .number,
-.small:not([aria-pressed='true']) .seats {
-  opacity: 0.55;
 }
 
 .table[aria-pressed='true'] {

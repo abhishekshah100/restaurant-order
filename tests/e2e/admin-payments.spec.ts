@@ -118,9 +118,9 @@ test('collect a bill in cash with change, find it, refund part of it, report and
   await expect(sheet).toContainText('Cash in the drawer');
   await expect(sheet).toContainText(`#${atNine}`);
 
-  // The day as CSV.
+  // The day as an Excel file.
   const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export CSV' }).click();
+  await page.getByRole('button', { name: 'Export to Excel' }).click();
   const file = await download;
-  expect(file.suggestedFilename()).toMatch(/^payments-blr-indiranagar-\d{4}-\d{2}-\d{2}\.csv$/);
+  expect(file.suggestedFilename()).toMatch(/^payments-blr-indiranagar-\d{4}-\d{2}-\d{2}\.xlsx$/);
 });

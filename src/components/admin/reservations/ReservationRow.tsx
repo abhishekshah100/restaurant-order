@@ -1,13 +1,13 @@
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
-import { canSeat, reservationState } from '@/lib/reservations';
+import { bookingTables, canSeat, isUnmarked, reservationState } from '@/lib/reservations';
 import type { Reservation } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useReservationText } from './useReservationText';
 import styles from './ReservationRow.module.css';
 
 /**
- * One booking in a list: its time (and how long the table is held), the guest, party, table and
+ * One booking in a list: its day and time (and how long the table is held), the guest, party, table and
  * mobile, its note, its state toned (booked, arriving soon, late, seated, cancelled, no-show),
  * and Seat once the guests can be seated. The row opens the booking.
  */
@@ -35,14 +35,15 @@ export function ReservationRow({
   const time = clock.dateTime(r.at);
   const meta = [
     text.guests(r.partySize),
-    ...(showTable ? [t('adminReservations.table', { table: r.table })] : []),
+    ...(showTable ? [text.tables(bookingTables(r))] : []),
     ...(r.phone ? [text.phone(r.phone)] : []),
   ];
 
   return (
     <li className={styles.row} data-state={state}>
       <span className={styles.time} aria-hidden="true">
-        <span className={styles.clock}>{time}</span>
+        <span className={styles.day}>{clock.date(r.at)}</span>
+        <span className={styles.clock}>{clock.time(r.at)}</span>
         <span className={styles.length}>{text.length(r.minutes)}</span>
       </span>
 
@@ -77,13 +78,17 @@ export function ReservationRow({
       </span>
 
       <div className={styles.end}>
-        {canSeat(r, now) ? (
+        {/* Not once the hold is over (the history): the booking's popup can still mark it. */}
+        {canSeat(r, now) && !isUnmarked(r, now) ? (
           <button
             type="button"
             className={styles.seat}
             disabled={seating}
             onClick={onSeat}
-            aria-label={t('adminReservations.row.seatLabel', { name: r.guestName, table: r.table })}
+            aria-label={t('adminReservations.row.seatLabel', {
+              name: r.guestName,
+              tables: text.tables(bookingTables(r)),
+            })}
           >
             <Icon name="check" size="xs" />
             {t('adminReservations.row.seat')}

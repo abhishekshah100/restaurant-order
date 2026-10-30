@@ -6,7 +6,7 @@ import type { AdminOrdersFilter } from '@/api/contracts';
  * server's limits on GET /admin/branches/:branchId/orders).
  */
 
-export const HISTORY_DAYS = 90;
+export const HISTORY_DAYS = 365;
 export const RANGE_DAYS = 31;
 
 export interface DayRange {
@@ -50,20 +50,19 @@ export function parseDayRange(from: string | null, to: string | null, today: str
   return { from: start < earliest ? earliest : start, to: end };
 }
 
-/** A new first day: the end follows when it's earlier, or when the range gets too long. */
-export function withFrom(range: DayRange, from: string, today: string): DayRange {
-  const start = clampDay(from, today);
-  const latest = shiftDay(start, RANGE_DAYS - 1);
-  const end = range.to < start ? start : range.to > latest ? latest : range.to;
-  return { from: start, to: clampDay(end, today) };
-}
-
-/** A new last day: the start follows when it's later, or when the range gets too long. */
-export function withTo(range: DayRange, to: string, today: string): DayRange {
-  const end = clampDay(to, today);
-  const earliest = shiftDay(end, -(RANGE_DAYS - 1));
-  const start = range.from > end ? end : range.from < earliest ? earliest : range.from;
-  return { from: start, to: end };
+/**
+ * What's wrong with the days staff picked, if anything: a day after today or more than
+ * HISTORY_DAYS back (`outside`), From after To (`order`), or more than RANGE_DAYS between them
+ * (`tooLong`). The filter shows it and waits; it never moves the other day by itself.
+ */
+export function rangeProblem(
+  range: DayRange,
+  today: string,
+): 'outside' | 'order' | 'tooLong' | null {
+  if (range.to > today || range.from < firstDay(today)) return 'outside';
+  if (range.from > range.to) return 'order';
+  if (range.to > shiftDay(range.from, RANGE_DAYS - 1)) return 'tooLong';
+  return null;
 }
 
 export const isTodayOnly = (range: DayRange, today: string): boolean =>

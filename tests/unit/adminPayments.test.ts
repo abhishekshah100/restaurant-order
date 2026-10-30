@@ -7,7 +7,6 @@ import {
   dueGroups,
   filterEntries,
   filterGroups,
-  ledgerCsv,
   ledgerEntries,
   ledgerOf,
   parsePaymentsView,
@@ -249,17 +248,5 @@ describe('amounts typed in', () => {
     }
     expect(digitsOnly('a1b2-3.4₹!')).toBe('1234');
     expect(digitsOnly('abc')).toBe('');
-  });
-});
-
-describe('export', () => {
-  it('writes the ledger as CSV, quoting what needs it', () => {
-    const entries = ledgerEntries([split]).slice(0, 1);
-    const csv = ledgerCsv(entries, ['Order', 'Guest', 'Amount'], (e) => [
-      e.order.id,
-      'Priya, "P"',
-      e.amount,
-    ]);
-    expect(csv).toBe('Order,Guest,Amount\nA101,"Priya, ""P""",50');
   });
 });

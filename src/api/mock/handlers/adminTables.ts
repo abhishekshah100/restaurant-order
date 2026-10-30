@@ -2,7 +2,7 @@ import { createClock } from '@/lib/clock';
 import { amountDue } from '@/lib/lifecycle';
 import { isFinished, isToday } from '@/lib/orders';
 import { cleanLayout, disabledNumbers, layoutErrors, removedNumbers } from '@/lib/floorLayout';
-import { isDue } from '@/lib/reservations';
+import { bookingTables, isDue } from '@/lib/reservations';
 import type {
   AdminFloorPlan,
   AdminFloorTable,
@@ -106,7 +106,7 @@ function bookingsAt(input: FloorPlanInput, number: number, since: (at: string) =
   const today = (input.reservations ?? [])
     .filter(
       (r) =>
-        r.table === number &&
+        bookingTables(r).includes(number) &&
         (r.status === 'booked' || r.status === 'seated') &&
         clock.isSameDay(r.at, new Date(now)),
     )
@@ -369,7 +369,7 @@ function tablesInUse(
     if (open) return [{ number, reason: 'openOrder', change }];
     const booked = (input.reservations ?? []).some(
       (r) =>
-        r.table === number &&
+        bookingTables(r).includes(number) &&
         (r.status === 'booked' || r.status === 'seated') &&
         Date.parse(r.at) + r.minutes * MINUTE > input.now,
     );

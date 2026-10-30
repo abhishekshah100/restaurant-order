@@ -131,6 +131,7 @@
   align-items: center;
   gap: 5px;
   border: 1px dashed var(--line-strong);
+  text-decoration: none;
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--surface) 70%, transparent);
   color: var(--ink-2);

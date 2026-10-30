@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { useBrandTitle } from '@/hooks/useBrandName';
+import { brandName } from '@/lib/branchParts';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMoney, type Money } from '@/lib/money';
 import type { AdminBranch } from '@/types/admin';
@@ -16,6 +18,8 @@ export type WorkspaceBranch = Pick<
 export interface AdminWorkspace {
   /** As GET /admin/branches sent it (its status can differ from GET /branches'). */
   branch: WorkspaceBranch;
+  /** The name it goes by (brandName): the bars, QR cards, bills and the tab's title. */
+  brand: string;
   /** Its region rules (GET /branches): currency, taxes, tables. */
   region: Branch;
   /** How the branch writes money and times. */
@@ -32,10 +36,19 @@ export function AdminWorkspaceProvider({
   region,
   canSwitch,
   children,
-}: Omit<AdminWorkspace, 'money' | 'clock'> & { children: ReactNode }) {
+}: Omit<AdminWorkspace, 'brand' | 'money' | 'clock'> & { children: ReactNode }) {
+  const brand = brandName(branch.name);
+  useBrandTitle(brand);
   const value = useMemo(
-    () => ({ branch, region, canSwitch, money: createMoney(region), clock: createClock(region) }),
-    [branch, region, canSwitch],
+    () => ({
+      branch,
+      brand,
+      region,
+      canSwitch,
+      money: createMoney(region),
+      clock: createClock(region),
+    }),
+    [branch, brand, region, canSwitch],
   );
   return <AdminWorkspaceContext.Provider value={value}>{children}</AdminWorkspaceContext.Provider>;
 }

@@ -335,20 +335,3 @@ export function changeDue(received: Price, owed: Price, minorUnit: number): Pric
 
 /** Tip choices staff offer, as percentages of the amount (0 is no tip). */
 export const TIP_PERCENTS = [0, 5, 10] as const;
-
-/* ---------- Export ---------- */
-
-/** A cell for a CSV file: quoted when it holds a comma, quote or line break. */
-const csvCell = (value: string | number) => {
-  const text = String(value);
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
-
-/** The ledger as a CSV file (one row per payment or refund), with the given column names. */
-export function ledgerCsv(
-  entries: readonly LedgerEntry[],
-  columns: readonly string[],
-  row: (entry: LedgerEntry) => readonly (string | number)[],
-): string {
-  return [columns, ...entries.map(row)].map((cells) => cells.map(csvCell).join(',')).join('\n');
-}

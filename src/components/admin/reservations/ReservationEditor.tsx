@@ -20,12 +20,14 @@ import {
   MAX_NAME,
   MAX_NOTE,
   MAX_PARTY,
+  MAX_TABLES,
   bookingDays,
   bookingRange,
   dayOffset,
   reservationErrors,
   reservationForm,
   reservationInput,
+  suggestTables,
   tableChoices,
   timeSlots,
   type ReservationForm,
@@ -91,16 +93,33 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
     slots.unshift(form.at);
   }
   const areas = tableChoices(floors, reservations, form, editing?.id, now);
-  const picked = areas.flatMap((a) => a.tables).find((c) => c.table === form.table);
-  const errors = tried ? reservationErrors(form, region.mobile) : {};
+  const picked = areas.flatMap((a) => a.tables).filter((c) => form.tables.includes(c.table));
+  const seats = picked.reduce((sum, c) => sum + c.seats, 0);
+  const short = Math.max(0, form.partySize - seats);
+  const suggested = suggestTables(areas, form.partySize);
+  const sameAsSuggested =
+    suggested.length === form.tables.length && suggested.every((n) => form.tables.includes(n));
+  const errors = tried ? reservationErrors(form, region.mobile, seats) : {};
+
+  /** A table tapped: on or off; one in another area starts the party again there. */
+  const toggleTable = (table: number, areaId: string) => {
+    if (form.tables.includes(table)) {
+      set({ tables: form.tables.filter((n) => n !== table) });
+      return;
+    }
+    const areaOf = (n: number) => areas.find((a) => a.tables.some((c) => c.table === n))?.id;
+    const sameArea = form.tables.every((n) => areaOf(n) === areaId);
+    if (!sameArea) set({ tables: [table] });
+    else if (form.tables.length < MAX_TABLES) set({ tables: [...form.tables, table] });
+  };
 
   const pickDay = (day: string) =>
     set({ day, at: form.at && clock.dayKey(form.at) === day ? form.at : '' });
 
   const submit = () => {
     setTried(true);
-    if (Object.keys(reservationErrors(form, region.mobile)).length > 0) return;
-    if (picked?.clash) return;
+    if (Object.keys(reservationErrors(form, region.mobile, seats)).length > 0) return;
+    if (picked.some((c) => c.clash)) return;
     save.mutate(
       { branchId: branch.id, id: editing?.id, body: reservationInput(form) },
       {
@@ -109,7 +128,7 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
             editing
               ? t('adminReservations.toast.updated', { id: saved.id })
               : t('adminReservations.toast.created', {
-                  table: saved.table,
+                  tables: text.tables(saved.tables ?? [saved.table]),
                   name: saved.guestName,
                   time: clock.dateTime(saved.at),
                 }),
@@ -118,7 +137,7 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
           onClose();
         },
         onError: (error) => {
-          const message = text.error(error, form.table ?? 0);
+          const message = text.error(error, form.tables);
           if (isApiError(error, 'table_taken')) setTaken(message);
           else showToast(message, { tone: 'error' });
         },
@@ -255,19 +274,67 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
           </div>
           <TablePicker
             areas={areas}
-            value={form.table}
+            value={form.tables}
             disabled={!form.at}
-            error={taken ?? (errors.table && t('adminReservations.editor.errors.table'))}
-            onChange={(table) => set({ table })}
+            error={
+              taken ??
+              (errors.table === 'seats'
+                ? t('adminReservations.editor.errors.seats', { count: short })
+                : errors.table && t('adminReservations.editor.errors.table'))
+            }
+            onToggle={toggleTable}
           />
-          {picked?.tooSmall && (
-            <p className={styles.warning}>
-              {t('adminReservations.editor.tooSmall', {
-                table: picked.table,
-                seats: picked.seats,
-                party: form.partySize,
-              })}
-            </p>
+          {form.at && (
+            <div className={styles.seatsBar} data-short={short > 0 || undefined}>
+              <div className={styles.seatsText}>
+                <p className={styles.seatsCount} aria-live="polite">
+                  {form.tables.length === 0
+                    ? t('adminReservations.editor.seatsPicked', {
+                        seats: 0,
+                        party: form.partySize,
+                      })
+                    : short > 0
+                      ? t('adminReservations.editor.seatsShort', {
+                          seats,
+                          count: short,
+                          party: form.partySize,
+                        })
+                      : t('adminReservations.editor.seatsEnough', {
+                          seats,
+                          party: form.partySize,
+                        })}
+                </p>
+                {form.tables.length > 0 && (
+                  <p className={styles.seatsTables}>{text.tables(form.tables)}</p>
+                )}
+                <span className={styles.meter} aria-hidden="true">
+                  <span style={{ width: `${Math.min(100, (seats / form.partySize) * 100)}%` }} />
+                </span>
+              </div>
+              <div className={styles.seatsActions}>
+                {suggested.length > 0 && !sameAsSuggested && (
+                  <Button
+                    size="sm"
+                    variant={short > 0 ? 'primary' : 'secondary'}
+                    iconStart="sparkle"
+                    onClick={() => set({ tables: suggested })}
+                  >
+                    {t('adminReservations.editor.useSuggested', {
+                      tables: text.tables(suggested),
+                    })}
+                  </Button>
+                )}
+                {form.tables.length > 0 && (
+                  <button
+                    type="button"
+                    className={styles.clear}
+                    onClick={() => set({ tables: [] })}
+                  >
+                    {t('adminReservations.editor.clearTables')}
+                  </button>
+                )}
+              </div>
+            </div>
           )}
         </section>
 

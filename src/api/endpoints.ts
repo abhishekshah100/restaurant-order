@@ -53,6 +53,7 @@ import type {
   PromoQuote,
   ReorderDishesRequest,
   ReservationInput,
+  ReservationsFilter,
   ReservationsResponse,
   ResolveRequestResponse,
   SendOtpRequest,
@@ -177,8 +178,11 @@ export const api = {
     apiPatch<AutoOffer>(`admin/branches/${seg(branchId)}/offers/${seg(id)}`, body, bearer(token)),
   removeOffer: (token: string, branchId: string, id: string) =>
     apiDelete(`admin/branches/${seg(branchId)}/offers/${seg(id)}`, bearer(token)),
-  reservations: (token: string, branchId: string) =>
-    apiGet<ReservationsResponse>(`admin/branches/${seg(branchId)}/reservations`, bearer(token)),
+  reservations: (token: string, branchId: string, filter: ReservationsFilter = {}) =>
+    apiGet<ReservationsResponse>(
+      `admin/branches/${seg(branchId)}/reservations${searchOf(filter)}`,
+      bearer(token),
+    ),
   createReservation: (token: string, branchId: string, body: ReservationInput) =>
     apiPost<Reservation>(`admin/branches/${seg(branchId)}/reservations`, body, bearer(token)),
   updateReservation: (token: string, branchId: string, id: string, body: ReservationInput) =>

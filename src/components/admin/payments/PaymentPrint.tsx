@@ -6,6 +6,7 @@ import { useContent } from '@/api/hooks';
 import { useAdminName } from '@/hooks/useAdminSession';
 import { dueOn } from '@/lib/adminOrders';
 import { daySummary, ledgerEntries, ledgerOf, type DueGroup } from '@/lib/adminPayments';
+import { brandName } from '@/lib/branchParts';
 import { paidAmount } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
 import type { Order } from '@/types/order';
@@ -110,7 +111,7 @@ function PrintHead({ title }: { title: string }) {
   const { region } = usePrintPlace();
   return (
     <header className={styles.head}>
-      <p className={styles.brand}>{t('meta.applicationName')}</p>
+      <p className={styles.brand}>{brandName(region.name)}</p>
       <p className={styles.branch}>{region.shortName}</p>
       {region.address && <p className={styles.address}>{region.address}</p>}
       {(region.phone || region.tax.taxId) && (

@@ -105,6 +105,7 @@ export function demoReservations(branch: Branch, now: number): Reservation[] {
     return {
       id: `R${1001 + i}`,
       table: demo.table,
+      tables: [demo.table],
       guestName: demo.guestName,
       ...(demo.phone ? { phone: demo.phone } : {}),
       partySize: demo.partySize,

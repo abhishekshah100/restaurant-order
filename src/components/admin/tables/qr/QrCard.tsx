@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useContent, useRestaurant } from '@/api/hooks';
+import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import { qrPath, tableLink } from '@/lib/tableQr';
@@ -26,8 +26,7 @@ export function QrCard({
   showLink?: boolean;
 }) {
   const t = useContent('common');
-  const restaurant = useRestaurant();
-  const { branch } = useAdminWorkspace();
+  const { branch, brand } = useAdminWorkspace();
   const link = tableLink(origin, code.path);
   const { size, d } = useMemo(() => qrPath(link), [link]);
   return (
@@ -36,7 +35,7 @@ export function QrCard({
         <span className={styles.mark} aria-hidden="true">
           <Icon name="olive" size="sm" />
         </span>
-        <span className={styles.name}>{restaurant.name}</span>
+        <span className={styles.name}>{brand}</span>
       </header>
       <p className={styles.table}>{t('adminQr.card.table', { table: code.table })}</p>
       <svg

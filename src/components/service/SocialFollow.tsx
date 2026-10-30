@@ -1,5 +1,6 @@
 import { Icon, type IconName } from '@/components/ui';
 import { useContent, useRestaurant } from '@/api/hooks';
+import { useBrandName } from '@/hooks/useBrandName';
 import type { SocialNetwork } from '@/types/restaurant';
 import styles from './SocialFollow.module.css';
 
@@ -13,6 +14,7 @@ const NETWORK_ICON: Record<SocialNetwork, IconName> = {
 /** "Follow us": the restaurant's social profiles, each opening in a new tab. */
 export function SocialFollow() {
   const restaurant = useRestaurant();
+  const brand = useBrandName();
   const t = useContent('service');
   if (restaurant.social.length === 0) return null;
   return (
@@ -20,9 +22,7 @@ export function SocialFollow() {
       <div className={styles.head}>
         <h2 id="follow-us" className={styles.title}>
           <span className="hide-desktop">{t('social.titleMobile')}</span>
-          <span className="hide-mobile">
-            {t('social.titleDesktop', { restaurant: restaurant.name })}
-          </span>
+          <span className="hide-mobile">{t('social.titleDesktop', { restaurant: brand })}</span>
         </h2>
         <p className={styles.sub}>{t('social.sub')}</p>
       </div>

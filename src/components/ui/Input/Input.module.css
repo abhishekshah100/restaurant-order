@@ -90,7 +90,7 @@ textarea.input {
   color: var(--brand-600);
 }
 
-/* Select: a native picker with the field's look and a chevron */
+/* Select: the field's look, a chevron, and its own dropdown list (Select.tsx) */
 .selectWrap {
   position: relative;
   display: block;
@@ -98,12 +98,21 @@ textarea.input {
 .select {
   padding-right: 44px;
   cursor: pointer;
+  text-align: left;
 }
-.withIcon > select {
+.select:disabled {
+  cursor: not-allowed;
+}
+.withIcon > .select {
   padding-left: 44px;
 }
-.select:invalid,
-.select option[value=''] {
+.selectValue {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.selectEmpty {
   color: var(--ink-3);
 }
 .selectWrap > span.selectChev {
@@ -114,4 +123,65 @@ textarea.input {
   transform: translateY(-50%);
   color: var(--ink-2);
   pointer-events: none;
+  transition: transform var(--dur-base) ease;
+}
+.selectWrap > span.selectChevOpen {
+  transform: translateY(-50%) rotate(180deg);
+}
+.selectList {
+  position: fixed;
+  z-index: var(--z-select-list);
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh-2);
+  animation: fade-in 0.12s ease-out;
+}
+.selectGroup {
+  padding: 10px 12px 4px;
+  font: var(--font-small-strong);
+  color: var(--ink-3);
+}
+.selectOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: calc(var(--r) - 4px);
+  font: 500 16px/22px var(--f-ui);
+  color: var(--ink);
+  cursor: pointer;
+}
+.selectInGroup {
+  padding-left: 20px;
+}
+.selectOption[aria-selected='true'] {
+  font-weight: 700;
+}
+.selectOption[aria-selected='true'] > span[aria-hidden] {
+  color: var(--brand-600);
+}
+.selectActive {
+  background: var(--sand);
+}
+.selectOption[aria-disabled='true'] {
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .selectList {
+    animation: none;
+  }
 }

@@ -136,6 +136,7 @@
   --z-header-popover: 45; /* Header search dropdown */
   --z-dialog-scrim: 80;
   --z-dialog: 81;
+  --z-select-list: 85; /* A field's dropdown list, above the dialog it's in */
   --z-lightbox: 90;
   --z-toast: 95; /* Toasts stay readable above every overlay, lightbox included */
   --z-skip-link: 100;

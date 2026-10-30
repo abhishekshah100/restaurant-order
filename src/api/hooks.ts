@@ -15,7 +15,12 @@ import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { useActiveBranchId } from './activeBranch';
 import { isMockApi } from './config';
-import type { AdminOrdersFilter, AdminSignInRequest, OrderLineRequest } from './contracts';
+import type {
+  AdminOrdersFilter,
+  AdminSignInRequest,
+  OrderLineRequest,
+  ReservationsFilter,
+} from './contracts';
 import {
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
@@ -29,6 +34,7 @@ import {
   floorPlanQuery,
   tableDetailQuery,
   tableQrCodesQuery,
+  reservationHistoryQuery,
   reservationsQuery,
   branchPromotionsQuery,
   branchServiceQuery,
@@ -264,6 +270,10 @@ export const useAdminOffers = (branchId: string | undefined) =>
 /** GET /admin/branches/:branchId/reservations: bookings from today on; polled like the floor. */
 export const useReservations = (branchId: string | undefined) =>
   useQuery(reservationsQuery(useAdminToken(), branchId));
+
+/** GET …/reservations?from=&to=: the bookings on the days picked (Reservations › History). */
+export const useReservationHistory = (branchId: string | undefined, filter: ReservationsFilter) =>
+  useQuery(reservationHistoryQuery(useAdminToken(), branchId, filter));
 
 /** GET /admin/branches/:branchId/settings: the branch's settings, to edit, and their choices. */
 export const useBranchSettings = (branchId: string | undefined) =>

@@ -8,7 +8,7 @@
   --tone: var(--reserved);
   position: relative;
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) auto;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
   grid-template-areas:
     'time main main'
     'time state end';
@@ -65,6 +65,12 @@
   border-radius: var(--r-tile);
   background: color-mix(in srgb, var(--tone) 10%, var(--surface));
   text-align: center;
+}
+
+.day {
+  color: color-mix(in srgb, var(--tone) 70%, var(--ink-2));
+  font: var(--font-meta);
+  white-space: nowrap;
 }
 
 .clock {
@@ -236,7 +242,7 @@
 
 @media (min-width: 900px) {
   .row {
-    grid-template-columns: 84px minmax(0, 1fr) 150px 110px;
+    grid-template-columns: 96px minmax(0, 1fr) 150px 110px;
     grid-template-areas: 'time main state end';
     gap: 16px;
     padding: 12px 20px;

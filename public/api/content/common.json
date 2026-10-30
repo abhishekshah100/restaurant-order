@@ -267,7 +267,9 @@
       "pickup": "Pickup · Settings · Admin",
       "branches": "Branches · Settings · Admin",
       "services": "Services · Settings · Admin",
-      "offers": "Offers · Settings · Admin"
+      "offers": "Offers · Settings · Admin",
+      "reservationHistory": "Reservation history · Admin",
+      "tableHistory": "Table order history · Admin"
     },
     "loading": "Loading your workspace",
     "descriptor": "Admin",
@@ -567,17 +569,39 @@
       "history": {
         "action": "Order history",
         "title": "Table {table} · Order history",
-        "subtitle": "Completed and cancelled orders",
+        "subtitle": "Every order at this table on the days picked: paid, still to collect and cancelled.",
         "loading": "Loading orders",
         "failed": "Couldn't load the orders. Try again.",
         "retry": "Try again",
-        "empty": "No completed orders on these days.",
+        "empty": "No orders at this table on these days.",
         "row": "#{order} · {name}",
         "items": {
           "one": "{count} item",
           "other": "{count} items"
         },
-        "back": "Back to history"
+        "back": "Table {table}",
+        "invalid": "Open a table from Tables to see its order history.",
+        "stats": {
+          "label": "On these days",
+          "orders": "Orders",
+          "billed": "Billed",
+          "average": "Average bill",
+          "cancelled": "Cancelled",
+          "none": "—"
+        },
+        "filters": {
+          "label": "Show",
+          "all": "All",
+          "paid": "Paid",
+          "due": "To collect",
+          "cancelled": "Cancelled"
+        },
+        "search": "Search order number or guest",
+        "day": {
+          "one": "{date} · {count} order",
+          "other": "{date} · {count} orders"
+        },
+        "filtered": "No orders match. Try another filter or search."
       },
       "free": {
         "action": "Free table",
@@ -1165,13 +1189,15 @@
       "late": "{count} min late",
       "seated": "Seated",
       "cancelled": "Cancelled",
-      "noShow": "No-show"
+      "noShow": "No-show",
+      "unmarked": "Not marked"
     },
     "guests": {
       "one": "{count} guest",
       "other": "{count} guests"
     },
     "table": "Table {table}",
+    "tables": "Tables {tables}",
     "length": {
       "hours": "{hours} h",
       "hoursMinutes": "{hours} h {minutes} min"
@@ -1180,7 +1206,7 @@
     "row": {
       "open": "Booking {id}: {name}, {time}, {state}",
       "seat": "Seat",
-      "seatLabel": "Seat {name} at table {table}"
+      "seatLabel": "Seat {name} at {tables}"
     },
     "empty": {
       "title": "No bookings",
@@ -1196,7 +1222,7 @@
     "detail": {
       "title": "Booking {id}",
       "when": "When",
-      "table": "Table",
+      "table": "Tables",
       "party": "Party",
       "phone": "Mobile",
       "note": "Note",
@@ -1219,15 +1245,15 @@
       "notYet": "You can seat the guests from an hour before their time.",
       "confirmCancel": {
         "title": "Cancel booking {id}?",
-        "body": "Table {table} will be free for others on {time}. You can restore the booking later if the table is still free.",
+        "body": "{tables} will be free for others on {time}. You can restore the booking later if the tables are still free.",
         "confirm": "Cancel booking",
         "keep": "Keep booking"
       }
     },
     "toast": {
-      "created": "Table {table} booked for {name} on {time}",
+      "created": "{tables} booked for {name} on {time}",
       "updated": "Booking {id} saved",
-      "seated": "{name} seated at table {table}",
+      "seated": "{name} seated at {tables}",
       "cancelled": "Booking {id} cancelled",
       "noShow": "{name} marked as a no-show",
       "booked": "Booking {id} restored",
@@ -1259,14 +1285,13 @@
       "timePlaceholder": "Pick a time",
       "noTimes": "No times left on this day. Pick another day.",
       "length": "Hold the table for",
-      "table": "Table",
-      "tableHint": "Free tables for the party at that time; the best fit is marked.",
+      "table": "Tables",
+      "tableHint": "Tap tables to seat the party, in one area. The best fit is marked.",
       "pickTimeFirst": "Pick a time first to see which tables are free.",
       "bestFit": "Best fit",
       "inUse": "Guests at it now",
       "booked": "Booked {time}",
       "seats": "{count} seats",
-      "tooSmall": "Table {table} seats {seats}, for a party of {party}. Fine if you'll add chairs or push tables together.",
       "note": "Note",
       "notePlaceholder": "Occasion, high chair, allergies…",
       "save": "Book table",
@@ -1276,7 +1301,71 @@
         "time": "Pick a time",
         "table": "Pick a table",
         "phoneLength": "Enter the full mobile number",
-        "phonePrefix": "That doesn't look like a mobile number"
+        "phonePrefix": "That doesn't look like a mobile number",
+        "seats": "Pick tables for {count} more guests"
+      },
+      "seatsPicked": "{seats} of {party} guests seated",
+      "seatsShort": "{seats} seats picked · needs {count} more for {party} guests",
+      "seatsEnough": "{seats} seats for {party} guests",
+      "picked": "{tables}",
+      "useSuggested": "Use {tables}",
+      "clearTables": "Clear",
+      "otherArea": "A party sits in one area: picking a table in {area} starts again there."
+    },
+    "history": {
+      "open": "History",
+      "back": "Reservations",
+      "title": "Reservation history",
+      "subtitle": "Bookings on past days: who came, who didn’t, and who cancelled.",
+      "stats": {
+        "label": "On these days",
+        "bookings": "Bookings",
+        "guests": "Guests seated",
+        "showRate": "Showed up",
+        "showRateValue": "{percent}%",
+        "noShows": "No-shows",
+        "cancelled": "Cancelled",
+        "none": "—"
+      },
+      "filters": {
+        "label": "Show",
+        "all": "All",
+        "seated": "Came",
+        "noShow": "No-show",
+        "cancelled": "Cancelled",
+        "unmarked": "Not marked"
+      },
+      "search": "Search name, mobile, table or booking",
+      "day": {
+        "one": "{date} · {count} booking",
+        "other": "{date} · {count} bookings"
+      },
+      "empty": {
+        "title": "No bookings on these days",
+        "body": "Pick other days to look further back.",
+        "filtered": "No bookings match. Try another filter or search."
+      },
+      "error": {
+        "title": "Couldn’t load the history",
+        "body": "Check the connection and try again.",
+        "retry": "Try again"
+      },
+      "loading": "Loading the history",
+      "export": "Download Excel",
+      "exportFile": "reservations-{branch}-{dates}.xlsx",
+      "columns": {
+        "date": "Date",
+        "time": "Time",
+        "booking": "Booking",
+        "guest": "Guest",
+        "mobile": "Mobile",
+        "party": "Party",
+        "table": "Table",
+        "held": "Held for",
+        "status": "Status",
+        "takenBy": "Taken by",
+        "changedBy": "Last changed by",
+        "note": "Note"
       }
     }
   },
@@ -1284,7 +1373,12 @@
     "label": "Dates",
     "from": "From",
     "to": "To",
-    "today": "Today"
+    "today": "Today",
+    "problems": {
+      "outside": "Pick days from {first} to today.",
+      "order": "From must be on or before To.",
+      "tooLong": "Pick up to {days} days at a time. Move From or To closer together."
+    }
   },
   "adminPayments": {
     "title": "Payments",
@@ -1338,8 +1432,8 @@
     },
     "actions": {
       "report": "Day report",
-      "export": "Export CSV",
-      "exportFile": "payments-{branch}-{date}.csv"
+      "export": "Export to Excel",
+      "exportFile": "payments-{branch}-{date}.xlsx"
     },
     "views": {
       "label": "Payments",

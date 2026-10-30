@@ -4,7 +4,8 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Suspense, useState, type FormEvent, type ReactNode } from 'react';
-import { useBranchConfig, useBranches, useContent, useRestaurant } from '@/api/hooks';
+import { useBranchConfig, useBranches, useContent } from '@/api/hooks';
+import { useBrandName } from '@/hooks/useBrandName';
 import { BrandPanel } from '@/components/home/BrandPanel';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Button, Dialog, Icon, Skeleton } from '@/components/ui';
@@ -51,7 +52,7 @@ const safeNext = (next: string | null) =>
  */
 export function StartView() {
   const branches = useBranches();
-  const restaurant = useRestaurant();
+  const brand = useBrandName();
   const session = useGuestSession();
   const visit = useVisit();
   const { start, update } = useVisitActions();
@@ -139,7 +140,7 @@ export function StartView() {
 
   return (
     <div className={styles.page}>
-      <BrandPanel caption={restaurant.name} />
+      <BrandPanel caption={brand} />
       <div className={cx(styles.hero, 'hide-desktop')}>
         <Image
           className={styles.heroImg}
@@ -153,14 +154,14 @@ export function StartView() {
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.heroBrand}>
           <Icon name="olive" />
-          <span className={cx('t-caption', styles.heroCaption)}>{restaurant.name}</span>
+          <span className={cx('t-caption', styles.heroCaption)}>{brand}</span>
         </div>
       </div>
 
       <main id="main" className={styles.main}>
         <form className={styles.form} onSubmit={submit} noValidate>
           <div className={styles.intro}>
-            <p className={styles.eyebrow}>{t('start.eyebrow', { restaurant: restaurant.name })}</p>
+            <p className={styles.eyebrow}>{t('start.eyebrow', { restaurant: brand })}</p>
             <h1 className={cx('t-display', styles.title)}>{t('start.title')}</h1>
             <p className={cx('t-body c2', styles.lede)}>{t('start.lede')}</p>
           </div>

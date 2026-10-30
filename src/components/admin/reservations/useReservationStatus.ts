@@ -1,6 +1,7 @@
 import { useContent } from '@/api/hooks';
 import { useSetReservationStatus } from '@/api/mutations';
 import { useToast } from '@/context/ToastContext';
+import { bookingTables } from '@/lib/reservations';
 import type { Reservation, ReservationStatus } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useReservationText } from './useReservationText';
@@ -25,13 +26,13 @@ export function useReservationStatus() {
             t(`adminReservations.toast.${status}`, {
               id: r.id,
               name: r.guestName,
-              table: r.table,
+              tables: text.tables(bookingTables(r)),
             }),
             { tone: 'success' },
           );
           onDone?.();
         },
-        onError: (error) => showToast(text.error(error, r.table), { tone: 'error' }),
+        onError: (error) => showToast(text.error(error, bookingTables(r)), { tone: 'error' }),
       },
     );
 

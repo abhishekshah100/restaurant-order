@@ -77,6 +77,7 @@ export const ADMIN_LINKS = {
   requests: section('requests'),
   tables: section('tables'),
   reservations: section('reservations'),
+  reservationHistory: `${section('reservations')}history/`,
   readyOrders: `${section('orders')}ready/`,
   unpaidOrders: `${section('orders')}unpaid/`,
   settings: section('settings'),
@@ -89,6 +90,12 @@ export const settingsPath = (page: string) => `${ADMIN_LINKS.settings}${page}/`;
 export const reservationsPath = (day?: string) =>
   day ? `${ADMIN_LINKS.reservations}?day=${encodeURIComponent(day)}` : ADMIN_LINKS.reservations;
 
+/** Reservations › History on the days picked (?from=&to=); the last 30 days without them. */
+export const reservationHistoryPath = (range?: DayRange) =>
+  range
+    ? `${ADMIN_LINKS.reservationHistory}?from=${range.from}&to=${range.to}`
+    : ADMIN_LINKS.reservationHistory;
+
 /** Every table's QR code, to print. */
 export const qrCodesPath = () => `${ADMIN_LINKS.tables}qr/`;
 
@@ -97,6 +104,10 @@ export const qrCodesPath = () => `${ADMIN_LINKS.tables}qr/`;
  * number), so tables added in Settings › Floor plan open without a new build.
  */
 export const tablePath = (table: number) => `${ADMIN_LINKS.tables}view/?table=${table}`;
+
+/** A table's order history: /admin/dashboard/tables/history/?table=5 (and the days picked). */
+export const tableHistoryPath = (table: number, range?: DayRange) =>
+  `${ADMIN_LINKS.tables}history/?table=${table}${range ? `&from=${range.from}&to=${range.to}` : ''}`;
 
 /** The floor plan open on an area: /admin/dashboard/tables/?floor=first. */
 export const floorPath = (floorId: string) =>

@@ -33,7 +33,8 @@ export function useOverlay(
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      // A dropdown inside that closed on this Esc has handled it (preventDefault).
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
       event.stopPropagation();
       close();
     };

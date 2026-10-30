@@ -4,9 +4,8 @@ import {
   isDayKey,
   ordersFilter,
   parseDayRange,
+  rangeProblem,
   shiftDay,
-  withFrom,
-  withTo,
 } from '@/lib/dayRange';
 
 /* The range of days staff look back at orders and payments over. */
@@ -41,9 +40,10 @@ describe('day range', () => {
       from: '2026-10-25',
       to: TODAY,
     });
-    expect(parseDayRange('2026-01-01', '2026-07-01', TODAY)).toEqual({
-      from: '2026-07-28',
-      to: '2026-07-28',
+    // More than a year back: the first day there is.
+    expect(parseDayRange('2025-01-01', '2025-07-01', TODAY)).toEqual({
+      from: '2025-10-26',
+      to: '2025-10-26',
     });
     expect(parseDayRange('2026-08-01', '2026-10-26', TODAY)).toEqual({
       from: '2026-09-26',
@@ -51,15 +51,12 @@ describe('day range', () => {
     });
   });
 
-  it('moves the other end when a pick would make the range wrong or too long', () => {
-    const range = { from: '2026-10-20', to: '2026-10-22' };
-    expect(withFrom(range, '2026-10-24', TODAY)).toEqual({ from: '2026-10-24', to: '2026-10-24' });
-    expect(withFrom(range, '2026-09-01', TODAY)).toEqual({ from: '2026-09-01', to: '2026-10-01' });
-    expect(withTo(range, '2026-10-18', TODAY)).toEqual({ from: '2026-10-18', to: '2026-10-18' });
-    expect(withTo({ from: '2026-09-01', to: '2026-09-02' }, TODAY, TODAY)).toEqual({
-      from: '2026-09-26',
-      to: TODAY,
-    });
+  it("says what's wrong with a pick, without moving either day", () => {
+    expect(rangeProblem({ from: '2026-09-26', to: TODAY }, TODAY)).toBeNull(); // 31 days
+    expect(rangeProblem({ from: '2026-09-25', to: TODAY }, TODAY)).toBe('tooLong');
+    expect(rangeProblem({ from: '2026-10-24', to: '2026-10-20' }, TODAY)).toBe('order');
+    expect(rangeProblem({ from: '2026-10-20', to: '2026-10-27' }, TODAY)).toBe('outside');
+    expect(rangeProblem({ from: '2025-10-25', to: '2025-10-30' }, TODAY)).toBe('outside');
   });
 
   it('asks the server for nothing extra on today alone', () => {

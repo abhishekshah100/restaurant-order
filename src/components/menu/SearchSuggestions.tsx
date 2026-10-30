@@ -6,6 +6,7 @@ import { useId } from 'react';
 import { Chip, Icon, VegMark } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import { useContent, useMenu, useRegion } from '@/api/hooks';
+import { useBrandName } from '@/hooks/useBrandName';
 import { dishHref, dishImage, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import styles from './SearchSuggestions.module.css';
@@ -32,6 +33,7 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
   // The header dropdown and the /search page can both be on screen, so ids must be unique.
   const id = useId();
   const t = useContent('menu');
+  const brand = useBrandName();
   const { money } = useRegion();
 
   return (
@@ -89,7 +91,7 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
       <section className={styles.section} aria-labelledby={`${id}-popular`}>
         <h2 id={`${id}-popular`} className={styles.heading}>
           <Icon name="flame" size="xs" className={styles.headingIcon} />
-          {t('search.suggestions.popular')}
+          {t('search.suggestions.popular', { restaurant: brand })}
         </h2>
         <div className={styles.chips}>
           {popularSearches.map((term) => (

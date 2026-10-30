@@ -87,12 +87,81 @@
   gap: 6px;
 }
 
-.warning {
-  padding: 10px 12px;
+/* Seats picked against the party: a meter, the tables, and the suggested ones in a tap. */
+.seatsBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--success) 35%, var(--line));
   border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--success-tint) 60%, var(--surface));
+}
+
+.seatsBar[data-short] {
+  border-color: color-mix(in srgb, var(--gold-ink) 30%, var(--line));
   background: var(--warn-tint);
-  color: var(--gold-ink);
+}
+
+.seatsText {
+  flex: 1 1 220px;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.seatsCount {
+  color: var(--success);
   font: var(--font-small-strong);
+}
+
+.seatsBar[data-short] .seatsCount {
+  color: var(--gold-ink);
+}
+
+.seatsTables {
+  color: var(--ink-2);
+  font: var(--font-meta);
+}
+
+.meter {
+  display: block;
+  height: 6px;
+  margin-top: 2px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+  transition: width var(--dur-base) ease;
+}
+
+.seatsBar[data-short] .meter > span {
+  background: var(--gold-ink);
+}
+
+.seatsActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clear {
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
 }
 
 @media (min-width: 600px) {
