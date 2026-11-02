@@ -168,16 +168,20 @@
     "addOn": "+ {item}",
     "without": "No {item}",
     "stock": {
-      "mark": "Sold out",
+      "mark": "Out of stock",
       "markLabel": "Mark {dish} out of stock",
       "issue": {
-        "soldOut": "Sold out now · tell the waiter",
+        "soldOut": "Sold out now · tap Out of stock",
         "offToday": "Off today · tell the waiter",
         "sizeOff": "This size is off · tell the waiter"
       },
       "warning": {
-        "one": "{count} item can't be made now. Let the waiter tell the guest.",
-        "other": "{count} items can't be made now. Let the waiter tell the guest."
+        "one": "{count} item is out of stock now. Tap Out of stock to remove it from the bill and tell the waiter.",
+        "other": "{count} items are out of stock now. Tap Out of stock to remove them from the bill and tell the waiter."
+      },
+      "unavailable": {
+        "one": "{count} out of stock",
+        "other": "{count} out of stock"
       }
     },
     "allergy": "Allergy",
@@ -369,5 +373,23 @@
     "notePlaceholder": "e.g. Out of paneer, offer the dal?",
     "sent": "Sent to the waiters: {reason}",
     "failed": "Couldn't send it. Try again."
+  },
+  "cantMake": {
+    "title": "{dish} is out of stock?",
+    "subtitle": "{where} · #{order}",
+    "explain": "It's taken off the guest's bill (anything they paid online for it is refunded), and the waiters are told.",
+    "howMany": "How many are out of stock?",
+    "offMenu": "Also sold out on the menu",
+    "offMenuHint": "Guests and waiters stop seeing it until it is back.",
+    "confirm": {
+      "one": "Mark 1 out of stock",
+      "other": "Mark {count} out of stock"
+    },
+    "wholeOrder": "Whole order out of stock",
+    "itemNote": "{dish} × {count} out of stock",
+    "orderNote": "Order #{order} out of stock",
+    "itemDone": "{dish} marked out of stock · waiters told",
+    "orderDone": "Order #{order} cancelled (out of stock) · waiters told",
+    "failed": "That didn't go through. Try again."
   }
 }

@@ -23,6 +23,7 @@ import {
 } from '@/lib/orders';
 import type { Order } from '@/types/order';
 import { ChangeWindow } from './ChangeWindow';
+import { UnavailableNotice } from './UnavailableNotice';
 import { FulfilmentCard } from './FulfilmentCard';
 import { ItemStatusList } from './ItemStatusList';
 import { OrderActions } from './OrderActions';
@@ -266,6 +267,7 @@ function TrackingView({
 
         <TrackStepper entries={progress} note={currentNote} />
 
+        <UnavailableNotice order={order} />
         <ChangeWindow order={order} />
 
         {order.mode === 'dineIn' ? <OrderActions /> : <FulfilmentCard order={order} />}

@@ -677,3 +677,16 @@
     color: var(--ink);
   }
 }
+
+/* An item the kitchen couldn't make: struck through, nothing to tap. */
+.gone .itemName,
+.gone .qty {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+
+.gone .choices,
+.gone .detail,
+.gone .removals {
+  opacity: 0.5;
+}

@@ -91,34 +91,37 @@ function Kot({
         <p className={styles.note}>{t('kot.note', { note: ticket.kitchenNote })}</p>
       )}
       <ul className={styles.items}>
-        {ticket.items.map((item, index) => {
-          const view = kitchenItem(item, dishOf(item.dishSlug));
-          return (
-            <li key={`${item.dishSlug}-${index}`}>
-              <span className={styles.qty}>{item.quantity}</span>
-              <span>
-                <strong>{item.name}</strong>
-                {view.size && <span className={styles.small}>{view.size}</span>}
-                {view.choices.map((c) => (
-                  <span key={`${c.group ?? ''}${c.choice}`} className={styles.small}>
-                    {c.choice}
-                  </span>
-                ))}
-                {view.addOns.map((name) => (
-                  <span key={name} className={styles.small}>
-                    {t('ticket.addOn', { item: name })}
-                  </span>
-                ))}
-                {view.removals.map((name) => (
-                  <span key={name} className={styles.removal}>
-                    {t('ticket.without', { item: name.toLowerCase() })}
-                  </span>
-                ))}
-                {item.note && <span className={styles.itemNote}>{item.note}</span>}
-              </span>
-            </li>
-          );
-        })}
+        {/* Only what's to make: what the kitchen couldn't make isn't cooked. */}
+        {ticket.items
+          .filter((item) => item.quantity > 0)
+          .map((item, index) => {
+            const view = kitchenItem(item, dishOf(item.dishSlug));
+            return (
+              <li key={`${item.dishSlug}-${index}`}>
+                <span className={styles.qty}>{item.quantity}</span>
+                <span>
+                  <strong>{item.name}</strong>
+                  {view.size && <span className={styles.small}>{view.size}</span>}
+                  {view.choices.map((c) => (
+                    <span key={`${c.group ?? ''}${c.choice}`} className={styles.small}>
+                      {c.choice}
+                    </span>
+                  ))}
+                  {view.addOns.map((name) => (
+                    <span key={name} className={styles.small}>
+                      {t('ticket.addOn', { item: name })}
+                    </span>
+                  ))}
+                  {view.removals.map((name) => (
+                    <span key={name} className={styles.removal}>
+                      {t('ticket.without', { item: name.toLowerCase() })}
+                    </span>
+                  ))}
+                  {item.note && <span className={styles.itemNote}>{item.note}</span>}
+                </span>
+              </li>
+            );
+          })}
       </ul>
       <p className={styles.printed}>{t('kot.printed', { time: clock.dateTime(now) })}</p>
     </article>

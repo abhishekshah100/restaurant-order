@@ -64,7 +64,10 @@ export function TableOrderCard({
         })}
       </span>
       <span className={styles.items}>
-        {shown.map((item) => `${item.quantity} × ${item.name}`).join(', ')}
+        {shown
+          .filter((item) => item.quantity > 0)
+          .map((item) => `${item.quantity} × ${item.name}`)
+          .join(', ')}
         {hidden > 0 && (
           <span className={styles.more}>{t.plural('adminTables.detail.order.more', hidden)}</span>
         )}

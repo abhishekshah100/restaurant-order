@@ -79,6 +79,13 @@ const ADAPTERS: readonly (readonly [HttpMethod, string, Adapt])[] = [
   ['POST', 'admin/branches/:branchId/orders/:id/payment', orderOf],
   ['POST', 'admin/branches/:branchId/orders/:id/cancel', orderOf],
   ['POST', 'admin/branches/:branchId/orders/:id/refund', orderOf],
+  ['POST', 'admin/branches/:branchId/orders/:id/rounds/:round/cancel', changeOf],
+  [
+    'POST',
+    'admin/branches/:branchId/orders/:id/rounds/:round/items/:position/unavailable',
+    changeOf,
+  ],
+  ['POST', 'admin/branches/:branchId/orders/:id/unavailable', changeOf],
   ['POST', 'admin/branches/:branchId/tables/:table/payment', ordersIn],
   // Staff: the floor and requests.
   ['GET', 'admin/branches/:branchId/service', serviceBoard],

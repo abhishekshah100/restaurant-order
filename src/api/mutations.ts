@@ -12,31 +12,34 @@ import type { Order } from '@/types/order';
 import type {
   AddRoundRequest,
   CancelByStaffRequest,
-  OfferRequest,
   CancelOrderRequest,
+  CancelRoundRequest,
   ChangeOrderRequest,
   CollectPaymentRequest,
-  RefundRequest,
-  UpdateFloorsRequest,
-  UpdateBranchSettingsRequest,
-  CreateBranchRequest,
   CollectTableRequest,
+  CreateBranchRequest,
   DishInput,
-  ImageUploadRequest,
   EditRoundRequest,
+  ImageUploadRequest,
+  ItemUnavailableRequest,
+  KitchenMessageRequest,
+  KitchenStep,
+  OfferRequest,
+  OrderUnavailableRequest,
+  RefundRequest,
   ReservationInput,
   ServiceRequestListResponse,
   SetAvailabilityRequest,
   SetBranchStatusRequest,
-  KitchenStep,
   SetReservationStatusRequest,
-  UpdateCategoriesRequest,
   SimulatePaymentRequest,
   StaffRoundRequest,
   TakeTableOrderRequest,
+  UpdateBranchSettingsRequest,
+  UpdateCategoriesRequest,
+  UpdateFloorsRequest,
   UpdateSessionRequest,
   ValidatePromoRequest,
-  KitchenMessageRequest,
 } from './contracts';
 import { api } from './endpoints';
 import { ApiError, isApiError } from './client';
@@ -382,6 +385,64 @@ export function useSendKitchenMessage() {
     }: { branchId: string; orderId: string } & KitchenMessageRequest) =>
       api.sendKitchenMessage(requireToken(token), branchId, orderId, body),
     onSettled: () => client.invalidateQueries({ queryKey: ['admin', 'service'] }),
+  });
+}
+
+/**
+ * POST …/orders/:id/rounds/:round/cancel: a waiter takes back a round the kitchen hasn't
+ * started and that isn't paid (the only round cancels the order). Orders read again.
+ */
+export function useCancelRound() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      round,
+      ...body
+    }: { branchId: string; orderId: string; round: number } & CancelRoundRequest) =>
+      api.cancelRound(requireToken(token), branchId, orderId, round, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/**
+ * The kitchen can't make something (sold out): some of an item (POST …/rounds/:round/items/
+ * :position/unavailable) or the whole order (POST …/orders/:id/unavailable). The bill comes down
+ * (or the order is cancelled) and the waiters are told; the boards and orders are read again.
+ */
+export function useMarkUnavailable() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (
+      target:
+        | ({
+            kind: 'item';
+            branchId: string;
+            orderId: string;
+            round: number;
+            index: number;
+          } & ItemUnavailableRequest)
+        | ({ kind: 'order'; branchId: string; orderId: string } & OrderUnavailableRequest),
+    ) =>
+      target.kind === 'item'
+        ? api.itemUnavailable(
+            requireToken(token),
+            target.branchId,
+            target.orderId,
+            target.round,
+            target.index,
+            {
+              quantity: target.quantity,
+              ...(target.note ? { note: target.note } : {}),
+            },
+          )
+        : api.orderUnavailable(requireToken(token), target.branchId, target.orderId, {
+            ...(target.note ? { note: target.note } : {}),
+          }),
+    onSettled: () => refreshFloor(client),
   });
 }
 

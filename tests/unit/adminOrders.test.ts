@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ordersPath } from '@/lib/adminNav';
 import {
   editableRound,
+  roundOpenForStaff,
   filterOrders,
   modeCounts,
   nextAction,
@@ -116,16 +117,24 @@ describe('changing an order', () => {
       Order['rounds']
     >[number];
 
-  it("offers the latest round the kitchen hasn't finished, dine-in only", () => {
-    expect(editableRound(preparing)?.number).toBe(1);
+  it("offers the latest round the kitchen hasn't started, while the order isn't paid", () => {
+    expect(editableRound(order('A107', { status: 'received' }))?.number).toBe(1);
+    // Started, ready, or a takeaway: not a waiter's to change.
+    expect(editableRound(preparing)).toBeNull();
     expect(editableRound(ready)).toBeNull();
     expect(editableRound(order('A108', { mode: 'takeaway', status: 'received' }))).toBeNull();
     const tab = order('A109', {
       table: 5,
-      status: 'preparing',
-      rounds: [round(1, 'served'), round(2, 'preparing'), round(3, 'cancelled')],
+      status: 'received',
+      rounds: [round(1, 'served'), round(2, 'received'), round(3, 'cancelled')],
     });
     expect(editableRound(tab)?.number).toBe(2);
+    // Paid in full: nothing to change or cancel.
+    expect(
+      editableRound({ ...tab, payment: { method: 'counter', status: 'paid', paid: 525 } }),
+    ).toBeNull();
+    expect(roundOpenForStaff(tab, round(1, 'served'))).toBe(false);
+    expect(roundOpenForStaff(tab, round(2, 'received'))).toBe(true);
     const served = order('A110', { table: 5, rounds: [round(1, 'ready'), round(2, 'served')] });
     expect(editableRound(served)).toBeNull();
   });

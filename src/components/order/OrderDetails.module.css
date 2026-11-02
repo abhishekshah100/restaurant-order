@@ -363,3 +363,18 @@
     display: none;
   }
 }
+
+/* What the kitchen couldn't make (sold out): struck through, off the bill. */
+.unavailable .name,
+.unavailable .qty,
+.unavailable .price {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+
+.unavailableNote {
+  margin: 2px 0 0;
+  color: var(--error);
+  font: var(--font-small-strong);
+  text-decoration: none;
+}

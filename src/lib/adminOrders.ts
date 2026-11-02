@@ -120,8 +120,22 @@ export function nextAction(order: Order): OrderAction | null {
 export const CANCEL_REASONS: readonly CancelReason[] = CANCELLATION_REASONS;
 
 /**
- * The round a waiter can still change: the latest one not cancelled, while the kitchen hasn't
- * finished it (received or preparing). An order without rounds is one round. Dine-in only.
+ * Whether a waiter can still change or cancel this round: a dine-in order not cancelled, the
+ * kitchen hasn't started the round (New), and the order isn't paid (it still owes money). The
+ * server checks it too (a round paid online as it was sent can't be either).
+ */
+export const roundOpenForStaff = (
+  order: Order,
+  round: Pick<OrderRound, 'status'>,
+): boolean =>
+  order.mode === 'dineIn' &&
+  order.status !== 'cancelled' &&
+  round.status === 'received' &&
+  dueOn(order) > 0;
+
+/**
+ * The round a waiter can still change: the latest one not cancelled, while it's open for staff
+ * (roundOpenForStaff: not started, not paid). An order without rounds is one round.
  */
 export function editableRound(
   order: Order,
@@ -131,5 +145,5 @@ export function editableRound(
     { number: 1, status: order.status, items: order.items, kitchenNote: order.kitchenNote },
   ];
   const latest = rounds.filter((r) => r.status !== 'cancelled').at(-1);
-  return latest && (latest.status === 'received' || latest.status === 'preparing') ? latest : null;
+  return latest && roundOpenForStaff(order, latest) ? latest : null;
 }

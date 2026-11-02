@@ -85,7 +85,10 @@ export interface OrderItem {
   veg: boolean;
   /** Ticked off as plated in the kitchen (every kitchen screen shows it). */
   plated?: boolean;
+  /** What's still being made: 0 when the kitchen couldn't make any of it. */
   quantity: number;
+  /** How many the kitchen couldn't make (sold out): off the bill, shown struck through. */
+  unavailable?: number;
   /** Variant label, e.g. "Full". */
   variant?: string;
   /** Detail lines, e.g. ["Full · 10 pcs · Medium spicy", "+ Extra mint chutney (free)"]. */

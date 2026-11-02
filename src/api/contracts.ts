@@ -714,6 +714,41 @@ export interface SetPlatedRequest {
 }
 
 /**
+ * `POST /admin/branches/:branchId/orders/:id/rounds/:round/items/:position/unavailable` — the
+ * kitchen can't make `quantity` more of an item (sold out). They come off the bill (taxes and
+ * offers worked out again; anything paid beyond it refunded the way it came); a round left with
+ * nothing is cancelled, an order left with nothing cancelled as out of stock. The waiters get a
+ * kitchen message (`note`, worded by the kitchen app). Needs `kitchen.update`. 200 →
+ * `OrderChangeResponse`. Errors: 400 (more than is left), 404, 409 order_closed (cancelled,
+ * handed over, or the item already plated).
+ */
+/**
+ * `POST /admin/branches/:branchId/orders/:id/rounds/:round/cancel` — a waiter takes back one
+ * round the kitchen hasn't started and that isn't paid (the order still owes money; the round
+ * wasn't paid online as it was sent). The rest of the tab is priced again, anything paid beyond
+ * it refunded; the order's only round cancels the order (for `reason`, else "other"). Needs
+ * `orders.take`. 200 → `OrderChangeResponse`. Errors: 404, 409 window_closed (started or
+ * paid), 409 order_closed (cancelled).
+ */
+export interface CancelRoundRequest {
+  reason?: CancelReason;
+}
+
+export interface ItemUnavailableRequest {
+  quantity: number;
+  note?: string;
+}
+
+/**
+ * `POST /admin/branches/:branchId/orders/:id/unavailable` — the kitchen can't make the order at
+ * all: cancelled as out of stock, anything paid refunded, the waiters told. Needs
+ * `kitchen.update`. 200 → `OrderChangeResponse`. Errors: 404, 409 order_closed.
+ */
+export interface OrderUnavailableRequest {
+  note?: string;
+}
+
+/**
  * `PATCH /admin/branches/:branchId/orders/:id/rush` — a waiter marks the order rush (first in the
  * kitchen's lanes) or not. Needs `orders.take`. 200 → the order (`rush: true` while it is). Errors:
  * 404 not_found, 409 order_closed (cancelled).

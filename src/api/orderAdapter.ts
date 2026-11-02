@@ -54,6 +54,7 @@ interface BackendItem {
   config: LineConfig;
   offer?: OrderItem['offer'];
   plated?: true;
+  unavailable?: number;
 }
 
 interface BackendRound {
@@ -173,6 +174,7 @@ function itemOf(item: BackendItem, status: OrderStatus, words: Words): OrderItem
     ...(item.plated ? { plated: true } : {}),
     veg: item.veg,
     quantity: item.quantity,
+    ...(item.unavailable ? { unavailable: item.unavailable } : {}),
     ...(item.variantName ? { variant: item.variantName.split(' · ')[0] } : {}),
     details: options ? [options] : [],
     ...(instructions ? { note: instructions.replace(/^“|”$/g, '') } : {}),

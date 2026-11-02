@@ -211,16 +211,19 @@ function BillDoc({ orders }: { orders: Order[] }) {
                 </tr>
               </thead>
               <tbody>
-                {order.items.map((item, index) => (
-                  <tr key={`${item.dishSlug}-${index}`}>
-                    <td>
-                      <span className={styles.itemName}>{item.name}</span>
-                      {item.variant && <span className={styles.variant}>{item.variant}</span>}
-                    </td>
-                    <td className={styles.qty}>{item.quantity}</td>
-                    <td className={styles.num}>{amount(item.unitPrice * item.quantity)}</td>
-                  </tr>
-                ))}
+                {/* Only what's charged: what the kitchen couldn't make is off the bill. */}
+                {order.items
+                  .filter((item) => item.quantity > 0)
+                  .map((item, index) => (
+                    <tr key={`${item.dishSlug}-${index}`}>
+                      <td>
+                        <span className={styles.itemName}>{item.name}</span>
+                        {item.variant && <span className={styles.variant}>{item.variant}</span>}
+                      </td>
+                      <td className={styles.qty}>{item.quantity}</td>
+                      <td className={styles.num}>{amount(item.unitPrice * item.quantity)}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
             <dl className={styles.sums}>

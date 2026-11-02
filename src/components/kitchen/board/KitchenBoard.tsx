@@ -21,7 +21,6 @@ import {
   type KitchenTicket,
   type StationFilter,
 } from '@/lib/kitchenBoard';
-import type { Dish } from '@/types/menu';
 import { playChime } from '../shell/kitchenSound';
 import { TEXT_SCALE, useKitchenPrefs } from '../shell/useKitchenPrefs';
 import { useKitchenThemeClass } from '../shell/useKitchenTheme';
@@ -44,13 +43,10 @@ const KitchenMessageDialog = dynamic(
   () => import('./KitchenMessageDialog').then((m) => m.KitchenMessageDialog),
   { ssr: false, loading: () => <LoadingSignal /> },
 );
-const AvailabilityDialog = dynamic(
-  () => import('@/components/admin/menu/AvailabilityDialog').then((m) => m.AvailabilityDialog),
-  {
-    ssr: false,
-    loading: () => <LoadingSignal />,
-  },
-);
+const CantMakeDialog = dynamic(() => import('./CantMakeDialog').then((m) => m.CantMakeDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
 
 /** Urgency and "due in" move on this often (each ticket's clock ticks on its own). */
 const BOARD_REFRESH_MS = 15_000;
@@ -106,7 +102,8 @@ export function KitchenBoard() {
   const [lane, setLane] = useState<KitchenLane>('new');
   const [allDayOpen, setAllDayOpen] = useState(false);
   // The dish a cook is taking off the menu from a ticket (the Menu page's own dialog).
-  const [outOfStock, setOutOfStock] = useState<Dish | null>(null);
+  // The item the kitchen can't make: its ticket and place on it.
+  const [cantMake, setCantMake] = useState<{ key: string; index: number } | null>(null);
   // New tickets: a chime, and a printed ticket where this screen prints them.
   const onArrive = useCallback(
     (arrived: KitchenTicket[]) => {
@@ -123,6 +120,10 @@ export function KitchenBoard() {
   // Cancelled tickets the kitchen has seen and put away (they go by themselves after a while).
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
   const dismiss = useCallback((key: string) => setDismissed((keys) => new Set(keys).add(key)), []);
+  const onCantMake = useCallback(
+    (ticket: KitchenTicket, index: number) => setCantMake({ key: ticket.key, index }),
+    [],
+  );
   useWaitingReminder(tickets, prefs.sound && prefs.reminders);
 
   const view = useMemo(() => {
@@ -164,13 +165,16 @@ export function KitchenBoard() {
   const messageTicket = messageKey
     ? tickets?.find((ticket) => ticket.key === messageKey)
     : undefined;
+  const cantMakeTicket = cantMake
+    ? tickets?.find((ticket) => ticket.key === cantMake.key)
+    : undefined;
   const cardProps = (ticket: KitchenTicket) => ({
     ticket,
     now,
     station,
     categoryOf,
     dishOf,
-    onOutOfStock: setOutOfStock,
+    onCantMake,
     onTogglePlated: actions.togglePlated,
     onDismiss: dismiss,
     onMessage: setMessageKey,
@@ -375,11 +379,12 @@ export function KitchenBoard() {
           <KitchenMessageDialog ticket={messageTicket} onClose={() => setMessageKey(null)} />
         )}
 
-        {outOfStock && (
-          <AvailabilityDialog
-            dish={outOfStock}
-            initial="soldOut"
-            onClose={() => setOutOfStock(null)}
+        {cantMakeTicket && cantMake && (
+          <CantMakeDialog
+            ticket={cantMakeTicket}
+            index={cantMake.index}
+            dish={dishOf(cantMakeTicket.items[cantMake.index]?.dishSlug ?? '')}
+            onClose={() => setCantMake(null)}
           />
         )}
       </>

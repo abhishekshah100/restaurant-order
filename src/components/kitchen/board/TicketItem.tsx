@@ -13,32 +13,35 @@ export interface TicketItemProps {
   plated: boolean;
   /** Ticks it off or on; none on a ticket that's been cancelled. */
   onTogglePlated?: () => void;
-  /** Offered on tickets still to cook: mark the dish out of stock. */
-  onOutOfStock?: (dish: Dish) => void;
+  /** Offered on tickets still to cook: the kitchen can't make (some of) it. */
+  onCantMake?: () => void;
 }
 
 /**
  * One item on a ticket, the way a cook reads it: the quantity, the dish and its size, each
  * choice by its slot (a thali's curry, bread, rice…), add-ons, what to leave out (highlighted),
  * the guest's note, and a warning when the dish has gone off the menu since. Tap it when it's
- * plated; Sold out takes the dish off the menu for everyone.
+ * plated; Can't make takes it off the guest's bill (and, if chosen, the dish off the menu). What
+ * the kitchen couldn't make shows struck through.
  */
-export function TicketItem({ item, dish, plated, onTogglePlated, onOutOfStock }: TicketItemProps) {
+export function TicketItem({ item, dish, plated, onTogglePlated, onCantMake }: TicketItemProps) {
   const t = useContent('kitchen');
   const view = kitchenItem(item, dish);
   const issue = stockIssue(item, dish);
+  // None of it to make: struck through, nothing to tap.
+  const gone = item.quantity === 0;
 
   return (
     <li className={styles.itemRow}>
       <button
         type="button"
-        className={cx(styles.item, plated && styles.plated)}
+        className={cx(styles.item, plated && styles.plated, gone && styles.gone)}
         aria-pressed={plated}
         aria-label={t(plated ? 'ticket.plated' : 'ticket.plate', { item: item.name })}
         onClick={onTogglePlated}
-        disabled={!onTogglePlated}
+        disabled={!onTogglePlated || gone}
       >
-        <span className={styles.qty}>{item.quantity}</span>
+        <span className={styles.qty}>{gone ? item.unavailable : item.quantity}</span>
         <span className={styles.itemBody}>
           <span className={styles.itemName}>
             <VegMark veg={item.veg} decorative />
@@ -80,7 +83,13 @@ export function TicketItem({ item, dish, plated, onTogglePlated, onOutOfStock }:
               {item.note}
             </span>
           )}
-          {issue && (
+          {item.unavailable ? (
+            <span className={styles.stockIssue}>
+              <Icon name="xc" size="xs" />
+              {t.plural('ticket.stock.unavailable', item.unavailable)}
+            </span>
+          ) : null}
+          {issue && !gone && (
             <span className={styles.stockIssue}>
               <Icon name="alert" size="xs" />
               {t(`ticket.stock.issue.${issue}`)}
@@ -91,12 +100,12 @@ export function TicketItem({ item, dish, plated, onTogglePlated, onOutOfStock }:
           {plated && <Icon name="check" size="xs" />}
         </span>
       </button>
-      {onOutOfStock && dish && !issue && (
+      {onCantMake && !gone && !plated && (
         <button
           type="button"
           className={styles.outOfStock}
-          onClick={() => onOutOfStock(dish)}
-          aria-label={t('ticket.stock.markLabel', { dish: dish.name })}
+          onClick={onCantMake}
+          aria-label={t('ticket.stock.markLabel', { dish: item.name })}
         >
           {t('ticket.stock.mark')}
         </button>

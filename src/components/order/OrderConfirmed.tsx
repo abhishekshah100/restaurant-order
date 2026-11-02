@@ -9,6 +9,7 @@ import { cx } from '@/lib/cx';
 import { TRACK_STEPS, orderPath, stepKey, unpaidLabel } from '@/lib/orders';
 import type { Order } from '@/types/order';
 import { ChangeWindow } from './ChangeWindow';
+import { UnavailableNotice } from './UnavailableNotice';
 import { OrderSavings } from './OrderSavings';
 import { OrderCancelled } from './OrderCancelled';
 import { useLiveOrder } from './useLiveOrders';
@@ -163,6 +164,7 @@ function Confirmed({ order }: { order: Order }) {
 
         <OrderSavings order={order} className={styles.saved} />
 
+        <UnavailableNotice order={order} className={styles.change} />
         <ChangeWindow order={order} className={styles.change} />
 
         <div className={styles.progress}>

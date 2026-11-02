@@ -1,11 +1,13 @@
+import type { ReactNode } from 'react';
 import { useContent } from '@/api/hooks';
 import { StatusPill, Tag, VegMark } from '@/components/ui';
 import { amountDue } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
-import type { Order } from '@/types/order';
+import type { Order, OrderRound } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { BillSummary, billRows } from '../../cart/PriceSummary';
 import { PaymentBadge } from './PaymentBadge';
+import { cx } from '@/lib/cx';
 import styles from './OrderDetailDialog.module.css';
 
 /**
@@ -15,7 +17,14 @@ import styles from './OrderDetailDialog.module.css';
  * service charge, taxes, round off), what's paid and still to pay, how it's paid and its
  * progress.
  */
-export function OrderSummary({ order }: { order: Order }) {
+export function OrderSummary({
+  order,
+  roundActions,
+}: {
+  order: Order;
+  /** What can be done to a round (a running order's): drawn in its heading. */
+  roundActions?: (round: OrderRound) => ReactNode;
+}) {
   const t = useContent('common');
   const cart = useContent('cart');
   const { money, clock, region } = useAdminWorkspace();
@@ -63,6 +72,7 @@ export function OrderSummary({ order }: { order: Order }) {
                   })}
                 </span>
                 <StatusPill status={group.round.status} />
+                {roundActions?.(group.round)}
                 {group.round.timeline[0]?.note && (
                   <span className={styles.roundNote}>{group.round.timeline[0].note}</span>
                 )}
@@ -75,11 +85,21 @@ export function OrderSummary({ order }: { order: Order }) {
             )}
             <ul className={styles.items}>
               {group.items.map((item, index) => (
-                <li key={`${item.dishSlug}-${index}`} className={styles.item}>
+                <li
+                  key={`${item.dishSlug}-${index}`}
+                  className={cx(styles.item, item.quantity === 0 && styles.itemUnavailable)}
+                >
                   <VegMark veg={item.veg} className={styles.veg} />
-                  <span className={styles.qty}>{item.quantity}</span>
+                  <span className={styles.qty}>
+                    {item.quantity === 0 ? item.unavailable : item.quantity}
+                  </span>
                   <span className={styles.itemBody}>
                     <span className={styles.itemName}>{item.name}</span>
+                    {item.unavailable ? (
+                      <span className={styles.unavailableNote}>
+                        {t.plural('adminOrder.unavailable', item.unavailable)}
+                      </span>
+                    ) : null}
                     {/* details already open with the variant; it stands alone only without them */}
                     {(item.details.length ? item.details : [item.variant])
                       .filter(Boolean)
@@ -95,7 +115,10 @@ export function OrderSummary({ order }: { order: Order }) {
                     )}
                   </span>
                   <span className={styles.price}>
-                    {money.format(item.unitPrice * item.quantity)}
+                    {money.format(
+                      item.unitPrice *
+                        (item.quantity === 0 ? (item.unavailable ?? 0) : item.quantity),
+                    )}
                   </span>
                 </li>
               ))}

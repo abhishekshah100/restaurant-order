@@ -691,7 +691,23 @@
       "done": "Order {order} cancelled"
     },
     "changeItems": "Change items",
-    "newOrder": "New order"
+    "newOrder": "New order",
+    "unavailable": {
+      "one": "{count} out of stock · removed from bill",
+      "other": "{count} out of stock · removed from bill"
+    },
+    "round_actions": {
+      "change": "Change",
+      "changeLabel": "Change round {round}",
+      "cancel": "Cancel round",
+      "cancelLabel": "Cancel round {round}"
+    },
+    "cancelRound": {
+      "title": "Cancel round {round}?",
+      "body": "These come off the bill. The kitchen hasn't started on them.",
+      "confirm": "Cancel round {round}",
+      "done": "Round {round} of #{order} cancelled"
+    }
   },
   "adminOrderPad": {
     "titleNew": "New order · Table {table}",
@@ -2426,7 +2442,7 @@
       "orderDelayed": "Order delayed",
       "orderCancelled": "Order cancelled",
       "itemReady": "Ready to serve",
-      "itemRejected": "Item can't be made",
+      "itemRejected": "Item out of stock",
       "paymentReceived": "Payment received",
       "paymentFailed": "Payment failed",
       "refundIssued": "Refund issued",

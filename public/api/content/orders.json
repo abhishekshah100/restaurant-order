@@ -302,5 +302,16 @@
     "kitchenIssue": "The kitchen couldn't make it",
     "duplicate": "It was placed twice",
     "other": "Cancelled by the restaurant"
+  },
+  "unavailable": {
+    "notice": "Sorry, {dishes} is out of stock. We've removed it from your bill.",
+    "noticeMany": "Sorry, {dishes} are out of stock. We've removed them from your bill.",
+    "refund": "If you paid for it online, the money is on its way back to you.",
+    "item": "Out of stock",
+    "some": {
+      "one": "{count} out of stock",
+      "other": "{count} out of stock"
+    },
+    "and": " and "
   }
 }

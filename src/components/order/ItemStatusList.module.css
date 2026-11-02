@@ -29,3 +29,14 @@
     padding: 12px 0;
   }
 }
+
+/* What the kitchen couldn't make (sold out): struck through, off the bill. */
+.unavailable .name {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+
+.unavailableNote {
+  color: var(--error);
+  font: var(--font-small-strong);
+}

@@ -2,21 +2,27 @@
 
 import { useState } from 'react';
 import { useContent } from '@/api/hooks';
-import { useCancelByStaff, useCollectPayment, useMarkServed, useSetRush } from '@/api/mutations';
+import {
+  useCancelByStaff,
+  useCancelRound,
+  useCollectPayment,
+  useMarkServed,
+  useSetRush,
+} from '@/api/mutations';
 import { Button, Dialog } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
-import { dueOn, editableRound } from '@/lib/adminOrders';
+import { dueOn, editableRound, roundOpenForStaff } from '@/lib/adminOrders';
 import { paidAmount } from '@/lib/lifecycle';
 import { isFinished } from '@/lib/orders';
 import type { CancelReason } from '@/types/admin';
-import type { Order } from '@/types/order';
+import type { Order, OrderRound } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { CollectFields, useCollectChoice } from '../payments/CollectFields';
 import { CancelOrderView } from './OrderActionViews';
 import { OrderSummary } from './OrderSummary';
 import styles from './OrderDetailDialog.module.css';
 
-export type OrderDialogView = 'details' | 'collect' | 'cancel';
+export type OrderDialogView = 'details' | 'collect' | 'cancel' | 'cancelRound';
 
 /**
  * One order for staff, with what can be done to it: Mark served / Handed over when it's ready,
@@ -35,8 +41,11 @@ interface OrderDetailDialogProps {
   onAddItems?: (order: Order) => void;
   /** Opens the order pad for a new order at the order's table, for the same guest. */
   onNewOrder?: (order: Order) => void;
-  /** Opens the order pad on the round the kitchen hasn't finished; Change items needs it. */
-  onChangeItems?: (order: Order) => void;
+  /**
+   * Opens the order pad on a round the kitchen hasn't started (that one, else the latest);
+   * Change needs it.
+   */
+  onChangeItems?: (order: Order, round?: number) => void;
   /** The step it opens on (Collect from a list's quick action). */
   initialView?: OrderDialogView;
 }
@@ -60,6 +69,9 @@ function OrderDialog({
   const serve = useMarkServed();
   const collect = useCollectPayment();
   const cancel = useCancelByStaff();
+  const cancelRound = useCancelRound();
+  // The round being taken back (Cancel round).
+  const [roundToCancel, setRoundToCancel] = useState<number | null>(null);
   const rush = useSetRush();
   const [view, setView] = useState<OrderDialogView>(initialView);
   const choice = useCollectChoice([order]);
@@ -79,7 +91,38 @@ function OrderDialog({
         : t(`modes.${order.mode}`),
     time: clock.dateTime(order.placedAt),
   });
-  let body = <OrderSummary order={order} />;
+  // From an earlier day: only settled (served, paid), never changed, added to or cancelled.
+  const past = clock.dayKey(order.placedAt) < clock.dayKey(new Date());
+  const roundActions = (round: OrderRound) =>
+    !past && roundOpenForStaff(order, round) ? (
+      <span className={styles.roundActions}>
+        {onChangeItems && (
+          <Button
+            size="sm"
+            variant="secondary"
+            iconStart="pencil"
+            aria-label={t('adminOrder.round_actions.changeLabel', { round: round.number })}
+            onClick={() => onChangeItems(order, round.number)}
+          >
+            {t('adminOrder.round_actions.change')}
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          iconStart="xc"
+          className={styles.cancelLink}
+          aria-label={t('adminOrder.round_actions.cancelLabel', { round: round.number })}
+          onClick={() => {
+            setRoundToCancel(round.number);
+            setView('cancelRound');
+          }}
+        >
+          {t('adminOrder.round_actions.cancel')}
+        </Button>
+      </span>
+    ) : null;
+  let body = <OrderSummary order={order} roundActions={roundActions} />;
   let footer;
 
   if (view === 'collect') {
@@ -133,15 +176,57 @@ function OrderDialog({
         {t('adminOrder.cancel.confirm')}
       </Button>
     );
+  } else if (view === 'cancelRound' && roundToCancel !== null) {
+    const round = order.rounds?.find((r) => r.number === roundToCancel);
+    title = t('adminOrder.cancelRound.title', { round: roundToCancel });
+    description = t('adminOrder.cancelRound.body');
+    body = (
+      <ul className={styles.cancelItems}>
+        {(round?.items ?? [])
+          .filter((item) => item.quantity > 0)
+          .map((item, index) => (
+            <li key={`${item.dishSlug}-${index}`}>
+              <span>
+                {item.quantity} × {item.name}
+              </span>
+              <span>{money.format(item.unitPrice * item.quantity)}</span>
+            </li>
+          ))}
+      </ul>
+    );
+    footer = (
+      <Button
+        block
+        className={styles.danger}
+        loading={cancelRound.isPending}
+        onClick={() =>
+          cancelRound.mutate(
+            { branchId: branch.id, orderId: order.id, round: roundToCancel },
+            {
+              onSuccess: () => {
+                showToast(
+                  t('adminOrder.cancelRound.done', { round: roundToCancel, order: order.id }),
+                );
+                setRoundToCancel(null);
+                setView('details');
+              },
+              onError: failed,
+            },
+          )
+        }
+      >
+        {t('adminOrder.cancelRound.confirm', { round: roundToCancel })}
+      </Button>
+    );
   } else {
     const ready = order.status === 'ready';
-    // From an earlier day: only settled (served, paid), never changed, added to or cancelled.
-    const past = clock.dayKey(order.placedAt) < clock.dayKey(new Date());
     const dineIn = !past && order.mode === 'dineIn' && order.status !== 'cancelled';
     // Still to pay: more goes on this bill. Paid in full: more is a new order, not a reopened bill.
     const canAdd = onAddItems && dineIn && due > 0;
     const canNew = onNewOrder && dineIn && due === 0;
-    const canChange = !past && onChangeItems && editableRound(order) !== null;
+    // A running order's rounds each have their own Change (in their heading).
+    const multiRound = (order.rounds ?? []).filter((r) => r.status !== 'cancelled').length > 1;
+    const canChange = !past && !multiRound && onChangeItems && editableRound(order) !== null;
     const live = !past && !finished;
     footer = (
       <div className={styles.actions}>

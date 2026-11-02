@@ -15,6 +15,7 @@ import { isFinished, orderBill, orderPath, unpaidLabel } from '@/lib/orders';
 import { itemCount } from '@/lib/pricing';
 import type { Order, OrderItem } from '@/types/order';
 import { ChangeWindow } from './ChangeWindow';
+import { UnavailableNotice } from './UnavailableNotice';
 import { FulfilmentCard } from './FulfilmentCard';
 import { OrderCancelled } from './OrderCancelled';
 import { OrderAgainButton } from './OrderAgainButton';
@@ -61,12 +62,22 @@ function ItemRows({ items }: { items: OrderItem[] }) {
   return (
     <ul className={styles.list}>
       {items.map((item, i) => (
-        <li key={`${item.dishSlug}-${i}`} className={styles.row}>
+        <li
+          key={`${item.dishSlug}-${i}`}
+          className={cx(styles.row, item.quantity === 0 && styles.unavailable)}
+        >
           <div className={styles.body}>
             <p className={styles.name}>
               <VegMark veg={item.veg} />
               {item.name}
             </p>
+            {item.unavailable ? (
+              <p className={styles.unavailableNote}>
+                {item.quantity === 0
+                  ? t('unavailable.item')
+                  : t.plural('unavailable.some', item.unavailable)}
+              </p>
+            ) : null}
             {item.details.length > 0 && (
               <p className={styles.opts}>
                 {item.details.map((d) => (
@@ -81,9 +92,13 @@ function ItemRows({ items }: { items: OrderItem[] }) {
             <span className="hide-desktop" aria-hidden="true">
               ×{' '}
             </span>
-            {item.quantity}
+            {item.quantity === 0 ? item.unavailable : item.quantity}
           </span>
-          <span className={styles.price}>{money.format(item.unitPrice * item.quantity)}</span>
+          <span className={styles.price}>
+            {money.format(
+              item.unitPrice * (item.quantity === 0 ? (item.unavailable ?? 0) : item.quantity),
+            )}
+          </span>
         </li>
       ))}
     </ul>
@@ -147,6 +162,7 @@ function DetailsView({ order }: { order: Order }) {
           </Button>
         </div>
 
+        <UnavailableNotice order={order} />
         <ChangeWindow order={order} />
 
         <section className={cx(styles.card, styles.items)} aria-labelledby="items-heading">

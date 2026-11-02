@@ -47,8 +47,8 @@ export interface TicketCardProps {
   onDismiss?: (key: string) => void;
   /** Opens a message to the waiters about the order (running late, an item off, a question). */
   onMessage?: (key: string) => void;
-  /** Take a dish off the menu (sold out, off today). */
-  onOutOfStock: (dish: Dish) => void;
+  /** The kitchen can't make an item (its place on the ticket): off the bill, waiters told. */
+  onCantMake: (ticket: KitchenTicket, index: number) => void;
   /** A step was sent and the server hasn't answered yet. */
   pending: boolean;
   /** Picked from the keyboard (or a bump bar). */
@@ -64,7 +64,7 @@ export interface TicketCardProps {
  * in large type, the minutes it has waited (green, amber when due soon, red when late, on the
  * card's edge too), then in smaller type the order and round, the guest and whether they
  * ordered on their phone or a waiter took it; when it's due, the kitchen note, the items (TicketItem: each choice by its slot, what to
- * leave out, notes; tap one when it's plated, or mark its dish sold out), a warning when a dish
+ * leave out, notes; tap one when it's plated, or say the kitchen can't make it), a warning when a dish
  * went off the menu since, (with a station chosen, the others are counted, not listed), and the
  * next step: Start cooking (or straight to Ready), Mark ready (Hand to rider for delivery). Ready
  * tickets wait for a waiter or the guest, with how long they've waited.
@@ -79,7 +79,7 @@ export const TicketCard = memo(function TicketCard({
   onStep,
   onDismiss,
   onMessage,
-  onOutOfStock,
+  onCantMake,
   pending,
   picked = false,
   onOpen,
@@ -263,7 +263,7 @@ export const TicketCard = memo(function TicketCard({
               dish={dishOf(item.dishSlug)}
               plated={item.plated === true}
               onTogglePlated={cancelled ? undefined : () => onTogglePlated(ticket, index)}
-              onOutOfStock={toCook ? onOutOfStock : undefined}
+              onCantMake={toCook ? () => onCantMake(ticket, index) : undefined}
             />
           ) : null,
         )}

@@ -1,0 +1,60 @@
+/* Can't make an item: why it matters, how many, the dish off the menu too; then the actions. */
+
+.body {
+  display: grid;
+  gap: 16px;
+}
+
+.explain {
+  margin: 0;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  font: var(--font-label);
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--brand-600);
+}
+
+.check b {
+  display: block;
+  font: var(--font-label);
+}
+
+.hint {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.actions {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+}
+
+.whole {
+  color: var(--error);
+}

@@ -13,7 +13,7 @@ import { useQueryParam } from '@/hooks/useQueryParam';
 import { ADMIN_LINKS, floorPath, settingsPath, tableHistoryPath } from '@/lib/adminNav';
 import { legendOf } from '@/lib/adminTables';
 import { cx } from '@/lib/cx';
-import { editableRound } from '@/lib/adminOrders';
+import { editableRound, roundOpenForStaff } from '@/lib/adminOrders';
 import type { AdminTableDetail } from '@/types/admin';
 import type { Order } from '@/types/order';
 import type { PadTarget } from '../orderPad/OrderPad';
@@ -157,9 +157,10 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
     setOpen(null);
     setPad({ kind: 'new', table: detail.table, guest: order.customerName });
   };
-  /** Changing the round the kitchen hasn't finished; undefined when there's none. */
-  const changeItems = (order: Order) => {
-    const round = editableRound(order);
+  /** Changing a round the kitchen hasn't started (that one, else the latest); undefined when none. */
+  const changeItems = (order: Order, number?: number) => {
+    const named = number === undefined ? undefined : order.rounds?.find((r) => r.number === number);
+    const round = named && roundOpenForStaff(order, named) ? named : editableRound(order);
     if (!round) return undefined;
     return () => {
       setOpen(null);
@@ -336,7 +337,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
           onClose={() => setOpen(null)}
           onAddItems={addItems}
           onNewOrder={newOrderFor}
-          onChangeItems={(order) => changeItems(order)?.()}
+          onChangeItems={(order, round) => changeItems(order, round)?.()}
         />
       )}
       {pad && <OrderPad target={pad} onClose={() => setPad(null)} />}

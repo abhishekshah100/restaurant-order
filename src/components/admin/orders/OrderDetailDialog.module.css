@@ -354,3 +354,39 @@
   color: var(--ink-2);
   font: var(--font-small);
 }
+
+/* What the kitchen couldn't make (sold out): struck through, off the bill. */
+.itemUnavailable .itemName,
+.itemUnavailable .qty,
+.itemUnavailable .price {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+
+.unavailableNote {
+  color: var(--error);
+  font: var(--font-small-strong);
+}
+
+/* A round's own actions (a running order): in its heading, after its status. */
+.roundActions {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* The round being cancelled: what comes off the bill. */
+.cancelItems {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.cancelItems li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font: var(--font-body);
+}
