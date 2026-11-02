@@ -20,11 +20,9 @@
     "addMore": "Add more",
     "itemsLabel": "Items in cart",
     "billSummary": "Bill summary",
-    "fineMobile": "Prices include no hidden charges. Tipping is optional.",
-    "fineDesktop": "No hidden charges · Tipping is optional",
     "eta": "Ready in about {time}",
     "etaAfterOrder": "Ready in about {time} after you order",
-    "totalLabel": "Total incl. taxes",
+    "totalLabel": "Total",
     "checkout": "Checkout",
     "etaMode": {
       "takeaway": "Ready for pickup in about {minutes} min",

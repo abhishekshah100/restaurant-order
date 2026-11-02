@@ -168,7 +168,6 @@ export function CartView() {
             </h2>
             <PriceSummary bill={bill} variant="split" />
           </section>
-          <p className={cx('t-small c3', styles.fine, 'hide-desktop')}>{t('page.fineMobile')}</p>
         </main>
 
         <aside className={cx(styles.aside, 'hide-mobile')} aria-labelledby="bill-d">
@@ -181,10 +180,6 @@ export function CartView() {
             {eta.now}
           </p>
           {checkout}
-          <p className={cx('t-small c3', styles.lockNote)}>
-            <Icon name="lock" size="xs" />
-            {t('page.fineDesktop')}
-          </p>
         </aside>
       </Columns>
 

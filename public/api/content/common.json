@@ -2,7 +2,7 @@
   "meta": {
     "title": "The Olive Table — Order from your table",
     "titleTemplate": "%s · The Olive Table",
-    "description": "Browse the menu and order directly from your table at The Olive Table. Seasonal Indian and Mediterranean plates, cooked to order.",
+    "description": "Browse the menu and order directly from your table at The Olive Table. Seasonal Food plates, cooked to order.",
     "applicationName": "The Olive Table"
   },
   "skipLink": "Skip to content",
@@ -1106,7 +1106,6 @@
       "name": "Name",
       "shortName": "Short name",
       "description": "Description",
-      "note": "New categories need the guest app built again, so they're added with the backend.",
       "save": "Save categories",
       "saved": "Categories saved",
       "errors": "Every category needs a name, and no name twice."

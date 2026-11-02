@@ -221,22 +221,6 @@ function DetailsForm({ initialName, initialPhone }: { initialName: string; initi
         </span>
         <span className={styles.price}>{money.format(bill.total)}</span>
       </Link>
-
-      <ul className={cx(styles.trust, 'hide-mobile')} aria-label={t('details.trustLabel')}>
-        <li>
-          <Icon name="lock" size="xs" />
-          {t('details.trust.secure')}
-        </li>
-        <li>
-          <Icon name="user" size="xs" />
-          {t('details.trust.noAccount')}
-        </li>
-        <li>
-          <Icon name="shield" size="xs" />
-          {t('details.trust.numberUse')}
-        </li>
-      </ul>
-
       <div className={cx(styles.desktopFoot, styles.desktopFootFull, 'hide-mobile')}>
         <Button type="submit" block iconEnd="arrow">
           {sendLabel}

@@ -161,12 +161,6 @@ export function DishIntro({ dish }: { dish: Dish }) {
             {dish.prepTime}
           </li>
         )}
-        {dish.serves && (
-          <li className={styles.chip}>
-            <Icon name="user" size="xs" />
-            {t('detail.servesChip', { count: dish.serves })}
-          </li>
-        )}
         {allergens && (
           <li className={styles.chip}>
             <Icon name="info" size="xs" />

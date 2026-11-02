@@ -42,14 +42,8 @@
   "details": {
     "title": "Who's ordering?",
     "nameLabel": "Full name",
-    "phoneHint": "For order updates and verification. We'll send a 6-digit code by SMS.",
+    "phoneHint": "For order verification. We'll send a 6-digit code by SMS.",
     "orderRowSub": "Incl. taxes · tap to review",
-    "trustLabel": "About your details",
-    "trust": {
-      "secure": "Secure checkout",
-      "noAccount": "No account needed",
-      "numberUse": "Number used only for this order"
-    },
     "submit": "Send OTP",
     "errors": {
       "nameRequired": "Please enter your name",
@@ -192,7 +186,6 @@
     },
     "payOnline": "Pay {total}",
     "placeOrder": "Place order · {total}",
-    "secured": "Card details are never stored",
     "placeError": "Couldn't place the order on this device. Please ask a waiter."
   },
   "processing": {

@@ -184,7 +184,6 @@
       }
     },
     "pay": "Pay {amount}",
-    "secured": "Card details are never stored",
     "hint": "Only orders placed on this phone can be paid here. Your server can settle anything else.",
     "offline": "You're offline. Reconnect to pay your bill.",
     "tryAgain": "Try again",

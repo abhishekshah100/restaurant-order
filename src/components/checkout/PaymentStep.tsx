@@ -80,7 +80,6 @@ function PaymentForm() {
   const total = money.format(bill.total);
   const payLabel = online ? t('payment.payOnline', { total }) : t('payment.placeOrder', { total });
   const payIcon = online ? 'lock' : undefined;
-  const secured = t('payment.secured');
 
   return (
     <form className={styles.stack} onSubmit={onSubmit} noValidate>
@@ -116,10 +115,6 @@ function PaymentForm() {
       </p>
 
       <div className={cx(styles.desktopFoot, 'hide-mobile')}>
-        <p className={cx('t-small c3', styles.fine)}>
-          <Icon name="shield" size="xs" />
-          {secured}
-        </p>
         <Button type="submit" iconStart={payIcon} loading={placing}>
           {payLabel}
         </Button>
@@ -129,10 +124,6 @@ function PaymentForm() {
         <Button type="submit" block iconStart={payIcon} loading={placing}>
           {payLabel}
         </Button>
-        <p className={cx('t-small c3', styles.fine)}>
-          <Icon name="shield" size="xs" />
-          {secured}
-        </p>
       </div>
     </form>
   );

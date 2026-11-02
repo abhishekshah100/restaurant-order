@@ -127,7 +127,6 @@ export function CategoriesDialog({
             {t('adminMenu.categoriesDialog.errors')}
           </p>
         )}
-        <p className={styles.note}>{t('adminMenu.categoriesDialog.note')}</p>
       </div>
     </Dialog>
   );

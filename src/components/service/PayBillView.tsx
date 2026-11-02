@@ -220,12 +220,6 @@ function PayForm({
       {t('payBill.pay', { amount })}
     </Button>
   );
-  const secured = (
-    <p className={cx('t-small c3', styles.fine)}>
-      <Icon name="shield" size="xs" />
-      {t('payBill.secured')}
-    </p>
-  );
 
   return (
     <Columns className={styles.cols}>
@@ -272,7 +266,6 @@ function PayForm({
 
         <div className={cx(styles.foot, 'hide-desktop')}>
           {payButton}
-          {secured}
         </div>
       </main>
 
@@ -282,7 +275,6 @@ function PayForm({
         </h2>
         <BillTotals bill={due} scope="mine" balanceOnly />
         {payButton}
-        {secured}
         <p className={styles.hint}>
           <Icon name="info" size="xs" className={styles.hintIcon} />
           {t('payBill.hint')}
