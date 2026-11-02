@@ -204,7 +204,12 @@ const choicesOf = (branch: Branch): BranchSettingsChoices => ({
 
 function servicesBody(v: unknown): ServicesSettings {
   const s = obj(v);
-  return { dineIn: bool(s.dineIn), takeaway: bool(s.takeaway), delivery: bool(s.delivery) };
+  return {
+    dineIn: bool(s.dineIn),
+    takeaway: bool(s.takeaway),
+    delivery: bool(s.delivery),
+    guestChanges: s.guestChanges === true,
+  };
 }
 
 /** The short names of every other branch, which a branch's mustn't repeat. */

@@ -218,6 +218,11 @@ export function buildOrder(
   };
 }
 
-/** ISO: until when an order or round placed at `now` can be changed or cancelled (GET /branches › ordering). */
+/**
+ * ISO: until when the guest can change or cancel an order or round placed at `now` (GET
+ * /branches › ordering): the window when guests may, else it closes as it's placed.
+ */
 export const changeableUntil = (now: Date, branch: Pick<Branch, 'ordering'>) =>
-  new Date(now.getTime() + branch.ordering.cancelWindowSeconds * 1000).toISOString();
+  new Date(
+    now.getTime() + (branch.ordering.guestChanges ? branch.ordering.cancelWindowSeconds : 0) * 1000,
+  ).toISOString();

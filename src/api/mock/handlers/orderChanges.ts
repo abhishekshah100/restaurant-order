@@ -99,8 +99,12 @@ async function targetOrder(
 /** The branch's rules for the order's promo code (none when it has none, or it's gone). */
 const promoOf = ({ order, promotions }: Target) => findPromo(promotions.codes, order.promoCode);
 
-/** The open window for the round named in the body, or 409 window_closed. */
+/**
+ * The open window for the round named in the body, or 409 window_closed: also when the branch
+ * doesn't let guests change or cancel (staff still can).
+ */
 function openWindow(target: Target, body: Record<string, unknown>) {
+  if (!target.branch.ordering.guestChanges) fail(409, 'window_closed');
   const window: ChangeWindow | null = changeWindow(target.live, target.now.getTime());
   if (!window?.open || window.round.number !== body.round) fail(409, 'window_closed');
   return window;

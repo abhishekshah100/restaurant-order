@@ -15,6 +15,23 @@
 .expanded {
   display: block;
 }
+/* Several lines (--lines, 3 unless set), "more" under them */
+.multiline {
+  display: block;
+}
+.multiline .text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--lines, 3);
+  line-clamp: var(--lines, 3);
+  white-space: normal;
+}
+.multiline .toggle {
+  margin-left: -2px;
+}
+.multiline.expanded .text {
+  display: block;
+}
 .expanded .text {
   white-space: normal;
   overflow: visible;

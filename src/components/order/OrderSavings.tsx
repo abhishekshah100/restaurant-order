@@ -15,9 +15,7 @@ export function OrderSavings({ order, className }: { order: Order; className?: s
   const discounts = order.discounts ?? [];
   if (discounts.length === 0) return null;
   const saved = discounts.reduce((sum, d) => sum + money.toMinor(d.amount), 0);
-  const names = discounts.map((d) =>
-    d.kind === 'offer' ? offerLabel(d, cart) : d.code,
-  );
+  const names = discounts.map((d) => (d.kind === 'offer' ? offerLabel(d, cart) : d.code));
   const list = new Intl.ListFormat(numberLocale(branch), { type: 'conjunction' }).format(names);
   return (
     <p className={cx(styles.saved, className)}>

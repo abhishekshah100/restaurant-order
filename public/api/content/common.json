@@ -61,8 +61,11 @@
     "summaryLabel": "Cart, {items}, {total} {currencyName}"
   },
   "cartBar": {
-    "label": "View cart, {items}, {total} {currencyName} plus taxes",
+    "label": "View cart, {items}, {total} {currencyName}",
+    "labelTaxes": "View cart, {items}, {total} {currencyName} plus taxes",
+    "labelService": "View cart, {items}, {total} {currencyName} plus service charge",
     "taxes": "Plus taxes",
+    "serviceCharge": "Plus service charge",
     "added": "{dish} added",
     "viewCart": "View cart"
   },
@@ -2218,7 +2221,18 @@
       "managedHere": "{mode} is {state}. Switch it on or off in Services.",
       "stateOn": "on",
       "stateOff": "off",
-      "openServices": "Open Services"
+      "openServices": "Open Services",
+      "afterCard": "After ordering",
+      "afterCardHint": "What guests can do with an order once they have placed it.",
+      "guestChanges": {
+        "label": "Guests can change or cancel",
+        "on": "For {minutes} after placing an order, until the kitchen starts on it. Staff can always change or cancel.",
+        "off": "Only staff can change or cancel orders. Guests see their order without these options.",
+        "minutes": {
+          "one": "{count} minute",
+          "other": "{count} minutes"
+        }
+      }
     },
     "offers": {
       "subtitle": "Automatic discounts guests get without a code, such as happy hour. Each runs on its days and hours (branch time), within its dates if you set them, for the ways of ordering you choose. Prices on the menu, in the cart and on the bill follow at once.",

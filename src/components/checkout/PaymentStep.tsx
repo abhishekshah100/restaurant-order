@@ -89,7 +89,6 @@ function PaymentForm() {
           {t('frame.back')}
         </Link>
         <h1 className={styles.title}>{t('payment.title')}</h1>
-        <p className="t-body c2 hide-mobile">{t('payment.intro')}</p>
       </div>
 
       <section className={cx(styles.payCard, 'hide-desktop')} aria-label={t('summary.title')}>
@@ -108,11 +107,6 @@ function PaymentForm() {
         value={method}
         onChange={setMethod}
       />
-
-      <p className={cx(styles.payNote, 'hide-desktop')}>
-        <Icon name="checkc" size="xs" />
-        {t('payment.intro')}
-      </p>
 
       <div className={cx(styles.desktopFoot, 'hide-mobile')}>
         <Button type="submit" iconStart={payIcon} loading={placing}>

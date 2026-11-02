@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState, type MouseEvent } from 'react';
-import { useContent, useRegion } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import dynamic from 'next/dynamic';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
@@ -33,6 +33,7 @@ export interface CartBarProps {
 export function CartBar({ noNav }: CartBarProps) {
   const t = useContent('common');
   const { money } = useRegion();
+  const { tax } = useBranch();
   const { count, hydrated } = useCart();
   // After the offers on now (happy hour): what the menu showed.
   const itemTotal = useCartItemTotal();
@@ -68,6 +69,10 @@ export function CartBar({ noNav }: CartBarProps) {
   };
 
   const items = t.plural('itemCount', count);
+  // What comes on top of the items: taxes when the branch charges them (Settings › Tax), else
+  // its service charge, else nothing to say.
+  const extra = tax.lines.length > 0 ? 'taxes' : tax.serviceCharge ? 'service' : null;
+  const label = { items, total: itemTotal, currencyName };
   return (
     <>
       <div className={cx(styles.spacer, 'hide-desktop')} aria-hidden="true" />
@@ -78,7 +83,13 @@ export function CartBar({ noNav }: CartBarProps) {
       <Link
         href="/cart/"
         className={cx(styles.bar, added && styles.bump, noNav && styles.noNav, 'hide-desktop')}
-        aria-label={t('cartBar.label', { items, total: itemTotal, currencyName })}
+        aria-label={
+          extra === 'taxes'
+            ? t('cartBar.labelTaxes', label)
+            : extra === 'service'
+              ? t('cartBar.labelService', label)
+              : t('cartBar.label', label)
+        }
         onClick={onClick}
       >
         {/* A new key on each add replays the pop, even for adds in quick succession. */}
@@ -97,7 +108,9 @@ export function CartBar({ noNav }: CartBarProps) {
             <b>
               {items} · {money.format(itemTotal)}
             </b>
-            <span>{t('cartBar.taxes')}</span>
+            {extra && (
+              <span>{extra === 'taxes' ? t('cartBar.taxes') : t('cartBar.serviceCharge')}</span>
+            )}
           </span>
         )}
         <span className={styles.go}>

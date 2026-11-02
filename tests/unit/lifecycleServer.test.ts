@@ -12,6 +12,7 @@ import { amountDue, paidAmount } from '@/lib/lifecycle';
 import type { Dish } from '@/types/menu';
 import type { Order } from '@/types/order';
 import type { GuestSession } from '@/types/session';
+import type { Branch } from '@/types/branch';
 import { createTestServer, testMenu } from '../apiState';
 
 /*
@@ -23,12 +24,18 @@ import { createTestServer, testMenu } from '../apiState';
 const START = Date.parse('2026-10-03T19:00:00+05:30');
 const SECOND = 1000;
 let now = START;
-const server = createTestServer(() => now);
+// Guests may change or cancel at these branches (Settings › Services; off by default).
+const guestChanges = (branches: Branch[]) =>
+  branches.map((b) => ({ ...b, ordering: { ...b.ordering, guestChanges: true } }));
+const server = createTestServer(() => now, guestChanges);
 // The same data with rounds paid as they're ordered.
 const perRound = createTestServer(
   () => now,
   (branches) =>
-    branches.map((b) => ({ ...b, ordering: { ...b.ordering, dineInPayment: 'perRound' } })),
+    guestChanges(branches).map((b) => ({
+      ...b,
+      ordering: { ...b.ordering, dineInPayment: 'perRound' },
+    })),
 );
 type Server = typeof server;
 

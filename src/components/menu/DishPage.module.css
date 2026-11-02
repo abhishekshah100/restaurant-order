@@ -1,0 +1,83 @@
+/*
+ * The dish page's outline while it opens (in the static HTML): the photo on top on a phone and
+ * beside the details on a wide screen, then the name, description, price and choices as soft
+ * shimmering bars.
+ */
+
+.photo,
+.line,
+.block {
+  display: block;
+  background: linear-gradient(90deg, var(--sand) 0%, var(--surface) 50%, var(--sand) 100%) 0 0 /
+    200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.photo {
+  height: clamp(200px, 32dvh, 260px);
+}
+
+.main {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg);
+}
+
+.line {
+  height: 14px;
+  width: 100%;
+  border-radius: var(--r-pill);
+}
+
+.tag {
+  width: 30%;
+}
+
+.title {
+  height: 28px;
+  width: 70%;
+  margin-bottom: 4px;
+}
+
+.short {
+  width: 55%;
+}
+
+.price {
+  height: 22px;
+  width: 25%;
+  margin: 8px 0;
+}
+
+.block {
+  height: 64px;
+  border-radius: var(--r);
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo,
+  .line,
+  .block {
+    animation: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .photo {
+    height: auto;
+    aspect-ratio: 4 / 3;
+    border-radius: 22px;
+  }
+
+  .main {
+    padding: 0;
+  }
+}

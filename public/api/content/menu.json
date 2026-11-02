@@ -119,7 +119,8 @@
     "addToCart": "Add to cart",
     "updateItem": "Update item",
     "unavailable": "Unavailable",
-    "closedNow": "Closed now"
+    "closedNow": "Closed now",
+    "loading": "Loading the dish"
   },
   "allergens": {
     "dairy": "dairy",

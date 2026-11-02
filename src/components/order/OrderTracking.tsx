@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
 import type { ContentMap } from '@/api/queries';
@@ -304,6 +305,20 @@ function TrackingView({
 
 /** Live order tracking (14 · w14); the cancelled state (s10 · ws10) for cancelled orders. */
 export function OrderTracking() {
+  return (
+    <Suspense fallback={<TrackingLoading />}>
+      <Tracking />
+    </Suspense>
+  );
+}
+
+/** While the page opens (in the static HTML too). */
+function TrackingLoading() {
+  const t = useContent('orders');
+  return <OrderLoading title={t('meta.tracking')} />;
+}
+
+function Tracking() {
   const t = useContent('orders');
   const id = useOrderId();
   const lookup = useLiveOrder(id);

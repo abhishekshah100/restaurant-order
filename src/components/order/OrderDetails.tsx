@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { Button, StatusPill, Tag, VegMark } from '@/components/ui';
 import { PriceSummary } from '@/components/cart/PriceSummary';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
@@ -276,6 +277,20 @@ function DetailsView({ order }: { order: Order }) {
 
 /** Order details (15 · w15); the cancelled state (s10 · ws10) for cancelled orders. */
 export function OrderDetails() {
+  return (
+    <Suspense fallback={<DetailsLoading />}>
+      <Details />
+    </Suspense>
+  );
+}
+
+/** While the page opens (in the static HTML too). */
+function DetailsLoading() {
+  const t = useContent('orders');
+  return <OrderLoading title={t('details.title')} />;
+}
+
+function Details() {
   const t = useContent('orders');
   const id = useOrderId();
   const lookup = useLiveOrder(id);

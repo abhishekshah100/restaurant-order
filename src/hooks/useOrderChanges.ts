@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 import { isApiError } from '@/api/client';
-import { useContent, useMenu, useRegion } from '@/api/hooks';
+import { useBranch, useContent, useMenu, useRegion } from '@/api/hooks';
 import { useCancelOrder, useChangeOrder } from '@/api/mutations';
 import { useGuestSession } from '@/context/GuestSessionContext';
 import { useToast } from '@/context/ToastContext';
@@ -37,10 +37,18 @@ export type ChangeWindowView = ChangeWindow & {
  */
 export function useChangeWindow(order: Order | undefined): ChangeWindowView | null {
   const sessionId = useGuestSession()?.id;
+  // Off at the branch (Settings › Services): only staff change or cancel; nothing to offer.
+  const allowed = useBranch().ordering.guestChanges === true;
   const round = order && latestRound(order);
   const closesAt = round ? Date.parse(round.changeableUntil) : null;
   const secondsLeft = useCountdown(closesAt);
-  if (!order || closesAt === null || secondsLeft === null || !isOwnOrder(order, sessionId)) {
+  if (
+    !allowed ||
+    !order ||
+    closesAt === null ||
+    secondsLeft === null ||
+    !isOwnOrder(order, sessionId)
+  ) {
     return null;
   }
   // The countdown's clock: when it reaches 0 the window is over.

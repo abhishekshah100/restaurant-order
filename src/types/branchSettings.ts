@@ -51,8 +51,11 @@ export interface BranchDetails {
   orderStart?: number;
 }
 
-/** Settings › Services: the ways guests can order at the branch (at least one). */
-export type ServicesSettings = Record<OrderMode, boolean>;
+/**
+ * Settings › Services: the ways guests can order at the branch (at least one), and whether they
+ * may change or cancel an order for a short while after placing it (off: only staff can).
+ */
+export type ServicesSettings = Record<OrderMode, boolean> & { guestChanges: boolean };
 
 /** A tax line as staff edit it: its rate and what it's charged on (its name is the region's). */
 export interface TaxLineSettings {

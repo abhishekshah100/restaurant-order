@@ -540,11 +540,11 @@ describe('region and services', () => {
 
   it('keeps at least one service, and delivery only with a zone', () => {
     const services = servicesOf(india);
-    expect(services).toEqual({ dineIn: true, takeaway: true, delivery: true });
+    expect(services).toEqual({ dineIn: true, takeaway: true, delivery: true, guestChanges: false });
     expect(servicesErrors(services, 3)).toEqual([]);
-    expect(servicesErrors({ dineIn: false, takeaway: false, delivery: false }, 3)).toEqual([
-      'noService',
-    ]);
+    expect(
+      servicesErrors({ dineIn: false, takeaway: false, delivery: false, guestChanges: false }, 3),
+    ).toEqual(['noService']);
     expect(servicesErrors({ ...services, delivery: true }, 0)).toEqual(['deliveryNeedsZones']);
     expect(withServices(india, { ...services, dineIn: false }).modes.dineIn.enabled).toBe(false);
   });

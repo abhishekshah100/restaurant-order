@@ -231,8 +231,13 @@ export type DineInPayment = 'perRound' | 'endOfMeal';
 /** How orders work once placed. */
 export interface OrderingRules {
   dineInPayment: DineInPayment;
-  /** Seconds after placing an order (or round) during which the guest can change or cancel it. */
+  /** Seconds after placing an order (or round) during which the guest can change or cancel it… */
   cancelWindowSeconds: number;
+  /**
+   * …when guests may at all (Settings › Services). Off, the default: only staff change or cancel
+   * orders, and guests' order pages don't offer it. Missing from servers before it: off.
+   */
+  guestChanges?: boolean;
 }
 
 /**

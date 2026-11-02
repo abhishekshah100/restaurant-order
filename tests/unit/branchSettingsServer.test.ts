@@ -211,7 +211,12 @@ describe('region and services on the mock server', () => {
 
   it('switches services, never all of them', async () => {
     const { settings: s } = await settings();
-    expect(s.services).toEqual({ dineIn: true, takeaway: true, delivery: true });
+    expect(s.services).toEqual({
+      dineIn: true,
+      takeaway: true,
+      delivery: true,
+      guestChanges: false,
+    });
     expect((await save({ services: { ...s.services, dineIn: false } })).status).toBe(200);
     expect((await guestBranch()).modes.dineIn.enabled).toBe(false);
     // A table's QR code no longer opens a dine-in visit.

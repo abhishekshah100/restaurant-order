@@ -213,7 +213,8 @@
     },
     "ordering": {
       "dineInPayment": "endOfMeal",
-      "cancelWindowSeconds": 120
+      "cancelWindowSeconds": 120,
+      "guestChanges": false
     },
     "modeStatus": {
       "takeaway": {
@@ -475,7 +476,8 @@
     },
     "ordering": {
       "dineInPayment": "endOfMeal",
-      "cancelWindowSeconds": 120
+      "cancelWindowSeconds": 120,
+      "guestChanges": false
     },
     "modeStatus": {
       "takeaway": {

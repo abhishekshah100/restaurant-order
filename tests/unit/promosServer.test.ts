@@ -25,7 +25,11 @@ const EVENING = Date.parse('2026-10-08T19:30:00+05:30');
 const HAPPY_HOUR = Date.parse('2026-10-08T17:00:00+05:30');
 const MINUTE = 60_000;
 let now = EVENING;
-const server = createTestServer(() => now);
+// Guests may change their order here (Settings › Services; off by default).
+const server = createTestServer(
+  () => now,
+  (branches) => branches.map((b) => ({ ...b, ordering: { ...b.ordering, guestChanges: true } })),
+);
 const call = (method: 'POST' | 'GET', path: string, body?: unknown) =>
   server({ method, path, body }) as Promise<ApiResponse>;
 const error = (res: ApiResponse) => (res.body as ApiErrorBody).error;

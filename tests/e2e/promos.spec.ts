@@ -46,6 +46,10 @@ async function applyCode(page: Page, code: string) {
   await visible(page, 'button', /^Apply$/).click();
 }
 
+/** The cart's promo code box is hidden until the next phase (CartView); its tests wait for it. */
+const PROMO_CODES_HIDDEN = true;
+const PROMO_CODES_HIDDEN_REASON = 'Promo codes are hidden in the cart until the next phase';
+
 test.beforeEach(async ({ page }) => {
   await scan(page, 'table=7');
   await page.evaluate(() => {
@@ -55,6 +59,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('India: WELCOME10 off the cart, through checkout to the receipt', async ({ page }) => {
+  test.skip(PROMO_CODES_HIDDEN, PROMO_CODES_HIDDEN_REASON);
   test.slow();
   await installClock(page, EVENING);
   await scan(page, 'table=12');
@@ -95,6 +100,7 @@ test('India: WELCOME10 off the cart, through checkout to the receipt', async ({ 
 });
 
 test('India: a code below its minimum says how much more to add', async ({ page }) => {
+  test.skip(PROMO_CODES_HIDDEN, PROMO_CODES_HIDDEN_REASON);
   await installClock(page, EVENING);
   await scan(page, 'table=12');
   await addDish(page, 'starters', 'Dahi Kebab');
@@ -115,6 +121,7 @@ test('India: a code below its minimum says how much more to add', async ({ page 
 test('Nepal: NAMASTE15 with the service charge and VAT on the discounted items', async ({
   page,
 }) => {
+  test.skip(PROMO_CODES_HIDDEN, PROMO_CODES_HIDDEN_REASON);
   await installClock(page, EVENING);
   await scan(page, 'branch=ktm-thamel&table=5');
   await addDish(page, 'mains', 'Dal Makhani');

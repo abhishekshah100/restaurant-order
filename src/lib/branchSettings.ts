@@ -146,11 +146,15 @@ export function detailsOf(branch: Branch): BranchDetails {
   };
 }
 
-export function servicesOf({ modes }: Pick<Branch, 'modes'>): ServicesSettings {
+export function servicesOf({
+  modes,
+  ordering,
+}: Pick<Branch, 'modes' | 'ordering'>): ServicesSettings {
   return {
     dineIn: modes.dineIn.enabled,
     takeaway: modes.takeaway.enabled,
     delivery: modes.delivery.enabled,
+    guestChanges: ordering.guestChanges === true,
   };
 }
 
@@ -561,6 +565,7 @@ export function withServices(branch: Branch, s: ServicesSettings): Branch {
       takeaway: { ...branch.modes.takeaway, enabled: s.takeaway },
       delivery: { ...branch.modes.delivery, enabled: s.delivery },
     },
+    ordering: { ...branch.ordering, guestChanges: s.guestChanges },
   };
 }
 

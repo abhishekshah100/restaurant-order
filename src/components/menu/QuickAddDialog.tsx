@@ -12,6 +12,7 @@ import type { CartLine } from '@/types/cart';
 import type { Dish } from '@/types/menu';
 import { DishOptionsForm } from './DishOptionsForm';
 import { tagLabel } from './dishTag';
+import { ExpandableText } from './ExpandableText';
 import styles from './QuickAdd.module.css';
 
 /** The thumbnail sits beside the dish name, so screen readers skip it. */
@@ -109,7 +110,12 @@ export function QuickAddDialog({ dish, editing, onClose }: QuickAddDialogProps) 
         </div>
       }
     >
-      <p className={cx('t-small c2', styles.desc)}>{dish.longDescription ?? dish.description}</p>
+      <ExpandableText
+        multiline
+        className={cx('t-small c2', styles.desc)}
+        text={dish.longDescription ?? dish.description}
+        itemName={dish.name}
+      />
       <DishOptionsForm dish={dish} state={state} variant="quick" idPrefix={`qa-${dish.slug}`} />
     </Dialog>
   );

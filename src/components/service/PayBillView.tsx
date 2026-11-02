@@ -264,9 +264,7 @@ function PayForm({
           />
         </div>
 
-        <div className={cx(styles.foot, 'hide-desktop')}>
-          {payButton}
-        </div>
+        <div className={cx(styles.foot, 'hide-desktop')}>{payButton}</div>
       </main>
 
       <aside className={cx(styles.aside, 'hide-mobile')} aria-labelledby="pay-summary">

@@ -20,6 +20,7 @@
   padding-top: 2px;
 }
 .desc {
+  --lines: 3;
   font-size: 13px;
   line-height: 18px;
 }
@@ -70,20 +71,11 @@
     line-height: 24px;
   }
   .desc {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    --lines: 1;
   }
   .foot .stepper[role='group'],
   .foot .stepper[role='group'] button,
   .foot .cta {
     height: 44px;
-  }
-}
-/* Very short windows: the description gives way so the choices fit */
-@media (max-height: 540px) {
-  .desc {
-    display: none;
   }
 }

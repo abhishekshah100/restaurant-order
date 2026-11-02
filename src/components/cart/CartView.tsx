@@ -23,7 +23,8 @@ import { EmptyCart } from './EmptyCart';
 import { CartSuggestions } from './CartSuggestions';
 import { KitchenNote } from './KitchenNote';
 import { PriceSummary } from './PriceSummary';
-import { PromoCard } from './PromoCard';
+// Promo codes are hidden for now; back in the next phase (with the PromoCard below).
+// import { PromoCard } from './PromoCard';
 import styles from './CartView.module.css';
 import { usePrepTime } from '@/hooks/useBranchTimes';
 
@@ -161,7 +162,8 @@ export function CartView() {
           </section>
           <CartSuggestions />
           <KitchenNote value={kitchenNote} onChange={setKitchenNote} />
-          <PromoCard action={action} />
+          {/* Hidden for now; back in the next phase. */}
+          {/* <PromoCard action={action} /> */}
           <section className={cx(styles.bill, 'hide-desktop')} aria-labelledby="bill-m">
             <h2 id="bill-m" className="t-h3">
               {t('page.billSummary')}

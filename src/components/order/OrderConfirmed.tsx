@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { Button, EmptyState, Icon, Skeleton, Tag } from '@/components/ui';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
@@ -55,28 +56,40 @@ function useModeWells(order: Order): { first: [string, string]; last: [string, s
  * the change window is open the guest can change or cancel it here.
  */
 export function OrderConfirmed() {
+  return (
+    <Suspense fallback={<ConfirmedLoading />}>
+      <ConfirmedFromAddress />
+    </Suspense>
+  );
+}
+
+/** While the order is read (and while the page opens, in the static HTML too). */
+function ConfirmedLoading() {
+  const t = useContent('orders');
+  return (
+    <div className={styles.page}>
+      <SiteHeader />
+      <main
+        id="main"
+        className={styles.loading}
+        aria-busy="true"
+        aria-label={t('shared.loadingOrder')}
+      >
+        <Skeleton shape="circle" width={112} height={112} />
+        <Skeleton shape="title" width={220} />
+        <Skeleton shape="block" width="100%" height={240} />
+      </main>
+    </div>
+  );
+}
+
+function ConfirmedFromAddress() {
   const t = useContent('orders');
   const id = useOrderId();
   const lookup = useLiveOrder(id);
   useFinishPlacedOrder(id);
 
-  if (lookup.state === 'loading') {
-    return (
-      <div className={styles.page}>
-        <SiteHeader />
-        <main
-          id="main"
-          className={styles.loading}
-          aria-busy="true"
-          aria-label={t('shared.loadingOrder')}
-        >
-          <Skeleton shape="circle" width={112} height={112} />
-          <Skeleton shape="title" width={220} />
-          <Skeleton shape="block" width="100%" height={240} />
-        </main>
-      </div>
-    );
-  }
+  if (lookup.state === 'loading') return <ConfirmedLoading />;
 
   if (lookup.state === 'missing') {
     return (
