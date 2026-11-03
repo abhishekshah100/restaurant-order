@@ -274,6 +274,9 @@ export const freeTable: Handler = async (ctx, { params, headers }) => {
   const branch = await adminBranch(ctx, headers, params.branchId);
   const input = await floorInput(ctx, branch);
   const number = tableNumber(input, params.table);
+  // Still owing: collect the bill first.
+  const due = tableDetail(input, number)?.due ?? 0;
+  if (due > 0) fail(409, 'bill_open', { due });
   const at = new Date(ctx.now()).toISOString();
   ctx.db.tablesFreed.write({ ...ctx.db.tablesFreed.read(), [`${branch.id}:${number}`]: at });
   return ok(tableDetail({ ...input, freedAt: { ...input.freedAt, [number]: at } }, number));

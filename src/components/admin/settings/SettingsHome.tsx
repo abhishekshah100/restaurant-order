@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useAdminBranches, useBranchSettings, useContent, useFloorLayout } from '@/api/hooks';
 import { Icon } from '@/components/ui';
-import { SETTINGS_GROUPS, type SettingsSectionId } from '@/lib/adminSettings';
+import { settingsFor, type SettingsSectionId } from '@/lib/adminSettings';
 import { layoutTotals } from '@/lib/floorLayout';
 import { ORDER_MODES } from '@/lib/fulfilment';
 import { formatRate } from '@/lib/pricing';
@@ -18,7 +18,7 @@ import { useBranchTimes } from '@/hooks/useBranchTimes';
  */
 export function SettingsHome() {
   const t = useContent('common');
-  const { branch } = useAdminWorkspace();
+  const { branch, can } = useAdminWorkspace();
   const summaries = useSummaries();
 
   return (
@@ -29,7 +29,7 @@ export function SettingsHome() {
           {t('adminSettings.subtitle', { branch: branch.shortName })}
         </p>
       </header>
-      {SETTINGS_GROUPS.map((group) => (
+      {settingsFor(can).map((group) => (
         <section key={group.id} className={styles.group} aria-labelledby={`settings-${group.id}`}>
           <h2 id={`settings-${group.id}`} className={styles.groupTitle}>
             {t(`adminSettings.groups.${group.id}`)}
@@ -70,10 +70,12 @@ export function SettingsHome() {
 function useSummaries(): Partial<Record<SettingsSectionId, string>> {
   const t = useContent('common');
   const cart = useContent('cart');
-  const { branch, region } = useAdminWorkspace();
+  const { branch, region, can } = useAdminWorkspace();
   const hoursToday = useBranchTimes(region)?.hoursToday ?? '';
   const layout = useFloorLayout(branch.id).data;
-  const settings = useBranchSettings(branch.id).data?.settings;
+  // Read only by those who may change them (the server answers 403 to anyone else).
+  const settings = useBranchSettings(can('branch.settings.manage') ? branch.id : undefined).data
+    ?.settings;
   const branches = useAdminBranches().data;
   const summaries: Partial<Record<SettingsSectionId, string>> = {};
 

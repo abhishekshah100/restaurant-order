@@ -20,7 +20,7 @@ export function TableRequests({
   now: Date | null;
 }) {
   const t = useContent('common');
-  const { branch } = useAdminWorkspace();
+  const { branch, can } = useAdminWorkspace();
   const { showToast } = useToast();
   const resolve = useResolveRequest();
   const text = useRequestText();
@@ -57,23 +57,25 @@ export function TableRequests({
                   </span>
                 )}
               </span>
-              <button
-                type="button"
-                className={styles.done}
-                aria-label={t('adminTables.detail.requests.doneLabel', { what: title })}
-                onClick={() =>
-                  resolve.mutate(
-                    { branchId: branch.id, request },
-                    {
-                      onError: () =>
-                        showToast(t('adminTables.detail.requests.failed'), { tone: 'error' }),
-                    },
-                  )
-                }
-              >
-                <Icon name="check" size="xs" />
-                {t('adminTables.detail.requests.done')}
-              </button>
+              {can('service.respond') && (
+                <button
+                  type="button"
+                  className={styles.done}
+                  aria-label={t('adminTables.detail.requests.doneLabel', { what: title })}
+                  onClick={() =>
+                    resolve.mutate(
+                      { branchId: branch.id, request },
+                      {
+                        onError: () =>
+                          showToast(t('adminTables.detail.requests.failed'), { tone: 'error' }),
+                      },
+                    )
+                  }
+                >
+                  <Icon name="check" size="xs" />
+                  {t('adminTables.detail.requests.done')}
+                </button>
+              )}
             </li>
           );
         })}

@@ -1,0 +1,164 @@
+/* Settings › Roles & permissions: a card per role (built-in ones quieter) and the role dialog. */
+
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.headText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.role {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.role[data-system] .icon {
+  background: var(--sand);
+  color: var(--ink-2);
+}
+
+.icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+}
+
+.text {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.name {
+  font: var(--font-h3);
+}
+
+.meta {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.detail {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .role {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .actions {
+    grid-column: auto;
+  }
+}
+
+.remove {
+  color: var(--error);
+}
+
+/* ---------- The dialogs ---------- */
+
+@media (min-width: 1024px) {
+  .dialog {
+    width: min(620px, calc(100vw - 48px));
+  }
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.note {
+  margin: 0;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.permissionsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.permissionsTitle {
+  font: var(--font-label);
+}
+
+.picked {
+  color: var(--ink-3);
+  font: var(--font-small-strong);
+}
+
+.group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.groupName {
+  margin-bottom: 4px;
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.danger {
+  background: var(--error);
+}

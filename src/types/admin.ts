@@ -18,6 +18,11 @@ export interface AdminSession {
   admin: AdminProfile;
   /** Epoch ms; after this the admin signs in again. */
   expiresAt: number;
+  /**
+   * Signed in with a password an admin set (new, or reset): they choose their own before going
+   * on (every other request answers 403 password_change_required until then).
+   */
+  mustChangePassword?: true;
 }
 
 /**
@@ -47,6 +52,8 @@ export interface AdminBranch {
   /** ISO 4217, e.g. "INR", "NPR". */
   currencyCode: string;
   image?: BranchImage;
+  /** What the signed-in staff member may do here (their roles' permissions at this branch). */
+  permissions?: StaffPermission[];
 }
 
 /* ---------- Floor service (GET /admin/branches/:branchId/service) ---------- */
@@ -314,4 +321,62 @@ export interface AdminReservations {
   reservations: Reservation[];
   /** ISO: when the server read it. */
   generatedAt: string;
+}
+
+/* ---------- Staff roles (Settings › Roles & permissions) ---------- */
+
+/** What a role can let staff do (the server's catalog: routes check these). */
+export type StaffPermission =
+  | 'branch.status.update'
+  | 'branch.settings.manage'
+  | 'branches.manage'
+  | 'staff.manage'
+  | 'menu.manage'
+  | 'menu.availability.update'
+  | 'tables.manage'
+  | 'orders.view'
+  | 'orders.take'
+  | 'orders.manage'
+  | 'payments.collect'
+  | 'service.respond'
+  | 'kitchen.update'
+  | 'reservations.manage'
+  | 'reports.view';
+
+/** A role staff can be given: built in (read-only) or the restaurant's own. */
+export interface AdminRole {
+  id: string;
+  /** "waiter"; a restaurant's own role gets one from its name. */
+  key: string;
+  name: string;
+  description: string;
+  /** Built in: every restaurant has it; duplicate it to change it. */
+  system: boolean;
+  permissions: StaffPermission[];
+  /** How many staff hold it at the restaurant. */
+  staff: number;
+}
+
+/* ---------- Staff (Settings › Staff) ---------- */
+
+/** Where someone's role applies: the whole restaurant (an admin), or this branch. */
+export type StaffScope = 'restaurant' | 'branch';
+
+/** Someone on the staff here. */
+export interface AdminStaffMember {
+  id: string;
+  name: string;
+  email: string;
+  /** International form: "+919876543210". */
+  phone: string;
+  role: { id: string; name: string };
+  scope: StaffScope;
+  /** Off: they can't sign in. */
+  active: boolean;
+  /** ISO; absent until their first sign-in. */
+  lastSignInAt?: string;
+  /** Still to choose their own password. */
+  mustChangePassword: boolean;
+  /** The one looking: their own role and status can't be changed. */
+  you: boolean;
 }

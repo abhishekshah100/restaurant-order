@@ -3,13 +3,11 @@
 import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { Dialog, Icon } from '@/components/ui';
-import { ADMIN_NAV, type AdminNavId } from '@/lib/adminNav';
+import { navFor, type AdminNavId } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from './AdminWorkspace';
 import { BranchStatusControl } from './BranchStatusControl';
 import styles from './MobileNav.module.css';
-
-const MORE = ADMIN_NAV.filter((item) => !item.tab);
 
 /** The phone navigation's More sheet: the other pages, the branch (switch it) and sign out. */
 export function MobileNavMore({
@@ -26,12 +24,13 @@ export function MobileNavMore({
   onSignOut: () => void;
 }) {
   const t = useContent('common');
-  const { branch, canSwitch } = useAdminWorkspace();
+  const { branch, canSwitch, can } = useAdminWorkspace();
+  const more = navFor(can).filter((item) => !item.tab);
   return (
     <Dialog open onClose={close} title={t('adminShell.more.title')} presentation="sheet">
       <div className={styles.sheet}>
         <ul className={styles.list} aria-label={t('adminShell.more.pages')}>
-          {MORE.map((item) => (
+          {more.map((item) => (
             <li key={item.id}>
               <Link
                 href={item.href}

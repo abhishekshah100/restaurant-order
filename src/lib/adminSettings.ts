@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/ui/Icon/iconNames';
+import type { StaffPermission } from '@/types/admin';
 import { settingsPath } from './adminNav';
 
 /*
@@ -18,12 +19,16 @@ export type SettingsSectionId =
   | 'services'
   | 'delivery'
   | 'pickup'
-  | 'branches';
+  | 'branches'
+  | 'roles'
+  | 'staff';
 
 export interface SettingsSection {
   id: SettingsSectionId;
   href: string;
   icon: IconName;
+  /** Shown to staff holding this at the branch (the permission its server routes check). */
+  needs: StaffPermission;
 }
 
 export interface SettingsGroup {
@@ -35,32 +40,63 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
   {
     id: 'branch',
     sections: [
-      { id: 'details', href: settingsPath('branch'), icon: 'store' },
-      { id: 'hours', href: settingsPath('hours'), icon: 'clock' },
-      { id: 'floorPlan', href: settingsPath('floor-plan'), icon: 'table' },
+      {
+        id: 'details',
+        href: settingsPath('branch'),
+        icon: 'store',
+        needs: 'branch.settings.manage',
+      },
+      { id: 'hours', href: settingsPath('hours'), icon: 'clock', needs: 'branch.settings.manage' },
+      { id: 'floorPlan', href: settingsPath('floor-plan'), icon: 'table', needs: 'tables.manage' },
     ],
   },
   {
     id: 'money',
     sections: [
-      { id: 'tax', href: settingsPath('tax'), icon: 'receipt' },
-      { id: 'payments', href: settingsPath('payments'), icon: 'card' },
-      { id: 'offers', href: settingsPath('offers'), icon: 'tag' },
+      { id: 'tax', href: settingsPath('tax'), icon: 'receipt', needs: 'branch.settings.manage' },
+      {
+        id: 'payments',
+        href: settingsPath('payments'),
+        icon: 'card',
+        needs: 'branch.settings.manage',
+      },
+      { id: 'offers', href: settingsPath('offers'), icon: 'tag', needs: 'branch.settings.manage' },
     ],
   },
   {
     id: 'ordering',
     sections: [
-      { id: 'services', href: settingsPath('services'), icon: 'cutlery' },
-      { id: 'delivery', href: settingsPath('delivery'), icon: 'scooter' },
-      { id: 'pickup', href: settingsPath('pickup'), icon: 'bag' },
+      {
+        id: 'services',
+        href: settingsPath('services'),
+        icon: 'cutlery',
+        needs: 'branch.settings.manage',
+      },
+      {
+        id: 'delivery',
+        href: settingsPath('delivery'),
+        icon: 'scooter',
+        needs: 'branch.settings.manage',
+      },
+      { id: 'pickup', href: settingsPath('pickup'), icon: 'bag', needs: 'branch.settings.manage' },
     ],
   },
   {
     id: 'restaurant',
-    sections: [{ id: 'branches', href: settingsPath('branches'), icon: 'pin' }],
+    sections: [
+      { id: 'branches', href: settingsPath('branches'), icon: 'pin', needs: 'branches.manage' },
+      { id: 'staff', href: settingsPath('staff'), icon: 'user', needs: 'staff.manage' },
+      { id: 'roles', href: settingsPath('roles'), icon: 'shield', needs: 'staff.manage' },
+    ],
   },
 ];
+
+/** The groups and pages a staff member may open (`can` from useAdminWorkspace); empty groups go. */
+export const settingsFor = (can: (...permissions: StaffPermission[]) => boolean) =>
+  SETTINGS_GROUPS.map((group) => ({
+    ...group,
+    sections: group.sections.filter((section) => can(section.needs)),
+  })).filter((group) => group.sections.length > 0);
 
 /** A settings page's address by its id. */
 export const settingsHref = (id: SettingsSectionId): string =>

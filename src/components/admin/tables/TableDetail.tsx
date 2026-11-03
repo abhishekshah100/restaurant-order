@@ -138,7 +138,7 @@ function TableDetailFor({ table }: { table: number | null | undefined }) {
 
 function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | null }) {
   const t = useContent('common');
-  const { money, clock } = useAdminWorkspace();
+  const { money, clock, can } = useAdminWorkspace();
   const seatedLabel = useSeatedLabel();
   const [open, setOpen] = useState<{ id: string; view: OrderDialogView } | null>(null);
   const [pad, setPad] = useState<PadTarget | null>(null);
@@ -193,7 +193,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <span className={styles.dot} aria-hidden="true" />
               {t(`adminTables.status.${detail.status}`)}
             </span>
-            {!detail.disabled && (
+            {!detail.disabled && can('reservations.manage') && (
               <button
                 type="button"
                 className={styles.free}
@@ -203,15 +203,18 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
                 {t('adminTables.detail.reserve')}
               </button>
             )}
-            <button type="button" className={styles.free} onClick={() => setShowingQr(true)}>
-              <Icon name="qr" size="xs" />
-              {t('adminQr.tableButton')}
-            </button>
+            {can('tables.manage') && (
+              <button type="button" className={styles.free} onClick={() => setShowingQr(true)}>
+                <Icon name="qr" size="xs" />
+                {t('adminQr.tableButton')}
+              </button>
+            )}
             <Link href={tableHistoryPath(detail.table)} className={styles.free}>
               <Icon name="history" size="xs" />
               {t('adminTables.detail.history.action')}
             </Link>
-            {detail.status !== 'available' &&
+            {can('service.respond') &&
+              detail.status !== 'available' &&
               detail.status !== 'reserved' &&
               detail.status !== 'outOfService' && (
                 <button type="button" className={styles.free} onClick={() => setFreeing(true)}>
@@ -221,7 +224,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               )}
           </span>
         </div>
-        {!detail.disabled && (
+        {!detail.disabled && can('orders.take') && (
           <Button
             iconStart="plus"
             className={styles.takeOrder}
@@ -233,7 +236,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               : t('adminTables.detail.takeOrder')}
           </Button>
         )}
-        {detail.due > 0 && (
+        {detail.due > 0 && can('payments.collect') && (
           <Button
             variant="secondary"
             iconStart="cash"
@@ -344,7 +347,16 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
       {collectingTable && (
         <TableCollectDialog detail={detail} onClose={() => setCollectingTable(false)} />
       )}
-      {freeing && <FreeTableDialog detail={detail} onClose={() => setFreeing(false)} />}
+      {freeing && (
+        <FreeTableDialog
+          detail={detail}
+          onCollect={() => {
+            setFreeing(false);
+            setCollectingTable(true);
+          }}
+          onClose={() => setFreeing(false)}
+        />
+      )}
       {showingQr && <TableQrDialog table={detail.table} onClose={() => setShowingQr(false)} />}
       {booking && <ReservationEditor target={booking} onClose={() => setBooking(null)} />}
     </>

@@ -31,8 +31,11 @@ export function OrderListItem({
   onAction: (action: OrderAction) => void;
 }) {
   const t = useContent('common');
-  const { money, clock } = useAdminWorkspace();
-  const action = nextAction(order);
+  const { money, clock, can } = useAdminWorkspace();
+  // The one action it needs next, if their role here lets them take it.
+  const next = nextAction(order);
+  const action =
+    next && can(next === 'collect' ? 'payments.collect' : 'service.respond') ? next : undefined;
   const shown = order.items.slice(0, PREVIEW_ITEMS);
   const hidden = order.items.length - shown.length;
   // How long it's been open; none once it's finished (or for a time still to come).

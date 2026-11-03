@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
-import { ADMIN_NAV, type AdminNavId } from '@/lib/adminNav';
+import { navFor, type AdminNavId } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import type { AdminServiceCounts } from '@/types/admin';
 import { useAdminWorkspace } from './AdminWorkspace';
@@ -32,7 +32,7 @@ export function Sidebar({
   onSignOut,
 }: SidebarProps) {
   const t = useContent('common');
-  const { branch, brand, canSwitch } = useAdminWorkspace();
+  const { branch, brand, canSwitch, can } = useAdminWorkspace();
 
   return (
     <aside className={styles.sidebar}>
@@ -71,7 +71,7 @@ export function Sidebar({
 
       <nav className={styles.nav} aria-label={t('adminShell.nav.label')}>
         <ul>
-          {ADMIN_NAV.map((item) => (
+          {navFor(can).map((item) => (
             <li key={item.id}>
               <Link
                 href={item.href}

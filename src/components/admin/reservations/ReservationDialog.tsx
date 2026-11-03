@@ -33,6 +33,7 @@ export function ReservationDialog({
   const t = useContent('common');
   const [confirming, setConfirming] = useState(false);
   const status = useReservationStatus();
+  const manage = useAdminWorkspace().can('reservations.manage');
   if (!reservation) return null;
   const r = reservation;
   const close = () => {
@@ -52,7 +53,10 @@ export function ReservationDialog({
   }
 
   let footer;
-  if (r.status === 'booked') {
+  // Only the table's page for those who can't change bookings.
+  if (r.status !== 'seated' && !manage) {
+    footer = undefined;
+  } else if (r.status === 'booked') {
     const seatable = canSeat(r, now);
     footer = (
       <div className={styles.actions}>

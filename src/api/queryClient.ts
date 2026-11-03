@@ -6,6 +6,7 @@ import {
   notifyManager,
 } from '@tanstack/react-query';
 import { signOutAdmin } from '@/lib/adminAuth';
+import { guestSessionEnded } from '@/lib/guestSessionEnd';
 import { ApiError, isApiError } from './client';
 
 /**
@@ -22,6 +23,8 @@ const retryOnce = (failures: number, error: Error) =>
  */
 function endStaffSessionOn(error: Error) {
   if (isApiError(error, 'unauthorized')) signOutAdmin();
+  // The guest's session ended (expired, or staff freed the table): a new visit starts.
+  if (isApiError(error, 'session_not_found')) guestSessionEnded();
 }
 
 /** Shared defaults: data stays fresh for a minute, failed requests retry once. */

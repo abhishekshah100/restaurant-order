@@ -28,7 +28,7 @@ export function ReservationRow({
   onSeat: () => void;
 }) {
   const t = useContent('common');
-  const { clock } = useAdminWorkspace();
+  const { clock, can } = useAdminWorkspace();
   const text = useReservationText();
   const state = reservationState(r, now);
   const stateText = text.state(r, now);
@@ -79,7 +79,7 @@ export function ReservationRow({
 
       <div className={styles.end}>
         {/* Not once the hold is over (the history): the booking's popup can still mark it. */}
-        {canSeat(r, now) && !isUnmarked(r, now) ? (
+        {can('reservations.manage') && canSeat(r, now) && !isUnmarked(r, now) ? (
           <button
             type="button"
             className={styles.seat}

@@ -13,9 +13,9 @@ import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Icon } from '@/components/ui';
 import { useAdminName } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
-import { ADMIN_PATHS } from '@/lib/adminBranches';
+import { adminHomeFor } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
-import { KITCHEN_NAV, KITCHEN_PATHS, activeKitchenNavId } from '@/lib/kitchenNav';
+import { KITCHEN_PATHS, activeKitchenNavId, kitchenNavFor } from '@/lib/kitchenNav';
 import { useFullscreen } from './useFullscreen';
 import { useKitchenPrefs } from './useKitchenPrefs';
 import styles from './KitchenBar.module.css';
@@ -44,7 +44,9 @@ const CLOCK_REFRESH_MS = 15_000;
 export function KitchenBar() {
   const t = useContent('kitchen');
   const pathname = usePathname();
-  const { branch, brand, clock, canSwitch } = useAdminWorkspace();
+  const { branch, brand, clock, canSwitch, can } = useAdminWorkspace();
+  // The way back to the waiter / admin pages: the first of them they may open (none: no link).
+  const adminHome = adminHomeFor(can);
   // What changes at the branch reaches the kitchen at once (every kitchen page has the bar).
   useBranchEvents(branch.id);
   const adminName = useAdminName();
@@ -81,7 +83,7 @@ export function KitchenBar() {
 
       <nav className={styles.nav} aria-label={t('nav.label')}>
         <ul>
-          {KITCHEN_NAV.map((item) => (
+          {kitchenNavFor(can).map((item) => (
             <li key={item.id}>
               <Link
                 href={item.href}
@@ -94,25 +96,29 @@ export function KitchenBar() {
             </li>
           ))}
           {/* Back to the waiter / admin pages in one tap (also in the account menu). */}
-          <li className={styles.adminItem}>
-            <Link href={ADMIN_PATHS.dashboard} className={styles.adminLink} title={t('bar.admin')}>
-              <Icon name="home" size="sm" />
-              <span className={styles.wideOnly}>{t('bar.admin')}</span>
-            </Link>
-          </li>
+          {adminHome && (
+            <li className={styles.adminItem}>
+              <Link href={adminHome} className={styles.adminLink} title={t('bar.admin')}>
+                <Icon name="home" size="sm" />
+                <span className={styles.wideOnly}>{t('bar.admin')}</span>
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
 
       <div className={styles.end}>
         {/* Below 1024px the tabs have no room for it, so it sits up here. */}
-        <Link
-          href={ADMIN_PATHS.dashboard}
-          className={cx(styles.adminLink, styles.adminTop)}
-          aria-label={t('bar.admin')}
-        >
-          <Icon name="home" size="sm" />
-          {t('bar.adminShort')}
-        </Link>
+        {adminHome && (
+          <Link
+            href={adminHome}
+            className={cx(styles.adminLink, styles.adminTop)}
+            aria-label={t('bar.admin')}
+          >
+            <Icon name="home" size="sm" />
+            {t('bar.adminShort')}
+          </Link>
+        )}
         {time && (
           <p className={styles.clock}>
             <span aria-hidden="true">{time}</span>
@@ -170,6 +176,7 @@ export function KitchenBar() {
       {menuOpen && (
         <KitchenAccountDialog
           adminName={adminName}
+          adminHome={adminHome}
           canSwitch={canSwitch}
           onClose={close}
           onSwitchBranch={switchBranch}

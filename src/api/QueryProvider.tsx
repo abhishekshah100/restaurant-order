@@ -7,6 +7,13 @@ import {
 } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { getQueryClient } from './queryClient';
+import { useContentRefresh } from './useContentRefresh';
+
+/** Inside the provider: keeps a long-open tab's words current (useContentRefresh). */
+function ContentRefresh() {
+  useContentRefresh();
+  return null;
+}
 
 /**
  * TanStack Query for the whole app. `state` is the data the root layout fetched at build
@@ -22,6 +29,7 @@ export function QueryProvider({
   const client = getQueryClient();
   return (
     <QueryClientProvider client={client}>
+      <ContentRefresh />
       <HydrationBoundary state={state}>{children}</HydrationBoundary>
     </QueryClientProvider>
   );

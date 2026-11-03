@@ -1,17 +1,18 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { useMemo, useState, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAdminBranches, useBranchService, useBranches, useContent } from '@/api/hooks';
 import { useAdminName, useSelectedAdminBranchId } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
 import { branchConfigQuery } from '@/api/queries';
-import { activeNavId } from '@/lib/adminNav';
+import { activeNavId, landingFor, pageNeeds } from '@/lib/adminNav';
 import { joinBranch } from '@/lib/branchParts';
 import { AdminAccess } from '../AdminAccess';
 import { AdminWorkspaceProvider, useAdminWorkspace } from './AdminWorkspace';
 import { MobileNav } from './MobileNav';
+import { NoAccess } from './NoAccess';
 import { ShellHeader } from './ShellHeader';
 import { Sidebar } from './Sidebar';
 import { useShellActions } from './useShellActions';
@@ -23,13 +24,15 @@ import { useBranchEvents } from '@/api/liveEvents';
 function ShellFrame({ children }: { children: ReactNode }) {
   const t = useContent('common');
   const pathname = usePathname();
-  const { branch, clock } = useAdminWorkspace();
+  const { branch, clock, can } = useAdminWorkspace();
   const adminName = useAdminName();
   const { signOut, switchBranch } = useShellActions();
-  const service = useBranchService(branch.id).data;
+  // The floor's counts and live changes, for those who may see the floor.
+  const floorId = can('orders.view') ? branch.id : undefined;
+  const service = useBranchService(floorId).data;
   const counts = service?.counts;
   // What changes at the branch is read again at once (and the pages poll rarely meanwhile).
-  useBranchEvents(branch.id);
+  useBranchEvents(floorId);
   // A chime, a vibration and a toast for what's new on the floor (food ready, a call, the bill).
   const [alertsOn, setAlertsOn] = useAlertsSetting();
   const alertsNeedTap = useServiceAlerts(service, alertsOn);
@@ -37,6 +40,15 @@ function ShellFrame({ children }: { children: ReactNode }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const active = activeNavId(pathname);
   const time = now ? clock.time(now) : null;
+  // A page opened by its link that their role here doesn't include.
+  const needs = pageNeeds(pathname);
+  const allowed = !needs || can(...needs);
+  // Home that isn't theirs (the kitchen, say): on to where they start, when there's somewhere.
+  const router = useRouter();
+  const landing = active === 'home' && !allowed ? landingFor(can) : undefined;
+  useEffect(() => {
+    if (landing) router.replace(landing);
+  }, [landing, router]);
 
   return (
     <div className={styles.shell}>
@@ -58,7 +70,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
           alerts={{ on: alertsOn, needsTap: alertsNeedTap, onToggle: () => setAlertsOn(!alertsOn) }}
         />
         <main id="main" className={styles.main}>
-          {children}
+          {allowed ? children : landing ? null : <NoAccess />}
         </main>
       </div>
       <MobileNav

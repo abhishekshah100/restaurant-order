@@ -11,6 +11,12 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   // Staff sign-in, sign-out, branches and their status.
   ['POST', 'admin/sessions'],
   ['DELETE', 'admin/sessions/current'],
+  ['PATCH', 'admin/sessions/current/password'],
+  // Settings › Staff.
+  ['GET', 'admin/branches/:branchId/staff'],
+  ['POST', 'admin/branches/:branchId/staff'],
+  ['PATCH', 'admin/branches/:branchId/staff/:staffId'],
+  ['POST', 'admin/branches/:branchId/staff/:staffId/password'],
   ['GET', 'admin/branches'],
   ['POST', 'admin/branches'],
   ['DELETE', 'admin/branches/:branchId'],
@@ -34,9 +40,15 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/menu/categories/:categoryId/order'],
   ['PATCH', 'admin/branches/:branchId/menu/categories'],
   ['POST', 'admin/branches/:branchId/menu/images'],
+  ['POST', 'admin/branches/:branchId/payment-proofs'],
   // Pricing: promotions, and the quotes the cart and checkout ask for.
   ['GET', 'branches/:branchId/promotions'],
   // Settings › Offers: staff manage the automatic offers.
+  // Settings › Roles & permissions.
+  ['GET', 'admin/branches/:branchId/roles'],
+  ['POST', 'admin/branches/:branchId/roles'],
+  ['PATCH', 'admin/branches/:branchId/roles/:roleId'],
+  ['DELETE', 'admin/branches/:branchId/roles/:roleId'],
   ['GET', 'admin/branches/:branchId/offers'],
   ['POST', 'admin/branches/:branchId/offers'],
   ['PATCH', 'admin/branches/:branchId/offers/:offerId'],
@@ -45,6 +57,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['POST', 'delivery/quote'],
   // Guests' visits, their one-time codes, and the signed table QR links staff print.
   ['POST', 'sessions'],
+  ['GET', 'sessions/:id'],
   ['PATCH', 'sessions/:id'],
   ['POST', 'otp'],
   ['POST', 'otp/verify'],
@@ -71,6 +84,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round'],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round/status'],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round/items/:position/plated'],
+  ['POST', 'admin/branches/:branchId/orders/:id/rounds/:round/dismiss'],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rush'],
   ['POST', 'admin/branches/:branchId/orders/:id/messages'],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds/:round/cancel'],

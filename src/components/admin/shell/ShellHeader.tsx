@@ -41,9 +41,10 @@ export function ShellHeader({
   alerts,
 }: ShellHeaderProps) {
   const t = useContent('common');
-  const { branch, brand } = useAdminWorkspace();
+  const { branch, brand, can } = useAdminWorkspace();
   const menuLink = (className: string) =>
-    MENU && (
+    MENU &&
+    can(...(MENU.needs ?? [])) && (
       <Link
         href={MENU.href}
         className={cx(className, menuActive && styles.menuActive)}

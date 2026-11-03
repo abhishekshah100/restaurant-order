@@ -14,6 +14,7 @@ import { selectAdminBranch, signInAdmin } from '@/lib/adminAuth';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { adminLanding } from '@/lib/adminBranches';
 import { adminLoginSchema, type AdminLoginValues } from '@/lib/adminLogin';
+import { NewPasswordStep } from './NewPasswordStep';
 import styles from './AdminLogin.module.css';
 
 const PHOTO = '/images/pasta-hero.jpg';
@@ -30,7 +31,10 @@ export function AdminLogin() {
   const branches = useAdminBranches();
   const token = useAdminToken();
   const signedInNow = login.isSuccess && token === login.data.token;
-  const branchesFailed = signedInNow && branches.isError;
+  // Signed in with a password an admin gave them: their own first (the server waits for it).
+  const [passwordChosen, setPasswordChosen] = useState(false);
+  const choosingPassword = signedInNow && login.data.mustChangePassword === true && !passwordChosen;
+  const branchesFailed = signedInNow && !choosingPassword && branches.isError;
   const demoAccount = useDemoAdminAccount();
   const [showPassword, setShowPassword] = useState(false);
   const schema = useMemo(() => adminLoginSchema(t.get('adminLogin.validation')), [t]);
@@ -45,14 +49,18 @@ export function AdminLogin() {
     defaultValues: { identity: '', password: '' },
   });
 
-  const onSubmit = (values: AdminLoginValues) => login.mutate(values, { onSuccess: signInAdmin });
+  const [given, setGiven] = useState('');
+  const onSubmit = (values: AdminLoginValues) => {
+    setGiven(values.password);
+    login.mutate(values, { onSuccess: signInAdmin });
+  };
 
   useEffect(() => {
-    if (!signedInNow || !branches.data) return;
+    if (!signedInNow || choosingPassword || !branches.data) return;
     const landing = adminLanding(branches.data);
     if (landing.select) selectAdminBranch(landing.select);
     router.replace(landing.to);
-  }, [branches.data, signedInNow, router]);
+  }, [branches.data, signedInNow, choosingPassword, router]);
 
   const fillDemoAccount = () => {
     if (!demoAccount) return;
@@ -91,87 +99,104 @@ export function AdminLogin() {
 
       <div className={styles.formPane}>
         <div className={styles.card}>
-          <header className={styles.intro}>
-            <h1 className={styles.title}>{t('adminLogin.title')}</h1>
-            <p className={styles.subtitle}>{t('adminLogin.subtitle')}</p>
-          </header>
-
-          {(login.isError || branchesFailed) && (
-            <Banner tone="err" icon="alert" live="assertive" className={styles.alert}>
-              {isApiError(login.error, 'invalid_credentials')
-                ? t('adminLogin.errors.invalidCredentials')
-                : isApiError(login.error, 'rate_limited')
-                  ? t('adminLogin.errors.tooManyAttempts')
-                  : t('adminLogin.errors.requestFailed')}
-            </Banner>
-          )}
-
-          {/* POST: a submit before the page's script runs must never put the password in the URL. */}
-          <form className={styles.form} method="post" onSubmit={handleSubmit(onSubmit)} noValidate>
-            <Input
-              id="admin-identity"
-              label={t('adminLogin.identity')}
-              icon="user"
-              type="text"
-              autoComplete="username"
-              autoCapitalize="none"
-              spellCheck={false}
-              placeholder={t('adminLogin.identityPlaceholder')}
-              error={errors.identity?.message}
-              {...register('identity')}
+          {choosingPassword ? (
+            <NewPasswordStep
+              given={given}
+              onDone={() => {
+                setPasswordChosen(true);
+                void branches.refetch();
+              }}
             />
+          ) : (
+            <>
+              <header className={styles.intro}>
+                <h1 className={styles.title}>{t('adminLogin.title')}</h1>
+                <p className={styles.subtitle}>{t('adminLogin.subtitle')}</p>
+              </header>
 
-            <div className={styles.passwordField}>
-              <Input
-                id="admin-password"
-                label={t('adminLogin.password')}
-                icon="lock"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                placeholder={t('adminLogin.passwordPlaceholder')}
-                error={errors.password?.message}
-                {...register('password')}
-              />
-              <button
-                className={styles.passwordToggle}
-                type="button"
-                aria-label={t('adminLogin.showPassword')}
-                aria-pressed={showPassword}
-                aria-controls="admin-password"
-                onClick={() => setShowPassword((visible) => !visible)}
+              {(login.isError || branchesFailed) && (
+                <Banner tone="err" icon="alert" live="assertive" className={styles.alert}>
+                  {isApiError(login.error, 'invalid_credentials')
+                    ? t('adminLogin.errors.invalidCredentials')
+                    : isApiError(login.error, 'rate_limited')
+                      ? t('adminLogin.errors.tooManyAttempts')
+                      : t('adminLogin.errors.requestFailed')}
+                </Banner>
+              )}
+
+              {/* POST: a submit before the page's script runs must never put the password in the URL. */}
+              <form
+                className={styles.form}
+                method="post"
+                onSubmit={handleSubmit(onSubmit)}
+                noValidate
               >
-                <Icon name={showPassword ? 'eyeoff' : 'eye'} size="sm" />
-              </button>
-            </div>
+                <Input
+                  id="admin-identity"
+                  label={t('adminLogin.identity')}
+                  icon="user"
+                  type="text"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder={t('adminLogin.identityPlaceholder')}
+                  error={errors.identity?.message}
+                  {...register('identity')}
+                />
 
-            <Button
-              type="submit"
-              block
-              loading={login.isPending || (login.isSuccess && !branchesFailed)}
-              iconEnd="arrow"
-              className={styles.submit}
-            >
-              {t('adminLogin.submit')}
-            </Button>
-          </form>
+                <div className={styles.passwordField}>
+                  <Input
+                    id="admin-password"
+                    label={t('adminLogin.password')}
+                    icon="lock"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder={t('adminLogin.passwordPlaceholder')}
+                    error={errors.password?.message}
+                    {...register('password')}
+                  />
+                  <button
+                    className={styles.passwordToggle}
+                    type="button"
+                    aria-label={t('adminLogin.showPassword')}
+                    aria-pressed={showPassword}
+                    aria-controls="admin-password"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                  >
+                    <Icon name={showPassword ? 'eyeoff' : 'eye'} size="sm" />
+                  </button>
+                </div>
 
-          {demoAccount && (
-            <aside className={styles.demo} aria-labelledby="admin-demo-title">
-              <div className={styles.demoText}>
-                <p id="admin-demo-title" className={styles.demoTitle}>
-                  {t('adminLogin.demo.title')}
-                </p>
-                <p className={styles.demoBody}>{t('adminLogin.demo.body')}</p>
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                className={styles.demoButton}
-                onClick={fillDemoAccount}
-              >
-                {t('adminLogin.demo.use')}
-              </Button>
-            </aside>
+                <Button
+                  type="submit"
+                  block
+                  loading={login.isPending || (login.isSuccess && !branchesFailed)}
+                  iconEnd="arrow"
+                  className={styles.submit}
+                >
+                  {t('adminLogin.submit')}
+                </Button>
+              </form>
+
+              {demoAccount && (
+                <aside className={styles.demo} aria-labelledby="admin-demo-title">
+                  <div className={styles.demoText}>
+                    <p id="admin-demo-title" className={styles.demoTitle}>
+                      {t('adminLogin.demo.title')}
+                    </p>
+                    <p className={styles.demoBody}>{t('adminLogin.demo.body')}</p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className={styles.demoButton}
+                    onClick={fillDemoAccount}
+                  >
+                    {t('adminLogin.demo.use')}
+                  </Button>
+                </aside>
+              )}
+            </>
           )}
         </div>
       </div>

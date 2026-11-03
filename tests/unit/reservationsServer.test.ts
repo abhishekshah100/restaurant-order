@@ -292,6 +292,8 @@ describe('reservations on the floor plan (mock)', () => {
     await guestOrder(6);
     expect((await tableOnFloor(6))?.status).toBe('ordering');
     now += 60_000;
+    // The bill collected, the guests leave.
+    await call('POST', `${BASE}/tables/6/payment`, { method: 'cash' }, admin);
     await call('POST', `${BASE}/tables/6/free`, undefined, admin);
     expect(await tableOnFloor(6)).toMatchObject({ status: 'available', freed: true });
   });

@@ -114,6 +114,8 @@ export interface KitchenTicket {
   doneAt?: string;
   /** ISO: when it was cancelled, if it was. */
   cancelledAt?: string;
+  /** ISO: cancelled, and the kitchen put it away (Dismiss, on any screen). */
+  dismissedAt?: string;
   /** The lane it was in last (a cancelled ticket shows there for a while). */
   lastLane: KitchenLane;
   /** ISO: when its items were last changed after it was sent. */
@@ -220,6 +222,7 @@ export function kitchenTickets(
         readyAt: kitchen?.ready?.at ?? eventAt(timeline, ['ready', 'outForDelivery']),
         doneAt: round.servedAt ?? eventAt(timeline, ['served', 'pickedUp', 'delivered']),
         cancelledAt: eventAt(timeline, ['cancelled']),
+        ...(round.dismissedAt ? { dismissedAt: round.dismissedAt } : {}),
         lastLane: eventAt(timeline, ['ready', 'outForDelivery'])
           ? 'ready'
           : eventAt(timeline, ['preparing'])
@@ -346,9 +349,13 @@ export function laneTickets(
 export const CANCELLED_SHOW_MS = 5 * MINUTE_MS;
 export const CHANGED_SHOW_MS = 5 * MINUTE_MS;
 
-/** Cancelled in the last few minutes (CANCELLED_SHOW_MS): still on the board, to stop. */
+/**
+ * Cancelled in the last few minutes (CANCELLED_SHOW_MS) and not put away yet (Dismiss): still on
+ * the board, to stop.
+ */
 export const justCancelled = (ticket: KitchenTicket, now: Date) =>
   ticket.stage === 'cancelled' &&
+  ticket.dismissedAt === undefined &&
   ticket.cancelledAt !== undefined &&
   now.getTime() - Date.parse(ticket.cancelledAt) < CANCELLED_SHOW_MS;
 
@@ -527,6 +534,23 @@ export function withPlated(
       rounds: order.rounds.map((r) => (r.number === round ? { ...r, items: tick(r.items) } : r)),
     };
   });
+}
+
+/** A cancelled round put away (Dismiss): shown so at once, before the server answers. */
+export function withDismissed(
+  orders: readonly Order[],
+  orderId: string,
+  round: number,
+  at: string,
+): Order[] {
+  return orders.map((order) =>
+    order.id === orderId && order.rounds
+      ? {
+          ...order,
+          rounds: order.rounds.map((r) => (r.number === round ? { ...r, dismissedAt: at } : r)),
+        }
+      : order,
+  );
 }
 
 /** Whole minutes a ticket has waited (what its timer shows: "12 min"); 0 before the first. */

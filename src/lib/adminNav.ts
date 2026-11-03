@@ -1,5 +1,5 @@
 import type { IconName } from '@/components/ui/Icon/iconNames';
-import type { AdminServiceCounts } from '@/types/admin';
+import type { AdminServiceCounts, StaffPermission } from '@/types/admin';
 import type { OrderView } from './adminOrders';
 import type { PaymentsView } from './adminPayments';
 import type { DayRange } from './dayRange';
@@ -8,7 +8,9 @@ import { ADMIN_PATHS } from './adminBranches';
 /*
  * The admin navigation, one list for every layout: the desktop sidebar shows every item; the
  * mobile tab bar shows the `tab` items and puts the rest in its More sheet. Labels are content
- * keys (common › adminShell.nav.<id>).
+ * keys (common › adminShell.nav.<id>). Each page shows for its own permissions (`needs`) and the
+ * server lets those read what the page shows (access-catalog › READERS), so a role opens exactly
+ * the pages its permissions name.
  */
 
 export type AdminNavId =
@@ -30,19 +32,23 @@ export interface AdminNavItem {
   tab: boolean;
   /** The live count shown beside it, if any. */
   badge?: (counts: AdminServiceCounts) => number;
+  /** Shown to staff holding any of these at the branch (everyone, without). */
+  needs?: readonly StaffPermission[];
 }
 
 const section = (id: string) => `${ADMIN_PATHS.dashboard}${id}/`;
 
 export const ADMIN_NAV: readonly AdminNavItem[] = [
-  { id: 'home', href: ADMIN_PATHS.dashboard, icon: 'home', tab: true },
-  { id: 'tables', href: section('tables'), icon: 'table', tab: true },
+  // The floor's home: the queue of what's waiting on the floor.
+  { id: 'home', href: ADMIN_PATHS.dashboard, icon: 'home', tab: true, needs: ['orders.view'] },
+  { id: 'tables', href: section('tables'), icon: 'table', tab: true, needs: ['orders.view'] },
   {
     id: 'orders',
     href: section('orders'),
     icon: 'receipt',
     tab: true,
     badge: (counts) => counts.readyToServe,
+    needs: ['orders.view'],
   },
   {
     id: 'requests',
@@ -50,14 +56,64 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     icon: 'bell',
     tab: true,
     badge: (counts) => counts.waiterCalls + counts.billRequests + (counts.kitchenMessages ?? 0),
+    needs: ['orders.view'],
   },
-  { id: 'reservations', href: section('reservations'), icon: 'calendar', tab: false },
+  {
+    id: 'reservations',
+    href: section('reservations'),
+    icon: 'calendar',
+    tab: false,
+    needs: ['reservations.manage'],
+  },
   // The kitchen has its own workspace (lib/kitchenNav), outside this shell.
-  { id: 'kitchen', href: ADMIN_PATHS.kitchen, icon: 'chef', tab: false },
-  { id: 'menu', href: section('menu'), icon: 'menu', tab: false },
-  { id: 'payments', href: section('payments'), icon: 'card', tab: false },
-  { id: 'settings', href: section('settings'), icon: 'sliders', tab: false },
+  { id: 'kitchen', href: ADMIN_PATHS.kitchen, icon: 'chef', tab: false, needs: ['kitchen.update'] },
+  {
+    id: 'menu',
+    href: section('menu'),
+    icon: 'menu',
+    tab: false,
+    needs: ['menu.manage', 'menu.availability.update'],
+  },
+  {
+    id: 'payments',
+    href: section('payments'),
+    icon: 'card',
+    tab: false,
+    needs: ['payments.collect', 'reports.view'],
+  },
+  {
+    id: 'settings',
+    href: section('settings'),
+    icon: 'sliders',
+    tab: false,
+    needs: ['branch.settings.manage', 'tables.manage', 'branches.manage', 'staff.manage'],
+  },
 ];
+
+/** The nav items a staff member may open (`can` from useAdminWorkspace). */
+export const navFor = (can: (...permissions: StaffPermission[]) => boolean) =>
+  ADMIN_NAV.filter((item) => !item.needs || can(...item.needs));
+
+/**
+ * Where a staff member starts at a branch, from what they may do there: the floor's home, else the
+ * kitchen, else the first page of the nav they can open. Undefined: nothing there is theirs.
+ */
+export function landingFor(can: (...permissions: StaffPermission[]) => boolean) {
+  const open = navFor(can);
+  return (
+    open.find((item) => item.id === 'home') ??
+    open.find((item) => item.id === 'kitchen') ??
+    open[0]
+  )?.href;
+}
+
+/** The first page of the admin shell (not the kitchen's) they can open: the kitchen's way back. */
+export const adminHomeFor = (can: (...permissions: StaffPermission[]) => boolean) =>
+  navFor(can).find((item) => item.id !== 'kitchen')?.href;
+
+/** The pages a permission opens (its nav items): what the role form says it gives. */
+export const pagesOf = (permission: StaffPermission): AdminNavId[] =>
+  ADMIN_NAV.filter((item) => item.needs?.includes(permission)).map((item) => item.id);
 
 /** "/admin/dashboard/orders/ready" and "/admin/dashboard/orders/ready/" alike. */
 const withSlash = (path: string) => `${path.replace(/\/+$/, '')}/`;
@@ -70,6 +126,16 @@ export function activeNavId(pathname: string): AdminNavId | undefined {
   const path = withSlash(pathname);
   if (path === ADMIN_PATHS.dashboard) return 'home';
   return ADMIN_NAV.find((item) => item.id !== 'home' && path.startsWith(item.href))?.id;
+}
+
+/**
+ * What a pathname's page needs (any of): its nav item's, and Table QR codes the floor plan's
+ * (they're printed from the tables the plan sets up). Undefined: anyone at the branch.
+ */
+export function pageNeeds(pathname: string): readonly StaffPermission[] | undefined {
+  if (withSlash(pathname).startsWith(qrCodesPath())) return ['tables.manage'];
+  const id = activeNavId(pathname);
+  return ADMIN_NAV.find((item) => item.id === id)?.needs;
 }
 
 /** Where the waiter home's counters lead. */

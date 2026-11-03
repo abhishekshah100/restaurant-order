@@ -22,6 +22,7 @@ export function LedgerRow({ entry, onOpen }: { entry: LedgerEntry; onOpen: () =>
     t(entry.channel === 'online' ? 'adminPayments.entry.online' : 'adminPayments.entry.inPerson'),
     entry.by && t('adminPayments.entry.by', { name: entry.by }),
     entry.transactionRef && t('adminPayments.entry.ref', { ref: entry.transactionRef }),
+    entry.proofs?.length && t.plural('adminPayments.entry.proofs', entry.proofs.length),
   ].filter(Boolean);
 
   return (

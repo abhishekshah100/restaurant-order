@@ -124,10 +124,7 @@ export const CANCEL_REASONS: readonly CancelReason[] = CANCELLATION_REASONS;
  * kitchen hasn't started the round (New), and the order isn't paid (it still owes money). The
  * server checks it too (a round paid online as it was sent can't be either).
  */
-export const roundOpenForStaff = (
-  order: Order,
-  round: Pick<OrderRound, 'status'>,
-): boolean =>
+export const roundOpenForStaff = (order: Order, round: Pick<OrderRound, 'status'>): boolean =>
   order.mode === 'dineIn' &&
   order.status !== 'cancelled' &&
   round.status === 'received' &&

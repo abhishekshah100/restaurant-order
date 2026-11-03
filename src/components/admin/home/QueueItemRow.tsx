@@ -68,6 +68,7 @@ export function QueueItemRow({
 }) {
   const t = useContent('common');
   const { title, detail } = useDescription(item);
+  const { can } = useAdminWorkspace();
   const minutes = now ? minutesSince(item.since, now) : null;
   // A request someone is already on the way to: who.
   const coming = item.kind === 'ready' ? undefined : item.request.acknowledgedBy;
@@ -128,15 +129,17 @@ export function QueueItemRow({
           )}
         </p>
       )}
-      <button
-        type="button"
-        className={cx(styles.action, item.kind === 'ready' && styles.primary)}
-        onClick={onAct}
-        aria-label={t('adminHome.queue.actionLabel', { action, what: title, where })}
-      >
-        <Icon name="check" size="xs" className={styles.actionIcon} />
-        {action}
-      </button>
+      {can('service.respond') && (
+        <button
+          type="button"
+          className={cx(styles.action, item.kind === 'ready' && styles.primary)}
+          onClick={onAct}
+          aria-label={t('adminHome.queue.actionLabel', { action, what: title, where })}
+        >
+          <Icon name="check" size="xs" className={styles.actionIcon} />
+          {action}
+        </button>
+      )}
     </li>
   );
 }

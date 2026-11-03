@@ -56,7 +56,9 @@ type Open =
  */
 export function MenuBoard() {
   const t = useContent('common');
-  const { branch, region } = useAdminWorkspace();
+  const { branch, region, can } = useAdminWorkspace();
+  // Adding, changing and ordering dishes; the rest only switch what's in stock.
+  const manage = can('menu.manage');
   const { menu, error } = useBranchMenu(region);
   const [status, setStatus] = useState<MenuStatusFilter>('all');
   const [category, setCategory] = useState<CategoryId | 'all'>('all');
@@ -124,7 +126,7 @@ export function MenuBoard() {
             ))}
           </div>
           <div className={styles.actions}>
-            {order ? (
+            {!manage ? null : order ? (
               <>
                 <Button variant="secondary" onClick={() => setOrder(null)}>
                   {t('adminMenu.reorderCancel')}
@@ -205,7 +207,7 @@ export function MenuBoard() {
                       onAvailability={() =>
                         setOpen({ kind: 'availability', dish, offFirst: false })
                       }
-                      onEdit={() => setOpen({ kind: 'edit', dish })}
+                      onEdit={manage ? () => setOpen({ kind: 'edit', dish }) : undefined}
                       reorder={
                         order
                           ? {

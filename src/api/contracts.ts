@@ -6,13 +6,17 @@ import type {
   AdminFloorPlan,
   AdminOrders,
   AdminReservations,
+  AdminRole,
+  AdminServiceRequest,
+  AdminSession,
+  AdminStaffMember,
+  AdminTableDetail,
   AdminTableQrCodes,
   CancelReason,
-  AdminServiceRequest,
   FloorPlanLayout,
-  AdminTableDetail,
-  AdminSession,
   Reservation,
+  StaffPermission,
+  StaffScope,
 } from '@/types/admin';
 import type { AtTableMethodKey, OrderMode, PaymentMethodId } from '@/types/branch';
 import type { BranchDetails, BranchSettings, BranchSettingsChoices } from '@/types/branchSettings';
@@ -122,6 +126,15 @@ export type ApiErrorCode =
   | 'reservation_closed'
   /** 409: a table the new floor plan leaves out has an open bill, food on the way or a booking. */
   | 'table_in_use'
+  /** 409: the table still owes money (`due`): collect it before freeing the table. */
+  | 'bill_open'
+  | 'role_system'
+  | 'role_in_use'
+  | 'staff_exists'
+  | 'own_account'
+  | 'last_admin'
+  | 'wrong_password'
+  | 'password_change_required'
   /** 403: a table scan's QR token is missing, forged or for another table: scan the code again. */
   | 'qr_invalid'
   /** 409: the table is out of service (Settings › Floor plan): nobody can order at it or book it. */
@@ -148,8 +161,14 @@ export interface ApiErrorBody {
   reservation?: Pick<Reservation, 'id' | 'guestName' | 'at'>;
   /** table_taken: which of the booking's tables it holds. */
   table?: number;
+  /** staff_exists, and a 400's: the field at fault. */
+  field?: string;
+  /** role_in_use: how many staff hold the role. */
+  staff?: number;
   /** table_in_use: the tables that can't go yet, and why. */
   tables?: TableInUse[];
+  /** bill_open: what the table still owes. */
+  due?: Price;
 }
 
 /** A table the floor plan can't leave out yet: its open orders or bill, or its bookings to come. */
@@ -514,7 +533,8 @@ export interface ImageUploadResponse {
  * mode and state, in full (items, rounds, payment, timeline, pickup or delivery details), newest
  * first. With `?from=YYYY-MM-DD&to=YYYY-MM-DD` (branch calendar days, up to 365 days back and 31
  * long), that range's instead; with `&table=N`, one table's only. A range up to today also has
- * yesterday's orders still to pay. Authorised like GET /admin/branches. 200 →
+ * yesterday's orders still to pay; with `&due=all`, every order still to pay from the year
+ * before (the Payments board: an unpaid bill stays to collect until it's taken). Authorised like GET /admin/branches. 200 →
  * `AdminOrdersResponse`. Errors: 400 invalid_request (details: field from | to | table), 401,
  * 403. Poll it like the service (every 15 s). Mock: this device's orders, the drawn history
  * and, in dev, the demo floor; today only.
@@ -526,6 +546,8 @@ export interface AdminOrdersFilter {
   from?: string;
   to?: string;
   table?: number;
+  /** Up to today: also every older order still to pay (the Payments board). */
+  due?: 'all';
 }
 
 /**
@@ -535,8 +557,43 @@ export interface AdminOrdersFilter {
  * `method` is one of GET /branches › payments.atTable. 200 → `Order`. Errors: 400 (another
  * method), 401, 403, 404 not_found, 409 order_closed (cancelled) / nothing_to_pay (paid).
  */
-export interface CollectPaymentRequest {
+/**
+ * One way part of a bill was paid in person (₹1,500 cash, then ₹1,526 UPI), with any proof
+ * photos of it (keys from POST …/payment-proofs; up to 5, not for cash).
+ */
+export interface PaymentPart {
   method: AtTableMethodKey;
+  /** Major units, more than 0. */
+  amount: Price;
+  proofs?: string[];
+}
+
+/** Proof photos on one part of a payment, and ways a bill can be paid in at most. */
+export const MAX_PROOFS = 5;
+export const MAX_PARTS = 5;
+
+/**
+ * `POST /admin/branches/:branchId/payment-proofs` — a photo taken as proof of a payment in
+ * person, kept privately (a data URL: JPEG, PNG or WebP, at most 1 MB; the app sends a JPEG of
+ * at most 1600 px). Needs `payments.collect`. 201 → `{ key }`, sent with the payment's part.
+ * `GET …/payment-proofs/:key` answers the photo itself (not JSON) to staff with
+ * `payments.collect` or `reports.view`, once it's on a payment at the branch; 404 otherwise.
+ * Backend only.
+ */
+export interface PaymentProofRequest {
+  dataUrl: string;
+}
+export interface PaymentProofResponse {
+  key: string;
+}
+
+/**
+ * Taken in one way (`method`) or several (`parts`, which add up to what's taken; then no
+ * `amount`): one of the two.
+ */
+export interface CollectPaymentRequest {
+  method?: AtTableMethodKey;
+  parts?: PaymentPart[];
   /**
    * Part of what's due, for a split bill (major units, more than 0, at most what's due): the
    * rest stays due. Missing: everything due.
@@ -603,7 +660,9 @@ export type UpdateFloorsRequest = FloorPlanLayout;
  * (the orders it paid). Errors: 400, 401, 403, 409 nothing_to_pay.
  */
 export interface CollectTableRequest {
-  method: AtTableMethodKey;
+  /** One way, or several (`parts`, adding up to the whole bill less what's left). */
+  method?: AtTableMethodKey;
+  parts?: PaymentPart[];
   /** A tip on top, recorded with the payment (not part of the bill). */
   tip?: Price;
   /** Part of the table's bill left, with why: it comes off its latest orders first. */
@@ -704,6 +763,13 @@ export interface SetKitchenStatusRequest {
 export type KitchenStep = 'received' | 'preparing' | 'ready';
 
 /**
+ * `POST /admin/branches/:branchId/orders/:id/rounds/:round/dismiss` — the kitchen saw a cancelled
+ * ticket and put it away: the round gets `dismissedAt`, and every kitchen screen drops it (a live
+ * change). No body. Needs `kitchen.update`. Idempotent. 200 → the order (as the plated tick).
+ * Errors: 401, 403, 404 not_found (no such order or round), 409 conflict (not cancelled).
+ */
+
+/**
  * `PATCH /admin/branches/:branchId/orders/:id/rounds/:round/items/:position/plated` — the kitchen
  * ticks an item off as plated (or unticks it), so every kitchen screen shows it. `position` is
  * the item's index in the round (0 first). Needs `kitchen.update`. 200 → the order. Errors: 404
@@ -732,6 +798,82 @@ export interface SetPlatedRequest {
  */
 export interface CancelRoundRequest {
   reason?: CancelReason;
+}
+
+/**
+ * `GET /admin/branches/:branchId/roles` — the roles the restaurant gives its staff (built in,
+ * read-only; and its own) and every permission there is. Needs `staff.manage`. 200 → this.
+ */
+export interface RolesResponse {
+  roles: AdminRole[];
+  /** Every permission, and what each needs: a role with it is saved with those too. */
+  permissions: { key: StaffPermission; description: string; needs: StaffPermission[] }[];
+}
+
+/**
+ * `POST /admin/branches/:branchId/roles` — a role of the restaurant's own (201 → `AdminRole`) —
+ * and `PATCH …/roles/:roleId` — one of its own, sent whole (200). `DELETE …/roles/:roleId` →
+ * 204. Needs `staff.manage`. Errors: 400 invalid_request, 403 forbidden (a permission the one
+ * granting doesn't hold), 404, 409 role_system (built in), 409 role_in_use (`staff`: how many
+ * hold it; delete only).
+ */
+export interface RoleInput {
+  name: string;
+  description?: string;
+  permissions: StaffPermission[];
+}
+
+/**
+ * `GET /admin/branches/:branchId/staff` — everyone with a role here (the branch's, and the
+ * restaurant's admins) and the roles they can be given. Needs `staff.manage`. 200 → this.
+ */
+export interface StaffResponse {
+  staff: AdminStaffMember[];
+  roles: { id: string; name: string; scope: StaffScope }[];
+}
+
+/**
+ * `POST /admin/branches/:branchId/staff` — someone on the staff here: a new account with this
+ * password (changed at their first sign-in), or an account the email has, given the role here.
+ * 201 → `AdminStaffMember`. Errors: 400 (`field`: phone, roleId), 403 (a role with permissions
+ * the one adding doesn't hold), 409 staff_exists (`field`: email — already here; phone —
+ * someone else's).
+ */
+export interface AddStaffRequest {
+  name: string;
+  email: string;
+  /** National digits, by the branch's mobile rules. */
+  phone: string;
+  roleId: string;
+  /** At least 8 characters. */
+  password: string;
+}
+
+/**
+ * `PATCH /admin/branches/:branchId/staff/:staffId` — a new name, a role here, on or off (off
+ * signs them out everywhere). 200 → `AdminStaffMember`. Errors: 403, 404, 409 own_account
+ * (one's own role or status), 409 last_admin (the restaurant's only active admin).
+ */
+export interface UpdateStaffRequest {
+  name?: string;
+  roleId?: string;
+  active?: boolean;
+}
+
+/**
+ * `POST /admin/branches/:branchId/staff/:staffId/password` — a new password for them, changed
+ * at their next sign-in; signed out everywhere now. 204. Errors: 403, 404, 409 own_account.
+ * `PATCH /admin/sessions/current/password` (`ChangePasswordRequest`) — one's own: 204; 401
+ * wrong_password.
+ */
+export interface ResetStaffPasswordRequest {
+  password: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  /** At least 8 characters. */
+  newPassword: string;
 }
 
 export interface ItemUnavailableRequest {
@@ -795,6 +937,15 @@ export type SetKitchenStatusResponse = Order;
  */
 export type CreateSessionRequest = SessionStart;
 export type CreateSessionResponse = GuestSession;
+
+/**
+ * `GET /sessions/:id` — the session as it is, while it's live. 200 → `GuestSession`. Errors: 404
+ * session_not_found once it ended: it expired, or staff freed its table (`POST
+ * /admin/branches/:branchId/tables/:table/free` ends every session open at the table, so the
+ * next scan starts a new visit). The app checks a session it kept before going on with it.
+ * Backend only.
+ */
+export type SessionResponse = GuestSession;
 
 /**
  * `PATCH /sessions/:id` — order another way, or to another delivery area, in the same session

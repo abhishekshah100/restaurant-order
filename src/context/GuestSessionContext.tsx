@@ -16,7 +16,9 @@ import type { UpdateSessionRequest } from '@/api/contracts';
 import { useBranchDataLoaded, useBranches, useRestaurant } from '@/api/hooks';
 import { useStartSession, useUpdateSession } from '@/api/mutations';
 import { isOrderMode } from '@/lib/fulfilment';
-import { ApiError } from '@/api/client';
+import { isBackendEnabled } from '@/api/backend';
+import { ApiError, isApiError } from '@/api/client';
+import { api } from '@/api/endpoints';
 import {
   fitsBranches,
   parseScan,
@@ -27,6 +29,7 @@ import {
 } from '@/lib/scan';
 import { fromSaved, isLiveSession, isSavedSession } from '@/lib/session';
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage';
+import { onGuestSessionEnded } from '@/lib/guestSessionEnd';
 import type { BranchSummary, OrderMode } from '@/types/branch';
 import type { GuestSession, SessionStart, StartChoice } from '@/types/session';
 
@@ -137,6 +140,9 @@ function saveSession(session: GuestSession) {
   setState({ session, opening: null, choosing: null });
 }
 
+/** Whether a kept session is still live on the server (rejects session_not_found if not). */
+const checkSession = (id: string) => api.session(id);
+
 /** One session opening at a time (Strict Mode runs effects twice). */
 let opening: { key: string; promise: Promise<GuestSession> } | null = null;
 
@@ -223,6 +229,36 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
     [patchSession],
   );
 
+  /**
+   * The server says the session ended (it expired, or staff freed the table when the guests
+   * left): it's let go here too, and the visit starts over — a new session from the table's QR
+   * link (its checkout fresh: name and number asked again), or the start screen.
+   */
+  const restart = useCallback(() => {
+    if (!current.session) return;
+    removeKey(STORAGE_KEYS.session);
+    const outcome = loadOutcome(window.location.search, null, branches, defaultBranchId);
+    if ('start' in outcome) {
+      void open(outcome.start).catch(() => undefined);
+    } else {
+      setState({
+        session: null,
+        opening: null,
+        choosing: 'choose' in outcome ? outcome.choose : null,
+      });
+    }
+  }, [branches, defaultBranchId, open]);
+  // A request found the session gone: the current one is checked first, so an old request
+  // still on its way after a restart can't drop the new session.
+  const recheck = useCallback(() => {
+    const id = current.session?.id;
+    if (!id || !isBackendEnabled()) return;
+    checkSession(id).catch((error: unknown) => {
+      if (isApiError(error, 'session_not_found') && current.session?.id === id) restart();
+    });
+  }, [restart]);
+  useEffect(() => onGuestSessionEnded(recheck), [recheck]);
+
   useEffect(() => {
     const saved = liveSavedSession(Date.now(), branches, defaultBranchId);
     const outcome = loadOutcome(window.location.search, saved, branches, defaultBranchId);
@@ -242,7 +278,12 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
     } else {
       setState({ session: outcome.keep, opening: null, choosing: null });
     }
-  }, [branches, defaultBranchId, open, update]);
+    // A kept session may have ended on the server meanwhile (staff freed the table): checked
+    // once, and a new visit starts if so. The mock keeps sessions on the device only.
+    const kept =
+      'change' in outcome ? outcome.change.session : 'keep' in outcome ? outcome.keep : null;
+    if (kept) recheck();
+  }, [branches, defaultBranchId, open, recheck, update]);
 
   // Another tab opened or changed a session: this device now has that guest session.
   useEffect(() => {

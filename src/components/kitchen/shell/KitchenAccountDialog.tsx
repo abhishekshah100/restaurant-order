@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { Dialog, Icon } from '@/components/ui';
-import { ADMIN_PATHS } from '@/lib/adminBranches';
 import { cx } from '@/lib/cx';
 import styles from './KitchenBar.module.css';
 import { useKitchenThemeClass } from './useKitchenTheme';
@@ -11,12 +10,15 @@ import { useKitchenThemeClass } from './useKitchenTheme';
 /** The kitchen's account menu: who's signed in, the admin dashboard, switch branch, sign out. */
 export function KitchenAccountDialog({
   adminName,
+  adminHome,
   canSwitch,
   onClose: close,
   onSwitchBranch,
   onSignOut,
 }: {
   adminName: string | undefined;
+  /** The first waiter / admin page they may open (none: no row). */
+  adminHome: string | undefined;
   canSwitch: boolean;
   onClose: () => void;
   onSwitchBranch: () => void;
@@ -41,16 +43,18 @@ export function KitchenAccountDialog({
             {t('account.signedIn', { name: adminName })}
           </p>
         )}
-        <Link href={ADMIN_PATHS.dashboard} className={styles.row} onClick={close}>
-          <span className={styles.rowIcon}>
-            <Icon name="home" size="sm" />
-          </span>
-          <span className={styles.rowText}>
-            <span className={styles.rowLabel}>{t('account.admin')}</span>
-            <span className={styles.rowSub}>{t('account.adminSub')}</span>
-          </span>
-          <Icon name="chev" size="xs" className={styles.chev} />
-        </Link>
+        {adminHome && (
+          <Link href={adminHome} className={styles.row} onClick={close}>
+            <span className={styles.rowIcon}>
+              <Icon name="home" size="sm" />
+            </span>
+            <span className={styles.rowText}>
+              <span className={styles.rowLabel}>{t('account.admin')}</span>
+              <span className={styles.rowSub}>{t('account.adminSub')}</span>
+            </span>
+            <Icon name="chev" size="xs" className={styles.chev} />
+          </Link>
+        )}
         {canSwitch && (
           <button
             type="button"

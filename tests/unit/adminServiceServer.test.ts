@@ -797,13 +797,23 @@ describe('POST /admin/branches/:branchId/tables/:table/free (mock)', () => {
     (await call('GET', 'admin/branches/blr-indiranagar/tables/5', undefined, admin))
       .body as TableDetailResponse;
 
-  it('frees a table: available, its earlier orders left out, until the next order', async () => {
+  it('frees a table once paid: available, its earlier orders left out, until the next order', async () => {
     const atFive = await guest('blr-indiranagar', { mode: 'dineIn', table: 5 });
     await place(atFive);
     await callWaiter(atFive);
     expect(await tableFive()).toMatchObject({ status: 'needsWaiter', freed: false, orderCount: 1 });
 
     now += MINUTE_MS;
+    // Still owing: collect the bill first.
+    const refused = await free(5);
+    expect(refused.status).toBe(409);
+    expect(refused.body).toMatchObject({ error: 'bill_open' });
+    await call(
+      'POST',
+      'admin/branches/blr-indiranagar/tables/5/payment',
+      { method: 'cash' },
+      admin,
+    );
     const res = await free(5);
     expect(res.status).toBe(200);
     expect(res.body as TableDetailResponse).toMatchObject({

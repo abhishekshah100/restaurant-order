@@ -1,6 +1,7 @@
 'use client';
 
 import { useContent } from '@/api/hooks';
+import { isApiError } from '@/api/client';
 import { useCollectPayment, useCollectTablePayment } from '@/api/mutations';
 import { Button, Dialog } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
@@ -53,7 +54,13 @@ function CollectForm({
   const { body, toCollect } = choice;
 
   const busy = collect.isPending || collectTable.isPending;
-  const failed = () => showToast(t('adminPayments.failed'), { tone: 'error' });
+  const failed = (error: unknown) =>
+    showToast(
+      isApiError(error, 'nothing_to_pay')
+        ? t('adminPayments.nothingToPay')
+        : t('adminPayments.failed'),
+      { tone: 'error' },
+    );
   const done = (message: string) => {
     showToast(message, { tone: 'success' });
     onClose();

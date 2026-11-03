@@ -27,7 +27,7 @@ export function DueCard({
   onOpenOrder: (orderId: string) => void;
 }) {
   const t = useContent('common');
-  const { clock } = useAdminWorkspace();
+  const { clock, can } = useAdminWorkspace();
   const { amount, ago } = usePaymentText();
   const request = group.kind === 'table' ? group.request : undefined;
   const orders = group.kind === 'table' ? group.orders : [group.order];
@@ -48,7 +48,9 @@ export function DueCard({
         : t('adminPayments.due.pickup', { time: clock.dateTime(order.pickup.at) })
       : order.delivery
         ? t('adminPayments.due.delivery', { area: order.delivery.address.area })
-        : t('adminPayments.due.since', { time: clock.dateTime(order.placedAt) });
+        : order.table !== undefined
+          ? `${t('adminPayments.due.table', { table: order.table })} · ${t('adminPayments.due.since', { time: clock.dateTime(order.placedAt) })}`
+          : t('adminPayments.due.since', { time: clock.dateTime(order.placedAt) });
   }
 
   return (
@@ -66,7 +68,7 @@ export function DueCard({
         </p>
       )}
       <div className={styles.head}>
-        <WhereBadge table={group.kind === 'table' ? group.table : undefined} mode={first.mode} />
+        <WhereBadge table={first.table} mode={first.mode} />
         <div className={styles.heading}>
           <h3 id={titleId} className={styles.title}>
             {title}
@@ -118,9 +120,11 @@ export function DueCard({
           <Button variant="secondary" size="sm" iconStart="receipt" onClick={onPrint}>
             {t('adminPayments.due.printBill')}
           </Button>
-          <Button size="sm" iconStart="cash" onClick={onCollect}>
-            {t('adminPayments.due.collect')}
-          </Button>
+          {can('payments.collect') && (
+            <Button size="sm" iconStart="cash" onClick={onCollect}>
+              {t('adminPayments.due.collect')}
+            </Button>
+          )}
         </div>
       </div>
     </li>

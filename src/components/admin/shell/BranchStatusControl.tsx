@@ -30,8 +30,16 @@ export function BranchStatusControl({
   className?: string;
 }) {
   const t = useContent('common');
-  const { branch } = useAdminWorkspace();
+  const { branch, can } = useAdminWorkspace();
   const [open, setOpen] = useState(false);
+  // Those who can't open, pause or close the branch just see its status.
+  if (!can('branch.status.update')) {
+    return (
+      <span className={cx(styles.button, styles.static, onDark && styles.onDark, className)}>
+        <BranchStatus status={branch.status} onDark={onDark} />
+      </span>
+    );
+  }
   return (
     <>
       <button

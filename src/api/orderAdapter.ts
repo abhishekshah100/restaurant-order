@@ -66,6 +66,7 @@ interface BackendRound {
   kitchenNote?: string;
   changeableUntil: string;
   changedAt?: string;
+  dismissedAt?: string;
 }
 
 export interface BackendOrder {
@@ -250,6 +251,7 @@ function roundOf(round: BackendRound, order: BackendOrder, words: Words, now: nu
     ...(round.kitchenNote ? { kitchenNote: round.kitchenNote } : {}),
     changeableUntil: round.changeableUntil,
     ...(round.changedAt ? { changedAt: round.changedAt } : {}),
+    ...(round.dismissedAt ? { dismissedAt: round.dismissedAt } : {}),
     ...(done ? {} : { etaMinutes: Math.max(1, Math.ceil((awaited - now) / MINUTE_MS)) }),
     readyBy: words.clock.time(new Date(awaited)),
     ...(handedOver ? { servedAt: handedOver.at } : {}),
@@ -258,11 +260,15 @@ function roundOf(round: BackendRound, order: BackendOrder, words: Words, now: nu
 }
 
 /** How the order was paid, as the guest reads it: "UPI", "Cash"… */
+/** How the order was paid: each way used, in order ("Cash + UPI" for a bill paid in parts). */
 function paymentDetail(order: BackendOrder, words: Words): string | undefined {
-  const payments = order.payment.transactions.filter((t) => t.kind === 'payment');
-  const last = payments.at(-1);
-  if (!last) return undefined;
-  return words.common(`paymentMethods.${last.method}` as Parameters<Words['common']>[0]);
+  const methods = [
+    ...new Set(order.payment.transactions.filter((t) => t.kind === 'payment').map((t) => t.method)),
+  ];
+  if (methods.length === 0) return undefined;
+  return methods
+    .map((m) => words.common(`paymentMethods.${m}` as Parameters<Words['common']>[0]))
+    .join(' + ');
 }
 
 /**

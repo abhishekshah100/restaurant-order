@@ -25,6 +25,9 @@ import {
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
   adminOffersQuery,
+  adminRolesQuery,
+  paymentProofQuery,
+  adminStaffQuery,
   branchConfigQuery,
   branchStatusQuery,
   branchMenuQuery,
@@ -262,6 +265,33 @@ export const useBranchOrders = (
 /** GET /admin/branches/:branchId/tables: every area with its tables; polled like the service. */
 export const useFloorPlan = (branchId: string | undefined) =>
   useQuery(floorPlanQuery(useAdminToken(), branchId));
+
+/** GET /admin/branches/:branchId/staff: everyone here, and the roles they can be given. */
+export const useAdminStaff = (branchId: string | undefined) =>
+  useQuery(adminStaffQuery(useAdminToken(), branchId));
+
+/**
+ * A proof photo, as an object URL for an <img> (let go when it's no longer shown), and whether
+ * it couldn't be read.
+ */
+export function usePaymentProof(branchId: string | undefined, key: string) {
+  const photo = useQuery(paymentProofQuery(useAdminToken(), branchId, key));
+  const url = useMemo(
+    () => (photo.data ? URL.createObjectURL(photo.data) : undefined),
+    [photo.data],
+  );
+  useEffect(
+    () => () => {
+      if (url) URL.revokeObjectURL(url);
+    },
+    [url],
+  );
+  return { url, failed: photo.isError };
+}
+
+/** GET /admin/branches/:branchId/roles: the roles staff can be given, and every permission. */
+export const useAdminRoles = (branchId: string | undefined) =>
+  useQuery(adminRolesQuery(useAdminToken(), branchId));
 
 /** GET /admin/branches/:branchId/offers: the branch's automatic offers, paused ones too. */
 export const useAdminOffers = (branchId: string | undefined) =>

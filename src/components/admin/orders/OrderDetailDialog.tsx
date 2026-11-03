@@ -64,7 +64,7 @@ function OrderDialog({
   initialView = 'details',
 }: OrderDetailDialogProps & { order: Order }) {
   const t = useContent('common');
-  const { branch, money, clock } = useAdminWorkspace();
+  const { branch, money, clock, can } = useAdminWorkspace();
   const { showToast } = useToast();
   const serve = useMarkServed();
   const collect = useCollectPayment();
@@ -94,7 +94,7 @@ function OrderDialog({
   // From an earlier day: only settled (served, paid), never changed, added to or cancelled.
   const past = clock.dayKey(order.placedAt) < clock.dayKey(new Date());
   const roundActions = (round: OrderRound) =>
-    !past && roundOpenForStaff(order, round) ? (
+    !past && can('orders.take') && roundOpenForStaff(order, round) ? (
       <span className={styles.roundActions}>
         {onChangeItems && (
           <Button
@@ -220,17 +220,22 @@ function OrderDialog({
     );
   } else {
     const ready = order.status === 'ready';
-    const dineIn = !past && order.mode === 'dineIn' && order.status !== 'cancelled';
+    // What their role here lets them do (the rest isn't offered).
+    const take = can('orders.take');
+    const dineIn = take && !past && order.mode === 'dineIn' && order.status !== 'cancelled';
     // Still to pay: more goes on this bill. Paid in full: more is a new order, not a reopened bill.
     const canAdd = onAddItems && dineIn && due > 0;
     const canNew = onNewOrder && dineIn && due === 0;
     // A running order's rounds each have their own Change (in their heading).
     const multiRound = (order.rounds ?? []).filter((r) => r.status !== 'cancelled').length > 1;
-    const canChange = !past && !multiRound && onChangeItems && editableRound(order) !== null;
+    const canChange =
+      take && !past && !multiRound && onChangeItems && editableRound(order) !== null;
     const live = !past && !finished;
+    const canRush = live && take;
+    const canCancel = live && can('orders.manage');
     footer = (
       <div className={styles.actions}>
-        {ready && (
+        {ready && can('service.respond') && (
           <Button
             block
             iconStart="check"
@@ -240,7 +245,7 @@ function OrderDialog({
             {order.mode === 'takeaway' ? t('adminOrder.handOver') : t('adminOrder.serve')}
           </Button>
         )}
-        {due > 0 && (
+        {due > 0 && can('payments.collect') && (
           <Button
             block
             variant={ready ? 'secondary' : 'primary'}
@@ -251,9 +256,9 @@ function OrderDialog({
             {t('adminOrder.collectPayment')}
           </Button>
         )}
-        {(canAdd || canNew || canChange || live) && (
+        {(canAdd || canNew || canChange || canRush || canCancel) && (
           <div className={styles.secondary}>
-            {live && (
+            {canRush && (
               <Button
                 size="sm"
                 variant={order.rush ? 'primary' : 'secondary'}
@@ -308,7 +313,7 @@ function OrderDialog({
                 {t('adminOrder.changeItems')}
               </Button>
             )}
-            {live && (
+            {canCancel && (
               <Button
                 size="sm"
                 variant="ghost"

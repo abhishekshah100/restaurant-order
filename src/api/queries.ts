@@ -376,6 +376,36 @@ export const adminOffersQuery = (token: string | null, branchId: string | undefi
     queryFn: token && branchId ? () => api.offers(token, branchId) : skipToken,
   });
 
+/** GET /admin/branches/:branchId/staff: everyone here, and the roles they can be given. */
+export const adminStaffQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'staff', branchId, token] as const,
+    queryFn: token && branchId ? () => api.staff(token, branchId) : skipToken,
+  });
+
+/** GET /admin/branches/:branchId/roles: the roles staff can be given, and every permission. */
+export const adminRolesQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'roles', branchId, token] as const,
+    queryFn: token && branchId ? () => api.roles(token, branchId) : skipToken,
+  });
+
+/**
+ * GET /admin/branches/:branchId/payment-proofs/:key: a proof photo's bytes (private: the admin's
+ * token). A photo never changes (its key is its content's hash), so it's read once.
+ */
+export const paymentProofQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  key: string,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'payment-proof', branchId, key, token] as const,
+    queryFn: token && branchId ? () => api.paymentProof(token, branchId, key) : skipToken,
+    staleTime: Infinity,
+    retry: 1,
+  });
+
 /** GET /admin/branches/:branchId/floors: the floor plan to edit; it changes rarely. */
 export const floorLayoutQuery = (token: string | null, branchId: string | undefined) =>
   queryOptions({

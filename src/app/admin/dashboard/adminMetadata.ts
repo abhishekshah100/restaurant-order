@@ -23,6 +23,8 @@ type AdminPage =
   | 'tax'
   | 'paymentMethods'
   | 'offers'
+  | 'roles'
+  | 'staff'
   | 'deliveryZones'
   | 'pickup'
   | 'branches'

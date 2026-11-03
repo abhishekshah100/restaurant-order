@@ -205,6 +205,18 @@ describe('to collect', () => {
     expect(groups[0]).toMatchObject({ request: asked });
   });
 
+  it("collects a dine-in bill left from days ago on its own, not with the table's", () => {
+    const groups = dueGroups(all, [], (o) => o.id !== 'A104');
+    expect(groups.map((g) => g.key)).toContain('order-A104');
+    const twelve = groups.find((g) => g.key === 'table-12');
+    expect(twelve?.kind === 'table' && twelve.orders.map((o) => o.id)).toEqual(['A105']);
+    expect(
+      filterGroups(groups, '12')
+        .map((g) => g.key)
+        .sort(),
+    ).toEqual(['order-A104', 'table-12']);
+  });
+
   it('searches by table, order or guest', () => {
     const groups = dueGroups(all);
     expect(filterGroups(groups, '12').map((g) => g.key)).toEqual(['table-12']);

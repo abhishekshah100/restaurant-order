@@ -77,6 +77,11 @@ export interface PaymentTransaction {
   reason?: RefundReason | 'cancelled' | 'changed';
   note?: string;
   status?: 'started' | 'done';
+  /**
+   * In person: photos staff took as proof (a UPI screen, a card slip), by key. Private: read
+   * with the admin's token (api › paymentProof).
+   */
+  proofs?: string[];
 }
 
 export interface OrderItem {
@@ -201,6 +206,8 @@ export interface OrderRound {
   changeableUntil: string;
   /** ISO: when its items were last changed after it was sent (the kitchen flags it). */
   changedAt?: string;
+  /** ISO: cancelled, and the kitchen put it away (Dismiss): off every kitchen screen. */
+  dismissedAt?: string;
   /** Minutes until it's ready, while it's being made. */
   etaMinutes?: number;
   /** Expected ready time, e.g. "7:58 PM". */

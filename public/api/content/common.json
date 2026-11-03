@@ -185,6 +185,17 @@
       "title": "Demo account",
       "body": "Fill in the sample admin to explore.",
       "use": "Use demo account"
+    },
+    "newPassword": {
+      "title": "Choose your own password",
+      "body": "You signed in with a password an admin gave you. Choose one only you know.",
+      "password": "New password",
+      "confirm": "Type it again",
+      "short": "At least 8 characters",
+      "mismatch": "The two passwords don't match",
+      "same": "Choose a different password from the one you were given",
+      "save": "Save and continue",
+      "failed": "Couldn't save your password. Try again."
     }
   },
   "countryNames": {
@@ -272,9 +283,16 @@
       "services": "Services · Settings · Admin",
       "offers": "Offers · Settings · Admin",
       "reservationHistory": "Reservation history · Admin",
-      "tableHistory": "Table order history · Admin"
+      "tableHistory": "Table order history · Admin",
+      "roles": "Roles & permissions · Settings · Admin",
+      "staff": "Staff · Settings · Admin"
     },
     "loading": "Loading your workspace",
+    "noAccess": {
+      "title": "You don't have access to this page",
+      "body": "Your role at this branch doesn't include it. Ask an admin if you need it.",
+      "home": "Go to home"
+    },
     "descriptor": "Admin",
     "homeLink": "{name} admin home",
     "nav": {
@@ -609,8 +627,12 @@
       "free": {
         "action": "Free table",
         "title": "Free Table {table}?",
-        "body": "Use this when the guests have left. The table shows as available until the next order.",
-        "unpaid": "{amount} is still unpaid. It stays on the Orders page to collect.",
+        "body": "Use this when the guests have left. The table shows as available until the next order, and the next scan of its QR code starts a new visit.",
+        "blockedTitle": "Table {table} has an open bill",
+        "blocked": "{amount} is still unpaid. Collect the bill first, then free the table.",
+        "collect": "Collect {amount}",
+        "close": "Close",
+        "billOpen": "Table {table} still owes {amount}. Collect it before freeing the table.",
         "confirm": "Free table",
         "keep": "Not yet",
         "done": "Table {table} is free",
@@ -1403,6 +1425,7 @@
     "orderId": "#{order}",
     "loading": "Loading payments",
     "failed": "That didn't go through. Try again.",
+    "nothingToPay": "Nothing is left to pay on this bill. The list has been refreshed.",
     "today": {
       "label": "Today's takings",
       "eyebrow": "Today · {date}",
@@ -1496,6 +1519,10 @@
       "refund": "Refund",
       "where": "#{order} · {where}",
       "by": "by {name}",
+      "proofs": {
+        "one": "{count} proof photo",
+        "other": "{count} proof photos"
+      },
       "ref": "Ref {ref}",
       "tip": "+{amount} tip",
       "left": "{amount} left · {reason}",
@@ -1574,6 +1601,34 @@
       "confirm": "Collect {amount}",
       "doneOrder": "{amount} collected for order #{order}",
       "doneTable": "Table {table} settled: {amount} collected"
+    },
+    "parts": {
+      "start": "Split payment",
+      "startHint": "Part cash, part UPI or card",
+      "payRest": "Pay {amount} by UPI, card…",
+      "title": "Split payment",
+      "way": "Payment {n}",
+      "restBadge": "Remaining balance",
+      "method": "How payment {n} was made",
+      "remove": "Remove payment {n}",
+      "amount": "{method} amount",
+      "total": "Bill {amount}",
+      "tooMuch": "The payments above already add up to {amount} or more. Lower one of them.",
+      "add": "Add another payment"
+    },
+    "proofs": {
+      "label": "Proof photo (optional)",
+      "count": "{count} of {max}",
+      "photo": "Proof photo {n}",
+      "take": "Take photo",
+      "choose": "Choose photos",
+      "remove": "Remove photo {n}",
+      "uploading": "Uploading",
+      "failed": "Couldn't upload",
+      "failedHint": "A photo couldn't be uploaded. Remove it, then add it again.",
+      "view": "View proof photos ({count})",
+      "viewTitle": "Proof photos · {method} {amount}",
+      "loadFailed": "Couldn't load this photo."
     },
     "refund": {
       "title": "Refund order #{order}",
@@ -1734,6 +1789,14 @@
         "description": "Dine-in, takeaway and delivery: which ones guests can use.",
         "summary": "{modes}",
         "none": "No services on"
+      },
+      "roles": {
+        "title": "Roles & permissions",
+        "description": "What each kind of staff member can do: built-in roles and your own."
+      },
+      "staff": {
+        "title": "Staff",
+        "description": "Who works here, their roles, and their sign-in."
       }
     },
     "open": "Manage",
@@ -2347,6 +2410,191 @@
       },
       "pauseShort": "Pause",
       "resumeShort": "Switch on"
+    },
+    "roles": {
+      "subtitle": "Each role is a set of permissions. Give staff a role and they can do exactly that, at every branch they work at.",
+      "add": "Add role",
+      "loading": "Loading roles",
+      "failed": "Couldn't load the roles. Try again.",
+      "retry": "Try again",
+      "builtIn": "Built in",
+      "builtInHint": "Built-in roles stay as they are. Duplicate one to make your own version.",
+      "staff": {
+        "one": "{count} staff member",
+        "other": "{count} staff"
+      },
+      "nobody": "No staff yet",
+      "allowed": "{count} of {total} permissions",
+      "view": "View",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "duplicateName": "{name} (copy)",
+      "remove": "Delete {name}",
+      "removeTitle": "Delete {name}?",
+      "removeBody": "Nobody has this role. It will be gone for good.",
+      "removeConfirm": "Delete role",
+      "cancel": "Cancel",
+      "removed": "{name} deleted",
+      "inUse": {
+        "one": "{count} staff member still has this role. Give them another role first.",
+        "other": "{count} staff still have this role. Give them another role first."
+      },
+      "forbidden": "You can only give permissions you have yourself.",
+      "saveFailed": "Couldn't save the role. Try again.",
+      "added": "{name} added",
+      "saved": "{name} saved",
+      "dialog": {
+        "newTitle": "New role",
+        "editTitle": "Edit {name}",
+        "viewTitle": "{name}",
+        "name": "Role name",
+        "namePlaceholder": "e.g. Head chef",
+        "nameRequired": "Give the role a name",
+        "description": "What it is for",
+        "descriptionPlaceholder": "e.g. Runs the kitchen and the stock",
+        "permissions": "What they can do",
+        "picked": "{count} of {total} on",
+        "neededBy": "Needed for: {names}. Stays on while they are.",
+        "opens": "Opens: {pages}.",
+        "save": "Save changes",
+        "create": "Add role",
+        "close": "Close"
+      },
+      "groups": {
+        "service": "Serving guests",
+        "kitchen": "Kitchen",
+        "manage": "Orders, bookings & reports",
+        "menu": "Menu & tables",
+        "branch": "Branch",
+        "staff": "Staff"
+      },
+      "permissions": {
+        "orders_view": {
+          "label": "See orders and tables",
+          "hint": "Today's orders, the floor plan and guests' requests."
+        },
+        "orders_take": {
+          "label": "Take orders",
+          "hint": "New orders and rounds at a table; change a round before cooking."
+        },
+        "service_respond": {
+          "label": "Answer guests",
+          "hint": "Waiter calls and bill requests; mark food served."
+        },
+        "payments_collect": {
+          "label": "Collect payments",
+          "hint": "Cash, card or UPI at the table or counter."
+        },
+        "kitchen_update": {
+          "label": "Run the kitchen",
+          "hint": "Start, ready and out of stock on kitchen tickets."
+        },
+        "menu_availability_update": {
+          "label": "Mark dishes sold out",
+          "hint": "Take a dish off the menu, or put it back."
+        },
+        "orders_manage": {
+          "label": "Cancel and refund orders",
+          "hint": "Cancel whole orders and give money back."
+        },
+        "reservations_manage": {
+          "label": "Manage bookings",
+          "hint": "Take, change, seat and cancel reservations."
+        },
+        "reports_view": {
+          "label": "See reports",
+          "hint": "Sales, payments and history."
+        },
+        "menu_manage": {
+          "label": "Edit the menu",
+          "hint": "Add, change and remove dishes and categories."
+        },
+        "tables_manage": {
+          "label": "Edit tables",
+          "hint": "The floor plan and table QR codes."
+        },
+        "branch_status_update": {
+          "label": "Open and close the branch",
+          "hint": "Pause, close or reopen ordering."
+        },
+        "branch_settings_manage": {
+          "label": "Change branch settings",
+          "hint": "Details, hours, tax, payments, delivery."
+        },
+        "branches_manage": {
+          "label": "Add and remove branches",
+          "hint": "Open new branches or remove one."
+        },
+        "staff_manage": {
+          "label": "Manage staff and roles",
+          "hint": "Add staff, give them roles, create roles."
+        }
+      }
+    },
+    "staff": {
+      "subtitle": "Everyone who works at {branch}, and your restaurant admins. Add people, give them a role, or turn their sign-in off.",
+      "add": "Add staff",
+      "loading": "Loading staff",
+      "failed": "Couldn't load the staff. Try again.",
+      "retry": "Try again",
+      "you": "You",
+      "off": "Sign-in off",
+      "pending": "New password not chosen yet",
+      "allBranches": "All branches",
+      "thisBranch": "This branch",
+      "lastSignIn": "Last signed in {date}",
+      "neverSignedIn": "Not signed in yet",
+      "edit": "Edit",
+      "editLabel": "Edit {name}",
+      "resetPassword": "New password",
+      "resetLabel": "Give {name} a new password",
+      "rolesLink": "Roles & permissions",
+      "errors": {
+        "emailExists": "Someone with this email is already on the staff here.",
+        "phoneTaken": "This mobile number belongs to someone else.",
+        "phone": "Enter a valid mobile number.",
+        "ownAccount": "You can't change your own role or turn off your own sign-in.",
+        "lastAdmin": "Your restaurant needs at least one active admin.",
+        "forbidden": "You can only give roles whose permissions you have yourself.",
+        "failed": "Couldn't save. Try again."
+      },
+      "dialog": {
+        "addTitle": "Add staff",
+        "editTitle": "Edit {name}",
+        "name": "Full name",
+        "namePlaceholder": "e.g. Ravi Kumar",
+        "nameRequired": "Enter their name",
+        "email": "Email",
+        "emailPlaceholder": "name@example.com",
+        "emailInvalid": "Enter a valid email",
+        "phone": "Mobile number",
+        "role": "Role",
+        "rolePlaceholder": "Pick a role",
+        "roleRequired": "Pick a role",
+        "roleAll": "{role} · all branches",
+        "password": "Temporary password",
+        "passwordHint": "Share it with them. They choose their own the first time they sign in.",
+        "passwordShort": "At least 8 characters",
+        "generate": "New one",
+        "copy": "Copy",
+        "copied": "Copied",
+        "active": "Can sign in",
+        "activeOn": "They can sign in and work here.",
+        "activeOff": "They can't sign in. Turning this off signs them out at once.",
+        "youNote": "You can change your name here. Ask another admin to change your role.",
+        "add": "Add staff",
+        "save": "Save changes"
+      },
+      "reset": {
+        "title": "New password for {name}",
+        "body": "They're signed out everywhere now, and choose their own password the next time they sign in.",
+        "confirm": "Set password"
+      },
+      "toast": {
+        "added": "{name} added",
+        "saved": "{name} saved",
+        "reset": "New password set for {name}"
+      }
     }
   },
   "masters": {

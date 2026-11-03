@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { withAvailability } from '@/lib/adminMenu';
-import { withKitchenStep, withPlated } from '@/lib/kitchenBoard';
+import { withDismissed, withKitchenStep, withPlated } from '@/lib/kitchenBoard';
 import { withAcknowledged, withoutReadyRound, withoutRequest } from '@/lib/adminService';
 import type { AdminBranchService, AdminServiceRequest } from '@/types/admin';
 import type { ServiceRequest } from '@/types/service';
@@ -11,16 +11,19 @@ import { PROMO_REFUSALS } from '@/lib/promotions';
 import type { Order } from '@/types/order';
 import type {
   AddRoundRequest,
+  AddStaffRequest,
   CancelByStaffRequest,
   CancelOrderRequest,
   CancelRoundRequest,
   ChangeOrderRequest,
+  ChangePasswordRequest,
   CollectPaymentRequest,
   CollectTableRequest,
   CreateBranchRequest,
   DishInput,
   EditRoundRequest,
   ImageUploadRequest,
+  PaymentProofRequest,
   ItemUnavailableRequest,
   KitchenMessageRequest,
   KitchenStep,
@@ -28,6 +31,7 @@ import type {
   OrderUnavailableRequest,
   RefundRequest,
   ReservationInput,
+  RoleInput,
   ServiceRequestListResponse,
   SetAvailabilityRequest,
   SetBranchStatusRequest,
@@ -39,6 +43,7 @@ import type {
   UpdateCategoriesRequest,
   UpdateFloorsRequest,
   UpdateSessionRequest,
+  UpdateStaffRequest,
   ValidatePromoRequest,
 } from './contracts';
 import { api } from './endpoints';
@@ -486,6 +491,41 @@ export function useSetPlated() {
   });
 }
 
+/**
+ * POST …/orders/:id/rounds/:round/dismiss: a cancelled ticket put away. It leaves this screen at
+ * once (back if the server refuses); the other kitchen screens drop it from the branch's events.
+ */
+export function useDismissTicket() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      round,
+    }: {
+      branchId: string;
+      orderId: string;
+      round: number;
+    }) => api.dismissTicket(requireToken(token), branchId, orderId, round),
+    onMutate: async ({ branchId, orderId, round }) => {
+      const { queryKey } = branchOrdersQuery(token, branchId);
+      await client.cancelQueries({ queryKey });
+      const previous = client.getQueryData(queryKey);
+      if (previous) {
+        client.setQueryData(queryKey, {
+          ...previous,
+          orders: withDismissed(previous.orders, orderId, round, new Date().toISOString()),
+        });
+      }
+      return { queryKey, previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) client.setQueryData(context.queryKey, context.previous);
+    },
+  });
+}
+
 /** The admin's token, or a 401 like the server's when signed out. */
 function requireToken(token: string | null): string {
   if (!token) throw new ApiError(401, 'admin', { error: 'unauthorized' });
@@ -802,6 +842,15 @@ export function useUploadDishImage() {
   });
 }
 
+/** POST /admin/branches/:branchId/payment-proofs: a proof photo kept privately; its key. */
+export function useUploadPaymentProof() {
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: PaymentProofRequest }) =>
+      api.uploadPaymentProof(requireToken(token), branchId, body),
+  });
+}
+
 /**
  * PATCH /admin/branches/:branchId/status: pause new orders, close for the day, or open again.
  * The admin's branches and the branch data guests read are read again.
@@ -869,6 +918,73 @@ export function useRemoveBranch() {
 }
 
 /** Offers changed: Settings › Offers lists them again, and the menu's prices follow. */
+/** Staff and the roles' staff counts read again after a change to who works here. */
+const refreshStaff = (client: QueryClient) =>
+  Promise.all([
+    client.invalidateQueries({ queryKey: ['admin', 'staff'] }),
+    client.invalidateQueries({ queryKey: ['admin', 'roles'] }),
+  ]);
+
+/** POST …/staff (no `id`) or PATCH …/staff/:staffId. */
+export function useSaveStaff() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (
+      target:
+        | { branchId: string; id?: undefined; body: AddStaffRequest }
+        | { branchId: string; id: string; body: UpdateStaffRequest },
+    ) =>
+      target.id === undefined
+        ? api.addStaff(requireToken(token), target.branchId, target.body)
+        : api.updateStaff(requireToken(token), target.branchId, target.id, target.body),
+    onSettled: () => refreshStaff(client),
+  });
+}
+
+/** POST …/staff/:staffId/password: a new password for them, changed at their next sign-in. */
+export function useResetStaffPassword() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id, password }: { branchId: string; id: string; password: string }) =>
+      api.resetStaffPassword(requireToken(token), branchId, id, { password }),
+    onSettled: () => refreshStaff(client),
+  });
+}
+
+/** PATCH /admin/sessions/current/password: one's own password (the first sign-in's step too). */
+export function useChangeOwnPassword() {
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (body: ChangePasswordRequest) => api.changeOwnPassword(requireToken(token), body),
+  });
+}
+
+/** POST …/roles (no `id`) or PATCH …/roles/:roleId: a role of the restaurant's own. */
+export function useSaveRole() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id, body }: { branchId: string; id?: string; body: RoleInput }) =>
+      id
+        ? api.updateRole(requireToken(token), branchId, id, body)
+        : api.createRole(requireToken(token), branchId, body),
+    onSettled: () => client.invalidateQueries({ queryKey: ['admin', 'roles'] }),
+  });
+}
+
+/** DELETE …/roles/:roleId: one of the restaurant's own nobody holds. */
+export function useRemoveRole() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id }: { branchId: string; id: string }) =>
+      api.removeRole(requireToken(token), branchId, id),
+    onSettled: () => client.invalidateQueries({ queryKey: ['admin', 'roles'] }),
+  });
+}
+
 const refreshOffers = (client: QueryClient, branchId: string) =>
   Promise.all([
     client.invalidateQueries({ queryKey: ['admin', 'offers', branchId] }),

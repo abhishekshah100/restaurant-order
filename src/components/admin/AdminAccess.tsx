@@ -30,7 +30,10 @@ export function AdminAccess({
   const router = useRouter();
 
   const page = adminPage(pathname);
-  const unauthorized = isApiError(branches.error, 'unauthorized');
+  // An ended session, or one still to choose its own password (the sign-in page asks for it).
+  const unauthorized =
+    isApiError(branches.error, 'unauthorized') ||
+    isApiError(branches.error, 'password_change_required');
   const failed = branches.isError && !unauthorized;
   const decision = useMemo(
     () =>

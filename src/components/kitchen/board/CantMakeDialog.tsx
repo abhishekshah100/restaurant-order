@@ -31,7 +31,9 @@ export function CantMakeDialog({
   onClose: () => void;
 }) {
   const t = useContent('kitchen');
-  const { branch } = useAdminWorkspace();
+  const { branch, can } = useAdminWorkspace();
+  // Taking the dish off the menu too: for those who may mark dishes sold out.
+  const offMenuDish = can('menu.availability.update') ? dish : undefined;
   const themeClass = useKitchenThemeClass();
   const whereOf = useTicketWhere();
   const { showToast } = useToast();
@@ -44,10 +46,10 @@ export function CantMakeDialog({
 
   const target = { branchId: branch.id, orderId: ticket.orderId };
   const done = (message: string) => {
-    if (offMenu && dish) {
+    if (offMenu && offMenuDish) {
       availability.mutate({
         branchId: branch.id,
-        slug: dish.slug,
+        slug: offMenuDish.slug,
         body: { availability: { status: 'sold-out' } },
       });
     }
@@ -117,7 +119,7 @@ export function CantMakeDialog({
             />
           </div>
         )}
-        {dish && (
+        {offMenuDish && (
           <label className={styles.check}>
             <input
               type="checkbox"
@@ -125,7 +127,7 @@ export function CantMakeDialog({
               onChange={(event) => setOffMenu(event.target.checked)}
             />
             <span>
-              <b>{t('cantMake.offMenu', { dish: dish.name })}</b>
+              <b>{t('cantMake.offMenu', { dish: offMenuDish.name })}</b>
               <span className={styles.hint}>{t('cantMake.offMenuHint')}</span>
             </span>
           </label>

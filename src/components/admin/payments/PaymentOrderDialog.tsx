@@ -9,6 +9,7 @@ import type { Order } from '@/types/order';
 import { OrderSummary } from '../orders/OrderSummary';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { methodIcon, usePaymentText } from './usePaymentText';
+import { ProofThumbs } from './ProofThumbs';
 import styles from './PaymentDialogs.module.css';
 
 /**
@@ -30,7 +31,7 @@ export function PaymentOrderDialog({
   onPrint: (order: Order) => void;
 }) {
   const t = useContent('common');
-  const { clock } = useAdminWorkspace();
+  const { clock, can } = useAdminWorkspace();
   const { amount, methodName } = usePaymentText();
   if (!order) return null;
   const ledger = ledgerOf(order);
@@ -54,7 +55,7 @@ export function PaymentOrderDialog({
       className={styles.dialog}
       footer={
         <div className={styles.orderActions}>
-          {due > 0 && (
+          {due > 0 && can('payments.collect') && (
             <Button block iconStart="cash" meta={amount(due)} onClick={() => onCollect(order)}>
               {t('adminPayments.order.collect')}
             </Button>
@@ -63,7 +64,7 @@ export function PaymentOrderDialog({
             <Button variant="secondary" iconStart="receipt" onClick={() => onPrint(order)}>
               {t('adminPayments.order.print')}
             </Button>
-            {canRefund && (
+            {canRefund && can('orders.manage') && (
               <Button variant="secondary" iconStart="refresh" onClick={() => onRefund(order)}>
                 {t('adminPayments.order.refund')}
               </Button>
@@ -115,6 +116,9 @@ export function PaymentOrderDialog({
                           .join(' · ')}
                       </span>
                       {entry.note && <span className={styles.historyNote}>{entry.note}</span>}
+                      {entry.proofs && entry.proofs.length > 0 && (
+                        <ProofThumbs proofs={entry.proofs} />
+                      )}
                     </span>
                     <span className={styles.historyAmount}>
                       {amount(refund ? -entry.amount : entry.amount)}

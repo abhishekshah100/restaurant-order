@@ -34,7 +34,8 @@ export function TableOrderCard({
   onCollect: () => void;
 }) {
   const t = useContent('common');
-  const { money, clock } = useAdminWorkspace();
+  const { money, clock, can } = useAdminWorkspace();
+  const take = can('orders.take');
   const shown = order.items.slice(0, PREVIEW_ITEMS);
   const hidden = order.items.length - shown.length;
   const itemCount = order.items.reduce((n, item) => n + item.quantity, 0);
@@ -80,7 +81,7 @@ export function TableOrderCard({
         <strong className={styles.total}>{money.format(order.total)}</strong>
       </span>
       <span className={styles.actions}>
-        {due > 0 ? (
+        {!take ? null : due > 0 ? (
           <button
             type="button"
             className={styles.action}
@@ -101,7 +102,7 @@ export function TableOrderCard({
             {t('adminTables.detail.order.newOrder')}
           </button>
         )}
-        {onChange && (
+        {take && onChange && (
           <button
             type="button"
             className={styles.action}
@@ -112,7 +113,7 @@ export function TableOrderCard({
             {t('adminTables.detail.order.change')}
           </button>
         )}
-        {due > 0 && (
+        {due > 0 && can('payments.collect') && (
           <button
             type="button"
             className={cx(styles.action, styles.collect)}

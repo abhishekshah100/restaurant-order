@@ -165,6 +165,17 @@ async function send<T>(request: ApiRequest, init?: RequestInit): Promise<T> {
  */
 export const staticGet = <T>(path: string): Promise<T> => viaFetch<T>({ method: 'GET', path });
 
+/**
+ * GET a file the backend serves (a private photo), as bytes. Throws ApiError on a non-2xx
+ * response. Backend only: the mock keeps no files.
+ */
+export async function backendBlob(path: string, init?: RequestInit): Promise<Blob> {
+  const url = backendUrl(path);
+  const response = await fetch(url, init);
+  if (!response.ok) throw new ApiError(response.status, url);
+  return response.blob();
+}
+
 /** GET an endpoint and parse its JSON body. Throws ApiError on a non-2xx response. */
 export const apiGet = <T>(path: string, init?: RequestInit): Promise<T> =>
   send<T>({ method: 'GET', path }, init);

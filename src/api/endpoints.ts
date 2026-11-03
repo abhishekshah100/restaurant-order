@@ -1,12 +1,20 @@
-import type { AdminBranch, AdminServiceRequest, FloorPlanLayout, Reservation } from '@/types/admin';
+import type {
+  AdminBranch,
+  AdminServiceRequest,
+  FloorPlanLayout,
+  Reservation,
+  AdminRole,
+  AdminStaffMember,
+} from '@/types/admin';
 import type { MenuData } from '@/types/menu';
 import type { AutoOffer } from '@/types/promotion';
 import type { GuestSession } from '@/types/session';
-import { apiDelete, apiGet, apiPatch, apiPost } from './client';
+import { apiDelete, apiGet, apiPatch, apiPost, backendBlob } from './client';
 import { guestQuery } from './guestQuery';
 import type {
   AcknowledgeRequestResponse,
   AddRoundRequest,
+  AddStaffRequest,
   AdminBranchesResponse,
   AdminOrdersFilter,
   AdminOrdersResponse,
@@ -18,6 +26,7 @@ import type {
   CancelOrderRequest,
   CancelRoundRequest,
   ChangeOrderRequest,
+  ChangePasswordRequest,
   CollectPaymentRequest,
   CollectTableRequest,
   CreateBranchRequest,
@@ -33,6 +42,8 @@ import type {
   FloorPlanResponse,
   FreeTableResponse,
   ImageUploadRequest,
+  PaymentProofRequest,
+  PaymentProofResponse,
   ImageUploadResponse,
   ItemUnavailableRequest,
   KitchenMessageRequest,
@@ -52,7 +63,10 @@ import type {
   ReservationInput,
   ReservationsFilter,
   ReservationsResponse,
+  ResetStaffPasswordRequest,
   ResolveRequestResponse,
+  RoleInput,
+  RolesResponse,
   SendOtpRequest,
   ServiceRequestListResponse,
   SetAvailabilityRequest,
@@ -64,6 +78,7 @@ import type {
   SetRushRequest,
   SettledPaymentResponse,
   SimulatePaymentRequest,
+  StaffResponse,
   StaffRoundRequest,
   TableDetailResponse,
   TablePaymentResponse,
@@ -73,6 +88,7 @@ import type {
   UpdateCategoriesRequest,
   UpdateFloorsRequest,
   UpdateSessionRequest,
+  UpdateStaffRequest,
   ValidatePromoRequest,
   VerifyOtpRequest,
   VerifyOtpResponse,
@@ -102,6 +118,25 @@ export const api = {
   createAdminSession: (body: AdminSignInRequest) =>
     apiPost<AdminSignInResponse>('admin/sessions', body),
   endAdminSession: (token: string) => apiDelete('admin/sessions/current', bearer(token)),
+  changeOwnPassword: (token: string, body: ChangePasswordRequest) =>
+    apiPatch<void>('admin/sessions/current/password', body, bearer(token)),
+  staff: (token: string, branchId: string) =>
+    apiGet<StaffResponse>(`admin/branches/${seg(branchId)}/staff`, bearer(token)),
+  addStaff: (token: string, branchId: string, body: AddStaffRequest) =>
+    apiPost<AdminStaffMember>(`admin/branches/${seg(branchId)}/staff`, body, bearer(token)),
+  updateStaff: (token: string, branchId: string, id: string, body: UpdateStaffRequest) =>
+    apiPatch<AdminStaffMember>(
+      `admin/branches/${seg(branchId)}/staff/${seg(id)}`,
+      body,
+      bearer(token),
+    ),
+  resetStaffPassword: (
+    token: string,
+    branchId: string,
+    id: string,
+    body: ResetStaffPasswordRequest,
+  ) =>
+    apiPost<void>(`admin/branches/${seg(branchId)}/staff/${seg(id)}/password`, body, bearer(token)),
   adminBranches: (token: string) => apiGet<AdminBranchesResponse>('admin/branches', bearer(token)),
   setBranchStatus: (token: string, branchId: string, body: SetBranchStatusRequest) =>
     apiPatch<AdminBranch>(`admin/branches/${seg(branchId)}/status`, body, bearer(token)),
@@ -167,6 +202,15 @@ export const api = {
     ),
   updateCategories: (token: string, branchId: string, body: UpdateCategoriesRequest) =>
     apiPatch<MenuData>(`admin/branches/${seg(branchId)}/menu/categories`, body, bearer(token)),
+  uploadPaymentProof: (token: string, branchId: string, body: PaymentProofRequest) =>
+    apiPost<PaymentProofResponse>(
+      `admin/branches/${seg(branchId)}/payment-proofs`,
+      body,
+      bearer(token),
+    ),
+  /** A proof photo's bytes (private: the admin's token). Backend only. */
+  paymentProof: (token: string, branchId: string, key: string) =>
+    backendBlob(`admin/branches/${seg(branchId)}/payment-proofs/${seg(key)}`, bearer(token)),
   uploadDishImage: (token: string, branchId: string, body: ImageUploadRequest) =>
     apiPost<ImageUploadResponse>(
       `admin/branches/${seg(branchId)}/menu/images`,
@@ -181,6 +225,14 @@ export const api = {
     apiPatch<AutoOffer>(`admin/branches/${seg(branchId)}/offers/${seg(id)}`, body, bearer(token)),
   removeOffer: (token: string, branchId: string, id: string) =>
     apiDelete(`admin/branches/${seg(branchId)}/offers/${seg(id)}`, bearer(token)),
+  roles: (token: string, branchId: string) =>
+    apiGet<RolesResponse>(`admin/branches/${seg(branchId)}/roles`, bearer(token)),
+  createRole: (token: string, branchId: string, body: RoleInput) =>
+    apiPost<AdminRole>(`admin/branches/${seg(branchId)}/roles`, body, bearer(token)),
+  updateRole: (token: string, branchId: string, id: string, body: RoleInput) =>
+    apiPatch<AdminRole>(`admin/branches/${seg(branchId)}/roles/${seg(id)}`, body, bearer(token)),
+  removeRole: (token: string, branchId: string, id: string) =>
+    apiDelete(`admin/branches/${seg(branchId)}/roles/${seg(id)}`, bearer(token)),
   reservations: (token: string, branchId: string, filter: ReservationsFilter = {}) =>
     apiGet<ReservationsResponse>(
       `admin/branches/${seg(branchId)}/reservations${searchOf(filter)}`,
@@ -355,10 +407,18 @@ export const api = {
       body,
       bearer(token),
     ),
+  dismissTicket: (token: string, branchId: string, orderId: string, round: number) =>
+    apiPost<SetKitchenStatusResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/rounds/${round}/dismiss`,
+      {},
+      bearer(token),
+    ),
   markOrderServed: (token: string, id: string, body: MarkServedRequest) =>
     apiPost<MarkServedResponse>(`admin/orders/${seg(id)}/served`, body, bearer(token)),
 
   createSession: (body: CreateSessionRequest) => apiPost<GuestSession>('sessions', body),
+  /** GET /sessions/:id: the session while it's live; 404 session_not_found once it ended. */
+  session: (id: string) => apiGet<GuestSession>(`sessions/${seg(id)}`),
   updateSession: (id: string, body: UpdateSessionRequest) =>
     apiPatch<GuestSession>(`sessions/${seg(id)}`, body),
 

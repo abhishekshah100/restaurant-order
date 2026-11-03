@@ -136,6 +136,75 @@
   box-shadow: var(--focus);
 }
 
+.shortActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* The second choice beside paying the rest another way: leaving it. */
+.shortAlt {
+  border: 1px solid currentcolor;
+  background: transparent;
+  color: var(--gold-ink);
+}
+
+/* ---------- Split payment: the way in ---------- */
+
+.splitOpen {
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.splitOpen:hover {
+  border-color: var(--ink-2);
+}
+
+.splitOpen:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.splitIcon {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+}
+
+.splitText {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.splitText strong {
+  font: var(--font-label);
+}
+
+.splitText span {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.splitChev {
+  color: var(--ink-2);
+}
+
 /* ---------- Leave part of the bill ---------- */
 
 .leaveOpen {
@@ -454,4 +523,118 @@
 
 .historyItem[data-kind='refund'] .historyAmount {
   color: var(--error);
+}
+
+/* ---------- Paid in more than one way ---------- */
+
+.parts {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.part {
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.partHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.partTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-label);
+}
+
+.partBadge {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--gold-tint);
+  color: var(--gold-ink);
+  font: var(--font-caption);
+}
+
+.partRemove {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.partRemove:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.partRest {
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.partRest strong {
+  color: var(--ink);
+  font: var(--font-price);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The sum under the payments: what they come to, and the bill. */
+.partsSum {
+  padding: 10px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.partsSum strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.partsSumOk {
+  background: var(--success-tint);
+}
+
+.partsSumOk strong {
+  color: var(--success);
+}
+
+.partsError {
+  color: var(--error);
+  font: var(--font-small);
+}
+
+.quickButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }

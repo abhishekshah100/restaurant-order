@@ -36,6 +36,7 @@ import { useArrivals, useTicketActions } from './useTicketActions';
 import { useBoardKeyboard } from './useBoardKeyboard';
 import { useConnection } from './useConnection';
 import { useWaitingReminder } from './useWaitingReminder';
+import { useDismissTicket } from '@/api/mutations';
 import styles from './KitchenBoard.module.css';
 
 // Popups: each downloaded the first time it opens.
@@ -73,7 +74,7 @@ export function KitchenBoard() {
   const { tickets, categories, categoryOf, dishOf } = kitchen;
   const now = useNow(BOARD_REFRESH_MS);
   const actions = useTicketActions();
-  const { clock } = useAdminWorkspace();
+  const { branch, clock } = useAdminWorkspace();
   const [prefs, updatePrefs] = useKitchenPrefs();
   const themeClass = useKitchenThemeClass();
   const whereOf = useTicketWhere();
@@ -117,9 +118,18 @@ export function KitchenBoard() {
     if (prefs.sound) playChime('arrival');
   }, [prefs.sound]);
   useArrivals(tickets, actions.setAnnouncement, onArrive, onAlert);
-  // Cancelled tickets the kitchen has seen and put away (they go by themselves after a while).
-  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
-  const dismiss = useCallback((key: string) => setDismissed((keys) => new Set(keys).add(key)), []);
+  // A cancelled ticket the kitchen has seen and put away: off every kitchen screen (the server
+  // keeps it), or it goes by itself after a while.
+  const { mutate: dismissTicket } = useDismissTicket();
+  const dismiss = useCallback(
+    (key: string) => {
+      const ticket = tickets?.find((t) => t.key === key);
+      if (ticket) {
+        dismissTicket({ branchId: branch.id, orderId: ticket.orderId, round: ticket.round });
+      }
+    },
+    [branch.id, dismissTicket, tickets],
+  );
   const onCantMake = useCallback(
     (ticket: KitchenTicket, index: number) => setCantMake({ key: ticket.key, index }),
     [],
@@ -129,9 +139,7 @@ export function KitchenBoard() {
   const view = useMemo(() => {
     if (!tickets) return null;
     const filters = { mode, station, query };
-    const shown = boardTickets(tickets, filters, categoryOf, now ?? undefined).filter(
-      (ticket) => !dismissed.has(ticket.key),
-    );
+    const shown = boardTickets(tickets, filters, categoryOf, now ?? undefined);
     return {
       shown,
       lanes: laneTickets(shown),
@@ -143,7 +151,7 @@ export function KitchenBoard() {
         categories.map((c) => c.id),
       ),
     };
-  }, [categories, categoryOf, dismissed, mode, now, query, station, tickets]);
+  }, [categories, categoryOf, mode, now, query, station, tickets]);
   const stats = useMemo(() => (tickets && now ? boardStats(tickets, now) : null), [now, tickets]);
 
   // The keyboard picks tickets in the order they're shown: New, then Cooking, then Ready.

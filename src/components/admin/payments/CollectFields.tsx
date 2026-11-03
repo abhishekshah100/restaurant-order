@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from 'react';
 import { useContent } from '@/api/hooks';
+import { isBackendEnabled } from '@/api/backend';
 import type { CollectTableRequest } from '@/api/contracts';
 import { Icon } from '@/components/ui';
 import { dueOn } from '@/lib/adminOrders';
@@ -9,26 +10,58 @@ import { WAIVE_REASONS, changeDue } from '@/lib/adminPayments';
 import { cx } from '@/lib/cx';
 import { paidAmount } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
+import {
+  canAddPart,
+  nextMethod,
+  partsRequest,
+  restOf,
+  rowAmount,
+  takesProof,
+  type PartRow,
+} from '@/lib/paymentParts';
 import type { AtTableMethodKey } from '@/types/branch';
 import type { Order, WaiveReason } from '@/types/order';
 import { billRows } from '../../cart/PriceSummary';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { AmountInput, RadioTiles, SumRows, parseAmount } from './PaymentFields';
 import { methodIcon, usePaymentText } from './usePaymentText';
+import { PaymentPartsFields } from './PaymentPartsFields';
+import { ProofPicker } from './ProofPicker';
+import { useProofPhotos } from './useProofPhotos';
 import styles from './PaymentDialogs.module.css';
+
+/** The one way paid's photos, while it's the only one (a row of its own once there are more). */
+const SINGLE = 'single';
+
+let nextRowId = 0;
+const newRow = (method: AtTableMethodKey, amount = ''): PartRow => ({
+  id: `part-${String((nextRowId += 1))}`,
+  method,
+  amount,
+});
 
 /**
  * What staff choose when they take what's due in person, for one order or a table: how the guest
- * paid (the branch's ways to pay staff), any part of the bill left (with why), and for cash, what
- * was handed over and the change.
+ * paid (the branch's ways to pay staff) — one way, or several (half cash, half UPI), each way
+ * other than cash with optional proof photos — any part of the bill left (with why), and for
+ * cash paid in one way, what was handed over and the change.
  */
 export function useCollectChoice(orders: readonly Order[]) {
-  const { region, money } = useAdminWorkspace();
+  const { branch, region, money } = useAdminWorkspace();
   const methods = region.payments.atTable;
   // Cash first: most guests at a table pay that way.
-  const [method, setMethod] = useState<AtTableMethodKey>(
+  const [method, chooseMethod] = useState<AtTableMethodKey>(
     methods.includes('cash') ? 'cash' : methods[0],
   );
+  const proofs = useProofPhotos(branch.id);
+  // Several ways and photos are kept by the backend (the mock takes one way, no photos).
+  const withParts = isBackendEnabled();
+  // Paid in several ways: the rows, the last taking the rest. Null: one way.
+  const [rows, setRows] = useState<PartRow[] | null>(null);
+  const setMethod = (next: AtTableMethodKey) => {
+    if (!takesProof(next)) proofs.drop(SINGLE);
+    chooseMethod(next);
+  };
   const [received, setReceived] = useState('');
   const [leaving, setLeaving] = useState(false);
   const [leave, setLeave] = useState('');
@@ -54,6 +87,65 @@ export function useCollectChoice(orders: readonly Order[]) {
   const tip = method === 'cash' && keepChange && change !== null && change > 0 ? change : 0;
   // Cash needs what was handed over, unless the whole bill is left.
   const cashReady = method !== 'cash' || toCollect === 0 || (receivedAmount !== null && !short);
+
+  // Several ways: what the rows before the last add up to; the last is the rest.
+  const rest = restOf(rows ?? [], toCollect, money.minorUnit);
+  const shownRows = rows?.map((row, i) =>
+    i === rows.length - 1 ? { ...row, amount: rest > 0 ? String(rest) : '' } : row,
+  );
+  const partsReady =
+    shownRows !== undefined &&
+    rest > 0 &&
+    shownRows.every((r) => rowAmount(r.amount) !== null) &&
+    !proofs.unsettled(shownRows.map((r) => r.id));
+
+  const updateRow = (id: string, change: Partial<PartRow>) =>
+    setRows((all) => all?.map((r) => (r.id === id ? { ...r, ...change } : r)) ?? null);
+  const parts = {
+    /** Paid in more than one way (the guest's cash, then UPI for the rest). */
+    /**
+     * Split between ways (part cash, part UPI): what's been typed carries over — cash handed
+     * over that falls short becomes the first payment, the next one taking the remaining
+     * balance.
+     */
+    start: () => {
+      const shortCash =
+        method === 'cash' &&
+        receivedAmount !== null &&
+        receivedAmount > 0 &&
+        receivedAmount < toCollect;
+      const first = newRow(method, shortCash ? String(receivedAmount) : '');
+      proofs.move(SINGLE, first.id);
+      setRows([first, newRow(nextMethod(methods, [first]))]);
+    },
+    /** Another way: the one that was the rest keeps what it was; the new one is the rest. */
+    add: () =>
+      setRows((all) => {
+        if (!all || !canAddPart(all)) return all;
+        const fixed = all.map((r, i) =>
+          i === all.length - 1 ? { ...r, amount: rest > 0 ? String(rest) : '' } : r,
+        );
+        return [...fixed, newRow(nextMethod(methods, all))];
+      }),
+    /** A way taken off; with one left, back to paying in one way (its photos kept). */
+    remove: (id: string) => {
+      if (!rows) return;
+      proofs.drop(id);
+      const left = rows.filter((r) => r.id !== id);
+      if (left.length === 1 && left[0]) {
+        chooseMethod(left[0].method);
+        proofs.move(left[0].id, SINGLE);
+        setRows(null);
+      } else {
+        setRows(left);
+      }
+    },
+    setMethod: (id: string, next: AtTableMethodKey) => {
+      if (!takesProof(next)) proofs.drop(id);
+      updateRow(id, { method: next });
+    },
+    setAmount: (id: string, amount: string) => updateRow(id, { amount }),
+  };
 
   const stopLeaving = () => {
     setLeaving(false);
@@ -105,15 +197,41 @@ export function useCollectChoice(orders: readonly Order[]) {
     leaveShort: () => {
       if (receivedAmount !== null) leaveOf(due - receivedAmount, 'noChange');
     },
-    /** Something to take, any part left has a reason, and cash handed over covers the rest. */
-    ready: due > 0 && leaveReady && cashReady,
+    withParts,
+    /** Paid in several ways: the rows (the last showing the rest), or undefined for one way. */
+    rows: shownRows,
+    /** What the rows before the last leave for it (0 or less: they already cover the bill). */
+    rest,
+    canAddPart: rows !== null && canAddPart(rows),
+    parts,
+    proofs,
+    /** The one way's photos (a row's id for several). */
+    single: SINGLE,
+    /**
+     * Something to take, any part left has a reason, and, for one way, cash handed over covers
+     * the rest; for several, each way has an amount and the last a rest. No photo still
+     * uploading (or failed and not removed).
+     */
+    ready:
+      due > 0 &&
+      leaveReady &&
+      (shownRows ? toCollect > 0 && partsReady : cashReady && !proofs.unsettled([SINGLE])),
     /** The request for POST …/payment (an order's or a table's). */
     body: {
-      method,
+      ...collectWays(),
       ...(left > 0 && leaveReason ? { waive: { amount: left, reason: leaveReason } } : {}),
-      ...(tip > 0 ? { tip } : {}),
+      ...(tip > 0 && !shownRows ? { tip } : {}),
     } satisfies CollectTableRequest,
   };
+
+  /** One way (with its photos, as a part of it all), or the rows. */
+  function collectWays(): Pick<CollectTableRequest, 'method' | 'parts'> {
+    if (shownRows) return { parts: partsRequest(shownRows, proofs.keysOf) };
+    const photos = takesProof(method) ? proofs.keysOf(SINGLE) : [];
+    return photos.length > 0 && toCollect > 0
+      ? { parts: [{ method, amount: toCollect, proofs: photos }] }
+      : { method };
+  }
 }
 
 export type CollectChoice = ReturnType<typeof useCollectChoice>;
@@ -248,82 +366,129 @@ export function CollectFields({
         )}
       </section>
 
-      <RadioTiles<AtTableMethodKey>
-        name="collect-method"
-        legend={t('adminPayments.collect.method')}
-        value={method}
-        onChange={setMethod}
-        compact
-        columns={methods.length >= 4 ? 4 : (Math.max(2, methods.length) as 2 | 3)}
-        choices={methods.map((m) => ({ id: m, label: methodName(m), icon: methodIcon(m) }))}
-      />
-
-      {method === 'cash' && toCollect > 0 && (
-        <section className={styles.block}>
-          <AmountInput
-            id="collect-received"
-            label={t('adminPayments.collect.cashReceived')}
-            symbol={region.currency.symbol}
-            value={received}
-            onChange={setReceived}
-            hint={receivedAmount === null ? t('adminPayments.collect.cashHint') : undefined}
+      {choice.rows ? (
+        <PaymentPartsFields choice={choice} />
+      ) : (
+        <>
+          <RadioTiles<AtTableMethodKey>
+            name="collect-method"
+            legend={t('adminPayments.collect.method')}
+            value={method}
+            onChange={setMethod}
+            compact
+            columns={methods.length >= 4 ? 4 : (Math.max(2, methods.length) as 2 | 3)}
+            choices={methods.map((m) => ({ id: m, label: methodName(m), icon: methodIcon(m) }))}
           />
-          <div
-            className={styles.quick}
-            role="group"
-            aria-label={t('adminPayments.collect.cashReceived')}
-          >
-            {quickCash.map((value, index) => (
-              <button
-                key={value}
-                type="button"
-                className={styles.quickButton}
-                aria-pressed={receivedAmount === value}
-                onClick={() => setReceived(String(value))}
+
+          {method === 'cash' && toCollect > 0 && (
+            <section className={styles.block}>
+              <AmountInput
+                id="collect-received"
+                label={t('adminPayments.collect.cashReceived')}
+                symbol={region.currency.symbol}
+                value={received}
+                onChange={setReceived}
+                hint={receivedAmount === null ? t('adminPayments.collect.cashHint') : undefined}
+              />
+              <div
+                className={styles.quick}
+                role="group"
+                aria-label={t('adminPayments.collect.cashReceived')}
               >
-                {index === 0 ? t('adminPayments.collect.exact') : format(value)}
-              </button>
-            ))}
-          </div>
-          {choice.short && (
-            // Handed over less than the bill: one tap leaves the rest, as no change.
-            <div className={styles.shortPanel} role="status">
-              <span>{t('adminPayments.collect.short', { amount: format(choice.shortBy) })}</span>
-              <button type="button" className={styles.shortLeave} onClick={choice.leaveShort}>
-                {t('adminPayments.collect.leaveShort', { amount: format(choice.shortBy) })}
-              </button>
-            </div>
+                {quickCash.map((value, index) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={styles.quickButton}
+                    aria-pressed={receivedAmount === value}
+                    onClick={() => setReceived(String(value))}
+                  >
+                    {index === 0 ? t('adminPayments.collect.exact') : format(value)}
+                  </button>
+                ))}
+              </div>
+              {choice.short && (
+                // Handed over less than the bill: one tap leaves the rest, as no change.
+                <div className={styles.shortPanel} role="status">
+                  <span>
+                    {t('adminPayments.collect.short', { amount: format(choice.shortBy) })}
+                  </span>
+                  <span className={styles.shortActions}>
+                    {choice.withParts && methods.length > 1 && (
+                      // The usual case: the guest pays the rest by UPI or card.
+                      <button
+                        type="button"
+                        className={styles.shortLeave}
+                        onClick={choice.parts.start}
+                      >
+                        {t('adminPayments.parts.payRest', { amount: format(choice.shortBy) })}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={cx(styles.shortLeave, choice.withParts && styles.shortAlt)}
+                      onClick={choice.leaveShort}
+                    >
+                      {t('adminPayments.collect.leaveShort', { amount: format(choice.shortBy) })}
+                    </button>
+                  </span>
+                </div>
+              )}
+              {choice.change !== null &&
+                choice.change > 0 &&
+                (choice.tip > 0 ? (
+                  // The guest let the restaurant keep the change: a tip on the payment.
+                  <div className={cx(styles.change, styles.kept)} role="status">
+                    <span>
+                      {t('adminPayments.collect.tipKept', { amount: format(choice.tip) })}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.changeLink}
+                      onClick={() => choice.setKeepChange(false)}
+                    >
+                      {t('adminPayments.collect.giveChange')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className={styles.change} role="status">
+                    <span className={styles.changeAmount}>
+                      {t('adminPayments.collect.change')}
+                      <strong>{format(choice.change)}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.keepTip}
+                      onClick={() => choice.setKeepChange(true)}
+                    >
+                      {t('adminPayments.collect.keepTip', { amount: format(choice.change) })}
+                    </button>
+                  </div>
+                ))}
+            </section>
           )}
-          {choice.change !== null &&
-            choice.change > 0 &&
-            (choice.tip > 0 ? (
-              // The guest let the restaurant keep the change: a tip on the payment.
-              <div className={cx(styles.change, styles.kept)} role="status">
-                <span>{t('adminPayments.collect.tipKept', { amount: format(choice.tip) })}</span>
-                <button
-                  type="button"
-                  className={styles.changeLink}
-                  onClick={() => choice.setKeepChange(false)}
-                >
-                  {t('adminPayments.collect.giveChange')}
-                </button>
-              </div>
-            ) : (
-              <div className={styles.change} role="status">
-                <span className={styles.changeAmount}>
-                  {t('adminPayments.collect.change')}
-                  <strong>{format(choice.change)}</strong>
-                </span>
-                <button
-                  type="button"
-                  className={styles.keepTip}
-                  onClick={() => choice.setKeepChange(true)}
-                >
-                  {t('adminPayments.collect.keepTip', { amount: format(choice.change) })}
-                </button>
-              </div>
-            ))}
-        </section>
+
+          {choice.withParts && takesProof(method) && toCollect > 0 && (
+            <ProofPicker
+              id="collect-proofs"
+              photos={choice.proofs.photosOf(choice.single)}
+              onAdd={(files) => choice.proofs.add(choice.single, files)}
+              onRemove={(photo) => choice.proofs.remove(choice.single, photo)}
+            />
+          )}
+          {choice.withParts && toCollect > 0 && methods.length > 1 && (
+            <button type="button" className={styles.splitOpen} onClick={choice.parts.start}>
+              <span className={styles.splitIcon} aria-hidden="true">
+                <Icon name="swap" size="sm" />
+              </span>
+              <span className={styles.splitText}>
+                <strong>{t('adminPayments.parts.start')}</strong>
+                <span>{t('adminPayments.parts.startHint')}</span>
+              </span>
+              <Icon name="chev" size="xs" className={styles.splitChev} />
+            </button>
+          )}
+        </>
       )}
 
       {choice.leaving ? (

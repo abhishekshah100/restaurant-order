@@ -59,7 +59,7 @@ const STATE_REFRESH_MS = 30_000;
 export function ReservationsBoard() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, clock } = useAdminWorkspace();
+  const { branch, clock, can } = useAdminWorkspace();
   const reservations = useReservations(branch.id);
   const tick = useNow(STATE_REFRESH_MS);
   const dayParam = useQueryParam('day');
@@ -113,13 +113,15 @@ export function ReservationsBoard() {
             <Button variant="secondary" iconStart="history" href={ADMIN_LINKS.reservationHistory}>
               {t('adminReservations.history.open')}
             </Button>
-            <Button
-              iconStart="plus"
-              className={styles.new}
-              onClick={() => setEditor({ kind: 'new' })}
-            >
-              {t('adminReservations.new')}
-            </Button>
+            {can('reservations.manage') && (
+              <Button
+                iconStart="plus"
+                className={styles.new}
+                onClick={() => setEditor({ kind: 'new' })}
+              >
+                {t('adminReservations.new')}
+              </Button>
+            )}
           </div>
         </div>
 

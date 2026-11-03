@@ -23,7 +23,7 @@ import {
 } from '@/lib/adminPayments';
 import type { Order } from '@/types/order';
 import type { BillRequest } from '@/types/service';
-import { inDayRange, isTodayOnly, ordersFilter, parseDayRange } from '@/lib/dayRange';
+import { inDayRange, isTodayOnly, ordersFilter, parseDayRange, shiftDay } from '@/lib/dayRange';
 import { downloadXlsx, toXlsx } from '@/lib/xlsx';
 import { DateRangeFilter } from '../DateRangeFilter';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
@@ -85,7 +85,12 @@ export function PaymentsBoard() {
   const onToday = isTodayOnly(days, today);
   // Days up to today keep being polled; past ones don't change on their own.
   const live = days.to === today;
-  const orders = useBranchOrders(branch.id, ordersFilter(days, today), live);
+  // Up to today, every bill still to pay however old: nothing unpaid drops off To collect.
+  const orders = useBranchOrders(
+    branch.id,
+    { ...ordersFilter(days, today), ...(live ? { due: 'all' as const } : {}) },
+    live,
+  );
   const service = useBranchService(branch.id);
   const text = usePaymentText();
   const view = parsePaymentsView(useQueryParam('view'));
@@ -114,15 +119,18 @@ export function PaymentsBoard() {
 
   let content;
   if (orders.data) {
-    // Up to today the list also has yesterday's bills still to pay: they're to collect, but
-    // their money counts on the day they were placed.
+    // Up to today the list also has older bills still to pay: they're to collect, but their
+    // money counts on the day they were placed.
     const all = orders.data.orders;
     const placed = all.filter((o) => inDayRange(clock.dayKey(o.placedAt), days));
     const day = daySummary(placed);
     const billRequests = live
       ? (service.data?.requests ?? []).filter((r): r is BillRequest => r.kind === 'bill')
       : [];
-    const groups = dueGroups(all, billRequests);
+    // A table's bill is today's and yesterday's orders there (as the server takes it, a bill
+    // left open at midnight included); older ones are collected on their own.
+    const tableFrom = shiftDay(today, -1);
+    const groups = dueGroups(all, billRequests, (o) => clock.dayKey(o.placedAt) >= tableFrom);
     const entries = ledgerEntries(placed);
     const refunds = entries.filter((e) => e.kind === 'refund');
     const shownGroups = filterGroups(groups, query);

@@ -6,8 +6,10 @@ import type { ReactNode } from 'react';
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { ADMIN_LINKS } from '@/lib/adminNav';
-import { SETTINGS_GROUPS, activeSettingsSection } from '@/lib/adminSettings';
+import { SETTINGS_GROUPS, activeSettingsSection, settingsFor } from '@/lib/adminSettings';
 import { cx } from '@/lib/cx';
+import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { NoAccess } from '../shell/NoAccess';
 import styles from './SettingsFrame.module.css';
 
 /**
@@ -17,6 +19,9 @@ import styles from './SettingsFrame.module.css';
 export function SettingsFrame({ children }: { children: ReactNode }) {
   const t = useContent('common');
   const active = activeSettingsSection(usePathname());
+  const { can } = useAdminWorkspace();
+  const groups = settingsFor(can);
+  const needs = SETTINGS_GROUPS.flatMap((g) => g.sections).find((s) => s.id === active)?.needs;
 
   return (
     <div className={styles.frame}>
@@ -28,7 +33,7 @@ export function SettingsFrame({ children }: { children: ReactNode }) {
         >
           {t('adminSettings.title')}
         </Link>
-        {SETTINGS_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div key={group.id} className={styles.group}>
             <p className={styles.groupTitle}>{t(`adminSettings.groups.${group.id}`)}</p>
             <ul className={styles.items}>
@@ -55,7 +60,7 @@ export function SettingsFrame({ children }: { children: ReactNode }) {
             {t('adminSettings.back')}
           </Link>
         )}
-        {children}
+        {!needs || can(needs) ? children : <NoAccess />}
       </div>
     </div>
   );

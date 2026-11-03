@@ -205,17 +205,19 @@ export type DueGroup =
 /**
  * What's still to collect: tables with an open bill (every order at the table with something
  * due), then takeaway and delivery orders. Tables whose guests asked for the bill come first
- * (asked longest ago first); the rest oldest first.
+ * (asked longest ago first); the rest oldest first. A dine-in order `onTableBill` turns down (one
+ * left unpaid days ago) is a bill of its own, so it isn't taken with whoever sits there now.
  */
 export function dueGroups(
   orders: readonly Order[],
   billRequests: readonly BillRequest[] = [],
+  onTableBill: (order: Order) => boolean = () => true,
 ): DueGroup[] {
   const due = orders.filter((o) => dueOn(o) > 0);
   const tables = new Map<number, Order[]>();
   const groups: DueGroup[] = [];
   for (const order of due) {
-    if (order.mode === 'dineIn' && order.table !== undefined) {
+    if (order.mode === 'dineIn' && order.table !== undefined && onTableBill(order)) {
       tables.set(order.table, [...(tables.get(order.table) ?? []), order]);
     } else {
       groups.push({
@@ -303,8 +305,11 @@ export function filterGroups(groups: readonly DueGroup[], query: string): DueGro
   if (!q) return [...groups];
   const matches = (o: Order) =>
     o.id.toLowerCase().includes(q) || o.customerName.toLowerCase().includes(q);
+  // A dine-in bill of its own (left from days ago) is found by its table too.
   return groups.filter((g) =>
-    g.kind === 'table' ? String(g.table) === q || g.orders.some(matches) : matches(g.order),
+    g.kind === 'table'
+      ? String(g.table) === q || g.orders.some(matches)
+      : matches(g.order) || (g.order.table !== undefined && String(g.order.table) === q),
   );
 }
 

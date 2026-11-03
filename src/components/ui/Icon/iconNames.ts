@@ -59,6 +59,8 @@ export const ICON_NAMES = [
   'shrink',
   'belloff',
   'printer',
+  'camera',
+  'image',
   'logout',
   'swap',
   'cloche',

@@ -85,3 +85,8 @@
 .lastOrders.onDark.soon {
   color: var(--warn-tint);
 }
+
+/* Status only (no permission to change it). */
+.static {
+  cursor: default;
+}

@@ -21,6 +21,7 @@ import {
   laneTickets,
   ticketUrgency,
   withKitchenStep,
+  withDismissed,
   withPlated,
   type CategoryOf,
   type KitchenTicket,
@@ -243,6 +244,13 @@ describe('kitchen tickets', () => {
     expect(laneTickets(shown).cooking.map((t) => t.key)).toEqual(['A1:1']);
     const cancelled = tickets.find((t) => t.key === 'A1:1') as KitchenTicket;
     expect(justCancelled(cancelled, NOW)).toBe(true);
+    // Put away (Dismiss, on any screen): off the board at once.
+    expect(justCancelled({ ...cancelled, dismissedAt: NOW.toISOString() }, NOW)).toBe(false);
+    const [put] = kitchenTickets(
+      withDismissed([order('A1', [cooking])], 'A1', 1, NOW.toISOString()),
+      branch,
+    );
+    expect(put?.dismissedAt).toBe(NOW.toISOString());
     const fresh = tickets.find((t) => t.key === 'A3:1') as KitchenTicket;
     expect(justChanged(fresh, NOW)).toBe(true);
     expect(justChanged(fresh, new Date(NOW.getTime() + 10 * 60_000))).toBe(false);
