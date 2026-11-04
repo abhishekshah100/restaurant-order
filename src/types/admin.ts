@@ -308,6 +308,50 @@ export interface Reservation {
   /** ISO and who: the last change of status (seated, cancelled, no-show, restored). */
   updatedAt?: string;
   updatedBy?: string;
+  /** A no-show the server set: not seated within the branch's grace period. */
+  autoNoShow?: true;
+  /** The advance the guest paid, if any. */
+  deposit?: ReservationDeposit;
+  /** Staff reminded the guest (WhatsApp or SMS): when, and who. */
+  reminded?: { at: string; by?: string };
+}
+
+/**
+ * A booking's advance: how much and how, who took it, its proof photos (keys), and what became
+ * of it: held, applied to a bill (`order`), refunded, or kept by the restaurant.
+ */
+export interface ReservationDeposit {
+  amount: Price;
+  method: string;
+  at: string;
+  by?: string;
+  proofs?: string[];
+  status: 'held' | 'applied' | 'refunded' | 'kept';
+  settledAt?: string;
+  order?: string;
+}
+
+/**
+ * A branch's booking rules: a no-show this many minutes after the time (0: staff mark them);
+ * a deposit of `depositPerPerson` a head for parties of `depositPartySize` or more (0: never)
+ * or after `depositAfterNoShows` no-shows in six months (0: never), refunded when cancelled
+ * `depositCancelHours` or more ahead, kept when later or for a no-show.
+ */
+export interface ReservationRules {
+  noShowAfterMinutes: number;
+  depositPartySize: number;
+  depositPerPerson: Price;
+  depositCancelHours: number;
+  depositAfterNoShows: number;
+}
+
+/** How a guest's bookings at the branch ended in the last six months (by their number). */
+export interface GuestHistory {
+  bookings: number;
+  seated: number;
+  noShows: number;
+  cancelled: number;
+  lastNoShowAt?: string;
 }
 
 /** What a table card shows of a booking. */
@@ -321,6 +365,8 @@ export interface AdminReservations {
   reservations: Reservation[];
   /** ISO: when the server read it. */
   generatedAt: string;
+  /** The branch's no-show and deposit rules (the server's; the mock has none). */
+  rules?: ReservationRules;
 }
 
 /* ---------- Staff roles (Settings › Roles & permissions) ---------- */
@@ -336,8 +382,11 @@ export type StaffPermission =
   | 'tables.manage'
   | 'orders.view'
   | 'orders.take'
-  | 'orders.manage'
+  | 'orders.cancel'
+  | 'refunds.give'
   | 'payments.collect'
+  | 'cash.manage'
+  | 'cash.review'
   | 'service.respond'
   | 'kitchen.update'
   | 'reservations.manage'

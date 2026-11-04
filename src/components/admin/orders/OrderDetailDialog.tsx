@@ -232,7 +232,7 @@ function OrderDialog({
       take && !past && !multiRound && onChangeItems && editableRound(order) !== null;
     const live = !past && !finished;
     const canRush = live && take;
-    const canCancel = live && can('orders.manage');
+    const canCancel = live && can('orders.cancel');
     footer = (
       <div className={styles.actions}>
         {ready && can('service.respond') && (

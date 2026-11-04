@@ -128,6 +128,21 @@ export type ApiErrorCode =
   | 'table_in_use'
   /** 409: the table still owes money (`due`): collect it before freeing the table. */
   | 'bill_open'
+  /** 409: no cash register is open at the branch: open it before taking or giving cash. */
+  | 'register_closed'
+  /** 409: the branch's cash register is already open (one drawer per branch). */
+  | 'register_open'
+  /**
+   * 409: the count at close differs from what's expected (`expected`, `difference` for the cash,
+   * `methods` for card and UPI): say why.
+   */
+  | 'count_differs'
+  /** 409: a register session that day is still open: close it before signing the day off. */
+  | 'day_open'
+  /** 409: the day was already signed off. */
+  | 'day_signed_off'
+  /** 409: the booking already has a deposit (one at most). */
+  | 'deposit_exists'
   | 'role_system'
   | 'role_in_use'
   | 'staff_exists'
@@ -169,6 +184,11 @@ export interface ApiErrorBody {
   tables?: TableInUse[];
   /** bill_open: what the table still owes. */
   due?: Price;
+  /** count_differs: what the drawer should hold, and counted - expected (negative: short). */
+  expected?: Price;
+  difference?: Price;
+  /** count_differs: the card and UPI totals checked, against what was taken that way. */
+  methods?: { method: string; expected: Price; difference: Price }[];
 }
 
 /** A table the floor plan can't leave out yet: its open orders or bill, or its bookings to come. */
@@ -594,6 +614,8 @@ export interface PaymentProofResponse {
 export interface CollectPaymentRequest {
   method?: AtTableMethodKey;
   parts?: PaymentPart[];
+  /** A seated booking ("R1004") whose held deposit pays part first; the rest as sent. */
+  deposit?: string;
   /**
    * Part of what's due, for a split bill (major units, more than 0, at most what's due): the
    * rest stays due. Missing: everything due.
@@ -663,6 +685,8 @@ export interface CollectTableRequest {
   /** One way, or several (`parts`, adding up to the whole bill less what's left). */
   method?: AtTableMethodKey;
   parts?: PaymentPart[];
+  /** A seated booking at the table whose held deposit pays part first. */
+  deposit?: string;
   /** A tip on top, recorded with the payment (not part of the bill). */
   tip?: Price;
   /** Part of the table's bill left, with why: it comes off its latest orders first. */
@@ -1314,4 +1338,182 @@ export interface OfferRequest {
   scope: { categories: string[]; dishes: string[] };
   type: AutoOffer['type'];
   value: number;
+}
+
+/* ---------- The cash register ---------- */
+
+/** Notes and coins counted: ₹500 × 4, ₹10 × 7 (they add up to the amount they go with). */
+export type DrawerCount = { value: Price; quantity: number }[];
+
+/** Why cash went in or out of the drawer, other than an order's. */
+export type CashMovementReason = 'float' | 'supplies' | 'withdrawal' | 'bank' | 'other';
+
+export interface CashMovement {
+  id: string;
+  kind: 'in' | 'out';
+  amount: Price;
+  reason: CashMovementReason;
+  note?: string;
+  at: string;
+  by?: string;
+}
+
+/** What the drawer took and gave back since it opened, besides the float. */
+export interface CashTotals {
+  /** Cash payments, tips included. */
+  taken: Price;
+  tips: Price;
+  /** Cash handed back (refunds). */
+  refunded: Price;
+  paidIn: Price;
+  paidOut: Price;
+  /** Float + taken - refunded + paid in - paid out. */
+  expected: Price;
+}
+
+/** A branch's cash drawer from opening (a float) to closing (a count). */
+export interface CashSession {
+  id: string;
+  number: number;
+  openedAt: string;
+  openedBy?: string;
+  float: Price;
+  openingCount?: DrawerCount;
+  movements: CashMovement[];
+  /** While open only for staff who see reports (the close count is blind); always once closed. */
+  totals?: CashTotals;
+  closedAt?: string;
+  closedBy?: string;
+  counted?: Price;
+  closingCount?: DrawerCount;
+  /** Counted - expected (negative: short). */
+  difference?: Price;
+  /** Closed: card, UPI… taken in person, checked against the machine or statement. */
+  methods?: CashMethodCheck[];
+  /** Closed: a difference above the branch's limit then: it needs review. */
+  overLimit?: boolean;
+  note?: string;
+}
+
+/** A way taken in person during a session, and what was counted (when checked). */
+export interface CashMethodCheck {
+  method: string;
+  expected: Price;
+  counted?: Price;
+  difference?: Price;
+}
+
+export interface CashSessionSummary {
+  id: string;
+  number: number;
+  openedAt: string;
+  openedBy?: string;
+  closedAt?: string;
+  closedBy?: string;
+  float: Price;
+  expected?: Price;
+  counted?: Price;
+  difference?: Price;
+  overLimit?: boolean;
+}
+
+/**
+ * `GET /admin/branches/:branchId/cash-register` — the drawer now (`current`, null when closed),
+ * the count at the last close (`lastCounted`: the next float) and recent sessions (for staff
+ * with `cash.manage` or `reports.view`). Read by those who collect payments too (cash needs an
+ * open drawer). `GET …/cash-register/sessions/:id` → one `CashSession`. Backend only.
+ */
+export interface CashRegisterResponse {
+  current: CashSession | null;
+  lastCounted?: Price;
+  recent: CashSessionSummary[];
+  /** How big a difference can be before it needs review (0: any). */
+  differenceLimit: Price;
+}
+
+/**
+ * `GET …/cash-register/days/:day` — the branch's day at the register (sessions opened that
+ * calendar day): its cash, card and UPI, what needs review and the sign-off. `POST
+ * …/days/:day/sign-off` (`{ note? }`, needs `cash.review`) → the same, signed off; 409 day_open
+ * while a session that day is open, 409 day_signed_off.
+ */
+export interface CashDaySummary {
+  day: string;
+  sessions: CashSessionSummary[];
+  open: boolean;
+  cash: {
+    float: Price;
+    taken: Price;
+    refunded: Price;
+    paidIn: Price;
+    paidOut: Price;
+    expected: Price;
+    counted: Price;
+    difference: Price;
+  };
+  methods: CashMethodCheck[];
+  needsReview: number;
+  signOff?: { at: string; by?: string; note?: string };
+}
+
+/**
+ * `GET …/cash-register/report?from=&to=` — closed sessions day by day (the last 30 days by
+ * default, at most 92), and each closer's record. `PATCH …/cash-register/limit` (`{
+ * differenceLimit }`, needs `cash.review`) sets how big a difference can be before review.
+ */
+export interface CashReport {
+  from: string;
+  to: string;
+  days: {
+    day: string;
+    sessions: number;
+    expected: Price;
+    counted: Price;
+    difference: Price;
+    needsReview: number;
+    signedOff: boolean;
+  }[];
+  staff: { name: string; sessions: number; short: Price; over: Price }[];
+}
+
+/**
+ * `POST …/cash-register/open` (201 → `CashSession`; 409 register_open), `POST …/movements`
+ * (→ `CashSession`; 409 register_closed) and `POST …/close` (→ the closed `CashSession`; 409
+ * count_differs with `expected` and `difference` until a differing count comes with `note`;
+ * 409 register_closed). Need `cash.manage`. A `count` must add up to its amount (400 `count`).
+ */
+export interface OpenRegisterRequest {
+  float: Price;
+  count?: DrawerCount;
+}
+export interface CashMovementRequest {
+  kind: 'in' | 'out';
+  amount: Price;
+  reason: CashMovementReason;
+  note?: string;
+}
+export interface CloseRegisterRequest {
+  counted: Price;
+  count?: DrawerCount;
+  /** Card, UPI…: the machine's batch total or the statement's, as counted (optional). */
+  methods?: { method: string; counted: Price }[];
+  note?: string;
+}
+
+/* ---------- Reservations: deposits, reminders, rules ---------- */
+
+/**
+ * `POST /admin/branches/:branchId/reservations/:id/deposit` — the guest paid an advance (one per
+ * booking, while booked): cash goes into the open cash register (409 register_closed); proof
+ * photos only for other ways. → the `Reservation`. 409 deposit_exists, reservation_closed. A
+ * held deposit is kept for a no-show; cancelled `depositCancelHours` or more ahead it's
+ * refunded (cash from the drawer), later it's kept; a seated party's is put towards their bill
+ * (`deposit` on POST …/payment). `POST …/:id/reminded` → the `Reservation` (staff reminded the
+ * guest). `GET …/reservations/guests/:phone` → `GuestHistory`. `PATCH …/reservations/rules`
+ * (`ReservationRules`, needs `branch.settings.manage`) → the rules. Backend only.
+ */
+export interface DepositRequest {
+  amount: Price;
+  method: string;
+  proofs?: string[];
 }

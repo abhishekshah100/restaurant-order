@@ -344,6 +344,18 @@ const PAST_ORDERS_STALE_MS = 5 * 60_000;
  * GET /admin/branches/:branchId/reservations: bookings from today on. Keyed like the floor, so
  * a booking seated or changed refreshes the floor plan and the other way round. Polled like it.
  */
+/** GET …/reservations/guests/:phone: how a guest's bookings ended (while staff book them). */
+export const guestHistoryQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  phone: string,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'service', 'reservations', 'guest', branchId, phone, token] as const,
+    queryFn: token && branchId ? () => api.guestHistory(token, branchId, phone) : skipToken,
+    staleTime: 60_000,
+  });
+
 export const reservationsQuery = (token: string | null, branchId: string | undefined) =>
   queryOptions({
     queryKey: ['admin', 'service', 'reservations', branchId, token] as const,
@@ -388,6 +400,42 @@ export const adminRolesQuery = (token: string | null, branchId: string | undefin
   queryOptions({
     queryKey: ['admin', 'roles', branchId, token] as const,
     queryFn: token && branchId ? () => api.roles(token, branchId) : skipToken,
+  });
+
+/**
+ * GET /admin/branches/:branchId/cash-register: whether the drawer is open (cash needs it), and
+ * its sessions. Polled like the service while shown (another device may open or close it).
+ */
+export const cashRegisterQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'cash-register', branchId, token] as const,
+    queryFn: token && branchId ? () => api.cashRegister(token, branchId) : skipToken,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
+  });
+
+/** GET …/cash-register/days/:day: the day's register (today's changes while shown). */
+export const cashDayQuery = (token: string | null, branchId: string | undefined, day: string) =>
+  queryOptions({
+    queryKey: ['admin', 'cash-register', branchId, 'day', day, token] as const,
+    queryFn: token && branchId ? () => api.cashDay(token, branchId, day) : skipToken,
+  });
+
+/** GET …/cash-register/report: closed sessions day by day, and by staff. */
+export const cashReportQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  range: { from: string; to: string },
+) =>
+  queryOptions({
+    queryKey: ['admin', 'cash-register', branchId, 'report', range.from, range.to, token] as const,
+    queryFn: token && branchId ? () => api.cashReport(token, branchId, range) : skipToken,
+  });
+
+/** GET …/cash-register/sessions/:id: one session in full (a closed one doesn't change). */
+export const cashSessionQuery = (token: string | null, branchId: string | undefined, id: string) =>
+  queryOptions({
+    queryKey: ['admin', 'cash-session', branchId, id, token] as const,
+    queryFn: token && branchId ? () => api.cashSession(token, branchId, id) : skipToken,
   });
 
 /**

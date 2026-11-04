@@ -1,0 +1,185 @@
+/* Refunds & cancellations: totals, refunds on their way, reasons, then the list. */
+
+.page {
+  max-width: 900px;
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  display: grid;
+  gap: 4px;
+}
+
+.title {
+  font: var(--font-h);
+}
+
+.muted {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.tile {
+  padding: 14px 16px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.tileWarn {
+  border-color: var(--warn);
+  background: var(--warn-tint);
+}
+
+.tileLabel {
+  color: var(--ink-2);
+  font: var(--font-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tileValue {
+  font: var(--font-price-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.card {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.cardTitle {
+  font: var(--font-label);
+  font-size: 1.0625rem;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.rows {
+  display: grid;
+  list-style: none;
+}
+
+.row {
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.rowIcon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  font: var(--font-small);
+}
+
+.rowEnd {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.refund {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+.cancel {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.chip {
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font: var(--font-caption);
+  white-space: nowrap;
+}
+
+.waiting {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+.done {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+/* Reasons: tap one to filter the list by it. */
+.reasonList {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+}
+
+.reason {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+  text-align: start;
+  cursor: pointer;
+}
+
+.reason[aria-pressed='true'] {
+  border-color: var(--ink);
+}
+
+.reason:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.kind {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font: var(--font-caption);
+}
+
+.reasonName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

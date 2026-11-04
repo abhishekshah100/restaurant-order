@@ -58,7 +58,9 @@ function CollectForm({
     showToast(
       isApiError(error, 'nothing_to_pay')
         ? t('adminPayments.nothingToPay')
-        : t('adminPayments.failed'),
+        : isApiError(error, 'register_closed')
+          ? t('adminCash.errors.closed')
+          : t('adminPayments.failed'),
       { tone: 'error' },
     );
   const done = (message: string) => {

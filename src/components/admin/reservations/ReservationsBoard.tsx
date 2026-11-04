@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { isBackendEnabled } from '@/api/backend';
 import { useContent, useReservations } from '@/api/hooks';
 import { Button, Chip, EmptyState, Icon, SearchField } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
@@ -26,6 +27,7 @@ import type { Reservation } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { DayStrip } from './DayStrip';
 import type { EditorTarget } from './ReservationEditor';
+import { RemindersPanel } from './RemindersPanel';
 import { ReservationRow } from './ReservationRow';
 import { useReservationStatus } from './useReservationStatus';
 import styles from './ReservationsBoard.module.css';
@@ -37,6 +39,10 @@ const ReservationDialog = dynamic(
     ssr: false,
     loading: () => <LoadingSignal />,
   },
+);
+const BookingRulesDialog = dynamic(
+  () => import('./BookingRulesDialog').then((m) => m.BookingRulesDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
 );
 const ReservationEditor = dynamic(
   () => import('./ReservationEditor').then((m) => m.ReservationEditor),
@@ -67,7 +73,9 @@ export function ReservationsBoard() {
   const [query, setQuery] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
   const [editor, setEditor] = useState<EditorTarget | null>(null);
+  const [editingRules, setEditingRules] = useState(false);
   const status = useReservationStatus();
+  const backend = isBackendEnabled();
 
   let content;
   if (reservations.data) {
@@ -113,6 +121,11 @@ export function ReservationsBoard() {
             <Button variant="secondary" iconStart="history" href={ADMIN_LINKS.reservationHistory}>
               {t('adminReservations.history.open')}
             </Button>
+            {backend && reservations.data.rules && can('branch.settings.manage') && (
+              <Button variant="secondary" iconStart="sliders" onClick={() => setEditingRules(true)}>
+                {t('adminReservations.rules.open')}
+              </Button>
+            )}
             {can('reservations.manage') && (
               <Button
                 iconStart="plus"
@@ -147,6 +160,8 @@ export function ReservationsBoard() {
             </dd>
           </div>
         </dl>
+
+        {backend && can('reservations.manage') && <RemindersPanel reservations={all} now={now} />}
 
         <section className={styles.panel} aria-label={t('adminReservations.title')}>
           <div className={styles.tools}>
@@ -203,6 +218,12 @@ export function ReservationsBoard() {
           )}
         </section>
 
+        {editingRules && reservations.data.rules && (
+          <BookingRulesDialog
+            rules={reservations.data.rules}
+            onClose={() => setEditingRules(false)}
+          />
+        )}
         {open && (
           <ReservationDialog
             reservation={open}

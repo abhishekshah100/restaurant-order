@@ -1,14 +1,15 @@
 'use client';
 
 import { Fragment, useState } from 'react';
-import { useContent } from '@/api/hooks';
+import { useCashRegister, useContent, useReservations } from '@/api/hooks';
 import { isBackendEnabled } from '@/api/backend';
 import type { CollectTableRequest } from '@/api/contracts';
-import { Icon } from '@/components/ui';
+import { Banner, Button, Icon } from '@/components/ui';
 import { dueOn } from '@/lib/adminOrders';
 import { WAIVE_REASONS, changeDue } from '@/lib/adminPayments';
 import { cx } from '@/lib/cx';
 import { paidAmount } from '@/lib/lifecycle';
+import { ADMIN_LINKS } from '@/lib/adminNav';
 import { orderBill } from '@/lib/orders';
 import {
   canAddPart,
@@ -54,6 +55,19 @@ export function useCollectChoice(orders: readonly Order[]) {
     methods.includes('cash') ? 'cash' : methods[0],
   );
   const proofs = useProofPhotos(branch.id);
+  // Cash needs the branch's cash register open (the server refuses it otherwise).
+  const register = useCashRegister(branch.id, isBackendEnabled()).data;
+  // A party seated at these orders' table with a deposit held: it pays its part first.
+  const tables = new Set(orders.flatMap((o) => (o.table === undefined ? [] : [o.table])));
+  const booking = useReservations(
+    isBackendEnabled() ? branch.id : undefined,
+  ).data?.reservations.find(
+    (r) =>
+      r.status === 'seated' &&
+      r.deposit?.status === 'held' &&
+      (r.tables ?? [r.table]).some((n) => tables.has(n)),
+  );
+  const [useDeposit, setUseDeposit] = useState(true);
   // Several ways and photos are kept by the backend (the mock takes one way, no photos).
   const withParts = isBackendEnabled();
   // Paid in several ways: the rows, the last taking the rest. Null: one way.
@@ -75,7 +89,10 @@ export function useCollectChoice(orders: readonly Order[]) {
   const leaveTooMuch = leaveAmount !== null && leaveAmount > due;
   const leaveReady = leaveAmount === null || (!leaveTooMuch && leaveReason !== null);
   const left = leaveAmount !== null && !leaveTooMuch ? leaveAmount : 0;
-  const toCollect = Math.max(0, due - left);
+  // The booking's deposit, up to what's left of the bill.
+  const depositUsed =
+    booking?.deposit && useDeposit ? Math.min(booking.deposit.amount, Math.max(0, due - left)) : 0;
+  const toCollect = Math.max(0, Math.round((due - left - depositUsed) * 100) / 100);
 
   const receivedAmount = method === 'cash' ? parseAmount(received) : null;
   const change =
@@ -98,6 +115,11 @@ export function useCollectChoice(orders: readonly Order[]) {
     rest > 0 &&
     shownRows.every((r) => rowAmount(r.amount) !== null) &&
     !proofs.unsettled(shownRows.map((r) => r.id));
+
+  const usesCash = shownRows
+    ? shownRows.some((r) => r.method === 'cash')
+    : method === 'cash' && toCollect > 0;
+  const cashBlocked = usesCash && register !== undefined && register.current === null;
 
   const updateRow = (id: string, change: Partial<PartRow>) =>
     setRows((all) => all?.map((r) => (r.id === id ? { ...r, ...change } : r)) ?? null);
@@ -207,18 +229,27 @@ export function useCollectChoice(orders: readonly Order[]) {
     proofs,
     /** The one way's photos (a row's id for several). */
     single: SINGLE,
+    /** Cash is part of it while the cash register is closed: it can't be taken now. */
+    cashBlocked,
     /**
      * Something to take, any part left has a reason, and, for one way, cash handed over covers
      * the rest; for several, each way has an amount and the last a rest. No photo still
-     * uploading (or failed and not removed).
+     * uploading (or failed and not removed), and no cash while the register is closed.
      */
     ready:
       due > 0 &&
       leaveReady &&
+      !cashBlocked &&
       (shownRows ? toCollect > 0 && partsReady : cashReady && !proofs.unsettled([SINGLE])),
     /** The request for POST …/payment (an order's or a table's). */
+    /** A seated party's held deposit, and whether it pays its part (the staff's choice). */
+    deposit: booking?.deposit
+      ? { id: booking.id, amount: booking.deposit.amount, used: depositUsed, on: useDeposit }
+      : undefined,
+    setUseDeposit,
     body: {
       ...collectWays(),
+      ...(depositUsed > 0 && booking ? { deposit: booking.id } : {}),
       ...(left > 0 && leaveReason ? { waive: { amount: left, reason: leaveReason } } : {}),
       ...(tip > 0 && !shownRows ? { tip } : {}),
     } satisfies CollectTableRequest,
@@ -251,7 +282,7 @@ export function CollectFields({
 }) {
   const t = useContent('common');
   const cart = useContent('cart');
-  const { region, money } = useAdminWorkspace();
+  const { region, money, can } = useAdminWorkspace();
   const { amount: format, methodName } = usePaymentText();
   const [showBill, setShowBill] = useState(false);
   const { methods, method, setMethod, received, setReceived, receivedAmount, due, toCollect } =
@@ -304,6 +335,21 @@ export function CollectFields({
           {format(toCollect)}
         </p>
         <p className={styles.heroMeta}>{summary.join(' · ')}</p>
+        {choice.deposit && (
+          <label className={styles.depositRow}>
+            <input
+              type="checkbox"
+              checked={choice.deposit.on}
+              onChange={(event) => choice.setUseDeposit(event.target.checked)}
+            />
+            <span>
+              {t('adminPayments.collect.deposit', {
+                id: choice.deposit.id,
+                amount: format(choice.deposit.on ? choice.deposit.used : choice.deposit.amount),
+              })}
+            </span>
+          </label>
+        )}
 
         {showBill && (
           <div id="collect-bill" className={styles.bill}>
@@ -489,6 +535,25 @@ export function CollectFields({
             </button>
           )}
         </>
+      )}
+
+      {choice.cashBlocked && (
+        <Banner
+          tone="warn"
+          icon="lock"
+          live="polite"
+          action={
+            can('cash.manage') && (
+              <Button href={ADMIN_LINKS.cash} size="sm" variant="secondary">
+                {t('adminPayments.register.open')}
+              </Button>
+            )
+          }
+        >
+          <strong>{t('adminPayments.register.closed')}</strong>
+          <br />
+          {t('adminPayments.register.closedBody')}
+        </Banner>
       )}
 
       {choice.leaving ? (

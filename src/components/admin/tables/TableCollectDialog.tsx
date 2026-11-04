@@ -1,5 +1,6 @@
 'use client';
 
+import { isApiError } from '@/api/client';
 import { useContent } from '@/api/hooks';
 import { useCollectTablePayment } from '@/api/mutations';
 import { Button, Dialog } from '@/components/ui';
@@ -51,7 +52,13 @@ export function TableCollectDialog({
                   });
                   onClose();
                 },
-                onError: () => showToast(t('adminTableCollect.failed'), { tone: 'error' }),
+                onError: (error) =>
+                  showToast(
+                    isApiError(error, 'register_closed')
+                      ? t('adminCash.errors.closed')
+                      : t('adminTableCollect.failed'),
+                    { tone: 'error' },
+                  ),
               },
             )
           }

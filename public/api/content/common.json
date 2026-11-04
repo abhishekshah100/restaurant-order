@@ -41,7 +41,8 @@
     "counter": "Counter",
     "pickup": "Pay at pickup",
     "cod": "Cash on delivery",
-    "cash": "Cash"
+    "cash": "Cash",
+    "deposit": "Booking deposit"
   },
   "nav": {
     "label": "Primary",
@@ -268,6 +269,8 @@
       "menu": "Menu · Admin",
       "requests": "Requests · Admin",
       "payments": "Payments · Admin",
+      "cash": "Cash register · Admin",
+      "refunds": "Refunds & cancellations · Admin",
       "table": "Table · Admin",
       "qrCodes": "Table QR codes · Admin",
       "reservations": "Reservations · Admin",
@@ -305,6 +308,8 @@
       "kitchen": "Kitchen",
       "menu": "Menu",
       "payments": "Payments",
+      "cash": "Cash register",
+      "refunds": "Refunds & cancellations",
       "more": "More",
       "settings": "Settings"
     },
@@ -888,6 +893,225 @@
     "loading": "Loading orders",
     "failed": "Couldn't update that. Try again."
   },
+  "adminCash": {
+    "title": "Cash register",
+    "subtitle": "Open the drawer with a float, close it with a count.",
+    "tabs": {
+      "label": "Cash register views",
+      "register": "Register",
+      "day": "Day end",
+      "reports": "Reports"
+    },
+    "needsReview": "Needs review",
+    "backendOnly": "The cash register needs the server. It isn't available in the demo.",
+    "loading": "Loading the cash register",
+    "failed": "Couldn't load the cash register.",
+    "retry": "Try again",
+    "status": {
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "register": "Register #{number}",
+    "openedBy": "Opened {time} by {name}",
+    "opened": "Opened {time}",
+    "open": {
+      "title": "Open the register",
+      "body": "Count the cash in the drawer and open the register. Cash can't be taken while it's closed.",
+      "float": "Opening float",
+      "floatHint": "The last close counted {amount}.",
+      "count": "Count notes and coins",
+      "total": "Enter a total instead",
+      "confirm": "Open register",
+      "done": "Register opened with {amount}",
+      "exists": "The register is already open."
+    },
+    "counter": {
+      "label": "Notes and coins",
+      "quantity": "Number of {value}",
+      "total": "Total {amount}"
+    },
+    "current": {
+      "float": "Opening float",
+      "taken": "Cash taken",
+      "tips": "incl. {amount} tips",
+      "refunded": "Cash refunds",
+      "paidIn": "Paid in",
+      "paidOut": "Paid out",
+      "expected": "Expected in drawer",
+      "blind": "The expected amount shows after the count at close."
+    },
+    "actions": {
+      "payIn": "Pay in",
+      "payOut": "Pay out",
+      "close": "Close register"
+    },
+    "movements": {
+      "title": "Paid in and out",
+      "none": "Nothing paid in or out yet.",
+      "by": "by {name}"
+    },
+    "reasons": {
+      "float": "Float top-up",
+      "supplies": "Supplies",
+      "withdrawal": "Owner withdrawal",
+      "bank": "Bank deposit",
+      "other": "Other"
+    },
+    "move": {
+      "titleIn": "Pay cash in",
+      "titleOut": "Pay cash out",
+      "amount": "Amount",
+      "reason": "Why",
+      "note": "Note",
+      "notePlaceholder": "e.g. Milk and bread",
+      "confirmIn": "Pay in {amount}",
+      "confirmOut": "Pay out {amount}",
+      "doneIn": "{amount} paid in",
+      "doneOut": "{amount} paid out"
+    },
+    "close": {
+      "title": "Close register #{number}",
+      "countBody": "Count the cash in the drawer. You'll see the expected amount after.",
+      "counted": "Counted cash",
+      "check": "Check count",
+      "expected": "Expected",
+      "countedRow": "Counted",
+      "difference": "Difference",
+      "match": "Count matches",
+      "short": "{amount} short",
+      "over": "{amount} over",
+      "methodsTitle": "Card and UPI totals",
+      "methodsBody": "Optional: from the card machine's batch report and the UPI app. Leave blank to skip.",
+      "methodTotal": "{method} total",
+      "cashRow": "Cash",
+      "notChecked": "Not checked",
+      "why": "Why doesn't it match?",
+      "whyPlaceholder": "e.g. Wrong change given at table 4",
+      "recount": "Count again",
+      "confirm": "Close register",
+      "done": "Register #{number} closed"
+    },
+    "history": {
+      "title": "Recent sessions",
+      "none": "No closed sessions yet.",
+      "when": "{from} – {to}",
+      "view": "View register #{number}"
+    },
+    "session": {
+      "title": "Register #{number}",
+      "opened": "Opened",
+      "closed": "Closed",
+      "note": "Reason given"
+    },
+    "day": {
+      "date": "Day",
+      "status": {
+        "signed": "Signed off by {name} · {time}",
+        "signedNoName": "Signed off · {time}",
+        "open": "A register is still open this day. Close it to sign off.",
+        "pending": "Not signed off yet",
+        "empty": "No register sessions this day."
+      },
+      "cashTitle": "Cash",
+      "methodsTitle": "Card and UPI",
+      "sessionsTitle": "Register sessions",
+      "needsReview": {
+        "one": "{count} session needs review",
+        "other": "{count} sessions need review"
+      },
+      "way": "Way",
+      "expected": "Expected",
+      "counted": "Counted",
+      "difference": "Difference",
+      "signOff": "Sign off the day",
+      "signOffNote": "Note for the record",
+      "signOffPlaceholder": "e.g. Short ₹50 explained by Ravi",
+      "signedToast": "{day} signed off",
+      "signFailed": "Couldn't sign off. Try again."
+    },
+    "report": {
+      "from": "From",
+      "to": "To",
+      "daysTitle": "Day by day",
+      "staffTitle": "By staff",
+      "none": "No closed register sessions in these days.",
+      "day": "Day",
+      "sessions": "Sessions",
+      "expected": "Expected",
+      "counted": "Counted",
+      "difference": "Difference",
+      "review": "Review",
+      "signedOff": "Signed off",
+      "yes": "Yes",
+      "no": "No",
+      "name": "Closed by",
+      "short": "Short",
+      "over": "Over",
+      "failed": "Couldn't load the report.",
+      "range": "Choose up to 92 days, ending today at the latest."
+    },
+    "limit": {
+      "title": "Difference limit",
+      "body": "A difference bigger than this (cash, card or UPI) is marked Needs review. 0 means any difference.",
+      "label": "Allowed difference",
+      "save": "Save limit",
+      "saved": "Limit saved: {amount}",
+      "failed": "Couldn't save the limit."
+    },
+    "errors": {
+      "closed": "The register is closed. Open it first.",
+      "failed": "Couldn't save that. Try again."
+    }
+  },
+  "adminRefunds": {
+    "title": "Refunds & cancellations",
+    "subtitle": "Every refund and cancelled order, why, and refunds still on their way to guests.",
+    "loading": "Loading refunds and cancellations",
+    "failed": "Couldn't load refunds and cancellations.",
+    "retry": "Try again",
+    "note": "Covers orders placed in the days chosen.",
+    "summary": {
+      "refunded": "Refunded",
+      "refundedSub": "{inPerson} in person · {online} online",
+      "cancelled": "Cancelled orders",
+      "cancelledSub": "{amount} in orders",
+      "pending": "Online refunds on their way"
+    },
+    "pending": {
+      "title": "Online refunds on their way",
+      "body": "The payment partner takes 5–7 working days. Mark a refund received once the guest has it.",
+      "received": "Mark received",
+      "receivedToast": "Refund on #{order} marked received",
+      "failed": "Couldn't update the refund. Try again."
+    },
+    "reasons": {
+      "title": "By reason",
+      "none": "No reason given",
+      "count": "× {count}",
+      "option": "{kind} · {reason}"
+    },
+    "filters": {
+      "kind": "Show",
+      "all": "Refunds and cancellations",
+      "refund": "Refunds",
+      "cancel": "Cancellations",
+      "reason": "Reason",
+      "allReasons": "All reasons",
+      "staff": "Refunded by",
+      "allStaff": "Anyone",
+      "search": "Order, guest or table"
+    },
+    "list": {
+      "title": "All refunds and cancellations",
+      "none": "Nothing refunded or cancelled in these days.",
+      "noMatch": "Nothing matches these filters.",
+      "refund": "Refund",
+      "cancel": "Cancelled",
+      "by": "by {name}",
+      "byGuest": "by the guest",
+      "byRestaurant": "by the restaurant"
+    }
+  },
   "adminTableCollect": {
     "title": "Collect for Table {table}",
     "orders": {
@@ -1272,6 +1496,7 @@
         "seated": "Seated by {name} on {time}",
         "cancelled": "Cancelled by {name} on {time}",
         "noShow": "Marked no-show by {name} on {time}",
+        "noShowAuto": "Marked no-show automatically on {time} (not seated within {minutes} min)",
         "booked": "Restored by {name} on {time}"
       },
       "whenValue": "{date} · {time} – {end}",
@@ -1351,6 +1576,78 @@
       "useSuggested": "Use {tables}",
       "clearTables": "Clear",
       "otherArea": "A party sits in one area: picking a table in {area} starts again there."
+    },
+    "deposit": {
+      "title": "Deposit",
+      "status": {
+        "held": "{amount} deposit held · {method}",
+        "applied": "{amount} deposit taken off the bill of #{order}",
+        "appliedNoOrder": "{amount} deposit taken off the bill",
+        "refunded": "{amount} deposit refunded",
+        "kept": "{amount} deposit kept"
+      },
+      "by": "Taken by {name} · {time}",
+      "due": "Deposit asked: {amount}",
+      "record": "Record deposit",
+      "dialogTitle": "Deposit for {id}",
+      "amount": "Amount",
+      "asked": "Asked for this booking: {amount} ({people} × {each})",
+      "method": "Paid by",
+      "confirm": "Record {amount}",
+      "done": "Deposit of {amount} recorded",
+      "exists": "This booking already has a deposit.",
+      "registerClosed": "The cash register is closed. Open it to take cash.",
+      "failed": "Couldn't record the deposit. Try again.",
+      "cancelRefund": "The {amount} deposit will be refunded{cash}.",
+      "cancelRefundCash": " (hand it back from the cash drawer)",
+      "cancelKeep": "The {amount} deposit will be kept: it's less than {hours} hours before the booking."
+    },
+    "remind": {
+      "title": "Reminders",
+      "body": "Bookings in the next 24 hours. Tap to send the guest a ready-made message.",
+      "none": "No reminders due.",
+      "whatsapp": "WhatsApp",
+      "sms": "SMS",
+      "whatsappLabel": "Remind {name} on WhatsApp",
+      "smsLabel": "Remind {name} by SMS",
+      "done": "Reminded",
+      "reminded": "Reminded by {name} · {time}",
+      "remindedNoName": "Reminded · {time}",
+      "message": "Hello {name}, this is {brand}. A reminder of your table for {party} on {date} at {time}.{deposit} Reply to this message to change or cancel. See you soon!",
+      "messageDeposit": " Your deposit of {amount} is held for you."
+    },
+    "guest": {
+      "history": "{bookings} bookings in the last 6 months · {noShows} no-shows",
+      "noShows": {
+        "one": "{count} no-show in the last 6 months",
+        "other": "{count} no-shows in the last 6 months"
+      },
+      "depositAsked": "Ask for a deposit of {amount} for this booking."
+    },
+    "rules": {
+      "open": "Booking rules",
+      "title": "Booking rules",
+      "noShowTitle": "No-shows",
+      "noShowAfter": "Mark a no-show after (minutes)",
+      "noShowHint": "Not seated this long after the booking time: marked a no-show and the table is freed. 0 means staff mark them.",
+      "depositTitle": "Deposits",
+      "partySize": "Ask parties of this size or more",
+      "partySizeHint": "0: not by party size.",
+      "afterNoShows": "Ask guests with this many no-shows (6 months)",
+      "afterNoShowsHint": "0: not for past no-shows.",
+      "perPerson": "Deposit per person",
+      "cancelHours": "Refund when cancelled at least (hours before)",
+      "cancelHoursHint": "Cancelled later, or a no-show: the deposit is kept.",
+      "save": "Save rules",
+      "saved": "Booking rules saved",
+      "failed": "Couldn't save the rules. Try again."
+    },
+    "noShowStats": {
+      "label": "How these bookings went",
+      "rate": "No-show rate",
+      "noShows": "No-shows",
+      "lostCovers": "Guests who didn't come",
+      "depositsKept": "Deposits kept"
     },
     "history": {
       "open": "History",
@@ -1571,6 +1868,7 @@
       "paidSoFar": "Paid so far",
       "due": "Due now",
       "toCollect": "To collect",
+      "deposit": "Use booking deposit {id}: −{amount}",
       "summary": {
         "bill": "Bill {amount}",
         "paid": "{amount} paid",
@@ -1601,6 +1899,11 @@
       "confirm": "Collect {amount}",
       "doneOrder": "{amount} collected for order #{order}",
       "doneTable": "Table {table} settled: {amount} collected"
+    },
+    "register": {
+      "closed": "The cash register is closed",
+      "closedBody": "Open it to take cash. UPI and card still work.",
+      "open": "Open register"
     },
     "parts": {
       "start": "Split payment",
@@ -2485,6 +2788,14 @@
           "label": "Collect payments",
           "hint": "Cash, card or UPI at the table or counter."
         },
+        "cash_manage": {
+          "label": "Run the cash register",
+          "hint": "Open and close the drawer, count it, pay cash in and out."
+        },
+        "cash_review": {
+          "label": "Review cash and sign off",
+          "hint": "Day-end summary, reports, the difference limit and signing off each day."
+        },
         "kitchen_update": {
           "label": "Run the kitchen",
           "hint": "Start, ready and out of stock on kitchen tickets."
@@ -2493,9 +2804,13 @@
           "label": "Mark dishes sold out",
           "hint": "Take a dish off the menu, or put it back."
         },
-        "orders_manage": {
-          "label": "Cancel and refund orders",
-          "hint": "Cancel whole orders and give money back."
+        "orders_cancel": {
+          "label": "Cancel orders",
+          "hint": "Cancel whole orders. Anything paid is refunded."
+        },
+        "refunds_give": {
+          "label": "Give refunds",
+          "hint": "Give money back, and mark online refunds as received."
         },
         "reservations_manage": {
           "label": "Manage bookings",

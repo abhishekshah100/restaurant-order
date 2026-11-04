@@ -1,0 +1,426 @@
+/* The cash register page and its dialogs: the drawer now, paid in and out, and its history. */
+
+.page {
+  max-width: 760px;
+  display: grid;
+  gap: 20px;
+}
+
+.header {
+  display: grid;
+  gap: 4px;
+}
+
+.title {
+  font: var(--font-h);
+}
+
+.muted {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.card {
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardTitle {
+  font: var(--font-label);
+  font-size: 1.125rem;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.block {
+  display: grid;
+  gap: 10px;
+}
+
+.blockTitle {
+  font: var(--font-label);
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.label {
+  font: var(--font-label);
+}
+
+.reasons {
+  display: grid;
+  gap: 8px;
+}
+
+.actions {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* ---------- Status chips: open, and how a count came out ---------- */
+
+.chip {
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+}
+
+.isOpen,
+.match {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.short {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.over {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+/* After a count that differs: by how much, in large type. */
+.verdict {
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  font: var(--font-price);
+  text-align: center;
+}
+
+/* ---------- Counting: a total, or note by note ---------- */
+
+.amountField {
+  display: grid;
+  gap: 8px;
+}
+
+.linkButton {
+  justify-self: start;
+  min-height: 36px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  color: var(--brand-600);
+  font: var(--font-label);
+  cursor: pointer;
+}
+
+.linkButton:focus-visible {
+  border-radius: var(--r-sm);
+  box-shadow: var(--focus);
+}
+
+.counter {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  border: 0;
+}
+
+.counterLegend {
+  padding: 0;
+  margin-bottom: 4px;
+  font: var(--font-label);
+}
+
+.counterRows {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+}
+
+.counterRow {
+  display: grid;
+  grid-template-columns: 72px 12px 88px 1fr;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.counterValue {
+  font: var(--font-small-strong);
+}
+
+.counterInput {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-body);
+  text-align: end;
+}
+
+.counterInput:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--focus);
+}
+
+.counterLine {
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-align: end;
+}
+
+.counterTotal {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font: var(--font-label);
+  text-align: end;
+}
+
+/* ---------- Paid in and out ---------- */
+
+.moves {
+  display: grid;
+  list-style: none;
+}
+
+.move {
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.moveIcon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.moveIcon.out {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.moveBody {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.moveTitle {
+  font: var(--font-small-strong);
+}
+
+.moveAmount {
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- History ---------- */
+
+.history {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.historyRow {
+  width: 100%;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.historyRow:hover {
+  border-color: var(--line-strong);
+}
+
+.historyRow:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.historyMain {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.historyNumbers {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- A session in full ---------- */
+
+.facts {
+  display: grid;
+  gap: 8px;
+}
+
+.facts div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+}
+
+.facts dt {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.facts dd {
+  font: var(--font-small-strong);
+}
+
+/* ---------- Views: the register, the day's end, reports ---------- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  justify-self: start;
+}
+
+.tab {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.tab[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--sh-1);
+}
+
+.tab:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.dateField {
+  display: grid;
+  gap: 6px;
+  justify-self: start;
+}
+
+.dateInput {
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-body);
+}
+
+.dateInput:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--focus);
+}
+
+.rangeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dayStatus {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+/* Sums by way, by day and by staff. */
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+  text-align: end;
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  text-align: start;
+}
+
+.table thead th {
+  color: var(--ink-2);
+  font: var(--font-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table tbody th {
+  font: var(--font-small-strong);
+}
+
+/* A difference in a table: coloured text only (the chips' backgrounds are for badges). */
+.table .short,
+.table .over,
+.table .match {
+  background: none;
+}

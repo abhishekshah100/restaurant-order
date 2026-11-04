@@ -5,7 +5,7 @@ import { useAdminToken } from '@/hooks/useAdminSession';
 import { withAvailability } from '@/lib/adminMenu';
 import { withDismissed, withKitchenStep, withPlated } from '@/lib/kitchenBoard';
 import { withAcknowledged, withoutReadyRound, withoutRequest } from '@/lib/adminService';
-import type { AdminBranchService, AdminServiceRequest } from '@/types/admin';
+import type { AdminBranchService, AdminServiceRequest, ReservationRules } from '@/types/admin';
 import type { ServiceRequest } from '@/types/service';
 import { PROMO_REFUSALS } from '@/lib/promotions';
 import type { Order } from '@/types/order';
@@ -24,6 +24,10 @@ import type {
   EditRoundRequest,
   ImageUploadRequest,
   PaymentProofRequest,
+  DepositRequest,
+  CashMovementRequest,
+  CloseRegisterRequest,
+  OpenRegisterRequest,
   ItemUnavailableRequest,
   KitchenMessageRequest,
   KitchenStep,
@@ -535,7 +539,9 @@ function requireToken(token: string | null): string {
 /** After a waiter's order: the floor, the table and the guests' orders read fresh. */
 const refreshFloor = (client: QueryClient) =>
   Promise.all(
-    [['admin', 'service'], ['orders']].map((queryKey) => client.invalidateQueries({ queryKey })),
+    [['admin', 'service'], ['orders'], ['admin', 'cash-register']].map((queryKey) =>
+      client.invalidateQueries({ queryKey }),
+    ),
   );
 
 /** POST /admin/branches/:branchId/tables/:table/orders: a waiter takes a new order at the table. */
@@ -606,6 +612,50 @@ export function useRefundOrder() {
       orderId: string;
       body: RefundRequest;
     }) => api.refundOrder(requireToken(token), branchId, orderId, body),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** POST …/orders/:id/refunds/:seq/received: an online refund reached the guest. */
+export function useRefundReceived() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, orderId, seq }: { branchId: string; orderId: string; seq: number }) =>
+      api.refundReceived(requireToken(token), branchId, orderId, seq),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** POST …/reservations/:id/deposit: the guest's advance recorded on the booking. */
+export function useRecordDeposit() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id, body }: { branchId: string; id: string; body: DepositRequest }) =>
+      api.recordDeposit(requireToken(token), branchId, id, body),
+    onSettled: () => Promise.all([refreshFloor(client), refreshRegister(client)]),
+  });
+}
+
+/** POST …/reservations/:id/reminded: staff reminded the guest (WhatsApp or SMS). */
+export function useMarkReminded() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id }: { branchId: string; id: string }) =>
+      api.reservationReminded(requireToken(token), branchId, id),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** PATCH …/reservations/rules: the branch's no-show and deposit rules. */
+export function useSetReservationRules() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, rules }: { branchId: string; rules: ReservationRules }) =>
+      api.setReservationRules(requireToken(token), branchId, rules),
     onSettled: () => refreshFloor(client),
   });
 }
@@ -839,6 +889,70 @@ export function useUploadDishImage() {
   return useMutation({
     mutationFn: ({ branchId, body }: { branchId: string; body: ImageUploadRequest }) =>
       api.uploadDishImage(requireToken(token), branchId, body),
+  });
+}
+
+/** The cash register changed: it and its sessions are read again. */
+const refreshRegister = (client: QueryClient) =>
+  Promise.all(
+    [
+      ['admin', 'cash-register'],
+      ['admin', 'cash-session'],
+    ].map((queryKey) => client.invalidateQueries({ queryKey })),
+  );
+
+/** POST …/cash-register/open: the drawer opens with a float. */
+export function useOpenRegister() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: OpenRegisterRequest }) =>
+      api.openRegister(requireToken(token), branchId, body),
+    onSettled: () => refreshRegister(client),
+  });
+}
+
+/** POST …/cash-register/movements: cash paid in or out. */
+export function useMoveCash() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: CashMovementRequest }) =>
+      api.moveCash(requireToken(token), branchId, body),
+    onSettled: () => refreshRegister(client),
+  });
+}
+
+/** POST …/cash-register/close: the count (409 count_differs until a difference has a reason). */
+export function useCloseRegister() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: CloseRegisterRequest }) =>
+      api.closeRegister(requireToken(token), branchId, body),
+    onSettled: () => refreshRegister(client),
+  });
+}
+
+/** POST …/cash-register/days/:day/sign-off: a manager accepts the day's register. */
+export function useSignOffCashDay() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, day, note }: { branchId: string; day: string; note?: string }) =>
+      api.signOffCashDay(requireToken(token), branchId, day, note),
+    onSettled: () => refreshRegister(client),
+  });
+}
+
+/** PATCH …/cash-register/limit: how big a difference can be before it needs review. */
+export function useSetCashLimit() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, differenceLimit }: { branchId: string; differenceLimit: number }) =>
+      api.setCashLimit(requireToken(token), branchId, differenceLimit),
+    onSettled: () => refreshRegister(client),
   });
 }
 

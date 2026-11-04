@@ -64,7 +64,7 @@ export function PaymentOrderDialog({
             <Button variant="secondary" iconStart="receipt" onClick={() => onPrint(order)}>
               {t('adminPayments.order.print')}
             </Button>
-            {canRefund && can('orders.manage') && (
+            {canRefund && can('refunds.give') && (
               <Button variant="secondary" iconStart="refresh" onClick={() => onRefund(order)}>
                 {t('adminPayments.order.refund')}
               </Button>

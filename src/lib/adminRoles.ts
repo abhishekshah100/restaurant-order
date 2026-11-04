@@ -15,10 +15,25 @@ export const PERMISSION_GROUPS: readonly {
 }[] = [
   {
     id: 'service',
-    permissions: ['orders.view', 'orders.take', 'service.respond', 'payments.collect'],
+    permissions: [
+      'orders.view',
+      'orders.take',
+      'service.respond',
+      'payments.collect',
+      'cash.manage',
+    ],
   },
   { id: 'kitchen', permissions: ['kitchen.update', 'menu.availability.update'] },
-  { id: 'manage', permissions: ['orders.manage', 'reservations.manage', 'reports.view'] },
+  {
+    id: 'manage',
+    permissions: [
+      'orders.cancel',
+      'refunds.give',
+      'reservations.manage',
+      'reports.view',
+      'cash.review',
+    ],
+  },
   { id: 'menu', permissions: ['menu.manage', 'tables.manage'] },
   {
     id: 'branch',
@@ -40,8 +55,11 @@ export type PermissionWord =
   | 'tables_manage'
   | 'orders_view'
   | 'orders_take'
-  | 'orders_manage'
+  | 'orders_cancel'
+  | 'refunds_give'
   | 'payments_collect'
+  | 'cash_manage'
+  | 'cash_review'
   | 'service_respond'
   | 'kitchen_update'
   | 'reservations_manage'

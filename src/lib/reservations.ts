@@ -1,5 +1,12 @@
 import type { ReservationInput } from '@/api/contracts';
-import type { AdminFloor, AdminFloorTable, Reservation, ReservationStatus } from '@/types/admin';
+import type {
+  AdminFloor,
+  AdminFloorTable,
+  Reservation,
+  ReservationRules,
+  ReservationStatus,
+} from '@/types/admin';
+import type { Price } from '@/types/menu';
 import type { Branch, MobileRules } from '@/types/branch';
 import { sessionMinutes, sessionsOn, weekdayAt } from './branchHours';
 import { createClock, type Clock } from './clock';
@@ -570,4 +577,86 @@ export function byDay(
     else days.push({ day, reservations: [r] });
   }
   return days;
+}
+
+/* ---------- No-shows, deposits and reminders ---------- */
+
+const HOUR_MS = 60 * 60_000;
+
+/** The deposit a booking is asked for (the server's rule): 0 when none is. */
+export function depositAsked(
+  rules: ReservationRules | undefined,
+  partySize: number,
+  noShows: number,
+): Price {
+  if (!rules || rules.depositPerPerson <= 0) return 0;
+  const bySize = rules.depositPartySize > 0 && partySize >= rules.depositPartySize;
+  const byHistory = rules.depositAfterNoShows > 0 && noShows >= rules.depositAfterNoShows;
+  return bySize || byHistory ? Math.round(rules.depositPerPerson * partySize * 100) / 100 : 0;
+}
+
+/** A held deposit if the booking is cancelled now: refunded when early enough, else kept. */
+export const cancelOutcome = (at: string, now: number, cancelHours: number): 'refunded' | 'kept' =>
+  Date.parse(at) - now >= cancelHours * HOUR_MS ? 'refunded' : 'kept';
+
+/** Booked parties due in the next `hours` with a number to reach: reminders, soonest first. */
+export const remindersDue = (
+  reservations: readonly Reservation[],
+  now: number,
+  hours = 24,
+): Reservation[] =>
+  reservations
+    .filter(
+      (r) =>
+        r.status === 'booked' &&
+        r.phone !== undefined &&
+        Date.parse(r.at) > now &&
+        Date.parse(r.at) <= now + hours * HOUR_MS,
+    )
+    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+
+/** The guest's full number for links: "+91" and "9876501234" → "919876501234". */
+const fullNumber = (dialCode: string, phone: string) => `${dialCode.replace(/\D/g, '')}${phone}`;
+
+/** Opens WhatsApp with a message ready to send to the guest. */
+export const whatsappLink = (dialCode: string, phone: string, text: string) =>
+  `https://wa.me/${fullNumber(dialCode, phone)}?text=${encodeURIComponent(text)}`;
+
+/** Opens the phone's messages with a text ready to send to the guest. */
+export const smsLink = (dialCode: string, phone: string, text: string) =>
+  `sms:+${fullNumber(dialCode, phone)}?body=${encodeURIComponent(text)}`;
+
+/** How a period's bookings went: no-shows against the parties that were due. */
+export interface NoShowStats {
+  bookings: number;
+  seated: number;
+  noShows: number;
+  cancelled: number;
+  /** No-shows of the parties due (seated or no-show), 0–1; 0 with none due. */
+  rate: number;
+  /** Guests who didn't come. */
+  lostCovers: number;
+  /** Deposits the restaurant kept (no-shows and late cancellations). */
+  depositsKept: Price;
+}
+
+export function noShowStats(reservations: readonly Reservation[]): NoShowStats {
+  const of = (status: ReservationStatus) => reservations.filter((r) => r.status === status);
+  const seated = of('seated').length;
+  const noShows = of('noShow');
+  const due = seated + noShows.length;
+  return {
+    bookings: reservations.length,
+    seated,
+    noShows: noShows.length,
+    cancelled: of('cancelled').length,
+    rate: due === 0 ? 0 : noShows.length / due,
+    lostCovers: noShows.reduce((sum, r) => sum + r.partySize, 0),
+    depositsKept:
+      Math.round(
+        reservations
+          .filter((r) => r.deposit?.status === 'kept')
+          .reduce((sum, r) => sum + (r.deposit?.amount ?? 0), 0) * 100,
+      ) / 100,
+  };
 }

@@ -1,17 +1,32 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useContent } from '@/api/hooks';
+import { isBackendEnabled } from '@/api/backend';
+import { useContent, useReservations } from '@/api/hooks';
 import { Button, Dialog, Icon } from '@/components/ui';
 import { tablePath } from '@/lib/adminNav';
-import { bookingTables, canMarkNoShow, canSeat, reservationState } from '@/lib/reservations';
+import {
+  bookingTables,
+  cancelOutcome,
+  canMarkNoShow,
+  canSeat,
+  reservationState,
+} from '@/lib/reservations';
 import { cx } from '@/lib/cx';
-import type { Reservation } from '@/types/admin';
+import type { Reservation, ReservationRules } from '@/types/admin';
+import { usePaymentText } from '../payments/usePaymentText';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { RemindActions } from './RemindActions';
 import { useReservationStatus } from './useReservationStatus';
 import { useReservationText } from './useReservationText';
 import styles from './ReservationDialog.module.css';
+import extras from './ReservationExtras.module.css';
+
+const DepositDialog = dynamic(() => import('./DepositDialog').then((m) => m.DepositDialog), {
+  ssr: false,
+});
 
 /**
  * One booking with what can be done to it: Seat guests (from an hour before), Change, Didn't
@@ -32,8 +47,13 @@ export function ReservationDialog({
 }) {
   const t = useContent('common');
   const [confirming, setConfirming] = useState(false);
+  const [depositing, setDepositing] = useState(false);
   const status = useReservationStatus();
-  const manage = useAdminWorkspace().can('reservations.manage');
+  const { branch, can } = useAdminWorkspace();
+  const manage = can('reservations.manage');
+  // Deposits and reminders are the server's (the mock books without them).
+  const backend = isBackendEnabled();
+  const rules = useReservations(branch.id).data?.rules;
   if (!reservation) return null;
   const r = reservation;
   const close = () => {
@@ -41,9 +61,15 @@ export function ReservationDialog({
     onClose();
   };
 
+  if (depositing) {
+    return <DepositDialog reservation={r} rules={rules} onClose={() => setDepositing(false)} />;
+  }
+
   if (confirming) {
     return (
       <CancelStep
+        rules={rules}
+        now={now}
         reservation={r}
         busy={status.busy(r, 'cancelled')}
         onKeep={() => setConfirming(false)}
@@ -73,6 +99,11 @@ export function ReservationDialog({
           <Button variant="secondary" iconStart="pencil" onClick={() => onEdit(r)}>
             {t('adminReservations.detail.edit')}
           </Button>
+          {backend && !r.deposit && (
+            <Button variant="secondary" iconStart="cash" onClick={() => setDepositing(true)}>
+              {t('adminReservations.deposit.record')}
+            </Button>
+          )}
           {canMarkNoShow(r, now) && (
             <Button
               variant="secondary"
@@ -117,14 +148,29 @@ export function ReservationDialog({
       title={t('adminReservations.detail.title', { id: r.id })}
       footer={footer}
     >
-      <ReservationFacts reservation={r} now={now} />
+      <ReservationFacts reservation={r} now={now} rules={rules} />
+      {backend && manage && r.status === 'booked' && r.phone && (
+        <div className={styles.remindRow}>
+          <RemindActions reservation={r} />
+        </div>
+      )}
     </Dialog>
   );
 }
 
-function ReservationFacts({ reservation: r, now }: { reservation: Reservation; now: number }) {
+function ReservationFacts({
+  reservation: r,
+  now,
+  rules,
+}: {
+  reservation: Reservation;
+  now: number;
+  rules?: ReservationRules;
+}) {
   const t = useContent('common');
-  const { clock } = useAdminWorkspace();
+  const { clock, money } = useAdminWorkspace();
+  const { methodName } = usePaymentText();
+  const deposit = r.deposit;
   const text = useReservationText();
   const state = reservationState(r, now);
   const end = new Date(Date.parse(r.at) + r.minutes * 60_000);
@@ -206,8 +252,54 @@ function ReservationFacts({ reservation: r, now }: { reservation: Reservation; n
                 })}
               </span>
             )}
+            {r.autoNoShow && r.updatedAt && (
+              <span>
+                {t('adminReservations.detail.updated.noShowAuto', {
+                  time: clock.dateTime(r.updatedAt),
+                  minutes: rules?.noShowAfterMinutes ?? 30,
+                })}
+              </span>
+            )}
+            {r.reminded && (
+              <span>
+                {r.reminded.by
+                  ? t('adminReservations.remind.reminded', {
+                      name: r.reminded.by,
+                      time: clock.dateTime(r.reminded.at),
+                    })
+                  : t('adminReservations.remind.remindedNoName', {
+                      time: clock.dateTime(r.reminded.at),
+                    })}
+              </span>
+            )}
           </dd>
         </div>
+        {deposit && (
+          <div className={cx(styles.fact, styles.wide)}>
+            <dt>{t('adminReservations.deposit.title')}</dt>
+            <dd className={styles.history}>
+              <span>
+                {deposit.status === 'applied' && !deposit.order
+                  ? t('adminReservations.deposit.status.appliedNoOrder', {
+                      amount: money.format(deposit.amount),
+                    })
+                  : t(`adminReservations.deposit.status.${deposit.status}`, {
+                      amount: money.format(deposit.amount),
+                      method: methodName(deposit.method),
+                      order: deposit.order ?? '',
+                    })}
+              </span>
+              {deposit.by && (
+                <span>
+                  {t('adminReservations.deposit.by', {
+                    name: deposit.by,
+                    time: clock.dateTime(deposit.at),
+                  })}
+                </span>
+              )}
+            </dd>
+          </div>
+        )}
       </dl>
 
       {r.status === 'booked' && !canSeat(r, now) && (
@@ -222,17 +314,24 @@ function ReservationFacts({ reservation: r, now }: { reservation: Reservation; n
 
 function CancelStep({
   reservation: r,
+  rules,
+  now,
   busy,
   onKeep,
   onCancel,
 }: {
   reservation: Reservation;
+  rules?: ReservationRules;
+  now: number;
   busy: boolean;
   onKeep: () => void;
   onCancel: () => void;
 }) {
   const t = useContent('common');
-  const { clock } = useAdminWorkspace();
+  const { clock, money } = useAdminWorkspace();
+  const held = r.deposit?.status === 'held' ? r.deposit : undefined;
+  const hours = rules?.depositCancelHours ?? 24;
+  const outcome = held ? cancelOutcome(r.at, now, hours) : undefined;
   const text = useReservationText();
   return (
     <Dialog
@@ -257,6 +356,19 @@ function CancelStep({
           time: clock.dateTime(r.at),
         })}
       </p>
+      {held && outcome && (
+        <p className={cx(extras.note, outcome === 'kept' && extras.warn)}>
+          {outcome === 'refunded'
+            ? t('adminReservations.deposit.cancelRefund', {
+                amount: money.format(held.amount),
+                cash: held.method === 'cash' ? t('adminReservations.deposit.cancelRefundCash') : '',
+              })
+            : t('adminReservations.deposit.cancelKeep', {
+                amount: money.format(held.amount),
+                hours,
+              })}
+        </p>
+      )}
     </Dialog>
   );
 }

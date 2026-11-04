@@ -25,8 +25,8 @@ const waiter: AdminRole = {
 describe('roles', () => {
   it('groups every permission once', () => {
     const all = PERMISSION_GROUPS.flatMap((g) => g.permissions);
-    expect(all).toHaveLength(15);
-    expect(new Set(all).size).toBe(15);
+    expect(all).toHaveLength(18);
+    expect(new Set(all).size).toBe(18);
     expect(permissionWord('menu.availability.update')).toBe('menu_availability_update');
   });
 
@@ -40,12 +40,12 @@ describe('roles', () => {
     const input = roleInput({
       ...draft,
       name: '  Head waiter ',
-      permissions: ['orders.manage', 'payments.collect', 'orders.view'],
+      permissions: ['refunds.give', 'payments.collect', 'orders.view'],
     });
     expect(input).toEqual({
       name: 'Head waiter',
       description: 'Serves the floor',
-      permissions: ['orders.view', 'payments.collect', 'orders.manage'],
+      permissions: ['orders.view', 'payments.collect', 'refunds.give'],
     });
     expect(roleDraft()).toEqual({ name: '', description: '', permissions: [] });
   });

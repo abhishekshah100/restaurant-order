@@ -22,6 +22,8 @@ export type AdminNavId =
   | 'kitchen'
   | 'menu'
   | 'payments'
+  | 'cash'
+  | 'refunds'
   | 'settings';
 
 export interface AdminNavItem {
@@ -80,6 +82,20 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     icon: 'card',
     tab: false,
     needs: ['payments.collect', 'reports.view'],
+  },
+  {
+    id: 'refunds',
+    href: section('refunds'),
+    icon: 'refresh',
+    tab: false,
+    needs: ['refunds.give', 'orders.cancel', 'reports.view'],
+  },
+  {
+    id: 'cash',
+    href: section('cash'),
+    icon: 'cash',
+    tab: false,
+    needs: ['cash.manage', 'cash.review'],
   },
   {
     id: 'settings',
@@ -147,6 +163,7 @@ export const ADMIN_LINKS = {
   readyOrders: `${section('orders')}ready/`,
   unpaidOrders: `${section('orders')}unpaid/`,
   settings: section('settings'),
+  cash: section('cash'),
 } as const;
 
 /** A settings page: /admin/dashboard/settings/floor-plan/. */

@@ -2,7 +2,9 @@ import type {
   AdminBranch,
   AdminServiceRequest,
   FloorPlanLayout,
+  GuestHistory,
   Reservation,
+  ReservationRules,
   AdminRole,
   AdminStaffMember,
 } from '@/types/admin';
@@ -42,8 +44,16 @@ import type {
   FloorPlanResponse,
   FreeTableResponse,
   ImageUploadRequest,
+  DepositRequest,
   PaymentProofRequest,
   PaymentProofResponse,
+  CashDaySummary,
+  CashMovementRequest,
+  CashRegisterResponse,
+  CashReport,
+  CashSession,
+  CloseRegisterRequest,
+  OpenRegisterRequest,
   ImageUploadResponse,
   ItemUnavailableRequest,
   KitchenMessageRequest,
@@ -202,6 +212,55 @@ export const api = {
     ),
   updateCategories: (token: string, branchId: string, body: UpdateCategoriesRequest) =>
     apiPatch<MenuData>(`admin/branches/${seg(branchId)}/menu/categories`, body, bearer(token)),
+  cashRegister: (token: string, branchId: string) =>
+    apiGet<CashRegisterResponse>(`admin/branches/${seg(branchId)}/cash-register`, bearer(token)),
+  cashSession: (token: string, branchId: string, id: string) =>
+    apiGet<CashSession>(
+      `admin/branches/${seg(branchId)}/cash-register/sessions/${seg(id)}`,
+      bearer(token),
+    ),
+  openRegister: (token: string, branchId: string, body: OpenRegisterRequest) =>
+    apiPost<CashSession>(`admin/branches/${seg(branchId)}/cash-register/open`, body, bearer(token)),
+  moveCash: (token: string, branchId: string, body: CashMovementRequest) =>
+    apiPost<CashSession>(
+      `admin/branches/${seg(branchId)}/cash-register/movements`,
+      body,
+      bearer(token),
+    ),
+  closeRegister: (token: string, branchId: string, body: CloseRegisterRequest) =>
+    apiPost<CashSession>(
+      `admin/branches/${seg(branchId)}/cash-register/close`,
+      body,
+      bearer(token),
+    ),
+  cashDay: (token: string, branchId: string, day: string) =>
+    apiGet<CashDaySummary>(
+      `admin/branches/${seg(branchId)}/cash-register/days/${seg(day)}`,
+      bearer(token),
+    ),
+  signOffCashDay: (token: string, branchId: string, day: string, note?: string) =>
+    apiPost<CashDaySummary>(
+      `admin/branches/${seg(branchId)}/cash-register/days/${seg(day)}/sign-off`,
+      note ? { note } : {},
+      bearer(token),
+    ),
+  cashReport: (token: string, branchId: string, range: { from: string; to: string }) =>
+    apiGet<CashReport>(
+      `admin/branches/${seg(branchId)}/cash-register/report${searchOf(range)}`,
+      bearer(token),
+    ),
+  setCashLimit: (token: string, branchId: string, differenceLimit: number) =>
+    apiPatch<{ differenceLimit: number }>(
+      `admin/branches/${seg(branchId)}/cash-register/limit`,
+      { differenceLimit },
+      bearer(token),
+    ),
+  refundReceived: (token: string, branchId: string, orderId: string, seq: number) =>
+    apiPost<OrderResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/refunds/${seq}/received`,
+      {},
+      bearer(token),
+    ),
   uploadPaymentProof: (token: string, branchId: string, body: PaymentProofRequest) =>
     apiPost<PaymentProofResponse>(
       `admin/branches/${seg(branchId)}/payment-proofs`,
@@ -233,6 +292,29 @@ export const api = {
     apiPatch<AdminRole>(`admin/branches/${seg(branchId)}/roles/${seg(id)}`, body, bearer(token)),
   removeRole: (token: string, branchId: string, id: string) =>
     apiDelete(`admin/branches/${seg(branchId)}/roles/${seg(id)}`, bearer(token)),
+  recordDeposit: (token: string, branchId: string, id: string, body: DepositRequest) =>
+    apiPost<Reservation>(
+      `admin/branches/${seg(branchId)}/reservations/${seg(id)}/deposit`,
+      body,
+      bearer(token),
+    ),
+  reservationReminded: (token: string, branchId: string, id: string) =>
+    apiPost<Reservation>(
+      `admin/branches/${seg(branchId)}/reservations/${seg(id)}/reminded`,
+      {},
+      bearer(token),
+    ),
+  guestHistory: (token: string, branchId: string, phone: string) =>
+    apiGet<GuestHistory>(
+      `admin/branches/${seg(branchId)}/reservations/guests/${seg(phone)}`,
+      bearer(token),
+    ),
+  setReservationRules: (token: string, branchId: string, rules: ReservationRules) =>
+    apiPatch<ReservationRules>(
+      `admin/branches/${seg(branchId)}/reservations/rules`,
+      rules,
+      bearer(token),
+    ),
   reservations: (token: string, branchId: string, filter: ReservationsFilter = {}) =>
     apiGet<ReservationsResponse>(
       `admin/branches/${seg(branchId)}/reservations${searchOf(filter)}`,

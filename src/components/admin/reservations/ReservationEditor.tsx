@@ -35,6 +35,7 @@ import {
 import type { Reservation } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { DayStrip } from './DayStrip';
+import { GuestNote } from './GuestNote';
 import { TablePicker } from './TablePicker';
 import { useReservationText } from './useReservationText';
 import styles from './ReservationEditor.module.css';
@@ -205,6 +206,7 @@ function EditorForm({ target, onClose }: { target: EditorTarget; onClose: () => 
               onChange={(partySize) => set({ partySize })}
             />
           </div>
+          <GuestNote phone={form.phone} partySize={form.partySize} />
         </section>
 
         <section className={styles.section} aria-labelledby="res-when">

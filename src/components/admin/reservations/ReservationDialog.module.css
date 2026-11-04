@@ -166,3 +166,8 @@
   color: var(--ink-2);
   font: var(--font-body);
 }
+
+/* Remind the guest: WhatsApp or SMS, under the facts. */
+.remindRow {
+  margin-top: 12px;
+}

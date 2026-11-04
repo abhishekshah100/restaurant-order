@@ -27,6 +27,11 @@ import {
   adminOffersQuery,
   adminRolesQuery,
   paymentProofQuery,
+  cashRegisterQuery,
+  guestHistoryQuery,
+  cashSessionQuery,
+  cashDayQuery,
+  cashReportQuery,
   adminStaffQuery,
   branchConfigQuery,
   branchStatusQuery,
@@ -269,6 +274,39 @@ export const useFloorPlan = (branchId: string | undefined) =>
 /** GET /admin/branches/:branchId/staff: everyone here, and the roles they can be given. */
 export const useAdminStaff = (branchId: string | undefined) =>
   useQuery(adminStaffQuery(useAdminToken(), branchId));
+
+/**
+ * GET …/reservations/guests/:phone: a guest's no-shows and bookings, for a full number only
+ * (`phone` null: nothing read). Backend only: `enabled` false (the mock) reads nothing.
+ */
+export const useGuestHistory = (
+  branchId: string | undefined,
+  phone: string | null,
+  enabled = true,
+) =>
+  useQuery({
+    ...guestHistoryQuery(useAdminToken(), branchId, phone ?? ''),
+    enabled: enabled && phone !== null,
+  });
+
+/**
+ * GET /admin/branches/:branchId/cash-register: the drawer now and its history. Backend only:
+ * `enabled` false (the mock) reads nothing.
+ */
+export const useCashRegister = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...cashRegisterQuery(useAdminToken(), branchId), enabled });
+
+/** GET …/cash-register/days/:day: the day's register, cash, card and UPI, and its sign-off. */
+export const useCashDay = (branchId: string | undefined, day: string) =>
+  useQuery(cashDayQuery(useAdminToken(), branchId, day));
+
+/** GET …/cash-register/report: closed sessions day by day, and by staff. */
+export const useCashReport = (branchId: string | undefined, range: { from: string; to: string }) =>
+  useQuery(cashReportQuery(useAdminToken(), branchId, range));
+
+/** GET …/cash-register/sessions/:id: one session in full. */
+export const useCashSession = (branchId: string | undefined, id: string) =>
+  useQuery(cashSessionQuery(useAdminToken(), branchId, id));
 
 /**
  * A proof photo, as an object URL for an <img> (let go when it's no longer shown), and whether

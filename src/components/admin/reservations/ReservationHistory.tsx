@@ -20,6 +20,7 @@ import {
   filterHistory,
   historyCounts,
   historySummary,
+  noShowStats,
   type HistoryFilter,
 } from '@/lib/reservations';
 import type { Reservation } from '@/types/admin';
@@ -56,7 +57,7 @@ const STATE_REFRESH_MS = 30_000;
 export function ReservationHistory() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, clock } = useAdminWorkspace();
+  const { branch, clock, money } = useAdminWorkspace();
   const text = useReservationText();
   const tick = useNow(STATE_REFRESH_MS);
   const today = clock.dayKey(tick ?? new Date());
@@ -82,6 +83,7 @@ export function ReservationHistory() {
     const all = history.data.reservations;
     const counts = historyCounts(all, now);
     const summary = historySummary(all, now);
+    const noShows = noShowStats(all);
     const shown = filterHistory(all, filter, query, now);
     const open = all.find((r) => r.id === openId);
 
@@ -159,6 +161,16 @@ export function ReservationHistory() {
             <dt>{t('adminReservations.history.stats.cancelled')}</dt>
             <dd>{summary.cancelled}</dd>
           </div>
+          <div className={board.stat}>
+            <dt>{t('adminReservations.noShowStats.lostCovers')}</dt>
+            <dd>{noShows.lostCovers}</dd>
+          </div>
+          {noShows.depositsKept > 0 && (
+            <div className={board.stat}>
+              <dt>{t('adminReservations.noShowStats.depositsKept')}</dt>
+              <dd>{money.format(noShows.depositsKept)}</dd>
+            </div>
+          )}
         </dl>
 
         <section className={board.panel} aria-label={t('adminReservations.history.title')}>

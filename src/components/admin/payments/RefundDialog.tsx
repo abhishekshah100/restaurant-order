@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isApiError } from '@/api/client';
 import { useContent } from '@/api/hooks';
 import { useRefundOrder } from '@/api/mutations';
 import { Button, Dialog, Textarea } from '@/components/ui';
@@ -64,7 +65,14 @@ function RefundForm({ order, onClose }: { order: Order; onClose: () => void }) {
           });
           onClose();
         },
-        onError: () => showToast(t('adminPayments.failed'), { tone: 'error' }),
+        // Cash handed back comes out of the drawer: it must be open.
+        onError: (error) =>
+          showToast(
+            isApiError(error, 'register_closed')
+              ? t('adminCash.errors.closed')
+              : t('adminPayments.failed'),
+            { tone: 'error' },
+          ),
       },
     );
   };

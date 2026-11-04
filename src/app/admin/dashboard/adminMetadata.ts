@@ -16,6 +16,8 @@ type AdminPage =
   | 'menu'
   | 'requests'
   | 'payments'
+  | 'cash'
+  | 'refunds'
   | 'settings'
   | 'floorPlan'
   | 'branchDetails'

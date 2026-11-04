@@ -1,0 +1,144 @@
+/* Deposits, reminders and booking rules on the Reservations pages. */
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.block {
+  display: grid;
+  gap: 10px;
+}
+
+.label {
+  font: var(--font-label);
+}
+
+.remind {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.remindLink {
+  min-height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  text-decoration: none;
+}
+
+.remindLink:hover {
+  border-color: var(--ink-2);
+}
+
+.remindLink:focus-visible {
+  box-shadow: var(--focus);
+}
+
+/* The reminders panel: bookings due in the next day. */
+.panel {
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.panelTitle {
+  font: var(--font-label);
+}
+
+.muted {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.rows {
+  display: grid;
+  list-style: none;
+}
+
+.row {
+  padding: 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.rowMain {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  font: var(--font-small);
+}
+
+.done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--success);
+  font: var(--font-small-strong);
+}
+
+/* A booking's deposit and the guest's history, as notes in the dialogs. */
+.note {
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.warn {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+/* How a period's bookings went (the history). */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.stat {
+  padding: 10px 12px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.stat dt {
+  color: var(--ink-2);
+  font: var(--font-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stat dd {
+  font: var(--font-price);
+  font-variant-numeric: tabular-nums;
+}
