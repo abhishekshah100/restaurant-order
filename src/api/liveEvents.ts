@@ -25,13 +25,18 @@ export function useEventsConnected(): boolean {
   return useSyncExternalStore(subscribeEventsConnected, eventsConnected, () => false);
 }
 
-/** What an event makes stale: orders, tables and the floor; requests; the menu; everything. */
+/** What an event makes stale: orders, tables and the floor; requests; the menu; stock; everything. */
 function refresh(client: QueryClient, branchId: string, kind: BranchEvent['kind']) {
   if (kind === 'orders' || kind === 'service' || kind === 'resync') {
     void client.invalidateQueries({ queryKey: ['admin', 'service'] });
   }
   if (kind === 'menu' || kind === 'resync') {
     void client.invalidateQueries({ queryKey: ['branches', branchId, 'menu'] });
+    // Stock takes dishes off: the recipes list shows which.
+    void client.invalidateQueries({ queryKey: ['admin', 'inventory', branchId, 'recipes'] });
+  }
+  if (kind === 'inventory' || kind === 'resync') {
+    void client.invalidateQueries({ queryKey: ['admin', 'inventory', branchId] });
   }
 }
 

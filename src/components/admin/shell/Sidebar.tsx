@@ -4,9 +4,8 @@ import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
-import { navFor, type AdminNavId } from '@/lib/adminNav';
+import { navFor, type AdminNavId, type NavCounts } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
-import type { AdminServiceCounts } from '@/types/admin';
 import { useAdminWorkspace } from './AdminWorkspace';
 import { BranchStatusControl } from './BranchStatusControl';
 import { NavBadge } from './NavBadge';
@@ -14,7 +13,7 @@ import styles from './Sidebar.module.css';
 
 export interface SidebarProps {
   active: AdminNavId | undefined;
-  counts: AdminServiceCounts | undefined;
+  counts: NavCounts;
   /** The branch's local time ("7:42 PM"); null until known. */
   time: string | null;
   adminName: string | undefined;
@@ -80,7 +79,7 @@ export function Sidebar({
               >
                 <Icon name={item.icon} size="sm" />
                 <span className={styles.label}>{t(`adminShell.nav.${item.id}`)}</span>
-                {item.badge && counts && (
+                {item.badge && (
                   <NavBadge id={item.id} count={item.badge(counts)} className={styles.badge} />
                 )}
               </Link>

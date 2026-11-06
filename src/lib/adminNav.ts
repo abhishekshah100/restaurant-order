@@ -1,5 +1,6 @@
 import type { IconName } from '@/components/ui/Icon/iconNames';
 import type { AdminServiceCounts, StaffPermission } from '@/types/admin';
+import type { StockAlertsResponse } from '@/types/inventory';
 import type { OrderView } from './adminOrders';
 import type { PaymentsView } from './adminPayments';
 import type { DayRange } from './dayRange';
@@ -24,7 +25,35 @@ export type AdminNavId =
   | 'payments'
   | 'cash'
   | 'refunds'
+  | 'inventory'
+  | 'purchasing'
   | 'settings';
+
+/**
+ * What the nav's badges count: the floor's counts (for staff who see the floor) and the stock
+ * alerts (for staff with inventory), each when known.
+ */
+export interface NavCounts {
+  service?: AdminServiceCounts;
+  stock?: Pick<StockAlertsResponse, 'low' | 'out' | 'expiring' | 'expired'>;
+}
+
+/** The permissions that read the stock alerts (the server's READERS.inventoryList). */
+export const INVENTORY_READERS: readonly StaffPermission[] = [
+  'inventory.view',
+  'inventory.manage',
+  'inventory.adjust',
+  'inventory.wastage',
+  'inventory.count',
+];
+
+/** The permissions that open purchasing (the server's READERS.purchasing). */
+export const PURCHASING_READERS: readonly StaffPermission[] = [
+  'purchase.view',
+  'purchase.manage',
+  'purchase.approve',
+  'purchase.receive',
+];
 
 export interface AdminNavItem {
   id: AdminNavId;
@@ -32,8 +61,8 @@ export interface AdminNavItem {
   icon: IconName;
   /** On the mobile tab bar (else in More). */
   tab: boolean;
-  /** The live count shown beside it, if any. */
-  badge?: (counts: AdminServiceCounts) => number;
+  /** The live count shown beside it, if any (0 while what it counts isn't known). */
+  badge?: (counts: NavCounts) => number;
   /** Shown to staff holding any of these at the branch (everyone, without). */
   needs?: readonly StaffPermission[];
 }
@@ -49,7 +78,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     href: section('orders'),
     icon: 'receipt',
     tab: true,
-    badge: (counts) => counts.readyToServe,
+    badge: ({ service }) => service?.readyToServe ?? 0,
     needs: ['orders.view'],
   },
   {
@@ -57,7 +86,8 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     href: section('requests'),
     icon: 'bell',
     tab: true,
-    badge: (counts) => counts.waiterCalls + counts.billRequests + (counts.kitchenMessages ?? 0),
+    badge: ({ service }) =>
+      service ? service.waiterCalls + service.billRequests + (service.kitchenMessages ?? 0) : 0,
     needs: ['orders.view'],
   },
   {
@@ -96,6 +126,21 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     icon: 'cash',
     tab: false,
     needs: ['cash.manage', 'cash.review'],
+  },
+  {
+    id: 'inventory',
+    href: section('inventory'),
+    icon: 'bag',
+    tab: false,
+    badge: ({ stock }) => (stock ? stock.low + stock.out + stock.expiring + stock.expired : 0),
+    needs: INVENTORY_READERS,
+  },
+  {
+    id: 'purchasing',
+    href: section('purchasing'),
+    icon: 'tag',
+    tab: false,
+    needs: PURCHASING_READERS,
   },
   {
     id: 'settings',

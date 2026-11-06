@@ -9,6 +9,7 @@ import { ORDER_MODES } from '@/lib/fulfilment';
 import { formatRate } from '@/lib/pricing';
 import { WEEKDAYS } from '@/types/branch';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { FeaturesCard } from './FeaturesCard';
 import styles from './SettingsHome.module.css';
 import { useBranchTimes } from '@/hooks/useBranchTimes';
 
@@ -29,6 +30,7 @@ export function SettingsHome() {
           {t('adminSettings.subtitle', { branch: branch.shortName })}
         </p>
       </header>
+      <FeaturesCard />
       {settingsFor(can).map((group) => (
         <section key={group.id} className={styles.group} aria-labelledby={`settings-${group.id}`}>
           <h2 id={`settings-${group.id}`} className={styles.groupTitle}>

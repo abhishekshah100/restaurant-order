@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MAX_PROOFS } from '@/api/contracts';
-import { useUploadPaymentProof } from '@/api/mutations';
+import { useUploadPaymentProof, useUploadPurchaseProof } from '@/api/mutations';
 import { resizeImage } from '@/lib/imageResize';
 
 /** The longer side a proof photo is shrunk to before upload: a UPI screen stays readable. */
@@ -24,8 +24,10 @@ let nextId = 0;
  * and uploaded as soon as it's picked (POST …/payment-proofs), so collecting doesn't wait. Up
  * to MAX_PROOFS a row. Thumbnails' object URLs are let go when a photo is removed and on close.
  */
-export function useProofPhotos(branchId: string) {
-  const { mutateAsync: upload } = useUploadPaymentProof();
+export function useProofPhotos(branchId: string, kept: 'payments' | 'purchasing' = 'payments') {
+  const payments = useUploadPaymentProof();
+  const purchasing = useUploadPurchaseProof();
+  const upload = (kept === 'purchasing' ? purchasing : payments).mutateAsync;
   const [byRow, setByRow] = useState<Readonly<Record<string, readonly ProofPhoto[]>>>({});
   const current = useRef(byRow);
   current.current = byRow;

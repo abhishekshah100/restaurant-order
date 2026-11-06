@@ -18,6 +18,7 @@ import {
 } from '@/lib/adminMenu';
 import type { CategoryId, Dish } from '@/types/menu';
 import { StatTiles, type StatTile } from '../StatTiles';
+import { KitchenIngredients } from './KitchenIngredients';
 import styles from './KitchenStock.module.css';
 
 // Popups: each downloaded the first time it opens.
@@ -99,6 +100,7 @@ export function KitchenStock() {
       <>
         <p className={styles.intro}>{t('stock.intro')}</p>
         <StatTiles tiles={tiles} label={t('stock.summary.label')} />
+        <KitchenIngredients />
 
         <section className={styles.panel} aria-label={t('stock.title')}>
           <div className={styles.tools}>

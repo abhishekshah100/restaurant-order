@@ -167,10 +167,16 @@ describe('activeNavId', () => {
       'orders',
       'requests',
     ]);
-    const counts = { waiterCalls: 2, billRequests: 1, readyToServe: 4, unpaid: 3 };
+    const counts = {
+      service: { waiterCalls: 2, billRequests: 1, readyToServe: 4, unpaid: 3 },
+      stock: { low: 2, out: 1, expiring: 1, expired: 1 },
+    };
     const badge = (id: string) => ADMIN_NAV.find((item) => item.id === id)?.badge?.(counts);
     expect(badge('requests')).toBe(3);
     expect(badge('orders')).toBe(4);
+    expect(badge('inventory')).toBe(5);
     expect(badge('home')).toBeUndefined();
+    // Not known yet (no floor, no stock): nothing to show.
+    expect(ADMIN_NAV.find((item) => item.id === 'orders')?.badge?.({})).toBe(0);
   });
 });

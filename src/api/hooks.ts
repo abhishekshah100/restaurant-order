@@ -10,6 +10,7 @@ import { withLiveStatus } from '@/lib/restaurantStatus';
 import { joinBranch } from '@/lib/branchParts';
 import { resolveBranch } from '@/lib/scan';
 import type { Branch, BranchConfig, BranchSummary, MobileRules } from '@/types/branch';
+import type { MovementsQuery } from '@/types/inventory';
 import type { HelpTopics } from '@/types/help';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
@@ -32,6 +33,27 @@ import {
   cashSessionQuery,
   cashDayQuery,
   cashReportQuery,
+  inventoryAlertsQuery,
+  inventoryItemQuery,
+  inventoryMovementsQuery,
+  inventoryStockQuery,
+  ingredientsQuery,
+  recipeQuery,
+  recipesQuery,
+  inventoryDashboardQuery,
+  stockBatchesQuery,
+  stockCountsQuery,
+  stockCountQuery,
+  stockTransfersQuery,
+  inventoryUsageQuery,
+  suppliersQuery,
+  featuresQuery,
+  purchaseOrdersQuery,
+  purchaseOrderQuery,
+  receiptsQuery,
+  receiptQuery,
+  priceChangesQuery,
+  purchaseReturnsQuery,
   adminStaffQuery,
   branchConfigQuery,
   branchStatusQuery,
@@ -307,6 +329,112 @@ export const useCashReport = (branchId: string | undefined, range: { from: strin
 /** GET …/cash-register/sessions/:id: one session in full. */
 export const useCashSession = (branchId: string | undefined, id: string) =>
   useQuery(cashSessionQuery(useAdminToken(), branchId, id));
+
+/*
+ * Inventory (backend only): `enabled` false (the mock, or staff without the permission) reads
+ * nothing.
+ */
+
+/** GET …/inventory/stock */
+export const useInventoryStock = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...inventoryStockQuery(useAdminToken(), branchId), enabled });
+
+/** GET …/inventory/stock/:ingredientId */
+export const useInventoryItem = (branchId: string | undefined, ingredientId: string) =>
+  useQuery(inventoryItemQuery(useAdminToken(), branchId, ingredientId));
+
+/** GET …/inventory/movements */
+export const useInventoryMovements = (
+  branchId: string | undefined,
+  query: MovementsQuery,
+  enabled = true,
+) => useQuery({ ...inventoryMovementsQuery(useAdminToken(), branchId, query), enabled });
+
+/** GET …/inventory/alerts */
+export const useInventoryAlerts = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...inventoryAlertsQuery(useAdminToken(), branchId), enabled });
+
+/** GET …/features: what the restaurant has switched on (backend only). */
+export const useFeatures = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...featuresQuery(useAdminToken(), branchId), enabled });
+
+/* Purchasing (backend only): `enabled` false reads nothing. */
+
+export const useSuppliers = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...suppliersQuery(useAdminToken(), branchId), enabled });
+
+export const usePurchaseOrders = (
+  branchId: string | undefined,
+  query: { status?: string; supplier?: string },
+  enabled = true,
+) => useQuery({ ...purchaseOrdersQuery(useAdminToken(), branchId, query), enabled });
+
+/** One order; none read without an id (a delivery not against an order, a new order). */
+export const usePurchaseOrder = (branchId: string | undefined, id: string) =>
+  useQuery({ ...purchaseOrderQuery(useAdminToken(), branchId, id), enabled: Boolean(id) });
+
+export const useReceipts = (
+  branchId: string | undefined,
+  range: { from?: string; to?: string },
+  enabled = true,
+) => useQuery({ ...receiptsQuery(useAdminToken(), branchId, range), enabled });
+
+export const useReceipt = (branchId: string | undefined, id: string) =>
+  useQuery({ ...receiptQuery(useAdminToken(), branchId, id), enabled: Boolean(id) });
+
+export const usePriceChanges = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...priceChangesQuery(useAdminToken(), branchId), enabled });
+
+export const usePurchaseReturns = (
+  branchId: string | undefined,
+  range: { from?: string; to?: string },
+  enabled = true,
+) => useQuery({ ...purchaseReturnsQuery(useAdminToken(), branchId, range), enabled });
+
+/** GET …/inventory/batches (an item's, or by state) */
+export const useStockBatches = (
+  branchId: string | undefined,
+  query: { ingredient?: string; status?: 'expiring' | 'expired' | 'unknown' },
+  enabled = true,
+) => useQuery({ ...stockBatchesQuery(useAdminToken(), branchId, query), enabled });
+
+/** GET …/inventory/dashboard */
+export const useInventoryDashboard = (
+  branchId: string | undefined,
+  scope: 'branch' | 'restaurant',
+  enabled = true,
+) => useQuery({ ...inventoryDashboardQuery(useAdminToken(), branchId, scope), enabled });
+
+/** GET …/inventory/counts */
+export const useStockCounts = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...stockCountsQuery(useAdminToken(), branchId), enabled });
+
+/** GET …/inventory/counts/:id (none read without an id) */
+export const useStockCount = (branchId: string | undefined, id: string) =>
+  useQuery({ ...stockCountQuery(useAdminToken(), branchId, id), enabled: Boolean(id) });
+
+/** GET …/inventory/transfers */
+export const useStockTransfers = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...stockTransfersQuery(useAdminToken(), branchId), enabled });
+
+/** GET …/inventory/usage */
+export const useInventoryUsage = (
+  branchId: string | undefined,
+  range: { from?: string; to?: string },
+  enabled = true,
+) => useQuery({ ...inventoryUsageQuery(useAdminToken(), branchId, range), enabled });
+
+/** GET …/inventory/recipes */
+export const useRecipes = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...recipesQuery(useAdminToken(), branchId), enabled });
+
+/** GET …/inventory/recipes/:dishSlug */
+export const useRecipe = (branchId: string | undefined, slug: string) =>
+  useQuery(recipeQuery(useAdminToken(), branchId, slug));
+
+/** GET …/inventory/ingredients */
+export const useIngredients = (branchId: string | undefined, enabled = true) =>
+  useQuery({ ...ingredientsQuery(useAdminToken(), branchId), enabled });
 
 /**
  * A proof photo, as an object URL for an <img> (let go when it's no longer shown), and whether

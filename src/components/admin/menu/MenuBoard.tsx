@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { isBackendEnabled } from '@/api/backend';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { useState } from 'react';
 import { useBranchMenu } from '@/api/adminDashboard';
@@ -35,6 +36,10 @@ const CategoriesDialog = dynamic(
     loading: () => <LoadingSignal />,
   },
 );
+const RecipeDialog = dynamic(
+  () => import('../inventory/RecipeDialog').then((m) => m.RecipeDialog),
+  { ssr: false },
+);
 const DishEditor = dynamic(() => import('./DishEditor').then((m) => m.DishEditor), {
   ssr: false,
   loading: () => <LoadingSignal />,
@@ -43,6 +48,7 @@ const DishEditor = dynamic(() => import('./DishEditor').then((m) => m.DishEditor
 type Open =
   | { kind: 'availability'; dish: Dish; offFirst: boolean }
   | { kind: 'edit'; dish?: Dish }
+  | { kind: 'recipe'; slug: string }
   | { kind: 'categories' }
   | null;
 
@@ -59,6 +65,8 @@ export function MenuBoard() {
   const { branch, region, can } = useAdminWorkspace();
   // Adding, changing and ordering dishes; the rest only switch what's in stock.
   const manage = can('menu.manage');
+  // Recipes need the server (the mock keeps no stock) and the inventory manager's permission.
+  const recipes = isBackendEnabled() && can('inventory.manage');
   const { menu, error } = useBranchMenu(region);
   const [status, setStatus] = useState<MenuStatusFilter>('all');
   const [category, setCategory] = useState<CategoryId | 'all'>('all');
@@ -208,6 +216,9 @@ export function MenuBoard() {
                         setOpen({ kind: 'availability', dish, offFirst: false })
                       }
                       onEdit={manage ? () => setOpen({ kind: 'edit', dish }) : undefined}
+                      onRecipe={
+                        recipes ? () => setOpen({ kind: 'recipe', slug: dish.slug }) : undefined
+                      }
                       reorder={
                         order
                           ? {
@@ -245,6 +256,7 @@ export function MenuBoard() {
             onClose={() => setOpen(null)}
           />
         )}
+        {open?.kind === 'recipe' && <RecipeDialog slug={open.slug} onClose={() => setOpen(null)} />}
         {open?.kind === 'categories' && (
           <CategoriesDialog categories={menu.categories} onClose={() => setOpen(null)} />
         )}

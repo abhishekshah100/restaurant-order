@@ -18,7 +18,9 @@ export function NavBadge({
   const label =
     id === 'orders'
       ? t('adminShell.badge.orders', { count })
-      : t('adminShell.badge.requests', { count });
+      : id === 'inventory'
+        ? t('adminShell.badge.inventory', { count })
+        : t('adminShell.badge.requests', { count });
   return (
     <span className={cx(styles.badge, className)}>
       <span aria-hidden="true">{count > 99 ? '99+' : count}</span>

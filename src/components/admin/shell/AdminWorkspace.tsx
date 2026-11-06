@@ -20,6 +20,7 @@ export type WorkspaceBranch = Pick<
   | 'timezone'
   | 'locale'
   | 'permissions'
+  | 'features'
 >;
 
 /** Whether the staff member holds any of these permissions at the branch. */

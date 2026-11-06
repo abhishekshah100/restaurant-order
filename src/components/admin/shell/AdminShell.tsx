@@ -3,11 +3,18 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAdminBranches, useBranchService, useBranches, useContent } from '@/api/hooks';
+import {
+  useAdminBranches,
+  useBranchService,
+  useBranches,
+  useContent,
+  useInventoryAlerts,
+} from '@/api/hooks';
+import { isBackendEnabled } from '@/api/backend';
 import { useAdminName, useSelectedAdminBranchId } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
 import { branchConfigQuery } from '@/api/queries';
-import { activeNavId, landingFor, pageNeeds } from '@/lib/adminNav';
+import { INVENTORY_READERS, activeNavId, landingFor, pageNeeds } from '@/lib/adminNav';
 import { joinBranch } from '@/lib/branchParts';
 import { AdminAccess } from '../AdminAccess';
 import { AdminWorkspaceProvider, useAdminWorkspace } from './AdminWorkspace';
@@ -30,9 +37,11 @@ function ShellFrame({ children }: { children: ReactNode }) {
   // The floor's counts and live changes, for those who may see the floor.
   const floorId = can('orders.view') ? branch.id : undefined;
   const service = useBranchService(floorId).data;
-  const counts = service?.counts;
+  // What's low or out, for staff with inventory (backend only: the mock keeps no stock).
+  const stock = useInventoryAlerts(branch.id, isBackendEnabled() && can(...INVENTORY_READERS)).data;
+  const counts = useMemo(() => ({ service: service?.counts, stock }), [service?.counts, stock]);
   // What changes at the branch is read again at once (and the pages poll rarely meanwhile).
-  useBranchEvents(floorId);
+  useBranchEvents(can('orders.view', 'inventory.view') ? branch.id : undefined);
   // A chime, a vibration and a toast for what's new on the floor (food ready, a call, the bill).
   const [alertsOn, setAlertsOn] = useAlertsSetting();
   const alertsNeedTap = useServiceAlerts(service, alertsOn);

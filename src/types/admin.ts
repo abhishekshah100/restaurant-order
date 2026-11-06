@@ -54,6 +54,17 @@ export interface AdminBranch {
   image?: BranchImage;
   /** What the signed-in staff member may do here (their roles' permissions at this branch). */
   permissions?: StaffPermission[];
+  /** Optional modules the branch's restaurant has ("inventory"); none from the mock. */
+  features?: string[];
+}
+
+/** GET …/features: what the restaurant has switched on, and whether this person may switch it. */
+export interface FeaturesResponse {
+  features: string[];
+  /** ISO: when a feature was last switched. */
+  changedAt?: string;
+  /** A super admin: the platform switches features. */
+  canChange: boolean;
 }
 
 /* ---------- Floor service (GET /admin/branches/:branchId/service) ---------- */
@@ -390,7 +401,16 @@ export type StaffPermission =
   | 'service.respond'
   | 'kitchen.update'
   | 'reservations.manage'
-  | 'reports.view';
+  | 'reports.view'
+  | 'inventory.view'
+  | 'inventory.manage'
+  | 'inventory.adjust'
+  | 'inventory.wastage'
+  | 'inventory.count'
+  | 'purchase.view'
+  | 'purchase.manage'
+  | 'purchase.approve'
+  | 'purchase.receive';
 
 /** A role staff can be given: built in (read-only) or the restaurant's own. */
 export interface AdminRole {

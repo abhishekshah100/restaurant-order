@@ -5,9 +5,8 @@ import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Icon } from '@/components/ui';
-import { navFor, type AdminNavId } from '@/lib/adminNav';
+import { navFor, type AdminNavId, type NavCounts } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
-import type { AdminServiceCounts } from '@/types/admin';
 import { useAdminWorkspace } from './AdminWorkspace';
 import { NavBadge } from './NavBadge';
 import styles from './MobileNav.module.css';
@@ -20,7 +19,7 @@ const MobileNavMore = dynamic(() => import('./MobileNavMore').then((m) => m.Mobi
 
 export interface MobileNavProps {
   active: AdminNavId | undefined;
-  counts: AdminServiceCounts | undefined;
+  counts: NavCounts;
   adminName: string | undefined;
   moreOpen: boolean;
   onMoreOpenChange: (open: boolean) => void;
@@ -61,7 +60,7 @@ export function MobileNav({
                 >
                   <span className={styles.iconWrap}>
                     <Icon name={item.icon} size="sm" />
-                    {item.badge && counts && (
+                    {item.badge && (
                       <NavBadge id={item.id} count={item.badge(counts)} className={styles.badge} />
                     )}
                   </span>

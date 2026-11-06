@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useContent } from '@/api/hooks';
 import { Button, Dialog, Input, Textarea } from '@/components/ui';
 import {
-  PERMISSION_GROUPS,
+  groupsFor,
   neededBy,
   permissionWord,
   withNeeds,
@@ -12,11 +12,10 @@ import {
   type RoleDraft,
 } from '@/lib/adminRoles';
 import { pagesOf } from '@/lib/adminNav';
+import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import type { StaffPermission } from '@/types/admin';
 import { ToggleRow } from '../shared/SettingsEditor';
 import styles from './RolesManager.module.css';
-
-const TOTAL = PERMISSION_GROUPS.reduce((n, g) => n + g.permissions.length, 0);
 
 /**
  * A role's name, what it's for and what it lets staff do (the permissions in plain groups, on or
@@ -45,6 +44,10 @@ export function RoleDialog({
   onClose: () => void;
 }) {
   const t = useContent('common');
+  // The groups of modules the restaurant has (a role keeps the others' permissions).
+  const { branch } = useAdminWorkspace();
+  const groups = groupsFor(branch.features);
+  const shown = new Set(groups.flatMap((g) => g.permissions));
   const [draft, setDraft] = useState(initial);
   const [tried, setTried] = useState(false);
   const nameMissing = draft.name.trim() === '';
@@ -129,12 +132,12 @@ export function RoleDialog({
           <h3 className={styles.permissionsTitle}>{t('adminSettings.roles.dialog.permissions')}</h3>
           <span className={styles.picked}>
             {t('adminSettings.roles.dialog.picked', {
-              count: draft.permissions.length,
-              total: TOTAL,
+              count: draft.permissions.filter((p) => shown.has(p)).length,
+              total: shown.size,
             })}
           </span>
         </div>
-        {PERMISSION_GROUPS.map((group) => (
+        {groups.map((group) => (
           <fieldset key={group.id} className={styles.group}>
             <legend className={styles.groupName}>
               {t(`adminSettings.roles.groups.${group.id}`)}

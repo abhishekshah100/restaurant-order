@@ -7,11 +7,14 @@ import type { AdminRole, StaffPermission } from '@/types/admin';
  * (common › adminSettings.roles.permissions.orders_view).
  */
 
-export type PermissionGroupId = 'service' | 'kitchen' | 'manage' | 'menu' | 'branch' | 'staff';
+export type PermissionGroupId =
+  'service' | 'kitchen' | 'manage' | 'inventory' | 'purchasing' | 'menu' | 'branch' | 'staff';
 
 export const PERMISSION_GROUPS: readonly {
   id: PermissionGroupId;
   permissions: readonly StaffPermission[];
+  /** Shown only while the restaurant has this optional module. */
+  feature?: 'inventory';
 }[] = [
   {
     id: 'service',
@@ -34,6 +37,22 @@ export const PERMISSION_GROUPS: readonly {
       'cash.review',
     ],
   },
+  {
+    id: 'inventory',
+    permissions: [
+      'inventory.view',
+      'inventory.manage',
+      'inventory.adjust',
+      'inventory.wastage',
+      'inventory.count',
+    ],
+    feature: 'inventory',
+  },
+  {
+    id: 'purchasing',
+    permissions: ['purchase.view', 'purchase.manage', 'purchase.approve', 'purchase.receive'],
+    feature: 'inventory',
+  },
   { id: 'menu', permissions: ['menu.manage', 'tables.manage'] },
   {
     id: 'branch',
@@ -41,6 +60,13 @@ export const PERMISSION_GROUPS: readonly {
   },
   { id: 'staff', permissions: ['staff.manage'] },
 ];
+
+/**
+ * The groups a role form shows: those of modules the restaurant doesn't have stay hidden (a role
+ * keeps their permissions for when it's switched on). Without `features` (the mock): all.
+ */
+export const groupsFor = (features: readonly string[] | undefined) =>
+  PERMISSION_GROUPS.filter((g) => !g.feature || !features || features.includes(g.feature));
 
 /** The content key of a permission's words: "orders.view" → "orders_view". */
 export const permissionWord = (key: StaffPermission) => key.replace(/\./g, '_') as PermissionWord;
@@ -63,7 +89,16 @@ export type PermissionWord =
   | 'service_respond'
   | 'kitchen_update'
   | 'reservations_manage'
-  | 'reports_view';
+  | 'reports_view'
+  | 'inventory_view'
+  | 'inventory_manage'
+  | 'inventory_adjust'
+  | 'inventory_wastage'
+  | 'inventory_count'
+  | 'purchase_view'
+  | 'purchase_manage'
+  | 'purchase_approve'
+  | 'purchase_receive';
 
 export interface RoleDraft {
   name: string;

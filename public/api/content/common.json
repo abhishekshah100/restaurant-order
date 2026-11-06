@@ -288,7 +288,9 @@
       "reservationHistory": "Reservation history · Admin",
       "tableHistory": "Table order history · Admin",
       "roles": "Roles & permissions · Settings · Admin",
-      "staff": "Staff · Settings · Admin"
+      "staff": "Staff · Settings · Admin",
+      "inventory": "Inventory · Admin",
+      "purchasing": "Purchasing · Admin"
     },
     "loading": "Loading your workspace",
     "noAccess": {
@@ -311,11 +313,14 @@
       "cash": "Cash register",
       "refunds": "Refunds & cancellations",
       "more": "More",
-      "settings": "Settings"
+      "settings": "Settings",
+      "inventory": "Inventory",
+      "purchasing": "Purchasing"
     },
     "badge": {
       "orders": "{count} ready to serve",
-      "requests": "{count} open"
+      "requests": "{count} open",
+      "inventory": "{count} low or out"
     },
     "branch": {
       "label": "Current branch",
@@ -1110,6 +1115,768 @@
       "by": "by {name}",
       "byGuest": "by the guest",
       "byRestaurant": "by the restaurant"
+    }
+  },
+  "adminInventory": {
+    "title": "Inventory",
+    "subtitle": "What the branch has in stock, what it's worth, and every change to it.",
+    "backendOnly": "Inventory needs the server. It isn't available in the demo.",
+    "loading": "Loading stock",
+    "failed": "Couldn't load the stock.",
+    "retry": "Try again",
+    "tabs": {
+      "label": "Inventory views",
+      "stock": "Stock",
+      "ingredients": "Ingredients",
+      "wastage": "Wastage",
+      "ledger": "Ledger",
+      "recipes": "Recipes",
+      "dashboard": "Dashboard",
+      "counts": "Counts",
+      "transfers": "Transfers",
+      "usage": "Usage"
+    },
+    "summary": {
+      "label": "Stock at a glance",
+      "tracked": "Items tracked",
+      "low": "Running low",
+      "out": "Out of stock",
+      "value": "Stock value",
+      "wastedToday": "Wasted today",
+      "expiring": "Expiring soon",
+      "expired": "Expired"
+    },
+    "status": {
+      "ok": "In stock",
+      "low": "Low",
+      "out": "Out"
+    },
+    "filters": {
+      "all": "All",
+      "low": "Low",
+      "out": "Out",
+      "ok": "In stock"
+    },
+    "units": {
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "l": "L",
+      "pc": "pc",
+      "dozen": "dozen"
+    },
+    "unitNames": {
+      "g": "Grams (g)",
+      "kg": "Kilograms (kg)",
+      "ml": "Millilitres (ml)",
+      "l": "Litres (L)",
+      "pc": "Pieces (pc)",
+      "dozen": "Dozens"
+    },
+    "perUnit": "{amount} / {unit}",
+    "packOption": "{name} ({quantity})",
+    "by": "by {name}",
+    "leaves": "Now {quantity}",
+    "newCost": "New cost {cost}",
+    "kinds": {
+      "opening": "Opening stock",
+      "adjustment": "Adjustment",
+      "wastage": "Wastage",
+      "revaluation": "Cost changed",
+      "consumption": "Used by orders",
+      "production_in": "Batch made",
+      "production_out": "Used in a batch",
+      "purchase": "Received",
+      "purchase_return": "Returned to supplier",
+      "purchase_price": "Price confirmed",
+      "count": "Stock count",
+      "transfer_out": "Sent to a branch",
+      "transfer_in": "Received from a branch"
+    },
+    "reasons": {
+      "correction": "Correction",
+      "found": "Found",
+      "missing": "Missing",
+      "expired": "Expired",
+      "spoiled": "Spoiled",
+      "damaged": "Damaged",
+      "kitchen_mistake": "Kitchen mistake",
+      "spilled": "Spilled",
+      "guest_return": "Sent back by guest",
+      "other": "Other",
+      "returned": "Given back",
+      "cancelled": "Cancelled after cooking",
+      "wrong_item": "Wrong item",
+      "excess": "Too many"
+    },
+    "actions": {
+      "opening": {
+        "one": "Enter opening stock ({count} item)",
+        "other": "Enter opening stock ({count} items)"
+      },
+      "adjust": "Adjust stock",
+      "waste": "Record wastage",
+      "orderLow": "Order low stock"
+    },
+    "stock": {
+      "label": "Stock list",
+      "empty": "No ingredients are tracked here yet.",
+      "emptyHint": "Add ingredients on the Ingredients tab, then enter their opening stock.",
+      "search": "Search ingredients",
+      "searchPlaceholder": "Name or code",
+      "category": "Category",
+      "allCategories": "All categories",
+      "noCategory": "No category",
+      "filter": "Show",
+      "noMatch": "Nothing matches.",
+      "reorderAt": "Reorder at {quantity}",
+      "openingDue": "Opening stock not entered",
+      "switchedOn": "Inventory was switched on {time}. Stock didn't move while it was off: count or adjust it before relying on it."
+    },
+    "item": {
+      "onHand": "On hand",
+      "status": "Status",
+      "cost": "Average cost",
+      "value": "Value",
+      "lastMoved": "Last change",
+      "levels": "Levels and cost",
+      "reorderLevel": "Reorder level ({unit})",
+      "reorderHint": "Shows as low at or below this. Leave empty for never.",
+      "parLevel": "Full shelf ({unit})",
+      "parHint": "How much a full shelf holds.",
+      "costHint": "Changing it revalues what's on hand.",
+      "save": "Save levels and cost",
+      "saved": "Saved",
+      "history": "History",
+      "noHistory": "Nothing has changed yet.",
+      "moreInLedger": "Older changes are on the Ledger tab.",
+      "untrack": "Stop tracking here",
+      "untracked": "{name} is no longer tracked here"
+    },
+    "entry": {
+      "title": {
+        "opening": "Opening stock",
+        "adjustment": "Adjust stock",
+        "wastage": "Record wastage"
+      },
+      "body": {
+        "opening": "Enter what's on the shelf now and what it cost. This is done once per item; later changes are adjustments.",
+        "adjustment": "Correct the stock: set it to what you counted, or add or take away an amount.",
+        "wastage": "What was thrown away, and why. It comes off the stock at its average cost."
+      },
+      "confirm": {
+        "opening": {
+          "one": "Save opening stock",
+          "other": "Save opening stock ({count} items)"
+        },
+        "adjustment": {
+          "one": "Save adjustment",
+          "other": "Save adjustments ({count} items)"
+        },
+        "wastage": {
+          "one": "Record wastage",
+          "other": "Record wastage ({count} items)"
+        }
+      },
+      "done": {
+        "opening": {
+          "one": "Opening stock saved",
+          "other": "Opening stock saved for {count} items"
+        },
+        "adjustment": {
+          "one": "Stock adjusted",
+          "other": "{count} items adjusted"
+        },
+        "wastage": {
+          "one": "Wastage recorded",
+          "other": "Wastage recorded for {count} items"
+        }
+      },
+      "nothing": {
+        "opening": "Every tracked item already has its opening stock.",
+        "adjustment": "No ingredients are tracked here yet.",
+        "wastage": "No ingredients are tracked here yet."
+      },
+      "line": "Item {number}",
+      "removeLine": "Remove this item",
+      "addLine": "Add another item",
+      "ingredient": "Ingredient",
+      "pick": "Pick an ingredient.",
+      "pickPlaceholder": "Choose an ingredient",
+      "onHand": "On hand now: {quantity}",
+      "how": "How it changes",
+      "modes": {
+        "count": "Set to count",
+        "add": "Add",
+        "remove": "Take away"
+      },
+      "quantity": "Quantity",
+      "counted": "Counted",
+      "quantityError": "Enter a number, up to 3 decimals.",
+      "in": "Unit",
+      "cost": "Cost ({symbol} per {unit})",
+      "costError": "Enter an amount, up to 2 decimals.",
+      "reason": "Why",
+      "reasonError": "Pick a reason.",
+      "note": "Note",
+      "noteError": "Say what happened."
+    },
+    "ingredients": {
+      "shared": "Ingredients are shared by every branch of the restaurant. Stock, levels and costs are kept per branch.",
+      "new": "New ingredient",
+      "newTitle": "New ingredient",
+      "editTitle": "Edit {name}",
+      "name": "Name",
+      "namePlaceholder": "e.g. Paneer",
+      "nameRequired": "Give it a name.",
+      "unit": "Kept in",
+      "unitHint": "Weight, volume or count can only change before its stock moves.",
+      "category": "Category",
+      "sku": "Code",
+      "packs": "Packs",
+      "packsHint": "How it comes (a 10 kg bag, a case of 24), so stock can be entered in packs.",
+      "packName": "Pack",
+      "packNamePlaceholder": "e.g. bag",
+      "packHolds": "Holds ({unit})",
+      "addPack": "Add a pack",
+      "removePack": "Remove this pack",
+      "add": "Add ingredient",
+      "save": "Save changes",
+      "added": "{name} added",
+      "saved": "{name} saved",
+      "track": "Track at this branch",
+      "nowTracked": "{name} is now tracked here",
+      "archive": "Archive ingredient",
+      "archived": "{name} archived",
+      "tracked": "Tracked here",
+      "notTracked": "Not tracked here",
+      "empty": "No ingredients yet. Add the first one."
+    },
+    "categories": {
+      "title": "Categories",
+      "body": "Group ingredients (Dairy, Vegetables). Removing a category keeps its ingredients.",
+      "name": "Category name",
+      "new": "New category",
+      "placeholder": "e.g. Dairy",
+      "add": "Add",
+      "remove": "Remove {name}"
+    },
+    "wastage": {
+      "total": "Wasted: {amount}",
+      "totalPartial": "Wasted in the latest 100: {amount}",
+      "recordOnly": "Wastage you record comes off the stock straight away."
+    },
+    "ledger": {
+      "kind": "Change",
+      "allKinds": "All changes",
+      "allIngredients": "All ingredients",
+      "more": "Show older"
+    },
+    "errors": {
+      "failed": "Couldn't save. Try again.",
+      "nameTaken": "That name is already used.",
+      "openingDone": "Opening stock was already entered for {names}. Adjust it instead.",
+      "notTracked": "{names} isn't tracked here.",
+      "held": "Still in stock at {branches}. Bring it to zero there first.",
+      "measure": "Its stock has moved, so it stays in the same kind of unit.",
+      "expiryRequired": "Give the expiry date for {names}."
+    },
+    "kitchen": {
+      "title": "Ingredients",
+      "allGood": "Nothing is running low."
+    },
+    "recipes": {
+      "summary": "Recipes at a glance",
+      "coverage": "Dishes with a recipe",
+      "coverageValue": "{done} of {total}",
+      "offByStock": "Off the menu by stock",
+      "targetLabel": "Food cost target (%)",
+      "targetHint": "A portion's cost should stay under this share of its price.",
+      "targetError": "Enter a percentage from 1 to 100.",
+      "target": "Target food cost: {pct}% of the price (before tax).",
+      "search": "Search dishes",
+      "filters": {
+        "all": "All",
+        "none": "No recipe",
+        "over": "Over target",
+        "off": "Off by stock"
+      },
+      "noRecipe": "No recipe yet: uses no stock",
+      "lines": {
+        "one": "{count} ingredient line",
+        "other": "{count} ingredient lines"
+      },
+      "unknown": {
+        "one": "{count} line for a part the dish no longer has",
+        "other": "{count} lines for parts the dish no longer has"
+      },
+      "soldOut": "Off by stock",
+      "overTarget": "Over target",
+      "open": "Recipe for {dish}",
+      "title": "Recipe · {name}",
+      "body": "What one portion uses. The kitchen's stock goes down by this when it starts cooking.",
+      "every": "Every portion",
+      "everySizes": "Used by sizes that don't have their own recipe.",
+      "size": "{name} size",
+      "usesBase": "Uses the recipe above.",
+      "ownRecipe": "Give it its own recipe",
+      "addOn": "Add-on · {name}",
+      "choice": "{group} · {name}",
+      "removal": "Left out · {name}",
+      "removalHint": "Taken off the portion when a guest leaves it out.",
+      "showExtras": "Add-ons, options and leave-outs ({count})",
+      "addLine": "Add an ingredient",
+      "removeLine": "Remove this ingredient",
+      "perPortion": "Per portion",
+      "twice": "Already in this part.",
+      "foodCost": "{pct}% food cost",
+      "dropped": {
+        "one": "{count} line was for a part the dish no longer has. It goes when you save.",
+        "other": "{count} lines were for parts the dish no longer has. They go when you save."
+      },
+      "save": "Save recipe",
+      "saved": "Recipe for {name} saved"
+    },
+    "prep": {
+      "title": "Made here",
+      "toggle": "Made in batches (gravy, dough, marinade)",
+      "hint": "Making a batch takes its ingredients out of stock and adds this. Dishes then use it.",
+      "badge": "Made in batches",
+      "batch": "One batch makes ({unit})",
+      "perBatch": "Per batch"
+    },
+    "production": {
+      "title": "Make a batch",
+      "body": "How much came out. What it uses leaves the stock, and the batch comes in at what that cost.",
+      "item": "Prepared item",
+      "made": "Made",
+      "batch": "One batch makes {quantity}",
+      "uses": "It uses",
+      "confirm": "Save batch",
+      "done": "{name} batch saved",
+      "none": "Nothing is made in batches here yet. Mark an ingredient as made in batches on the Ingredients tab, and track it here."
+    },
+    "export": {
+      "csv": "Download CSV",
+      "failed": "Couldn't download. Try again."
+    },
+    "dashboard": {
+      "scope": "Show",
+      "scopes": {
+        "branch": "This branch",
+        "restaurant": "All branches"
+      },
+      "todo": "Waiting for you",
+      "todos": {
+        "countsToApply": {
+          "one": "{count} count to apply",
+          "other": "{count} counts to apply"
+        },
+        "transfersToReceive": {
+          "one": "{count} transfer to receive",
+          "other": "{count} transfers to receive"
+        },
+        "pricesToConfirm": {
+          "one": "{count} price to confirm",
+          "other": "{count} prices to confirm"
+        },
+        "ordersToApprove": {
+          "one": "{count} order to approve",
+          "other": "{count} orders to approve"
+        },
+        "deliveriesDue": {
+          "one": "{count} delivery due",
+          "other": "{count} deliveries due"
+        },
+        "expiring": {
+          "one": "{count} item expiring soon",
+          "other": "{count} items expiring soon"
+        },
+        "expired": {
+          "one": "{count} item past its date",
+          "other": "{count} items past their date"
+        }
+      },
+      "tiles": {
+        "stockValue": "Stock value",
+        "low": "Running low",
+        "out": "Out of stock",
+        "wastedWeek": "Wasted this week",
+        "purchasedMonth": "Bought this month",
+        "foodCost": "Food cost (30 days)",
+        "lastCount": "Last count"
+      },
+      "recipesSay": "Recipes say {percent}",
+      "never": "Never",
+      "countDifference": "Difference {amount}",
+      "branches": "Branches",
+      "branch": "Branch",
+      "valueTrend": "Stock value, last 30 days",
+      "chartLabel": "{label}: from {from} to {to}",
+      "now": "Now {value}",
+      "asTable": "Show as a table",
+      "wastage": "Wastage this week, by reason",
+      "records": {
+        "one": "{count} record",
+        "other": "{count} records"
+      },
+      "noWastage": "No wastage recorded this week.",
+      "topUsed": "Most used by orders, last 30 days",
+      "priceMoves": "Prices that moved most, last 30 days"
+    },
+    "counts": {
+      "start": "Start a count",
+      "startBody": "Count what is on the shelves. The count is compared with the stock when it starts, so service can carry on meanwhile.",
+      "startConfirm": "Start counting",
+      "what": "What to count",
+      "scopes": {
+        "all": "Everything",
+        "category": "A category",
+        "items": "Chosen items"
+      },
+      "allItems": {
+        "one": "{count} item tracked here.",
+        "other": "{count} items tracked here."
+      },
+      "picked": {
+        "one": "{count} item chosen",
+        "other": "{count} items chosen"
+      },
+      "pickItems": "Choose at least one item.",
+      "hint": "Staff count blind; a manager sees the differences and applies the count.",
+      "empty": "No counts yet. Counting regularly shows what goes missing.",
+      "number": "Count #{number}",
+      "continue": "Carry on count #{number}",
+      "progress": "{counted} of {total} counted",
+      "worth": "difference {amount}",
+      "startedAt": "Started {time}",
+      "status": {
+        "counting": "Counting",
+        "submitted": "To apply",
+        "applied": "Applied",
+        "cancelled": "Cancelled"
+      },
+      "show": {
+        "todo": "Not counted",
+        "all": "All",
+        "differences": "Differences"
+      },
+      "none": {
+        "todo": "Everything is counted.",
+        "all": "Nothing matches.",
+        "differences": "No differences."
+      },
+      "countHint": "Enter what you find. Each item saves when you move on; leave an item empty if you did not count it.",
+      "expectedHint": "Expected is the stock when the count started. Big differences need a reason before applying.",
+      "waiting": "Sent for review. A manager applies it.",
+      "expected": "Expected {quantity}",
+      "counted": "Counted {quantity}",
+      "why": "Why the difference",
+      "whyError": "Say why: the difference is big.",
+      "submit": "Send for review",
+      "apply": "Apply count",
+      "cancel": "Cancel count",
+      "done": {
+        "submit": "Count sent for review.",
+        "apply": "Count applied. Stock updated.",
+        "cancel": "Count cancelled."
+      },
+      "errors": {
+        "open": "Count #{number} is still open for some of these items. Finish or cancel it first.",
+        "notes": "Say why for {names}.",
+        "closed": "This count has already moved on. Reopen it to see."
+      }
+    },
+    "transfers": {
+      "send": "Send to a branch",
+      "sendBody": "The stock leaves this branch now, at what it cost here. The other branch confirms what arrives.",
+      "sendConfirm": {
+        "one": "Send",
+        "other": "Send {count} items"
+      },
+      "toBranch": "Send to",
+      "oneBranch": "Transfers need another branch in this restaurant.",
+      "empty": "No transfers yet.",
+      "to": "#{number} to {name}",
+      "from": "#{number} from {name}",
+      "items": {
+        "one": "{count} item",
+        "other": "{count} items"
+      },
+      "lostWorth": "{amount} lost",
+      "sentAt": "Sent {time}",
+      "status": {
+        "sent": {
+          "out": "On its way",
+          "in": "To receive"
+        },
+        "received": {
+          "out": "Received",
+          "in": "Received"
+        },
+        "cancelled": {
+          "out": "Cancelled",
+          "in": "Cancelled"
+        }
+      },
+      "receive": "Confirm received",
+      "receiveHint": "Change a quantity if less arrived. What did not arrive is recorded as lost on the way.",
+      "cancel": "Call back",
+      "sentQuantity": "Sent {quantity}",
+      "lost": "{quantity} lost",
+      "arrived": "Arrived ({unit})",
+      "arrivedError": "Between nothing and what was sent.",
+      "closed": "This transfer has already been received or cancelled.",
+      "done": {
+        "send": "Stock sent.",
+        "receive": "Received. Stock updated.",
+        "cancel": "Called back. The stock is here again."
+      }
+    },
+    "usage": {
+      "hint": "What really went (stock at the start, plus what came in, less what is left) against what recipes say. Waste is what was recorded; the rest is unexplained.",
+      "countedAt": "Last count in this period: {time}. Actual usage is right up to then.",
+      "noCount": "No count was applied in this period, so actual usage only shows what was recorded. Count stock for the real picture.",
+      "summary": "Usage at a glance",
+      "tiles": {
+        "sales": "Food sales",
+        "actual": "Actually used",
+        "theoretical": "Recipes say",
+        "wastage": "Wasted",
+        "unexplained": "Unexplained",
+        "foodCostActual": "Food cost (actual)",
+        "foodCostTheoretical": "Food cost (recipes)"
+      },
+      "byCategory": "By category",
+      "items": "Items",
+      "empty": "Nothing was used in this period.",
+      "used": "Used {amount}",
+      "recipes": "recipes {amount}",
+      "wasted": "wasted {amount}",
+      "opening": "Start {amount}",
+      "cameIn": "came in {amount}",
+      "closing": "end {amount}",
+      "unexplained": "{amount} unexplained",
+      "allExplained": "All explained"
+    },
+    "expiry": {
+      "title": "Expiry",
+      "toggle": "Track expiry dates",
+      "hint": "Stock is kept in batches with their last good day. The kitchen uses the earliest first and is warned before it expires.",
+      "startHint": "What's in stock now becomes one batch without a date. Set its date on the item's page.",
+      "shelfLife": "Keeps for (days)",
+      "shelfLifeHint": "Fills in the date when it comes in. Leave empty to type the date each time.",
+      "shelfLifeError": "A whole number of days, 1 to 3650.",
+      "warnDays": "Warn days before",
+      "warnError": "A whole number of days, 0 to 60.",
+      "expires": "Expires",
+      "dateError": "Choose the last good day.",
+      "lot": "Batch code",
+      "undated": "Date not set",
+      "expiredOn": "Expired {date}",
+      "today": "Last day today",
+      "daysLeft": {
+        "one": "{count} day left",
+        "other": "{count} days left"
+      },
+      "until": "Good till {date}",
+      "writtenOff": {
+        "one": "Written off as expired.",
+        "other": "{count} batches written off as expired."
+      },
+      "batches": "Batches",
+      "noBatches": "No stock in batches.",
+      "sources": {
+        "receipt_line": "Delivery",
+        "production": "Made here",
+        "stock_transfer": "Transfer",
+        "opening": "Opening stock",
+        "start": "Stock when tracking began",
+        "split": "Split off",
+        "other": "Added"
+      },
+      "came": "{quantity} on {date}",
+      "lotNamed": "Code {lot}",
+      "edit": "Edit",
+      "writeOff": "Write off",
+      "saved": "Batch saved.",
+      "splitHint": "Part of it has another date? Split it off.",
+      "splitQuantity": "Split off ({unit})",
+      "splitExpires": "Its date",
+      "splitError": "Less than what is left in the batch.",
+      "save": "Save batch",
+      "close": "Close",
+      "next": "Next expires {date}",
+      "batchesMoved": "Batches {dates}",
+      "useFirst": "Use first",
+      "writeOffExpired": "Write off expired"
+    }
+  },
+  "adminPurchasing": {
+    "title": "Purchasing",
+    "subtitle": "Order from suppliers, receive deliveries, send back what's wrong.",
+    "backendOnly": "Purchasing needs the server. It isn't available in the demo.",
+    "tabs": {
+      "label": "Purchasing views",
+      "orders": "Orders",
+      "receipts": "Deliveries",
+      "suppliers": "Suppliers"
+    },
+    "pack": "{name} ({size})",
+    "status": {
+      "draft": "To approve",
+      "approved": "Approved",
+      "sent": "Sent",
+      "partly_received": "Part received",
+      "received": "Received",
+      "cancelled": "Cancelled",
+      "closed": "Closed short"
+    },
+    "settings": {
+      "title": "Approval and price alerts",
+      "limit": "Approve orders above",
+      "limitHint": "Before tax. 0 means every order needs approval.",
+      "alert": "Flag prices more than (%) above expected",
+      "alertHint": "Compared with the order's price, or the supplier's last.",
+      "save": "Save settings"
+    },
+    "orders": {
+      "new": "New order",
+      "newTitle": "New purchase order",
+      "title": "Purchase order {number}",
+      "supplier": "Supplier",
+      "pickSupplier": "Choose a supplier",
+      "expectedOn": "Expected on",
+      "packs": "Quantity",
+      "pack": "Pack",
+      "price": "Price per pack",
+      "tax": "Tax (%)",
+      "taxError": "Enter 0–100.",
+      "create": "Create order",
+      "save": "Save order",
+      "saved": "{number} saved",
+      "suggestFrom": "Suggest from low stock for",
+      "suggest": "Suggest order",
+      "filters": {
+        "open": "Open",
+        "draft": "To approve",
+        "done": "Done",
+        "all": "All"
+      },
+      "none": "No orders here.",
+      "lineCount": {
+        "one": "{count} item",
+        "other": "{count} items"
+      },
+      "expected": "Expected {date}",
+      "createdBy": "Created {time} by {name}",
+      "approvedBy": "approved by {name}",
+      "needsApproval": "Above the approval limit: it needs approval before it's sent.",
+      "received": "{quantity} received",
+      "taxRate": "{rate}% tax",
+      "total": "Total {total} + {tax} tax",
+      "edit": "Edit",
+      "approve": "Approve",
+      "markSent": "Mark as sent",
+      "receive": "Receive delivery",
+      "whatsApp": "Send on WhatsApp",
+      "email": "Send by email",
+      "print": "Print",
+      "cancel": "Cancel order",
+      "close": "Close short",
+      "done": {
+        "approve": "Order approved",
+        "send": "Order marked as sent",
+        "cancel": "Order cancelled",
+        "close": "Order closed short"
+      },
+      "message": "Purchase order {number} from {brand}. Please deliver {date}:"
+    },
+    "receive": {
+      "title": "Receive delivery",
+      "titleOrder": "Receive {number}",
+      "noPrices": "Count what came. Prices are confirmed by a manager later.",
+      "order": "Against order",
+      "noOrder": "No order (bought direct)",
+      "ordered": "ordered {quantity}, {received} so far",
+      "came": "Came",
+      "rejected": "Refused at the door",
+      "rejectedError": "No more than came.",
+      "rejectReason": "Why refused",
+      "invoice": "Supplier invoice number",
+      "confirm": "Save delivery",
+      "done": "{number} saved"
+    },
+    "receipts": {
+      "title": "Delivery {number}",
+      "list": "Deliveries",
+      "none": "No deliveries in these days.",
+      "priceChanges": "Prices to look at",
+      "toConfirm": "Price to confirm",
+      "flagged": "Above {expected}",
+      "refused": "{quantity} refused: {reason}",
+      "returned": "{quantity} sent back",
+      "invoiceNo": "Invoice {number}",
+      "photo": "View invoice photo",
+      "prices": "Prices",
+      "confirmPrices": "Save prices",
+      "pricesSaved": "Prices saved"
+    },
+    "returns": {
+      "start": "Send items back",
+      "title": "Send back to supplier",
+      "list": "Returns",
+      "left": "{quantity} can go back",
+      "quantity": "How many",
+      "confirm": "Save return",
+      "done": "{number} saved",
+      "credit": "Credit {amount}",
+      "reasons": {
+        "damaged": "Damaged",
+        "wrong_item": "Wrong item",
+        "expired": "Expired",
+        "excess": "Too many",
+        "other": "Other"
+      }
+    },
+    "suppliers": {
+      "new": "New supplier",
+      "newTitle": "New supplier",
+      "empty": "No suppliers yet. Add the first one.",
+      "name": "Name",
+      "contact": "Contact person",
+      "phone": "Phone",
+      "phoneHint": "With country code: +919876543210",
+      "email": "Email",
+      "taxId": "GSTIN / PAN",
+      "terms": "Pays in (days)",
+      "address": "Address",
+      "add": "Add supplier",
+      "save": "Save details",
+      "saved": "{name} saved",
+      "items": "What they sell",
+      "itemsHint": "Each ingredient in the pack it comes in, at its last price. Deliveries update the price.",
+      "preferred": "Preferred supplier for this",
+      "saveItems": "Save what they sell",
+      "itemsSaved": "Saved",
+      "archive": "Archive supplier",
+      "archived": "{name} archived",
+      "itemCount": {
+        "one": "{count} item",
+        "other": "{count} items"
+      },
+      "openOrders": {
+        "one": "{count} open order",
+        "other": "{count} open orders"
+      }
+    },
+    "errors": {
+      "notEditable": "That order can't change now.",
+      "notApproved": "It needs approval before it's sent.",
+      "closed": "Nothing more can be received on that order.",
+      "returnExceeds": "That's more than came in.",
+      "supplierInUse": "The supplier has open orders. Close them first.",
+      "nothingLow": "Nothing from this supplier is low."
     }
   },
   "adminTableCollect": {
@@ -2769,7 +3536,9 @@
         "manage": "Orders, bookings & reports",
         "menu": "Menu & tables",
         "branch": "Branch",
-        "staff": "Staff"
+        "staff": "Staff",
+        "inventory": "Inventory",
+        "purchasing": "Purchasing"
       },
       "permissions": {
         "orders_view": {
@@ -2843,6 +3612,42 @@
         "staff_manage": {
           "label": "Manage staff and roles",
           "hint": "Add staff, give them roles, create roles."
+        },
+        "inventory_view": {
+          "label": "See stock",
+          "hint": "Stock levels, the ledger and low-stock alerts."
+        },
+        "inventory_manage": {
+          "label": "Manage inventory",
+          "hint": "Ingredients, opening stock, reorder levels and costs."
+        },
+        "inventory_adjust": {
+          "label": "Adjust stock",
+          "hint": "Correct stock up or down, with a reason."
+        },
+        "inventory_wastage": {
+          "label": "Record wastage",
+          "hint": "Record what was thrown away, and why."
+        },
+        "inventory_count": {
+          "label": "Count stock",
+          "hint": "Count what's on the shelves, without seeing what the system expects. A manager applies the count."
+        },
+        "purchase_view": {
+          "label": "See purchasing",
+          "hint": "Suppliers, purchase orders, deliveries and returns."
+        },
+        "purchase_manage": {
+          "label": "Buy",
+          "hint": "Suppliers; create and send orders; record deliveries and returns; confirm prices."
+        },
+        "purchase_approve": {
+          "label": "Approve orders",
+          "hint": "Approve orders above the limit, and set it."
+        },
+        "purchase_receive": {
+          "label": "Receive deliveries",
+          "hint": "Record what came at the door, without prices."
         }
       }
     },
@@ -2910,6 +3715,17 @@
         "saved": "{name} saved",
         "reset": "New password set for {name}"
       }
+    },
+    "features": {
+      "title": "Features",
+      "inventory": "Inventory and purchasing",
+      "inventoryOn": "On for every branch: stock, recipes, suppliers, deliveries.",
+      "inventoryOff": "Off: the restaurant works without stock, as before. Its data is kept.",
+      "who": "Only the platform team can change this.",
+      "changedAt": "Last changed {time}",
+      "turnedOn": "Inventory is on",
+      "turnedOff": "Inventory is off. Dishes stock had taken off are back on the menu.",
+      "failed": "Couldn't change it. Try again."
     }
   },
   "masters": {

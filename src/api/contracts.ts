@@ -143,6 +143,38 @@ export type ApiErrorCode =
   | 'day_signed_off'
   /** 409: the booking already has a deposit (one at most). */
   | 'deposit_exists'
+  /** 409: another ingredient or category has that name (`field`). */
+  | 'name_taken'
+  /** 409: opening stock was already entered for these (`ingredients`): adjust instead. */
+  | 'opening_done'
+  /** 409: the branch doesn't track these (`ingredients`). */
+  | 'not_tracked'
+  /** 409: a branch still holds some (`branches`), or its measure can't change now (`field`). */
+  | 'ingredient_in_use'
+  /** 409: the purchase order can't change that way now (`status`). */
+  | 'po_not_editable'
+  /** 409: the purchase order needs approval before it's sent. */
+  | 'po_not_approved'
+  /** 409: nothing more can be received on the order (`status`). */
+  | 'po_closed'
+  /** 409: more would go back than came in (`lines`: what each can take). */
+  | 'return_exceeds'
+  /** 409: the supplier has open purchase orders (`orders`: their numbers). */
+  | 'supplier_in_use'
+  /** 409: nothing the supplier sells is low. */
+  | 'nothing_to_order'
+  /** 403: the restaurant doesn't have this feature (`feature`): the platform switches it on. */
+  | 'feature_disabled'
+  /** 409: some items are in another open count (`count`: its number). */
+  | 'count_open'
+  /** 409: the count can't change that way now (`status`). */
+  | 'count_closed'
+  /** 409: big differences need a note before applying (`ingredients`). */
+  | 'count_needs_notes'
+  /** 409: the transfer can't change that way now (`status`). */
+  | 'transfer_closed'
+  /** 400: these items track expiry and have no shelf life: give the date (`ingredients`). */
+  | 'expiry_required'
   | 'role_system'
   | 'role_in_use'
   | 'staff_exists'
@@ -189,6 +221,18 @@ export interface ApiErrorBody {
   difference?: Price;
   /** count_differs: the card and UPI totals checked, against what was taken that way. */
   methods?: { method: string; expected: Price; difference: Price }[];
+  /** opening_done, not_tracked: the ingredients, by name. */
+  ingredients?: string[];
+  /** ingredient_in_use: the branches still holding some. */
+  branches?: string[];
+  /** po_not_editable, po_closed: where the order stands. */
+  status?: string;
+  /** supplier_in_use: its open orders' numbers. */
+  orders?: number[];
+  /** count_open: the open count's number. */
+  count?: number;
+  /** return_exceeds: how much each line can still take back. */
+  lines?: { receiptLineId: string; available: number }[];
 }
 
 /** A table the floor plan can't leave out yet: its open orders or bill, or its bookings to come. */
@@ -936,12 +980,13 @@ export interface KitchenMessageRequest {
 
 /**
  * `GET /admin/branches/:branchId/events` — Server-Sent Events: what changes at the branch, for as
- * long as the screen keeps it open (`orders.view`). `event:` orders | service | menu | resync,
+ * long as the screen keeps it open (`orders.view`, `kitchen.update` or `inventory.view`). `event:`
+ * orders | service | menu | inventory | resync,
  * `data:` this; the screen reads again through the usual endpoints. A heartbeat comment every
  * 25 s; closed when the session ends. 429 rate_limited past six streams for one sign-in.
  */
 export interface BranchEvent {
-  kind: 'orders' | 'service' | 'menu' | 'resync';
+  kind: 'orders' | 'service' | 'menu' | 'inventory' | 'resync';
   orderId?: string;
   at: string;
 }
@@ -1499,6 +1544,30 @@ export interface CloseRegisterRequest {
   methods?: { method: string; counted: Price }[];
   note?: string;
 }
+
+/* ---------- Inventory (backend only) ---------- */
+
+/*
+ * `/admin/branches/:branchId/inventory` (types/inventory.ts). Costs and values only with
+ * `inventory.manage` or `reports.view`.
+ * - `GET /stock` → StockResponse; `GET /stock/:ingredientId?before=` → StockItemResponse;
+ *   `GET /movements?from=&to=&kind=&ingredient=&before=` → MovementsResponse (`inventory.view`).
+ * - `GET /ingredients` → IngredientsResponse; `GET /alerts` → StockAlertsResponse (any inventory
+ *   permission: the kitchen's wastage too).
+ * - `PATCH /stock/:ingredientId` (tracked, levels, cost) → StockItem; `POST /opening` → 409
+ *   opening_done; ingredients `POST`, `PATCH`/`DELETE /ingredients/:id` (409 name_taken,
+ *   ingredient_in_use); categories `POST`, `PATCH`/`DELETE /categories/:id` (`inventory.manage`).
+ * - `POST /adjustments` (`inventory.adjust`), `POST /wastage` (`inventory.wastage`) →
+ *   StockEntryResponse; 409 not_tracked (`ingredients`: names).
+ */
+export type * from '@/types/inventory';
+
+/*
+ * `/admin/branches/:branchId/purchasing` (types/purchasing.ts): suppliers and their items, purchase
+ * orders (approve above the branch's limit, send, cancel, close, suggest), deliveries (receive,
+ * confirm prices, price changes) and returns. `purchasing/proofs` keeps invoice photos.
+ */
+export type * from '@/types/purchasing';
 
 /* ---------- Reservations: deposits, reminders, rules ---------- */
 

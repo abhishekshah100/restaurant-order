@@ -3,6 +3,7 @@ import { TRACK_REFRESH_MS } from '@/lib/orders';
 import type { FloorPlanLayout } from '@/types/admin';
 import type { BranchConfig, BranchLiveStatus, BranchSummary } from '@/types/branch';
 import type { HelpTopics } from '@/types/help';
+import type { MovementsQuery } from '@/types/inventory';
 import type { MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
@@ -436,6 +437,184 @@ export const cashSessionQuery = (token: string | null, branchId: string | undefi
   queryOptions({
     queryKey: ['admin', 'cash-session', branchId, id, token] as const,
     queryFn: token && branchId ? () => api.cashSession(token, branchId, id) : skipToken,
+  });
+
+/* Inventory (backend only): everything under ['admin', 'inventory', branchId], which the branch's
+ * `inventory` event and every inventory change make stale. */
+
+/** GET …/inventory/stock: what the branch tracks and how it stands (polled while shown). */
+export const inventoryStockQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'stock', token] as const,
+    queryFn: token && branchId ? () => api.inventoryStock(token, branchId) : skipToken,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
+  });
+
+/** GET …/inventory/stock/:ingredientId: one item and its latest ledger rows. */
+export const inventoryItemQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  ingredientId: string,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'item', ingredientId, token] as const,
+    queryFn: token && branchId ? () => api.inventoryItem(token, branchId, ingredientId) : skipToken,
+  });
+
+/** GET …/inventory/movements: the ledger for some days (and a kind or an item). */
+export const inventoryMovementsQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  query: MovementsQuery,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'movements', query, token] as const,
+    queryFn: token && branchId ? () => api.inventoryMovements(token, branchId, query) : skipToken,
+  });
+
+/** GET …/inventory/alerts: what's low or out (the nav's badge, the kitchen). */
+export const inventoryAlertsQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'alerts', token] as const,
+    queryFn: token && branchId ? () => api.inventoryAlerts(token, branchId) : skipToken,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
+  });
+
+/** GET …/inventory/recipes: every dish, its recipe coverage and food cost. */
+export const recipesQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'recipes', token] as const,
+    queryFn: token && branchId ? () => api.recipes(token, branchId) : skipToken,
+  });
+
+/** GET …/inventory/recipes/:dishSlug: one dish's parts, recipe and portion costs. */
+export const recipeQuery = (token: string | null, branchId: string | undefined, slug: string) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'recipe', slug, token] as const,
+    queryFn: token && branchId ? () => api.recipe(token, branchId, slug) : skipToken,
+  });
+
+/** GET …/features: the restaurant's optional modules (backend only). */
+export const featuresQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'features', branchId, token] as const,
+    queryFn: token && branchId ? () => api.features(token, branchId) : skipToken,
+  });
+
+/* Purchasing (backend only): everything under ['admin', 'purchasing', branchId]. */
+
+export const suppliersQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'purchasing', branchId, 'suppliers', token] as const,
+    queryFn: token && branchId ? () => api.suppliers(token, branchId) : skipToken,
+  });
+
+export const purchaseOrdersQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  query: { status?: string; supplier?: string },
+) =>
+  queryOptions({
+    queryKey: ['admin', 'purchasing', branchId, 'orders', query, token] as const,
+    queryFn: token && branchId ? () => api.purchaseOrders(token, branchId, query) : skipToken,
+  });
+
+export const purchaseOrderQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  id: string,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'purchasing', branchId, 'order', id, token] as const,
+    queryFn: token && branchId ? () => api.purchaseOrder(token, branchId, id) : skipToken,
+  });
+
+export const receiptsQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  range: { from?: string; to?: string },
+) =>
+  queryOptions({
+    queryKey: ['admin', 'purchasing', branchId, 'receipts', range, token] as const,
+    queryFn: token && branchId ? () => api.receipts(token, branchId, range) : skipToken,
+  });
+
+export const receiptQuery = (token: string | null, branchId: string | undefined, id: string) =>
+  queryOptions({
+    queryKey: ['admin', 'purchasing', branchId, 'receipt', id, token] as const,
+    queryFn: token && branchId ? () => api.receipt(token, branchId, id) : skipToken,
+  });
+
+export const priceChangesQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'purchasing', branchId, 'price-changes', token] as const,
+    queryFn: token && branchId ? () => api.priceChanges(token, branchId) : skipToken,
+  });
+
+export const purchaseReturnsQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  range: { from?: string; to?: string },
+) =>
+  queryOptions({
+    queryKey: ['admin', 'purchasing', branchId, 'returns', range, token] as const,
+    queryFn: token && branchId ? () => api.purchaseReturns(token, branchId, range) : skipToken,
+  });
+
+export const stockBatchesQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  query: { ingredient?: string; status?: 'expiring' | 'expired' | 'unknown' },
+) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'batches', query, token] as const,
+    queryFn: token && branchId ? () => api.stockBatches(token, branchId, query) : skipToken,
+  });
+
+export const inventoryDashboardQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  scope: 'branch' | 'restaurant',
+) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'dashboard', scope, token] as const,
+    queryFn: token && branchId ? () => api.inventoryDashboard(token, branchId, scope) : skipToken,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
+  });
+
+export const stockCountsQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'counts', token] as const,
+    queryFn: token && branchId ? () => api.stockCounts(token, branchId) : skipToken,
+  });
+
+export const stockCountQuery = (token: string | null, branchId: string | undefined, id: string) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'count', id, token] as const,
+    queryFn: token && branchId ? () => api.stockCount(token, branchId, id) : skipToken,
+  });
+
+export const stockTransfersQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'transfers', token] as const,
+    queryFn: token && branchId ? () => api.stockTransfers(token, branchId) : skipToken,
+  });
+
+export const inventoryUsageQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  range: { from?: string; to?: string },
+) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'usage', range, token] as const,
+    queryFn: token && branchId ? () => api.inventoryUsage(token, branchId, range) : skipToken,
+  });
+
+/** GET …/inventory/ingredients: the restaurant's ingredients and categories. */
+export const ingredientsQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'inventory', branchId, 'ingredients', token] as const,
+    queryFn: token && branchId ? () => api.ingredients(token, branchId) : skipToken,
   });
 
 /**

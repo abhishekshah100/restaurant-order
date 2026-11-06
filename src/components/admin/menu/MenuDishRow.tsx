@@ -22,6 +22,7 @@ export function MenuDishRow({
   onSwitch,
   onAvailability,
   onEdit,
+  onRecipe,
   reorder,
 }: {
   dish: Dish;
@@ -30,6 +31,8 @@ export function MenuDishRow({
   onAvailability: () => void;
   /** Opens the dish editor; without it there's no Edit (the kitchen's Stock page). */
   onEdit?: () => void;
+  /** Opens the dish's recipe (inventory managers, with the server). */
+  onRecipe?: () => void;
   /** While reordering: move up / down instead of the switch and Edit. */
   reorder?: { first: boolean; last: boolean; onMove: (by: -1 | 1) => void };
 }) {
@@ -129,6 +132,16 @@ export function MenuDishRow({
               onChange={onSwitch}
               label={t('adminMenu.toggle', { dish: dish.name })}
             />
+            {onRecipe && (
+              <button
+                type="button"
+                className={styles.edit}
+                onClick={onRecipe}
+                aria-label={t('adminInventory.recipes.open', { dish: dish.name })}
+              >
+                <Icon name="list" size="xs" />
+              </button>
+            )}
             {onEdit && (
               <button
                 type="button"

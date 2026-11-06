@@ -18,6 +18,8 @@ type AdminPage =
   | 'payments'
   | 'cash'
   | 'refunds'
+  | 'inventory'
+  | 'purchasing'
   | 'settings'
   | 'floorPlan'
   | 'branchDetails'
