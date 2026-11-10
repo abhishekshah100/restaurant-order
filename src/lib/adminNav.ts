@@ -205,6 +205,7 @@ export const ADMIN_LINKS = {
   requests: section('requests'),
   tables: section('tables'),
   reservations: section('reservations'),
+  menu: section('menu'),
   reservationHistory: `${section('reservations')}history/`,
   readyOrders: `${section('orders')}ready/`,
   unpaidOrders: `${section('orders')}unpaid/`,

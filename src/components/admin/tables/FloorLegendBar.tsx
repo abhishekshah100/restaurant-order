@@ -2,6 +2,7 @@ import { useContent } from '@/api/hooks';
 import { FLOOR_LEGEND, type FloorLegend } from '@/lib/adminTables';
 import { cx } from '@/lib/cx';
 import styles from './FloorLegendBar.module.css';
+import tones from './tableTones.module.css';
 
 /** The open area's tables by state: a colour key that also counts them. */
 export function FloorLegendBar({ counts }: { counts: Record<FloorLegend, number> }) {
@@ -10,7 +11,7 @@ export function FloorLegendBar({ counts }: { counts: Record<FloorLegend, number>
     <ul className={styles.legend} aria-label={t('adminTables.legend.label')}>
       {/* Out of service only when there's a table like that. */}
       {FLOOR_LEGEND.filter((g) => g !== 'outOfService' || counts.outOfService > 0).map((group) => (
-        <li key={group} className={cx(styles.item, styles[group])}>
+        <li key={group} className={cx(styles.item, tones[group])}>
           <span className={styles.dot} aria-hidden="true" />
           {t(`adminTables.legend.${group}`)}
           <span className={styles.count}>{counts[group]}</span>

@@ -105,6 +105,7 @@ export interface BackendOrder {
   /** Dine-in: the kitchen's usual time, in minutes. */
   estimateMinutes?: { min: number; max: number };
   kitchenNote?: string;
+  tableNote?: Order['tableNote'];
   live: boolean;
 }
 
@@ -235,6 +236,8 @@ function roundOf(round: BackendRound, order: BackendOrder, words: Words, now: nu
     if (event.status === 'ready' || event.status === 'outForDelivery') marks.ready = mark;
   }
   const handedOver = round.timeline.find((e) => e.status === finalStep(order.mode));
+  // Taken at the table by a waiter (the received step says who).
+  const takenBy = round.timeline.find((e) => e.note === 'takenBy')?.by;
   // Waiting while the kitchen (or the rider) hasn't finished.
   const waitingFor = order.mode === 'delivery' ? 'delivered' : 'ready';
   const done = round.timeline.some(
@@ -256,6 +259,7 @@ function roundOf(round: BackendRound, order: BackendOrder, words: Words, now: nu
     readyBy: words.clock.time(new Date(awaited)),
     ...(handedOver ? { servedAt: handedOver.at } : {}),
     ...(marks.started || marks.ready ? { kitchen: marks } : {}),
+    ...(takenBy ? { takenBy } : {}),
   };
 }
 
@@ -336,6 +340,7 @@ export function toAppOrder(
     ...(latest?.etaMinutes !== undefined ? { etaMinutes: latest.etaMinutes } : {}),
     ...(latest?.readyBy ? { readyBy: latest.readyBy } : {}),
     ...(order.kitchenNote ? { kitchenNote: order.kitchenNote } : {}),
+    ...(order.tableNote ? { tableNote: order.tableNote } : {}),
     live: order.live,
   };
 }

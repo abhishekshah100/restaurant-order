@@ -1,0 +1,151 @@
+/* Assign waiters: the waiters as choices, then the tables to tap; Clear all and Done below. */
+
+.people {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.people::-webkit-scrollbar {
+  display: none;
+}
+
+.person {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 6px 14px 6px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.person:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.on {
+  border-color: var(--brand-600);
+  background: var(--brand-tint);
+}
+
+.badge {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--sand);
+  color: var(--ink);
+  font: var(--font-meta-strong);
+}
+
+.on .badge {
+  background: var(--brand-600);
+  color: var(--white);
+}
+
+.who {
+  display: grid;
+}
+
+.name {
+  font: var(--font-small-strong);
+  white-space: nowrap;
+}
+
+.count {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.hint {
+  margin: 0;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.floor {
+  display: grid;
+  gap: 8px;
+}
+
+.floorName {
+  margin: 0;
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.table {
+  width: 100%;
+  min-height: 64px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.table:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.table:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Someone else's: solid edge, their initials. */
+.other {
+  border-style: solid;
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+}
+
+/* The picked waiter's: filled in the brand colour. */
+.theirs {
+  border: 1px solid var(--brand-600);
+  background: var(--brand-600);
+  color: var(--white);
+}
+
+.number {
+  font: 500 22px/1 var(--f-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.covered {
+  color: inherit;
+  font: var(--font-meta-strong);
+  opacity: 0.8;
+}
+
+.foot {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}

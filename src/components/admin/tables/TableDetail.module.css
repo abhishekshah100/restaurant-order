@@ -38,7 +38,6 @@
 /* ---------- Header ---------- */
 
 .hero {
-  --tone: var(--success);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
@@ -59,30 +58,6 @@
   box-shadow: var(--sh-1);
 }
 
-.available {
-  --tone: var(--success);
-}
-
-.reserved {
-  --tone: var(--reserved);
-}
-
-.occupied {
-  --tone: var(--info);
-}
-
-.needsWaiter {
-  --tone: var(--error);
-}
-
-.wantsBill {
-  --tone: var(--gold);
-}
-
-.outOfService {
-  --tone: var(--ink-3);
-}
-
 .badge {
   grid-area: badge;
   width: 64px;
@@ -97,7 +72,7 @@
   box-shadow: 0 6px 16px color-mix(in srgb, var(--tone) 30%, transparent);
 }
 
-.wantsBill .badge {
+[data-state='wantsBill'] .badge {
   color: var(--ink);
 }
 
@@ -161,7 +136,7 @@
   font: var(--font-label);
 }
 
-.wantsBill .status {
+[data-state='wantsBill'] .status {
   color: var(--gold-ink);
 }
 
@@ -354,4 +329,26 @@
   color: inherit;
   font: var(--font-small-strong);
   white-space: nowrap;
+}
+
+/* Who covers the table (table sections), with Take this table / Release. */
+.waiterLine {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.waiterBadge {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--brand-tint);
+  color: var(--brand-700);
+  font: var(--font-meta-strong);
 }

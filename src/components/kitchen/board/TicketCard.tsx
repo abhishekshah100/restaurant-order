@@ -104,8 +104,13 @@ export const TicketCard = memo(function TicketCard({
   const offMenu = toCook
     ? ticket.items.filter((item) => stockIssue(item, dishOf(item.dishSlug))).length
     : 0;
-  // An allergy named in a note: flagged above everything else.
-  const allergy = allergensIn([ticket.kitchenNote, ...ticket.items.map((item) => item.note)]);
+  // An allergy named in a note, or tagged on the table by the waiter: flagged above everything.
+  const allergy = allergensIn([
+    ticket.kitchenNote,
+    ...ticket.items.map((item) => item.note),
+    ticket.allergy?.text,
+  ]);
+  const allergyFlagged = allergy.flagged || ticket.allergy !== undefined;
 
   // When it's due, and how it's doing, for new and cooking tickets.
   let due: string | null = null;
@@ -228,12 +233,15 @@ export const TicketCard = memo(function TicketCard({
         </p>
       )}
 
-      {allergy.flagged && (
+      {allergyFlagged && (
         <p className={styles.allergy} role="note">
           <Icon name="alert" size="sm" />
           {allergy.allergens.length > 0
             ? t('ticket.allergyWith', { list: allergy.allergens.join(', ') })
             : t('ticket.allergy')}
+          {ticket.allergy?.text && allergy.allergens.length === 0
+            ? ` · ${t('ticket.tableNote', { note: ticket.allergy.text })}`
+            : null}
         </p>
       )}
 

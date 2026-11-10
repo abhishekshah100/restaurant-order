@@ -119,6 +119,18 @@ describe('kitchen tickets', () => {
     expect(ticket).toMatchObject({ source: 'staff', takenBy: 'Taken by Abhishek' });
   });
 
+  it("flags the table's allergy (from the waiter's note) on its tickets, not other tags", () => {
+    const allergic = order('A4', [round(1, 2, 'received', [item('naan')])], {
+      tableNote: { text: 'Peanuts', tags: ['allergy', 'vip'] },
+    });
+    const vip = order('A5', [round(1, 2, 'received', [item('naan')])], {
+      tableNote: { tags: ['vip'] },
+    });
+    const [first, second] = kitchenTickets([allergic, vip], branch);
+    expect(first?.allergy).toEqual({ text: 'Peanuts' });
+    expect(second?.allergy).toBeUndefined();
+  });
+
   it('maps statuses to kitchen stages, delivery done once it is with the rider', () => {
     expect(
       ['received', 'preparing', 'ready', 'outForDelivery', 'cancelled'].map((s) =>

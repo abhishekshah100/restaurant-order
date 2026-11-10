@@ -32,6 +32,7 @@ export const PERMISSION_GROUPS: readonly {
     permissions: [
       'orders.cancel',
       'refunds.give',
+      'tables.assign',
       'reservations.manage',
       'reports.view',
       'cash.review',
@@ -79,6 +80,7 @@ export type PermissionWord =
   | 'menu_manage'
   | 'menu_availability_update'
   | 'tables_manage'
+  | 'tables_assign'
   | 'orders_view'
   | 'orders_take'
   | 'orders_cancel'

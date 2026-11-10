@@ -1,0 +1,30 @@
+/*
+ * The tables' states as colours, in one place for every screen that shows a table (the floor
+ * plan's cards and legend, a table's page, the home's floor and the New order picker): each sets
+ * `--tone`, which those screens tint, edge and dot with. Use with `legendOf(status)`; the
+ * element also carries `data-state` for rules about one state (gold words on a bill request…).
+ */
+
+.available {
+  --tone: var(--success);
+}
+
+.reserved {
+  --tone: var(--reserved);
+}
+
+.occupied {
+  --tone: var(--info);
+}
+
+.needsWaiter {
+  --tone: var(--error);
+}
+
+.wantsBill {
+  --tone: var(--gold);
+}
+
+.outOfService {
+  --tone: var(--ink-3);
+}

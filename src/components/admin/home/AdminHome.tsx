@@ -5,10 +5,14 @@ import { Button, EmptyState } from '@/components/ui';
 import { useAdminName } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { HomeGreeting } from './HomeGreeting';
+import { counterExtras } from '@/lib/adminHome';
+import { ArrivingSoon } from './ArrivingSoon';
+import { FloorGlance } from './FloorGlance';
+import { MyShift } from './MyShift';
+import { HomeHeader } from './HomeHeader';
 import { ServiceCounters } from './ServiceCounters';
 import { ServiceQueue } from './ServiceQueue';
-import { TablesGlance } from './TablesGlance';
+import { SoldOutTonight } from './SoldOutTonight';
 import { HomeSkeleton } from './HomeSkeleton';
 import styles from './AdminHome.module.css';
 
@@ -16,13 +20,17 @@ import styles from './AdminHome.module.css';
 const AGE_REFRESH_MS = 20_000;
 
 /**
- * /admin/dashboard/: the waiter home. What needs a person now, in one place: the counts, one
- * queue (oldest first) with the action for each, and the tables with activity today. Read from
- * GET /admin/branches/:branchId/service, polled every 15 s.
+ * /admin/dashboard/: the waiter home. Everything a waiter checks during service, by urgency: the
+ * header (until when orders are taken, and quick actions: new order, new booking, sold out);
+ * the counts; one queue (oldest first) with the action for each and what was handled lately;
+ * the floor at a glance (busy, free, tables that need a look); then the bookings arriving soon
+ * and what can't be sold tonight; and my shift so far. Each part shows only to staff allowed to
+ * use it. Read from
+ * GET …/service, …/tables, …/reservations and the menu, all polled or refreshed on change.
  */
 export function AdminHome() {
   const t = useContent('common');
-  const { branch } = useAdminWorkspace();
+  const { branch, can } = useAdminWorkspace();
   const adminName = useAdminName();
   const service = useBranchService(branch.id);
   const now = useNow(AGE_REFRESH_MS);
@@ -31,10 +39,20 @@ export function AdminHome() {
   if (service.data) {
     content = (
       <>
-        <ServiceCounters counts={service.data.counts} />
+        <ServiceCounters
+          counts={service.data.counts}
+          extras={now ? counterExtras(service.data, now) : null}
+        />
         <div className={styles.columns}>
-          <ServiceQueue service={service.data} now={now} />
-          <TablesGlance tables={service.data.tables} />
+          <div className={styles.main}>
+            <ServiceQueue service={service.data} now={now} />
+            <FloorGlance now={now} />
+          </div>
+          <div className={styles.side}>
+            {can('reservations.manage') && <ArrivingSoon now={now} />}
+            <SoldOutTonight />
+            {(can('orders.take') || can('payments.collect')) && <MyShift />}
+          </div>
         </div>
       </>
     );
@@ -65,7 +83,7 @@ export function AdminHome() {
 
   return (
     <div className={styles.home}>
-      <HomeGreeting now={now} adminName={adminName} />
+      <HomeHeader now={now} adminName={adminName} />
       {content}
     </div>
   );

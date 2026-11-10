@@ -91,6 +91,12 @@
   font: var(--font-meta);
 }
 
+/* With something waiting: how long (or how much), in the counter's tone. */
+.extra {
+  color: var(--tone);
+  font: var(--font-meta-strong);
+}
+
 .chev {
   display: none;
 }

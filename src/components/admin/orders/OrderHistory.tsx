@@ -17,13 +17,20 @@ import { useQueryParam } from '@/hooks/useQueryParam';
 import { orderHistoryPath, ordersPath } from '@/lib/adminNav';
 import { MODE_FILTERS, type ModeFilter } from '@/lib/adminOrders';
 import { cx } from '@/lib/cx';
-import { ORDER_HISTORY_LIMITS, parseDayRange, shiftDay, type DayRange } from '@/lib/dayRange';
+import {
+  ORDER_HISTORY_LIMITS,
+  groupByDay,
+  parseDayRange,
+  shiftDay,
+  type DayRange,
+} from '@/lib/dayRange';
 import { downloadXlsx, toXlsx } from '@/lib/xlsx';
 import { DateRangeFilter } from '../DateRangeFilter';
 import { usePaymentText } from '../payments/usePaymentText';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { PaymentBadge } from './PaymentBadge';
 import styles from './OrderHistory.module.css';
+import cards from '../HistorySummary.module.css';
 
 const OrderDetailDialog = dynamic(
   () => import('./OrderDetailDialog').then((m) => m.OrderDetailDialog),
@@ -201,24 +208,18 @@ export function OrderHistory() {
       cancelled: summary.cancelled,
     };
     // Under their day, as placed.
-    const byDay: { day: string; orders: HistoryOrder[] }[] = [];
-    for (const order of orders) {
-      const day = clock.dayKey(order.placedAt);
-      const last = byDay.at(-1);
-      if (last?.day === day) last.orders.push(order);
-      else byDay.push({ day, orders: [order] });
-    }
+    const byDay = groupByDay(orders, (o) => clock.dayKey(o.placedAt));
 
     content = (
       <>
         <section className={styles.summary} aria-labelledby="order-history-sales">
-          <div className={styles.hero}>
-            <p className={styles.eyebrow}>{period}</p>
-            <h2 id="order-history-sales" className={styles.heroLabel}>
+          <div className={cards.hero}>
+            <p className={cards.eyebrow}>{period}</p>
+            <h2 id="order-history-sales" className={cards.heroLabel}>
               {t('adminOrders.history.sales')}
             </h2>
-            <p className={styles.sales}>{text.amount(summary.sales)}</p>
-            <p className={styles.heroHint}>
+            <p className={cards.bigValue}>{text.amount(summary.sales)}</p>
+            <p className={cards.heroHint}>
               {t('adminOrders.history.salesHint', {
                 orders: t.plural('adminOrders.history.orders', summary.orders - summary.cancelled),
               })}
@@ -235,7 +236,7 @@ export function OrderHistory() {
                 ))}
               </div>
             )}
-            <div className={styles.heroActions}>
+            <div className={cards.heroActions}>
               <Button
                 variant="secondary"
                 size="sm"
@@ -249,13 +250,13 @@ export function OrderHistory() {
             </div>
           </div>
           <div className={styles.kpis}>
-            <div className={styles.kpi}>
-              <span className={styles.kpiLabel}>
+            <div className={cards.kpi}>
+              <span className={cards.kpiLabel}>
                 <Icon name="receipt" size="xs" />
                 {t('adminOrders.history.kpis.orders')}
               </span>
-              <span className={styles.kpiValue}>{summary.orders}</span>
-              <span className={styles.kpiHint}>
+              <span className={cards.kpiValue}>{summary.orders}</span>
+              <span className={cards.kpiHint}>
                 {t('adminOrders.history.kpis.ordersHint', {
                   completed: summary.completed,
                   cancelled: summary.cancelled,
@@ -264,26 +265,26 @@ export function OrderHistory() {
                   ` · ${t('adminOrders.history.kpis.inProgress', { count: summary.inProgress })}`}
               </span>
             </div>
-            <div className={styles.kpi}>
-              <span className={styles.kpiLabel}>
+            <div className={cards.kpi}>
+              <span className={cards.kpiLabel}>
                 <Icon name="tag" size="xs" />
                 {t('adminOrders.history.kpis.average')}
               </span>
-              <span className={styles.kpiValue}>{text.amount(summary.averageBill)}</span>
-              <span className={styles.kpiHint}>{t('adminOrders.history.kpis.averageHint')}</span>
+              <span className={cards.kpiValue}>{text.amount(summary.averageBill)}</span>
+              <span className={cards.kpiHint}>{t('adminOrders.history.kpis.averageHint')}</span>
             </div>
             <button
               type="button"
-              className={cx(styles.kpi, styles.kpiButton, summary.unpaid > 0 && styles.toCollect)}
+              className={cx(cards.kpi, styles.kpiButton, summary.unpaid > 0 && styles.toCollect)}
               disabled={summary.unpaidOrders === 0}
               onClick={() => goTo(days, 'unpaid')}
             >
-              <span className={styles.kpiLabel}>
+              <span className={cards.kpiLabel}>
                 <Icon name="cash" size="xs" />
                 {t('adminOrders.history.kpis.unpaid')}
               </span>
-              <span className={styles.kpiValue}>{text.amount(summary.unpaid)}</span>
-              <span className={styles.kpiHint}>
+              <span className={cards.kpiValue}>{text.amount(summary.unpaid)}</span>
+              <span className={cards.kpiHint}>
                 {summary.unpaidOrders > 0
                   ? t.plural('adminOrders.history.kpis.unpaidHint', summary.unpaidOrders)
                   : t('adminOrders.history.kpis.unpaidNone')}
@@ -291,7 +292,7 @@ export function OrderHistory() {
             </button>
           </div>
         </section>
-        <p className={styles.note}>
+        <p className={cards.note}>
           <Icon name="info" size="xs" />
           {t('adminOrders.history.note')}
         </p>
@@ -332,7 +333,7 @@ export function OrderHistory() {
 
           {byDay.length > 0 ? (
             <>
-              {byDay.map(({ day, orders: ofDay }) => (
+              {byDay.map(({ day, items: ofDay }) => (
                 <section key={day} aria-labelledby={`order-history-${day}`}>
                   <h3 id={`order-history-${day}`} className={styles.day}>
                     {t.plural('adminOrders.history.day', ofDay.length, { date: dayLabel(day) })}

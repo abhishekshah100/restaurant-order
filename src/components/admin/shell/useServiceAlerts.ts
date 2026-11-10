@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { useContent } from '@/api/hooks';
 import { useToast } from '@/context/ToastContext';
+import { useAdminName, useAdminStaffId } from '@/hooks/useAdminSession';
+import { sectionsFor } from '@/lib/adminTables';
 import { STORAGE_KEYS } from '@/lib/storage';
 import type { AdminBranchService } from '@/types/admin';
 import { playChime } from '../../kitchen/shell/kitchenSound';
@@ -54,18 +56,25 @@ const VIBRATION = [180, 90, 180];
 /**
  * Watches the floor (the service board) and alerts for what's new since the last read: ready
  * rounds, waiter calls, bill requests and kitchen messages. What's there when the page opens
- * isn't new. Returns whether sound still needs a tap on the page (browsers ask for one).
+ * isn't new. A waiter with a section is alerted for their tables, tables nobody covers, pickup
+ * and delivery, not for other waiters' tables. Returns whether sound still needs a tap on the
+ * page (browsers ask for one).
  */
 export function useServiceAlerts(service: AdminBranchService | undefined, on: boolean): boolean {
   const t = useContent('common');
   const { showToast } = useToast();
   const seen = useRef<Set<string> | null>(null);
   const needsTap = useSoundUnlock(on);
+  const staffId = useAdminStaffId();
+  const staffName = useAdminName();
 
   useEffect(() => {
     if (!service) return;
+    const { others } = sectionsFor(service.sections, { id: staffId, name: staffName });
+    const theirs = (table: number | undefined) => table !== undefined && others.has(table);
     const now = new Map<string, string>();
     for (const order of service.orders) {
+      if (theirs(order.table)) continue;
       for (const r of order.readyRounds) {
         now.set(
           `ready:${order.id}:${r.round}`,
@@ -76,6 +85,7 @@ export function useServiceAlerts(service: AdminBranchService | undefined, on: bo
       }
     }
     for (const r of service.requests) {
+      if (theirs(r.table)) continue;
       now.set(
         `req:${r.id}`,
         r.kind === 'kitchen'
@@ -96,7 +106,7 @@ export function useServiceAlerts(service: AdminBranchService | undefined, on: bo
         : t('adminShell.alerts.many', { first: fresh[0], count: fresh.length - 1 }),
       { tone: 'info', icon: 'bell' },
     );
-  }, [service, on, t, showToast]);
+  }, [service, on, t, showToast, staffId, staffName]);
 
   return needsTap;
 }

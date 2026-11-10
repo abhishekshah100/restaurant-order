@@ -96,3 +96,24 @@ export const inDayRange = (key: string, range: DayRange): boolean =>
 /** What the orders request asks for: nothing for today alone (the live list everyone shares). */
 export const ordersFilter = (range: DayRange, today: string): AdminOrdersFilter =>
   isTodayOnly(range, today) ? {} : { from: range.from, to: range.to };
+
+/**
+ * Items already in time order, in runs by their day ("2026-11-10"): the history lists' "day,
+ * then its rows". A day comes once per run, so newest-first input gives newest-first days.
+ */
+export function groupByDay<T>(
+  items: readonly T[],
+  dayOf: (item: T) => string,
+): {
+  day: string;
+  items: T[];
+}[] {
+  const days: { day: string; items: T[] }[] = [];
+  for (const item of items) {
+    const day = dayOf(item);
+    const last = days.at(-1);
+    if (last?.day === day) last.items.push(item);
+    else days.push({ day, items: [item] });
+  }
+  return days;
+}

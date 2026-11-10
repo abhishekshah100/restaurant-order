@@ -5,7 +5,6 @@
  */
 
 .card {
-  --tone: var(--success);
   position: relative;
   height: 100%;
   min-height: 132px;
@@ -37,32 +36,8 @@
   background: var(--tone);
 }
 
-.available {
-  --tone: var(--success);
-}
-
-.reserved {
-  --tone: var(--reserved);
-}
-
-.occupied {
-  --tone: var(--info);
-}
-
-.needsWaiter {
-  --tone: var(--error);
-}
-
-.wantsBill {
-  --tone: var(--gold);
-}
-
-.outOfService {
-  --tone: var(--ink-3);
-}
-
 /* Out of service: hatched and quiet, so it reads as not in use at a glance. */
-.card.outOfService {
+.card[data-state='outOfService'] {
   background:
     repeating-linear-gradient(135deg, transparent 0 8px, var(--ink-a04) 8px 16px), var(--surface);
   color: var(--ink-3);
@@ -78,6 +53,25 @@
 .number {
   font: 500 32px/34px var(--f-display);
   font-variant-numeric: tabular-nums;
+}
+
+.topRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The waiter covering it (table sections): their initials. */
+.waiter {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--brand-tint);
+  color: var(--brand-700);
+  font: var(--font-meta-strong);
 }
 
 .seats {
@@ -99,7 +93,7 @@
   font: var(--font-label);
 }
 
-.wantsBill .status {
+[data-state='wantsBill'] .status {
   color: var(--gold-ink);
 }
 
@@ -113,8 +107,8 @@
 }
 
 /* Calls for a person: the dot pulses gently. */
-.needsWaiter .dot,
-.wantsBill .dot {
+[data-state='needsWaiter'] .dot,
+[data-state='wantsBill'] .dot {
   animation: pulse 1.8s ease-in-out infinite;
 }
 
@@ -125,8 +119,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .needsWaiter .dot,
-  .wantsBill .dot {
+  [data-state='needsWaiter'] .dot,
+  [data-state='wantsBill'] .dot {
     animation: none;
   }
 }

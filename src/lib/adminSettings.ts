@@ -14,14 +14,7 @@ export type SettingsGroupId = 'branch' | 'money' | 'restaurant';
 
 /** A section of the menu. */
 export type SettingsTopicId =
-  | 'info'
-  | 'hours'
-  | 'tables'
-  | 'ordering'
-  | 'billing'
-  | 'offers'
-  | 'team'
-  | 'branches';
+  'info' | 'hours' | 'tables' | 'ordering' | 'billing' | 'offers' | 'team' | 'branches';
 
 /** A page (a tab of its section). */
 export type SettingsSectionId =
@@ -38,6 +31,7 @@ export type SettingsSectionId =
   | 'branches'
   | 'roles'
   | 'staff'
+  | 'shifts'
   | 'modules';
 
 export interface SettingsSection {
@@ -123,6 +117,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
         pages: [
           { id: 'staff', href: settingsPath('staff'), needs: 'staff.manage' },
           { id: 'roles', href: settingsPath('roles'), needs: 'staff.manage' },
+          { id: 'shifts', href: settingsPath('shifts'), needs: 'reports.view' },
         ],
       },
       {

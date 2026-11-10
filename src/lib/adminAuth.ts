@@ -62,6 +62,11 @@ export const isAdminSignedIn = (now = Date.now()): boolean => adminSession(now) 
 /** The bearer token for admin requests while signed in, else null. */
 export const adminToken = (): string | null => adminSession()?.token ?? null;
 
+/** The signed-in staff member's id, when their session has it. */
+export function adminStaffId(): string | undefined {
+  return adminSession()?.admin.id || undefined;
+}
+
 /** The signed-in admin's name, as the server sent it. */
 export function adminUsername(): string | undefined {
   return adminSession()?.admin.name.trim() || undefined;

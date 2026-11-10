@@ -2,13 +2,15 @@ import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { tablePath } from '@/lib/adminNav';
-import { legendOf } from '@/lib/adminTables';
+import { initialsOf, legendOf } from '@/lib/adminTables';
 import { cx } from '@/lib/cx';
 import { lateBy } from '@/lib/reservations';
 import type { AdminFloorTable } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useSeatedLabel } from './useSeatedLabel';
+import { NoteTags } from './NoteTags';
 import styles from './TableCard.module.css';
+import tones from './tableTones.module.css';
 
 /**
  * One table on the floor plan: its number large, its seats, and its state in words with a dot
@@ -30,14 +32,26 @@ export function TableCard({ table, now }: { table: AdminFloorTable; now: Date | 
   return (
     <Link
       href={tablePath(table.table)}
-      className={cx(styles.card, styles[legendOf(table.status)])}
-      aria-label={t('adminTables.tile', { table: table.table, seats, status })}
+      className={cx(styles.card, tones[legendOf(table.status)])}
+      data-state={legendOf(table.status)}
+      aria-label={
+        table.waiter
+          ? `${t('adminTables.tile', { table: table.table, seats, status })}, ${t('adminTables.sections.coveredBy', { name: table.waiter.name })}`
+          : t('adminTables.tile', { table: table.table, seats, status })
+      }
     >
       <span className={styles.top} aria-hidden="true">
         <span className={styles.number}>{table.table}</span>
-        <span className={styles.seats}>
-          <Icon name="user" size="xs" />
-          {table.seats}
+        <span className={styles.topRight}>
+          {table.waiter && (
+            <span className={styles.waiter} title={table.waiter.name}>
+              {initialsOf(table.waiter.name)}
+            </span>
+          )}
+          <span className={styles.seats}>
+            <Icon name="user" size="xs" />
+            {table.seats}
+          </span>
         </span>
       </span>
       <span className={styles.status} aria-hidden="true">
@@ -105,6 +119,7 @@ export function TableCard({ table, now }: { table: AdminFloorTable; now: Date | 
           </>
         )}
       </span>
+      {table.note && <NoteTags tags={table.note.tags} max={2} />}
     </Link>
   );
 }

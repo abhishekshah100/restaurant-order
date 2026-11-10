@@ -323,6 +323,38 @@ export function useOrderHistory(
   });
 }
 
+/** My open shift at the branch (null: not on shift); backend only (`enabled` false: none read). */
+export const useCurrentShift = (branchId: string | undefined, enabled = true) => {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'shift', 'current', branchId, token] as const,
+    queryFn: token && branchId && enabled ? () => api.currentShift(token, branchId) : skipToken,
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+/** Team › Shifts: the shifts started on these days. */
+export const useShifts = (branchId: string | undefined, range: { from: string; to: string }) => {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'shift', 'list', branchId, token, range] as const,
+    queryFn: token && branchId ? () => api.shifts(token, branchId, range) : skipToken,
+    staleTime: 30_000,
+    placeholderData: (previous) => previous,
+  });
+};
+
+/** Table sections: who can cover tables at the branch (none: nothing read); with the floor. */
+export const useSectionWaiters = (branchId: string | undefined) => {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'service', 'section-waiters', branchId, token] as const,
+    queryFn: token && branchId ? () => api.sectionWaiters(token, branchId) : skipToken,
+    staleTime: 30_000,
+  });
+};
+
 /** One order at the branch by its code (none: nothing read); refreshed with the service. */
 export const branchOrderQuery = (
   token: string | null,

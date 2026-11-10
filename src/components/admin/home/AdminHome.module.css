@@ -1,4 +1,7 @@
-/* The waiter home: greeting, the four counters, then the queue beside the tables (from 1280px). */
+/*
+ * The waiter home: header, the four counters, then the queue and the floor beside the bookings
+ * and what's sold out (two columns from 1024px; one, by urgency, below).
+ */
 
 .home {
   display: grid;
@@ -9,6 +12,18 @@
   display: grid;
   gap: 20px;
   align-items: start;
+}
+
+.main,
+.side {
+  min-width: 0;
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+
+.side:empty {
+  display: none;
 }
 
 .state {
@@ -29,9 +44,19 @@
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   .columns {
-    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+    grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+    gap: 24px;
+  }
+
+  /* Nothing beside it (no bookings soon, nothing sold out): the main column takes the width. */
+  .columns:has(> .side:empty) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .main,
+  .side {
     gap: 24px;
   }
 }

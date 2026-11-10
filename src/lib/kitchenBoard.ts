@@ -100,6 +100,8 @@ export interface KitchenTicket {
   /** Items, counted by quantity. */
   itemCount: number;
   kitchenNote?: string;
+  /** The table's guests have an allergy (their note says what, when it does). */
+  allergy?: { text?: string };
   /** Takeaway: ISO, when the guest collects it. */
   pickupAt?: string;
   /** Takeaway: chosen "as soon as possible" rather than a slot. */
@@ -216,6 +218,9 @@ export function kitchenTickets(
         items: round.items,
         itemCount: quantity(round.items),
         ...(round.kitchenNote ? { kitchenNote: round.kitchenNote } : {}),
+        ...(order.tableNote?.tags.includes('allergy')
+          ? { allergy: order.tableNote.text ? { text: order.tableNote.text } : {} }
+          : {}),
         ...(order.pickup ? { pickupAt: order.pickup.at, asap: order.pickup.asap } : {}),
         ...(order.delivery ? { deliveryArea: order.delivery.address.area } : {}),
         dueAt: ticketDueAt(order, round.placedAt, branch, slowest(round.items, prepOf)),

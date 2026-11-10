@@ -777,6 +777,75 @@ export function useFreeTable() {
 }
 
 /**
+ * PATCH …/tables/sections: tables given to a waiter (or released); DELETE: clear all. The floor
+ * (and who covers what) is read again.
+ */
+export function useAssignTables() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      tables,
+      waiterId,
+    }: {
+      branchId: string;
+      tables: number[];
+      /** A waiter's id, "me" (the signed-in staff member) or null (nobody). */
+      waiterId: string | null;
+    }) => api.assignTables(requireToken(token), branchId, { tables, waiterId }),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/** POST …/shifts/start or …/end: clock in or out; my shift (and, out, the floor) read again. */
+export function useShiftClock() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, action }: { branchId: string; action: 'start' | 'end' }) =>
+      action === 'start'
+        ? api.startShift(requireToken(token), branchId)
+        : api.endShift(requireToken(token), branchId),
+    onSettled: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: ['admin', 'shift'] }),
+        refreshFloor(client),
+      ]),
+  });
+}
+
+/** PATCH …/tables/:table/note: the guests' note for the visit; the floor and orders read again. */
+export function useSetTableNote() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      table,
+      text,
+      tags,
+    }: {
+      branchId: string;
+      table: number;
+      text: string;
+      tags: string[];
+    }) => api.setTableNote(requireToken(token), branchId, table, { text, tags }),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+export function useClearSections() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId }: { branchId: string }) =>
+      api.clearSections(requireToken(token), branchId),
+    onSettled: () => refreshFloor(client),
+  });
+}
+
+/**
  * POST …/reservations (no `id`) or PATCH …/reservations/:id: a booking taken or changed. The
  * floor plan and the bookings are read again.
  */

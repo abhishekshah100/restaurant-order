@@ -6,6 +6,8 @@ import type { KitchenMessage, ServiceRequest } from './service';
 
 /** The signed-in staff member, as `POST /admin/sessions` returns them. */
 export interface AdminProfile {
+  /** Their staff id (sessions from before it was sent don't have it: their name stands in). */
+  id?: string;
   name: string;
   email: string;
   /** International form, e.g. "+919876543210". */
@@ -147,6 +149,8 @@ export interface AdminBranchService {
   orders: AdminOrderSummary[];
   /** By table number. */
   tables: AdminTableState[];
+  /** Who covers which table (table sections): covered tables only. None from the mock. */
+  sections?: { table: number; waiter: TableWaiter }[];
   counts: AdminServiceCounts;
   /** ISO: when the server read it. */
   generatedAt: string;
@@ -203,6 +207,56 @@ export type FloorTableStatus =
   /** Out of service, with nothing going on at it. */
   | 'outOfService';
 
+/** A staff member's shift at a branch (Start shift / Clock out). Times ISO. */
+export interface StaffShift {
+  id: string;
+  staff: TableWaiter;
+  startedAt: string;
+  /** None while they're on shift. */
+  endedAt?: string;
+  /** Left open: closed 30 minutes after the branch's closing time that day. */
+  autoClosed?: true;
+}
+
+/** One shift in Team › Shifts, with what the person did during it. */
+export interface ShiftRow extends StaffShift {
+  minutes: number;
+  ordersTaken: number;
+  payments: number;
+  collected: number;
+  tips: number;
+}
+
+/** GET …/shifts?from=&to=: the shifts started on those days, newest first. */
+export interface ShiftListResponse {
+  from: string;
+  to: string;
+  shifts: ShiftRow[];
+}
+
+/** The quick tags a table's note can carry. */
+export const NOTE_TAGS = ['vip', 'allergy', 'birthday', 'regular', 'highChair'] as const;
+export type NoteTag = (typeof NOTE_TAGS)[number];
+
+/** The guests' note at a table for the visit: a line, quick tags, when and by whom. */
+export interface TableNote {
+  text?: string;
+  tags: NoteTag[];
+  at?: string;
+  by?: string;
+}
+
+/** A staff member covering tables (table sections). */
+export interface TableWaiter {
+  id: string;
+  name: string;
+}
+
+/** GET …/tables/waiters: who can cover tables, and the tables each covers now. */
+export interface SectionWaiter extends TableWaiter {
+  tables: number[];
+}
+
 /** One table on the floor plan, with what's happening at it. */
 export interface AdminFloorTable {
   table: number;
@@ -215,6 +269,10 @@ export interface AdminFloorTable {
   freed: boolean;
   /** Out of service (see FloorTableLayout › disabled). */
   disabled: boolean;
+  /** The waiter covering it (table sections); none when nobody is. */
+  waiter?: TableWaiter;
+  /** The guests' note for this visit (cleared when the table is freed). */
+  note?: TableNote;
   /** Today's open orders at the table: not cancelled, and not both served and paid. */
   orderCount: number;
   /** Still to pay across them. */
@@ -392,6 +450,7 @@ export type StaffPermission =
   | 'menu.manage'
   | 'menu.availability.update'
   | 'tables.manage'
+  | 'tables.assign'
   | 'orders.view'
   | 'orders.take'
   | 'orders.cancel'

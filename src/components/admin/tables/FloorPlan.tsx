@@ -1,7 +1,11 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { isBackendEnabled } from '@/api/backend';
 import { useContent, useFloorPlan } from '@/api/hooks';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Button, EmptyState } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
@@ -13,6 +17,11 @@ import { FloorLegendBar } from './FloorLegendBar';
 import { FloorTabs } from './FloorTabs';
 import { TableCard } from './TableCard';
 import styles from './FloorPlan.module.css';
+
+const AssignWaitersDialog = dynamic(
+  () => import('./AssignWaitersDialog').then((m) => m.AssignWaitersDialog),
+  { ssr: false, loading: () => <LoadingSignal /> },
+);
 
 /** Seated times ("26 min") move on this often. */
 const SEATED_REFRESH_MS = 30_000;
@@ -33,6 +42,9 @@ export function FloorPlan() {
   const plan = useFloorPlan(branch.id);
   const floorId = useQueryParam('floor');
   const now = useNow(SEATED_REFRESH_MS);
+  const [assigning, setAssigning] = useState(false);
+  // Table sections are the server's (the mock keeps none).
+  const canAssign = can('tables.assign') && isBackendEnabled();
 
   let content;
   if (plan.data) {
@@ -50,6 +62,11 @@ export function FloorPlan() {
             />
           )}
           <div className={styles.links}>
+            {canAssign && (
+              <Button variant="secondary" iconStart="user" onClick={() => setAssigning(true)}>
+                {t('adminTables.sections.open')}
+              </Button>
+            )}
             <Button href={reservationsPath()} variant="secondary" iconStart="calendar">
               {t('adminTables.openReservations')}
             </Button>
@@ -115,6 +132,7 @@ export function FloorPlan() {
       {/* The bar above already names the page; the heading is for screen readers. */}
       <h1 className="visually-hidden">{t('adminTables.title')}</h1>
       {content}
+      {assigning && <AssignWaitersDialog onClose={() => setAssigning(false)} />}
     </div>
   );
 }

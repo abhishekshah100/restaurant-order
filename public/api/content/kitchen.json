@@ -201,7 +201,8 @@
     "platedFailed": "Couldn't save the tick. Try again.",
     "rush": "Rush",
     "message": "Message waiters",
-    "messageLabel": "Message the waiters about order {order}"
+    "messageLabel": "Message the waiters about order {order}",
+    "tableNote": "“{note}”"
   },
   "activity": {
     "title": "Kitchen activity",

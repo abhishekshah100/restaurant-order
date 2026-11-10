@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useSyncExternalStore } from 'react';
 import { api } from '@/api/endpoints';
 import {
+  adminStaffId,
   adminToken,
   adminUsername,
   selectedAdminBranchId,
@@ -22,6 +23,10 @@ const none = () => null;
 /** The bearer token while signed in, else null. */
 export const useAdminToken = (): string | null =>
   useSyncExternalStore(subscribeAdminSession, adminToken, none);
+
+/** The signed-in staff member's id (none on a session from before it was sent). */
+export const useAdminStaffId = (): string | undefined =>
+  useSyncExternalStore(subscribeAdminSession, adminStaffId, () => undefined);
 
 /** The signed-in admin's name. */
 export const useAdminName = (): string | undefined =>

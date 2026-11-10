@@ -52,43 +52,6 @@
   gap: 12px;
 }
 
-.hero {
-  display: grid;
-  gap: 6px;
-  align-content: start;
-  padding: 20px 22px;
-  border-radius: var(--r-lg);
-  background: linear-gradient(135deg, var(--ink), #4a2a1f);
-  color: var(--white);
-}
-
-.eyebrow {
-  margin: 0;
-  font: var(--font-caption);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.8;
-}
-
-.heroLabel {
-  margin: 4px 0 0;
-  font: var(--font-meta);
-  opacity: 0.9;
-}
-
-.sales {
-  margin: 0;
-  font: var(--font-price-lg);
-  font-size: 34px;
-  line-height: 1.1;
-}
-
-.heroHint {
-  margin: 0;
-  font: var(--font-small);
-  opacity: 0.8;
-}
-
 .modes {
   display: flex;
   flex-wrap: wrap;
@@ -101,26 +64,10 @@
   opacity: 0.75;
 }
 
-.heroActions {
-  margin-top: 10px;
-}
-
 .kpis {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
-}
-
-.kpi {
-  display: grid;
-  gap: 2px;
-  align-content: start;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  color: var(--ink);
-  text-align: left;
 }
 
 .kpiButton {
@@ -142,40 +89,11 @@
   }
 }
 
-.toCollect {
+/* Two classes, so it wins over the shared card's border and background. */
+.kpiButton.toCollect {
+  --kpi-value: var(--gold-ink);
   border-color: color-mix(in srgb, var(--gold) 40%, var(--line));
   background: color-mix(in srgb, var(--warn-tint) 55%, var(--surface));
-}
-
-.toCollect .kpiValue {
-  color: var(--gold-ink);
-}
-
-.kpiLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font: var(--font-small);
-  color: var(--ink-2);
-}
-
-.kpiValue {
-  font: var(--font-price-lg);
-  font-variant-numeric: tabular-nums;
-}
-
-.kpiHint {
-  font: var(--font-small);
-  color: var(--ink-3);
-}
-
-.note {
-  margin: 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font: var(--font-small);
-  color: var(--ink-2);
 }
 
 /* ---------- The orders ---------- */

@@ -52,6 +52,28 @@ export function serviceQueue(
   );
 }
 
+/** The table a queue item is at (none for pickup and delivery). */
+export const tableOf = (item: QueueItem): number | undefined =>
+  item.kind === 'ready' ? item.order.table : item.request.table;
+
+/**
+ * The queue with the signed-in waiter's tables first (each part oldest first, as before), then
+ * tables nobody covers, pickup and delivery, then other waiters' tables.
+ */
+export function mineFirst(
+  items: readonly QueueItem[],
+  mine: ReadonlySet<number>,
+  others: ReadonlySet<number>,
+): QueueItem[] {
+  const rank = (item: QueueItem) => {
+    const table = tableOf(item);
+    if (table !== undefined && mine.has(table)) return 0;
+    if (table !== undefined && others.has(table)) return 2;
+    return 1;
+  };
+  return [...items].sort((a, b) => rank(a) - rank(b));
+}
+
 /** Whole minutes from `since` (ISO) to `now`, never negative. */
 export const minutesSince = (since: string, now: Date): number =>
   Math.max(0, Math.floor((now.getTime() - Date.parse(since)) / 60_000));

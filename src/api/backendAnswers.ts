@@ -92,10 +92,12 @@ const ADAPTERS: readonly (readonly [HttpMethod, string, Adapt])[] = [
   ['POST', 'admin/branches/:branchId/tables/:table/payment', ordersIn],
   // Staff: the floor and requests.
   ['GET', 'admin/branches/:branchId/service', serviceBoard],
-  // Before …/tables/:table, which "qr-codes" would match: the links need nothing done.
+  // Before …/tables/:table, which "qr-codes" and "waiters" would match: nothing to do.
   ['GET', 'admin/branches/:branchId/tables/qr-codes', asIs],
+  ['GET', 'admin/branches/:branchId/tables/waiters', asIs],
   ['GET', 'admin/branches/:branchId/tables/:table', tableDetail],
   ['POST', 'admin/branches/:branchId/tables/:table/free', tableDetail],
+  ['PATCH', 'admin/branches/:branchId/tables/:table/note', tableDetail],
   ['POST', 'admin/service-requests/:id/acknowledge', requestOf],
   ['POST', 'admin/service-requests/:id/resolve', requestOf],
 ];

@@ -1,0 +1,252 @@
+/*
+ * The home's panels: the frame every one shares (card, header, title, the link to its page) for
+ * Floor, Arriving soon, Not available tonight and My shift; then the rows, chips and figures of
+ * the last three (the Floor's own parts are in FloorGlance.module.css).
+ */
+
+.panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 8px;
+}
+
+.title {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-h3);
+}
+
+.count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  font: var(--font-meta-strong);
+  text-align: center;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ---------- Arriving soon ---------- */
+
+.list {
+  margin: 0;
+  padding: 0 0 4px;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.time {
+  align-self: start;
+  padding-top: 2px;
+  color: var(--reserved);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.main {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.name {
+  overflow: hidden;
+  font: var(--font-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.note {
+  overflow: hidden;
+  color: var(--ink-3);
+  font: var(--font-meta);
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.when {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+.late {
+  color: var(--error);
+}
+
+/* ---------- Not available tonight ---------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 16px 16px;
+  list-style: none;
+}
+
+.dishChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small);
+  text-align: left;
+}
+
+button.dishChip {
+  cursor: pointer;
+}
+
+button.dishChip:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  button.dishChip:hover {
+    border-color: var(--ink-2);
+  }
+}
+
+.dishChip > span:first-child {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+
+.dish {
+  overflow: hidden;
+  font: var(--font-small-strong);
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.until {
+  flex: none;
+  color: var(--gold-ink);
+  font: var(--font-meta-strong);
+}
+
+/* ---------- My shift ---------- */
+
+.headIcon {
+  color: var(--ink-3);
+}
+
+.quiet {
+  margin: 0;
+  padding: 4px 16px 18px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 4px 16px 16px;
+}
+
+.stat {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+}
+
+.stat dt {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.stat dd {
+  margin: 0;
+  overflow: hidden;
+  font: var(--font-h3);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat dd.statHint {
+  color: var(--ink-3);
+  font: var(--font-meta);
+  white-space: normal;
+}
+
+@media (min-width: 768px) {
+  .head {
+    padding: 20px 20px 8px;
+  }
+
+  .quiet {
+    padding: 4px 20px 20px;
+  }
+
+  .stats {
+    padding: 4px 20px 20px;
+  }
+
+  .row {
+    padding: 10px 20px;
+  }
+
+  .chips {
+    padding: 4px 20px 20px;
+  }
+}

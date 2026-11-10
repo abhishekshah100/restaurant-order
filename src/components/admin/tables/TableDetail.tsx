@@ -23,8 +23,11 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { TableBookings } from './TableBookings';
 import { TableOrderCard } from './TableOrderCard';
 import { TableRequests } from './TableRequests';
+import { TableNoteCard } from './TableNoteCard';
+import { TableWaiterLine } from './TableWaiterLine';
 import { useSeatedLabel } from './useSeatedLabel';
 import styles from './TableDetail.module.css';
+import tones from './tableTones.module.css';
 
 // Popups: each downloaded the first time it opens.
 const OrderPad = dynamic(() => import('../orderPad/OrderPad').then((m) => m.OrderPad), {
@@ -172,7 +175,8 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
   return (
     <>
       <section
-        className={cx(styles.hero, styles[legendOf(detail.status)])}
+        className={cx(styles.hero, tones[legendOf(detail.status)])}
+        data-state={legendOf(detail.status)}
         aria-labelledby="table-title"
       >
         <span className={styles.badge} aria-hidden="true">
@@ -188,6 +192,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               seats: t.plural('adminTables.seats', detail.seats),
             })}
           </p>
+          <TableWaiterLine detail={detail} />
           <span className={styles.statusRow}>
             <span className={styles.status}>
               <span className={styles.dot} aria-hidden="true" />
@@ -278,6 +283,8 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
           {t('adminTables.detail.outOfService.body')}
         </Banner>
       )}
+
+      <TableNoteCard detail={detail} />
 
       {detail.reservations.length > 0 && (
         <TableBookings

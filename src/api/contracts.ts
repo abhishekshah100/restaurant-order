@@ -60,6 +60,8 @@ import type { GuestSession, SessionStart } from '@/types/session';
 export type ApiErrorCode =
   /** 400: the body is malformed. */
   | 'invalid_request'
+  /** 409: another waiter covers the table (table sections: taking one for oneself). */
+  | 'table_taken'
   /** 404: no such order, payment, session or request. */
   | 'not_found'
   /** 404 / 410: the guest session is unknown or has expired; scan the QR code again. */

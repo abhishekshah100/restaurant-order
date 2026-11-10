@@ -1,0 +1,284 @@
+/*
+ * The floor at a glance: a busy bar, filter chips, then small tiles toned like the floor plan
+ * (available green, reserved plum, occupied blue, needs waiter red, wants bill gold).
+ */
+
+/* The panel's frame (card, header, title, Floor plan link): HomePanels.module.css. */
+
+.body {
+  display: grid;
+  gap: 12px;
+  padding: 8px 16px 16px;
+}
+
+/* ---------- How busy ---------- */
+
+.summary {
+  display: grid;
+  gap: 6px;
+}
+
+.busy {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font: var(--font-label);
+}
+
+.seats {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.bar {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--success) 18%, var(--surface));
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--info);
+  transition: width var(--dur-base) ease;
+}
+
+.counts {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.freeDot,
+.reservedDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--success);
+}
+
+.reservedDot {
+  margin-left: 8px;
+  background: var(--reserved);
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filters > * {
+  flex: none;
+}
+
+/* ---------- Tiles ---------- */
+
+.floor {
+  display: grid;
+  gap: 8px;
+}
+
+.floorName {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  position: relative;
+  height: 100%;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 10px 9px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--tone) 26%, var(--line));
+  border-radius: var(--r-md);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tone) 9%, var(--surface)) 0%,
+    var(--surface) 75%
+  );
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color var(--dur-fast) ease,
+    transform var(--dur-base) var(--ease-emphasized);
+}
+
+.tile::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--tone);
+}
+
+.tile:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .tile:hover {
+    border-color: var(--tone);
+    transform: translateY(-1px);
+  }
+}
+
+.tile[data-state='outOfService'] {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 8px, var(--ink-a04) 8px 16px), var(--surface);
+  color: var(--ink-3);
+}
+
+/* Needs a look: a stronger edge. */
+.alert {
+  border-color: var(--tone);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tone) 35%, transparent);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.number {
+  font: 500 24px/26px var(--f-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.seatsOf {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* The waiter covering it (table sections): their initials. */
+.waiter {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--brand-tint);
+  color: var(--brand-700);
+  font: var(--font-meta-strong);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: color-mix(in srgb, var(--tone) 85%, var(--ink));
+  font: var(--font-meta-strong);
+}
+
+[data-state='wantsBill'] .status {
+  color: var(--gold-ink);
+}
+
+.dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-round);
+  background: var(--tone);
+}
+
+[data-state='needsWaiter'] .dot,
+[data-state='wantsBill'] .dot {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tone) 25%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-state='needsWaiter'] .dot,
+  [data-state='wantsBill'] .dot {
+    animation: none;
+  }
+}
+
+.line {
+  color: var(--ink-2);
+  font: var(--font-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+.flag {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  font: var(--font-meta-strong);
+}
+
+/* A phone: three tiles a row, a little shorter. */
+@media (max-width: 559.98px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .tile {
+    min-height: 82px;
+    padding: 8px 8px 7px;
+  }
+
+  .number {
+    font-size: 22px;
+    line-height: 24px;
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: 20px 8px;
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .body {
+    padding: 8px 20px 20px;
+  }
+}

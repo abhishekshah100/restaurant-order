@@ -186,3 +186,12 @@ ol {
     display: none;
   }
 }
+
+/*
+ * Password fields have our own show/hide eye: hide the browser's built-in one (Microsoft Edge
+ * adds a reveal eye, and a clear ✕ on text fields), so a field never shows two.
+ */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

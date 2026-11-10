@@ -1,0 +1,88 @@
+/*
+ * The history pages' summary (Payments › History, Orders › History): a dark hero card with the
+ * period, the headline amount, a line under it and an action, and small figure cards beside it.
+ * Each page lays them out and adds its own parts (Payments' online/in-person bar, Orders' types).
+ */
+
+.hero {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 20px 22px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--ink), #4a2a1f);
+  color: var(--white);
+}
+
+.eyebrow {
+  margin: 0;
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.heroLabel {
+  margin: 4px 0 0;
+  font: var(--font-meta);
+  opacity: 0.9;
+}
+
+/* The headline amount: net takings, sales. */
+.bigValue {
+  margin: 0;
+  font: var(--font-price-lg);
+  font-size: 34px;
+  line-height: 1.1;
+}
+
+.heroHint {
+  margin: 0;
+  font: var(--font-small);
+  opacity: 0.8;
+}
+
+.heroActions {
+  margin-top: 10px;
+}
+
+.kpi {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.kpiLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+
+/* A page tints one figure with `--kpi-value` (Orders: what's still to collect, in gold). */
+.kpiValue {
+  color: var(--kpi-value, inherit);
+  font: var(--font-price-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiHint {
+  font: var(--font-small);
+  color: var(--ink-3);
+}
+
+.note {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font: var(--font-small);
+  color: var(--ink-2);
+}

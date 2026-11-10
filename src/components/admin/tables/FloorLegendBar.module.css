@@ -8,7 +8,6 @@
 }
 
 .item {
-  --tone: var(--success);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -27,28 +26,4 @@
 .count {
   color: var(--ink);
   font-variant-numeric: tabular-nums;
-}
-
-.available {
-  --tone: var(--success);
-}
-
-.reserved {
-  --tone: var(--reserved);
-}
-
-.occupied {
-  --tone: var(--info);
-}
-
-.needsWaiter {
-  --tone: var(--error);
-}
-
-.wantsBill {
-  --tone: var(--gold);
-}
-
-.outOfService {
-  --tone: var(--ink-3);
 }

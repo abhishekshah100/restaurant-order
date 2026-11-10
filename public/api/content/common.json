@@ -298,7 +298,8 @@
       "staff": "Staff · Settings · Admin",
       "inventory": "Inventory · Admin",
       "purchasing": "Purchasing · Admin",
-      "orderHistory": "Order history · Admin"
+      "orderHistory": "Order history · Admin",
+      "shifts": "Shifts · Settings · Admin"
     },
     "loading": "Loading your workspace",
     "noAccess": {
@@ -423,6 +424,11 @@
       "unpaid": {
         "label": "Unpaid",
         "hint": "Orders today"
+      },
+      "extra": {
+        "oldest": "Oldest {count} min",
+        "oldestNow": "Oldest just now",
+        "unpaid": "{amount} to collect"
       }
     },
     "queue": {
@@ -483,7 +489,15 @@
       "serve": "Mark served",
       "handOver": "Handed over",
       "actionLabel": "{action}: {what}, {where}",
-      "failed": "Couldn't update that. It's back on the list, try again."
+      "failed": "Couldn't update that. It's back on the list, try again.",
+      "handled": {
+        "title": "Handled in the last 30 min",
+        "waiter": "Waiter call",
+        "bill": "Bill request",
+        "kitchen": "Kitchen message",
+        "by": "{name}",
+        "ago": "{time}"
+      }
     },
     "tables": {
       "title": "Tables",
@@ -498,6 +512,106 @@
         "eating": "Eating",
         "closing": "Paid · closing"
       }
+    },
+    "header": {
+      "lastOrders": "Last orders {time} · in {minutes} min",
+      "lastOrdersAt": "Taking orders till {time}",
+      "closed": "Closed now · opens {when}",
+      "actions": "Quick actions",
+      "newOrder": "New order",
+      "newBooking": "New booking",
+      "soldOut": "Mark sold out"
+    },
+    "pickTable": {
+      "title": "New order",
+      "body": "Which table is it for?",
+      "free": "Free",
+      "busy": {
+        "one": "{count} open order",
+        "other": "{count} open orders"
+      },
+      "seated": "Seated",
+      "none": "No tables are set up yet.",
+      "loading": "Loading tables"
+    },
+    "floor": {
+      "title": "Floor",
+      "subtitle": "Every table right now",
+      "all": "Floor plan",
+      "busy": "{busy} of {tables} tables busy",
+      "seats": "{taken} of {seats} seats",
+      "free": "{count} free",
+      "reserved": "{count} reserved",
+      "filters": {
+        "label": "Show",
+        "all": "All",
+        "attention": "Needs a look",
+        "free": "Free",
+        "mine": "My tables"
+      },
+      "flags": {
+        "noOrder": "No order yet",
+        "longWait": "Waiting for food"
+      },
+      "due": "{amount} due",
+      "next": "Booked {time}",
+      "emptyAttention": "Nothing needs a look right now.",
+      "emptyFree": "No free tables right now.",
+      "empty": "No tables are set up yet.",
+      "tile": "Table {table}: {status}",
+      "loading": "Loading the floor",
+      "emptyMine": "You don't have any tables yet. Take one from its page, or ask a manager.",
+      "coveredBy": "Covered by {name}"
+    },
+    "arriving": {
+      "title": "Arriving soon",
+      "subtitle": "Bookings in the next 2 hours",
+      "all": "All bookings",
+      "guests": {
+        "one": "{count} guest",
+        "other": "{count} guests"
+      },
+      "table": "Table {tables}",
+      "late": "Late by {count} min",
+      "inMinutes": "In {count} min",
+      "now": "Due now",
+      "seat": "Seat",
+      "seatLabel": "Seat {name} at table {tables}"
+    },
+    "soldOut": {
+      "title": "Not available tonight",
+      "subtitle": "Tell guests before they order",
+      "backAt": "Back {time}",
+      "today": "Off today",
+      "soldOut": "Sold out",
+      "change": "Change {dish}",
+      "manage": "Menu"
+    },
+    "shift": {
+      "title": "My shift",
+      "subtitle": "Today so far",
+      "orders": "Orders taken",
+      "tables": "Tables served",
+      "collected": "Collected",
+      "tips": "Tips",
+      "payments": {
+        "one": "From {count} payment",
+        "other": "From {count} payments"
+      },
+      "ordersHint": {
+        "one": "At {count} table",
+        "other": "At {count} tables"
+      },
+      "none": "Orders you take and payments you collect today add up here.",
+      "start": "Start shift",
+      "since": "On shift since {time}",
+      "clockOut": "Clock out",
+      "started": "Shift started at {time}.",
+      "ended": "Clocked out. Your tables are free for the next waiter.",
+      "confirmTitle": "Clock out?",
+      "confirmBody": "Your tables will be released so the next waiter can take them.",
+      "clockFailed": "Couldn't update your shift. Try again.",
+      "subtitleSince": "Since {time}"
     }
   },
   "adminTables": {
@@ -668,7 +782,59 @@
     "nextBooking": "Booked {time}",
     "late": "{count} min late",
     "openReservations": "Reservations",
-    "outOfService": "Not in use"
+    "outOfService": "Not in use",
+    "sections": {
+      "open": "Assign waiters",
+      "title": "Assign waiters",
+      "body": "Pick a waiter, then tap their tables. Tap one of their tables again to take it off them.",
+      "whoLabel": "Waiter",
+      "tables": {
+        "one": "{count} table",
+        "other": "{count} tables"
+      },
+      "tapFor": "Tap the tables {name} covers.",
+      "tableLabel": "Table {table}: {waiter}",
+      "nobody": "nobody",
+      "clearAll": "Clear all",
+      "clearConfirm": "Tap again to clear",
+      "cleared": "Every table is free to take.",
+      "done": "Done",
+      "loading": "Loading waiters",
+      "noWaiters": "No waiters at this branch yet. Add staff with the Waiter role in Settings › Team.",
+      "failed": "Couldn't save that. Try again.",
+      "yours": "Your table",
+      "coveredBy": "Covered by {name}",
+      "noWaiter": "No waiter yet",
+      "take": "Take this table",
+      "release": "Release",
+      "takenToast": "Table {table} is yours.",
+      "releasedToast": "You released table {table}.",
+      "alreadyTaken": "Another waiter covers table {table}. Ask a manager to move it."
+    },
+    "notes": {
+      "title": "Guest note",
+      "add": "Add note",
+      "edit": "Edit",
+      "clear": "Clear",
+      "empty": "VIP, allergy or birthday? Add a note for this visit. It's cleared when the table is freed.",
+      "dialogTitle": "Guest note · Table {table}",
+      "tagsLabel": "Tags",
+      "textLabel": "Note",
+      "placeholder": "e.g. Allergic to peanuts · cake at 9 PM",
+      "kitchenHint": "Allergy notes also show on the kitchen tickets.",
+      "save": "Save note",
+      "saved": "Note saved for table {table}.",
+      "cleared": "Note cleared for table {table}.",
+      "failed": "Couldn't save the note. Try again.",
+      "by": "{name} · {time}",
+      "tags": {
+        "vip": "VIP",
+        "allergy": "Allergy",
+        "birthday": "Birthday",
+        "regular": "Regular",
+        "highChair": "High chair"
+      }
+    }
   },
   "adminOrder": {
     "title": "Order {order}",
@@ -3097,7 +3263,7 @@
       },
       "team": {
         "title": "Team & access",
-        "description": "Your staff, and what each role is allowed to do."
+        "description": "Your staff, what each role can do, and who worked when."
       },
       "branches": {
         "title": "Branches",
@@ -3116,7 +3282,8 @@
       "staff": "Staff",
       "roles": "Roles & permissions",
       "branches": "Branches",
-      "modules": "Modules"
+      "modules": "Modules",
+      "shifts": "Shifts"
     },
     "sections": {
       "details": {
@@ -3198,6 +3365,10 @@
       "staff": {
         "title": "Staff",
         "description": "Who works here, their roles, and their sign-in."
+      },
+      "shifts": {
+        "title": "Shifts",
+        "description": "Who worked when, and what each person did on their shift."
       }
     },
     "open": "Manage",
@@ -3991,6 +4162,10 @@
           "label": "Edit tables",
           "hint": "The floor plan and table QR codes."
         },
+        "tables_assign": {
+          "label": "Assign waiters to tables",
+          "hint": "Give tables to waiters and clear everyone's sections."
+        },
         "branch_status_update": {
           "label": "Open and close the branch",
           "hint": "Pause, close or reopen ordering."
@@ -4123,6 +4298,42 @@
       "turnedOn": "Inventory is on",
       "turnedOff": "Inventory is off. Dishes stock had taken off are back on the menu.",
       "failed": "Couldn't change it. Try again."
+    },
+    "shifts": {
+      "subtitle": "Who worked when, and what they did on each shift. Staff clock in and out from the home page.",
+      "loading": "Loading shifts",
+      "failed": "Couldn't load the shifts. Try again.",
+      "empty": "No shifts on these days. Staff start a shift from the home page with Start shift.",
+      "people": "By person",
+      "byDay": "Each shift",
+      "export": "Export to Excel",
+      "exportFile": "shifts-{branch}-{date}.xlsx",
+      "presets": {
+        "week": "Last 7 days",
+        "month": "Last 30 days",
+        "quarter": "Last 3 months"
+      },
+      "minutes": "{minutes} min",
+      "hours": "{hours} h {minutes} min",
+      "span": "{from} – {to}",
+      "onNow": "{from} – on shift now",
+      "autoClosed": "Closed for them",
+      "orders": {
+        "one": "{count} order",
+        "other": "{count} orders"
+      },
+      "tips": "{amount} tips",
+      "columns": {
+        "name": "Name",
+        "shifts": "Shifts",
+        "start": "Started",
+        "end": "Ended",
+        "hours": "Hours",
+        "orders": "Orders taken",
+        "collected": "Collected",
+        "tips": "Tips",
+        "note": "Note"
+      }
     }
   },
   "masters": {

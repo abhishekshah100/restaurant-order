@@ -216,6 +216,14 @@ export interface OrderRound {
   servedAt?: string;
   /** What the kitchen marked on it (started, ready). */
   kitchen?: KitchenMarks;
+  /** The staff member who took it at the table; none when the guest ordered on their phone. */
+  takenBy?: string;
+}
+
+/** The guests' note at a table, as staff read it on an order. */
+export interface TableNoteBrief {
+  text?: string;
+  tags: string[];
 }
 
 export interface Order {
@@ -294,6 +302,8 @@ export interface Order {
   readyBy?: string;
   cancelReason?: string;
   kitchenNote?: string;
+  /** Staff only, dine-in still open: the guests' note at the table (an allergy for the kitchen). */
+  tableNote?: TableNoteBrief;
   /** Set by the server on a read: true while the kitchen is still updating the order (poll it). */
   live?: boolean;
   /**

@@ -42,7 +42,7 @@ import type {
   WastageLine,
 } from '@/types/inventory';
 import type { MenuData } from '@/types/menu';
-import type { FeaturesResponse } from '@/types/admin';
+import type { FeaturesResponse, SectionWaiter, ShiftListResponse, StaffShift } from '@/types/admin';
 import type {
   OrderInput,
   PriceChangesResponse,
@@ -236,6 +236,50 @@ export const api = {
     apiGet<BranchServiceResponse>(`admin/branches/${seg(branchId)}/service`, bearer(token)),
   floorPlan: (token: string, branchId: string) =>
     apiGet<FloorPlanResponse>(`admin/branches/${seg(branchId)}/tables`, bearer(token)),
+  /** My open shift at the branch, or null. */
+  currentShift: (token: string, branchId: string) =>
+    apiGet<StaffShift | null>(`admin/branches/${seg(branchId)}/shifts/current`, bearer(token)),
+  /** Start shift (an open one already: that one). */
+  startShift: (token: string, branchId: string) =>
+    apiPost<StaffShift>(`admin/branches/${seg(branchId)}/shifts/start`, {}, bearer(token)),
+  /** Clock out: my tables are released. */
+  endShift: (token: string, branchId: string) =>
+    apiPost<StaffShift>(`admin/branches/${seg(branchId)}/shifts/end`, {}, bearer(token)),
+  /** Team › Shifts: the shifts started on those days, with what each person did. */
+  shifts: (token: string, branchId: string, range: { from: string; to: string }) =>
+    apiGet<ShiftListResponse>(
+      `admin/branches/${seg(branchId)}/shifts?from=${range.from}&to=${range.to}`,
+      bearer(token),
+    ),
+  /** Table sections: who can cover tables, with what each covers now. */
+  sectionWaiters: (token: string, branchId: string) =>
+    apiGet<SectionWaiter[]>(`admin/branches/${seg(branchId)}/tables/waiters`, bearer(token)),
+  /** These tables to this waiter, or to nobody (`waiterId` null). */
+  assignTables: (
+    token: string,
+    branchId: string,
+    body: { tables: number[]; waiterId: string | null },
+  ) =>
+    apiPatch<FloorPlanResponse>(
+      `admin/branches/${seg(branchId)}/tables/sections`,
+      body,
+      bearer(token),
+    ),
+  /** The guests' note at a table for the visit (both empty: cleared). */
+  setTableNote: (
+    token: string,
+    branchId: string,
+    table: number,
+    body: { text: string; tags: string[] },
+  ) =>
+    apiPatch<TableDetailResponse>(
+      `admin/branches/${seg(branchId)}/tables/${String(table)}/note`,
+      body,
+      bearer(token),
+    ),
+  /** Clear all: nobody covers any table. */
+  clearSections: (token: string, branchId: string) =>
+    apiDelete(`admin/branches/${seg(branchId)}/tables/sections`, bearer(token)),
   floorLayout: (token: string, branchId: string) =>
     apiGet<FloorPlanLayout>(`admin/branches/${seg(branchId)}/floors`, bearer(token)),
   updateFloors: (token: string, branchId: string, body: UpdateFloorsRequest) =>

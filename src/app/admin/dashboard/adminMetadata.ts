@@ -34,6 +34,7 @@ type AdminPage =
   | 'offers'
   | 'roles'
   | 'staff'
+  | 'shifts'
   | 'deliveryZones'
   | 'pickup'
   | 'branches'

@@ -23,6 +23,7 @@ import { useLedgerExport } from './paymentsExport';
 import { usePaymentText } from './usePaymentText';
 import styles from './PaymentsBoard.module.css';
 import own from './PaymentHistory.module.css';
+import cards from '../HistorySummary.module.css';
 
 const CHANNELS: readonly ChannelFilter[] = ['all', 'online', 'inPerson'];
 const VIEWS = ['transactions', 'refunds'] as const;
@@ -159,13 +160,13 @@ export function PaymentHistory() {
     content = (
       <>
         <section className={own.summary} aria-labelledby="history-net">
-          <div className={own.hero}>
-            <p className={own.eyebrow}>{period}</p>
-            <h2 id="history-net" className={own.heroLabel}>
+          <div className={cards.hero}>
+            <p className={cards.eyebrow}>{period}</p>
+            <h2 id="history-net" className={cards.heroLabel}>
               {t('adminPayments.history.net')}
             </h2>
-            <p className={own.net}>{text.amount(summary.net)}</p>
-            <p className={own.heroHint}>
+            <p className={cards.bigValue}>{text.amount(summary.net)}</p>
+            <p className={cards.heroHint}>
               {t('adminPayments.history.netHint', {
                 collected: text.amount(summary.collected),
                 refunds: text.amount(summary.refunds),
@@ -186,7 +187,7 @@ export function PaymentHistory() {
                 <b>{text.amount(summary.inPerson)}</b>
               </span>
             </div>
-            <div className={own.heroActions}>
+            <div className={cards.heroActions}>
               <Button
                 variant="secondary"
                 size="sm"
@@ -201,21 +202,21 @@ export function PaymentHistory() {
             </div>
           </div>
           <div className={own.kpis}>
-            <div className={own.kpi}>
-              <span className={own.kpiLabel}>
+            <div className={cards.kpi}>
+              <span className={cards.kpiLabel}>
                 <Icon name="heart" size="xs" />
                 {t('adminPayments.history.tips')}
               </span>
-              <span className={own.kpiValue}>{text.amount(summary.tips)}</span>
+              <span className={cards.kpiValue}>{text.amount(summary.tips)}</span>
             </div>
-            <div className={own.kpi}>
-              <span className={own.kpiLabel}>
+            <div className={cards.kpi}>
+              <span className={cards.kpiLabel}>
                 <Icon name="refresh" size="xs" />
                 {t('adminPayments.history.refunds')}
               </span>
-              <span className={own.kpiValue}>{text.amount(summary.refunds)}</span>
+              <span className={cards.kpiValue}>{text.amount(summary.refunds)}</span>
               {summary.refundsPending > 0 && (
-                <span className={own.kpiHint}>
+                <span className={cards.kpiHint}>
                   {t('adminPayments.history.refundsHint', {
                     pending: text.amount(summary.refundsPending),
                   })}
@@ -224,7 +225,7 @@ export function PaymentHistory() {
             </div>
           </div>
         </section>
-        <p className={own.note}>
+        <p className={cards.note}>
           <Icon name="info" size="xs" />
           {t('adminPayments.history.countedNote')}
         </p>

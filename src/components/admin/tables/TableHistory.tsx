@@ -11,7 +11,7 @@ import { useHydrated } from '@/hooks/useHydrated';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { dueOn } from '@/lib/adminOrders';
 import { ADMIN_LINKS, tableHistoryPath, tablePath } from '@/lib/adminNav';
-import { parseDayRange, shiftDay, type DayRange } from '@/lib/dayRange';
+import { groupByDay, parseDayRange, shiftDay, type DayRange } from '@/lib/dayRange';
 import type { Order } from '@/types/order';
 import { DateRangeFilter } from '../DateRangeFilter';
 import { PaymentBadge } from '../orders/PaymentBadge';
@@ -100,13 +100,7 @@ export function TableHistory() {
         (!q || o.id.toLowerCase().includes(q) || o.customerName.toLowerCase().includes(q)),
     );
     // Under their day, as placed.
-    const byDay: { day: string; orders: Order[] }[] = [];
-    for (const order of shown) {
-      const day = clock.dayKey(order.placedAt);
-      const last = byDay.at(-1);
-      if (last?.day === day) last.orders.push(order);
-      else byDay.push({ day, orders: [order] });
-    }
+    const byDay = groupByDay(shown, (o) => clock.dayKey(o.placedAt));
     const open = openId ? all.find((o) => o.id === openId) : undefined;
 
     content = (
@@ -160,7 +154,7 @@ export function TableHistory() {
           </div>
 
           {byDay.length > 0 ? (
-            byDay.map(({ day, orders: ofDay }) => (
+            byDay.map(({ day, items: ofDay }) => (
               <section key={day} aria-labelledby={`table-history-${day}`}>
                 <h2 id={`table-history-${day}`} className={styles.day}>
                   {t.plural('adminTables.detail.history.day', ofDay.length, {

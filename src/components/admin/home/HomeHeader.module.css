@@ -1,0 +1,116 @@
+/* The top of the waiter home: date, greeting and service time; the quick actions beside it. */
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.greeting {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.date {
+  margin: 0;
+  color: var(--brand-700);
+  font: var(--font-caption);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Keeps its height before the time is known, so nothing below moves. */
+.title {
+  margin: 0;
+  min-height: 34px;
+  color: var(--ink);
+  font: var(--font-h1);
+  text-wrap: balance;
+}
+
+.service {
+  margin: 2px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+/* Service time, then Start shift / On shift · Clock out. */
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+
+.onShift {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 10px;
+  border-radius: var(--r-pill);
+  background: var(--success-tint);
+}
+
+.onShiftText {
+  color: var(--success);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 20%, transparent);
+}
+
+/* The last half hour of orders: amber. */
+.soon {
+  color: var(--gold-ink);
+}
+
+.soon .dot {
+  background: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 25%, transparent);
+}
+
+.closed .dot {
+  background: var(--ink-3);
+  box-shadow: none;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* A phone: New order across the width, the other actions side by side under it. */
+@media (max-width: 559.98px) {
+  .actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The first action across the width; an action left alone on its row too. */
+  .actions > :first-child,
+  .actions > :nth-child(2):last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 768px) {
+  .title {
+    min-height: 42px;
+    font: var(--font-display);
+  }
+}

@@ -7,6 +7,7 @@ import {
   parseDayRange,
   rangeProblem,
   shiftDay,
+  groupByDay,
 } from '@/lib/dayRange';
 
 /* The range of days staff look back at orders and payments over. */
@@ -87,5 +88,20 @@ describe('payment history limits (a year at a time, back two years)', () => {
       ),
     ).toBe('outside');
     expect(parseDayRange(year.from, year.to, TODAY, PAYMENT_HISTORY_LIMITS)).toEqual(year);
+  });
+});
+
+describe('groupByDay', () => {
+  it('runs items in order into their days, newest first as given', () => {
+    const items = [
+      { id: 'c', day: '2026-11-11' },
+      { id: 'b', day: '2026-11-10' },
+      { id: 'a', day: '2026-11-10' },
+    ];
+    expect(groupByDay(items, (i) => i.day).map((d) => [d.day, d.items.map((i) => i.id)])).toEqual([
+      ['2026-11-11', ['c']],
+      ['2026-11-10', ['b', 'a']],
+    ]);
+    expect(groupByDay([], () => '')).toEqual([]);
   });
 });
