@@ -29,10 +29,15 @@ export function TableQrDialog({ table, onClose }: { table: number; onClose: () =
       footer={
         code && (
           <div className={styles.dialogActions}>
-            <Button variant="secondary" iconStart="arrow" onClick={() => void download(code)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              iconStart="arrow"
+              onClick={() => void download(code)}
+            >
               {t('adminQr.download')}
             </Button>
-            <Button iconStart="check" onClick={() => print([code])}>
+            <Button size="sm" iconStart="check" onClick={() => print([code])}>
               {t('adminQr.print')}
             </Button>
           </div>
@@ -41,7 +46,7 @@ export function TableQrDialog({ table, onClose }: { table: number; onClose: () =
     >
       <div className={styles.dialogBody}>
         {code && origin ? (
-          <QrCard code={code} origin={origin} showLink />
+          <QrCard code={code} origin={origin} showLink className={styles.dialogCard} />
         ) : (
           <div className={styles.skeleton} role="status" aria-label={t('adminQr.loading')} />
         )}

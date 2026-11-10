@@ -84,7 +84,7 @@
     "copied": "Password copied",
     "qr": "Show QR code",
     "qrTitle": "Join our Wi-Fi",
-    "qrBody": "Open the camera on your phone and point it at this code. Tap the Wi-Fi message that appears to join.",
+    "qrBody": "Scan with your phone camera to join.",
     "qrLabel": "QR code to join the Wi-Fi network {name}",
     "qrDone": "Done"
   },
@@ -139,12 +139,14 @@
     "mine": "Just my orders",
     "mineNone": "No orders from you yet",
     "table": "Whole table",
-    "tableSub": "All {orders} placed at Table {table}",
+    "tableSub": "{orders} at Table {table}",
     "hint": "Your server will bring the bill to your table. You can pay them by {paymentMethods}.",
-    "hintPay": "Pay now from your phone, or ask for the bill and pay your server by {paymentMethods}.",
+    "hintPay": "Pay from your phone by UPI or card, or ask for the bill and pay your server by {paymentMethods}.",
     "payNowSub": "On your phone, by UPI or card",
     "or": "or",
-    "tablePayNote": "Want to pay only your own orders from your phone? Choose “Just my orders” above."
+    "tablePayNote": "Want to pay only your own orders from your phone? Choose “Just my orders” above.",
+    "payShort": "Pay {amount}",
+    "viewShort": "View request"
   },
   "billRequested": {
     "noneTitle": "No bill request",

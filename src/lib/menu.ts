@@ -89,6 +89,20 @@ export function unavailableReason(dish: Dish): UnavailableReason | undefined {
   return undefined;
 }
 
+/**
+ * A dish's initials, shown where it has no photo: the first letters of its first two words
+ * ("Garlic Naan" → "GN", "Tiramisu" → "T"), brackets and symbols skipped.
+ */
+export function dishInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((word) => word.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join('');
+}
+
 export function dishImage(dish: Dish, kind: 'hero' | 'card' | 'thumb'): DishImage | undefined {
   if (kind === 'thumb') return dish.thumb ?? dish.image;
   return dish.image;

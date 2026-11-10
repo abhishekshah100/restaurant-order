@@ -74,6 +74,17 @@
   composes: cover from '@/styles/patterns.module.css';
   transition: transform 0.3s ease;
 }
+/* No photo: the dish's initials, filling the tile */
+.trendInitials {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, var(--brand-tint-2), var(--brand-tint));
+  color: var(--brand-700);
+  font: 500 34px/1 var(--f-display);
+  letter-spacing: 0.02em;
+}
 /* Veg / non-veg mark as a small white badge on the photo */
 .trendMark {
   position: absolute;

@@ -2,13 +2,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { Chip, Icon, Skeleton, VegMark } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import { useContent, useMenu, useRegion, useSearchSuggestions } from '@/api/hooks';
 import { useBrandName } from '@/hooks/useBrandName';
-import { dishHref, dishImage, startingPrice } from '@/lib/menu';
-import type { Dish } from '@/types/menu';
+import { dishHref, dishImage, dishInitials, startingPrice } from '@/lib/menu';
+import type { Dish, DishImage } from '@/types/menu';
 import styles from './SearchSuggestions.module.css';
 
 export interface SearchSuggestionsProps {
@@ -90,18 +90,7 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
                     onClick={onNavigate}
                   >
                     <span className={styles.trendImg}>
-                      {thumb && (
-                        <Image
-                          className={styles.trendPhoto}
-                          src={thumb.src}
-                          alt={DECORATIVE}
-                          width={thumb.width}
-                          height={thumb.height}
-                          sizes="168px"
-                          // The first thing on the search screen: often its largest image.
-                          loading="eager"
-                        />
-                      )}
+                      <TrendPhoto image={thumb} name={dish.name} />
                       <span className={styles.trendMark}>
                         <VegMark veg={dish.veg} />
                       </span>
@@ -141,5 +130,33 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
         </section>
       )}
     </div>
+  );
+}
+
+/**
+ * A trending card's picture: the dish's photo, or its initials ("GN") when it has none or the
+ * photo can't be loaded (a file gone from the server), never an empty or broken tile.
+ */
+function TrendPhoto({ image, name }: { image: DishImage | undefined; name: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!image || failed) {
+    return (
+      <span className={styles.trendInitials} aria-hidden="true">
+        {dishInitials(name)}
+      </span>
+    );
+  }
+  return (
+    <Image
+      className={styles.trendPhoto}
+      src={image.src}
+      alt={DECORATIVE}
+      width={image.width}
+      height={image.height}
+      sizes="168px"
+      // The first thing on the search screen: often its largest image.
+      loading="eager"
+      onError={() => setFailed(true)}
+    />
   );
 }

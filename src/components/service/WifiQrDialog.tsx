@@ -27,16 +27,16 @@ export function WifiQrDialog({
     <Dialog
       open
       onClose={onClose}
-      presentation="modal"
+      presentation="adaptive"
       title={t('wifi.qrTitle')}
-      description={t('wifi.qrBody')}
       footer={
-        <Button block onClick={onClose}>
+        <Button block size="sm" variant="secondary" onClick={onClose}>
           {t('wifi.qrDone')}
         </Button>
       }
     >
       <div className={styles.qr}>
+        <p className={styles.qrHint}>{t('wifi.qrBody')}</p>
         <svg
           className={styles.qrCode}
           viewBox={`-2 -2 ${qr.size + 4} ${qr.size + 4}`}
@@ -47,12 +47,12 @@ export function WifiQrDialog({
           <rect x={-2} y={-2} width={qr.size + 4} height={qr.size + 4} fill="#ffffff" />
           <path d={qr.d} fill="#1d1b18" />
         </svg>
-        <dl className={styles.rows}>
-          <div className={styles.row}>
+        <dl className={styles.qrRows}>
+          <div>
             <dt>{t('wifi.network')}</dt>
             <dd className={styles.value}>{name}</dd>
           </div>
-          <div className={styles.row}>
+          <div>
             <dt>{t('wifi.password')}</dt>
             <dd className={password ? styles.value : 'c3'}>{password || t('wifi.noPassword')}</dd>
           </div>

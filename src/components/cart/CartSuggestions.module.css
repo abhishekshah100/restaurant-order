@@ -38,6 +38,9 @@
 }
 .img {
   composes: cover from '@/styles/patterns.module.css';
+  /* Fills the whole tile whatever the photo's shape (a grid item would size the row to it). */
+  position: absolute;
+  inset: 0;
 }
 .initial {
   font: 500 26px/1 var(--f-display);

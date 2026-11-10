@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { useBillDownload } from '@/components/admin/payments/PaymentPrint';
 import { createClock } from '@/lib/clock';
@@ -27,11 +27,22 @@ vi.mock('html2canvas', () => ({
 vi.mock('jspdf', () => ({
   jsPDF: class {
     addImage() {}
-    save(name: string) {
-      drawn.saved = name;
+    output() {
+      return new Blob(['%PDF'], { type: 'application/pdf' });
     }
   },
 }));
+
+// Not a phone (no share sheet): the file is downloaded through a link, staying on the page.
+beforeEach(() => {
+  URL.createObjectURL = vi.fn(() => 'blob:bill');
+  URL.revokeObjectURL = vi.fn();
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    drawn.saved = this.download;
+  });
+});
 
 const branch = testBranch();
 const order = testOrderHistory().history.find((o) => o.id === 'A104') as Order;

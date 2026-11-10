@@ -164,6 +164,28 @@
   margin: 0 auto;
 }
 
+/* Tighter than the printed card, the code shrinking on short screens (never below scanning size),
+   so the whole card and its buttons fit without scrolling on a laptop or a tablet. */
+@media screen {
+  .dialogBody .dialogCard {
+    gap: 4px;
+    padding: 12px 14px;
+  }
+
+  .dialogBody .dialogCard svg {
+    max-width: clamp(150px, calc(100dvh - 450px), 200px);
+  }
+
+  .dialogBody .dialogCard p {
+    margin: 0;
+  }
+
+  /* The table number (the card's first line of text). */
+  .dialogBody .dialogCard p:first-of-type {
+    font-size: 28px;
+  }
+}
+
 .dialogActions {
   flex: 1;
   display: grid;

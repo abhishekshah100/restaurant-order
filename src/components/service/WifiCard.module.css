@@ -44,19 +44,45 @@
 }
 
 /* The QR pop-up: the code large on white (cameras read dark on light), the details under it. */
+/* The QR sheet: a one-line hint, the code, then the network and password side by side. */
 .qr {
   display: grid;
-  gap: 16px;
+  gap: 12px;
   justify-items: center;
 }
+.qrHint {
+  margin: -6px 0 0;
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-align: center;
+}
 .qrCode {
-  width: min(260px, 70vw);
+  width: min(220px, 58vw);
   height: auto;
   padding: 8px;
   border-radius: var(--r-md);
   background: #ffffff;
   border: 1px solid var(--line);
 }
-.qr .rows {
+.qrRows {
+  margin: 0;
   width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.qrRows > div {
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+.qrRows dt {
+  color: var(--ink-3);
+  font: var(--font-caption);
+}
+.qrRows dd {
+  margin: 0;
+  font: var(--font-small);
+  overflow-wrap: anywhere;
 }

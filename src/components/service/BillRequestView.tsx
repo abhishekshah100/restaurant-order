@@ -9,7 +9,7 @@ import { useContent, useRegion } from '@/api/hooks';
 import { Banner, Button, EmptyState, Icon, OptionGroup, Skeleton } from '@/components/ui';
 import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
-import { PAY_BILL_PATH, SERVICE_PATHS, billFor, firstName } from '@/lib/service';
+import { PAY_BILL_PATH, SERVICE_PATHS, billFor } from '@/lib/service';
 import type { BillScope } from '@/types/service';
 import { BillOrderList } from './BillOrderList';
 import { BillTotals } from './BillTotals';
@@ -120,6 +120,26 @@ export function BillRequestView() {
   ) : (
     <div className={styles.actions}>{ask}</div>
   );
+  // On a phone: one short row pinned to the bottom (two half-width buttons when the guest can
+  // pay here), so the bill above stays in view.
+  const footer = canPay ? (
+    <div className={styles.footRow}>
+      {pending ? (
+        <Button href={SERVICE_PATHS.bill} variant="secondary" block>
+          {t('billRequest.viewShort')}
+        </Button>
+      ) : (
+        <Button variant="secondary" block onClick={() => sendBillRequest(scope)}>
+          {t('billRequest.confirm')}
+        </Button>
+      )}
+      <Button href={PAY_BILL_PATH} block iconStart="lock">
+        {t('billRequest.payShort', { amount: money.format(bill.payableTotal) })}
+      </Button>
+    </div>
+  ) : (
+    ask
+  );
   const hint = (
     <>
       <p className={styles.hint}>
@@ -137,7 +157,6 @@ export function BillRequestView() {
     </>
   );
   const mineIds = mine.orders.map((o) => `#${o.id}`).join(', ');
-  const mineName = firstName(mine.orders[0]?.customerName ?? '');
   const heading = t('billRequest.heading', {
     table,
     orders: t.plural('shared.orderCount', bill.orders.length),
@@ -177,15 +196,14 @@ export function BillRequestView() {
               title={t('billRequest.scopeTitle')}
               titleClassName="visually-hidden"
               layout="grid"
+              tilesOnMobile
               value={scope}
               onChange={(id) => setPicked(id as BillScope)}
               choices={[
                 {
                   id: 'mine',
                   label: t('billRequest.mine'),
-                  sub: mine.orders.length
-                    ? `${mineIds}${mineName ? ` · ${mineName}` : ''}`
-                    : t('billRequest.mineNone'),
+                  sub: mine.orders.length ? mineIds : t('billRequest.mineNone'),
                   price: money.format(mine.total),
                   disabled: mine.orders.length === 0,
                 },
@@ -210,7 +228,7 @@ export function BillRequestView() {
             <BillTotals bill={bill} scope={scope} signed breakdown className="hide-desktop" />
           </section>
           <div className={cx(styles.hints, 'hide-desktop')}>{hint}</div>
-          <div className={cx(styles.foot, 'hide-desktop')}>{confirm}</div>
+          <div className={cx(styles.foot, 'hide-desktop')}>{footer}</div>
         </main>
 
         <aside className={cx(styles.aside, 'hide-mobile')} aria-labelledby="bill-summary">

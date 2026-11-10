@@ -3022,7 +3022,12 @@
       "due": "Amount due",
       "payments": "Payments",
       "thanks": "Thank you for dining with us",
-      "printed": "Printed {time}"
+      "printed": "Printed {time}",
+      "ready": {
+        "title": "Your invoice is ready",
+        "body": "Save it to your phone, print it or share it.",
+        "save": "Save or share invoice"
+      }
     },
     "report": {
       "title": "Day report",

@@ -9,7 +9,9 @@ import { daySummary, ledgerEntries, ledgerOf, type DueGroup } from '@/lib/adminP
 import { brandName } from '@/lib/branchParts';
 import { paidAmount } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
+import { canShareFile, downloadFile, needsTap, shareFile } from '@/lib/saveFile';
 import type { Order } from '@/types/order';
+import { Button, Dialog } from '@/components/ui';
 import { billRows } from '../../cart/PriceSummary';
 import { useAdminWorkspace, type AdminWorkspace } from '../shell/AdminWorkspace';
 import { usePaymentText, usePaymentWords } from './usePaymentText';
@@ -49,13 +51,33 @@ export function usePaymentPrint() {
  * The same bill for a guest's order (the order page's "Get invoice"), as a PDF file to keep:
  * staff and guests get one bill, drawn for the branch the order is from. A file rather than the
  * print dialog: phones (and the browsers inside chat apps) print badly or not at all, but all of
- * them download. `download(orders)` resolves once the file is saved; it throws if it can't be.
+ * them download. On a phone the file goes to its share sheet (Save to Files, Print, WhatsApp),
+ * so the guest never leaves the page; if making it took too long for the phone to allow that, a
+ * small "Your invoice is ready" sheet asks for one more tap. On a computer it downloads.
+ * `download(orders)` resolves once the file is handed over; it throws if it can't be made.
  */
 export function useBillDownload(place: PrintPlace) {
   const t = useContent('common');
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [busy, setBusy] = useState(false);
+  /** A file made, waiting for a tap to open the share sheet. */
+  const [ready, setReady] = useState<File | null>(null);
   const holder = useRef<HTMLDivElement>(null);
+
+  /** The file to the phone's share sheet, or downloaded; a fresh tap is asked for if needed. */
+  const handOver = async (file: File) => {
+    if (!canShareFile(file)) {
+      downloadFile(file, file.name);
+      return;
+    }
+    try {
+      await shareFile(file);
+      setReady(null);
+    } catch (error) {
+      if (needsTap(error)) setReady(file);
+      else downloadFile(file, file.name);
+    }
+  };
 
   const download = async (next: Order[]) => {
     setBusy(true);
@@ -89,23 +111,44 @@ export function useBillDownload(place: PrintPlace) {
       const name = t('adminPayments.receipt.fileName', {
         orders: next.map((o) => o.id).join(', '),
       });
-      pdf.save(`${name}.pdf`);
+      const file = new File([pdf.output('blob')], `${name}.pdf`, { type: 'application/pdf' });
+      // Not pdf.save(): on an iPhone it replaces the page with the PDF.
+      await handOver(file);
     } finally {
       setOrders(null);
       setBusy(false);
     }
   };
 
-  const sheet =
-    orders &&
-    createPortal(
-      <PrintPlaceContext.Provider value={place}>
-        <div ref={holder} className={styles.capture} aria-hidden="true">
-          <BillDoc orders={orders} />
-        </div>
-      </PrintPlaceContext.Provider>,
-      document.body,
-    );
+  const sheet = (
+    <>
+      {orders &&
+        createPortal(
+          <PrintPlaceContext.Provider value={place}>
+            <div ref={holder} className={styles.capture} aria-hidden="true">
+              <BillDoc orders={orders} />
+            </div>
+          </PrintPlaceContext.Provider>,
+          document.body,
+        )}
+      {ready && (
+        <Dialog
+          open
+          onClose={() => setReady(null)}
+          presentation="adaptive"
+          title={t('adminPayments.receipt.ready.title')}
+          description={t('adminPayments.receipt.ready.body')}
+          footer={
+            <Button block iconStart="receipt" onClick={() => void handOver(ready)}>
+              {t('adminPayments.receipt.ready.save')}
+            </Button>
+          }
+        >
+          <p className="t-small c2">{ready.name}</p>
+        </Dialog>
+      )}
+    </>
+  );
 
   return { download, busy, sheet };
 }
