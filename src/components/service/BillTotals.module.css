@@ -17,6 +17,15 @@
   color: var(--ink);
   font-weight: 600;
 }
+.subtotal {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.subtotal dt,
+.subtotal dd {
+  color: var(--ink);
+  font-weight: 700;
+}
 .row .ok,
 .tile .ok {
   color: var(--success);

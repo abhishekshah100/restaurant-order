@@ -10,7 +10,7 @@ import styles from './OrderThumb.module.css';
  * 56px photo of the order's first dish that has one; otherwise a soft tile with the
  * first dish's initial (as in the cart). Cancelled orders show a cross tile.
  */
-export function OrderThumb({ order }: { order: Order }) {
+export function OrderThumb({ order, eager }: { order: Order; eager?: boolean }) {
   const menu = useMenu();
   const cancelled = order.status === 'cancelled';
   const photo = cancelled
@@ -32,6 +32,7 @@ export function OrderThumb({ order }: { order: Order }) {
           width={photo.width}
           height={photo.height}
           sizes="56px"
+          loading={eager ? 'eager' : 'lazy'}
         />
       ) : cancelled ? (
         <Icon name="xc" size="sm" />

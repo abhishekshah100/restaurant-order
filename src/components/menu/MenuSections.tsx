@@ -56,7 +56,7 @@ export function PicksSection() {
       {picks.length > 0 ? (
         <ul className={styles.rail}>
           {picks.map((dish, i) => (
-            <DishCard key={dish.slug} dish={dish} priority={i < 2} hideChefTag />
+            <DishCard key={dish.slug} dish={dish} eager={i < 2} hideChefTag />
           ))}
         </ul>
       ) : (
@@ -98,7 +98,8 @@ export function CategorySection({ category, divider }: CategorySectionProps) {
           <span className="t-small c3">{menu.categoryCountLabel(category)}</span>
         </div>
         {shown.length > 0 ? (
-          <DishList dishes={shown} label={category.name} />
+          // The first section's first rows are near the top of the menu.
+          <DishList dishes={shown} label={category.name} eagerRows={divider ? 0 : 4} />
         ) : (
           <p className={cx('t-small c3', styles.empty)}>{t('home.noDishes')}</p>
         )}

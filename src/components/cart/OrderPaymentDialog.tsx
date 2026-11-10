@@ -16,6 +16,7 @@ import { paidAmount } from '@/lib/lifecycle';
 import { PAYMENT_METHODS, isOnlineMethod, pickMethod } from '@/lib/payments';
 import type { PaymentMethodId } from '@/types/branch';
 import styles from './OrderPaymentDialog.module.css';
+import { PaymentTestControls } from '@/components/checkout/PaymentTestControls';
 
 interface OrderPaymentDialogProps extends CartPayment {
   prompt: PaymentPrompt | null;
@@ -117,23 +118,15 @@ function PaymentFlow({
             name: common(`paymentMethods.${pending.method}`),
           })}
         </p>
-        <div className={styles.actions}>
-          <Button
-            variant="secondary"
-            block
-            disabled={settling || busy}
-            onClick={() => {
-              report({ id: pending.id, outcome: 'failed' });
-              setPending(null);
-              setFailed(true);
-            }}
-          >
-            {checkout('processing.protoFailure')}
-          </Button>
-          <Button block loading={settling || busy} onClick={() => void succeed(pending)}>
-            {checkout('processing.protoSuccess')}
-          </Button>
-        </div>
+        <PaymentTestControls
+          disabled={settling || busy}
+          onApprove={() => void succeed(pending)}
+          onDecline={() => {
+            report({ id: pending.id, outcome: 'failed' });
+            setPending(null);
+            setFailed(true);
+          }}
+        />
       </div>
     );
   }

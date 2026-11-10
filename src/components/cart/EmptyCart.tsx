@@ -48,6 +48,7 @@ export function EmptyCart() {
                   width={thumb.width}
                   height={thumb.height}
                   sizes="52px"
+                  loading="eager"
                 />
                 <span className={styles.popularText}>
                   <span className="t-small">

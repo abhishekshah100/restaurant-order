@@ -39,7 +39,7 @@
       "payment": "Payment help",
       "paymentSub": "Failed payment, refunds, invoices",
       "faqs": "Allergens & FAQs",
-      "faqsSub": "Ingredients, Wi-Fi, timings"
+      "faqsSub": "Ingredients, opening hours and more"
     },
     "modeLede": {
       "takeaway": "Ordering takeaway from {branch}. Questions about your order? We're a call away.",
@@ -65,7 +65,33 @@
     "titleMobile": "Follow us",
     "titleDesktop": "Follow {restaurant}",
     "sub": "New dishes, specials and events, first.",
-    "linkLabel": "{network} (opens in a new tab)"
+    "linkLabel": "{network} (opens in a new tab)",
+    "networks": {
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "youtube": "YouTube",
+      "x": "X",
+      "whatsapp": "WhatsApp",
+      "googleReviews": "Review us"
+    }
+  },
+  "wifi": {
+    "title": "Free Wi-Fi",
+    "network": "Network",
+    "password": "Password",
+    "noPassword": "No password needed",
+    "copy": "Copy password",
+    "copied": "Password copied",
+    "qr": "Show QR code",
+    "qrTitle": "Join our Wi-Fi",
+    "qrBody": "Open the camera on your phone and point it at this code. Tap the Wi-Fi message that appears to join.",
+    "qrLabel": "QR code to join the Wi-Fi network {name}",
+    "qrDone": "Done"
+  },
+  "faq": {
+    "hours": "Opening hours",
+    "hoursBody": "Today: {hours}. The kitchen takes last orders {lastOrders}.",
+    "address": "Where to find us"
   },
   "waiterDialog": {
     "title": "Need assistance?",
@@ -106,7 +132,7 @@
     "emptyBody": "Orders placed at Table {table} today will show up here.",
     "view": "View",
     "viewRequest": "View bill request",
-    "confirm": "Confirm bill request",
+    "confirm": "Ask for the bill",
     "heading": "Table {table} · {orders}",
     "pending": "You asked for the bill on {time}. Your server is on the way.",
     "scopeTitle": "Which bill?",
@@ -114,21 +140,28 @@
     "mineNone": "No orders from you yet",
     "table": "Whole table",
     "tableSub": "All {orders} placed at Table {table}",
-    "hint": "Your server will bring the printed bill. You can pay by {paymentMethods}."
+    "hint": "Your server will bring the bill to your table. You can pay them by {paymentMethods}.",
+    "hintPay": "Pay now from your phone, or ask for the bill and pay your server by {paymentMethods}.",
+    "payNowSub": "On your phone, by UPI or card",
+    "or": "or",
+    "tablePayNote": "Want to pay only your own orders from your phone? Choose “Just my orders” above."
   },
   "billRequested": {
     "noneTitle": "No bill request",
     "noneBody": "You haven't asked for the bill at Table {table} yet.",
-    "lede": "Your server is preparing the bill for Table {table} and will bring it over in a few minutes.",
-    "comingLede": "{name} is bringing the bill for Table {table}.",
+    "lede": "Your bill is on its way to Table {table}. You can pay by {paymentMethods}.",
+    "comingLede": "{name} is bringing your bill to Table {table}. You can pay by {paymentMethods}.",
     "payServer": "I'll pay the server",
+    "payAtTable": "I'll pay at the table",
+    "backToMenu": "Back to the menu",
     "paymentOptions": "Payment options"
   },
   "billTotals": {
     "mine": "Your total",
     "table": "Table total",
     "paid": "Already paid",
-    "balance": "Balance due"
+    "balance": "Balance due",
+    "noTax": "No tax charged"
   },
   "billOrders": {
     "you": "You",
@@ -201,10 +234,8 @@
       "requestSent": "Payment request sent",
       "waiting": "Waiting for approval",
       "settling": "Marking your orders as paid",
-      "secure": "Encrypted payment",
-      "cancel": "Cancel payment",
-      "protoSuccess": "Prototype: success",
-      "protoFailure": "Prototype: failure"
+      "secure": "Secure payment. We never see your card number or UPI PIN.",
+      "cancel": "Cancel payment"
     },
     "failed": {
       "title": "Payment didn't go through",

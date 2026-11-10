@@ -330,3 +330,44 @@ describe('POST and DELETE /admin/branches (mock)', () => {
     expect((res.body as AdminBranch).id).toBe('kathmandu-thamel');
   });
 });
+
+describe('help page (mock)', () => {
+  it('saves the Wi-Fi, links and questions; guests see the links and questions, never the password', async () => {
+    const res = await save({
+      help: {
+        wifiName: 'Olive Guest',
+        wifiPassword: 'pasta2026',
+        social: { instagram: 'instagram.com/olive', youtube: '' },
+        faqs: [
+          { question: 'Is there parking?', answer: 'Yes, behind the building.' },
+          { question: '', answer: '' },
+        ],
+      },
+    });
+    expect(res.status).toBe(200);
+    expect((await settings()).settings.help).toEqual({
+      wifiName: 'Olive Guest',
+      wifiPassword: 'pasta2026',
+      social: { instagram: 'https://instagram.com/olive' },
+      faqs: [{ question: 'Is there parking?', answer: 'Yes, behind the building.' }],
+    });
+    const branch = await guestBranch();
+    expect(branch.help?.social).toEqual({ instagram: 'https://instagram.com/olive' });
+    expect(JSON.stringify(branch)).not.toContain('pasta2026');
+
+    // A seated guest gets the Wi-Fi from their session.
+    const session = (
+      await call('POST', 'sessions', { branchId: 'blr-indiranagar', mode: 'dineIn', table: 5 })
+    ).body as GuestSession;
+    expect((await call('GET', `sessions/${session.id}/wifi`)).body).toEqual({
+      wifi: { name: 'Olive Guest', password: 'pasta2026' },
+    });
+  });
+
+  it('refuses a link to another site', async () => {
+    const res = await save({
+      help: { wifiName: '', wifiPassword: '', social: { x: 'https://example.com/x' }, faqs: [] },
+    });
+    expect(res.status).toBe(400);
+  });
+});

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Icon, IconButton, Tag, VegMark } from '@/components/ui';
 import { VisitPill } from '@/components/layout/VisitPill';
 import { cx } from '@/lib/cx';
-import { useContent, useMenu } from '@/api/hooks';
+import { useContent, useMenu, useRegion } from '@/api/hooks';
 import { startingPrice } from '@/lib/menu';
 import type { Allergen, Dish, DishImage } from '@/types/menu';
 import { Breadcrumbs } from './Breadcrumbs';
@@ -47,7 +47,8 @@ export function DishHero({
           width={hero.width}
           height={hero.height}
           sizes="100vw"
-          priority
+          loading="eager"
+          fetchPriority="high"
         />
         <span className={cx(styles.zoomHint, styles.zoomHintMobile)} aria-hidden="true">
           <Icon name="search" size="xs" />
@@ -95,7 +96,8 @@ export function DishMediaColumn({ dish, onZoom }: { dish: Dish; onZoom: () => vo
                 width={hero.width}
                 height={hero.height}
                 sizes="50vw"
-                priority
+                loading="eager"
+                fetchPriority="high"
               />
               <span className={styles.zoomHint} aria-hidden="true">
                 <Icon name="search" size="xs" />
@@ -175,6 +177,32 @@ export function DishIntro({ dish }: { dish: Dish }) {
         <OfferPrice dish={dish} price={startingPrice(dish)} />
       </p>
       <OfferBadge dish={dish} price={startingPrice(dish)} className={styles.offerBadge} />
+      {dish.combo && <MealNote combo={dish.combo} />}
     </section>
+  );
+}
+
+/**
+ * What a meal (combo) includes and, when staff set one, what it saves against ordering the parts
+ * separately: the "Meal · Save" tag on the menu explained. The saving is already in the price;
+ * nothing comes off the bill.
+ */
+function MealNote({ combo }: { combo: NonNullable<Dish['combo']> }) {
+  const t = useContent('menu');
+  const { money } = useRegion();
+  return (
+    <div className={styles.meal}>
+      <Icon name="cutlery" size="sm" className={styles.mealIcon} />
+      <div>
+        <p className={styles.mealIncludes}>
+          {t('detail.mealIncludes', { includes: combo.includes })}
+        </p>
+        {combo.savings ? (
+          <p className="t-small c2">
+            {t('detail.mealSaves', { savings: money.format(combo.savings) })}
+          </p>
+        ) : null}
+      </div>
+    </div>
   );
 }

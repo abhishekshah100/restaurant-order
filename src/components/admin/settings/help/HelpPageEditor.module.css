@@ -1,0 +1,89 @@
+/* Settings › Help page: one row per network, numbered question cards. */
+
+.social {
+  display: grid;
+  gap: 14px;
+}
+
+/* Icon · field · "Check link": the icon sits beside the input under the label. */
+.socialRow {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.socialIcon {
+  /* Level with the field: under its label (20px) and the 8px gap, as tall as it. */
+  margin-top: 28px;
+  width: 40px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink-2);
+}
+
+.check {
+  margin-top: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: var(--font-meta-strong);
+  color: var(--brand-600);
+  white-space: nowrap;
+}
+
+@media (max-width: 599.98px) {
+  .socialRow {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .check {
+    grid-column: 2;
+    margin-top: -4px;
+    justify-self: start;
+  }
+}
+
+.faqs {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.faq {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.faqHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.faqNumber {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

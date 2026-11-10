@@ -36,6 +36,13 @@ const CategoriesDialog = dynamic(
     loading: () => <LoadingSignal />,
   },
 );
+const SearchSuggestionsDialog = dynamic(
+  () => import('./SearchSuggestionsDialog').then((m) => m.SearchSuggestionsDialog),
+  {
+    ssr: false,
+    loading: () => <LoadingSignal />,
+  },
+);
 const RecipeDialog = dynamic(
   () => import('../inventory/RecipeDialog').then((m) => m.RecipeDialog),
   { ssr: false },
@@ -50,6 +57,7 @@ type Open =
   | { kind: 'edit'; dish?: Dish }
   | { kind: 'recipe'; slug: string }
   | { kind: 'categories' }
+  | { kind: 'suggestions' }
   | null;
 
 /**
@@ -57,7 +65,7 @@ type Open =
  * counts), search, pick a category; a row per dish with its sizes, prices and state. The switch
  * takes a dish off (sold out, until a time, or off today) or puts it back at once; Edit and Add
  * dish open the dish editor. With a category picked, Reorder moves its dishes up and down;
- * Categories renames and reorders them. Changes reach guests' menus within a minute. Read from
+ * Categories renames and reorders them; Search suggestions sets what the search screen offers. Changes reach guests' menus within a minute. Read from
  * GET /branches/:id/menu.
  */
 export function MenuBoard() {
@@ -150,6 +158,13 @@ export function MenuBoard() {
                 </Button>
                 <Button
                   variant="secondary"
+                  iconStart="search"
+                  onClick={() => setOpen({ kind: 'suggestions' })}
+                >
+                  {t('adminMenu.suggestionsButton')}
+                </Button>
+                <Button
+                  variant="secondary"
                   iconStart="sort"
                   disabled={!canReorder}
                   title={canReorder ? undefined : t('adminMenu.reorderHint')}
@@ -194,7 +209,7 @@ export function MenuBoard() {
           </div>
 
           {sections.length > 0 ? (
-            sections.map((section) => (
+            sections.map((section, sectionIndex) => (
               <section
                 key={section.id}
                 className={styles.section}
@@ -207,10 +222,12 @@ export function MenuBoard() {
                   </h2>
                 )}
                 <ul className={styles.list}>
-                  {section.dishes.map((dish) => (
+                  {section.dishes.map((dish, i) => (
                     <MenuDishRow
                       key={dish.slug}
                       dish={dish}
+                      // The first section's first rows are near the top of the page.
+                      eager={sectionIndex === 0 && i < 6}
                       onSwitch={(on) => onSwitch(dish, on)}
                       onAvailability={() =>
                         setOpen({ kind: 'availability', dish, offFirst: false })
@@ -259,6 +276,9 @@ export function MenuBoard() {
         {open?.kind === 'recipe' && <RecipeDialog slug={open.slug} onClose={() => setOpen(null)} />}
         {open?.kind === 'categories' && (
           <CategoriesDialog categories={menu.categories} onClose={() => setOpen(null)} />
+        )}
+        {open?.kind === 'suggestions' && (
+          <SearchSuggestionsDialog menu={menu} onClose={() => setOpen(null)} />
         )}
         {open?.kind === 'edit' && (
           <DishEditor

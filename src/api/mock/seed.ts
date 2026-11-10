@@ -33,10 +33,9 @@ export interface MockSeed {
   /** The same branches before the status: what staff saved. */
   branchConfigs(): Promise<Branch[]>;
   /**
-   * The table numbers a branch's QR links may carry (what a backend stores per branch), widened
-   * to every table on the floor plan staff saved. Guests aren't sent it.
+   * How many tables are on the floor plan staff saved (the branch picker shows it).
    */
-  tables(branchId: string): Promise<{ first: number; last: number }>;
+  tableCount(branchId: string): Promise<number>;
   defaultBranchId(): Promise<string>;
   /** GET /branches/:id/menu: the dummy JSON with staff changes on top. */
   menuData(branchId: string): Promise<MenuData>;
@@ -111,16 +110,6 @@ export const promotionsBaseQuery = (branchId: string) =>
     ...seedSource<BranchPromotions>(`branches/${branchId}/promotions`),
   });
 
-/**
- * MOCK ONLY: the table numbers each demo branch's QR links may carry, as a backend stores them
- * per branch (its floor plan widens them). A branch staff add gets the default.
- */
-const TABLE_RANGES: Record<string, { first: number; last: number }> = {
-  'blr-indiranagar': { first: 1, last: 999 },
-  'ktm-thamel': { first: 1, last: 40 },
-};
-const DEFAULT_TABLE_RANGE = { first: 1, last: 40 };
-
 export function querySeed(
   client: QueryClient,
   db: Pick<MockDb, 'menuChanges' | 'branchStatus' | 'floorLayouts' | 'branchSetup'>,
@@ -180,14 +169,8 @@ export function querySeed(
     menu: async (branchId) => createMenuCatalog(await menuData(branchId)),
     promotions: (branchId) => client.fetchQuery(promotionsBaseQuery(sourceOf(branchId))),
     floors,
-    tables: async (branchId) => {
-      const base = TABLE_RANGES[sourceOf(branchId)] ?? DEFAULT_TABLE_RANGE;
-      const numbers = (await floors(branchId)).floors.flatMap((f) => f.tables.map((t) => t.number));
-      return {
-        first: Math.min(base.first, ...numbers),
-        last: Math.max(base.last, ...numbers),
-      };
-    },
+    tableCount: async (branchId) =>
+      (await floors(branchId)).floors.reduce((sum, f) => sum + f.tables.length, 0),
     orders: () => client.ensureQueryData(orderHistoryQuery()),
     orderLabels: async (branch) => {
       const [orders, common, cart] = await Promise.all([

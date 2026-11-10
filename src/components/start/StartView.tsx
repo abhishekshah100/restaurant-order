@@ -149,7 +149,8 @@ export function StartView() {
           width={780}
           height={540}
           sizes="100vw"
-          priority
+          loading="eager"
+          fetchPriority="high"
         />
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.heroBrand}>

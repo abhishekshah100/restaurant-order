@@ -87,8 +87,8 @@ test('paused: guests can keep building the cart, and checkout offers a waiter', 
 
   // ?status=open ends the preview.
   await page.goto('/menu/?status=open');
-  // When orders stop: last orders, 30 minutes before the 9:00 PM close (11:00–21:00 every day).
-  await expect(visible(page, 'Open · orders until 8:30 PM')).toBeVisible();
+  // The header says it's open (no closing time).
+  await expect(visible(page, 'Open now')).toBeVisible();
   await expect(page.getByText('Online ordering is paused')).toHaveCount(0);
 });
 

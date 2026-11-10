@@ -4,24 +4,32 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useContent } from '@/api/hooks';
-import { Icon } from '@/components/ui';
+import { Icon, Tabs } from '@/components/ui';
 import { ADMIN_LINKS } from '@/lib/adminNav';
-import { SETTINGS_GROUPS, activeSettingsSection, settingsFor } from '@/lib/adminSettings';
+import { activeSettingsSection, canOpenPage, settingsFor, settingsPage } from '@/lib/adminSettings';
 import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { NoAccess } from '../shell/NoAccess';
+import { usePlatformAdmin } from './usePlatformAdmin';
 import styles from './SettingsFrame.module.css';
 
 /**
- * Every Settings page's frame: from 1024px the Settings menu (its pages by group) beside the
+ * Every Settings page's frame: from 1024px the Settings menu (its sections by group) beside the
  * page; on phones a page has Back to Settings above it instead, and the overview is the menu.
+ * A section of several pages shows them as tabs above the page (each keeps its own address).
  */
 export function SettingsFrame({ children }: { children: ReactNode }) {
   const t = useContent('common');
   const active = activeSettingsSection(usePathname());
   const { can } = useAdminWorkspace();
-  const groups = settingsFor(can);
-  const needs = SETTINGS_GROUPS.flatMap((g) => g.sections).find((s) => s.id === active)?.needs;
+  const platform = usePlatformAdmin();
+  const groups = settingsFor(can, platform);
+  const page = active ? settingsPage(active) : undefined;
+  const allowed = !page || canOpenPage(page, can, platform);
+  // The section this page is in, with the pages (tabs) this staff member may open.
+  const topic = active
+    ? groups.flatMap((g) => g.topics).find((tp) => tp.pages.some((p) => p.id === active))
+    : undefined;
 
   return (
     <div className={styles.frame}>
@@ -37,18 +45,21 @@ export function SettingsFrame({ children }: { children: ReactNode }) {
           <div key={group.id} className={styles.group}>
             <p className={styles.groupTitle}>{t(`adminSettings.groups.${group.id}`)}</p>
             <ul className={styles.items}>
-              {group.sections.map((section) => (
-                <li key={section.id}>
-                  <Link
-                    href={section.href}
-                    className={cx(styles.item, active === section.id && styles.current)}
-                    aria-current={active === section.id ? 'page' : undefined}
-                  >
-                    <Icon name={section.icon} size="sm" />
-                    {t(`adminSettings.sections.${section.id}.title`)}
-                  </Link>
-                </li>
-              ))}
+              {group.topics.map((item) => {
+                const current = topic?.id === item.id;
+                return (
+                  <li key={item.id}>
+                    <Link
+                      href={item.href}
+                      className={cx(styles.item, current && styles.current)}
+                      aria-current={current ? 'page' : undefined}
+                    >
+                      <Icon name={item.icon} size="sm" />
+                      {t(`adminSettings.topics.${item.id}.title`)}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}
@@ -60,8 +71,34 @@ export function SettingsFrame({ children }: { children: ReactNode }) {
             {t('adminSettings.back')}
           </Link>
         )}
-        {!needs || can(needs) ? children : <NoAccess />}
+        {allowed && topic && topic.pages.length > 1 && active && (
+          <Tabs
+            className={styles.tabs}
+            label={t('adminSettings.tabs.label')}
+            value={active}
+            items={topic.pages.map((p) => ({
+              id: p.id,
+              label: t(`adminSettings.tabs.${p.id as TabbedPage}`),
+              href: p.href,
+            }))}
+          />
+        )}
+        {allowed ? children : <NoAccess />}
       </div>
     </div>
   );
 }
+
+/** The pages that share their section with others (each has a tab label). */
+type TabbedPage =
+  | 'details'
+  | 'help'
+  | 'services'
+  | 'pickup'
+  | 'delivery'
+  | 'tax'
+  | 'payments'
+  | 'staff'
+  | 'roles'
+  | 'branches'
+  | 'modules';

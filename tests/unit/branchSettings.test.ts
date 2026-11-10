@@ -21,6 +21,9 @@ import {
   withDetails,
   withPayments,
   withTax,
+  helpErrors,
+  isSocialUrl,
+  withHttps,
 } from '@/lib/branchSettings';
 import { calculateBill } from '@/lib/pricing';
 import type { Branch, OpeningSchedule, Session } from '@/types/branch';
@@ -482,6 +485,7 @@ it('reads every section off a branch, and the branch data carries only its week'
   const settings = settingsOf(india);
   expect(Object.keys(settings)).toEqual([
     'details',
+    'help',
     'services',
     'hours',
     'tax',
@@ -547,5 +551,23 @@ describe('region and services', () => {
     ).toEqual(['noService']);
     expect(servicesErrors({ ...services, delivery: true }, 0)).toEqual(['deliveryNeedsZones']);
     expect(withServices(india, { ...services, dineIn: false }).modes.dineIn.enabled).toBe(false);
+  });
+});
+
+describe('help page', () => {
+  const help = { wifiName: 'Olive Guest', wifiPassword: '', social: {}, faqs: [] };
+
+  it('takes a link typed without https, on the network’s own site', () => {
+    expect(withHttps('instagram.com/olive')).toBe('https://instagram.com/olive');
+    expect(isSocialUrl('instagram', 'https://instagram.com/olive')).toBe(true);
+    expect(helpErrors({ ...help, social: { instagram: 'instagram.com/olive' } })).toEqual([]);
+    expect(helpErrors({ ...help, social: { youtube: 'vimeo.com/olive' } })).toEqual(['youtubeUrl']);
+  });
+
+  it('drops an empty question, and asks for the missing half of a half-filled one', () => {
+    expect(helpErrors({ ...help, faqs: [{ question: ' ', answer: '' }] })).toEqual([]);
+    expect(helpErrors({ ...help, faqs: [{ question: 'Parking?', answer: '' }] })).toEqual([
+      'faqAnswer',
+    ]);
   });
 });

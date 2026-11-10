@@ -1,5 +1,8 @@
-import { useContent, useRegion } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
+import { billRows } from '@/components/cart/PriceSummary';
 import { cx } from '@/lib/cx';
+import { orderBill } from '@/lib/orders';
+import { combineBills } from '@/lib/pricing';
 import type { BillSummary } from '@/lib/service';
 import type { BillScope } from '@/types/service';
 import styles from './BillTotals.module.css';
@@ -13,6 +16,11 @@ interface BillTotalsProps {
   signed?: boolean;
   /** Only the balance row: everything listed is due (the pay page). List layout only. */
   balanceOnly?: boolean;
+  /**
+   * The orders' bills added up above the total: items, discounts, service charge, each tax
+   * (CGST, SGST…) and round off, as on each order's own bill (list layout only).
+   */
+  breakdown?: boolean;
   className?: string;
 }
 
@@ -23,6 +31,7 @@ export function BillTotals({
   layout = 'list',
   signed,
   balanceOnly,
+  breakdown,
   className,
 }: BillTotalsProps) {
   const t = useContent('service');
@@ -51,8 +60,9 @@ export function BillTotals({
 
   return (
     <dl className={cx(styles.list, className)}>
+      {breakdown && !balanceOnly && <Breakdown bill={bill} />}
       {!balanceOnly && (
-        <div className={styles.row}>
+        <div className={cx(styles.row, breakdown && styles.subtotal)}>
           <dt>{totalLabel}</dt>
           <dd>{money.format(bill.total)}</dd>
         </div>
@@ -68,5 +78,31 @@ export function BillTotals({
         <dd>{money.format(bill.balance)}</dd>
       </div>
     </dl>
+  );
+}
+
+/** The orders' charges added up, labelled as on a bill; "No tax charged" when there's none. */
+function Breakdown({ bill }: { bill: BillSummary }) {
+  const branch = useBranch();
+  const { money } = useRegion();
+  const cart = useContent('cart');
+  const t = useContent('service');
+  const combined = combineBills(bill.orders.map((o) => orderBill(o, branch)));
+  const taxed = combined.lines.some((l) => l.id !== 'serviceCharge');
+  return (
+    <>
+      {billRows(combined, { t: cart, money, tax: branch.tax }).map(([label, value, saving]) => (
+        <div key={label} className={styles.row}>
+          <dt>{label}</dt>
+          <dd className={saving ? styles.ok : undefined}>{value}</dd>
+        </div>
+      ))}
+      {!taxed && (
+        <div className={styles.row}>
+          <dt>{t('billTotals.noTax')}</dt>
+          <dd />
+        </div>
+      )}
+    </>
   );
 }

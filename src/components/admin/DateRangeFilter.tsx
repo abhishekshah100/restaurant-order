@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useContent } from '@/api/hooks';
-import { Button, Input } from '@/components/ui';
+import { Button, Chip, Input } from '@/components/ui';
 import {
   RANGE_DAYS,
   firstDay,
   isDayKey,
   isTodayOnly,
   rangeProblem,
+  shiftDay,
+  type DayLimits,
   type DayRange,
 } from '@/lib/dayRange';
 import { useAdminWorkspace } from './shell/AdminWorkspace';
@@ -23,6 +25,8 @@ export function DateRangeFilter({
   range,
   today,
   onChange,
+  limits,
+  presets,
 }: {
   /** Prefix for the fields' ids (two filters can share a page). */
   id: string;
@@ -30,10 +34,15 @@ export function DateRangeFilter({
   /** The branch's today, "2026-10-26". */
   today: string;
   onChange: (range: DayRange) => void;
+  /** How far back and how long (the page's server limits); the orders' by default. */
+  limits?: DayLimits;
+  /** Quick ranges ending today, in days ("Last 7 days", "Last 6 months"…). */
+  presets?: readonly { days: number; label: string }[];
 }) {
   const t = useContent('common');
   const { clock } = useAdminWorkspace();
-  const min = firstDay(today);
+  const min = firstDay(today, limits);
+  const rangeDays = limits?.rangeDays ?? RANGE_DAYS;
   // The days as typed; the page's range until staff change one.
   const [draft, setDraft] = useState(range);
   const [shown, setShown] = useState(range);
@@ -43,11 +52,13 @@ export function DateRangeFilter({
     setDraft(range);
   }
   const complete = isDayKey(draft.from) && isDayKey(draft.to);
-  const problem = complete ? rangeProblem(draft, today) : null;
+  const problem = complete ? rangeProblem(draft, today, limits) : null;
 
   const pick = (next: DayRange) => {
     setDraft(next);
-    if (isDayKey(next.from) && isDayKey(next.to) && !rangeProblem(next, today)) onChange(next);
+    if (isDayKey(next.from) && isDayKey(next.to) && !rangeProblem(next, today, limits)) {
+      onChange(next);
+    }
   };
 
   return (
@@ -91,8 +102,24 @@ export function DateRangeFilter({
             ? t('adminDateRange.problems.outside', { first: clock.date(`${min}T12:00:00Z`) })
             : problem === 'order'
               ? t('adminDateRange.problems.order')
-              : t('adminDateRange.problems.tooLong', { days: RANGE_DAYS })}
+              : t('adminDateRange.problems.tooLong', { days: rangeDays })}
         </p>
+      )}
+      {presets && presets.length > 0 && (
+        <div className={styles.presets} role="group" aria-label={t('adminDateRange.presets')}>
+          {presets.map((p) => {
+            const range = { from: shiftDay(today, -(p.days - 1)), to: today };
+            return (
+              <Chip
+                key={p.days}
+                pressed={draft.from === range.from && draft.to === range.to}
+                onClick={() => pick(range)}
+              >
+                {p.label}
+              </Chip>
+            );
+          })}
+        </div>
       )}
     </div>
   );

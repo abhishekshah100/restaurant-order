@@ -115,7 +115,7 @@ test('collect a bill in cash with change, find it, refund part of it, report and
   await page.getByRole('button', { name: 'Day report' }).click();
   const sheet = page.locator('[data-print-sheet]');
   await expect(sheet).toContainText('Day report');
-  await expect(sheet).toContainText('Cash in the drawer');
+  await expect(sheet).toContainText('Cash taken from these orders');
   await expect(sheet).toContainText(`#${atNine}`);
 
   // The day as an Excel file.

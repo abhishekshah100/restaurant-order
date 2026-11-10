@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createPortal, flushSync } from 'react-dom';
 import { useContent } from '@/api/hooks';
 import { useAdminName } from '@/hooks/useAdminSession';
 import { dueOn } from '@/lib/adminOrders';
@@ -37,8 +37,8 @@ function usePrintPlace(): PrintPlace {
  * Printing from the Payments page: `bill(orders)` prints the bill for an order or a table (a
  * receipt once it's paid: what was paid, how and when); `report(orders, due, period)` prints
  * the day report for the days in `period` (the day's money, by method, every payment and refund,
- * what's still to collect). The page is put in the document, the browser's print dialog opens,
- * and it's taken away after. The page has no margin, so browsers leave out their own header and
+ * what's still to collect). The page is put in the document and the browser's print dialog
+ * opens in the same click; it's taken away at the next tap or key press. The page has no margin, so browsers leave out their own header and
  * footer (date, title, address); the sheet keeps its own.
  */
 export function usePaymentPrint() {
@@ -46,42 +46,113 @@ export function usePaymentPrint() {
 }
 
 /**
- * The same printed bill for a guest's order (the order page's "Get invoice"): staff and guests
- * get one bill, drawn for the branch the order is from.
+ * The same bill for a guest's order (the order page's "Get invoice"), as a PDF file to keep:
+ * staff and guests get one bill, drawn for the branch the order is from. A file rather than the
+ * print dialog: phones (and the browsers inside chat apps) print badly or not at all, but all of
+ * them download. `download(orders)` resolves once the file is saved; it throws if it can't be.
  */
-export function useBillPrint(place: PrintPlace) {
-  const { bill, sheet } = usePrintDoc(place);
-  return { bill, sheet };
+export function useBillDownload(place: PrintPlace) {
+  const t = useContent('common');
+  const [orders, setOrders] = useState<Order[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const holder = useRef<HTMLDivElement>(null);
+
+  const download = async (next: Order[]) => {
+    setBusy(true);
+    try {
+      flushSync(() => setOrders(next));
+      const node = holder.current;
+      if (!node) throw new Error('The bill could not be drawn');
+      // Downloaded only when a bill is asked for (about 300 kB together).
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+        // Its fonts loaded, or the drawing falls back to another (older browsers lack this).
+        document.fonts?.ready,
+      ]);
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+      });
+      // One page as long as the bill, like a till roll: its width in CSS pixels, its height to scale.
+      const width = node.offsetWidth;
+      const height = (canvas.height / canvas.width) * width;
+      const pdf = new jsPDF({
+        unit: 'px',
+        format: [width, height],
+        orientation: height > width ? 'portrait' : 'landscape',
+        hotfixes: ['px_scaling'],
+      });
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, width, height);
+      const name = t('adminPayments.receipt.fileName', {
+        orders: next.map((o) => o.id).join(', '),
+      });
+      pdf.save(`${name}.pdf`);
+    } finally {
+      setOrders(null);
+      setBusy(false);
+    }
+  };
+
+  const sheet =
+    orders &&
+    createPortal(
+      <PrintPlaceContext.Provider value={place}>
+        <div ref={holder} className={styles.capture} aria-hidden="true">
+          <BillDoc orders={orders} />
+        </div>
+      </PrintPlaceContext.Provider>,
+      document.body,
+    );
+
+  return { download, busy, sheet };
 }
 
 function usePrintDoc(place: PrintPlace) {
   const t = useContent('common');
   const [doc, setDoc] = useState<Printable | null>(null);
 
+  // Put away once the person is back on the page: their next tap or key press. Not on
+  // `afterprint`: phones print in the background and fire it at once, before the print preview
+  // has read the page, which then printed the whole page or nothing.
   useEffect(() => {
     if (!doc) return;
-    const root = document.documentElement;
-    // The tab's title names a saved PDF ("Bill BLR-001"); the page's comes back after.
-    const pageTitle = document.title;
     const done = () => {
-      root.classList.remove(PRINTING);
-      document.title = pageTitle;
+      document.documentElement.classList.remove(PRINTING);
       setDoc(null);
     };
-    document.title =
-      doc.kind === 'bill'
-        ? t('adminPayments.receipt.fileName', { orders: doc.orders.map((o) => o.id).join(', ') })
-        : t('adminPayments.report.fileName', { period: doc.period });
-    root.classList.add(PRINTING);
-    window.addEventListener('afterprint', done, { once: true });
-    const id = window.setTimeout(() => window.print(), 50);
+    const listen = window.setTimeout(() => {
+      window.addEventListener('pointerdown', done, { once: true, capture: true });
+      window.addEventListener('keydown', done, { once: true, capture: true });
+    }, 0);
     return () => {
-      window.clearTimeout(id);
-      window.removeEventListener('afterprint', done);
-      root.classList.remove(PRINTING);
-      document.title = pageTitle;
+      window.clearTimeout(listen);
+      window.removeEventListener('pointerdown', done, { capture: true });
+      window.removeEventListener('keydown', done, { capture: true });
     };
-  }, [doc, t]);
+  }, [doc]);
+  // Leaving the page while a sheet is out: nothing stays hidden.
+  useEffect(() => () => document.documentElement.classList.remove(PRINTING), []);
+
+  /**
+   * Draws the sheet at once and opens the print dialog in the same tap or click: phones (iPhone
+   * Safari above all) only print from the person's own action, not from a timer or an effect.
+   */
+  const print = (next: Printable) => {
+    const root = document.documentElement;
+    flushSync(() => setDoc(next));
+    root.classList.add(PRINTING);
+    // The tab's title names a saved PDF ("Bill BLR-001"); the page's comes back after.
+    const pageTitle = document.title;
+    document.title =
+      next.kind === 'bill'
+        ? t('adminPayments.receipt.fileName', { orders: next.orders.map((o) => o.id).join(', ') })
+        : t('adminPayments.report.fileName', { period: next.period });
+    window.addEventListener('afterprint', () => (document.title = pageTitle), { once: true });
+    window.print();
+  };
 
   const sheet =
     doc &&
@@ -99,9 +170,9 @@ function usePrintDoc(place: PrintPlace) {
     );
 
   return {
-    bill: (orders: Order[]) => setDoc({ kind: 'bill', orders }),
+    bill: (orders: Order[]) => print({ kind: 'bill', orders }),
     report: (orders: Order[], due: DueGroup[], period: string) =>
-      setDoc({ kind: 'report', orders, due, period }),
+      print({ kind: 'report', orders, due, period }),
     sheet,
   };
 }

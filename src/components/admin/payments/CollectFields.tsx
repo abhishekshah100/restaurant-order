@@ -34,6 +34,10 @@ import styles from './PaymentDialogs.module.css';
 /** The one way paid's photos, while it's the only one (a row of its own once there are more). */
 const SINGLE = 'single';
 
+/** The branch's ways to pay staff, cash first (the rest in the branch's order). */
+const cashFirst = (methods: readonly AtTableMethodKey[]): AtTableMethodKey[] =>
+  methods.includes('cash') ? ['cash', ...methods.filter((m) => m !== 'cash')] : [...methods];
+
 let nextRowId = 0;
 const newRow = (method: AtTableMethodKey, amount = ''): PartRow => ({
   id: `part-${String((nextRowId += 1))}`,
@@ -49,11 +53,9 @@ const newRow = (method: AtTableMethodKey, amount = ''): PartRow => ({
  */
 export function useCollectChoice(orders: readonly Order[]) {
   const { branch, region, money } = useAdminWorkspace();
-  const methods = region.payments.atTable;
-  // Cash first: most guests at a table pay that way.
-  const [method, chooseMethod] = useState<AtTableMethodKey>(
-    methods.includes('cash') ? 'cash' : methods[0],
-  );
+  // Cash first, and chosen to start with: most guests at a table pay that way.
+  const methods = cashFirst(region.payments.atTable);
+  const [method, chooseMethod] = useState<AtTableMethodKey>(methods[0]);
   const proofs = useProofPhotos(branch.id);
   // Cash needs the branch's cash register open (the server refuses it otherwise).
   const register = useCashRegister(branch.id, isBackendEnabled()).data;

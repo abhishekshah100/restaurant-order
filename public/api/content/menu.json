@@ -116,6 +116,8 @@
     "allergens": "Allergens",
     "noAllergens": "None listed",
     "from": "from",
+    "mealIncludes": "Meal: {includes}",
+    "mealSaves": "Save {savings} compared with ordering these separately. The saving is already in the price.",
     "addToCart": "Add to cart",
     "updateItem": "Update item",
     "unavailable": "Unavailable",
@@ -168,6 +170,7 @@
     "emptyBody": "We couldn't find anything for “{term}”. Try searching for something else, or browse a category.",
     "clear": "Clear search",
     "suggestions": {
+      "loading": "Loading suggestions",
       "trending": "Trending tonight",
       "popular": "Popular at {restaurant}"
     }

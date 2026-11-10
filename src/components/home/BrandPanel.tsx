@@ -24,7 +24,8 @@ export function BrandPanel({ caption }: { caption: string }) {
           width={780}
           height={540}
           sizes="30vw"
-          priority
+          loading="eager"
+          fetchPriority="high"
         />
         <Image
           src="/images/prawns.jpg"
@@ -32,6 +33,7 @@ export function BrandPanel({ caption }: { caption: string }) {
           width={240}
           height={228}
           sizes="25vw"
+          loading="eager"
         />
         <Image
           src="/images/pizza-wide.jpg"
@@ -39,6 +41,7 @@ export function BrandPanel({ caption }: { caption: string }) {
           width={462}
           height={300}
           sizes="25vw"
+          loading="eager"
         />
       </div>
       <p className={styles.tagline}>{restaurant.tagline}</p>

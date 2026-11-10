@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import { useBranches, useContent } from '@/api/hooks';
-import { Input, Select, Textarea } from '@/components/ui';
+import { Button, Input, Select, Textarea } from '@/components/ui';
+import { settingsPath } from '@/lib/adminNav';
 import {
   COUNTRY_CODES,
   COUNTRY_DEFAULTS,
@@ -27,6 +28,10 @@ import { createMoney } from '@/lib/money';
 import type { BranchDetails } from '@/types/branchSettings';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { FieldGrid, SettingsCard, SettingsEditor, SettingsNote } from '../shared/SettingsEditor';
+import { BranchPhotoField } from './BranchPhotoField';
+
+/** The details typed into a text field. */
+type TextField = 'name' | 'shortName' | 'city' | 'address' | 'phone' | 'wifiName';
 
 /** Which field each problem belongs to, to show it there. */
 const FIELD_OF: Partial<Record<SettingsError, keyof BranchDetails>> = {
@@ -44,6 +49,7 @@ const FIELD_OF: Partial<Record<SettingsError, keyof BranchDetails>> = {
   wifiLong: 'wifiName',
   orderPrefix: 'orderPrefix',
   orderStart: 'orderStart',
+  image: 'image',
   country: 'country',
   timezone: 'timezone',
   locale: 'locale',
@@ -52,7 +58,7 @@ const FIELD_OF: Partial<Record<SettingsError, keyof BranchDetails>> = {
 
 /**
  * Settings › Branch details: the branch's name, the short name staff and guests tell it apart
- * by, its city, address and phone, and what guests at the table are told (the Wi-Fi, where the
+ * by, its city, address and phone, its photo, and what guests at the table are told (the Wi-Fi, where the
  * tables are); how its orders are numbered (prefix and starting number, "BLR-001"); and its
  * region — country, time zone, locale and currency. Another country brings its phone rules,
  * taxes and payment methods on saving.
@@ -78,7 +84,7 @@ export function BranchDetailsEditor() {
           const code = errors.find((e) => FIELD_OF[e] === field);
           return code ? t(`adminSettings.errors.${code}`, { dialCode }) : undefined;
         };
-        const field = (key: keyof BranchDetails) => ({
+        const field = (key: TextField) => ({
           id: `branch-${key}`,
           value: value[key],
           error: errorFor(key),
@@ -131,18 +137,28 @@ export function BranchDetailsEditor() {
             </SettingsCard>
 
             <SettingsCard
-              title={t('adminSettings.details.guests')}
-              hint={t('adminSettings.details.guestsHint')}
+              title={t('adminSettings.details.photo')}
+              hint={t('adminSettings.details.photoHint')}
             >
-              <FieldGrid>
-                <Input
-                  {...field('wifiName')}
-                  label={t('adminSettings.details.wifiName')}
-                  hint={t('adminSettings.details.wifiHint')}
-                  optional
-                  autoComplete="off"
-                />
-              </FieldGrid>
+              <BranchPhotoField
+                image={value.image ?? null}
+                name={value.shortName || value.name}
+                error={errorFor('image')}
+                onChange={(image) => set({ ...value, image })}
+              />
+            </SettingsCard>
+
+            {/* The guest Wi-Fi is edited with the rest of the Help page, in one place. */}
+            <SettingsCard title={t('adminSettings.details.guests')}>
+              <p className="t-small c2">{t('adminSettings.details.wifiMoved')}</p>
+              <Button
+                href={settingsPath('help-page')}
+                variant="secondary"
+                size="sm"
+                iconEnd="arrow"
+              >
+                {t('adminSettings.details.wifiMovedLink')}
+              </Button>
             </SettingsCard>
 
             {value.orderPrefix !== undefined && value.orderStart !== undefined && (

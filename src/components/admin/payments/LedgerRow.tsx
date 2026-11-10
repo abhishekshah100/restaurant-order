@@ -1,6 +1,6 @@
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
-import type { LedgerEntry } from '@/lib/adminPayments';
+import type { LedgerLine } from '@/lib/adminPayments';
 import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { methodIcon, usePaymentText } from './usePaymentText';
@@ -11,7 +11,7 @@ import styles from './LedgerRow.module.css';
  * refunded), the reference, any tip, and the amount (a refund in red, with whether it has
  * reached the guest). Opens the order.
  */
-export function LedgerRow({ entry, onOpen }: { entry: LedgerEntry; onOpen: () => void }) {
+export function LedgerRow({ entry, onOpen }: { entry: LedgerLine; onOpen?: () => void }) {
   const t = useContent('common');
   const { clock } = useAdminWorkspace();
   const { amount, methodName, where } = usePaymentText();
@@ -27,15 +27,14 @@ export function LedgerRow({ entry, onOpen }: { entry: LedgerEntry; onOpen: () =>
 
   return (
     <li>
-      <button
-        type="button"
+      <Row
         className={cx(styles.row, refund && styles.refund)}
-        aria-label={t('adminPayments.entry.open', {
+        label={t('adminPayments.entry.open', {
           kind,
           amount: amount(entry.amount),
           order: entry.order.id,
         })}
-        onClick={onOpen}
+        onOpen={onOpen}
       >
         <span className={styles.icon} data-channel={entry.channel} aria-hidden="true">
           <Icon name={refund ? 'refresh' : methodIcon(entry.method)} size="sm" />
@@ -85,7 +84,28 @@ export function LedgerRow({ entry, onOpen }: { entry: LedgerEntry; onOpen: () =>
             </span>
           )}
         </span>
-      </button>
+      </Row>
     </li>
+  );
+}
+
+/** The row: a button that opens the order, or (nothing to open) plain. */
+function Row({
+  className,
+  label,
+  onOpen,
+  children,
+}: {
+  className: string;
+  label: string;
+  onOpen?: () => void;
+  children: React.ReactNode;
+}) {
+  return onOpen ? (
+    <button type="button" className={className} aria-label={label} onClick={onOpen}>
+      {children}
+    </button>
+  ) : (
+    <div className={className}>{children}</div>
   );
 }

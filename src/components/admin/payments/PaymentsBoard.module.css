@@ -1,5 +1,10 @@
 /* The Payments page: today's takings, then the views beside the methods (stacked on phones). */
 
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -179,4 +184,25 @@
     position: sticky;
     top: 88px;
   }
+}
+
+/* Payments › History: back link, title and line under it. */
+.historyHead {
+  display: grid;
+  gap: 4px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  font: var(--font-meta-strong);
+  color: var(--ink-2);
+}
+
+.historyTitle {
+  margin: 4px 0 0;
+  font: var(--font-display);
+  font-size: 28px;
 }

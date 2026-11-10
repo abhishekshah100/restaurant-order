@@ -124,12 +124,7 @@ export function BranchCard({
         </p>
         <p className={styles.row}>
           <Icon name="table" size="xs" />
-          <span>
-            {t('adminSelectBranch.card.tables', {
-              first: branch.tables.first,
-              last: branch.tables.last,
-            })}
-          </span>
+          <span>{t.plural('adminSelectBranch.card.tables', branch.tableCount)}</span>
           <span className={styles.currency}>
             <span aria-hidden="true">{branch.currencyCode}</span>
             <span className="visually-hidden">

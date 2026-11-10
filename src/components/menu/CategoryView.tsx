@@ -87,7 +87,7 @@ function CategoryPage({ category }: { category: Category }) {
           <div className={styles.list}>
             {/* Keeps the outline h1 → h2 → h3 (dish names) for screen-reader navigation. */}
             <h2 className="visually-hidden">{t('category.dishesHeading')}</h2>
-            <DishList dishes={shown} label={category.name} showPrepTime />
+            <DishList dishes={shown} label={category.name} showPrepTime eagerRows={4} />
           </div>
         ) : (
           <p className={cx('t-body c2', styles.empty)}>

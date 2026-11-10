@@ -63,6 +63,7 @@ export function PayBillView() {
     return (
       <PayBillProcessing
         payment={payment}
+        orders={bill.payable}
         table={table}
         disabled={offline || settled}
         onCancel={() => setPhase({ step: 'choose', returning: true })}

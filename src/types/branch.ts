@@ -325,6 +325,36 @@ export interface BranchConfig {
   ordering: OrderingRules;
   /** The kitchen's usual time for an order, in minutes (shown as "18–22 min"). */
   prepMinutes: { min: number; max: number };
+  /**
+   * The Help page (Settings › Help page): the brand's social links (a network left out isn't
+   * shown) and the branch's questions and answers. Absent from the mock's JSON: the help.json
+   * answers and restaurant.json links stand in.
+   */
+  help?: BranchHelp;
+  /** MOCK ONLY: where the mock keeps the Wi-Fi password (the server never sends it here). */
+  wifiPassword?: string;
+}
+
+export const SOCIAL_NETWORKS = [
+  'instagram',
+  'facebook',
+  'youtube',
+  'x',
+  'whatsapp',
+  'googleReviews',
+] as const;
+export type HelpSocialNetwork = (typeof SOCIAL_NETWORKS)[number];
+/** A network's https link; a network left out isn't shown. */
+export type SocialLinks = Partial<Record<HelpSocialNetwork, string>>;
+
+export interface HelpFaq {
+  question: string;
+  answer: string;
+}
+
+export interface BranchHelp {
+  social: SocialLinks;
+  faqs: HelpFaq[];
 }
 
 /** A branch as the screens use it: its summary and its rules together (api/hooks › useBranch). */

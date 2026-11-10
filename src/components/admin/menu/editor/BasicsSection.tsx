@@ -7,7 +7,7 @@ import { useUploadDishImage } from '@/api/mutations';
 import { Button, Chip, Input, Select, Textarea } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import type { DishForm } from '@/lib/adminMenu';
-import { resizeImage } from '@/lib/imageResize';
+import { resizeWithThumb } from '@/lib/imageResize';
 import type { MenuCatalog } from '@/lib/menu';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { EditorSection } from './EditorSection';
@@ -90,9 +90,13 @@ function PictureField({ form, set }: { form: DishForm; set: (fields: Partial<Dis
   const choose = async (file: File | undefined) => {
     if (!file) return;
     try {
-      const resized = await resizeImage(file);
-      const { image } = await upload.mutateAsync({ branchId: branch.id, body: resized });
-      set({ image });
+      // The picture and a small copy for rows, the cart and orders.
+      const { thumb: small, ...picture } = await resizeWithThumb(file);
+      const { image, thumb } = await upload.mutateAsync({
+        branchId: branch.id,
+        body: { ...picture, thumb: small },
+      });
+      set({ image, thumb: thumb ?? null });
     } catch {
       showToast(t('adminMenu.editor.uploadFailed'), { tone: 'error' });
     }
@@ -129,7 +133,7 @@ function PictureField({ form, set }: { form: DishForm; set: (fields: Partial<Dis
               size="sm"
               variant="ghost"
               iconStart="trash"
-              onClick={() => set({ image: null })}
+              onClick={() => set({ image: null, thumb: null })}
             >
               {t('adminMenu.editor.removePicture')}
             </Button>

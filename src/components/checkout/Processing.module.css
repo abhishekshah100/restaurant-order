@@ -119,9 +119,19 @@
 }
 .proto {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 16px;
   border-top: 1px dashed var(--line-strong);
   padding-top: 4px;
+}
+/* "For testing": the test buttons are never mistaken for part of the payment. */
+.protoTag {
+  padding: 2px 8px;
+  border-radius: var(--r-round);
+  background: var(--warn-tint);
+  color: var(--warn);
+  font: var(--font-small-strong);
 }
 .protoLink {
   font: var(--font-meta-strong);

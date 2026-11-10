@@ -9,6 +9,20 @@ import type { AdminOrdersFilter } from '@/api/contracts';
 export const HISTORY_DAYS = 365;
 export const RANGE_DAYS = 31;
 
+/** How far back a page can look, and how long one range can be. */
+export interface DayLimits {
+  historyDays: number;
+  rangeDays: number;
+}
+
+const DEFAULT_LIMITS: DayLimits = { historyDays: HISTORY_DAYS, rangeDays: RANGE_DAYS };
+
+/** Payments › History: a year at a time, back two years (the server sums it). */
+export const PAYMENT_HISTORY_LIMITS: DayLimits = { historyDays: 730, rangeDays: 366 };
+
+/** Orders › History: the same as Payments › History (the server sums it). */
+export const ORDER_HISTORY_LIMITS: DayLimits = PAYMENT_HISTORY_LIMITS;
+
 export interface DayRange {
   from: string;
   to: string;
@@ -28,25 +42,31 @@ export const isDayKey = (value: string): boolean =>
   DAY_KEY.test(value) && shiftDay(value, 0) === value;
 
 /** The earliest day staff can look at. */
-export const firstDay = (today: string): string => shiftDay(today, -HISTORY_DAYS);
+export const firstDay = (today: string, limits: DayLimits = DEFAULT_LIMITS): string =>
+  shiftDay(today, -limits.historyDays);
 
-const clampDay = (key: string, today: string) =>
-  key > today ? today : key < firstDay(today) ? firstDay(today) : key;
+const clampDay = (key: string, today: string, limits: DayLimits) =>
+  key > today ? today : key < firstDay(today, limits) ? firstDay(today, limits) : key;
 
 /**
  * The range from the address (?from=&to=), made valid: a missing or wrong day follows the other
  * (today with neither), days past today or too far back move in, the wrong way round swaps,
  * and one too long is cut to the last RANGE_DAYS.
  */
-export function parseDayRange(from: string | null, to: string | null, today: string): DayRange {
+export function parseDayRange(
+  from: string | null,
+  to: string | null,
+  today: string,
+  limits: DayLimits = DEFAULT_LIMITS,
+): DayRange {
   const day = (value: string | null) =>
-    value && isDayKey(value) ? clampDay(value, today) : undefined;
+    value && isDayKey(value) ? clampDay(value, today, limits) : undefined;
   let start = day(from);
   let end = day(to);
   end ??= start ?? today;
   start ??= end;
   if (start > end) [start, end] = [end, start];
-  const earliest = shiftDay(end, -(RANGE_DAYS - 1));
+  const earliest = shiftDay(end, -(limits.rangeDays - 1));
   return { from: start < earliest ? earliest : start, to: end };
 }
 
@@ -58,10 +78,11 @@ export function parseDayRange(from: string | null, to: string | null, today: str
 export function rangeProblem(
   range: DayRange,
   today: string,
+  limits: DayLimits = DEFAULT_LIMITS,
 ): 'outside' | 'order' | 'tooLong' | null {
-  if (range.to > today || range.from < firstDay(today)) return 'outside';
+  if (range.to > today || range.from < firstDay(today, limits)) return 'outside';
   if (range.from > range.to) return 'order';
-  if (range.to > shiftDay(range.from, RANGE_DAYS - 1)) return 'tooLong';
+  if (range.to > shiftDay(range.from, limits.rangeDays - 1)) return 'tooLong';
   return null;
 }
 

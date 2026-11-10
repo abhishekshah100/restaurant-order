@@ -18,7 +18,7 @@ import type {
   StaffPermission,
   StaffScope,
 } from '@/types/admin';
-import type { AtTableMethodKey, OrderMode, PaymentMethodId } from '@/types/branch';
+import type { AtTableMethodKey, BranchImage, OrderMode, PaymentMethodId } from '@/types/branch';
 import type { BranchDetails, BranchSettings, BranchSettingsChoices } from '@/types/branchSettings';
 import type { LineConfig } from '@/types/cart';
 import type {
@@ -33,7 +33,14 @@ import type {
   Price,
   SpiceLevel,
 } from '@/types/menu';
-import type { DeliveryAddress, Order, RefundReason, WaiveReason } from '@/types/order';
+import type {
+  DeliveryAddress,
+  Order,
+  OrderStatus,
+  PaymentStatus as OrderPaymentStatus,
+  RefundReason,
+  WaiveReason,
+} from '@/types/order';
 import type { AutoOffer, PromoDescriptionKey } from '@/types/promotion';
 import type { BillScope, ServiceRequest, WaiterReason } from '@/types/service';
 import type { GuestSession, SessionStart } from '@/types/session';
@@ -548,6 +555,8 @@ export interface DishInput {
   allergens: Allergen[];
   /** Absent: no picture. */
   image?: DishImage;
+  /** The small copy uploaded with a new picture (rows, cart, orders); absent: the picture. */
+  thumb?: DishImage;
   availability: DishAvailability;
 }
 
@@ -578,18 +587,293 @@ export interface UpdateCategoriesRequest {
 }
 
 /**
- * `POST /admin/branches/:branchId/menu/images` — a dish picture, resized by the app (JPEG, at most
- * 640 px). 201 → `{ image }` to put on the dish. Errors: 400 (not a JPEG / PNG / WebP data URL,
+ * `POST /admin/branches/:branchId/menu/images` — a dish picture, resized by the app (WebP or
+ * JPEG, at most 640 px), with its small copy. 201 → `{ image, thumb }` to put on the dish. Errors: 400 (not a JPEG / PNG / WebP data URL,
  * or too large). Mock: the data URL itself is the picture's `src`.
  */
 export interface ImageUploadRequest {
   dataUrl: string;
   width: number;
   height: number;
+  /** A dish picture's small copy (short side 192 px), kept as its thumbnail. */
+  thumb?: { dataUrl: string; width: number; height: number };
 }
 
 export interface ImageUploadResponse {
   image: DishImage;
+  /** The small copy, when one was sent: saved with the dish as its `thumb`. */
+  thumb?: DishImage;
+}
+
+/**
+ * `POST /admin/branches/:branchId/settings/image` — the branch photo, resized by the app (JPEG,
+ * same body as a dish picture). 201 → `{ image }` to save with Settings › Details. Needs
+ * `branch.settings.manage`. Mock: the data URL itself is the photo's `src`.
+ */
+export interface BranchImageUploadResponse {
+  image: BranchImage;
+}
+
+/**
+ * `GET /branches/:branchId/menu/suggestions` — what the search screen shows before the guest
+ * types: staff's picks first, then (when auto-fill is on) what was ordered. "Trending tonight":
+ * dishes ordered most today, then this week (with a photo); "Popular at…": the names of dishes
+ * ordered most in 30 days. Dishes that can't be ordered now are left out. Mock: staff's picks
+ * only (it doesn't count orders).
+ */
+export interface SearchSuggestions {
+  /** Dish slugs. */
+  trending: string[];
+  /** Search words. */
+  popular: string[];
+}
+
+export type TrendingSource = 'pinned' | 'today' | 'week';
+export type PopularSource = 'word' | 'orders';
+
+/**
+ * `GET /admin/branches/:branchId/menu/suggestions` (`menu.manage`) — the same, with where each
+ * suggestion came from (Admin › Menu › Search suggestions), and staff's pins and words.
+ */
+export interface AdminSearchSuggestions {
+  trending: {
+    auto: boolean;
+    /** Pinned dishes; `showing: false` while guests can't order it (sold out, off today). */
+    pins: { slug: string; name: string; showing: boolean }[];
+    showing: { slug: string; name: string; source: TrendingSource; count?: number }[];
+  };
+  popular: {
+    auto: boolean;
+    words: string[];
+    showing: { term: string; source: PopularSource; slug?: string; count?: number }[];
+  };
+}
+
+/**
+ * `PATCH /admin/branches/:branchId/menu/suggestions` — replaces the pins (up to 4 live dishes),
+ * the words (up to 6, 1–40 characters, each once) and the auto-fill switches. 200 →
+ * AdminSearchSuggestions. 400 `{ field, reason }` otherwise.
+ */
+export interface UpdateSearchSuggestionsRequest {
+  trending: { auto: boolean; pins: string[] };
+  popular: { auto: boolean; words: string[] };
+}
+
+/** One payment or refund in Payments › History. */
+export interface HistoryTransaction {
+  /** "UDY-030-T2". */
+  id: string;
+  /** The order's code. */
+  orderId: string;
+  mode: OrderMode;
+  table?: number;
+  customerName: string;
+  kind: 'payment' | 'refund';
+  method: string;
+  channel: 'online' | 'inPerson';
+  amount: number;
+  tip?: number;
+  waived?: number;
+  waiveReason?: string;
+  by?: string;
+  transactionRef?: string;
+  reason?: string;
+  status?: 'started' | 'done';
+  /** ISO. */
+  at: string;
+}
+
+/**
+ * `GET /admin/branches/:branchId/payments/history?from=&to=&kind=&channel=&method=&q=&cursor=&limit=`
+ * (`payments.collect` or `reports.view`) — Payments › History: the days' sums (up to a year at a
+ * time, back two years; the last 7 days without any; each payment on the day it was taken),
+ * worked out on the server, and a page of the transactions (newest first; `next` for more).
+ */
+export interface PaymentHistoryResponse {
+  from: string;
+  to: string;
+  summary: {
+    collected: number;
+    refunds: number;
+    refundsPending: number;
+    net: number;
+    tips: number;
+    waived: number;
+    payments: number;
+    refundCount: number;
+    online: number;
+    inPerson: number;
+    /** Cash taken (with tips) less cash refunds (not the drawer: no float, no paid in or out). */
+    cashTaken: number;
+    byMethod: {
+      method: string;
+      channel: 'online' | 'inPerson';
+      count: number;
+      amount: number;
+      refunds: number;
+      tips: number;
+    }[];
+  };
+  transactions: HistoryTransaction[];
+  matching: number;
+  next?: string;
+}
+
+export interface PaymentHistoryQuery {
+  from: string;
+  to: string;
+  kind?: 'all' | 'payments' | 'refunds';
+  channel?: 'all' | 'online' | 'inPerson';
+  method?: string;
+  q?: string;
+  cursor?: string;
+  limit?: number;
+}
+
+/** One order in Orders › History: what its row shows (opening it reads the whole order). */
+export interface HistoryOrder {
+  /** The order's code ("BLR-031"). */
+  id: string;
+  /** The day's token ("#12"), when it has one. */
+  token?: number;
+  mode: OrderMode;
+  table?: number;
+  customerName: string;
+  status: OrderStatus;
+  cancelReason?: CancelReason;
+  cancelledBy?: 'guest' | 'restaurant';
+  /** Items made (rounds taken back and items the kitchen couldn't make left out). */
+  items: number;
+  total: number;
+  paymentStatus: OrderPaymentStatus;
+  /** Still to pay (0 once paid or cancelled). */
+  due: number;
+  /** The payment method the guest chose. */
+  method: string;
+  /** The staff member who took it at the table; none when the guest ordered on their phone. */
+  takenBy?: string;
+  /** ISO. */
+  placedAt: string;
+}
+
+export type OrderHistoryStatus = 'all' | 'completed' | 'unpaid' | 'cancelled';
+
+/**
+ * `GET /admin/branches/:branchId/orders/history?from=&to=&status=&mode=&q=&cursor=&limit=`
+ * (READERS.orders) — Orders › History: the days' sums (up to a year at a time, back two years;
+ * the last 7 days without any; each order on the day it was placed), worked out on the server,
+ * and a page of the orders (newest first, 30 at a time; `next` for more). The filters narrow the
+ * list, never the sums.
+ */
+export interface OrderHistoryResponse {
+  from: string;
+  to: string;
+  summary: {
+    orders: number;
+    completed: number;
+    cancelled: number;
+    /** Not handed over and not cancelled. */
+    inProgress: number;
+    /** Billed on the orders not cancelled. */
+    sales: number;
+    averageBill: number;
+    unpaidOrders: number;
+    /** Still to collect on those days' orders. */
+    unpaid: number;
+    byMode: { mode: OrderMode; orders: number; sales: number }[];
+  };
+  orders: HistoryOrder[];
+  matching: number;
+  next?: string;
+}
+
+export interface OrderHistoryQuery {
+  from: string;
+  to: string;
+  status?: OrderHistoryStatus;
+  mode?: 'all' | OrderMode;
+  q?: string;
+  cursor?: string;
+  limit?: number;
+}
+
+/** What became of a request: dealt with, never answered (it lapsed after 30 minutes), or open. */
+export type RequestOutcome = 'resolved' | 'lapsed' | 'open';
+
+export type HistoryServiceRequest = AdminServiceRequest & {
+  outcome: RequestOutcome;
+  /** Minutes from the request to the first answer (on the way, or done); none unanswered. */
+  answeredInMinutes?: number;
+};
+
+/**
+ * `GET /admin/branches/:branchId/service-requests/history?from=&to=&kind=` (whoever sees the
+ * service board) — Requests › History: the requests made on those days (the branch's calendar
+ * days, up to 31 at a time, back a year; today without any), newest first, with who answered and
+ * how fast, and a summary. One a guest took back isn't kept. Mock: every request this device
+ * kept, by day.
+ */
+export interface RequestHistoryResponse {
+  from: string;
+  to: string;
+  requests: HistoryServiceRequest[];
+  summary: {
+    total: number;
+    resolved: number;
+    lapsed: number;
+    /** Average minutes to the first answer; null when none was answered. */
+    averageAnswerMinutes: number | null;
+  };
+}
+
+/**
+ * `GET /sessions/:id/wifi` — the branch's guest Wi-Fi for a guest seated at a table (the
+ * password is for them only): null where there's none, or for takeaway and delivery.
+ */
+export interface SessionWifiResponse {
+  wifi: { name: string; password: string } | null;
+}
+
+/** Why a dish is suggested in the cart: pinned by staff, ordered together, popular, or the menu. */
+export type CartSuggestionSource = 'pinned' | 'together' | 'popular' | 'menu';
+
+export interface CartSuggestion {
+  slug: string;
+  name: string;
+  source: CartSuggestionSource;
+  /** "together": the cart dish it's most often ordered with (its name). */
+  withName?: string;
+  /** "together": orders with both (30 days); "popular": times ordered (30 days). */
+  count?: number;
+}
+
+/**
+ * `GET /branches/:branchId/menu/cart-suggestions?dishes=a,b` — "Goes well with your order": up
+ * to 3 dishes, never one in the cart or one that can't be ordered. Staff's pins first, then
+ * dishes ordered together with the cart's (in 3+ orders, 30 days), then the most ordered, then
+ * the menu, each from the chosen categories. None when switched off. Mock: pins, then the menu.
+ */
+export interface CartSuggestionsResponse {
+  dishes: CartSuggestion[];
+}
+
+/**
+ * `GET /admin/branches/:branchId/menu/cart-suggestions[?preview=slug]` (`menu.manage`) — the
+ * switch, the categories (codes; none: any the cart has nothing from) and the pins (up to 3), and
+ * what a guest with `preview` in the cart would see (shown even while switched off).
+ */
+export interface AdminCartSuggestions {
+  enabled: boolean;
+  categories: string[];
+  pins: { slug: string; name: string; showing: boolean }[];
+  preview: { dish: string | null; dishes: CartSuggestion[] };
+}
+
+/** `PATCH /admin/branches/:branchId/menu/cart-suggestions[?preview=slug]` → AdminCartSuggestions. */
+export interface UpdateCartSuggestionsRequest {
+  enabled: boolean;
+  categories: string[];
+  pins: string[];
 }
 
 /**

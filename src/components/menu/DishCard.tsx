@@ -14,7 +14,7 @@ import styles from './DishCard.module.css';
 export interface DishCardProps {
   dish: Dish;
   /** Load eagerly (above the fold). */
-  priority?: boolean;
+  eager?: boolean;
   /** Inside "Chef's picks" the chef's-pick tag says nothing new, so it's hidden. */
   hideChefTag?: boolean;
 }
@@ -40,7 +40,7 @@ function CardTag({ dish, hideChefTag }: { dish: Dish; hideChefTag?: boolean }) {
  * one-line description, and a price row with a compact ADD / stepper.
  * The whole card opens the dish; the ADD control stays separately operable.
  */
-export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: DishCardProps) {
+export const DishCard = memo(function DishCard({ dish, eager, hideChefTag }: DishCardProps) {
   const image = dishImage(dish, 'card');
   const price = startingPrice(dish);
   // While an offer is on, its badge takes the photo's tag spot.
@@ -56,7 +56,8 @@ export const DishCard = memo(function DishCard({ dish, priority, hideChefTag }: 
             width={image.width}
             height={image.height}
             sizes="(min-width: 1024px) 300px, 70vw"
-            priority={priority}
+            loading={eager ? 'eager' : 'lazy'}
+            fetchPriority={eager ? 'high' : undefined}
           />
         )}
         <span className={styles.tag}>

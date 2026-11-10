@@ -18,6 +18,9 @@ import { modePayments } from '@/lib/fulfilment';
 import { isOnlineMethod, onlineMethod, type Approval } from '@/lib/payments';
 import { formatCountdown } from '@/lib/format';
 import styles from './Processing.module.css';
+import { BillLines } from '@/components/cart/BillLines';
+import type { Bill } from '@/lib/pricing';
+import { PaymentTestControls } from './PaymentTestControls';
 
 type View = 'processing' | 'failed' | 'cancelled';
 
@@ -116,6 +119,7 @@ export function ProcessingStep() {
       <main id="main" className={cx(styles.body, view !== 'processing' && styles.grow)}>
         {view === 'processing' && (
           <ProcessingView
+            bill={bill}
             total={total}
             summary={summary}
             approval={approval}
@@ -193,12 +197,14 @@ function useApprovalVars({ method }: Approval) {
 }
 
 function ProcessingView({
+  bill,
   total,
   summary,
   approval,
   remaining,
   foot,
 }: {
+  bill: Bill;
   total: string;
   summary: string;
   approval: Approval;
@@ -226,6 +232,7 @@ function ProcessingView({
           <span className={styles.amount}>{total}</span>
           <span className="t-small c3 hide-mobile">{summary}</span>
         </div>
+        <BillLines bill={bill} />
         <hr className={styles.hr} />
         <ol className={styles.steps} aria-label={t('processing.progressLabel')}>
           <li className={cx(styles.step, styles.stepOk)}>
@@ -446,14 +453,7 @@ function ProcessingFoot({ disabled, onCancel, onSuccess, onFailure }: Processing
       <Button variant="ghost" onClick={onCancel} disabled={disabled}>
         {t('processing.cancel')}
       </Button>
-      <div className={styles.proto}>
-        <button type="button" className={styles.protoLink} onClick={onSuccess} disabled={disabled}>
-          {t('processing.protoSuccess')}
-        </button>
-        <button type="button" className={styles.protoLink} onClick={onFailure} disabled={disabled}>
-          {t('processing.protoFailure')}
-        </button>
-      </div>
+      <PaymentTestControls disabled={disabled} onApprove={onSuccess} onDecline={onFailure} />
     </>
   );
 }

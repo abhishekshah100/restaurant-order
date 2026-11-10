@@ -15,7 +15,10 @@ import { useServiceRequest } from '@/context/ServiceRequestContext';
 import { cx } from '@/lib/cx';
 import { orderPath } from '@/lib/orders';
 import type { HelpTopic } from '@/types/help';
+import { billFor } from '@/lib/service';
+import { useBranchTimes } from '@/hooks/useBranchTimes';
 import { SocialFollow } from './SocialFollow';
+import { WifiCard } from './WifiCard';
 import { useTableVisit } from './useTableVisit';
 import styles from './HelpView.module.css';
 
@@ -95,9 +98,12 @@ export function HelpView() {
   const t = useContent('service');
   const { clock } = useRegion();
   const { mode } = useVisit();
-  const { table, latest } = useTableVisit();
+  const { table, latest, orders, sessionId, hydrated } = useTableVisit();
+  // Nothing left to pay at the table (or nothing ordered yet): no bill to ask for.
+  const billDue = hydrated && billFor(orders, 'table', sessionId).balance > 0;
   const { openRequest, requests } = useServiceRequest();
   const topics = useHelpTopics();
+  const faqTopic = useFaqTopic(topics.faqs);
   const [topicId, setTopicId] = useState<HelpTopic['id']>('payment');
   const [topicOpen, setTopicOpen] = useState(false);
   const showTopic = (id: HelpTopic['id']) => {
@@ -157,34 +163,38 @@ export function HelpView() {
               <Icon name="chev" className={cx(styles.actionChev, 'hide-mobile')} />
             </button>
 
-            <button
-              type="button"
-              className={cx(styles.action, styles.actionSand)}
-              onClick={() => openRequest('bill')}
-            >
-              <span className={cx(styles.actionIcon, styles.dark)} aria-hidden="true">
-                <Icon name="receipt" />
-              </span>
-              <span className={styles.actionText}>
-                <span className={styles.actionTitle}>
-                  <span className="hide-desktop">{t('shared.requestBill')}</span>
-                  <span className="hide-mobile">{t('shared.requestTheBill')}</span>
+            {billDue && (
+              <button
+                type="button"
+                className={cx(styles.action, styles.actionSand)}
+                onClick={() => openRequest('bill')}
+              >
+                <span className={cx(styles.actionIcon, styles.dark)} aria-hidden="true">
+                  <Icon name="receipt" />
                 </span>
-                <span className={styles.actionSub}>
-                  {requests.bill ? (
-                    <span className={styles.pending}>
-                      {t('shared.requestedAt', { time: clock.dateTime(requests.bill.requestedAt) })}
-                    </span>
-                  ) : (
-                    <>
-                      <span className="hide-desktop">{t('help.bill.subMobile', { table })}</span>
-                      <span className="hide-mobile">{t('help.bill.subDesktop')}</span>
-                    </>
-                  )}
+                <span className={styles.actionText}>
+                  <span className={styles.actionTitle}>
+                    <span className="hide-desktop">{t('shared.requestBill')}</span>
+                    <span className="hide-mobile">{t('shared.requestTheBill')}</span>
+                  </span>
+                  <span className={styles.actionSub}>
+                    {requests.bill ? (
+                      <span className={styles.pending}>
+                        {t('shared.requestedAt', {
+                          time: clock.dateTime(requests.bill.requestedAt),
+                        })}
+                      </span>
+                    ) : (
+                      <>
+                        <span className="hide-desktop">{t('help.bill.subMobile', { table })}</span>
+                        <span className="hide-mobile">{t('help.bill.subDesktop')}</span>
+                      </>
+                    )}
+                  </span>
                 </span>
-              </span>
-              <Icon name="chev" className={cx(styles.actionChev, 'hide-mobile')} />
-            </button>
+                <Icon name="chev" className={cx(styles.actionChev, 'hide-mobile')} />
+              </button>
+            )}
           </div>
         )}
 
@@ -228,14 +238,22 @@ export function HelpView() {
               </li>
             </ul>
           </section>
-          <div className={styles.side}>
-            <SocialFollow />
+          <div className={styles.sideCol}>
+            <WifiCard />
+            {/* Hidden when the restaurant has no social links (the card renders nothing). */}
+            <div className={styles.side}>
+              <SocialFollow />
+            </div>
           </div>
         </div>
       </main>
       <BottomNav />
       {topicOpen && (
-        <HelpTopicDialog topic={topics[topicId]} open onClose={() => setTopicOpen(false)} />
+        <HelpTopicDialog
+          topic={topicId === 'faqs' ? faqTopic : topics[topicId]}
+          open
+          onClose={() => setTopicOpen(false)}
+        />
       )}
     </Page>
   );
@@ -262,4 +280,36 @@ function RowContent({
       <Icon name="chev" size="sm" className={styles.rowChev} />
     </>
   );
+}
+
+/**
+ * "Allergens & FAQs" for this branch: staff's own questions (Settings › Help page; the help.json
+ * ones stand in without the server's), then today's hours and the address from its settings, so
+ * they're never out of date.
+ */
+function useFaqTopic(base: HelpTopic): HelpTopic {
+  const branch = useBranch();
+  const t = useContent('service');
+  const times = useBranchTimes(branch);
+  const own = branch.help
+    ? branch.help.faqs.map((f) => ({ heading: f.question, body: f.answer }))
+    : base.sections;
+  return {
+    ...base,
+    sections: [
+      ...own,
+      ...(times
+        ? [
+            {
+              heading: t('faq.hours'),
+              body: t('faq.hoursBody', {
+                hours: times.hoursToday,
+                lastOrders: times.lastOrdersNote,
+              }),
+            },
+          ]
+        : []),
+      { heading: t('faq.address'), body: branch.address },
+    ],
+  };
 }

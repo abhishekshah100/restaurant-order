@@ -8,7 +8,7 @@ import { useBranchOrders, useBranchService, useContent } from '@/api/hooks';
 import { Button, Chip, EmptyState, Icon, SearchField } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { paymentsPath } from '@/lib/adminNav';
+import { paymentHistoryPath, paymentsPath } from '@/lib/adminNav';
 import { dueOn } from '@/lib/adminOrders';
 import {
   PAYMENTS_VIEWS,
@@ -19,18 +19,16 @@ import {
   ledgerEntries,
   parsePaymentsView,
   type ChannelFilter,
-  type LedgerEntry,
 } from '@/lib/adminPayments';
 import type { Order } from '@/types/order';
 import type { BillRequest } from '@/types/service';
-import { inDayRange, isTodayOnly, ordersFilter, parseDayRange, shiftDay } from '@/lib/dayRange';
-import { downloadXlsx, toXlsx } from '@/lib/xlsx';
-import { DateRangeFilter } from '../DateRangeFilter';
+import { inDayRange, ordersFilter, shiftDay } from '@/lib/dayRange';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { CollectTarget } from './CollectDialog';
 import { DueCard } from './DueCard';
 import { LedgerRow } from './LedgerRow';
 import { MethodBreakdown } from './MethodBreakdown';
+import { useLedgerExport } from './paymentsExport';
 import { usePaymentPrint } from './PaymentPrint';
 import { TakingsSummary } from './TakingsSummary';
 import { usePaymentText } from './usePaymentText';
@@ -56,17 +54,14 @@ const RefundDialog = dynamic(() => import('./RefundDialog').then((m) => m.Refund
 /** Ages ("4 min ago") move on this often. */
 const AGE_REFRESH_MS = 20_000;
 
-/** A calendar day as the branch writes dates: "2026-10-20" → "20 Oct 2026". */
-const dayLabelOf = (date: (at: string) => string) => (key: string) => date(`${key}T12:00:00Z`);
-
 /** The collect dialog follows the latest data: an order by id, a table by number. */
 type CollectKey = { kind: 'order'; id: string } | { kind: 'table'; table: number };
 
 const CHANNELS: readonly ChannelFilter[] = ['all', 'online', 'inPerson'];
 
 /**
- * /admin/dashboard/payments/: the branch's money today (or on the days picked, ?from=&to=, up to
- * a year back), for every member of staff. Today's
+ * /admin/dashboard/payments/: the branch's money today, for every member of staff (earlier days
+ * are on Payments › History). Today's
  * takings (net, online and in person, to collect, tips, average bill, refunds) with the day
  * report and an Excel export; by payment method with the cash in the drawer; and three views (in
  * the address): To collect (open bills by table, bill requests first: collect in full, split or
@@ -81,10 +76,9 @@ export function PaymentsBoard() {
   const { branch, clock } = useAdminWorkspace();
   const now = useNow(AGE_REFRESH_MS);
   const today = clock.dayKey(now ?? new Date());
-  const days = parseDayRange(useQueryParam('from'), useQueryParam('to'), today);
-  const onToday = isTodayOnly(days, today);
-  // Days up to today keep being polled; past ones don't change on their own.
-  const live = days.to === today;
+  // Today only: earlier days are on Payments › History.
+  const days = { from: today, to: today };
+  const live = true;
   // Up to today, every bill still to pay however old: nothing unpaid drops off To collect.
   const orders = useBranchOrders(
     branch.id,
@@ -101,21 +95,12 @@ export function PaymentsBoard() {
   const [collectKey, setCollectKey] = useState<CollectKey | null>(null);
   const [refundId, setRefundId] = useState<string | null>(null);
   const print = usePaymentPrint();
-  const dayLabel = dayLabelOf(clock.date);
+  const exportLedger = useLedgerExport();
 
-  const goTo = (next: (typeof PAYMENTS_VIEWS)[number], range = days) =>
-    router.replace(paymentsPath(next, isTodayOnly(range, today) ? undefined : range), {
-      scroll: false,
-    });
-  /** The days, as the summary's heading and the report write them. */
-  const period = onToday
-    ? t('adminPayments.today.eyebrow', { date: clock.date(now ?? new Date()) })
-    : days.from === days.to
-      ? t('adminPayments.today.eyebrowDay', { date: dayLabel(days.from) })
-      : t('adminPayments.today.eyebrowRange', {
-          from: dayLabel(days.from),
-          to: dayLabel(days.to),
-        });
+  const goTo = (next: (typeof PAYMENTS_VIEWS)[number]) =>
+    router.replace(paymentsPath(next), { scroll: false });
+  /** Today, as the summary's heading and the report write it. */
+  const period = t('adminPayments.today.eyebrow', { date: clock.date(now ?? new Date()) });
 
   let content;
   if (orders.data) {
@@ -160,60 +145,7 @@ export function PaymentsBoard() {
     const refundOrder = byId(refundId) ?? null;
     const openOrder = byId(openId);
 
-    const exportCsv = () => {
-      const c = (key: Parameters<typeof t>[0]) => t(key);
-      const workbook = toXlsx(
-        t('adminPayments.title'),
-        [...entries].reverse(),
-        [
-          c('adminPayments.report.columns.time'),
-          c('adminPayments.report.columns.order'),
-          c('adminPayments.report.columns.where'),
-          c('adminPayments.report.columns.guest'),
-          c('adminPayments.report.columns.kind'),
-          c('adminPayments.report.columns.method'),
-          c('adminPayments.report.columns.channel'),
-          c('adminPayments.report.columns.amount'),
-          c('adminPayments.report.columns.tip'),
-          c('adminPayments.report.columns.left'),
-          c('adminPayments.report.columns.leftReason'),
-          c('adminPayments.report.columns.by'),
-          c('adminPayments.report.columns.ref'),
-          c('adminPayments.report.columns.reason'),
-          c('adminPayments.report.columns.status'),
-        ],
-        (e: LedgerEntry) => [
-          clock.dateTime(e.at),
-          e.order.id,
-          text.where(e.order),
-          e.order.customerName,
-          t(e.kind === 'refund' ? 'adminPayments.entry.refund' : 'adminPayments.entry.payment'),
-          text.methodName(e.method),
-          t(e.channel === 'online' ? 'adminPayments.entry.online' : 'adminPayments.entry.inPerson'),
-          e.kind === 'refund' ? -e.amount : e.amount,
-          e.tip ?? '',
-          e.waived ?? '',
-          e.waiveReason ? t(`adminPayments.entry.waiveReasons.${e.waiveReason}`) : '',
-          e.by ?? '',
-          e.transactionRef ?? '',
-          e.reason ? t(`adminPayments.entry.reasons.${e.reason}`) : '',
-          e.kind === 'refund'
-            ? t(
-                e.status === 'started'
-                  ? 'adminPayments.entry.refundStarted'
-                  : 'adminPayments.entry.refundDone',
-              )
-            : '',
-        ],
-      );
-      downloadXlsx(
-        workbook,
-        t('adminPayments.actions.exportFile', {
-          branch: branch.id,
-          date: onToday ? today : days.from === days.to ? days.from : `${days.from}_${days.to}`,
-        }),
-      );
-    };
+    const exportCsv = () => exportLedger(entries, today);
 
     const ordersOf = (target: CollectTarget): Order[] =>
       target.kind === 'order' ? [target.order] : target.orders;
@@ -425,12 +357,11 @@ export function PaymentsBoard() {
     <div className={styles.page}>
       {/* The bar above already names the page; the heading is for screen readers. */}
       <h1 className="visually-hidden">{t('adminPayments.title')}</h1>
-      <DateRangeFilter
-        id="payments-days"
-        range={days}
-        today={today}
-        onChange={(range) => goTo(view, range)}
-      />
+      <div className={styles.toolbar}>
+        <Button href={paymentHistoryPath()} variant="secondary" size="sm" iconStart="history">
+          {t('adminPayments.historyButton')}
+        </Button>
+      </div>
       {content}
     </div>
   );

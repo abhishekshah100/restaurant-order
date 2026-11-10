@@ -65,7 +65,12 @@
     "popular": "Popular at your table tonight"
   },
   "suggestions": {
-    "title": "Goes well with your order"
+    "title": "Goes well with your order",
+    "reason": {
+      "together": "Often ordered with {dish}",
+      "pinned": "Our pick",
+      "popular": "Popular here"
+    }
   },
   "kitchenNote": {
     "add": "Add a note for the kitchen",
@@ -74,6 +79,8 @@
     "placeholder": "e.g. Serve starters first"
   },
   "priceSummary": {
+    "noTax": "No tax charged",
+    "paidEarlier": "Paid earlier",
     "itemTotal": "Item total",
     "itemTotalWithCount": "Item total ({count})",
     "lines": {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { isApiError } from '@/api/client';
 import { useContent } from '@/api/hooks';
 import { useChangeOwnPassword } from '@/api/mutations';
-import { Banner, Button, Input } from '@/components/ui';
+import { Banner, Button, Icon, Input } from '@/components/ui';
 import { isPasswordLongEnough } from '@/lib/staffPassword';
 import styles from './AdminLogin.module.css';
 
@@ -53,25 +53,21 @@ export function NewPasswordStep({
         </Banner>
       )}
       <form className={styles.form} method="post" onSubmit={submit} noValidate>
-        <Input
+        <PasswordInput
           id="admin-new-password"
-          type="password"
-          icon="lock"
-          autoComplete="new-password"
           label={t('adminLogin.newPassword.password')}
+          toggleLabel={t('adminLogin.showPassword')}
           value={password}
           error={tried ? problem : undefined}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={setPassword}
         />
-        <Input
+        <PasswordInput
           id="admin-new-password-again"
-          type="password"
-          icon="lock"
-          autoComplete="new-password"
           label={t('adminLogin.newPassword.confirm')}
+          toggleLabel={t('adminLogin.showPassword')}
           value={again}
           error={tried && !problem ? mismatch : undefined}
-          onChange={(event) => setAgain(event.target.value)}
+          onChange={setAgain}
         />
         <Button
           type="submit"
@@ -84,5 +80,48 @@ export function NewPasswordStep({
         </Button>
       </form>
     </>
+  );
+}
+
+/** A new-password input with the same show/hide eye as the sign-in form. */
+function PasswordInput({
+  id,
+  label,
+  toggleLabel,
+  value,
+  error,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  toggleLabel: string;
+  value: string;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className={styles.passwordField}>
+      <Input
+        id={id}
+        type={visible ? 'text' : 'password'}
+        icon="lock"
+        autoComplete="new-password"
+        label={label}
+        value={value}
+        error={error}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <button
+        className={styles.passwordToggle}
+        type="button"
+        aria-label={toggleLabel}
+        aria-pressed={visible}
+        aria-controls={id}
+        onClick={() => setVisible((shown) => !shown)}
+      >
+        <Icon name={visible ? 'eyeoff' : 'eye'} size="sm" />
+      </button>
+    </div>
   );
 }

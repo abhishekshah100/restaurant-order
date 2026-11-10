@@ -176,3 +176,57 @@ export const extrasMinor = (bill: Bill) =>
 /** Sum of the tax rates (not the service charge), for the "GST {rate}% + round off" label. */
 export const totalTaxRate = (tax: TaxConfig) =>
   formatRate(tax.lines.reduce((sum, l) => sum + l.rateBp, 0));
+
+/** A charge line's identity across bills: the same charge at the same rate is one line. */
+const chargeKey = (l: BillLine) => `${l.id}|${l.labelKey}|${l.vars.rate}`;
+
+function mergeLines(groups: readonly (readonly BillLine[])[]): BillLine[] {
+  const merged = new Map<string, BillLine>();
+  for (const lines of groups) {
+    for (const line of lines) {
+      const key = chargeKey(line);
+      const seen = merged.get(key);
+      if (!seen) {
+        merged.set(key, { ...line, ...(line.parts ? { parts: [...line.parts] } : {}) });
+        continue;
+      }
+      const parts = line.parts && seen.parts ? mergeLines([seen.parts, line.parts]) : seen.parts;
+      merged.set(key, {
+        ...seen,
+        amountMinor: seen.amountMinor + line.amountMinor,
+        ...(parts ? { parts } : {}),
+      });
+    }
+  }
+  return [...merged.values()];
+}
+
+/**
+ * Several orders' bills as one (a table's bill): items, discounts, delivery fees and round offs
+ * added up; the same charge at the same rate (service charge 10%, CGST 2.5%) on one line.
+ */
+export function combineBills(bills: readonly Bill[]): Bill {
+  const sum = (pick: (b: Bill) => number) => bills.reduce((s, b) => s + pick(b), 0);
+  const discounts = new Map<string, BillDiscount>();
+  for (const d of bills.flatMap((b) => b.discounts)) {
+    const key = d.kind === 'offer' ? `offer|${d.id}|${d.name ?? ''}` : `code|${d.code}`;
+    const seen = discounts.get(key);
+    discounts.set(key, seen ? { ...seen, amountMinor: seen.amountMinor + d.amountMinor } : d);
+  }
+  const fees = bills.map((b) => b.deliveryFeeMinor).filter((f): f is number => f !== null);
+  const roundOffMinor = sum((b) => b.roundOffMinor);
+  return {
+    itemCount: sum((b) => b.itemCount),
+    itemTotal: sum((b) => b.itemTotal),
+    itemTotalMinor: sum((b) => b.itemTotalMinor),
+    discounts: [...discounts.values()],
+    discountMinor: sum((b) => b.discountMinor),
+    lines: mergeLines(bills.map((b) => b.lines)),
+    serviceCharged: bills.some((b) => b.serviceCharged),
+    deliveryFeeMinor: fees.length > 0 ? fees.reduce((s, f) => s + f, 0) : null,
+    roundOffMinor,
+    showRoundOff: bills.some((b) => b.showRoundOff) && roundOffMinor !== 0,
+    totalMinor: sum((b) => b.totalMinor),
+    total: sum((b) => b.total),
+  };
+}

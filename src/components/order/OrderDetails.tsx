@@ -4,12 +4,13 @@ import { Suspense } from 'react';
 import { Button, StatusPill, Tag, VegMark } from '@/components/ui';
 import { PriceSummary } from '@/components/cart/PriceSummary';
 import { Breadcrumbs } from '@/components/menu/Breadcrumbs';
-import { useBillPrint } from '@/components/admin/payments/PaymentPrint';
+import { useBillDownload } from '@/components/admin/payments/PaymentPrint';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
 import type { ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
 import { cx } from '@/lib/cx';
 import { useVisitWords } from '@/hooks/useVisitLabel';
+import { useToast } from '@/context/ToastContext';
 import { amountDue, hasRounds, paidAmount } from '@/lib/lifecycle';
 import { isFinished, orderBill, orderPath, unpaidLabel } from '@/lib/orders';
 import { itemCount } from '@/lib/pricing';
@@ -108,12 +109,15 @@ function ItemRows({ items }: { items: OrderItem[] }) {
 function DetailsView({ order }: { order: Order }) {
   const branch = useBranch();
   const { money, clock } = useRegion();
-  // The invoice prints the same bill staff print from Payments.
-  const invoice = useBillPrint({ region: branch, money, clock });
+  // The invoice: the same bill staff print from Payments, saved as a PDF.
+  const invoice = useBillDownload({ region: branch, money, clock });
+  const { showToast } = useToast();
   const t = useContent('orders');
   const common = useContent('common');
   const visitWords = useVisitWords();
   const { payment } = order;
+  const bill = orderBill(order, branch);
+  const taxed = bill.lines.some((l) => l.id !== 'serviceCharge');
   const method =
     payment.detail ??
     (payment.method === 'online'
@@ -151,15 +155,18 @@ function DetailsView({ order }: { order: Order }) {
               })}
             </p>
           </div>
-          <Button
-            href={orderPath(order.id, 'track')}
-            variant="secondary"
-            size="sm"
-            iconStart="clock"
-            className={styles.track}
-          >
-            {trackLabel(order, t)}
-          </Button>
+          {/* Done with: served (or collected, delivered) and paid. Nothing left to follow. */}
+          {!(isFinished(order) && order.payment.status !== 'unpaid') && (
+            <Button
+              href={orderPath(order.id, 'track')}
+              variant="secondary"
+              size="sm"
+              iconStart="clock"
+              className={styles.track}
+            >
+              {trackLabel(order, t)}
+            </Button>
+          )}
         </div>
 
         <UnavailableNotice order={order} />
@@ -222,11 +229,9 @@ function DetailsView({ order }: { order: Order }) {
               })}
             </p>
           )}
-          <PriceSummary
-            bill={orderBill(order, branch)}
-            variant="receipt"
-            totalLabel={t('totals.total')}
-          />
+          <PriceSummary bill={bill} variant="receipt" totalLabel={t('totals.total')} />
+          {/* Billed without tax (the branch had it off): said, not just left out. */}
+          {!taxed && <p className={cx('t-small c2', styles.noTax)}>{t('details.noTax')}</p>}
         </section>
 
         <section className={cx(styles.card, styles.payment)} aria-labelledby="payment-heading">
@@ -277,7 +282,12 @@ function DetailsView({ order }: { order: Order }) {
             variant="secondary"
             block
             iconStart="receipt"
-            onClick={() => invoice.bill([order])}
+            loading={invoice.busy}
+            onClick={() =>
+              invoice
+                .download([order])
+                .catch(() => showToast(t('details.invoiceFailed'), { tone: 'error' }))
+            }
           >
             {t('details.invoice')}
           </Button>

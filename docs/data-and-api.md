@@ -85,7 +85,7 @@ What each file holds:
 
 - **`restaurant.json`**: the brand: name, tagline, `defaultBranchId` and social links.
 - **`branches.json`**: every location: name, address, contact, image, opening hours and weekly
-  `schedule`, status, table range, prep time, order modes, ordering rules, and the region rules
+  `schedule`, status, prep time, order modes, ordering rules, and the region rules
   (locale, currency, time zone, mobile rules, tax, payment methods, dietary marks). See
   [Branches and regions](#branches-and-regions).
 - **`branches/<id>/menu.json`**: categories, dishes and curated lists (`chefsPicks`,
@@ -399,8 +399,8 @@ prefetched) and applies staff changes on top:
    branch's weekly `schedule` in its time zone.
 3. **Status.** `withStatus` applies the status staff set (`branchStatus`): paused until a time,
    closed for the day, or open.
-4. **Tables.** `withTables` widens the branch's table range to every table on the saved floor plan
-   (so a new table's QR code scans) and lists out-of-service tables in `tables.outOfService`.
+4. **Tables.** A QR link's table must be on the saved floor plan; the staff branch picker shows
+   how many tables it has (`tableCount`).
 
 The result is what the mock's `GET /branches` returns. Other seeds:
 

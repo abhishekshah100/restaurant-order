@@ -101,6 +101,26 @@
   align-self: flex-start;
   margin-top: 8px;
 }
+.meal {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--success-tint);
+}
+.mealIcon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--success);
+}
+.meal p {
+  margin: 0;
+}
+.mealIncludes {
+  font-weight: 600;
+}
 .hr {
   composes: hr from '@/styles/patterns.module.css';
 }

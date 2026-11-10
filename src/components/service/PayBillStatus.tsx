@@ -2,7 +2,12 @@
 
 import { MobileHeader } from '@/components/layout/MobileHeader';
 import { SiteHeader } from '@/components/layout/SiteHeader';
-import { useContent, useRegion } from '@/api/hooks';
+import { useBranch, useContent, useRegion } from '@/api/hooks';
+import { BillLines } from '@/components/cart/BillLines';
+import { PaymentTestControls } from '@/components/checkout/PaymentTestControls';
+import { orderBill } from '@/lib/orders';
+import { combineBills } from '@/lib/pricing';
+import type { Order } from '@/types/order';
 import { Button, EmptyState, Icon, Spinner } from '@/components/ui';
 import { useFocusOnMount } from '@/hooks/useFocusOnMount';
 import { cx } from '@/lib/cx';
@@ -14,6 +19,8 @@ import type { TableLabel } from '@/hooks/useTable';
 
 interface ProcessingProps {
   payment: BillPayment;
+  /** The orders being paid, for what the amount is made of. */
+  orders: Order[];
   table: TableLabel;
   /** True while the result can't be accepted (offline, or already recorded). */
   disabled: boolean;
@@ -23,8 +30,11 @@ interface ProcessingProps {
 }
 
 /** Waiting for the guest to approve the payment (as 12 · w12, without the order steps). */
-export function PayBillProcessing({ payment, table, ...foot }: ProcessingProps) {
+export function PayBillProcessing({ payment, orders, table, ...foot }: ProcessingProps) {
   const t = useContent('service');
+  const branch = useBranch();
+  const paying = orders.filter((o) => payment.orderIds.includes(o.id));
+  const bill = combineBills(paying.map((o) => orderBill(o, branch)));
   const common = useContent('common');
   const { money } = useRegion();
   const titleRef = useFocusOnMount<HTMLHeadingElement>();
@@ -57,6 +67,9 @@ export function PayBillProcessing({ payment, table, ...foot }: ProcessingProps) 
               <span className={styles.amount}>{money.format(payment.amount)}</span>
               <span className="t-small c3 hide-mobile">{summary}</span>
             </div>
+            {paying.length > 0 && (
+              <BillLines bill={bill} paidEarlier={Math.max(0, bill.total - payment.amount)} />
+            )}
             <hr className={styles.hr} />
             <ol className={styles.steps} aria-label={t('payBill.processing.progressLabel')}>
               <li className={cx(styles.step, styles.stepOk)}>
@@ -90,7 +103,7 @@ function ProcessingFoot({
   onCancel,
   onSuccess,
   onFailure,
-}: Omit<ProcessingProps, 'payment' | 'table'>) {
+}: Omit<ProcessingProps, 'payment' | 'orders' | 'table'>) {
   const t = useContent('service');
   return (
     <>
@@ -101,14 +114,7 @@ function ProcessingFoot({
       <Button variant="ghost" onClick={onCancel}>
         {t('payBill.processing.cancel')}
       </Button>
-      <div className={styles.proto}>
-        <button type="button" className={styles.protoLink} onClick={onSuccess} disabled={disabled}>
-          {t('payBill.processing.protoSuccess')}
-        </button>
-        <button type="button" className={styles.protoLink} onClick={onFailure} disabled={disabled}>
-          {t('payBill.processing.protoFailure')}
-        </button>
-      </div>
+      <PaymentTestControls disabled={disabled} onApprove={onSuccess} onDecline={onFailure} />
     </>
   );
 }

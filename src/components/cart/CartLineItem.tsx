@@ -48,6 +48,7 @@ export function CartLineItem({ line, variant = 'page' }: CartLineItemProps) {
             width={thumb.width}
             height={thumb.height}
             sizes="80px"
+            loading="eager"
           />
         ) : (
           // No photo: a soft tile with the dish's initial instead of an empty placeholder

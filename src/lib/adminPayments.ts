@@ -85,6 +85,11 @@ export interface LedgerEntry extends PaymentTransaction {
   order: Order;
 }
 
+/** A payment or refund with just what's shown of its order (Payments › History reads these). */
+export type LedgerLine = PaymentTransaction & {
+  order: Pick<Order, 'id' | 'customerName' | 'mode' | 'table'>;
+};
+
 /** Every payment and refund on the orders, newest first. */
 export function ledgerEntries(orders: readonly Order[]): LedgerEntry[] {
   return orders

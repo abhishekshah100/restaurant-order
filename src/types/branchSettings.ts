@@ -2,6 +2,9 @@ import type {
   AtTableMethodKey,
   BillLineKey,
   BillMethodKey,
+  BranchImage,
+  HelpFaq,
+  SocialLinks,
   CheckoutMethodKey,
   CountryCode,
   DeliveryMode,
@@ -49,6 +52,12 @@ export interface BranchDetails {
    */
   orderPrefix?: string;
   orderStart?: number;
+  /**
+   * The restaurant's photo, shown in the staff branch picker and to guests choosing an outlet
+   * (POST …/settings/image first). null: none (the picker shows the short name's initial). Left
+   * out (a new branch, an older client): the branch keeps the one it has.
+   */
+  image?: BranchImage | null;
 }
 
 /**
@@ -119,8 +128,21 @@ export type DeliverySettings = Omit<DeliveryMode, 'payments'>;
 /** Settings › Pickup: everything about takeaway but its payment methods. */
 export type PickupSettings = Omit<TakeawayMode, 'payments'>;
 
+/**
+ * Settings › Help page: the guests' Help page. Wi-Fi name (also in the details) and password
+ * (only seated guests see it), the brand's social links (shared by every branch), and the
+ * branch's questions and answers. Empty: not shown.
+ */
+export interface HelpSettings {
+  wifiName: string;
+  wifiPassword: string;
+  social: SocialLinks;
+  faqs: HelpFaq[];
+}
+
 export interface BranchSettings {
   details: BranchDetails;
+  help: HelpSettings;
   services: ServicesSettings;
   hours: OpeningSchedule;
   tax: TaxSettings;

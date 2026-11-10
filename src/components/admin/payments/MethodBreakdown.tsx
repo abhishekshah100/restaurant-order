@@ -8,7 +8,13 @@ import styles from './MethodBreakdown.module.css';
  * Today's payments by method (cash, card, UPI, eSewa…), the most taken first, each with its
  * share of the day, how many and anything refunded; then the cash that should be in the drawer.
  */
-export function MethodBreakdown({ day, live = true }: { day: DaySummary; live?: boolean }) {
+export function MethodBreakdown({
+  day,
+  live = true,
+}: {
+  day: Pick<DaySummary, 'byMethod' | 'cashInDrawer'>;
+  live?: boolean;
+}) {
   const t = useContent('common');
   const { amount, methodName } = usePaymentText();
   const largest = Math.max(1, ...day.byMethod.map((m) => m.amount));

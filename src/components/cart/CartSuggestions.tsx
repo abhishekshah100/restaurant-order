@@ -1,63 +1,56 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import type { CartSuggestion } from '@/api/contracts';
+import type { ContentMap } from '@/api/queries';
+import type { Translator } from '@/api/translator';
 import { AddControl } from '@/components/menu/AddControl';
 import { VegMark } from '@/components/ui';
 import { useCart } from '@/hooks/useCart';
-import { useContent, useMenu, useRegion } from '@/api/hooks';
+import { useCartSuggestions, useContent, useMenu, useRegion } from '@/api/hooks';
 import { dishImage, isAvailable, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
 import styles from './CartSuggestions.module.css';
 
 /**
- * "Goes well with your order": three drinks or desserts that weren't in the cart when it
- * opened. A pick stays put once added (its "+" becomes a stepper), and focus moves to the
- * stepper so keyboard users aren't dropped back to the top of the page.
+ * "Goes well with your order": up to three dishes for what's in the cart, from GET
+ * …/menu/cart-suggestions (staff's picks, then what's ordered together with these dishes, then
+ * what's popular, from the categories staff chose; Admin › Menu › Suggestions › Cart). Each
+ * card says why it's there. A dish in the cart is never suggested: once added, its card makes way
+ * for the next. Until the server answers, nothing shows; if it can't be reached, the menu's own
+ * picks stand in.
  */
 export function CartSuggestions() {
   const { cartSuggestions, getDish } = useMenu();
   const { lines } = useCart();
   const t = useContent('cart');
   const { money } = useRegion();
-  const [initialSlugs] = useState(() => new Set(lines.map((l) => l.dishSlug)));
-  const listRef = useRef<HTMLUListElement>(null);
-  const picks = cartSuggestions
-    .map(getDish)
-    .filter((d): d is Dish => !!d && isAvailable(d) && !initialSlugs.has(d.slug))
-    .slice(0, 3);
-  const inCart = new Set(lines.map((l) => l.dishSlug));
-  const added = picks
-    .filter((d) => inCart.has(d.slug))
-    .map((d) => d.slug)
-    .join(' ');
-  const prevAdded = useRef(added);
+  const cart = [...new Set(lines.map((l) => l.dishSlug))];
+  const inCart = new Set(cart);
+  const { data, isError } = useCartSuggestions(cart);
 
-  useEffect(() => {
-    const before = prevAdded.current.split(' ');
-    prevAdded.current = added;
-    const fresh = added.split(' ').find((slug) => slug && !before.includes(slug));
-    if (!fresh) return;
-    // After the quick-add dialog (if any) has closed and tried to restore focus.
-    const frame = requestAnimationFrame(() => {
-      const active = document.activeElement;
-      if (active && active !== document.body) return;
-      listRef.current
-        ?.querySelector<HTMLElement>(`[data-slug="${fresh}"] [role="group"] button:last-of-type`)
-        ?.focus();
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [added]);
+  const picks: { dish: Dish; reason?: string }[] = isError
+    ? cartSuggestions
+        .map(getDish)
+        .filter((d): d is Dish => !!d && isAvailable(d) && !inCart.has(d.slug))
+        .slice(0, 3)
+        .map((dish) => ({ dish }))
+    : (data?.dishes ?? []).flatMap((s) => {
+        const dish = getDish(s.slug);
+        // The last answer stays while a changed cart's comes: drop what's now in the cart.
+        if (!dish || !isAvailable(dish) || inCart.has(s.slug)) return [];
+        return [{ dish, reason: reasonOf(s, t) }];
+      });
 
-  if (picks.length === 0) return null;
+  if (cart.length === 0 || picks.length === 0) return null;
 
   return (
     <section className={styles.root} aria-labelledby="goes-well">
       <h2 id="goes-well" className={styles.title}>
         {t('suggestions.title')}
       </h2>
-      <ul ref={listRef} className={styles.list}>
-        {picks.map((dish) => {
+      <ul className={styles.list}>
+        {picks.map(({ dish, reason }) => {
           const thumb = dishImage(dish, 'thumb');
           return (
             <li key={dish.slug} className={styles.item} data-slug={dish.slug}>
@@ -70,6 +63,8 @@ export function CartSuggestions() {
                     width={thumb.width}
                     height={thumb.height}
                     sizes="120px"
+                    // Three small cards near the top of the cart: often its largest image.
+                    loading="eager"
                   />
                 ) : (
                   <span className={styles.initial}>{dish.name.charAt(0)}</span>
@@ -79,6 +74,7 @@ export function CartSuggestions() {
                 </span>
               </span>
               <span className={styles.name}>{dish.name}</span>
+              {reason && <span className={styles.reason}>{reason}</span>}
               <span className={styles.foot}>
                 <span className={styles.price}>{money.format(startingPrice(dish))}</span>
                 <AddControl dish={dish} size="icon" className={styles.control} />
@@ -89,4 +85,12 @@ export function CartSuggestions() {
       </ul>
     </section>
   );
+}
+
+/** Why a dish is suggested, in a few words ("Often ordered with Butter Chicken"); none for the menu's. */
+function reasonOf(s: CartSuggestion, t: Translator<ContentMap['cart']>): string | undefined {
+  if (s.source === 'together') return t('suggestions.reason.together', { dish: s.withName ?? '' });
+  if (s.source === 'pinned') return t('suggestions.reason.pinned');
+  if (s.source === 'popular') return t('suggestions.reason.popular');
+  return undefined;
 }

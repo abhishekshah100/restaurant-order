@@ -205,7 +205,9 @@
     "method": "Method",
     "transactionId": "Transaction ID",
     "refund": "Refund",
+    "noTax": "No tax was charged on this order.",
     "invoice": "Get invoice",
+    "invoiceFailed": "We couldn't make the invoice. Try again.",
     "reportIssue": "Report issue"
   },
   "list": {

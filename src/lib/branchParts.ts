@@ -43,6 +43,8 @@ export const toBranchConfig = (b: Branch): BranchConfig => ({
   modes: b.modes,
   ordering: b.ordering,
   prepMinutes: b.prepMinutes,
+  // Never the Wi-Fi password: seated guests read it from their session.
+  ...(b.help ? { help: b.help } : {}),
 });
 
 /** The whole branch from its two parts (the config's modes carry their rules too). */

@@ -24,6 +24,7 @@ export function MenuDishRow({
   onEdit,
   onRecipe,
   reorder,
+  eager,
 }: {
   dish: Dish;
   /** On: back on the menu at once. Off: ask how it's off. */
@@ -35,6 +36,8 @@ export function MenuDishRow({
   onRecipe?: () => void;
   /** While reordering: move up / down instead of the switch and Edit. */
   reorder?: { first: boolean; last: boolean; onMove: (by: -1 | 1) => void };
+  /** Near the top of the page: its photo loads at once. */
+  eager?: boolean;
 }) {
   const t = useContent('common');
   const { money } = useAdminWorkspace();
@@ -72,6 +75,7 @@ export function MenuDishRow({
             width={thumb.width}
             height={thumb.height}
             sizes="56px"
+            loading={eager ? 'eager' : 'lazy'}
           />
         ) : (
           <Icon name="cutlery" size="sm" />

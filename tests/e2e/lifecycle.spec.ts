@@ -48,7 +48,7 @@ async function checkout(page: Page, phone: string, pay: 'online' | 'counter') {
   await expect(page).toHaveURL(/\/checkout\/payment\/$/);
   if (pay === 'online') {
     await visible(page, 'button', /^Pay /).click();
-    await visible(page, 'button', 'Prototype: success').click();
+    await visible(page, 'button', 'Approve payment').click();
   } else {
     await page.getByRole('radio', { name: /Pay at the counter/ }).click();
     await visible(page, 'button', /^Place order/).click();
@@ -157,7 +157,7 @@ test('change within the window updates the items and the total', async ({ page }
     "Your updated order comes to ₹607. You've paid ₹303 online, so ₹304 is left to pay.",
   );
   await dialog.getByRole('button', { name: 'Pay ₹304' }).click();
-  await dialog.getByRole('button', { name: 'Prototype: success' }).click();
+  await dialog.getByRole('button', { name: 'Approve payment' }).click();
 
   await expect(page).toHaveURL(/\/order\/track\/\?id=[A-Z]+-?\d+$/);
   await expect(

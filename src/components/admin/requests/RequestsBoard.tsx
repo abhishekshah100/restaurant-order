@@ -8,7 +8,7 @@ import { Button, Chip, EmptyState, Icon } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { useAdminName } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
-import { tablePath } from '@/lib/adminNav';
+import { ADMIN_LINKS, tablePath } from '@/lib/adminNav';
 import {
   REQUEST_FILTERS,
   handledInMinutes,
@@ -21,6 +21,9 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { RequestCard } from './RequestCard';
 import { useRequestText } from './useRequestText';
 import styles from './RequestsBoard.module.css';
+
+/** Requests › History: past requests by day (a page of its own). */
+const REQUEST_HISTORY_PATH = `${ADMIN_LINKS.requests}history/`;
 
 /** Waits ("3 min ago") move on this often. */
 const AGE_REFRESH_MS = 20_000;
@@ -145,6 +148,11 @@ export function RequestsBoard() {
     <div className={styles.page}>
       {/* The bar above already names the page; the heading is for screen readers. */}
       <h1 className="visually-hidden">{t('adminRequests.title')}</h1>
+      <div className={styles.toolbar}>
+        <Button href={REQUEST_HISTORY_PATH} variant="secondary" size="sm" iconStart="history">
+          {t('adminRequests.historyButton')}
+        </Button>
+      </div>
       {content}
     </div>
   );

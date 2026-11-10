@@ -135,7 +135,7 @@ test('Nepal delivery: zone fee, minimum order, eSewa and tracking to out for del
   await page.getByRole('radio', { name: /eSewa/ }).click();
   // 2 × 460 = 920 + fee 60 + service 92 + VAT 131.56 = 1,203.56 → रू 1,204
   await visible(page, 'Pay रू 1,204').click();
-  await visible(page, 'Prototype: success').click();
+  await visible(page, 'Approve payment').click();
   await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
   const orderId = new URL(page.url()).searchParams.get('id') ?? '';
   await expect(page.getByText('Deliver to').filter({ visible: true })).toBeVisible();

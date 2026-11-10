@@ -13,12 +13,11 @@ import type { ContentMap } from '@/api/queries';
 import { readApiJson, testBranch } from '../apiState';
 import type { Branch } from '@/types/branch';
 
-const ordersUntil = '8:30 PM';
 const t = createTranslator(readApiJson<ContentMap['status']>('content/status'));
 
 describe('status line / statusTone', () => {
   it('describes each restaurant status', () => {
-    expect(t('line.open', { time: ordersUntil })).toBe(`Open · orders until ${ordersUntil}`);
+    expect(t('line.open')).toBe('Open now');
     expect(t('line.closed')).toBe('Closed now');
     expect(t('line.paused')).toBe('Ordering paused');
   });

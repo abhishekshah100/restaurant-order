@@ -139,7 +139,11 @@ export function PaymentOrderDialog({
               })}
             </ol>
           ) : (
-            <p className={styles.note}>{t('adminPayments.order.none')}</p>
+            <p className={styles.note}>
+              {due > 0
+                ? t('adminPayments.order.none', { amount: amount(due) })
+                : t('adminPayments.order.noneDue')}
+            </p>
           )}
         </section>
         <OrderSummary order={order} />

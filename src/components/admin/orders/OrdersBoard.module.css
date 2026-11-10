@@ -1,5 +1,11 @@
 /* The Orders page: today's totals, status views, then the panel with search, types and rows. */
 
+/* History, a button away (top right). */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

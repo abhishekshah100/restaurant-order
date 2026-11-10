@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { ApiResponse } from '@/api/client';
 import type {
+  AdminCartSuggestions,
+  AdminSearchSuggestions,
+  CartSuggestionsResponse,
   AdminSignInResponse,
   ApiErrorBody,
   DishResponse,
   ImageUploadResponse,
+  SearchSuggestions,
 } from '@/api/contracts';
 import { dishForm, dishInputOf } from '@/lib/adminMenu';
 import { DEMO_ADMIN } from '@/api/mock/demoAdmin';
@@ -326,6 +330,36 @@ describe('removing, reordering, categories, pictures (mock)', () => {
     expect(saved.image).toEqual({ ...image, alt: 'Dahi Kebab' });
     expect(saved.thumb).toEqual(saved.image);
   });
+
+  it('keeps the small copy sent with a picture as its thumbnail', async () => {
+    const path = 'admin/branches/blr-indiranagar/menu/images';
+    const res = await call(
+      'POST',
+      path,
+      {
+        dataUrl: 'data:image/webp;base64,UklGRg==',
+        width: 640,
+        height: 480,
+        thumb: { dataUrl: 'data:image/webp;base64,UklGRh==', width: 256, height: 192 },
+      },
+      admin,
+    );
+    expect(res.status).toBe(201);
+    const { image, thumb } = res.body as ImageUploadResponse;
+    expect(thumb).toMatchObject({ width: 256, height: 192 });
+    const kebab = await dish('dahi-kebab');
+    const form = { ...dishForm(kebab, kebab.categoryId), image, thumb: thumb ?? null };
+    const saved = (
+      await call(
+        'PATCH',
+        'admin/branches/blr-indiranagar/menu/dishes/dahi-kebab',
+        dishInputOf(form),
+        admin,
+      )
+    ).body as DishResponse;
+    expect(saved.thumb?.src).toBe(thumb?.src);
+    expect(saved.image?.src).toBe(image.src);
+  });
 });
 
 describe('coming back on by itself (mock)', () => {
@@ -361,5 +395,94 @@ describe('coming back on by itself (mock)', () => {
     expect((await dish('dahi-kebab')).availability.status).toBe('unavailable-today');
     now = Date.parse('2026-10-15T19:00:00Z'); // 12:30 AM the next day
     expect((await dish('dahi-kebab')).availability).toEqual({ status: 'available' });
+  });
+});
+
+describe('search suggestions (mock: staff picks only)', () => {
+  const ADMIN = 'admin/branches/blr-indiranagar/menu/suggestions';
+  const forGuests = async () =>
+    (await call('GET', 'branches/blr-indiranagar/menu/suggestions')).body as SearchSuggestions;
+
+  it("reads the menu's lists, saves staff's pins and words, and hides what can't be ordered", async () => {
+    const before = (await call('GET', ADMIN, undefined, admin)).body as AdminSearchSuggestions;
+    expect(before.trending.auto).toBe(true);
+    const saved = await call(
+      'PATCH',
+      ADMIN,
+      {
+        trending: { auto: false, pins: ['dal-makhani', 'tiramisu'] },
+        popular: { auto: true, words: [' Mocktails ', 'Biryani'] },
+      },
+      admin,
+    );
+    expect(saved.status).toBe(200);
+    expect((saved.body as AdminSearchSuggestions).popular.words).toEqual(['Mocktails', 'Biryani']);
+    expect(await forGuests()).toEqual({
+      trending: ['dal-makhani', 'tiramisu'],
+      popular: ['Mocktails', 'Biryani'],
+    });
+    expect((await menu()).trendingTonight).toEqual(['dal-makhani', 'tiramisu']);
+
+    await setAvailability('dal-makhani', { availability: { status: 'sold-out' } });
+    expect((await forGuests()).trending).toEqual(['tiramisu']);
+    const after = (await call('GET', ADMIN, undefined, admin)).body as AdminSearchSuggestions;
+    expect(after.trending.pins[0]).toEqual({
+      slug: 'dal-makhani',
+      name: 'Dal Makhani',
+      showing: false,
+    });
+  });
+
+  it('refuses unknown dishes, repeated words and signed-out staff', async () => {
+    const body = (pins: string[], words: string[]) => ({
+      trending: { auto: true, pins },
+      popular: { auto: true, words },
+    });
+    expect((await call('PATCH', ADMIN, body(['no-such-dish'], []), admin)).status).toBe(400);
+    expect((await call('PATCH', ADMIN, body([], ['Naan', 'naan']), admin)).status).toBe(400);
+    expect((await call('PATCH', ADMIN, body([], []))).status).toBe(401);
+  });
+});
+
+describe('cart suggestions (mock: pins, then the chosen categories)', () => {
+  const ADMIN = 'admin/branches/blr-indiranagar/menu/cart-suggestions';
+  const forCart = async (dishes: string[]) =>
+    (
+      (
+        await call(
+          'GET',
+          `branches/blr-indiranagar/menu/cart-suggestions?dishes=${dishes.join(',')}`,
+        )
+      ).body as CartSuggestionsResponse
+    ).dishes;
+
+  it('never suggests a dish in the cart; staff pins come first; off shows nothing', async () => {
+    const saved = await call(
+      'PATCH',
+      ADMIN,
+      { enabled: true, categories: ['desserts'], pins: ['mango-lassi'] },
+      admin,
+    );
+    expect(saved.status).toBe(200);
+    const picks = await forCart(['dal-makhani']);
+    expect(picks[0]).toMatchObject({ slug: 'mango-lassi', source: 'pinned' });
+    expect(picks).toHaveLength(3);
+    const withLassi = await forCart(['dal-makhani', 'mango-lassi']);
+    expect(withLassi.map((p) => p.slug)).not.toContain('mango-lassi');
+    const view = (await call('GET', `${ADMIN}?preview=dal-makhani`, undefined, admin))
+      .body as AdminCartSuggestions;
+    expect(view.preview.dish).toBe('dal-makhani');
+    await call('PATCH', ADMIN, { enabled: false, categories: [], pins: [] }, admin);
+    expect(await forCart(['dal-makhani'])).toEqual([]);
+  });
+
+  it('refuses unknown categories and more than 3 pins', async () => {
+    expect(
+      (await call('PATCH', ADMIN, { enabled: true, categories: ['nope'], pins: [] }, admin)).status,
+    ).toBe(400);
+    const four = ['mango-lassi', 'masala-chai', 'tiramisu', 'gulab-jamun'];
+    expect(
+      (await call('PATCH', ADMIN, { enabled: true, categories: [], pins: four }, admin)).status,
+    ).toBe(400);
   });
 });

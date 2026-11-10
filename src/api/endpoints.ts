@@ -106,6 +106,17 @@ import type {
   CloseRegisterRequest,
   OpenRegisterRequest,
   ImageUploadResponse,
+  BranchImageUploadResponse,
+  SearchSuggestions,
+  AdminSearchSuggestions,
+  UpdateSearchSuggestionsRequest,
+  CartSuggestionsResponse,
+  SessionWifiResponse,
+  RequestHistoryResponse,
+  PaymentHistoryResponse,
+  PaymentHistoryQuery,
+  AdminCartSuggestions,
+  UpdateCartSuggestionsRequest,
   ItemUnavailableRequest,
   KitchenMessageRequest,
   MarkServedRequest,
@@ -114,6 +125,8 @@ import type {
   OrderChangeResponse,
   OrderListResponse,
   OrderResponse,
+  OrderHistoryQuery,
+  OrderHistoryResponse,
   OrderUnavailableRequest,
   OtpChallenge,
   Payment,
@@ -549,6 +562,49 @@ export const api = {
       body,
       bearer(token),
     ),
+  uploadBranchImage: (token: string, branchId: string, body: ImageUploadRequest) =>
+    apiPost<BranchImageUploadResponse>(
+      `admin/branches/${seg(branchId)}/settings/image`,
+      body,
+      bearer(token),
+    ),
+  searchSuggestions: (branchId: string) =>
+    apiGet<SearchSuggestions>(`branches/${seg(branchId)}/menu/suggestions`),
+  adminSearchSuggestions: (token: string, branchId: string) =>
+    apiGet<AdminSearchSuggestions>(
+      `admin/branches/${seg(branchId)}/menu/suggestions`,
+      bearer(token),
+    ),
+  updateSearchSuggestions: (
+    token: string,
+    branchId: string,
+    body: UpdateSearchSuggestionsRequest,
+  ) =>
+    apiPatch<AdminSearchSuggestions>(
+      `admin/branches/${seg(branchId)}/menu/suggestions`,
+      body,
+      bearer(token),
+    ),
+  cartSuggestions: (branchId: string, dishes: readonly string[]) =>
+    apiGet<CartSuggestionsResponse>(
+      `branches/${seg(branchId)}/menu/cart-suggestions?dishes=${dishes.map(seg).join(',')}`,
+    ),
+  adminCartSuggestions: (token: string, branchId: string, preview?: string) =>
+    apiGet<AdminCartSuggestions>(
+      `admin/branches/${seg(branchId)}/menu/cart-suggestions${preview ? `?preview=${seg(preview)}` : ''}`,
+      bearer(token),
+    ),
+  updateCartSuggestions: (
+    token: string,
+    branchId: string,
+    body: UpdateCartSuggestionsRequest,
+    preview?: string,
+  ) =>
+    apiPatch<AdminCartSuggestions>(
+      `admin/branches/${seg(branchId)}/menu/cart-suggestions${preview ? `?preview=${seg(preview)}` : ''}`,
+      body,
+      bearer(token),
+    ),
   offers: (token: string, branchId: string) =>
     apiGet<AutoOffer[]>(`admin/branches/${seg(branchId)}/offers`, bearer(token)),
   createOffer: (token: string, branchId: string, body: OfferRequest) =>
@@ -793,6 +849,42 @@ export const api = {
     apiPatch<OrderChangeResponse>(`orders/${seg(id)}`, body),
   cancelOrder: (id: string, body: CancelOrderRequest) =>
     apiPost<OrderChangeResponse>(`orders/${seg(id)}/cancel`, body),
+  paymentHistory: (token: string, branchId: string, query: PaymentHistoryQuery) => {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== '' && value !== 'all') search.set(key, String(value));
+    }
+    return apiGet<PaymentHistoryResponse>(
+      `admin/branches/${seg(branchId)}/payments/history?${search.toString()}`,
+      bearer(token),
+    );
+  },
+  orderHistory: (token: string, branchId: string, query: OrderHistoryQuery) => {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== '' && value !== 'all') search.set(key, String(value));
+    }
+    return apiGet<OrderHistoryResponse>(
+      `admin/branches/${seg(branchId)}/orders/history?${search.toString()}`,
+      bearer(token),
+    );
+  },
+  /** One order at the branch by its code, as staff see it (Orders › History opens it). */
+  branchOrder: (token: string, branchId: string, id: string) =>
+    apiGet<OrderResponse>(`admin/branches/${seg(branchId)}/orders/${seg(id)}`, bearer(token)),
+  requestHistory: (
+    token: string,
+    branchId: string,
+    query: { from: string; to: string; kind?: 'waiter' | 'bill' | 'kitchen' },
+  ) =>
+    apiGet<RequestHistoryResponse>(
+      `admin/branches/${seg(branchId)}/service-requests/history?from=${query.from}&to=${query.to}${
+        query.kind ? `&kind=${query.kind}` : ''
+      }`,
+      bearer(token),
+    ),
+  sessionWifi: (sessionId: string) =>
+    apiGet<SessionWifiResponse>(`sessions/${seg(sessionId)}/wifi`),
   sessionOrders: (sessionId: string) =>
     apiGet<OrderListResponse>(`sessions/${seg(sessionId)}/orders`),
   tableOrders: (branchId: string, table: number) =>

@@ -190,7 +190,13 @@ export function SearchView() {
         )}
         {state === 'results' && (
           <div className={styles.list}>
-            <DishList dishes={shown} label={t('search.resultsLabel')} query={term} searchResult />
+            <DishList
+              dishes={shown}
+              label={t('search.resultsLabel')}
+              query={term}
+              searchResult
+              eagerRows={4}
+            />
           </div>
         )}
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ordersPath } from '@/lib/adminNav';
+import { orderHistoryPath, ordersPath } from '@/lib/adminNav';
 import {
   editableRound,
   roundOpenForStaff,
@@ -105,8 +105,9 @@ describe('orders page', () => {
     expect(parseView('nope')).toBe('active');
     expect(ordersPath('active')).toBe('/admin/dashboard/orders/');
     expect(ordersPath('completed')).toBe('/admin/dashboard/orders/?view=completed');
-    expect(ordersPath('all', { from: '2026-10-20', to: '2026-10-25' })).toBe(
-      '/admin/dashboard/orders/?view=all&from=2026-10-20&to=2026-10-25',
+    expect(orderHistoryPath()).toBe('/admin/dashboard/orders/history/');
+    expect(orderHistoryPath({ from: '2026-10-20', to: '2026-10-25' }, 'unpaid')).toBe(
+      '/admin/dashboard/orders/history/?from=2026-10-20&to=2026-10-25&status=unpaid',
     );
   });
 });

@@ -1,0 +1,58 @@
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* The branch picker shows it square (56–72px): previewed the same way, a little larger. */
+.preview {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+
+.previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.monogram {
+  font: var(--font-display, inherit);
+  font-size: 36px;
+  color: var(--ink-3);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.hint {
+  flex-basis: 100%;
+  margin: 0;
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+
+.error {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+  font: var(--font-small);
+  color: var(--error);
+}

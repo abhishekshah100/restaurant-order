@@ -122,7 +122,7 @@ A table QR link is `/?branch=ktm-thamel&table=12&qr=<token>`.
 
 - `branch` is optional. Without it, or with an unknown id, the link is for the brand's
   `defaultBranchId` (`GET /restaurant`; `blr-indiranagar`, shown as "Udyog Vihar", Gurgaon).
-- `table` counts only inside the branch's `tables` range (`tables.first`–`tables.last`).
+- `table` counts only when it is a table on the branch's floor plan.
 - `qr` is an opaque token (`[\w.~-]{1,512}`) kept with the session for a future signed-token
   check. Nothing verifies it yet.
 - `mode=takeaway|delivery` is an ordering link. It is ignored when the named branch has that mode

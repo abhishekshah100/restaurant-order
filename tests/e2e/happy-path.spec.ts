@@ -86,7 +86,7 @@ test('order a dish and pay online', async ({ page }) => {
   // Processing → simulate success
   await expect(page).toHaveURL(/\/checkout\/processing\/$/);
   await expect(page.getByRole('heading', { name: 'Confirming your payment' })).toBeVisible();
-  await page.getByRole('button', { name: 'Prototype: success' }).filter({ visible: true }).click();
+  await page.getByRole('button', { name: 'Approve payment' }).filter({ visible: true }).click();
 
   // Confirmation
   await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
@@ -116,7 +116,7 @@ test('a failed payment keeps the cart', async ({ page }) => {
     .getByRole('button', { name: /^Pay ₹/ })
     .filter({ visible: true })
     .click();
-  await page.getByRole('button', { name: 'Prototype: failure' }).filter({ visible: true }).click();
+  await page.getByRole('button', { name: 'Decline payment' }).filter({ visible: true }).click();
   await expect(page.getByRole('heading', { name: "Payment didn't go through" })).toBeVisible();
   await page.getByRole('link', { name: 'Back to order' }).filter({ visible: true }).click();
   await expect(page.getByText('Dahi Kebab').filter({ visible: true }).first()).toBeVisible();

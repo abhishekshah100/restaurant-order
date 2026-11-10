@@ -16,6 +16,15 @@ export interface BranchMenuChanges {
   removed: string[];
   /** Every category, renamed and in staff's order (none: as in the JSON). */
   categories?: Category[];
+  /** Admin › Menu › Search suggestions (none: the JSON's lists, auto-fill on). */
+  suggestions?: {
+    pins: string[];
+    words: string[];
+    trendingAuto: boolean;
+    popularAuto: boolean;
+  };
+  /** "Goes well with your order" (none: on, the default categories, the JSON's list as pins). */
+  cart?: { enabled: boolean; categories: string[]; pins: string[] };
 }
 
 export const noMenuChanges = (): BranchMenuChanges => ({ dishes: {}, removed: [] });
@@ -38,7 +47,13 @@ export function applyMenuChanges(
   now: Date,
   clock: Clock,
 ): MenuData {
-  const { dishes: edited, removed, categories: staffCategories } = changes ?? noMenuChanges();
+  const {
+    dishes: edited,
+    removed,
+    categories: staffCategories,
+    suggestions,
+    cart,
+  } = changes ?? noMenuChanges();
   const gone = new Set(removed);
   const known = new Set(base.dishes.map((d) => d.slug));
   const categories = staffCategories ?? base.categories;
@@ -59,8 +74,9 @@ export function applyMenuChanges(
     categories,
     dishes,
     chefsPicks: base.chefsPicks.filter(kept),
-    cartSuggestions: base.cartSuggestions.filter(kept),
-    trendingTonight: base.trendingTonight.filter(kept),
+    cartSuggestions: (cart?.pins ?? base.cartSuggestions).filter(kept),
+    trendingTonight: (suggestions?.pins ?? base.trendingTonight).filter(kept),
+    popularSearches: suggestions?.words ?? base.popularSearches,
     popularAtTable: base.popularAtTable.filter((link) => kept(link.slug)),
   };
 }

@@ -29,14 +29,19 @@ test('request a waiter, see it pending, then cancel it', async ({ page }) => {
   await page.goto('/help/');
   await expect(page.getByRole('heading', { level: 1, name: 'How can we help?' })).toBeVisible();
 
-  // "Follow us": each social profile opens safely in a new tab.
-  await expect(
-    page.getByRole('heading', { name: /^Follow (us|The Olive Table)$/ }).filter({ visible: true }),
-  ).toBeVisible();
-  for (const network of ['Instagram', 'Facebook', 'YouTube', 'X']) {
-    const link = page.getByRole('link', { name: `${network} (opens in a new tab)` });
-    await expect(link).toHaveAttribute('target', '_blank');
-    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  // "Follow us": each social profile opens safely in a new tab. MOCK ONLY: the backend's
+  // restaurant has no links until staff add them (Settings › Help page), so no card.
+  if (!againstBackend) {
+    await expect(
+      page
+        .getByRole('heading', { name: /^Follow (us|The Olive Table)$/ })
+        .filter({ visible: true }),
+    ).toBeVisible();
+    for (const network of ['Instagram', 'Facebook', 'YouTube', 'X']) {
+      const link = page.getByRole('link', { name: `${network} (opens in a new tab)` });
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    }
   }
 
   await visible(page, 'button', /Call (a )?waiter/).click();
@@ -96,7 +101,7 @@ test('request the bill for the whole table', async ({ page }) => {
   await expect(page.getByRole('radio', { name: /Just my orders/ })).toBeDisabled();
   await expect(balanceDue(page)).toContainText('₹1,074');
 
-  await visible(page, 'button', 'Confirm bill request').click();
+  await visible(page, 'button', 'Ask for the bill').click();
   await expect(page).toHaveURL(/\/help\/bill-requested\/$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Bill requested' })).toBeVisible();
   await expect(balanceDue(page)).toContainText('₹1,074');

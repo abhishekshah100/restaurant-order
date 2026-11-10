@@ -24,6 +24,8 @@ export interface DishRowProps {
   showPrepTime?: boolean;
   /** Search result layout: category instead of tag, "In cart" note. */
   searchResult?: boolean;
+  /** Near the top of the page: its photo loads at once (it may be the page's largest image). */
+  eager?: boolean;
 }
 
 /**
@@ -36,6 +38,7 @@ export const DishRow = memo(function DishRow({
   query,
   showPrepTime,
   searchResult,
+  eager,
 }: DishRowProps) {
   const thumb = dishImage(dish, 'thumb');
   const available = isAvailable(dish);
@@ -77,6 +80,7 @@ export const DishRow = memo(function DishRow({
               width={thumb.width}
               height={thumb.height}
               sizes="96px"
+              loading={eager ? 'eager' : 'lazy'}
             />
           </div>
         )}

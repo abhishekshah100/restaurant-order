@@ -70,12 +70,30 @@ describe('navFor', () => {
 });
 
 describe('settingsFor', () => {
-  it('keeps the pages their role covers and drops empty groups', () => {
+  it('keeps the sections and pages their role covers and drops empty ones', () => {
     const groups = settingsFor(canAt({ permissions: ['tables.manage', 'staff.manage'] }));
-    expect(groups.map((g) => [g.id, g.sections.map((s) => s.id)])).toEqual([
-      ['branch', ['floorPlan']],
-      ['restaurant', ['staff', 'roles']],
+    expect(
+      groups.map((g) => [g.id, g.topics.map((tp) => [tp.id, tp.pages.map((p) => p.id)])]),
+    ).toEqual([
+      ['branch', [['tables', ['floorPlan']]]],
+      ['restaurant', [['team', ['staff', 'roles']]]],
     ]);
+  });
+
+  it('groups 14 pages into 8 sections, each opening on its first page staff may open', () => {
+    const all = settingsFor(() => true, true).flatMap((g) => g.topics);
+    expect(all.map((tp) => tp.id)).toEqual([
+      'info',
+      'hours',
+      'tables',
+      'ordering',
+      'billing',
+      'offers',
+      'team',
+      'branches',
+    ]);
+    expect(all.flatMap((tp) => tp.pages)).toHaveLength(14);
+    expect(all.find((tp) => tp.id === 'ordering')?.href).toBe(settingsPath('services'));
   });
 });
 
@@ -121,5 +139,18 @@ describe('kitchenNavFor', () => {
       kitchenNavFor(canAt({ permissions })).map((item) => item.id);
     expect(ids(KITCHEN)).toEqual(['board', 'stock', 'activity']);
     expect(ids(['kitchen.update'])).toEqual(['board', 'activity']);
+  });
+});
+
+describe('Settings › Modules', () => {
+  const everything = () => true;
+  const ids = (platform: boolean) =>
+    settingsFor(everything, platform).flatMap((g) =>
+      g.topics.flatMap((tp) => tp.pages.map((p) => p.id)),
+    );
+
+  it('is in the menu for super admins only, whatever else staff may do', () => {
+    expect(ids(true)).toContain('modules');
+    expect(ids(false)).not.toContain('modules');
   });
 });

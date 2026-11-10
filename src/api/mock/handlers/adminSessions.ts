@@ -76,10 +76,7 @@ export function signedInAccount(ctx: MockContext, headers: Record<string, string
 const MODE_ORDER: OrderMode[] = ['dineIn', 'takeaway', 'delivery'];
 
 /** A branch as the admin picker needs it (with when the status staff set ends, if it does). */
-export function toAdminBranch(
-  branch: Branch,
-  tables: { first: number; last: number },
-): AdminBranch {
+export function toAdminBranch(branch: Branch, tableCount: number): AdminBranch {
   return {
     id: branch.id,
     name: branch.name,
@@ -92,7 +89,7 @@ export function toAdminBranch(
     schedule: branch.schedule,
     timezone: branch.timezone,
     locale: branch.locale,
-    tables,
+    tableCount,
     modes: MODE_ORDER.filter((mode) => branch.modes[mode].enabled),
     currencyCode: branch.currency.code,
     ...(branch.image ? { image: branch.image } : {}),
@@ -121,7 +118,7 @@ export const listAdminBranches: Handler = async (ctx, { headers }) => {
   const body: AdminBranchesResponse = {
     branches: await Promise.all(
       (await managedBranches(ctx, account)).map(async (branch) =>
-        toAdminBranch(branch, await ctx.seed.tables(branch.id)),
+        toAdminBranch(branch, await ctx.seed.tableCount(branch.id)),
       ),
     ),
   };
@@ -164,5 +161,5 @@ export const setBranchStatus: Handler = async (ctx, { params, body, headers }) =
   }
   ctx.db.branchStatus.write({ ...ctx.db.branchStatus.read(), [branch.id]: change });
   const updated = (await ctx.seed.branches()).find((b) => b.id === branch.id) ?? branch;
-  return ok(toAdminBranch(updated, await ctx.seed.tables(updated.id)));
+  return ok(toAdminBranch(updated, await ctx.seed.tableCount(updated.id)));
 };

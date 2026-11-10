@@ -2,6 +2,7 @@ import {
   applySettings,
   deliveryErrors,
   detailsErrors,
+  helpErrors,
   hoursErrors,
   paymentChoicesFor,
   servicesErrors,
@@ -18,11 +19,19 @@ import {
 import { createClock } from '@/lib/clock';
 import { amountDue } from '@/lib/lifecycle';
 import { isFinished, isToday } from '@/lib/orders';
-import type { Branch, DeliveryZone, OpeningSchedule, Session, WeekSessions } from '@/types/branch';
+import type {
+  Branch,
+  BranchImage,
+  DeliveryZone,
+  OpeningSchedule,
+  Session,
+  WeekSessions,
+} from '@/types/branch';
 import { WEEKDAYS } from '@/types/branch';
 import type {
   BranchDetails,
   BranchSettings,
+  HelpSettings,
   BranchSettingsChoices,
   DeliverySettings,
   PaymentChannelSettings,
@@ -66,6 +75,28 @@ function detailsBody(v: unknown): BranchDetails {
     timezone: str(d.timezone),
     locale: str(d.locale),
     currency: str(d.currency),
+    ...(d.image === undefined ? {} : { image: d.image === null ? null : imageBody(d.image) }),
+  };
+}
+
+function imageBody(v: unknown): BranchImage {
+  const i = obj(v);
+  return { src: str(i.src), width: num(i.width), height: num(i.height) };
+}
+
+function helpBody(v: unknown): HelpSettings {
+  const h = obj(v);
+  const social = obj(h.social);
+  return {
+    wifiName: str(h.wifiName),
+    wifiPassword: str(h.wifiPassword),
+    social: Object.fromEntries(
+      Object.entries(social).map(([network, url]) => [network, str(url)]),
+    ) as HelpSettings['social'],
+    faqs: arr(h.faqs, 50).map((f) => {
+      const x = obj(f);
+      return { question: str(x.question), answer: str(x.answer) };
+    }),
   };
 }
 
@@ -243,6 +274,7 @@ export const updateBranchSettings: Handler = async (ctx, { params, body, headers
   const keys = Object.keys(raw);
   const known = new Set<string>([
     'details',
+    'help',
     'services',
     'hours',
     'tax',
@@ -262,6 +294,11 @@ export const updateBranchSettings: Handler = async (ctx, { params, body, headers
     const details = detailsBody(raw.details);
     if (detailsErrors(details, await otherShortNames(ctx, config.id)).length > 0) bad();
     apply({ details });
+  }
+  if (raw.help !== undefined) {
+    const help = helpBody(raw.help);
+    if (helpErrors(help).length > 0) bad();
+    apply({ help });
   }
   if (raw.hours !== undefined) {
     const hours = hoursBody(raw.hours);
@@ -341,7 +378,7 @@ export const createBranch: Handler = async (ctx, { body, headers }) => {
   if (menu) ctx.db.menuChanges.write({ ...ctx.db.menuChanges.read(), [id]: menu });
 
   const created = (await ctx.seed.branches()).find((b) => b.id === id) ?? branch;
-  return ok(toAdminBranch(created, await ctx.seed.tables(id)), 201);
+  return ok(toAdminBranch(created, await ctx.seed.tableCount(id)), 201);
 };
 
 /** Whether a branch has orders today still to finish or pay. */

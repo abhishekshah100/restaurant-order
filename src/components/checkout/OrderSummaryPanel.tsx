@@ -69,6 +69,7 @@ export function OrderSummaryPanel({
                     width={thumb.width}
                     height={thumb.height}
                     sizes="44px"
+                    loading="eager"
                   />
                 ) : (
                   dish.name.charAt(0)

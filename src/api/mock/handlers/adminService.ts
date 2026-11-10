@@ -14,7 +14,15 @@ import type {
 import type { Branch } from '@/types/branch';
 import type { Order, OrderItem, OrderRound } from '@/types/order';
 import type { ServiceRequest } from '@/types/service';
-import type { ResolveRequestResponse } from '../../contracts';
+import type {
+  HistoryOrder,
+  OrderHistoryResponse,
+  PaymentHistoryResponse,
+  RequestHistoryResponse,
+  ResolveRequestResponse,
+} from '../../contracts';
+import { ledgerOf } from '@/lib/adminPayments';
+import { shiftDay } from '@/lib/dayRange';
 import {
   acknowledgeDemo,
   demoDoneRequests,
@@ -354,4 +362,272 @@ export const markOrderServed: Handler = async (ctx, { params, body, headers }) =
   }
   const updated = (await placedOrders(ctx)).find((o) => o.id === order.id) ?? order;
   return ok(liveOrder(updated, now, branch));
+};
+
+/** A request lapses this long after it was made (as the backend). */
+const REQUEST_TTL_MS = 30 * 60_000;
+
+/**
+ * GET /admin/branches/:branchId/service-requests/history?from=&to=&kind= — MOCK: every request
+ * this device kept (the mock keeps no branch on them), on those days in the branch's time.
+ */
+export const requestHistory: Handler = async (ctx, { params, headers, query }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const clock = createClock(branch);
+  const today = clock.dayKey(new Date(ctx.now()));
+  const from = query.from ?? today;
+  const to = query.to ?? from;
+  const kind = query.kind;
+  if (from > to || to > today) fail(400, 'invalid_request');
+  const now = ctx.now();
+  const requests = ctx.db.serviceRequests
+    .read()
+    .filter((r) => {
+      const day = clock.dayKey(new Date(r.requestedAt));
+      return day >= from && day <= to && (!kind || r.kind === kind);
+    })
+    .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+    .map((r) => {
+      const answeredAt = r.acknowledgedAt ?? r.resolvedAt;
+      const requested = Date.parse(r.requestedAt);
+      return {
+        ...r,
+        outcome: r.resolvedAt
+          ? ('resolved' as const)
+          : now - requested >= REQUEST_TTL_MS
+            ? ('lapsed' as const)
+            : ('open' as const),
+        ...(answeredAt
+          ? {
+              answeredInMinutes: Math.max(
+                0,
+                Math.round((Date.parse(answeredAt) - requested) / 60_000),
+              ),
+            }
+          : {}),
+      };
+    });
+  const answered = requests.flatMap((r) =>
+    r.answeredInMinutes === undefined ? [] : [r.answeredInMinutes],
+  );
+  const response: RequestHistoryResponse = {
+    from,
+    to,
+    requests,
+    summary: {
+      total: requests.length,
+      resolved: requests.filter((r) => r.outcome === 'resolved').length,
+      lapsed: requests.filter((r) => r.outcome === 'lapsed').length,
+      averageAnswerMinutes: answered.length
+        ? Math.round(answered.reduce((s, m) => s + m, 0) / answered.length)
+        : null,
+    },
+  };
+  return ok(response);
+};
+
+/**
+ * GET /admin/branches/:branchId/payments/history — MOCK: the same sums and pages, worked out from
+ * the mock's orders (each payment on the day it was taken).
+ */
+export const paymentHistory: Handler = async (ctx, { params, headers, query }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const clock = createClock(branch);
+  const today = clock.dayKey(new Date(ctx.now()));
+  const to = query.to ?? today;
+  const from = query.from ?? shiftDay(to, -6);
+  if (from > to || to > today) fail(400, 'invalid_request');
+  const { placed, history } = await branchOrders(ctx, branch);
+  const rows = allOrders(placed, history).flatMap((order) =>
+    ledgerOf(order).map((tx, i) => ({ tx, order, seq: i + 1 })),
+  );
+  const inDays = rows.filter(({ tx }) => {
+    const day = clock.dayKey(new Date(tx.at));
+    return day >= from && day <= to;
+  });
+  const sum = (list: typeof inDays, pick: (r: (typeof inDays)[number]) => number) =>
+    list.reduce((s, r) => s + pick(r), 0);
+  const pays = inDays.filter((r) => r.tx.kind === 'payment');
+  const refs = inDays.filter((r) => r.tx.kind === 'refund');
+  const methods = new Map<string, PaymentHistoryResponse['summary']['byMethod'][number]>();
+  for (const { tx } of inDays) {
+    const key = `${tx.method}|${tx.channel}`;
+    const m = methods.get(key) ?? {
+      method: tx.method,
+      channel: tx.channel,
+      count: 0,
+      amount: 0,
+      refunds: 0,
+      tips: 0,
+    };
+    if (tx.kind === 'refund') m.refunds += tx.amount;
+    else {
+      m.count += 1;
+      m.amount += tx.amount;
+      m.tips += tx.tip ?? 0;
+    }
+    methods.set(key, m);
+  }
+  const cash = [...methods.values()].filter((m) => m.method === 'cash');
+  const q = (query.q ?? '').trim().toLowerCase();
+  const matching = inDays
+    .filter(
+      ({ tx, order }) =>
+        (!query.kind ||
+          query.kind === 'all' ||
+          (query.kind === 'refunds') === (tx.kind === 'refund')) &&
+        (!query.channel || query.channel === 'all' || tx.channel === query.channel) &&
+        (!query.method || tx.method === query.method) &&
+        (!q ||
+          [order.id, order.customerName, tx.transactionRef ?? '', tx.by ?? '']
+            .join(' ')
+            .toLowerCase()
+            .includes(q) ||
+          String(order.table ?? '') === q),
+    )
+    .sort((a, b) => b.tx.at.localeCompare(a.tx.at));
+  const limit = Math.min(Number(query.limit ?? 50) || 50, 1000);
+  const start = query.cursor ? Number(query.cursor) : 0;
+  const page = matching.slice(start, start + limit);
+  const response: PaymentHistoryResponse = {
+    from,
+    to,
+    summary: {
+      collected: sum(pays, (r) => r.tx.amount),
+      refunds: sum(refs, (r) => r.tx.amount),
+      refundsPending: sum(
+        refs.filter((r) => r.tx.status === 'started'),
+        (r) => r.tx.amount,
+      ),
+      net: sum(pays, (r) => r.tx.amount) - sum(refs, (r) => r.tx.amount),
+      tips: sum(pays, (r) => r.tx.tip ?? 0),
+      waived: sum(pays, (r) => r.tx.waived ?? 0),
+      payments: pays.length,
+      refundCount: refs.length,
+      online: sum(
+        pays.filter((r) => r.tx.channel === 'online'),
+        (r) => r.tx.amount,
+      ),
+      inPerson: sum(
+        pays.filter((r) => r.tx.channel === 'inPerson'),
+        (r) => r.tx.amount,
+      ),
+      cashTaken: cash.reduce((s, m) => s + m.amount + m.tips - m.refunds, 0),
+      byMethod: [...methods.values()].sort((a, b) => b.amount - a.amount),
+    },
+    transactions: page.map(({ tx, order, seq }) => ({
+      id: `${order.id}-T${String(seq)}`,
+      orderId: order.id,
+      mode: order.mode,
+      ...(order.table !== undefined ? { table: order.table } : {}),
+      customerName: order.customerName,
+      kind: tx.kind,
+      method: tx.method,
+      channel: tx.channel,
+      amount: tx.amount,
+      ...(tx.tip ? { tip: tx.tip } : {}),
+      ...(tx.waived ? { waived: tx.waived } : {}),
+      ...(tx.waiveReason ? { waiveReason: tx.waiveReason } : {}),
+      ...(tx.by ? { by: tx.by } : {}),
+      ...(tx.transactionRef ? { transactionRef: tx.transactionRef } : {}),
+      ...(tx.reason ? { reason: tx.reason } : {}),
+      ...(tx.status ? { status: tx.status } : {}),
+      at: tx.at,
+    })),
+    matching: matching.length,
+    ...(start + limit < matching.length ? { next: String(start + limit) } : {}),
+  };
+  return ok(response);
+};
+
+/** Handed over (served, picked up, delivered). */
+const isCompleted = (o: Order) => o.status !== 'cancelled' && isFinished(o);
+
+/**
+ * GET /admin/branches/:branchId/orders/history — MOCK: the same sums and pages, worked out from
+ * the mock's orders (each order on the day it was placed).
+ */
+export const orderHistory: Handler = async (ctx, { params, headers, query }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const clock = createClock(branch);
+  const today = clock.dayKey(new Date(ctx.now()));
+  const to = query.to ?? today;
+  const from = query.from ?? shiftDay(to, -6);
+  if (from > to || to > today) fail(400, 'invalid_request');
+  const { placed, history } = await branchOrders(ctx, branch);
+  const inDays = allOrders(placed, history).filter((o) => {
+    const day = clock.dayKey(o.placedAt);
+    return day >= from && day <= to;
+  });
+  const billed = inDays.filter((o) => o.status !== 'cancelled');
+  const sales = billed.reduce((s, o) => s + o.total, 0);
+  const unpaid = billed.filter((o) => amountDue(o) > 0);
+  const modes = new Map<Order['mode'], { mode: Order['mode']; orders: number; sales: number }>();
+  for (const o of billed) {
+    const m = modes.get(o.mode) ?? { mode: o.mode, orders: 0, sales: 0 };
+    m.orders += 1;
+    m.sales += o.total;
+    modes.set(o.mode, m);
+  }
+  const q = (query.q ?? '').trim().toLowerCase();
+  const matching = inDays
+    .filter(
+      (o) =>
+        (!query.status ||
+          query.status === 'all' ||
+          (query.status === 'completed' && isCompleted(o)) ||
+          (query.status === 'cancelled' && o.status === 'cancelled') ||
+          (query.status === 'unpaid' && amountDue(o) > 0)) &&
+        (!query.mode || query.mode === 'all' || o.mode === query.mode) &&
+        (!q ||
+          `${o.id} ${o.customerName}`.toLowerCase().includes(q) ||
+          String(o.table ?? '') === q),
+    )
+    .sort((a, b) => b.placedAt.localeCompare(a.placedAt));
+  const limit = Math.min(Number(query.limit ?? 30) || 30, 1000);
+  const start = query.cursor ? Number(query.cursor) : 0;
+  const row = (o: Order): HistoryOrder => ({
+    id: o.id,
+    ...(o.token !== undefined ? { token: o.token } : {}),
+    mode: o.mode,
+    ...(o.table !== undefined ? { table: o.table } : {}),
+    customerName: o.customerName,
+    status: o.status,
+    ...(o.cancelReason ? { cancelReason: o.cancelReason as HistoryOrder['cancelReason'] } : {}),
+    ...(o.cancelledBy ? { cancelledBy: o.cancelledBy } : {}),
+    items: quantity(o.items),
+    total: o.total,
+    paymentStatus: o.payment.status,
+    due: amountDue(o),
+    method: o.payment.method,
+    placedAt: o.placedAt,
+  });
+  const response: OrderHistoryResponse = {
+    from,
+    to,
+    summary: {
+      orders: inDays.length,
+      completed: inDays.filter(isCompleted).length,
+      cancelled: inDays.length - billed.length,
+      inProgress: billed.filter((o) => !isFinished(o)).length,
+      sales,
+      averageBill: billed.length > 0 ? Math.round(sales / billed.length) : 0,
+      unpaidOrders: unpaid.length,
+      unpaid: unpaid.reduce((s, o) => s + amountDue(o), 0),
+      byMode: [...modes.values()].sort((a, b) => b.sales - a.sales),
+    },
+    orders: matching.slice(start, start + limit).map(row),
+    matching: matching.length,
+    ...(start + limit < matching.length ? { next: String(start + limit) } : {}),
+  };
+  return ok(response);
+};
+
+/** GET /admin/branches/:branchId/orders/:id — MOCK: one of the branch's orders by its code. */
+export const branchOrder: Handler = async (ctx, { params, headers }) => {
+  const branch = await adminBranch(ctx, headers, params.branchId);
+  const { placed, history } = await branchOrders(ctx, branch);
+  const order = allOrders(placed, history).find((o) => o.id === params.id);
+  if (!order) fail(404, 'not_found');
+  return ok(order);
 };

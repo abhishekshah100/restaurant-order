@@ -1,6 +1,6 @@
 {
   "line": {
-    "open": "Open · orders until {time}",
+    "open": "Open now",
     "closed": "Closed now",
     "paused": "Ordering paused",
     "openNow": "Open now"

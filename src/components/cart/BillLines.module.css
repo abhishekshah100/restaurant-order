@@ -1,0 +1,21 @@
+/* An amount's parts, in small print (payment screens). */
+.lines {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font: var(--font-small);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.row dd {
+  margin: 0;
+  color: var(--ink);
+}
+.row .saving {
+  color: var(--success);
+}

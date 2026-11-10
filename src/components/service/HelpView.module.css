@@ -132,6 +132,14 @@
   margin-bottom: 4px;
 }
 /* Hours and "Follow us": one card on mobile, the right column on the web */
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.side:empty {
+  display: none;
+}
 .side {
   display: flex;
   flex-direction: column;

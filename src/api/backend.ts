@@ -24,6 +24,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   // Settings and the floor plan.
   ['GET', 'admin/branches/:branchId/settings'],
   ['PATCH', 'admin/branches/:branchId/settings'],
+  ['POST', 'admin/branches/:branchId/settings/image'],
   ['GET', 'admin/branches/:branchId/floors'],
   ['PATCH', 'admin/branches/:branchId/floors'],
   // What guests read of the branches.
@@ -40,6 +41,12 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/menu/categories/:categoryId/order'],
   ['PATCH', 'admin/branches/:branchId/menu/categories'],
   ['POST', 'admin/branches/:branchId/menu/images'],
+  ['GET', 'branches/:branchId/menu/suggestions'],
+  ['GET', 'admin/branches/:branchId/menu/suggestions'],
+  ['PATCH', 'admin/branches/:branchId/menu/suggestions'],
+  ['GET', 'branches/:branchId/menu/cart-suggestions'],
+  ['GET', 'admin/branches/:branchId/menu/cart-suggestions'],
+  ['PATCH', 'admin/branches/:branchId/menu/cart-suggestions'],
   ['POST', 'admin/branches/:branchId/payment-proofs'],
   ['POST', 'admin/branches/:branchId/reservations/:id/deposit'],
   ['POST', 'admin/branches/:branchId/reservations/:id/reminded'],
@@ -143,6 +150,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'orders/:id'],
   ['POST', 'orders/:id/cancel'],
   ['GET', 'sessions/:id/orders'],
+  ['GET', 'sessions/:id/wifi'],
   ['GET', 'tables/:branchId/:table/orders'],
   // Paying online (the simulator stands in for the payment partner in development).
   ['POST', 'payments'],
@@ -153,6 +161,8 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['GET', 'sessions/:id/service-requests'],
   // Staff: today's orders, the waiter's orders and rounds, the kitchen, payments in person.
   ['GET', 'admin/branches/:branchId/orders'],
+  ['GET', 'admin/branches/:branchId/orders/history'],
+  ['GET', 'admin/branches/:branchId/orders/:id'],
   ['POST', 'admin/branches/:branchId/tables/:table/orders'],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds'],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round'],
@@ -174,6 +184,8 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['GET', 'admin/branches/:branchId/tables'],
   ['GET', 'admin/branches/:branchId/tables/:table'],
   ['POST', 'admin/branches/:branchId/tables/:table/free'],
+  ['GET', 'admin/branches/:branchId/service-requests/history'],
+  ['GET', 'admin/branches/:branchId/payments/history'],
   ['POST', 'admin/service-requests/:id/acknowledge'],
   ['POST', 'admin/service-requests/:id/resolve'],
   ['GET', 'admin/branches/:branchId/reservations'],

@@ -6,6 +6,10 @@ import { MockHttpError, randomId, type Handler, type MockContext } from './conte
 import { createStorageDb } from './db';
 import {
   acknowledgeServiceRequest,
+  requestHistory,
+  paymentHistory,
+  orderHistory,
+  branchOrder,
   branchService,
   markOrderServed,
   resolveServiceRequest,
@@ -34,6 +38,13 @@ import {
   updateCategories,
   updateDish,
   uploadDishImage,
+  uploadBranchImage,
+  searchSuggestions,
+  adminSearchSuggestions,
+  updateSearchSuggestions,
+  cartSuggestions,
+  adminCartSuggestions,
+  updateCartSuggestions,
 } from './handlers/adminMenu';
 import {
   addStaffRound,
@@ -61,7 +72,13 @@ import {
 } from './handlers/adminTables';
 import { setKitchenStatus } from './handlers/kitchen';
 import { addRound, cancelOrder, changeOrder } from './handlers/orderChanges';
-import { getOrder, listSessionOrders, listTableOrders, placeOrder } from './handlers/orders';
+import {
+  getOrder,
+  listSessionOrders,
+  listTableOrders,
+  placeOrder,
+  sessionWifi,
+} from './handlers/orders';
 import { sendOtp, verifyOtp } from './handlers/otp';
 import { createPayment, simulatePayment } from './handlers/payments';
 import {
@@ -103,6 +120,8 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['PATCH', 'admin/branches/:branchId/reservations/:id', updateReservation],
   ['PATCH', 'admin/branches/:branchId/reservations/:id/status', setReservationStatus],
   ['GET', 'admin/branches/:branchId/orders', branchOrdersToday],
+  ['GET', 'admin/branches/:branchId/orders/history', orderHistory],
+  ['GET', 'admin/branches/:branchId/orders/:id', branchOrder],
   ['PATCH', 'admin/branches/:branchId/menu/dishes/:slug/availability', setDishAvailability],
   ['POST', 'admin/branches/:branchId/menu/dishes', createDish],
   ['PATCH', 'admin/branches/:branchId/menu/dishes/:slug', updateDish],
@@ -110,6 +129,13 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['PATCH', 'admin/branches/:branchId/menu/categories/:categoryId/order', reorderDishes],
   ['PATCH', 'admin/branches/:branchId/menu/categories', updateCategories],
   ['POST', 'admin/branches/:branchId/menu/images', uploadDishImage],
+  ['POST', 'admin/branches/:branchId/settings/image', uploadBranchImage],
+  ['GET', 'branches/:branchId/menu/suggestions', searchSuggestions],
+  ['GET', 'admin/branches/:branchId/menu/suggestions', adminSearchSuggestions],
+  ['PATCH', 'admin/branches/:branchId/menu/suggestions', updateSearchSuggestions],
+  ['GET', 'branches/:branchId/menu/cart-suggestions', cartSuggestions],
+  ['GET', 'admin/branches/:branchId/menu/cart-suggestions', adminCartSuggestions],
+  ['PATCH', 'admin/branches/:branchId/menu/cart-suggestions', updateCartSuggestions],
   ['GET', 'branches/:branchId/menu', branchMenu],
   ['GET', 'branches/:branchId/promotions', branchPromotions],
   ['GET', 'admin/branches/:branchId/offers', adminOffers],
@@ -122,6 +148,8 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'admin/branches/:branchId/orders/:id/payment', collectPayment],
   ['POST', 'admin/branches/:branchId/orders/:id/cancel', cancelByStaff],
   ['POST', 'admin/branches/:branchId/orders/:id/refund', refundOrder],
+  ['GET', 'admin/branches/:branchId/service-requests/history', requestHistory],
+  ['GET', 'admin/branches/:branchId/payments/history', paymentHistory],
   ['POST', 'admin/service-requests/:id/acknowledge', acknowledgeServiceRequest],
   ['POST', 'admin/service-requests/:id/resolve', resolveServiceRequest],
   ['POST', 'admin/orders/:id/served', markOrderServed],
@@ -137,6 +165,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['POST', 'orders/:id/rounds', addRound],
   ['POST', 'orders/:id/cancel', cancelOrder],
   ['GET', 'sessions/:id/orders', listSessionOrders],
+  ['GET', 'sessions/:id/wifi', sessionWifi],
   ['GET', 'tables/:branchId/:table/orders', listTableOrders],
   ['POST', 'payments', createPayment],
   ['POST', 'payments/:id/simulate', simulatePayment],

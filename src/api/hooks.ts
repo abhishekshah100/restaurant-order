@@ -1,8 +1,16 @@
 'use client';
 
-import { useQueries, useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  queryOptions,
+  skipToken,
+  useInfiniteQuery,
+  useQueries,
+  useQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useAdminToken } from '@/hooks/useAdminSession';
+import { api } from './endpoints';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { createMoney, type Money } from '@/lib/money';
@@ -21,11 +29,19 @@ import type {
   AdminSignInRequest,
   OrderLineRequest,
   ReservationsFilter,
+  PaymentHistoryQuery,
+  OrderHistoryQuery,
 } from './contracts';
 import {
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
   adminOffersQuery,
+  adminSearchSuggestionsQuery,
+  adminCartSuggestionsQuery,
+  sessionWifiQuery,
+  requestHistoryQuery,
+  cartSuggestionsQuery,
+  searchSuggestionsQuery,
   adminRolesQuery,
   paymentProofQuery,
   cashRegisterQuery,
@@ -254,6 +270,86 @@ export function useHelpTopics(): HelpTopics {
 /** GET /orders/:id: one order with its live status, polled while the kitchen moves it; idle without an id. */
 export const useOrder = (id: string | undefined) => useQuery(orderQuery(id));
 
+/**
+ * Payments › History: the days' sums (from the first page) and their transactions, a page at a
+ * time (`fetchNextPage` for more).
+ */
+export function usePaymentHistory(
+  branchId: string | undefined,
+  query: Omit<PaymentHistoryQuery, 'cursor' | 'limit'>,
+) {
+  const token = useAdminToken();
+  return useInfiniteQuery({
+    queryKey: ['admin', 'payment-history', branchId, token, query] as const,
+    queryFn:
+      token && branchId
+        ? ({ pageParam }) =>
+            api.paymentHistory(token, branchId, {
+              ...query,
+              ...(pageParam ? { cursor: pageParam } : {}),
+            })
+        : skipToken,
+    initialPageParam: '',
+    getNextPageParam: (page) => page.next,
+    staleTime: 30_000,
+    placeholderData: (previous) => previous,
+  });
+}
+
+/**
+ * Orders › History: the days' sums (from the first page) and their orders, 30 at a time
+ * (`fetchNextPage` for more). Keyed under the service, so a payment or refund taken on an order
+ * refreshes it.
+ */
+export function useOrderHistory(
+  branchId: string | undefined,
+  query: Omit<OrderHistoryQuery, 'cursor' | 'limit'>,
+) {
+  const token = useAdminToken();
+  return useInfiniteQuery({
+    queryKey: ['admin', 'service', 'order-history', branchId, token, query] as const,
+    queryFn:
+      token && branchId
+        ? ({ pageParam }) =>
+            api.orderHistory(token, branchId, {
+              ...query,
+              ...(pageParam ? { cursor: pageParam } : {}),
+            })
+        : skipToken,
+    initialPageParam: '',
+    getNextPageParam: (page) => page.next,
+    staleTime: 30_000,
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** One order at the branch by its code (none: nothing read); refreshed with the service. */
+export const branchOrderQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  id: string | null,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'service', 'order', branchId, token, id] as const,
+    queryFn: token && branchId && id ? () => api.branchOrder(token, branchId, id) : skipToken,
+    staleTime: 15_000,
+  });
+
+export const useBranchOrder = (branchId: string | undefined, id: string | null) =>
+  useQuery(branchOrderQuery(useAdminToken(), branchId, id));
+
+/** Requests › History: the branch's requests on these days (of one kind, or all). */
+export const useRequestHistory = (
+  branchId: string | undefined,
+  from: string,
+  to: string,
+  kind?: 'waiter' | 'bill' | 'kitchen',
+) => useQuery(requestHistoryQuery(useAdminToken(), branchId, from, to, kind));
+
+/** GET /sessions/:id/wifi: the guest Wi-Fi (name, password) for a seated guest, or null. */
+export const useSessionWifi = (sessionId: string | undefined) =>
+  useQuery(sessionWifiQuery(sessionId)).data?.wifi ?? null;
+
 /** GET /sessions/:id/orders: the guest's orders; idle until there's a session. */
 export const useSessionOrders = (sessionId: string | undefined) =>
   useQuery(sessionOrdersQuery(sessionId));
@@ -462,6 +558,24 @@ export const useAdminRoles = (branchId: string | undefined) =>
 /** GET /admin/branches/:branchId/offers: the branch's automatic offers, paused ones too. */
 export const useAdminOffers = (branchId: string | undefined) =>
   useQuery(adminOffersQuery(useAdminToken(), branchId));
+
+/** Admin › Menu › Search suggestions: what guests see now, and where each came from. */
+export const useAdminSearchSuggestions = (branchId: string | undefined) =>
+  useQuery(adminSearchSuggestionsQuery(useAdminToken(), branchId));
+
+/** Admin › Menu › Suggestions › Cart: the settings, and a guest's view with `preview` in the cart. */
+export const useAdminCartSuggestions = (branchId: string | undefined, preview?: string) =>
+  useQuery(adminCartSuggestionsQuery(useAdminToken(), branchId, preview));
+
+/** "Goes well with your order" for these cart dishes; undefined until read (or if it can't be). */
+export const useCartSuggestions = (dishes: readonly string[]) =>
+  useQuery(cartSuggestionsQuery(useBranchSummary().id, dishes));
+
+/**
+ * The active branch's search suggestions without waiting for them: `pending` until read; if they
+ * can't be (`isError`), the search screen falls back to the menu's own lists.
+ */
+export const useSearchSuggestions = () => useQuery(searchSuggestionsQuery(useBranchSummary().id));
 
 /** GET /admin/branches/:branchId/reservations: bookings from today on; polled like the floor. */
 export const useReservations = (branchId: string | undefined) =>

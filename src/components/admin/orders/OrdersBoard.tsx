@@ -10,7 +10,7 @@ import { Button, Chip, EmptyState, Icon, SearchField } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { ordersPath } from '@/lib/adminNav';
+import { orderHistoryPath, ordersPath } from '@/lib/adminNav';
 import {
   MODE_FILTERS,
   ORDER_VIEWS,
@@ -24,15 +24,7 @@ import {
   type OrderView,
 } from '@/lib/adminOrders';
 import { cx } from '@/lib/cx';
-import {
-  inDayRange,
-  isTodayOnly,
-  ordersFilter,
-  parseDayRange,
-  type DayRange,
-} from '@/lib/dayRange';
 import type { Order } from '@/types/order';
-import { DateRangeFilter } from '../DateRangeFilter';
 import type { PadTarget } from '../orderPad/OrderPad';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { OrderDialogView } from './OrderDetailDialog';
@@ -57,7 +49,8 @@ const AGE_REFRESH_MS = 20_000;
 
 /**
  * /admin/dashboard/orders/ (and its ready/ and unpaid/ pages): today's orders across dine-in,
- * takeaway and delivery, or those of the days picked (?from=&to=, up to a year back). Today's totals; a status view (in the address); type and search
+ * takeaway and delivery, with earlier bills still to collect (earlier days are in Orders ›
+ * History, a button away). Today's totals; a status view (in the address); type and search
  * filters; a row per order with the action it needs next (Mark served, Handed over, Collect);
  * and the order itself — collect payment, add items, cancel. Read from GET
  * /admin/branches/:branchId/orders, polled every 15 s.
@@ -69,9 +62,8 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
   const { branch, money, clock } = useAdminWorkspace();
   const now = useNow(AGE_REFRESH_MS);
   const today = clock.dayKey(now ?? new Date());
-  const days = parseDayRange(useQueryParam('from'), useQueryParam('to'), today);
-  // Today is the live list everyone shares (polled); past days are read once.
-  const orders = useBranchOrders(branch.id, ordersFilter(days, today), days.to === today);
+  // Today's live list everyone shares (polled).
+  const orders = useBranchOrders(branch.id);
   const queryView = useQueryParam('view');
   const view = queryView !== null || !routeView ? parseView(queryView) : routeView;
   const [mode, setMode] = useState<ModeFilter>('all');
@@ -81,10 +73,7 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
   const { showToast } = useToast();
   const serve = useMarkServed();
 
-  const goTo = (next: OrderView, range: DayRange = days) =>
-    router.replace(ordersPath(next, isTodayOnly(range, today) ? undefined : range), {
-      scroll: false,
-    });
+  const goTo = (next: OrderView) => router.replace(ordersPath(next), { scroll: false });
 
   const onAction = (order: Order, action: OrderAction) => {
     if (action === 'collect') {
@@ -100,9 +89,9 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
   let content;
   if (orders.data) {
     const all = orders.data.orders;
-    // Up to today the list also has yesterday's bills still to pay (listed, under Unpaid);
-    // the totals are the days' own.
-    const totals = todayTotals(all.filter((o) => inDayRange(clock.dayKey(o.placedAt), days)));
+    // The list also has yesterday's bills still to pay (listed, under Unpaid); the totals are
+    // today's own.
+    const totals = todayTotals(all.filter((o) => clock.dayKey(o.placedAt) === today));
     const listed = filterOrders(all, { view, mode, query });
     const byView = viewCounts(all, { mode, query });
     const byMode = modeCounts(all, { view, query });
@@ -225,12 +214,11 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
     <div className={styles.page}>
       {/* The bar above already names the page; the heading is for screen readers. */}
       <h1 className="visually-hidden">{t('adminOrders.title')}</h1>
-      <DateRangeFilter
-        id="orders-days"
-        range={days}
-        today={today}
-        onChange={(range) => goTo(view, range)}
-      />
+      <div className={styles.toolbar}>
+        <Button href={orderHistoryPath()} variant="secondary" size="sm" iconStart="history">
+          {t('adminOrders.historyButton')}
+        </Button>
+      </div>
       {content}
     </div>
   );

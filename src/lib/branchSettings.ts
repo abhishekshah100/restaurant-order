@@ -1,18 +1,21 @@
 import type {
   Branch,
   DeliveryZone,
+  HelpSocialNetwork,
   OpeningSchedule,
   PaymentOption,
   Session,
+  SocialLinks,
   TaxIdKey,
   WeekSessions,
 } from '@/types/branch';
-import { WEEKDAYS } from '@/types/branch';
+import { SOCIAL_NETWORKS, WEEKDAYS } from '@/types/branch';
 import type {
   BranchDetails,
   BranchSettings,
   BranchSettingsChoices,
   DeliverySettings,
+  HelpSettings,
   ServicesSettings,
   PaymentChannelSettings,
   PaymentChoices,
@@ -86,6 +89,17 @@ export type SettingsError =
   | 'wifiLong'
   | 'orderPrefix'
   | 'orderStart'
+  | 'image'
+  | 'wifiPasswordLong'
+  | 'instagramUrl'
+  | 'facebookUrl'
+  | 'youtubeUrl'
+  | 'xUrl'
+  | 'whatsappUrl'
+  | 'googleReviewsUrl'
+  | 'tooManyFaqs'
+  | 'faqQuestion'
+  | 'faqAnswer'
   | 'taxId'
   | 'country'
   | 'timezone'
@@ -143,6 +157,7 @@ export function detailsOf(branch: Branch): BranchDetails {
     timezone,
     locale,
     currency: branch.currency.code,
+    image: branch.image ?? null,
   };
 }
 
@@ -207,9 +222,19 @@ export function pickupOf({ modes }: Pick<Branch, 'modes'>): PickupSettings {
   return { ...pickup };
 }
 
+export function helpOf(branch: Branch): HelpSettings {
+  return {
+    wifiName: branch.wifiName,
+    wifiPassword: branch.wifiPassword ?? '',
+    social: { ...branch.help?.social },
+    faqs: (branch.help?.faqs ?? []).map((f) => ({ ...f })),
+  };
+}
+
 export function settingsOf(branch: Branch): BranchSettings {
   return {
     details: detailsOf(branch),
+    help: helpOf(branch),
     services: servicesOf(branch),
     hours: structuredClone(branch.schedule),
     tax: taxOf(branch),
@@ -581,6 +606,8 @@ export function withDetails(branch: Branch, d: BranchDetails): Branch {
     mapUrl: address === branch.address ? branch.mapUrl : mapUrlFor(address),
     phone,
     wifiName: trimmed(d.wifiName),
+    // Left out: the branch keeps its photo; null removes it.
+    image: d.image === undefined ? branch.image : (d.image ?? undefined),
   };
 }
 
@@ -763,6 +790,7 @@ export function applySettings(
 ): Branch {
   let next = branch;
   if (patch.details) next = withDetails(next, patch.details);
+  if (patch.help) next = withHelp(next, patch.help);
   if (patch.services) next = withServices(next, patch.services);
   if (patch.hours) next = withHours(next, patch.hours);
   if (patch.tax) next = withTax(next, patch.tax);
@@ -788,4 +816,87 @@ export function uniqueId(name: string, taken: ReadonlySet<string>, fallback = 'i
   let n = 2;
   while (taken.has(`${base}-${n}`)) n += 1;
   return `${base}-${n}`;
+}
+
+/* ---------- Help page ---------- */
+
+export const HELP_LIMITS = {
+  wifiName: 40,
+  /** WPA allows 63 characters. */
+  wifiPassword: 63,
+  socialUrl: 300,
+  faqs: 20,
+  faqQuestion: 120,
+  faqAnswer: 1000,
+} as const;
+
+/** The sites each network's links may be on (as the server checks). */
+const SOCIAL_HOSTS: Record<HelpSocialNetwork, readonly string[]> = {
+  instagram: ['instagram.com'],
+  facebook: ['facebook.com', 'fb.com', 'fb.me'],
+  youtube: ['youtube.com', 'youtu.be'],
+  x: ['x.com', 'twitter.com'],
+  whatsapp: ['wa.me', 'whatsapp.com', 'api.whatsapp.com', 'chat.whatsapp.com'],
+  googleReviews: ['g.page', 'goo.gl', 'maps.app.goo.gl', 'google.com', 'search.google.com'],
+};
+
+/** A link as typed, with "https://" when it was left off ("" stays ""). */
+export const withHttps = (url: string) => {
+  const v = url.trim();
+  return !v || /^https?:\/\//i.test(v) ? v : `https://${v}`;
+};
+
+/** Whether a link is an https address on the network's own site. */
+export function isSocialUrl(network: HelpSocialNetwork, url: string): boolean {
+  if (url.length > HELP_LIMITS.socialUrl) return false;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^(www|m)\./, '');
+    return (
+      parsed.protocol === 'https:' &&
+      SOCIAL_HOSTS[network].some((h) => host === h || host.endsWith(`.${h}`))
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function helpErrors(h: HelpSettings): SettingsError[] {
+  const errors: SettingsError[] = [];
+  if (h.wifiName.trim().length > HELP_LIMITS.wifiName) errors.push('wifiLong');
+  if (h.wifiPassword.trim().length > HELP_LIMITS.wifiPassword) errors.push('wifiPasswordLong');
+  for (const network of SOCIAL_NETWORKS) {
+    const url = withHttps(h.social[network] ?? '');
+    if (url && !isSocialUrl(network, url)) errors.push(`${network}Url`);
+  }
+  // A question and answer both left empty is dropped on saving; half-filled ones aren't.
+  const faqs = h.faqs.filter((f) => f.question.trim() || f.answer.trim());
+  if (faqs.length > HELP_LIMITS.faqs) errors.push('tooManyFaqs');
+  if (faqs.some((f) => !f.question.trim() || f.question.trim().length > HELP_LIMITS.faqQuestion)) {
+    errors.push('faqQuestion');
+  }
+  if (faqs.some((f) => !f.answer.trim() || f.answer.trim().length > HELP_LIMITS.faqAnswer)) {
+    errors.push('faqAnswer');
+  }
+  return errors;
+}
+
+/** MOCK: the branch with its Help page saved (links, questions, Wi-Fi), tidied as the server does. */
+export function withHelp(branch: Branch, h: HelpSettings): Branch {
+  const social: SocialLinks = {};
+  for (const network of SOCIAL_NETWORKS) {
+    const url = withHttps(h.social[network] ?? '');
+    if (url) social[network] = url;
+  }
+  return {
+    ...branch,
+    wifiName: h.wifiName.trim(),
+    wifiPassword: h.wifiPassword.trim(),
+    help: {
+      social,
+      faqs: h.faqs
+        .map((f) => ({ question: f.question.trim(), answer: f.answer.trim() }))
+        .filter((f) => f.question || f.answer),
+    },
+  };
 }

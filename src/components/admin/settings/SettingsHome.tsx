@@ -9,7 +9,7 @@ import { ORDER_MODES } from '@/lib/fulfilment';
 import { formatRate } from '@/lib/pricing';
 import { WEEKDAYS } from '@/types/branch';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { FeaturesCard } from './FeaturesCard';
+import { usePlatformAdmin } from './usePlatformAdmin';
 import styles from './SettingsHome.module.css';
 import { useBranchTimes } from '@/hooks/useBranchTimes';
 
@@ -20,6 +20,7 @@ import { useBranchTimes } from '@/hooks/useBranchTimes';
 export function SettingsHome() {
   const t = useContent('common');
   const { branch, can } = useAdminWorkspace();
+  const platform = usePlatformAdmin();
   const summaries = useSummaries();
 
   return (
@@ -30,37 +31,38 @@ export function SettingsHome() {
           {t('adminSettings.subtitle', { branch: branch.shortName })}
         </p>
       </header>
-      <FeaturesCard />
-      {settingsFor(can).map((group) => (
+      {settingsFor(can, platform).map((group) => (
         <section key={group.id} className={styles.group} aria-labelledby={`settings-${group.id}`}>
           <h2 id={`settings-${group.id}`} className={styles.groupTitle}>
             {t(`adminSettings.groups.${group.id}`)}
           </h2>
           <ul className={styles.cards}>
-            {group.sections.map((section) => (
-              <li key={section.id}>
-                <Link href={section.href} className={styles.card}>
-                  <span className={styles.icon} aria-hidden="true">
-                    <Icon name={section.icon} size="md" />
-                  </span>
-                  <span className={styles.body}>
-                    <span className={styles.cardTitle}>
-                      {t(`adminSettings.sections.${section.id}.title`)}
+            {group.topics.map((topic) => {
+              // A section's line: what its first page holds now (its other pages are tabs).
+              const summary = topic.pages.map((p) => summaries[p.id]).find(Boolean);
+              return (
+                <li key={topic.id}>
+                  <Link href={topic.href} className={styles.card}>
+                    <span className={styles.icon} aria-hidden="true">
+                      <Icon name={topic.icon} size="md" />
                     </span>
-                    <span className={styles.description}>
-                      {t(`adminSettings.sections.${section.id}.description`)}
+                    <span className={styles.body}>
+                      <span className={styles.cardTitle}>
+                        {t(`adminSettings.topics.${topic.id}.title`)}
+                      </span>
+                      <span className={styles.description}>
+                        {t(`adminSettings.topics.${topic.id}.description`)}
+                      </span>
+                      {summary && <span className={styles.summary}>{summary}</span>}
                     </span>
-                    {summaries[section.id] && (
-                      <span className={styles.summary}>{summaries[section.id]}</span>
-                    )}
-                  </span>
-                  <span className={styles.open}>
-                    {t('adminSettings.open')}
-                    <Icon name="chev" size="xs" />
-                  </span>
-                </Link>
-              </li>
-            ))}
+                    <span className={styles.open}>
+                      {t('adminSettings.open')}
+                      <Icon name="chev" size="xs" />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ))}
@@ -90,7 +92,11 @@ function useSummaries(): Partial<Record<SettingsSectionId, string>> {
     });
   }
   if (settings) {
-    const { details, services, hours, tax, payments, delivery, pickup } = settings;
+    const { details, help, services, hours, tax, payments, delivery, pickup } = settings;
+    summaries.help = t('adminSettings.sections.help.summary', {
+      faqs: t.plural('adminSettings.sections.help.faqs', help.faqs.length),
+      links: t.plural('adminSettings.sections.help.links', Object.keys(help.social).length),
+    });
     const on = ORDER_MODES.filter((m) => services[m]).map((m) => t(`modes.${m}`));
     summaries.services = on.length
       ? t('adminSettings.sections.services.summary', { modes: on.join(' · ') })

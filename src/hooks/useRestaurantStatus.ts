@@ -13,7 +13,6 @@ import {
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage';
 import { useVisit } from '@/context/GuestSessionContext';
 import { statusFor } from '@/lib/branchHours';
-import { useBranchTimes } from './useBranchTimes';
 import { recheckOnline, useOnlineStatus } from './useOnlineStatus';
 import { useQueryParam } from './useQueryParam';
 
@@ -87,14 +86,10 @@ export function useOrderingAvailability(): OrderingAvailabilityResult {
   );
 }
 
-/** The header subline ("Open · orders until 8:30 PM", "Closed now", "Ordering paused") and its colour. */
+/** The header subline ("Open now", "Closed now", "Ordering paused") and its colour. */
 export function useStatusLine(): { text: string; tone: 'error' | 'warn' | null } {
-  const ordersUntil = useBranchTimes(useBranch(), useVisit().mode)?.ordersUntil;
   const { status } = useOrderingAvailability();
   const t = useContent('status');
-  const text =
-    status === 'open' && !ordersUntil
-      ? t('line.openNow')
-      : t(`line.${status}`, { time: ordersUntil ?? '' });
+  const text = status === 'open' ? t('line.openNow') : t(`line.${status}`);
   return { text, tone: statusTone(status) };
 }

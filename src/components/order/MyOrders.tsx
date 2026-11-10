@@ -47,7 +47,7 @@ function OrderStatus({ order, className }: { order: Order; className?: string })
 }
 
 /** One order: a list row (or a highlighted card while active) on mobile, a table row on the web. */
-function OrderRow({ order, today }: { order: Order; today: boolean }) {
+function OrderRow({ order, today, eager }: { order: Order; today: boolean; eager?: boolean }) {
   const t = useContent('orders');
   const { money, clock } = useRegion();
   const visitWords = useVisitWords();
@@ -64,7 +64,7 @@ function OrderRow({ order, today }: { order: Order; today: boolean }) {
   return (
     <li className={styles.item}>
       <Link href={orderHref(order)} className={cx(styles.row, !finished && styles.active)}>
-        <OrderThumb order={order} />
+        <OrderThumb order={order} eager={eager} />
         <span className={styles.main}>
           <span className={styles.top}>
             <span className={styles.id}>{t('shared.orderRef', { id: order.id })}</span>
@@ -100,12 +100,15 @@ function VisitSection({
   summary,
   orders,
   today,
+  eagerRows = 0,
 }: {
   id: string;
   title: ReactNode;
   summary?: string;
   orders: Order[];
   today: boolean;
+  /** The first rows, near the top of the page: their photos load at once. */
+  eagerRows?: number;
 }) {
   const t = useContent('orders');
   return (
@@ -127,8 +130,8 @@ function VisitSection({
         </div>
       )}
       <ul className={styles.list}>
-        {orders.map((order) => (
-          <OrderRow key={order.id} order={order} today={today} />
+        {orders.map((order, i) => (
+          <OrderRow key={order.id} order={order} today={today} eager={i < eagerRows} />
         ))}
       </ul>
     </section>
@@ -189,6 +192,7 @@ export function MyOrders() {
             summary={`${t.plural('shared.orderCount', today.length)} · ${money.format(spentTotal(today))}`}
             orders={today}
             today
+            eagerRows={4}
           />
         )}
         {earlier.length > 0 && (
@@ -197,6 +201,7 @@ export function MyOrders() {
             title={t('list.earlier')}
             orders={earlier}
             today={false}
+            eagerRows={today.length === 0 ? 4 : 0}
           />
         )}
       </>

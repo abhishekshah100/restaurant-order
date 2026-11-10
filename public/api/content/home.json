@@ -4,7 +4,6 @@
     "description": "Browse the menu and order directly from your table."
   },
   "welcome": {
-    "openUntil": "Taking orders until {time}",
     "staffOnCall": "Staff on call at your table",
     "eyebrow": "Welcome to",
     "lede": "Browse our menu and order directly from your table.",

@@ -90,7 +90,7 @@ test('a Nepal QR code: NPR prices, service charge + VAT, +977 and Nepali payment
 
   await expect(page).toHaveURL(/\/checkout\/processing\/$/);
   await expect(visible(page, /Approve the request in your eSewa app/)).toBeVisible();
-  await page.getByRole('button', { name: 'Prototype: success' }).filter({ visible: true }).click();
+  await page.getByRole('button', { name: 'Approve payment' }).filter({ visible: true }).click();
 
   // The order is timed in Kathmandu.
   await expect(page).toHaveURL(/\/order\/confirmed\/\?id=[A-Z]+-?\d+$/);
@@ -152,7 +152,7 @@ test('Nepal: pay at the counter, then pay the bill with Khalti; the copy names N
     .first()
     .click();
   await expect(page.getByRole('heading', { name: 'Confirming your payment' })).toBeVisible();
-  await page.getByRole('button', { name: 'Prototype: success' }).filter({ visible: true }).click();
+  await page.getByRole('button', { name: 'Approve payment' }).filter({ visible: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Bill paid' })).toBeVisible();
   const receipt = page.getByRole('definition');
   await expect(receipt.filter({ hasText: npr('572') })).toBeVisible();

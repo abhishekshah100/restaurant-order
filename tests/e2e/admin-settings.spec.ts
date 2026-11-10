@@ -15,14 +15,24 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-async function openSetting(page: Page, name: string, path: string) {
+/**
+ * Opens a settings page the way staff do: its section on the Settings overview (named for the
+ * job), then its tab when the section has several pages. `heading` is the page's own title.
+ */
+async function openSetting(
+  page: Page,
+  section: string,
+  path: string,
+  { tab, heading = section }: { tab?: string; heading?: string } = {},
+) {
   await page.goto('/admin/dashboard/settings/');
   await page
-    .getByRole('link', { name: new RegExp(`^${name}`) })
+    .getByRole('link', { name: new RegExp(`^${section}`) })
     .last()
     .click();
+  if (tab) await page.getByRole('link', { name: tab, exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/settings/${path}/$`));
-  await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
 }
 
 async function saveChanges(page: Page, saved: string) {
@@ -60,14 +70,17 @@ test('opening hours, tax, payments, delivery and pickup save and show on Setting
   await saveChanges(page, 'Opening hours saved');
 
   // Tax: a 10% service charge, shown on the example bill.
-  await openSetting(page, 'Tax & service charge', 'tax');
+  await openSetting(page, 'Bills & payments', 'tax', { heading: 'Tax & service charge' });
   await page.getByRole('switch', { name: 'Add a service charge' }).check();
   await page.getByLabel('Rate (%)').last().fill('10');
   await expect(page.getByText('Service charge (10%)')).toBeVisible();
   await saveChanges(page, 'Tax & service charge saved');
 
   // Payment methods: every method off at checkout is refused.
-  await openSetting(page, 'Payment methods', 'payments');
+  await openSetting(page, 'Bills & payments', 'payments', {
+    tab: 'Payment methods',
+    heading: 'Payment methods',
+  });
   const checkout = page.locator('section').filter({ hasText: 'Dine-in checkout' });
   await checkout.getByRole('checkbox', { name: /^Pay online now/ }).uncheck();
   await checkout.getByRole('checkbox', { name: /^Pay at the counter/ }).uncheck();
@@ -76,7 +89,10 @@ test('opening hours, tax, payments, delivery and pickup save and show on Setting
   await saveChanges(page, 'Payment methods saved');
 
   // Delivery: a new zone can't take an area another zone has.
-  await openSetting(page, 'Delivery zones', 'delivery');
+  await openSetting(page, 'How guests order', 'delivery', {
+    tab: 'Delivery',
+    heading: 'Delivery zones',
+  });
   await page.getByRole('button', { name: 'Add zone' }).click();
   const dialog = page.getByRole('dialog', { name: 'Add a delivery zone' });
   await dialog.getByLabel('Zone name').fill('Airport');
@@ -89,7 +105,7 @@ test('opening hours, tax, payments, delivery and pickup save and show on Setting
   await saveChanges(page, 'Delivery zones saved');
 
   // Pickup: slots every 30 minutes.
-  await openSetting(page, 'Pickup', 'pickup');
+  await openSetting(page, 'How guests order', 'pickup', { tab: 'Takeaway', heading: 'Pickup' });
   await page.getByRole('radio', { name: 'Every 30 min' }).click();
   await saveChanges(page, 'Pickup saved');
 
@@ -97,14 +113,9 @@ test('opening hours, tax, payments, delivery and pickup save and show on Setting
   await expect(page.getByRole('link', { name: /^Opening hours/ }).last()).toContainText(
     'Open 6 days a week',
   );
-  await expect(page.getByRole('link', { name: /^Tax & service charge/ }).last()).toContainText(
+  // A section's card shows its first page's line (Tax for Bills & payments).
+  await expect(page.getByRole('link', { name: /^Bills & payments/ }).last()).toContainText(
     'service charge 10%',
-  );
-  await expect(page.getByRole('link', { name: /^Delivery zones/ }).last()).toContainText(
-    'Delivering · 4 zones',
-  );
-  await expect(page.getByRole('link', { name: /^Pickup/ }).last()).toContainText(
-    'slots every 30 min',
   );
 });
 
@@ -113,7 +124,7 @@ test('services switch on and off; the region is editable on Branch details', asy
   await adminSignIn(page, 'Udyog Vihar');
 
   // Services: never all off; dine-in off shows on Settings.
-  await openSetting(page, 'Services', 'services');
+  await openSetting(page, 'How guests order', 'services', { heading: 'Services' });
   for (const name of ['Dine-in', 'Takeaway', 'Delivery']) {
     await page.getByRole('switch', { name }).uncheck();
   }
@@ -128,7 +139,7 @@ test('services switch on and off; the region is editable on Branch details', asy
   );
 
   // Region: another country warns what comes with it, and the phone must follow.
-  await openSetting(page, 'Branch details', 'branch');
+  await openSetting(page, 'Restaurant info', 'branch', { heading: 'Branch details' });
   await pickOption(page.getByLabel('Country'), 'Nepal');
   await expect(page.getByLabel('Time zone')).toHaveValue('Asia/Kathmandu');
   await expect(page.getByLabel('Currency')).toHaveText(/^NPR/);

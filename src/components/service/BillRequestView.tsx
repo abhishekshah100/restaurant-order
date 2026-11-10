@@ -82,31 +82,59 @@ export function BillRequestView() {
     );
   }
 
-  // Only "Just my orders" can be paid in the app; the whole table's bill comes from the server.
+  // Only "Just my orders" can be paid in the app; the whole table's bill is paid to the server.
+  // So "Just my orders" offers two ways (pay here, or ask for the bill), the table one.
   const canPay = scope === 'mine' && bill.payableTotal > 0;
-  const requestVariant = canPay ? 'secondary' : 'primary';
-  const confirm = (
+  const ask = pending ? (
+    <Button
+      href={SERVICE_PATHS.bill}
+      variant={canPay ? 'secondary' : 'primary'}
+      block
+      iconStart="receipt"
+    >
+      {t('billRequest.viewRequest')}
+    </Button>
+  ) : (
+    <Button
+      variant={canPay ? 'secondary' : 'primary'}
+      block
+      iconStart="receipt"
+      onClick={() => sendBillRequest(scope)}
+    >
+      {t('billRequest.confirm')}
+    </Button>
+  );
+  const confirm = canPay ? (
     <div className={styles.actions}>
-      {canPay && (
+      <div className={styles.payNow}>
         <Button href={PAY_BILL_PATH} block iconStart="lock">
           {t('shared.payNow', { amount: money.format(bill.payableTotal) })}
         </Button>
-      )}
-      {pending ? (
-        <Button href={SERVICE_PATHS.bill} variant={requestVariant} block iconStart="receipt">
-          {t('billRequest.viewRequest')}
-        </Button>
-      ) : (
-        <Button
-          variant={requestVariant}
-          block
-          iconStart="receipt"
-          onClick={() => sendBillRequest(scope)}
-        >
-          {t('billRequest.confirm')}
-        </Button>
-      )}
+        <span className={styles.payNowSub}>{t('billRequest.payNowSub')}</span>
+      </div>
+      <p className={styles.or} aria-hidden="true">
+        <span>{t('billRequest.or')}</span>
+      </p>
+      {ask}
     </div>
+  ) : (
+    <div className={styles.actions}>{ask}</div>
+  );
+  const hint = (
+    <>
+      <p className={styles.hint}>
+        <Icon name="info" size="xs" className={styles.hintIcon} />
+        {canPay
+          ? t('billRequest.hintPay', { paymentMethods })
+          : t('billRequest.hint', { paymentMethods })}
+      </p>
+      {scope === 'table' && mine.payableTotal > 0 && (
+        <p className={styles.hint}>
+          <Icon name="lock" size="xs" className={styles.hintIcon} />
+          {t('billRequest.tablePayNote')}
+        </p>
+      )}
+    </>
   );
   const mineIds = mine.orders.map((o) => `#${o.id}`).join(', ');
   const mineName = firstName(mine.orders[0]?.customerName ?? '');
@@ -179,12 +207,9 @@ export function BillRequestView() {
               {heading}
             </h2>
             <BillOrderList orders={bill.orders} sessionId={sessionId} />
-            <BillTotals bill={bill} scope={scope} signed className="hide-desktop" />
+            <BillTotals bill={bill} scope={scope} signed breakdown className="hide-desktop" />
           </section>
-          <p className={cx(styles.hint, 'hide-desktop')}>
-            <Icon name="info" size="xs" className={styles.hintIcon} />
-            {t('billRequest.hint', { paymentMethods })}
-          </p>
+          <div className={cx(styles.hints, 'hide-desktop')}>{hint}</div>
           <div className={cx(styles.foot, 'hide-desktop')}>{confirm}</div>
         </main>
 
@@ -192,12 +217,9 @@ export function BillRequestView() {
           <h2 id="bill-summary" className="t-h2">
             {t('shared.billSummary')}
           </h2>
-          <BillTotals bill={bill} scope={scope} signed />
+          <BillTotals bill={bill} scope={scope} signed breakdown />
           {confirm}
-          <p className={styles.hint}>
-            <Icon name="info" size="xs" className={styles.hintIcon} />
-            {t('billRequest.hint', { paymentMethods })}
-          </p>
+          <div className={styles.hints}>{hint}</div>
         </aside>
       </Columns>
     </Page>

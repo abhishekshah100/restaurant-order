@@ -246,7 +246,10 @@
       "hoursToday": "Today {hours}",
       "now": "Now {time}",
       "nowLabel": "Local time now {time}",
-      "tables": "Tables {first}–{last}",
+      "tables": {
+        "one": "{count} table",
+        "other": "{count} tables"
+      },
       "modes": "Order modes",
       "currency": "Currency {code}"
     }
@@ -268,7 +271,9 @@
       "unpaidOrders": "Unpaid orders · Admin",
       "menu": "Menu · Admin",
       "requests": "Requests · Admin",
+      "requestHistory": "Request history · Admin",
       "payments": "Payments · Admin",
+      "paymentHistory": "Payment history · Admin",
       "cash": "Cash register · Admin",
       "refunds": "Refunds & cancellations · Admin",
       "table": "Table · Admin",
@@ -277,6 +282,8 @@
       "settings": "Settings · Admin",
       "floorPlan": "Floor plan · Settings · Admin",
       "branchDetails": "Branch details · Settings · Admin",
+      "helpPage": "Help page · Settings · Admin",
+      "modules": "Modules · Settings · Admin",
       "openingHours": "Opening hours · Settings · Admin",
       "tax": "Tax & service charge · Settings · Admin",
       "paymentMethods": "Payment methods · Settings · Admin",
@@ -290,7 +297,8 @@
       "roles": "Roles & permissions · Settings · Admin",
       "staff": "Staff · Settings · Admin",
       "inventory": "Inventory · Admin",
-      "purchasing": "Purchasing · Admin"
+      "purchasing": "Purchasing · Admin",
+      "orderHistory": "Order history · Admin"
     },
     "loading": "Loading your workspace",
     "noAccess": {
@@ -436,8 +444,8 @@
       },
       "bill": {
         "title": "Wants the bill",
-        "mine": "Just their orders",
-        "table": "Whole table",
+        "mine": "One guest's orders only",
+        "table": "Whole table's bill",
         "balance": "{amount} due"
       },
       "kitchen": {
@@ -802,6 +810,44 @@
   },
   "adminRequests": {
     "title": "Requests",
+    "historyButton": "History",
+    "history": {
+      "title": "Request history",
+      "subtitle": "Every waiter call, bill request and kitchen message, with who answered and how fast.",
+      "back": "Requests",
+      "summary": {
+        "total": "Requests",
+        "resolved": "Done",
+        "lapsed": "Not answered",
+        "average": "Average answer time",
+        "averageValue": "{count} min",
+        "averageNone": "—"
+      },
+      "columns": {
+        "when": "When",
+        "where": "Where",
+        "request": "Request",
+        "outcome": "Outcome"
+      },
+      "outcome": {
+        "resolved": "Done",
+        "lapsed": "Not answered",
+        "open": "Still open"
+      },
+      "answered": {
+        "now": "Answered at once",
+        "minutes": "Answered in {count} min"
+      },
+      "by": "by {name}",
+      "takenBy": "{name} went",
+      "table": "Table {table}",
+      "noTable": "Pickup / delivery",
+      "empty": "No requests on these days.",
+      "emptyKind": "No requests of this kind on these days.",
+      "cancelledNote": "Requests guests take back themselves aren't kept.",
+      "loading": "Loading request history",
+      "error": "We couldn't load the request history."
+    },
     "filters": {
       "label": "Show",
       "all": "All",
@@ -896,7 +942,99 @@
       "search": "No orders match “{query}”."
     },
     "loading": "Loading orders",
-    "failed": "Couldn't update that. Try again."
+    "failed": "Couldn't update that. Try again.",
+    "historyButton": "Order history",
+    "history": {
+      "title": "Order history",
+      "subtitle": "Every order on the days you pick: what sold, what was cancelled and what is still to collect.",
+      "back": "Today's orders",
+      "loading": "Loading order history",
+      "presets": {
+        "week": "Last 7 days",
+        "month": "Last 30 days",
+        "quarter": "Last 3 months",
+        "half": "Last 6 months",
+        "year": "Last year"
+      },
+      "period": {
+        "day": "{date}",
+        "range": "{from} – {to}"
+      },
+      "sales": "Sales",
+      "salesHint": "From {orders} · cancelled orders not counted",
+      "orders": {
+        "one": "{count} order",
+        "other": "{count} orders"
+      },
+      "kpis": {
+        "orders": "Orders",
+        "ordersHint": "{completed} completed · {cancelled} cancelled",
+        "inProgress": "{count} not finished",
+        "average": "Average bill",
+        "averageHint": "Per order, cancelled ones left out",
+        "unpaid": "Still to collect",
+        "unpaidHint": {
+          "one": "On {count} order",
+          "other": "On {count} orders"
+        },
+        "unpaidNone": "Every order is paid"
+      },
+      "note": "Each order counts on the day it was placed. The totals cover every order on these days; the filters only narrow the list.",
+      "statuses": {
+        "label": "Show",
+        "all": "All",
+        "completed": "Completed",
+        "unpaid": "Unpaid",
+        "cancelled": "Cancelled"
+      },
+      "search": "Search order number, guest, table or phone",
+      "day": {
+        "one": "{date} · {count} order",
+        "other": "{date} · {count} orders"
+      },
+      "row": {
+        "title": "{order} · {name}",
+        "token": "Token #{token}",
+        "items": {
+          "one": "{count} item",
+          "other": "{count} items"
+        },
+        "takenBy": "Taken by {name}",
+        "byGuest": "Ordered by the guest",
+        "cancelled": "Cancelled: {reason}",
+        "cancelledByGuest": "Cancelled by the guest",
+        "due": "{amount} to collect",
+        "open": "Open order {order}"
+      },
+      "showing": "Showing {shown} of {total}",
+      "more": "Show more",
+      "export": "Export to Excel",
+      "exporting": "Preparing the file…",
+      "exportFile": "orders-{branch}-{date}.xlsx",
+      "exportFailed": "Couldn't prepare the file. Try again.",
+      "columns": {
+        "time": "Placed at",
+        "order": "Order",
+        "where": "Where",
+        "guest": "Guest",
+        "items": "Items",
+        "total": "Total",
+        "payment": "Payment",
+        "due": "Still to collect",
+        "method": "Payment method",
+        "status": "Status",
+        "cancelReason": "Why cancelled",
+        "takenBy": "Taken by"
+      },
+      "empty": {
+        "title": "No orders on these days",
+        "body": "Pick other days above to see their orders.",
+        "filteredTitle": "Nothing matches",
+        "filtered": "No orders match these filters. Try All, or clear the search.",
+        "search": "No orders match “{query}”."
+      },
+      "openFailed": "Couldn't open that order. Try again."
+    }
   },
   "adminCash": {
     "title": "Cash register",
@@ -2141,6 +2279,89 @@
       "save": "Save categories",
       "saved": "Categories saved",
       "errors": "Every category needs a name, and no name twice."
+    },
+    "suggestionsButton": "Suggestions",
+    "suggestions": {
+      "title": "Suggestions",
+      "subtitles": {
+        "search": "What guests see on the search screen before they type",
+        "cart": "What guests are offered in their cart"
+      },
+      "tabs": {
+        "search": "Search",
+        "cart": "Cart"
+      },
+      "cart": {
+        "title": "Goes well with your order",
+        "hint": "Up to 3 dishes in the guest's cart. A dish already in the cart is never suggested.",
+        "enabled": "Show in the cart",
+        "enabledHint": "Off: guests see no suggestions in their cart.",
+        "from": "Suggest from",
+        "fromHint": "Dishes ordered with what's in the cart, from these categories. None ticked: any category the guest hasn't ordered from.",
+        "pins": "Your picks (shown first)",
+        "previewLabel": "With this dish in the cart",
+        "previewNote": "A guest with {dish} in the cart sees these, as saved.",
+        "offNote": "Switched off: guests don't see these now.",
+        "nothing": "Nothing to suggest for this dish.",
+        "fromMenu": "From the menu",
+        "together": {
+          "one": "Ordered with {dish} {count} time",
+          "other": "Ordered with {dish} {count} times"
+        }
+      },
+      "loadFailed": "We couldn't load the search suggestions.",
+      "retry": "Try again",
+      "trending": {
+        "title": "Trending tonight",
+        "hint": "Up to 4 dishes, shown with their photo. Your pinned dishes come first.",
+        "auto": "Fill from orders",
+        "autoHint": "Adds the dishes ordered most today, then this week. Dishes without a photo, sold out or off today are skipped.",
+        "pins": "Your pinned dishes",
+        "noPins": "None pinned.",
+        "hiddenPin": "Hidden: can't be ordered now",
+        "unpin": "Unpin {dish}",
+        "pinLabel": "Dish to pin",
+        "pinPlaceholder": "Choose a dish to pin",
+        "pin": "Pin",
+        "full": "{count} dishes pinned: unpin one to pin another.",
+        "nothing": "Nothing yet: pin a dish, or wait for today's orders."
+      },
+      "popular": {
+        "title": "Popular at {restaurant}",
+        "hint": "Up to 6 words. Tapping one searches the menu for it. Your words come first.",
+        "auto": "Fill from orders",
+        "autoHint": "Adds the names of the dishes ordered most in the last 30 days.",
+        "words": "Your words",
+        "noWords": "No words added.",
+        "remove": "Remove {word}",
+        "wordLabel": "Search word",
+        "wordPlaceholder": "e.g. Mocktails",
+        "add": "Add",
+        "duplicate": "This word is already in the list",
+        "full": "{count} words added: remove one to add another.",
+        "nothing": "Nothing yet: add a word, or wait for orders."
+      },
+      "guestsSee": "Guests see now",
+      "unsaved": "Save to see your changes here.",
+      "source": {
+        "pinned": "Pinned by you",
+        "word": "Your word",
+        "today": {
+          "one": "Ordered {count} time today",
+          "other": "Ordered {count} times today"
+        },
+        "week": {
+          "one": "Ordered {count} time this week",
+          "other": "Ordered {count} times this week"
+        },
+        "month": {
+          "one": "Ordered {count} time in 30 days",
+          "other": "Ordered {count} times in 30 days"
+        }
+      },
+      "close": "Close",
+      "save": "Save",
+      "saved": "Search suggestions saved"
     }
   },
   "adminQr": {
@@ -2475,6 +2696,7 @@
   },
   "adminDateRange": {
     "label": "Dates",
+    "presets": "Quick ranges",
     "from": "From",
     "to": "To",
     "today": "Today",
@@ -2486,6 +2708,45 @@
   },
   "adminPayments": {
     "title": "Payments",
+    "historyButton": "Payment history",
+    "history": {
+      "title": "Payment history",
+      "subtitle": "Every payment and refund on the days you pick, with totals by payment method.",
+      "back": "Today's payments",
+      "views": {
+        "label": "Show",
+        "transactions": "Payments & refunds",
+        "refunds": "Refunds only"
+      },
+      "period": {
+        "day": "{date}",
+        "range": "{from} – {to}"
+      },
+      "loading": "Loading payment history",
+      "presets": {
+        "week": "Last 7 days",
+        "month": "Last 30 days",
+        "quarter": "Last 3 months",
+        "half": "Last 6 months",
+        "year": "Last year"
+      },
+      "countedNote": "Each payment counts on the day it was taken. The totals cover every payment on these days; the filters only narrow the list.",
+      "net": "Net takings",
+      "netHint": "{collected} collected · {refunds} refunded",
+      "online": "Online",
+      "inPerson": "In person",
+      "tips": "Tips",
+      "refunds": "Refunds",
+      "refundsHint": "{pending} still on its way to guests",
+      "payments": {
+        "one": "{count} payment",
+        "other": "{count} payments"
+      },
+      "showing": "Showing {shown} of {total}",
+      "more": "Show more",
+      "export": "Export to Excel",
+      "exporting": "Preparing the file…"
+    },
     "orderId": "#{order}",
     "loading": "Loading payments",
     "failed": "That didn't go through. Try again.",
@@ -2532,8 +2793,8 @@
         "other": "{count} payments"
       },
       "refunded": "{amount} refunded",
-      "drawer": "Cash in the drawer",
-      "drawerHint": "Cash taken and tips, less cash handed back"
+      "drawer": "Cash taken from these orders",
+      "drawerHint": "Cash payments and tips, less cash refunds. Not the drawer total: Cash register also counts the opening float and cash paid in or out."
     },
     "actions": {
       "report": "Day report",
@@ -2725,7 +2986,8 @@
     "order": {
       "title": "Order #{order}",
       "history": "Payments on this order",
-      "none": "Nothing paid yet.",
+      "none": "No payment collected yet. The guest still owes {amount}.",
+      "noneDue": "No payment recorded. Nothing is due on this order.",
       "collect": "Collect",
       "refund": "Refund",
       "print": "Print receipt",
@@ -2799,16 +3061,80 @@
     "nav": "Settings",
     "back": "Settings",
     "groups": {
-      "branch": "This branch",
-      "money": "Money",
-      "ordering": "Ordering",
-      "restaurant": "All branches"
+      "branch": "Your branch",
+      "money": "Orders & money",
+      "restaurant": "People & branches"
+    },
+    "topics": {
+      "info": {
+        "title": "Restaurant info",
+        "description": "Name, address, phone and photo, plus what guests see on the Help page: Wi-Fi, social links and FAQs."
+      },
+      "hours": {
+        "title": "Opening hours",
+        "description": "When you're open each day, special dates, and when the kitchen takes last orders."
+      },
+      "tables": {
+        "title": "Tables",
+        "description": "Your floor plan: areas, tables and seats."
+      },
+      "ordering": {
+        "title": "How guests order",
+        "description": "Dine-in, takeaway and delivery: which ones you offer, pickup times, delivery zones and fees."
+      },
+      "billing": {
+        "title": "Bills & payments",
+        "description": "Tax, service charge, rounding, and the ways guests can pay."
+      },
+      "offers": {
+        "title": "Offers",
+        "description": "Happy hours and other automatic discounts."
+      },
+      "team": {
+        "title": "Team & access",
+        "description": "Your staff, and what each role is allowed to do."
+      },
+      "branches": {
+        "title": "Branches",
+        "description": "Add or remove branches of your restaurant."
+      }
+    },
+    "tabs": {
+      "label": "Pages in this section",
+      "details": "Details",
+      "help": "Guest info",
+      "services": "Overview",
+      "pickup": "Takeaway",
+      "delivery": "Delivery",
+      "tax": "Tax & service charge",
+      "payments": "Payment methods",
+      "staff": "Staff",
+      "roles": "Roles & permissions",
+      "branches": "Branches",
+      "modules": "Modules"
     },
     "sections": {
       "details": {
         "title": "Branch details",
         "description": "Name, address, phone and what guests at the table are told.",
         "summary": "{area} · {city}"
+      },
+      "modules": {
+        "title": "Modules",
+        "description": "Turn optional parts of the app on or off for this restaurant. Super admins only."
+      },
+      "help": {
+        "title": "Help page",
+        "description": "Wi-Fi, social media links and questions guests often ask.",
+        "summary": "{faqs} · {links}",
+        "faqs": {
+          "one": "{count} question",
+          "other": "{count} questions"
+        },
+        "links": {
+          "one": "{count} link",
+          "other": "{count} links"
+        }
       },
       "hours": {
         "title": "Opening hours",
@@ -3041,9 +3367,20 @@
       "phoneInvalid": "Enter the number with its country code, e.g. {dialCode} and the number",
       "phoneRegion": "Use a number starting {dialCode}, this branch's country code",
       "wifiLong": "Keep the Wi-Fi name to 40 characters",
+      "wifiPasswordLong": "Keep the Wi-Fi password to 63 characters",
+      "instagramUrl": "Use your Instagram link, e.g. https://instagram.com/yourname",
+      "facebookUrl": "Use your Facebook link, e.g. https://facebook.com/yourpage",
+      "youtubeUrl": "Use your YouTube link, e.g. https://youtube.com/@yourchannel",
+      "xUrl": "Use your X link, e.g. https://x.com/yourname",
+      "whatsappUrl": "Use a WhatsApp link, e.g. https://wa.me/919876543210",
+      "googleReviewsUrl": "Use your Google review link, e.g. https://g.page/r/…/review",
+      "tooManyFaqs": "Keep it to 20 questions",
+      "faqQuestion": "Each question needs words, up to 120 characters",
+      "faqAnswer": "Each question needs an answer, up to 1000 characters",
       "orderPrefix": "Use 1 to 5 capital letters, e.g. BLR",
       "taxId": "This number doesn't look right. Check it against your registration.",
       "orderStart": "Use a whole number from 1 to 999999",
+      "image": "This photo can't be used. Upload it again.",
       "noOpenDay": "Open the branch on at least one day.",
       "lastOrders": "Each session must be longer than the last-orders time.",
       "taxRate": "Use a rate from 0 to 50%, with up to two decimals.",
@@ -3083,6 +3420,48 @@
       "tooManySpecialDays": "Keep it to 50 special dates.",
       "specialLabel": "Keep each special date's name to 40 characters."
     },
+    "help": {
+      "subtitle": "What guests see on the Help page. Anything left empty isn't shown to them.",
+      "wifi": "Guest Wi-Fi",
+      "wifiHintCard": "Guests seated at a table see the name and password, with a button to copy the password.",
+      "wifiName": "Network name",
+      "wifiNamePlaceholder": "e.g. OliveTable-Guest",
+      "wifiPassword": "Password",
+      "wifiPasswordHint": "Optional. Only guests seated at a table see it.",
+      "social": "Social media",
+      "socialHint": "Shared by all your branches. Paste a link, or leave it empty to hide that icon.",
+      "networks": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "youtube": "YouTube",
+        "x": "X (Twitter)",
+        "whatsapp": "WhatsApp",
+        "googleReviews": "Google reviews"
+      },
+      "placeholders": {
+        "instagram": "instagram.com/yourname",
+        "facebook": "facebook.com/yourpage",
+        "youtube": "youtube.com/@yourchannel",
+        "x": "x.com/yourname",
+        "whatsapp": "wa.me/919876543210",
+        "googleReviews": "g.page/r/…/review"
+      },
+      "open": "Check link",
+      "openLabel": "Open the {network} link in a new tab",
+      "faqs": "Questions and answers",
+      "faqsHint": "Shown under “Allergens & FAQs”. Opening hours and the address are added for you from this branch's settings.",
+      "question": "Question",
+      "questionPlaceholder": "e.g. Is there parking?",
+      "answer": "Answer",
+      "answerPlaceholder": "e.g. Yes, free parking behind the building.",
+      "addFaq": "Add a question",
+      "removeFaq": "Remove “{question}”",
+      "removeFaqUntitled": "Remove this question",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "noFaqs": "No questions yet.",
+      "faqCount": "{count} of 20"
+    },
     "details": {
       "subtitle": "Who and where this branch is. Guests see these on the start screen, the welcome screen and the Help page.",
       "about": "About the branch",
@@ -3093,12 +3472,22 @@
       "city": "City",
       "address": "Address",
       "addressHint": "The map link guests open is made from it.",
+      "photo": "Restaurant image",
+      "photoHint": "Shown on the branch picker and to guests choosing an outlet. Without one, the short name's first letter is shown.",
+      "photoUpload": "Upload image",
+      "photoReplace": "Replace",
+      "photoRemove": "Remove",
+      "photoFileHint": "JPEG, PNG or WebP. A square photo looks best; it's resized before uploading.",
+      "photoAlt": "Photo of {name}",
+      "photoFailed": "We couldn't upload that image. Try another one.",
       "phone": "Phone",
       "phoneHint": "With the country code: {dialCode}…",
       "guests": "For guests at the table",
       "guestsHint": "Leave it empty and guests aren't shown it.",
       "wifiName": "Guest Wi-Fi name",
       "wifiHint": "Shown when a guest's phone goes offline.",
+      "wifiMoved": "The guest Wi-Fi, social media links and FAQs are on Settings › Help page.",
+      "wifiMovedLink": "Open Help page settings",
       "orders": "Order numbers",
       "ordersHint": "How orders at this branch are numbered on receipts, tickets and guests' phones. Each order also gets a token that starts at 1 every day.",
       "orderPrefix": "Prefix",
@@ -3367,10 +3756,10 @@
         "off": "Guests can't order delivery from this branch."
       },
       "configure": "{mode} settings",
-      "managedHere": "{mode} is {state}. Switch it on or off in Services.",
+      "managedHere": "{mode} is {state}. Switch it on or off on the Overview tab.",
       "stateOn": "on",
       "stateOff": "off",
-      "openServices": "Open Services",
+      "openServices": "Open Overview",
       "afterCard": "After ordering",
       "afterCardHint": "What guests can do with an order once they have placed it.",
       "guestChanges": {
@@ -3718,7 +4107,10 @@
     },
     "features": {
       "title": "Features",
+      "subtitle": "Optional parts of the app this restaurant uses. Each one is on or off for all its branches.",
+      "loading": "Loading modules",
       "inventory": "Inventory and purchasing",
+      "inventoryLabel": "Use inventory and purchasing",
       "inventoryOn": "On for every branch: stock, recipes, suppliers, deliveries.",
       "inventoryOff": "Off: the restaurant works without stock, as before. Its data is kept.",
       "who": "Only the platform team can change this.",

@@ -1,0 +1,62 @@
+/* The guest Wi-Fi: a small card beside "Follow us" (the help page's side column). */
+.card {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-label);
+}
+.rows {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+.row dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.value {
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+/* The QR pop-up: the code large on white (cameras read dark on light), the details under it. */
+.qr {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+.qrCode {
+  width: min(260px, 70vw);
+  height: auto;
+  padding: 8px;
+  border-radius: var(--r-md);
+  background: #ffffff;
+  border: 1px solid var(--line);
+}
+.qr .rows {
+  width: 100%;
+}

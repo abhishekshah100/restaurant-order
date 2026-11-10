@@ -69,6 +69,9 @@ export const ICON_NAMES = [
   'facebook',
   'youtube',
   'xbrand',
+  'wifi',
+  'whatsapp',
+  'google',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

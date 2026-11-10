@@ -40,7 +40,7 @@ describe('region-neutral copy', () => {
     seedGuestSession();
     const { result } = renderCopy();
     expect(result.current.hint).toBe(
-      'Your server will bring the printed bill. You can pay by card, UPI or cash.',
+      'Your server will bring the bill to your table. You can pay them by card, UPI or cash.',
     );
     expect(result.current.cart).toBe('Cart, 2 items, 578 rupees');
     expect(result.current.help).toBe(

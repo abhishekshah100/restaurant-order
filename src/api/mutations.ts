@@ -45,6 +45,8 @@ import type {
   DishInput,
   EditRoundRequest,
   ImageUploadRequest,
+  UpdateSearchSuggestionsRequest,
+  UpdateCartSuggestionsRequest,
   PaymentProofRequest,
   DepositRequest,
   CashMovementRequest,
@@ -76,6 +78,9 @@ import { api } from './endpoints';
 import { ApiError, isApiError } from './client';
 import {
   branchMenuQuery,
+  adminSearchSuggestionsQuery,
+  adminCartSuggestionsQuery,
+  searchSuggestionsQuery,
   branchOrdersQuery,
   branchPromotionsQuery,
   branchServiceQuery,
@@ -911,6 +916,62 @@ export function useUploadDishImage() {
   return useMutation({
     mutationFn: ({ branchId, body }: { branchId: string; body: ImageUploadRequest }) =>
       api.uploadDishImage(requireToken(token), branchId, body),
+  });
+}
+
+/** POST …/settings/image: the branch photo (resized by the app), to save with the details. */
+export function useUploadBranchImage() {
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: ImageUploadRequest }) =>
+      api.uploadBranchImage(requireToken(token), branchId, body),
+  });
+}
+
+/**
+ * PATCH …/menu/suggestions (Admin › Menu › Search suggestions): staff's pins, words and auto-fill
+ * switches. The screen shows the answer at once; guests' suggestions and the menu are read again.
+ */
+export function useSaveSearchSuggestions() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: UpdateSearchSuggestionsRequest }) =>
+      api.updateSearchSuggestions(requireToken(token), branchId, body),
+    onSuccess: (saved, { branchId }) =>
+      client.setQueryData(adminSearchSuggestionsQuery(token, branchId).queryKey, saved),
+    onSettled: (_data, _error, { branchId }) =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: searchSuggestionsQuery(branchId).queryKey }),
+        client.invalidateQueries({ queryKey: branchMenuQuery(branchId).queryKey }),
+      ]),
+  });
+}
+
+/**
+ * PATCH …/menu/cart-suggestions (Admin › Menu › Suggestions › Cart): the switch, categories and
+ * pins. The tab shows the answer at once; guests' cart suggestions and the menu are read again.
+ */
+export function useSaveCartSuggestions() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      body,
+      preview,
+    }: {
+      branchId: string;
+      body: UpdateCartSuggestionsRequest;
+      preview?: string;
+    }) => api.updateCartSuggestions(requireToken(token), branchId, body, preview),
+    onSuccess: (saved, { branchId, preview }) =>
+      client.setQueryData(adminCartSuggestionsQuery(token, branchId, preview).queryKey, saved),
+    onSettled: (_data, _error, { branchId }) =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: ['branches', branchId, 'cart-suggestions'] }),
+        client.invalidateQueries({ queryKey: branchMenuQuery(branchId).queryKey }),
+      ]),
   });
 }
 

@@ -378,3 +378,7 @@
   font: var(--font-small-strong);
   text-decoration: none;
 }
+
+.noTax {
+  margin: 8px 0 0;
+}

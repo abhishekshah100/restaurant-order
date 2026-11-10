@@ -24,13 +24,11 @@ export const createSession: Handler = async (ctx, { body: raw }) => {
   const branchId = stringField(body, 'branchId');
   const { table, qrToken, mode, deliveryArea } = body;
   const branch = (await ctx.seed.branches()).find((b) => b.id === branchId);
-  const range = branch && (await ctx.seed.tables(branch.id));
+  // A QR link's table must be on the branch's floor plan.
   const atTable =
+    branch !== undefined &&
     typeof table === 'number' &&
-    range !== undefined &&
-    Number.isInteger(table) &&
-    table >= range.first &&
-    table <= range.last;
+    areaOf(await ctx.seed.floors(branch.id), table) !== undefined;
   if (
     !branch ||
     !isOrderMode(mode) ||

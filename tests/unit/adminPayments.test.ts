@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { digitsOnly, parseAmount } from '@/components/admin/payments/PaymentFields';
-import { paymentsPath } from '@/lib/adminNav';
+import { paymentHistoryPath, paymentsPath } from '@/lib/adminNav';
 import {
   changeDue,
   daySummary,
@@ -244,6 +244,10 @@ describe('collecting', () => {
     expect(parsePaymentsView('refunds')).toBe('refunds');
     expect(parsePaymentsView('nope')).toBe('collect');
     expect(paymentsPath()).toBe('/admin/dashboard/payments/');
+    expect(paymentHistoryPath()).toBe('/admin/dashboard/payments/history/');
+    expect(paymentHistoryPath({ from: '2026-11-01', to: '2026-11-10' }, 'refunds')).toBe(
+      '/admin/dashboard/payments/history/?from=2026-11-01&to=2026-11-10&view=refunds',
+    );
     expect(paymentsPath('transactions')).toBe('/admin/dashboard/payments/?view=transactions');
     expect(paymentsPath('refunds', { from: '2026-10-20', to: '2026-10-25' })).toBe(
       '/admin/dashboard/payments/?view=refunds&from=2026-10-20&to=2026-10-25',

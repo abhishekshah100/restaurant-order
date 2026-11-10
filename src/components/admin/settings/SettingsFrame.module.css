@@ -125,3 +125,8 @@
   background: var(--brand-tint);
   color: var(--brand-700);
 }
+
+/* A section's pages, above the page. */
+.tabs {
+  margin-bottom: 16px;
+}

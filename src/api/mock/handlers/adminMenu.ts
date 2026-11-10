@@ -17,7 +17,13 @@ import type {
   SpiceLevel,
   Variant,
 } from '@/types/menu';
-import type { ImageUploadResponse } from '../../contracts';
+import type {
+  AdminCartSuggestions,
+  AdminSearchSuggestions,
+  CartSuggestion,
+  ImageUploadResponse,
+  SearchSuggestions,
+} from '../../contracts';
 import { fail, isObject, ok, type Handler, type MockContext } from '../context';
 import { noMenuChanges, type BranchMenuChanges } from '../menuChanges';
 import { adminBranch } from './adminSessions';
@@ -280,6 +286,7 @@ function dishInput(body: unknown, menu: MenuData, now: number, branch: Branch) {
   distinct(quick);
   const name = text(body.name, LIMITS.name);
   const image = imageOf(body.image, name);
+  const thumb = image ? imageOf(body.thumb, name) : undefined;
   const optionGroups = choiceGroupsOf(body.optionGroups, sizes);
   const removables = removablesOf(body.removables);
   const combo = comboOf(body.combo);
@@ -309,7 +316,7 @@ function dishInput(body: unknown, menu: MenuData, now: number, branch: Branch) {
     ...(spice ? { spice } : {}),
     ...(prepTime ? { prepTime } : {}),
     ...(isCount(serves, LIMITS.serves) ? { serves } : {}),
-    ...(image ? { image, thumb: image } : {}),
+    ...(image ? { image, thumb: thumb ?? image } : {}),
   };
 }
 
@@ -462,7 +469,16 @@ export const updateDish: Handler = async (ctx, { params, body, headers }) => {
   const saved: Dish = {
     ...withoutEdited(dish),
     ...input,
-    ...(samePicture && dish.image ? { image: dish.image, thumb: dish.thumb ?? dish.image } : {}),
+    // A small copy sent along replaces a thumbnail that was the picture itself.
+    ...(samePicture && dish.image
+      ? {
+          image: dish.image,
+          thumb:
+            dish.thumb && dish.thumb.src !== dish.image.src
+              ? dish.thumb
+              : (input.thumb ?? dish.image),
+        }
+      : {}),
     ...(sameAvailability ? { availability: before } : {}),
     // Moved to another category: last there, until it's reordered.
     rank: input.categoryId === dish.categoryId ? dish.rank : nextRank(menu, input.categoryId),
@@ -524,22 +540,245 @@ export const updateCategories: Handler = async (ctx, { params, body, headers }) 
 };
 
 /** POST /admin/branches/:branchId/menu/images */
-export const uploadDishImage: Handler = async (ctx, { params, body, headers }) => {
-  await adminBranch(ctx, headers, params.branchId);
+export const uploadDishImage: Handler = async (ctx, request) => {
+  await adminBranch(ctx, request.headers, request.params.branchId);
+  return ok(imageUpload(request.body), 201);
+};
+
+/** POST /admin/branches/:branchId/settings/image: the branch photo, kept the same way. */
+export const uploadBranchImage: Handler = async (ctx, request) => {
+  await adminBranch(ctx, request.headers, request.params.branchId);
+  const { image } = imageUpload(request.body);
+  return ok({ image: { src: image.src, width: image.width, height: image.height } }, 201);
+};
+
+/** A resized picture's data URL, checked: a backend stores the file, the mock keeps the URL. */
+function imageUpload(body: unknown): ImageUploadResponse {
   if (!isObject(body)) return bad();
-  const { dataUrl, width, height } = body;
+  const picture = (v: Record<string, unknown>) => {
+    const { dataUrl, width, height } = v;
+    if (
+      typeof dataUrl !== 'string' ||
+      !/^data:image\/(jpeg|png|webp);base64,/.test(dataUrl) ||
+      dataUrl.length > LIMITS.image ||
+      typeof width !== 'number' ||
+      typeof height !== 'number' ||
+      width < 1 ||
+      height < 1
+    ) {
+      return bad();
+    }
+    return { src: dataUrl, alt: '', width, height };
+  };
+  const image = picture(body);
+  if (body.thumb !== undefined && !isObject(body.thumb)) return bad();
+  const thumb = isObject(body.thumb) ? picture(body.thumb) : undefined;
+  return { image, ...(thumb ? { thumb } : {}) };
+}
+
+/* ---------- Search suggestions (MOCK: staff's picks only; orders aren't counted) ---------- */
+
+const SUGGESTION_LIMITS = { trending: 4, popular: 6, word: 40 };
+
+const orderable = (dish: Dish | undefined): dish is Dish =>
+  dish !== undefined && dish.availability.status === 'available';
+
+function suggestionsOf(ctx: MockContext, branchId: string, menu: MenuData) {
+  const saved = ctx.db.menuChanges.read()[branchId]?.suggestions;
+  const bySlug = new Map(menu.dishes.map((d) => [d.slug, d]));
+  const pins = menu.trendingTonight.flatMap((slug) => {
+    const dish = bySlug.get(slug);
+    return dish ? [{ slug, name: dish.name, showing: orderable(dish) }] : [];
+  });
+  return {
+    trendingAuto: saved?.trendingAuto ?? true,
+    popularAuto: saved?.popularAuto ?? true,
+    pins,
+    words: menu.popularSearches,
+  };
+}
+
+const adminSuggestions = (s: ReturnType<typeof suggestionsOf>): AdminSearchSuggestions => ({
+  trending: {
+    auto: s.trendingAuto,
+    pins: s.pins,
+    showing: s.pins
+      .filter((p) => p.showing)
+      .slice(0, SUGGESTION_LIMITS.trending)
+      .map(({ slug, name }) => ({ slug, name, source: 'pinned' as const })),
+  },
+  popular: {
+    auto: s.popularAuto,
+    words: s.words,
+    showing: s.words.map((term) => ({ term, source: 'word' as const })),
+  },
+});
+
+/** GET /branches/:branchId/menu/suggestions */
+export const searchSuggestions: Handler = async (ctx, { params }) => {
+  const branch = (await ctx.seed.branches()).find((b) => b.id === params.branchId);
+  if (!branch) fail(404, 'not_found');
+  const { trending, popular } = adminSuggestions(
+    suggestionsOf(ctx, branch.id, await ctx.seed.menuData(branch.id)),
+  );
+  const response: SearchSuggestions = {
+    trending: trending.showing.map((i) => i.slug),
+    popular: popular.showing.map((i) => i.term),
+  };
+  return ok(response);
+};
+
+/** GET /admin/branches/:branchId/menu/suggestions */
+export const adminSearchSuggestions: Handler = async (ctx, { params, headers }) => {
+  const { branch, menu } = await staffMenu(ctx, headers, params.branchId);
+  return ok(adminSuggestions(suggestionsOf(ctx, branch.id, menu)));
+};
+
+/** PATCH /admin/branches/:branchId/menu/suggestions */
+export const updateSearchSuggestions: Handler = async (ctx, { params, body, headers }) => {
+  const { branch, menu } = await staffMenu(ctx, headers, params.branchId);
+  if (!isObject(body) || !isObject(body.trending) || !isObject(body.popular)) return bad();
+  const { auto: trendingAuto, pins } = body.trending;
+  const { auto: popularAuto, words: rawWords } = body.popular;
   if (
-    typeof dataUrl !== 'string' ||
-    !/^data:image\/(jpeg|png|webp);base64,/.test(dataUrl) ||
-    dataUrl.length > LIMITS.image ||
-    typeof width !== 'number' ||
-    typeof height !== 'number' ||
-    width < 1 ||
-    height < 1
+    typeof trendingAuto !== 'boolean' ||
+    typeof popularAuto !== 'boolean' ||
+    !Array.isArray(pins) ||
+    !Array.isArray(rawWords)
   ) {
     return bad();
   }
-  // A backend stores the file and answers with its URL; the mock keeps the data URL.
-  const response: ImageUploadResponse = { image: { src: dataUrl, alt: '', width, height } };
-  return ok(response, 201);
+  const slugs = [...new Set(pins)];
+  if (
+    slugs.length > SUGGESTION_LIMITS.trending ||
+    slugs.some((s) => typeof s !== 'string' || !menu.dishes.some((d) => d.slug === s))
+  ) {
+    return bad();
+  }
+  const words = rawWords.map((w) => (typeof w === 'string' ? w.trim().replace(/\s+/g, ' ') : ''));
+  if (
+    words.length > SUGGESTION_LIMITS.popular ||
+    words.some((w) => !w || w.length > SUGGESTION_LIMITS.word) ||
+    new Set(words.map((w) => w.toLowerCase())).size !== words.length
+  ) {
+    return bad();
+  }
+  changeMenu(ctx, branch.id, (changes) => ({
+    ...changes,
+    suggestions: { pins: slugs as string[], words, trendingAuto, popularAuto },
+  }));
+  return ok(adminSuggestions(suggestionsOf(ctx, branch.id, await ctx.seed.menuData(branch.id))));
+};
+
+/* ---------- Cart suggestions (MOCK: pins, then the chosen categories' dishes; no orders) ---------- */
+
+const CART_DEFAULT_CATEGORIES = new Set(['breads-rice', 'beverages', 'drinks', 'desserts']);
+
+function cartSettingsOf(ctx: MockContext, branchId: string, menu: MenuData) {
+  const saved = ctx.db.menuChanges.read()[branchId]?.cart;
+  return {
+    enabled: saved?.enabled ?? true,
+    categories:
+      saved?.categories ??
+      menu.categories.map((c) => c.id).filter((id) => CART_DEFAULT_CATEGORIES.has(id)),
+    pins: menu.cartSuggestions,
+  };
+}
+
+function cartPicks(
+  settings: ReturnType<typeof cartSettingsOf>,
+  menu: MenuData,
+  cart: readonly string[],
+): CartSuggestion[] {
+  if (!settings.enabled || cart.length === 0) return [];
+  const bySlug = new Map(menu.dishes.map((d) => [d.slug, d]));
+  const inCart = new Set(cart);
+  const cartCategories = new Set(cart.flatMap((s) => bySlug.get(s)?.categoryId ?? []));
+  const fromCategory = (d: Dish) =>
+    settings.categories.length > 0
+      ? settings.categories.includes(d.categoryId as string)
+      : !cartCategories.has(d.categoryId);
+  const picks: CartSuggestion[] = [];
+  const add = (d: Dish | undefined, source: CartSuggestion['source']) => {
+    if (picks.length >= 3 || !orderable(d) || inCart.has(d.slug)) return;
+    if (picks.some((p) => p.slug === d.slug)) return;
+    picks.push({ slug: d.slug, name: d.name, source });
+  };
+  for (const slug of settings.pins) add(bySlug.get(slug), 'pinned');
+  // One dish from each category in turn (a bread, a dessert, a drink…), as the backend.
+  const queues = [
+    ...Map.groupBy(
+      menu.dishes.filter((d) => fromCategory(d)),
+      (d) => d.categoryId,
+    ).values(),
+  ];
+  for (let i = 0; queues.some((q) => i < q.length); i++) for (const q of queues) add(q[i], 'menu');
+  return picks;
+}
+
+function adminCart(
+  ctx: MockContext,
+  branchId: string,
+  menu: MenuData,
+  preview: string | undefined,
+): AdminCartSuggestions {
+  const settings = cartSettingsOf(ctx, branchId, menu);
+  const dish =
+    preview && menu.dishes.some((d) => d.slug === preview)
+      ? preview
+      : (menu.dishes.find((d) => !settings.categories.includes(d.categoryId as string))?.slug ??
+        null);
+  const bySlug = new Map(menu.dishes.map((d) => [d.slug, d]));
+  return {
+    enabled: settings.enabled,
+    categories: settings.categories,
+    pins: settings.pins.flatMap((slug) => {
+      const d = bySlug.get(slug);
+      return d ? [{ slug, name: d.name, showing: orderable(d) }] : [];
+    }),
+    preview: {
+      dish,
+      dishes: dish ? cartPicks({ ...settings, enabled: true }, menu, [dish]) : [],
+    },
+  };
+}
+
+/** GET /branches/:branchId/menu/cart-suggestions?dishes=a,b */
+export const cartSuggestions: Handler = async (ctx, { params, query }) => {
+  const branch = (await ctx.seed.branches()).find((b) => b.id === params.branchId);
+  if (!branch) fail(404, 'not_found');
+  const menu = await ctx.seed.menuData(branch.id);
+  const cart = (query.dishes ?? '').split(',').filter(Boolean);
+  return ok({ dishes: cartPicks(cartSettingsOf(ctx, branch.id, menu), menu, cart) });
+};
+
+/** GET /admin/branches/:branchId/menu/cart-suggestions */
+export const adminCartSuggestions: Handler = async (ctx, { params, headers, query }) => {
+  const { branch, menu } = await staffMenu(ctx, headers, params.branchId);
+  return ok(adminCart(ctx, branch.id, menu, query.preview));
+};
+
+/** PATCH /admin/branches/:branchId/menu/cart-suggestions */
+export const updateCartSuggestions: Handler = async (ctx, { params, body, headers, query }) => {
+  const { branch, menu } = await staffMenu(ctx, headers, params.branchId);
+  if (!isObject(body)) return bad();
+  const { enabled, categories, pins } = body;
+  if (typeof enabled !== 'boolean' || !Array.isArray(categories) || !Array.isArray(pins)) {
+    return bad();
+  }
+  const codes = new Set<string>(menu.categories.map((c) => c.id));
+  const cats = [...new Set(categories)];
+  const slugs = [...new Set(pins)];
+  if (
+    cats.some((c) => typeof c !== 'string' || !codes.has(c)) ||
+    slugs.length > 3 ||
+    slugs.some((s) => typeof s !== 'string' || !menu.dishes.some((d) => d.slug === s))
+  ) {
+    return bad();
+  }
+  changeMenu(ctx, branch.id, (changes) => ({
+    ...changes,
+    cart: { enabled, categories: cats as string[], pins: slugs as string[] },
+  }));
+  return ok(adminCart(ctx, branch.id, await ctx.seed.menuData(branch.id), query.preview));
 };

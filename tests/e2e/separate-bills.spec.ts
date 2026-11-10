@@ -63,7 +63,7 @@ async function orderAndCheckout(page: Page, dish: string, name: string, pay: 'on
   await expect(page).toHaveURL(/\/checkout\/payment\/$/);
   if (pay === 'online') {
     await visible(page, 'button', /^Pay ₹/).click();
-    await visible(page, 'button', 'Prototype: success').click();
+    await visible(page, 'button', 'Approve payment').click();
   } else {
     await page.getByRole('radio', { name: /Pay at the counter/ }).click();
     await visible(page, 'button', /^Place order/).click();
@@ -110,7 +110,7 @@ test('two guests at one table pay separate bills', async ({ browser }, testInfo)
 
   await expect(rohan.getByRole('heading', { name: 'Confirming your payment' })).toBeVisible();
   await expect(rohan.getByRole('heading', { name: 'Confirming your payment' })).toBeFocused();
-  await visible(rohan, 'button', 'Prototype: success').click();
+  await visible(rohan, 'button', 'Approve payment').click();
 
   await expect(rohan.getByRole('heading', { level: 1, name: 'Bill paid' })).toBeVisible();
   const receipt = rohan.getByRole('definition');
@@ -144,7 +144,7 @@ test('a failed bill payment keeps the orders unpaid and can be retried', async (
   await rohan.goto('/help/bill/pay/');
   await rohan.getByRole('radio', { name: /card/ }).click();
   await visible(rohan, 'button', 'Pay ₹272').click();
-  await visible(rohan, 'button', 'Prototype: failure').click();
+  await visible(rohan, 'button', 'Decline payment').click();
   await expect(
     rohan.getByRole('alert').filter({ hasText: "Payment didn't go through" }),
   ).toBeVisible();
@@ -156,9 +156,9 @@ test('a failed bill payment keeps the orders unpaid and can be retried', async (
 
   await payNow(rohan).filter({ visible: true }).first().click();
   await visible(rohan, 'button', 'Pay ₹272').click();
-  await visible(rohan, 'button', 'Prototype: failure').click();
+  await visible(rohan, 'button', 'Decline payment').click();
   await visible(rohan, 'button', 'Try again · ₹272').click();
-  await visible(rohan, 'button', 'Prototype: success').click();
+  await visible(rohan, 'button', 'Approve payment').click();
   await expect(rohan.getByRole('heading', { level: 1, name: 'Bill paid' })).toBeVisible();
 
   await rohan.context().close();

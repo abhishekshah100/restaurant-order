@@ -66,6 +66,15 @@
   color: var(--ink);
   min-height: 32px;
 }
+.reason {
+  margin-top: -4px;
+  padding: 0 4px;
+  font: 600 11px/14px var(--f-ui);
+  color: var(--success);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .foot {
   margin-top: auto;
   padding: 0 2px 0 4px;

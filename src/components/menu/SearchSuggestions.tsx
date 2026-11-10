@@ -3,9 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useId } from 'react';
-import { Chip, Icon, VegMark } from '@/components/ui';
+import { Chip, Icon, Skeleton, VegMark } from '@/components/ui';
 import { cx } from '@/lib/cx';
-import { useContent, useMenu, useRegion } from '@/api/hooks';
+import { useContent, useMenu, useRegion, useSearchSuggestions } from '@/api/hooks';
 import { useBrandName } from '@/hooks/useBrandName';
 import { dishHref, dishImage, startingPrice } from '@/lib/menu';
 import type { Dish } from '@/types/menu';
@@ -25,16 +25,50 @@ const DECORATIVE = '';
 
 /**
  * What the search screen shows before you type — the same sections on every device:
- * Trending tonight (dishes with photos) and Popular searches.
+ * Trending tonight (dishes) and Popular searches. Both come from GET …/menu/suggestions (what's
+ * ordered most, after staff's picks: Admin › Menu › Suggestions); placeholders until it's read,
+ * and the menu's own lists (staff's picks) only if it can't be.
  */
 export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggestionsProps) {
-  const { popularSearches, trendingTonight, getDish } = useMenu();
-  const trending = trendingTonight.map(getDish).filter((d): d is Dish => d !== undefined);
+  const { popularSearches: menuPopular, trendingTonight: menuTrending, getDish } = useMenu();
+  const { data: live, isError } = useSearchSuggestions();
+  // Only the server's answer is shown, so nothing is swapped in front of the guest; the menu's
+  // own lists stand in only when it can't be had.
+  const loading = !live && !isError;
+  const popularSearches = live?.popular ?? (isError ? menuPopular : []);
+  const trending = (live?.trending ?? (isError ? menuTrending : []))
+    .map(getDish)
+    .filter((d): d is Dish => d !== undefined);
   // The header dropdown and the /search page can both be on screen, so ids must be unique.
   const id = useId();
   const t = useContent('menu');
   const brand = useBrandName();
   const { money } = useRegion();
+
+  if (loading) {
+    return (
+      <div
+        className={cx(styles.root, compact && styles.compact)}
+        aria-busy="true"
+        aria-label={t('search.suggestions.loading')}
+      >
+        <section className={styles.section}>
+          <Skeleton shape="line" width={140} />
+          <ul className={styles.trending} aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <li key={i} className={styles.trend}>
+                <Skeleton shape="block" width="100%" height={compact ? 120 : 170} />
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className={styles.section}>
+          <Skeleton shape="line" width={180} />
+          <Skeleton shape="block" width="100%" height={40} />
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className={cx(styles.root, compact && styles.compact)}>
@@ -46,7 +80,8 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
           </h2>
           <ul className={styles.trending}>
             {trending.map((dish) => {
-              const thumb = dishImage(dish, 'thumb');
+              // A card 150–168 px wide: the full picture (a thumbnail would blur).
+              const thumb = dishImage(dish, 'card');
               return (
                 <li key={dish.slug} className={styles.trend}>
                   <Link
@@ -63,6 +98,8 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
                           width={thumb.width}
                           height={thumb.height}
                           sizes="168px"
+                          // The first thing on the search screen: often its largest image.
+                          loading="eager"
                         />
                       )}
                       <span className={styles.trendMark}>
@@ -88,19 +125,21 @@ export function SearchSuggestions({ onPick, onNavigate, compact }: SearchSuggest
         </section>
       )}
 
-      <section className={styles.section} aria-labelledby={`${id}-popular`}>
-        <h2 id={`${id}-popular`} className={styles.heading}>
-          <Icon name="flame" size="xs" className={styles.headingIcon} />
-          {t('search.suggestions.popular', { restaurant: brand })}
-        </h2>
-        <div className={styles.chips}>
-          {popularSearches.map((term) => (
-            <Chip key={term} iconStart="search" onClick={() => onPick(term)}>
-              {term}
-            </Chip>
-          ))}
-        </div>
-      </section>
+      {popularSearches.length > 0 && (
+        <section className={styles.section} aria-labelledby={`${id}-popular`}>
+          <h2 id={`${id}-popular`} className={styles.heading}>
+            <Icon name="flame" size="xs" className={styles.headingIcon} />
+            {t('search.suggestions.popular', { restaurant: brand })}
+          </h2>
+          <div className={styles.chips}>
+            {popularSearches.map((term) => (
+              <Chip key={term} iconStart="search" onClick={() => onPick(term)}>
+                {term}
+              </Chip>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

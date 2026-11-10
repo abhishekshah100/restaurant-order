@@ -2,12 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Button, Icon, Skeleton, StatusPill } from '@/components/ui';
+import { Button, Icon, Skeleton } from '@/components/ui';
 import { useBranch, useContent } from '@/api/hooks';
 import { useBrandName } from '@/hooks/useBrandName';
 import { MODE_ICON } from '@/components/start/ModeOptions';
 import { useGuestSession, useVisit } from '@/context/GuestSessionContext';
-import { useBranchTimes } from '@/hooks/useBranchTimes';
 import { UNKNOWN_TABLE, useTableLabel } from '@/hooks/useTable';
 import { cx } from '@/lib/cx';
 import { BrandPanel } from './BrandPanel';
@@ -59,14 +58,6 @@ export function Welcome() {
   const floor = useGuestSession()?.floor;
   const t = useContent('home');
 
-  // Only shown while ordering is open: OrderingGate swaps in the closed / paused / offline screen.
-  // When ordering stops is worked out on the device, so the pill waits for the first client
-  // render.
-  const ordersUntil = useBranchTimes(branch, mode)?.ordersUntil;
-  const kitchen = ordersUntil ? (
-    <StatusPill status="served">{t('welcome.openUntil', { time: ordersUntil })}</StatusPill>
-  ) : null;
-
   const staffOnCall = (
     <span className={cx('t-small c2', styles.footNote)}>
       <Icon name="bell" size="xs" />
@@ -84,7 +75,8 @@ export function Welcome() {
           width={780}
           height={540}
           sizes="100vw"
-          priority
+          loading="eager"
+          fetchPriority="high"
         />
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.heroBrand}>
@@ -141,10 +133,9 @@ export function Welcome() {
           </section>
         )}
 
-        <div className={cx(styles.statusRow, 'hide-desktop')}>
-          {kitchen}
-          {mode === 'dineIn' && staffOnCall}
-        </div>
+        {mode === 'dineIn' && (
+          <div className={cx(styles.statusRow, 'hide-desktop')}>{staffOnCall}</div>
+        )}
 
         <div className={cx(styles.actions, 'hide-mobile')}>
           <Button href="/menu/" block iconEnd="arrow">
@@ -152,10 +143,9 @@ export function Welcome() {
           </Button>
         </div>
 
-        <div className={cx(styles.footRow, 'hide-mobile')}>
-          {kitchen}
-          {mode === 'dineIn' && staffOnCall}
-        </div>
+        {mode === 'dineIn' && (
+          <div className={cx(styles.footRow, 'hide-mobile')}>{staffOnCall}</div>
+        )}
       </main>
 
       <div className={cx(styles.actions, 'hide-desktop')}>

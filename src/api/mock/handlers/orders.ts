@@ -5,7 +5,7 @@ import { isOnlineMethod, isPaymentMethodId } from '@/lib/payments';
 import type { Branch } from '@/types/branch';
 import type { Order } from '@/types/order';
 import { toOrderHistory } from '../../adapters';
-import type { OrderListResponse } from '../../contracts';
+import type { OrderListResponse, SessionWifiResponse } from '../../contracts';
 import {
   assertOrdering,
   fail,
@@ -223,6 +223,18 @@ export const listTableOrders: Handler = async (ctx, { params }) => {
   const { placed, history } = await branchOrders(ctx, branch);
   const response: OrderListResponse = {
     orders: tableOrders(allOrders(placed, history), table, ctx.now(), createClock(branch)),
+  };
+  return ok(response);
+};
+
+/** GET /sessions/:id/wifi: the guest Wi-Fi for a seated guest (MOCK: kept on the branch). */
+export const sessionWifi: Handler = async (ctx, { params }) => {
+  const { session, branch } = await liveSession(ctx, params.id);
+  const response: SessionWifiResponse = {
+    wifi:
+      session.mode === 'dineIn' && branch.wifiName
+        ? { name: branch.wifiName, password: branch.wifiPassword ?? '' }
+        : null,
   };
   return ok(response);
 };

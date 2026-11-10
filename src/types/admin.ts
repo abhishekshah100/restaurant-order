@@ -46,7 +46,8 @@ export interface AdminBranch {
   timezone: string;
   /** BCP 47 locale the branch writes times in. */
   locale: string;
-  tables: { first: number; last: number };
+  /** How many tables are on the branch's floor plan. */
+  tableCount: number;
   /** The order modes the branch takes, always in this order: dineIn, takeaway, delivery. */
   modes: OrderMode[];
   /** ISO 4217, e.g. "INR", "NPR". */

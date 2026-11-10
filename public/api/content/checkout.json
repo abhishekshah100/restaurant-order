@@ -208,10 +208,13 @@
     "timeLeft": " left",
     "sendingMobile": "Sending order to the kitchen",
     "sendingDesktop": "Sending to the kitchen",
-    "secure": "Encrypted payment",
+    "secure": "Secure payment. We never see your card number or UPI PIN.",
     "cancel": "Cancel payment",
-    "protoSuccess": "Prototype: success",
-    "protoFailure": "Prototype: failure"
+    "test": {
+      "label": "For testing",
+      "approve": "Approve payment",
+      "decline": "Decline payment"
+    }
   },
   "failed": {
     "title": "Payment didn't go through",

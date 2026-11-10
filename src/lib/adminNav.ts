@@ -2,6 +2,7 @@ import type { IconName } from '@/components/ui/Icon/iconNames';
 import type { AdminServiceCounts, StaffPermission } from '@/types/admin';
 import type { StockAlertsResponse } from '@/types/inventory';
 import type { OrderView } from './adminOrders';
+import type { OrderHistoryStatus } from '@/api/contracts';
 import type { PaymentsView } from './adminPayments';
 import type { DayRange } from './dayRange';
 import { ADMIN_PATHS } from './adminBranches';
@@ -242,25 +243,46 @@ export const floorPath = (floorId: string) =>
   `${ADMIN_LINKS.tables}?floor=${encodeURIComponent(floorId)}`;
 
 /**
- * An Orders view on the Orders page (?view=), so switching views keeps the page and its filters,
- * on today or on the days given (?from=&to=). The home's counters link to the ready/ and unpaid/
- * pages, which open on those views.
+ * An Orders view on the Orders page (?view=), today's orders only (earlier days are in Orders ›
+ * History). The home's counters link to the ready/ and unpaid/ pages, which open on those views.
  */
-export function ordersPath(view: OrderView, days?: DayRange): string {
+export function ordersPath(view: OrderView): string {
+  return view === 'active' ? section('orders') : `${section('orders')}?view=${view}`;
+}
+
+/** Orders › History: the days picked (none: the last 7 days), and a status to show. */
+export function orderHistoryPath(days?: DayRange, status: OrderHistoryStatus = 'all'): string {
   const search = new URLSearchParams();
-  if (view !== 'active') search.set('view', view);
   if (days) {
     search.set('from', days.from);
     search.set('to', days.to);
   }
+  if (status !== 'all') search.set('status', status);
   const query = search.toString();
-  return query ? `${section('orders')}?${query}` : section('orders');
+  const base = `${section('orders')}history/`;
+  return query ? `${base}?${query}` : base;
 }
 
 /**
  * The Payments page on a view (To collect is the page itself, the others ?view=), on today or
  * on the days given (?from=&to=).
  */
+/** Payments › History: the days picked (none: the last 7 days). */
+export function paymentHistoryPath(
+  days?: DayRange,
+  view: 'transactions' | 'refunds' = 'transactions',
+): string {
+  const search = new URLSearchParams();
+  if (days) {
+    search.set('from', days.from);
+    search.set('to', days.to);
+  }
+  if (view !== 'transactions') search.set('view', view);
+  const query = search.toString();
+  const base = `${section('payments')}history/`;
+  return query ? `${base}?${query}` : base;
+}
+
 export function paymentsPath(view: PaymentsView = 'collect', days?: DayRange): string {
   const search = new URLSearchParams();
   if (view !== 'collect') search.set('view', view);

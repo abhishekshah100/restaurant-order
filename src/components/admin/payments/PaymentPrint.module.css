@@ -31,6 +31,22 @@
   }
 }
 
+/*
+ * A bill drawn to be saved as a PDF (the order page's "Get invoice"): on screen but out of
+ * sight, styled as the printed sheet, a till receipt's width.
+ */
+.capture {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 420px;
+  padding: 12mm 10mm;
+  background: #ffffff;
+  color: #1d1b18;
+  font: 500 10.5pt/1.45 var(--f-ui);
+  pointer-events: none;
+}
+
 /* ---------- Header: the restaurant, the branch, how to reach it, the kind of bill ---------- */
 
 .head {

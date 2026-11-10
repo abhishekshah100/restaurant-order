@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   calculateBill,
+  combineBills,
   extrasMinor,
   itemCount,
   itemTotal,
@@ -177,5 +178,41 @@ describe('calculateBill: Nepal (10% service charge, then 13% VAT on items + serv
   it('has no GST lines', () => {
     const bill = calculateBill([{ unitPrice: 525, quantity: 2 }], nepal);
     expect(bill.lines.map((l) => l.id)).toEqual(['serviceCharge', 'vat']);
+  });
+});
+
+describe("combineBills: a table's orders as one bill", () => {
+  it('adds the items, merges the same tax at the same rate, and keeps the total', () => {
+    const a = calculateBill([{ unitPrice: 549, quantity: 1 }], india);
+    const b = calculateBill(
+      [
+        { unitPrice: 409, quantity: 1 },
+        { unitPrice: 199, quantity: 2 },
+      ],
+      india,
+    );
+    const both = combineBills([a, b]);
+    expect(both.itemCount).toBe(4);
+    expect(both.itemTotalMinor).toBe(135600);
+    expect(both.lines).toHaveLength(1);
+    expect(amount(both, 'gst')).toBe(amount(a, 'gst')! + amount(b, 'gst')!);
+    expect(amount(both, 'cgst')).toBe(amount(a, 'cgst')! + amount(b, 'cgst')!);
+    expect(both.roundOffMinor).toBe(a.roundOffMinor + b.roundOffMinor);
+    expect(both.totalMinor).toBe(a.totalMinor + b.totalMinor);
+    // The lines add up to the total.
+    expect(
+      both.itemTotalMinor -
+        both.discountMinor +
+        both.lines.reduce((s, l) => s + l.amountMinor, 0) +
+        both.roundOffMinor,
+    ).toBe(both.totalMinor);
+  });
+
+  it('keeps a bill without tax without tax lines', () => {
+    const untaxed = calculateBill([{ unitPrice: 300, quantity: 1 }], {
+      ...india,
+      tax: { ...india.tax, lines: [] },
+    });
+    expect(combineBills([untaxed, untaxed]).lines).toEqual([]);
   });
 });

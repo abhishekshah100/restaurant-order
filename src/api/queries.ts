@@ -130,6 +130,31 @@ export const branchMenuQuery = (branchId: string) =>
     refetchOnWindowFocus: true,
   });
 
+/**
+ * GET /branches/:branchId/menu/suggestions: the search screen's "Trending tonight" and "Popular
+ * at…" (from orders and staff's picks), read again like the menu.
+ */
+export const searchSuggestionsQuery = (branchId: string) =>
+  queryOptions({
+    queryKey: ['branches', branchId, 'search-suggestions'] as const,
+    queryFn: () => api.searchSuggestions(branchId),
+    staleTime: MENU_REFRESH_MS,
+  });
+
+/**
+ * GET /branches/:branchId/menu/cart-suggestions: "Goes well with your order" for the cart's
+ * dishes (sorted, so the same cart is one query). While a changed cart's answer comes, the last
+ * one stays (without the dishes now in the cart).
+ */
+export const cartSuggestionsQuery = (branchId: string, dishes: readonly string[]) =>
+  queryOptions({
+    queryKey: ['branches', branchId, 'cart-suggestions', [...dishes].sort().join(',')] as const,
+    queryFn: () => api.cartSuggestions(branchId, [...dishes].sort()),
+    staleTime: MENU_REFRESH_MS,
+    enabled: dishes.length > 0,
+    placeholderData: (previous) => previous,
+  });
+
 /** How long a menu read is trusted before it's read again (sold out, back on, new dishes). */
 export const MENU_REFRESH_MS = 60_000;
 
@@ -191,6 +216,14 @@ export const orderQuery = (id: string | undefined) =>
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchInterval: (query) => (query.state.data?.live ? TRACK_REFRESH_MS : false),
+  });
+
+/** GET /sessions/:id/wifi: the guest Wi-Fi for a seated guest (Help page); idle without a session. */
+export const sessionWifiQuery = (sessionId: string | undefined) =>
+  queryOptions({
+    queryKey: ['session', sessionId, 'wifi'] as const,
+    queryFn: sessionId ? () => api.sessionWifi(sessionId) : skipToken,
+    staleTime: 5 * 60_000,
   });
 
 /** GET /sessions/:id/orders: the guest's orders (My orders); polled while any is live. */
@@ -387,6 +420,42 @@ export const adminOffersQuery = (token: string | null, branchId: string | undefi
   queryOptions({
     queryKey: ['admin', 'offers', branchId, token] as const,
     queryFn: token && branchId ? () => api.offers(token, branchId) : skipToken,
+  });
+
+/** GET …/service-requests/history: Requests › History for these days and kind. */
+export const requestHistoryQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  from: string,
+  to: string,
+  kind?: 'waiter' | 'bill' | 'kitchen',
+) =>
+  queryOptions({
+    queryKey: ['admin', 'request-history', branchId, token, from, to, kind ?? 'all'] as const,
+    queryFn:
+      token && branchId ? () => api.requestHistory(token, branchId, { from, to, kind }) : skipToken,
+    staleTime: 30_000,
+    placeholderData: (previous) => previous,
+  });
+
+/** GET /admin/branches/:branchId/menu/suggestions: Admin › Menu › Search suggestions. */
+export const adminSearchSuggestionsQuery = (token: string | null, branchId: string | undefined) =>
+  queryOptions({
+    queryKey: ['admin', 'search-suggestions', branchId, token] as const,
+    queryFn: token && branchId ? () => api.adminSearchSuggestions(token, branchId) : skipToken,
+  });
+
+/** GET /admin/branches/:branchId/menu/cart-suggestions: the Cart tab, previewing `preview`. */
+export const adminCartSuggestionsQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  preview?: string,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'cart-suggestions', branchId, token, preview ?? null] as const,
+    queryFn:
+      token && branchId ? () => api.adminCartSuggestions(token, branchId, preview) : skipToken,
+    placeholderData: (previous) => previous,
   });
 
 /** GET /admin/branches/:branchId/staff: everyone here, and the roles they can be given. */

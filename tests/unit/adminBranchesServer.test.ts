@@ -51,7 +51,7 @@ describe('GET /admin/branches (mock)', () => {
       schedule: source.schedule,
       timezone: 'Asia/Kathmandu',
       locale: source.locale,
-      tables: { first: 1, last: 40 },
+      tableCount: 16,
       modes: ['dineIn', 'takeaway', 'delivery'],
       currencyCode: 'NPR',
       image: source.image,

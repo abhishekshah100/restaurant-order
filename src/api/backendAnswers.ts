@@ -71,6 +71,9 @@ const ADAPTERS: readonly (readonly [HttpMethod, string, Adapt])[] = [
   ['POST', 'payments/:id/simulate', ordersIn],
   // Staff: orders, the kitchen, payments in person.
   ['GET', 'admin/branches/:branchId/orders', ordersIn],
+  // Before …/orders/:id, which "history" would match: its rows need nothing done.
+  ['GET', 'admin/branches/:branchId/orders/history', asIs],
+  ['GET', 'admin/branches/:branchId/orders/:id', orderOf],
   ['POST', 'admin/branches/:branchId/tables/:table/orders', orderOf],
   ['POST', 'admin/branches/:branchId/orders/:id/rounds', orderOf],
   ['PATCH', 'admin/branches/:branchId/orders/:id/rounds/:round', changeOf],

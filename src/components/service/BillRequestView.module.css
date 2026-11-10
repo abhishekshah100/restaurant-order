@@ -52,6 +52,34 @@
   flex-direction: column;
   gap: 10px;
 }
+.payNow {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+.payNowSub {
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+/* "or" between the two ways to pay, on a hairline */
+.or {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: var(--font-small);
+  color: var(--ink-3);
+}
+.or::before,
+.or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+.hints {
+  display: grid;
+  gap: 8px;
+}
 
 .foot {
   position: sticky;

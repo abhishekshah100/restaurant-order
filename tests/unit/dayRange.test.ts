@@ -3,6 +3,7 @@ import {
   inDayRange,
   isDayKey,
   ordersFilter,
+  PAYMENT_HISTORY_LIMITS,
   parseDayRange,
   rangeProblem,
   shiftDay,
@@ -67,5 +68,24 @@ describe('day range', () => {
     });
     expect(inDayRange('2026-10-21', { from: '2026-10-20', to: '2026-10-22' })).toBe(true);
     expect(inDayRange('2026-10-23', { from: '2026-10-20', to: '2026-10-22' })).toBe(false);
+  });
+});
+
+describe('payment history limits (a year at a time, back two years)', () => {
+  it('takes a whole year, and refuses a longer one or one too far back', () => {
+    const year = { from: shiftDay(TODAY, -365), to: TODAY };
+    expect(rangeProblem(year, TODAY, PAYMENT_HISTORY_LIMITS)).toBeNull();
+    expect(rangeProblem(year, TODAY)).toBe('tooLong');
+    expect(
+      rangeProblem({ from: shiftDay(TODAY, -366), to: TODAY }, TODAY, PAYMENT_HISTORY_LIMITS),
+    ).toBe('tooLong');
+    expect(
+      rangeProblem(
+        { from: shiftDay(TODAY, -731), to: shiftDay(TODAY, -700) },
+        TODAY,
+        PAYMENT_HISTORY_LIMITS,
+      ),
+    ).toBe('outside');
+    expect(parseDayRange(year.from, year.to, TODAY, PAYMENT_HISTORY_LIMITS)).toEqual(year);
   });
 });

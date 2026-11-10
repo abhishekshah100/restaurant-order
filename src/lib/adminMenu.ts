@@ -174,6 +174,8 @@ export interface DishForm {
   mealSavings: string;
   allergens: Allergen[];
   image: DishImage | null;
+  /** The picture's small copy (rows, cart, orders); null: the picture itself is used. */
+  thumb: DishImage | null;
   status: DishAvailability['status'];
 }
 
@@ -277,6 +279,7 @@ export function dishForm(dish: Dish | undefined, categoryId: CategoryId): DishFo
     mealSavings: priceText(dish?.combo?.savings),
     allergens: dish?.allergens ?? [],
     image: dish?.image ?? null,
+    thumb: dish?.thumb ?? null,
     status: dish?.availability.status ?? 'available',
   };
 }
@@ -467,6 +470,7 @@ export function dishInputOf(form: DishForm, current?: DishAvailability): DishInp
       : {}),
     allergens: form.allergens,
     ...(form.image ? { image: form.image } : {}),
+    ...(form.image && form.thumb ? { thumb: form.thumb } : {}),
     availability,
   };
 }
