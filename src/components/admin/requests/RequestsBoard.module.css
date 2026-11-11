@@ -12,6 +12,23 @@
   justify-content: flex-end;
 }
 
+/* The kind filters, with History at the row's right end. */
+.filtersRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filtersRow > .filters {
+  flex: 1;
+  min-width: 0;
+}
+
+.filtersRow > :last-child {
+  flex: none;
+}
+
+
 .filters {
   display: flex;
   gap: 8px;

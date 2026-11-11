@@ -1,0 +1,535 @@
+/* Team › Rota: the week's toolbar and status, the grid (people × days) and, on a phone, one day. */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weekNav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weekTitle {
+  margin: 0;
+  font: var(--font-h3);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lead {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+/* Where the week stands: a coloured dot and one sentence (when it was published under it). */
+.statusLine {
+  --dot: var(--ink-3);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--dot) 10%, var(--surface));
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.statusLine[data-stage='draft'] {
+  --dot: var(--warn);
+}
+
+.statusLine[data-stage='changed'] {
+  --dot: var(--gold);
+}
+
+.statusLine[data-stage='published'] {
+  --dot: var(--success);
+}
+
+.statusDot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+.statusMeta {
+  display: block;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* A new week: three steps. */
+.steps {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+
+.stepNumber {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-600);
+  color: var(--on-brand);
+  font: var(--font-small-strong);
+}
+
+.stepText {
+  flex: 1 1 200px;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.stepText strong {
+  color: var(--ink);
+}
+
+/* ---------- The week ---------- */
+
+.gridWrap {
+  display: none;
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font: var(--font-small);
+}
+
+.grid th,
+.grid td {
+  padding: 4px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.personHead,
+.dayHead,
+.totalHead {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+  text-align: left;
+}
+
+.personHead {
+  width: 124px;
+}
+
+.totalHead {
+  width: 64px;
+  text-align: right;
+}
+
+.today {
+  background: color-mix(in srgb, var(--brand) 5%, transparent);
+}
+
+.dayHead.today {
+  color: var(--brand-700);
+}
+
+.person {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  min-width: 0;
+}
+
+.personName {
+  font: var(--font-small-strong);
+  overflow-wrap: anywhere;
+}
+
+.personRole {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.cell {
+  height: 64px;
+}
+
+.empty,
+.shift {
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--r-md);
+  font: inherit;
+  cursor: pointer;
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--line);
+  background: none;
+  color: var(--ink-3);
+}
+
+.shift {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 1px;
+  padding: 5px 6px;
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, var(--line));
+  border-left: 3px solid var(--tone);
+  background: color-mix(in srgb, var(--tone) 9%, var(--surface));
+  color: var(--ink);
+  text-align: left;
+}
+
+.empty:focus-visible,
+.shift:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .empty:hover {
+    border-color: var(--brand);
+    color: var(--brand-700);
+  }
+
+  .shift:hover {
+    border-color: var(--tone);
+  }
+}
+
+.shiftName {
+  color: color-mix(in srgb, var(--tone) 80%, var(--ink));
+  font: var(--font-meta-strong);
+}
+
+.shiftTime {
+  font: var(--font-meta-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A note, a swap, a change since publishing: small marks in the corner (the words on hover and
+   on opening the shift). */
+.marks {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-3);
+}
+
+.marks:empty {
+  display: none;
+}
+
+.withMarks {
+  padding-right: 34px;
+}
+
+.changedDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.totalCell {
+  text-align: right;
+}
+
+.total {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.over {
+  color: var(--error);
+}
+
+
+.coverage {
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.coverage span {
+  display: block;
+}
+
+.coverageHours {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.gap {
+  color: var(--error);
+}
+
+.grid tfoot th,
+.grid tfoot td {
+  border-bottom: 0;
+  font: var(--font-meta-strong);
+}
+
+/* ---------- A phone: one day ---------- */
+
+.phone {
+  display: grid;
+  gap: 12px;
+}
+
+.dayChips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.dayList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dayRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.dayRow .total {
+  display: inline;
+  font: inherit;
+}
+
+
+@media (min-width: 1100px) {
+  .gridWrap {
+    display: block;
+  }
+
+  .phone {
+    display: none;
+  }
+}
+
+/* ---------- Dialogs ---------- */
+
+@media (min-width: 1024px) {
+  .dialog {
+    width: min(620px, calc(100vw - 48px));
+  }
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.row {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 560px) {
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.typePicks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-inline-end: 6px;
+  border-radius: var(--r-round);
+  background: var(--tone);
+  vertical-align: middle;
+}
+
+.paid {
+  margin: 0;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.danger {
+  background: var(--error);
+}
+
+.typeList {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.typeRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.typeRow .swatch {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+
+.typeText {
+  display: grid;
+  gap: 2px;
+}
+
+.typeName {
+  font: var(--font-label);
+}
+
+.typeMeta {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.colorsLabel {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 0;
+  font: var(--font-label);
+}
+
+.colorDot {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--surface);
+  border-radius: var(--r-round);
+  background: var(--tone);
+  box-shadow: 0 0 0 1px var(--line);
+  cursor: pointer;
+}
+
+.colorDot[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.colorDot:focus-visible {
+  box-shadow: var(--focus);
+}
+
+/* ---------- Time off on the grid, swaps ---------- */
+
+.empty[data-off='approved'] {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--reserved) 35%, var(--line));
+  background: color-mix(in srgb, var(--reserved) 7%, transparent);
+}
+
+.empty[data-off='pending'] {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--line));
+}
+
+.offLabel {
+  color: var(--reserved);
+  font: var(--font-meta-strong);
+}
+
+.empty[data-off='pending'] .offLabel {
+  color: var(--gold-ink);
+}
+
+.clash {
+  border-color: var(--error);
+}
+
+.clashNote {
+  color: var(--error);
+  font: var(--font-meta-strong);
+}
+
+.sendRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.offWarn {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--reserved) 8%, var(--surface));
+  color: var(--reserved);
+  font: var(--font-small-strong);
+}

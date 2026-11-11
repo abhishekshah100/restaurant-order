@@ -106,3 +106,17 @@ describe('dish editor', () => {
     ]);
   });
 });
+
+describe('one description', () => {
+  it('shows all of a short one on the menu, and the first sentences of a long one', async () => {
+    const { menuLine } = await import('@/lib/adminMenu');
+    expect(menuLine('  Charred paneer,   mint chutney. ')).toBe('Charred paneer, mint chutney.');
+    const long = `${'Slow-cooked black lentils with butter and cream, finished overnight. '.repeat(2)}Served with a swirl of cream and coriander, best with naan or jeera rice for two.`;
+    const line = menuLine(long);
+    expect(line.length).toBeLessThanOrEqual(200);
+    expect(line.endsWith('.')).toBe(true);
+    const noStop = 'word '.repeat(60);
+    expect(menuLine(noStop).endsWith('…')).toBe(true);
+    expect(menuLine(noStop).length).toBeLessThanOrEqual(200);
+  });
+});

@@ -107,10 +107,13 @@ export interface SizeRow {
   /** The size's id on an existing dish. */
   id?: string;
   name: string;
-  /** A note guests see under it ("Perfect for one"). */
+  /** A note guests see under it ("Perfect for one"); kept, no longer asked for. */
   note: string;
   price: string;
+  /** Whether it sells now: changed from the Menu list, kept as it was here. */
   available: boolean;
+  /** How many it feeds ("" : not said). */
+  serves: string;
 }
 
 export interface ChoiceRow {
@@ -188,6 +191,7 @@ export const newSizeRow = (): SizeRow => ({
   note: '',
   price: '',
   available: true,
+  serves: '',
 });
 export const newChoiceRow = (): ChoiceRow => ({
   key: rowKey(),
@@ -224,6 +228,7 @@ export function dishForm(dish: Dish | undefined, categoryId: CategoryId): DishFo
           note: v.description ?? '',
           price: String(v.price),
           available: v.available !== false,
+          serves: v.serves ? String(v.serves) : '',
         }))
       : [newSizeRow(), newSizeRow()];
   // Size ids on the dish → the rows' keys.
@@ -231,8 +236,9 @@ export function dishForm(dish: Dish | undefined, categoryId: CategoryId): DishFo
     (ids ?? []).flatMap((id) => sizes.filter((s) => s.id === id).map((s) => s.key));
   return {
     name: dish?.name ?? '',
-    description: dish?.description ?? '',
-    longDescription: dish?.longDescription ?? '',
+    // One description: the full one where there is one (the menu's line is made from it).
+    description: dish?.longDescription ?? dish?.description ?? '',
+    longDescription: '',
     categoryId: dish?.categoryId ?? categoryId,
     veg: dish?.veg ?? true,
     tags: dish?.tags ?? [],
@@ -354,10 +360,35 @@ export function dishFormErrors(form: DishForm): DishFormError[] {
   if (form.meal && (!form.mealIncludes.trim() || priceOf(form.mealSavings, true) === null)) {
     errors.push('meal');
   }
-  if (form.serves.trim() && count(form.serves, 20) === null) errors.push('serves');
+  if (form.pricing === 'single' && form.serves.trim() && count(form.serves, 20) === null) {
+    errors.push('serves');
+  }
+  if (
+    form.pricing === 'sizes' &&
+    form.sizes.some((s) => s.serves.trim() && count(s.serves, 20) === null)
+  ) {
+    errors.push('serves');
+  }
   // Minutes the kitchen can read: "15 min" or "12–15 min".
   if (form.prepTime.trim() && tidyPrepTime(form.prepTime) === null) errors.push('prepTime');
   return errors;
+}
+
+/** The longest line the menu shows under a dish's name. */
+export const MENU_LINE_MAX = 200;
+
+/**
+ * A dish's description as the menu shows it under the name: all of it when it's short; else
+ * its first sentences up to 200 characters, or cut at a word with "…".
+ */
+export function menuLine(text: string): string {
+  const t = text.trim().replace(/\s+/g, ' ');
+  if (t.length <= MENU_LINE_MAX) return t;
+  const head = t.slice(0, MENU_LINE_MAX);
+  const sentence = head.match(/^(.*[.!?])\s/)?.[1];
+  if (sentence && sentence.length >= 40) return sentence;
+  const word = head.slice(0, MENU_LINE_MAX - 1).replace(/\s+\S*$/, '');
+  return `${word}…`;
 }
 
 /** "Half · 6 pcs" → "half-6-pcs": the id a new size is sent with. */
@@ -399,11 +430,17 @@ export function dishInputOf(form: DishForm, current?: DishAvailability): DishInp
     availability = current?.status === 'sold-out' ? current : { status: 'sold-out' };
   }
   const maxAddOns = count(form.maxAddOns, form.addOns.length);
-  const serves = count(form.serves, 20);
+  // With sizes, each says how many it serves; a dish-wide "serves" from before is kept until
+  // one of them does (nothing is lost on saving).
+  const sizeServes = sized && form.sizes.some((sz) => count(sz.serves, 20) !== null);
+  const serves = sizeServes ? null : count(form.serves, 20);
+  const text = form.description.trim();
+  const line = menuLine(text);
   return {
     name: form.name.trim(),
-    description: form.description.trim(),
-    ...(form.longDescription.trim() ? { longDescription: form.longDescription.trim() } : {}),
+    // The menu's line, and the whole text on the dish's page when there's more.
+    description: line,
+    ...(text.length > line.length ? { longDescription: text } : {}),
     categoryId: form.categoryId,
     veg: form.veg,
     tags: form.tags,
@@ -421,6 +458,7 @@ export function dishInputOf(form: DishForm, current?: DishAvailability): DishInp
             ...(s.note.trim() ? { description: s.note.trim() } : {}),
             price: priceOf(s.price) ?? 0,
             available: s.available,
+            ...(count(s.serves, 20) ? { serves: count(s.serves, 20) } : {}),
           })),
         }
       : { price: priceOf(form.price) ?? 0 }),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { SearchLink, Tabs } from '@/components/ui';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { CartBar } from '@/components/layout/CartBar';
@@ -18,22 +18,35 @@ import styles from './MenuViews.module.css';
 
 /**
  * Menu home (02 · w02): chef's picks, then every category with all its dishes, so guests scroll
- * the whole menu without opening each category; the tabs and sidebar jump to a section.
+ * the whole menu without opening each category; the tabs and sidebar jump to a section. A link
+ * to a section (`/menu/#soups`) lands on it once the menu is drawn. A simple menu (one category)
+ * reads as one list: no category tab or heading.
  */
 export function MenuHome() {
   const { categories } = useMenu();
   const t = useContent('menu');
+  const simple = categories.length === 1;
   const tabs = useMemo(
     () => [
       { id: 'recommended', label: t('sort.recommended'), href: '#picks' },
-      ...categories.map((c) => ({
-        id: c.id,
-        label: c.name,
-        href: `#${c.id}`,
-      })),
+      ...(categories.length > 1
+        ? categories.map((c) => ({
+            id: c.id,
+            label: c.name,
+            href: `#${c.id}`,
+          }))
+        : []),
     ],
     [categories, t],
   );
+
+  // The section a link asked for (`#soups`), once its dishes are on the page.
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (id && categories.some((c) => c.id === id)) {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' });
+    }
+  }, [categories]);
   const [first, ...rest] = categories;
   return (
     <>
@@ -57,7 +70,7 @@ export function MenuHome() {
       >
         <h1 className="visually-hidden">{t('nav.menu')}</h1>
         <PicksSection />
-        <CategorySection category={first} />
+        <CategorySection category={first} hideTitle={simple} />
         {rest.map((category) => (
           <CategorySection key={category.id} category={category} divider />
         ))}

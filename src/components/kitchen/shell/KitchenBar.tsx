@@ -17,6 +17,7 @@ import { adminHomeFor } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import { KITCHEN_PATHS, activeKitchenNavId, kitchenNavFor } from '@/lib/kitchenNav';
 import { useFullscreen } from './useFullscreen';
+import { KitchenShift } from './KitchenShift';
 import { useKitchenPrefs } from './useKitchenPrefs';
 import styles from './KitchenBar.module.css';
 
@@ -119,6 +120,7 @@ export function KitchenBar() {
             {t('bar.adminShort')}
           </Link>
         )}
+        <KitchenShift />
         {time && (
           <p className={styles.clock}>
             <span aria-hidden="true">{time}</span>

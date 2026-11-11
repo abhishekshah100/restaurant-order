@@ -7,16 +7,11 @@ import { useState } from 'react';
 import { useBranchMenu } from '@/api/adminDashboard';
 import { useContent } from '@/api/hooks';
 import { useReorderDishes, useSetDishAvailability } from '@/api/mutations';
-import { Button, Chip, EmptyState, Icon, SearchField } from '@/components/ui';
+import { Button, Chip, Dialog, EmptyState, Icon, SearchField } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
-import {
-  MENU_STATUS_FILTERS,
-  menuCounts,
-  menuSections,
-  moveItem,
-  type MenuStatusFilter,
-} from '@/lib/adminMenu';
+import { menuCounts, menuSections, moveItem, type MenuStatusFilter } from '@/lib/adminMenu';
 import type { CategoryId, Dish } from '@/types/menu';
+import { OptionsList } from '../OptionsList';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { MenuDishRow } from './MenuDishRow';
 import styles from './MenuBoard.module.css';
@@ -58,15 +53,19 @@ type Open =
   | { kind: 'recipe'; slug: string }
   | { kind: 'categories' }
   | { kind: 'suggestions' }
+  | { kind: 'more' }
   | null;
 
+/** The states the summary line counts (each taps to show only those dishes). */
+const STATES = ['available', 'soldOut', 'offToday'] as const;
+
 /**
- * /admin/dashboard/menu/: the branch's menu for every member of staff. Filter by state (with
- * counts), search, pick a category; a row per dish with its sizes, prices and state. The switch
- * takes a dish off (sold out, until a time, or off today) or puts it back at once; Edit and Add
- * dish open the dish editor. With a category picked, Reorder moves its dishes up and down;
- * Categories renames and reorders them; Search suggestions sets what the search screen offers. Changes reach guests' menus within a minute. Read from
- * GET /branches/:id/menu.
+ * /admin/dashboard/menu/: the branch's menu for every member of staff. A summary line ("56
+ * dishes · 54 available · 1 sold out"; each state taps to show only those), Categories, More
+ * (search suggestions, reorder a category's dishes) and Add dish; then search and the category
+ * chips, and a row per dish: one switch with its state in words, tap the dish to edit. A simple
+ * menu (one category) shows no categories at all: one list. Changes reach guests' menus within
+ * a minute. Read from GET /branches/:id/menu.
  */
 export function MenuBoard() {
   const t = useContent('common');
@@ -129,58 +128,86 @@ export function MenuBoard() {
           },
         ]
       : menuSections(menu, { status, category, query });
-    // Reordering needs one whole category: picked, not searched or filtered.
-    const canReorder = category !== 'all' && !query.trim() && status === 'all';
+    const simple = menu.categories.length === 1;
+    const startReorder = (id: CategoryId) => {
+      setStatus('all');
+      setQuery('');
+      setCategory(id);
+      setOrder(menu.dishesIn(id).map((d) => d.slug));
+      setOpen(null);
+    };
     content = (
       <>
         <div className={styles.top}>
-          <div className={styles.filters} role="group" aria-label={t('adminMenu.filters.label')}>
-            {MENU_STATUS_FILTERS.map((f) => (
-              <Chip key={f} pressed={status === f} count={counts[f]} onClick={() => setStatus(f)}>
-                {t(`adminMenu.filters.${f}`)}
-              </Chip>
-            ))}
+          <div className={styles.summary}>
+            <p className={styles.total}>{t.plural('adminMenu.summary.dishes', counts.all)}</p>
+            <div className={styles.states} role="group" aria-label={t('adminMenu.filters.label')}>
+              {STATES.filter((k) => k === 'available' || counts[k] > 0).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  className={styles.stateChip}
+                  data-state={k}
+                  aria-pressed={status === k}
+                  onClick={() => setStatus(status === k ? 'all' : k)}
+                >
+                  <span className={styles.stateDot} aria-hidden="true" />
+                  {t.plural(`adminMenu.summary.${k}`, counts[k])}
+                </button>
+              ))}
+              {status !== 'all' && (
+                <button type="button" className={styles.showAll} onClick={() => setStatus('all')}>
+                  {t('adminMenu.summary.showAll')}
+                </button>
+              )}
+            </div>
           </div>
           <div className={styles.actions}>
             {!manage ? null : order ? (
               <>
-                <Button variant="secondary" onClick={() => setOrder(null)}>
+                <Button size="sm" variant="secondary" onClick={() => setOrder(null)}>
                   {t('adminMenu.reorderCancel')}
                 </Button>
-                <Button iconStart="check" loading={reorderDishes.isPending} onClick={saveOrder}>
+                <Button
+                  size="sm"
+                  iconStart="check"
+                  loading={reorderDishes.isPending}
+                  onClick={saveOrder}
+                >
                   {t('adminMenu.reorderDone')}
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="secondary" onClick={() => setOpen({ kind: 'categories' })}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setOpen({ kind: 'categories' })}
+                >
                   {t('adminMenu.categoriesButton')}
                 </Button>
                 <Button
+                  size="sm"
                   variant="secondary"
-                  iconStart="search"
-                  onClick={() => setOpen({ kind: 'suggestions' })}
+                  iconStart="dots"
+                  onClick={() => setOpen({ kind: 'more' })}
                 >
-                  {t('adminMenu.suggestionsButton')}
+                  {t('adminMenu.more')}
                 </Button>
-                <Button
-                  variant="secondary"
-                  iconStart="sort"
-                  disabled={!canReorder}
-                  title={canReorder ? undefined : t('adminMenu.reorderHint')}
-                  onClick={() =>
-                    category !== 'all' && setOrder(menu.dishesIn(category).map((d) => d.slug))
-                  }
-                >
-                  {t('adminMenu.reorder')}
-                </Button>
-                <Button iconStart="plus" onClick={() => setOpen({ kind: 'edit' })}>
+                <Button size="sm" iconStart="plus" onClick={() => setOpen({ kind: 'edit' })}>
                   {t('adminMenu.addDish')}
                 </Button>
               </>
             )}
           </div>
         </div>
+
+        {order && (
+          <p className={styles.reordering} role="status">
+            <Icon name="sort" size="xs" />
+            {t('adminMenu.reordering', { name: menu.getCategory(category)?.name ?? '' })}
+          </p>
+        )}
 
         <section className={styles.panel} aria-label={t('adminMenu.title')}>
           <div className={styles.tools}>
@@ -190,7 +217,7 @@ export function MenuBoard() {
               label={t('adminMenu.search')}
               placeholder={t('adminMenu.search')}
             />
-            {!query.trim() && (
+            {!query.trim() && !simple && !order && (
               <div
                 className={styles.categories}
                 role="group"
@@ -215,7 +242,7 @@ export function MenuBoard() {
                 className={styles.section}
                 aria-label={section.name || undefined}
               >
-                {section.name && (
+                {section.name && !simple && (
                   <h2 className={styles.sectionTitle}>
                     {section.name}
                     <span className={styles.sectionCount}>{section.dishes.length}</span>
@@ -275,7 +302,47 @@ export function MenuBoard() {
         )}
         {open?.kind === 'recipe' && <RecipeDialog slug={open.slug} onClose={() => setOpen(null)} />}
         {open?.kind === 'categories' && (
-          <CategoriesDialog categories={menu.categories} onClose={() => setOpen(null)} />
+          <CategoriesDialog menu={menu} onClose={() => setOpen(null)} />
+        )}
+        {open?.kind === 'more' && (
+          <Dialog
+            open
+            onClose={() => setOpen(null)}
+            presentation="adaptive"
+            title={t('adminMenu.moreTitle')}
+            className={styles.moreDialog}
+          >
+            <OptionsList
+              items={[
+                {
+                  key: 'suggestions',
+                  icon: 'search',
+                  title: t('adminMenu.moreItems.suggestions.title'),
+                  body: t('adminMenu.moreItems.suggestions.body'),
+                  onSelect: () => setOpen({ kind: 'suggestions' }),
+                },
+                simple
+                  ? {
+                      key: 'reorder',
+                      icon: 'sort',
+                      title: t('adminMenu.moreItems.reorder.title'),
+                      body: t('adminMenu.moreItems.reorder.bodySimple'),
+                      onSelect: () => startReorder(menu.categories[0].id),
+                    }
+                  : {
+                      key: 'reorder',
+                      icon: 'sort',
+                      title: t('adminMenu.moreItems.reorder.title'),
+                      body: t('adminMenu.moreItems.reorder.body'),
+                      extra: menu.categories.map((c) => (
+                        <Chip key={c.id} onClick={() => startReorder(c.id)}>
+                          {c.shortName ?? c.name}
+                        </Chip>
+                      )),
+                    },
+              ]}
+            />
+          </Dialog>
         )}
         {open?.kind === 'suggestions' && (
           <SearchSuggestionsDialog menu={menu} onClose={() => setOpen(null)} />

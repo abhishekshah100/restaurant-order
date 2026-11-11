@@ -1,0 +1,192 @@
+/*
+ * Today's money: the day and its reports, the two big numbers (To collect, Taken today) side by
+ * side, then a quiet line of the rest. Light, so the bills below stay the focus.
+ */
+
+.strip {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.period {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tools {
+  display: flex;
+  gap: 6px;
+}
+
+.tool {
+  position: relative;
+  height: 32px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Small to look at; the tap target stays 44px tall. */
+.tool::after {
+  content: '';
+  position: absolute;
+  inset: -6px -2px;
+}
+
+.tool:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .tool:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+}
+
+/* ---------- The two big numbers ---------- */
+
+.main {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.big {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--bg) 50%, var(--surface));
+  color: var(--ink);
+  text-align: start;
+}
+
+.collect {
+  cursor: pointer;
+}
+
+.collect:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.open {
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--line));
+  background: var(--warn-tint);
+}
+
+.settled {
+  border-color: color-mix(in srgb, var(--success) 30%, var(--line));
+  background: var(--success-tint);
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.open .label {
+  color: var(--warn);
+}
+
+.settled .label {
+  color: var(--success);
+}
+
+.value {
+  overflow: hidden;
+  font: var(--font-h2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hint {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+@media (hover: hover) {
+  .collect.open:hover {
+    border-color: var(--warn);
+  }
+}
+
+/* ---------- The rest, small ---------- */
+
+.small {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.item {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.item dt {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.item dd {
+  margin: 0;
+  color: var(--ink);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.refunds dd {
+  color: var(--error);
+}
+
+@media (min-width: 768px) {
+  .strip {
+    padding: 16px 18px;
+  }
+
+  .small {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 28px;
+  }
+
+  .item {
+    justify-content: flex-start;
+  }
+}

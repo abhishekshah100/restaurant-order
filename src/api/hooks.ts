@@ -32,7 +32,9 @@ import type {
   PaymentHistoryQuery,
   OrderHistoryQuery,
 } from './contracts';
+import { liveRefresh } from './liveState';
 import {
+  BRANCH_SERVICE_REFRESH_MS,
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
   adminOffersQuery,
@@ -297,6 +299,36 @@ export function usePaymentHistory(
 }
 
 /**
+ * Payments: today's money as it's taken (each payment counted when it was taken, whatever day
+ * the order was placed): the totals, then the matching payments and refunds, 50 at a time.
+ * Keyed under the service, so a payment or refund (and the branch's live events) read it again
+ * at once; polled like the orders meanwhile.
+ */
+export function useTodayPayments(
+  branchId: string | undefined,
+  query: Omit<PaymentHistoryQuery, 'cursor'>,
+) {
+  const token = useAdminToken();
+  return useInfiniteQuery({
+    queryKey: ['admin', 'service', 'payments-today', branchId, token, query] as const,
+    queryFn:
+      token && branchId
+        ? ({ pageParam }) =>
+            api.paymentHistory(token, branchId, {
+              ...query,
+              ...(pageParam ? { cursor: pageParam } : {}),
+            })
+        : skipToken,
+    initialPageParam: '',
+    getNextPageParam: (page) => page.next,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: liveRefresh(BRANCH_SERVICE_REFRESH_MS),
+    placeholderData: (previous) => previous,
+  });
+}
+
+/**
  * Orders › History: the days' sums (from the first page) and their orders, 30 at a time
  * (`fetchNextPage` for more). Keyed under the service, so a payment or refund taken on an order
  * refreshes it.
@@ -331,6 +363,50 @@ export const useCurrentShift = (branchId: string | undefined, enabled = true) =>
     queryFn: token && branchId && enabled ? () => api.currentShift(token, branchId) : skipToken,
     staleTime: 60_000,
     refetchOnWindowFocus: true,
+  });
+};
+
+/** Settings › Rota: the week holding `week` ("YYYY-MM-DD"). */
+export const useRotaWeek = (branchId: string | undefined, week: string | undefined) => {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'rota', 'week', branchId, token, week] as const,
+    queryFn: token && branchId && week ? () => api.rotaWeek(token, branchId, week) : skipToken,
+    staleTime: 30_000,
+    placeholderData: (previous) => previous,
+  });
+};
+
+/** My published shifts (staff home); not read while `enabled` is false. */
+export const useMyRota = (branchId: string | undefined, enabled = true) => {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'rota', 'mine', branchId, token] as const,
+    queryFn: token && branchId && enabled ? () => api.myRota(token, branchId) : skipToken,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+/** Team › Rota: time off and swaps to decide (planners); polled for the Team badge. */
+export const useRotaRequests = (branchId: string | undefined, enabled = true) => {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'rota', 'requests', branchId, token] as const,
+    queryFn: token && branchId && enabled ? () => api.rotaRequests(token, branchId) : skipToken,
+    staleTime: 60_000,
+    refetchInterval: 2 * 60_000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+/** Whom to ask for a swap: everyone here but me. */
+export const useRotaColleagues = (branchId: string | undefined, enabled = true) => {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'rota', 'colleagues', branchId, token] as const,
+    queryFn: token && branchId && enabled ? () => api.rotaColleagues(token, branchId) : skipToken,
+    staleTime: 5 * 60_000,
   });
 };
 

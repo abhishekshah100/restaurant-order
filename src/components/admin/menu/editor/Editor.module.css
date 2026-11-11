@@ -136,7 +136,7 @@
 
 .sizeRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px auto auto;
+  grid-template-columns: minmax(0, 1fr) 96px 72px auto;
   align-items: end;
   gap: 8px;
 }
@@ -337,5 +337,64 @@
   .twoUp {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
+  }
+}
+
+/* An optional part not used yet: one "+ Add …" line, opened when needed. */
+.addSection {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: none;
+  color: var(--ink-3);
+  text-align: start;
+  cursor: pointer;
+}
+
+.addSection:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .addSection:hover {
+    border-color: var(--brand-600);
+    background: color-mix(in srgb, var(--brand-tint) 50%, transparent);
+  }
+}
+
+.addSectionIcon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--brand-tint);
+  color: var(--brand-600);
+}
+
+.addSectionText {
+  display: grid;
+  gap: 2px;
+  font: var(--font-small);
+}
+
+.addSectionText strong {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+/* A phone: the size's name on its own line, then price, serves and its buttons. */
+@media (max-width: 559px) {
+  .sizeRow {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .sizeRow > :first-child {
+    grid-column: 1 / -1;
   }
 }

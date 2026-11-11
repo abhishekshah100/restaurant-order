@@ -1,17 +1,17 @@
 /*
- * A dish row: picture, name and prices, its state (a button: change it), then the on/off switch
- * and Edit. Off the menu, the row dims (the controls stay clear). Below 700px the state drops
- * under the name.
+ * A dish row: picture, the dish (tap to edit: name, prices, what it has), then one switch with
+ * its state in words, then Recipe and Edit. Off the menu, the dish dims (the controls stay
+ * clear). On a phone the switch and buttons go on a line under the dish.
  */
 
 .row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas:
-    'thumb main controls'
-    'thumb status controls';
+    'thumb main main'
+    'thumb availability actions';
   align-items: center;
-  gap: 4px 12px;
+  gap: 8px 12px;
   padding: 12px 14px;
 }
 
@@ -26,6 +26,7 @@
 
 .thumb {
   grid-area: thumb;
+  align-self: start;
   width: 56px;
   height: 56px;
   display: grid;
@@ -47,6 +48,34 @@
   min-width: 0;
   display: grid;
   gap: 2px;
+}
+
+.mainButton {
+  margin: -6px -8px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.mainButton:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .mainButton:hover {
+    background: var(--bg);
+  }
+
+  .mainButton:hover .nameText {
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 3px;
+  }
 }
 
 .name {
@@ -80,23 +109,29 @@
   text-decoration: line-through;
 }
 
-/* ---------- State ---------- */
+/* ---------- On the menu or not: the switch, and its words ---------- */
+
+.availability {
+  grid-area: availability;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 .status {
   --tone: var(--success);
-  grid-area: status;
-  justify-self: start;
-  min-height: 30px;
-  padding: 0 10px 0 8px;
+  position: relative;
+  min-height: 32px;
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  padding: 0;
   border: 0;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--tone) 12%, var(--surface));
+  background: none;
   color: color-mix(in srgb, var(--tone) 85%, var(--ink));
-  font: var(--font-meta-strong);
+  font: var(--font-small-strong);
+  text-align: start;
   cursor: pointer;
 }
 
@@ -109,8 +144,9 @@
 }
 
 .dot {
-  width: 7px;
-  height: 7px;
+  flex: none;
+  width: 8px;
+  height: 8px;
   border-radius: var(--r-round);
   background: var(--tone);
 }
@@ -120,56 +156,68 @@
 }
 
 .status:focus-visible {
+  border-radius: var(--r-xs);
   box-shadow: var(--focus);
 }
 
 @media (hover: hover) {
   .status:hover {
-    background: color-mix(in srgb, var(--tone) 20%, var(--surface));
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }
 
-/* ---------- Controls ---------- */
+/* ---------- Recipe and Edit ---------- */
 
-.controls {
-  grid-area: controls;
+.actions {
+  grid-area: actions;
   display: flex;
-  align-items: center;
+  justify-content: flex-end;
   gap: 6px;
 }
 
-.edit {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: var(--r-round);
+.action {
+  height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--ink-2);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.edit:focus-visible {
+.action:focus-visible {
   box-shadow: var(--focus);
 }
 
 @media (hover: hover) {
-  .edit:hover {
-    border-color: var(--line-strong);
+  .action:hover {
+    border-color: var(--ink);
     color: var(--ink);
+  }
+}
+
+/* A phone: tapping the dish edits it, so Edit is one button less. */
+@media (max-width: 699px) {
+  .editAction {
+    display: none;
   }
 }
 
 @media (min-width: 700px) {
   .row {
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
-    grid-template-areas: 'thumb main status controls';
-    gap: 14px;
+    grid-template-columns: auto minmax(0, 1fr) minmax(190px, auto) auto;
+    grid-template-areas: 'thumb main availability actions';
+    gap: 16px;
     padding: 12px 20px;
   }
 
-  .status {
-    justify-self: end;
+  .thumb {
+    align-self: center;
   }
 }

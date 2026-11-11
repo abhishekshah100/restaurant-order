@@ -70,12 +70,11 @@
   color: var(--tone);
 }
 
+/* The whole message, over as many lines as it needs (a kitchen note must be read in full). */
 .detail {
-  overflow: hidden;
   color: var(--ink-2);
   font: var(--font-small);
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .age {

@@ -9,6 +9,7 @@ import {
   useBranches,
   useContent,
   useInventoryAlerts,
+  useRotaRequests,
 } from '@/api/hooks';
 import { isBackendEnabled } from '@/api/backend';
 import { useAdminName, useSelectedAdminBranchId } from '@/hooks/useAdminSession';
@@ -39,7 +40,13 @@ function ShellFrame({ children }: { children: ReactNode }) {
   const service = useBranchService(floorId).data;
   // What's low or out, for staff with inventory (backend only: the mock keeps no stock).
   const stock = useInventoryAlerts(branch.id, isBackendEnabled() && can(...INVENTORY_READERS)).data;
-  const counts = useMemo(() => ({ service: service?.counts, stock }), [service?.counts, stock]);
+  // Time off and swaps waiting, for those who plan the rota.
+  const rotaWaiting = useRotaRequests(branch.id, isBackendEnabled() && can('rota.plan')).data
+    ?.waiting;
+  const counts = useMemo(
+    () => ({ service: service?.counts, stock, rotaRequests: rotaWaiting }),
+    [service?.counts, stock, rotaWaiting],
+  );
   // What changes at the branch is read again at once (and the pages poll rarely meanwhile).
   useBranchEvents(can('orders.view', 'inventory.view') ? branch.id : undefined);
   // A chime, a vibration and a toast for what's new on the floor (food ready, a call, the bill).

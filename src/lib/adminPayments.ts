@@ -80,24 +80,12 @@ export const MAX_REFUND_NOTE = 200;
 /** Why staff refund, in the order they're offered. */
 export const REFUND_REASONS: readonly RefundReason[] = REFUND_REASON_CODES;
 
-/** One payment or refund with the order it's on, for the Transactions list. */
-export interface LedgerEntry extends PaymentTransaction {
-  order: Order;
-}
-
 /** A payment or refund with just what's shown of its order (Payments › History reads these). */
 export type LedgerLine = PaymentTransaction & {
   order: Pick<Order, 'id' | 'customerName' | 'mode' | 'table'>;
 };
 
-/** Every payment and refund on the orders, newest first. */
-export function ledgerEntries(orders: readonly Order[]): LedgerEntry[] {
-  return orders
-    .flatMap((order) => ledgerOf(order).map((t) => ({ ...t, order })))
-    .sort((a, b) => Date.parse(b.at) - Date.parse(a.at) || b.id.localeCompare(a.id));
-}
-
-/* ---------- The day at a glance ---------- */
+/* ---------- The day's money ---------- */
 
 export interface MethodTotal {
   /** The method's id ("cash", "upi", "online"…). */
@@ -110,83 +98,24 @@ export interface MethodTotal {
   tips: Price;
 }
 
+/**
+ * The day's money as the pages show it (the server adds it up, each payment on the day it was
+ * taken): after refunds, online and in person, tips, refunds, what was left off bills, by method,
+ * and the cash taken.
+ */
 export interface DaySummary {
-  /** Everything paid (online and in person), before refunds; tips not included. */
-  collected: Price;
-  refunds: Price;
-  /** Refunds still on their way to the guest (online). */
-  refundsPending: Price;
   /** Collected less refunds. */
   net: Price;
-  tips: Price;
-  /** Left off bills when staff took the rest (not money received), and on how many payments. */
-  waived: Price;
-  waivedCount: number;
-  payments: number;
-  refundCount: number;
   online: Price;
   inPerson: Price;
-  /** Still due on orders that stand, and on how many. */
-  toCollect: Price;
-  unpaidOrders: number;
-  /** Orders paid in full (not cancelled) and their average bill. */
-  paidOrders: number;
-  averageBill: Price;
+  tips: Price;
+  refunds: Price;
+  /** Left off bills when staff took the rest (not money received). */
+  waived: Price;
   /** By method, the most taken first. */
   byMethod: MethodTotal[];
-  /** Cash that should be in the drawer: cash taken (with tips) less cash given back. */
+  /** Cash taken (with tips) less cash given back. */
   cashInDrawer: Price;
-}
-
-export function daySummary(orders: readonly Order[]): DaySummary {
-  const entries = orders.flatMap(ledgerOf);
-  const payments = entries.filter((e) => e.kind === 'payment');
-  const refunds = entries.filter((e) => e.kind === 'refund');
-  const methods = new Map<string, MethodTotal>();
-  for (const e of entries) {
-    const total = methods.get(e.method) ?? {
-      method: e.method,
-      channel: e.channel,
-      count: 0,
-      amount: 0,
-      refunds: 0,
-      tips: 0,
-    };
-    if (e.kind === 'payment') {
-      total.count += 1;
-      total.amount += e.amount;
-      total.tips += e.tip ?? 0;
-    } else {
-      total.refunds += e.amount;
-    }
-    methods.set(e.method, total);
-  }
-  const collected = sum(payments, 'payment');
-  const refunded = sum(refunds, 'refund');
-  const standing = orders.filter((o) => o.status !== 'cancelled');
-  const paidOrders = standing.filter((o) => dueOn(o) === 0 && paidAmount(o) > 0);
-  const cash = methods.get('cash');
-  return {
-    collected,
-    refunds: refunded,
-    refundsPending: refunds.filter((e) => e.status === 'started').reduce((t, e) => t + e.amount, 0),
-    net: collected - refunded,
-    tips: payments.reduce((t, e) => t + (e.tip ?? 0), 0),
-    waived: payments.reduce((t, e) => t + (e.waived ?? 0), 0),
-    waivedCount: payments.filter((e) => (e.waived ?? 0) > 0).length,
-    payments: payments.length,
-    refundCount: refunds.length,
-    online: payments.filter((e) => e.channel === 'online').reduce((t, e) => t + e.amount, 0),
-    inPerson: payments.filter((e) => e.channel === 'inPerson').reduce((t, e) => t + e.amount, 0),
-    toCollect: standing.reduce((t, o) => t + dueOn(o), 0),
-    unpaidOrders: standing.filter((o) => dueOn(o) > 0).length,
-    paidOrders: paidOrders.length,
-    averageBill: paidOrders.length
-      ? paidOrders.reduce((t, o) => t + o.total, 0) / paidOrders.length
-      : 0,
-    byMethod: [...methods.values()].sort((a, b) => b.amount - a.amount),
-    cashInDrawer: cash ? cash.amount + cash.tips - cash.refunds : 0,
-  };
 }
 
 /* ---------- To collect ---------- */
@@ -260,6 +189,39 @@ export function dueGroups(
   });
 }
 
+/** The bills to collect in the three groups staff work through, with what's due in all. */
+export interface DueSections {
+  /** Tables whose guests asked for the bill: first, whatever their age. */
+  asked: DueGroup[];
+  /** Opened today. */
+  today: DueGroup[];
+  /** Still unpaid from an earlier day: to chase up. */
+  earlier: DueGroup[];
+  total: Price;
+  earlierTotal: Price;
+}
+
+/**
+ * Splits the bills to collect (in `dueGroups` order) into asked for the bill, today's and those
+ * from earlier days (`isEarlier` takes a bill's oldest order time). The totals are over every
+ * bill, so To collect matches the list below it.
+ */
+export function dueSections(
+  groups: readonly DueGroup[],
+  isEarlier: (since: string) => boolean,
+): DueSections {
+  const sections: DueSections = { asked: [], today: [], earlier: [], total: 0, earlierTotal: 0 };
+  for (const group of groups) {
+    sections.total += group.due;
+    if (group.kind === 'table' && group.request) sections.asked.push(group);
+    else if (isEarlier(group.since)) {
+      sections.earlier.push(group);
+      sections.earlierTotal += group.due;
+    } else sections.today.push(group);
+  }
+  return sections;
+}
+
 /* ---------- Views and filters ---------- */
 
 export type PaymentsView = 'collect' | 'transactions' | 'refunds';
@@ -280,7 +242,7 @@ export interface EntryFilters {
 }
 
 /** The order number, guest, table ("12"), method's reference or who took it. */
-function entryMatches(entry: LedgerEntry, query: string): boolean {
+function entryMatches(entry: LedgerLine, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
   const { order } = entry;
@@ -293,10 +255,10 @@ function entryMatches(entry: LedgerEntry, query: string): boolean {
   );
 }
 
-export const filterEntries = (
-  entries: readonly LedgerEntry[],
+export const filterEntries = <T extends LedgerLine>(
+  entries: readonly T[],
   { method, channel, query }: EntryFilters,
-) =>
+): T[] =>
   entries.filter(
     (e) =>
       (method === 'all' || e.method === method) &&

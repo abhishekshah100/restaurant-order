@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useContent } from '@/api/hooks';
 import { useRemoveDish, useSaveDish } from '@/api/mutations';
-import { Button, Dialog, OptionGroup } from '@/components/ui';
+import { Button, Dialog } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import {
   dishForm,
@@ -19,24 +19,16 @@ import { AddOnsSection } from './editor/AddOnsSection';
 import { BasicsSection } from './editor/BasicsSection';
 import { ChoicesSection } from './editor/ChoicesSection';
 import { DetailsSection } from './editor/DetailsSection';
-import { EditorSection } from './editor/EditorSection';
 import { LeaveOutSection } from './editor/LeaveOutSection';
 import { PriceSection } from './editor/PriceSection';
 import styles from './editor/Editor.module.css';
 
-const STATUSES: readonly DishForm['status'][] = ['available', 'sold-out', 'unavailable-today'];
-const STATUS_KEYS = {
-  available: 'statusAvailable',
-  'sold-out': 'statusSoldOut',
-  'unavailable-today': 'statusOffToday',
-} as const;
-
 /**
- * Adding a dish, or editing one — every part of it, in folding sections: basics and picture;
- * price or sizes; choice groups (a meal's slots, a spice level); add-ons; what guests can leave
- * out and quick kitchen notes; details (highlights, spice, prep time, serves, allergens, meal);
- * availability. Problems show when saving, in the section they're in. An existing dish can be
- * removed from the menu.
+ * Adding a dish, or editing one: the basics (name, description, category, veg, picture) and the
+ * price or sizes always open; choices, extras, what guests can leave out and details are "+ Add"
+ * buttons until a dish uses them. Whether it's available is set from the Menu list (the dish's
+ * switch), so it's not here. Problems show when saving, in the section they're in. An existing
+ * dish can be removed from the menu.
  */
 export function DishEditor({
   menu,
@@ -135,23 +127,6 @@ export function DishEditor({
               prepTime: message('prepTime'),
             }}
           />
-          <EditorSection
-            title={t('adminMenu.editor.sections.availability')}
-            summary={t(`adminMenu.editor.${STATUS_KEYS[form.status]}`)}
-          >
-            <OptionGroup
-              type="radio"
-              id="dish-status"
-              title={t('adminMenu.editor.status')}
-              layout="grid"
-              value={form.status}
-              onChange={(id) => set({ status: STATUSES.find((s) => s === id) ?? form.status })}
-              choices={STATUSES.map((status) => ({
-                id: status,
-                label: t(`adminMenu.editor.${STATUS_KEYS[status]}`),
-              }))}
-            />
-          </EditorSection>
           {dish && (
             <Button
               variant="ghost"

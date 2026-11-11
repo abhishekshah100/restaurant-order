@@ -1,65 +1,186 @@
-/* An open bill: where, its orders, what's due, then Print bill and Collect. */
+/*
+ * An open bill as one row: where and whose (tap to open), what's due, then Print bill and
+ * Collect. On a phone the buttons go on a line of their own, so the name has room; from 640px
+ * all in one line. A gold edge: the guests asked for the bill. An amber edge: from an earlier day.
+ */
 
-.card {
+.row {
+  --edge: transparent;
+  position: relative;
   min-width: 0;
   display: grid;
-  align-content: start;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--sh-1);
-}
-
-/* Guests asked for the bill: a gold edge and the request on top. */
-.asked {
-  border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
-  box-shadow:
-    inset 4px 0 0 var(--gold),
-    var(--sh-1);
-}
-
-.request {
-  justify-self: start;
-  padding: 4px 10px;
-  display: inline-flex;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'main amount'
+    'actions actions';
   align-items: center;
-  gap: 6px;
-  border-radius: var(--r-pill);
-  background: var(--gold-tint);
-  color: var(--gold-ink);
-  font: var(--font-meta-strong);
+  gap: 6px 12px;
+  padding: 12px 14px 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
 }
 
-.head {
+.row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--edge);
+}
+
+.asked {
+  --edge: var(--gold);
+  background: color-mix(in srgb, var(--gold-tint) 45%, var(--surface));
+}
+
+.earlier {
+  --edge: var(--warn);
+}
+
+/* ---------- Where and whose ---------- */
+
+.main {
+  grid-area: main;
+  min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 12px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
-.heading {
+.main:focus-visible {
+  border-radius: var(--r-xs);
+  box-shadow: var(--focus);
+}
+
+.text {
+  min-width: 0;
   display: grid;
   gap: 2px;
-  min-width: 0;
 }
 
 .title {
+  display: -webkit-box;
   overflow: hidden;
-  font: var(--font-h3);
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  color: var(--ink);
+  font: var(--font-label);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 
 .meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
   color: var(--ink-3);
   font: var(--font-meta);
 }
 
-/* ---------- A table's orders ---------- */
+.asked .meta {
+  color: var(--gold-ink);
+  font: var(--font-meta-strong);
+}
+
+.earlier .meta {
+  color: var(--warn);
+}
+
+.chevron {
+  transition: transform var(--dur-fast) ease;
+}
+
+.up {
+  transform: rotate(180deg);
+}
+
+@media (hover: hover) {
+  .main:hover .title {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* ---------- What's due and the buttons ---------- */
+
+.amount {
+  grid-area: amount;
+  justify-self: end;
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+}
+
+.due {
+  color: var(--ink);
+  font: var(--font-price);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.paid {
+  color: var(--success);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+}
+
+.actions {
+  grid-area: actions;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.print {
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+@media (hover: hover) {
+  .print:hover {
+    border-color: var(--ink);
+    background: var(--surface);
+    color: var(--ink);
+  }
+}
+
+.collect {
+  min-width: 104px;
+}
+
+/* On a phone: under the name (lined up with it), Collect taking the rest of the line. */
+@media (max-width: 639px) {
+  .actions {
+    justify-self: stretch;
+    padding-left: 56px;
+  }
+
+  .collect {
+    flex: 1;
+  }
+}
+
+/* ---------- A table's orders (opened from the row) ---------- */
 
 .orders {
+  grid-column: 1 / -1;
+  margin-left: 56px;
   display: grid;
   list-style: none;
   border-top: 1px dashed var(--line);
@@ -67,7 +188,7 @@
 
 .order {
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 2px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -79,6 +200,10 @@
   color: var(--ink);
   text-align: start;
   cursor: pointer;
+}
+
+.orders > li:last-child .order {
+  border-bottom: 0;
 }
 
 .order:focus-visible {
@@ -110,44 +235,11 @@
   }
 }
 
-/* ---------- Due and actions ---------- */
-
-/* The amount, with the buttons beside it when there's room and under it when there isn't. */
-.foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.amount {
-  flex: 1 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 10px;
-}
-
-.amountLabel {
-  color: var(--ink-3);
-  font: var(--font-meta);
-}
-
-.amountValue {
-  font: var(--font-price-lg);
-  font-variant-numeric: tabular-nums;
-}
-
-.paid {
-  color: var(--success);
-  font: var(--font-meta-strong);
-}
-
-.actions {
-  margin-left: auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
+@media (min-width: 640px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: 'main amount actions';
+    gap: 8px 18px;
+    padding: 12px 18px 12px 20px;
+  }
 }

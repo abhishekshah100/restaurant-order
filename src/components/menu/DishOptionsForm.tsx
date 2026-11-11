@@ -53,10 +53,17 @@ export function DishOptionsForm({ dish, state, variant, idPrefix }: DishOptionsF
             // "Quarter" with "1 pc" underneath and never breaks mid-phrase.
             const split = quick && (dish.variants?.length ?? 0) >= 3;
             const [name, ...detail] = v.name.split(' · ');
+            // How many it feeds, when the restaurant says ("Serves 2").
+            const serves = v.serves ? t.plural('detail.servesSize', v.serves) : undefined;
+            const sub = split
+              ? [...detail, serves].filter(Boolean).join(' · ')
+              : quick
+                ? serves
+                : [serves, v.description].filter(Boolean).join(' · ');
             return {
               id: v.id,
               label: split ? name : v.name,
-              sub: split ? detail.join(' · ') || undefined : quick ? undefined : v.description,
+              sub: sub || undefined,
               price: money.format(v.price),
               disabled: v.available === false,
             };

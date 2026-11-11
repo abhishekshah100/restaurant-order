@@ -8,6 +8,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { counterExtras } from '@/lib/adminHome';
 import { ArrivingSoon } from './ArrivingSoon';
 import { FloorGlance } from './FloorGlance';
+import { MyRota } from './MyRota';
 import { MyShift } from './MyShift';
 import { HomeHeader } from './HomeHeader';
 import { ServiceCounters } from './ServiceCounters';
@@ -51,6 +52,7 @@ export function AdminHome() {
           <div className={styles.side}>
             {can('reservations.manage') && <ArrivingSoon now={now} />}
             <SoldOutTonight />
+            <MyRota now={now} />
             {(can('orders.take') || can('payments.collect')) && <MyShift />}
           </div>
         </div>

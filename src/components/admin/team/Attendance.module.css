@@ -1,0 +1,600 @@
+/*
+ * Team › Attendance: a line under the tabs, the range chips with Excel and Add a shift, the day
+ * at a glance, what needs a look, then the shifts. On a phone each shift is a small card (name
+ * and status, then times); from 900px a table row: person, planned, in – out, hours, status.
+ */
+
+.page {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.lead {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ranges {
+  flex: 1 1 320px;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ranges::-webkit-scrollbar {
+  display: none;
+}
+
+.ranges > * {
+  flex: none;
+}
+
+.tools {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ---------- At a glance ---------- */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.kpi {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.kpi dt {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+.kpi dd {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font: var(--font-h2);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi[data-tone='info'] {
+  border-color: color-mix(in srgb, var(--info) 30%, var(--line));
+  background: var(--info-tint);
+}
+
+.kpi[data-tone='warn'] {
+  border-color: color-mix(in srgb, var(--warn) 30%, var(--line));
+  background: var(--warn-tint);
+}
+
+.kpi[data-tone='err'] {
+  border-color: color-mix(in srgb, var(--error) 30%, var(--line));
+  background: var(--error-tint);
+}
+
+/* ---------- Needs your attention ---------- */
+
+.attention {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--error) 35%, var(--line));
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--error-tint) 55%, var(--surface));
+}
+
+.attentionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--error);
+  font: var(--font-label);
+}
+
+.count {
+  min-width: 22px;
+  padding: 0 7px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  text-align: center;
+}
+
+.attentionList {
+  display: grid;
+  list-style: none;
+}
+
+.attentionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-top: 1px solid color-mix(in srgb, var(--error) 15%, var(--line));
+}
+
+.attentionRow:first-child {
+  border-top: 0;
+}
+
+.attentionText {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.attentionText strong {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+/* ---------- Cards: by person, and the shifts ---------- */
+
+.card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  font: var(--font-h3);
+}
+
+.cardHint {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table thead th {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+.table th:first-child {
+  text-align: left;
+}
+
+.table tr[data-picked] {
+  background: var(--brand-tint);
+}
+
+.personLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--font-small-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.warn {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.err {
+  color: var(--error);
+  font-weight: 700;
+}
+
+/* ---------- The shifts ---------- */
+
+.listHead {
+  display: none;
+}
+
+.day + .day {
+  margin-top: 14px;
+}
+
+.dayTitle {
+  padding: 6px 0;
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+/* A phone: a card per shift. */
+.row {
+  --edge: transparent;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'who'
+    'status'
+    'times'
+    'hours'
+    'planned'
+    'action';
+  gap: 6px 10px;
+  padding: 12px 12px 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--edge);
+}
+
+.row_err {
+  --edge: var(--error);
+}
+
+.row_warn {
+  --edge: var(--warn);
+}
+
+.row_info {
+  --edge: var(--info);
+}
+
+.row_ok {
+  --edge: var(--success);
+}
+
+.who {
+  grid-area: who;
+  min-width: 0;
+  display: grid;
+}
+
+.name {
+  overflow: hidden;
+  color: var(--ink);
+  font: var(--font-label);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.role {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.cellPlanned {
+  grid-area: planned;
+}
+
+.cellTimes {
+  grid-area: times;
+}
+
+.cellHours {
+  grid-area: hours;
+}
+
+.cellPlanned,
+.cellTimes,
+.cellHours {
+  display: flex;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.cellTimes {
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.cellLabel {
+  min-width: 64px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+.statuses {
+  grid-area: status;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.statuses:empty {
+  display: none;
+}
+
+.status {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+}
+
+.status[data-tone='ok'] {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.status[data-tone='warn'] {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+
+.status[data-tone='err'] {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.status[data-tone='info'] {
+  background: var(--info-tint);
+  color: var(--info);
+}
+
+.edited {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+  white-space: nowrap;
+}
+
+.action {
+  grid-area: action;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.action:empty {
+  display: none;
+}
+
+/* A computer: one table row per shift under column heads. */
+@media (min-width: 900px) {
+  .listHead,
+  .row {
+    grid-template-columns:
+      minmax(150px, 1.3fr) minmax(130px, 1fr) minmax(150px, 1.1fr) 90px minmax(160px, 1.3fr)
+      128px;
+    grid-template-areas: 'who planned times hours status action';
+    align-items: center;
+    column-gap: 14px;
+  }
+
+  .listHead {
+    display: grid;
+    padding: 0 12px 8px 16px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-3);
+    font: var(--font-meta-strong);
+  }
+
+  .list {
+    gap: 0;
+  }
+
+  .row {
+    padding: 10px 12px 10px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+  }
+
+  .cellLabel {
+    display: none;
+  }
+
+
+  .action:empty {
+    display: flex;
+  }
+}
+
+/* ---------- Fix times ---------- */
+
+.dialog {
+  max-width: 520px;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--warn-tint);
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.notice svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--warn);
+}
+
+.times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--ink);
+  font: var(--font-small);
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-600);
+}
+
+.summaryLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.summaryLine strong {
+  color: var(--ink);
+}
+
+.summaryLine:empty {
+  display: none;
+}
+
+.reasons {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.formError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--error-tint);
+  color: var(--error);
+  font: var(--font-small-strong);
+}
+
+.history {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.historyList {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.historyList li {
+  display: grid;
+  gap: 2px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.historyWho {
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+.historyNote {
+  font-style: italic;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

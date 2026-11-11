@@ -2,17 +2,20 @@
 
 import { useState } from 'react';
 import { isBackendEnabled } from '@/api/backend';
-import { useContent, useCurrentShift } from '@/api/hooks';
+import { useContent, useCurrentShift, useMyRota } from '@/api/hooks';
 import { useShiftClock } from '@/api/mutations';
 import { Button, Dialog } from '@/components/ui';
+import { useNow } from '@/hooks/useNow';
+import { spanLabel } from '@/lib/rota';
 import { useToast } from '@/context/ToastContext';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './HomeHeader.module.css';
 
 /**
- * Start shift / Clock out, in the home's header (optional: nothing needs a shift). On shift it
- * says since when; clocking out asks first, since it releases the person's tables for whoever
- * takes over. The shift's start also starts My shift's count.
+ * Shift in / Shift out, in the home's header (optional: nothing needs a shift). Before shifting
+ * in it says the shift planned for today (the published rota); on shift, since when. Shifting
+ * out asks first, since it releases the person's tables for whoever takes over. The shift's
+ * start also starts My shift's count.
  */
 export function ShiftControl() {
   const t = useContent('common');
@@ -25,6 +28,10 @@ export function ShiftControl() {
       can('service.respond') ||
       can('kitchen.update'));
   const shift = useCurrentShift(branch.id, works);
+  const rota = useMyRota(branch.id, works);
+  const now = useNow(60_000);
+  const today = now ? clock.dayKey(now) : null;
+  const planned = rota.data?.shifts.find((s) => s.day === today);
   const change = useShiftClock();
   const [confirming, setConfirming] = useState(false);
   if (!works || shift.data === undefined) return null;
@@ -54,7 +61,7 @@ export function ShiftControl() {
     );
 
   if (!shift.data) {
-    return (
+    const button = (
       <Button
         size="sm"
         variant="secondary"
@@ -64,6 +71,16 @@ export function ShiftControl() {
       >
         {t('adminHome.shift.start')}
       </Button>
+    );
+    return planned ? (
+      <span className={styles.planned}>
+        <span className={styles.plannedText}>
+          {t('adminHome.shift.planned', { time: spanLabel(planned.startsAt, planned.endsAt) })}
+        </span>
+        {button}
+      </span>
+    ) : (
+      button
     );
   }
   return (

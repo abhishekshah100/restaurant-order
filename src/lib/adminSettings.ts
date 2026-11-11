@@ -31,7 +31,6 @@ export type SettingsSectionId =
   | 'branches'
   | 'roles'
   | 'staff'
-  | 'shifts'
   | 'modules';
 
 export interface SettingsSection {
@@ -117,7 +116,6 @@ export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
         pages: [
           { id: 'staff', href: settingsPath('staff'), needs: 'staff.manage' },
           { id: 'roles', href: settingsPath('roles'), needs: 'staff.manage' },
-          { id: 'shifts', href: settingsPath('shifts'), needs: 'reports.view' },
         ],
       },
       {

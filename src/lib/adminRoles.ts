@@ -36,6 +36,8 @@ export const PERMISSION_GROUPS: readonly {
       'reservations.manage',
       'reports.view',
       'cash.review',
+      'rota.plan',
+      'attendance.fix',
     ],
   },
   {
@@ -77,6 +79,8 @@ export type PermissionWord =
   | 'branch_settings_manage'
   | 'branches_manage'
   | 'staff_manage'
+  | 'rota_plan'
+  | 'attendance_fix'
   | 'menu_manage'
   | 'menu_availability_update'
   | 'tables_manage'

@@ -1,0 +1,127 @@
+/* Team › Requests: what's waiting for an answer (cards), then the quieter lists. */
+
+.lead {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font: var(--font-h3);
+}
+
+.count {
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  text-align: center;
+}
+
+.allClear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--r-md);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-small-strong);
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.request {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.kind {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--reserved-tint);
+  color: var(--reserved);
+}
+
+.kind[data-kind='swap'] {
+  background: var(--info-tint);
+  color: var(--info);
+}
+
+.body {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.what {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.reason {
+  color: var(--ink-2);
+  font: var(--font-small);
+  font-style: italic;
+}
+
+.meta {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.decide {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.decideButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.plain {
+  display: grid;
+  list-style: none;
+}
+
+.plainRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.line {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.plainRow:first-child {
+  border-top: 0;
+}

@@ -1,8 +1,19 @@
 /** A price in whole major units of the branch's currency (rupees), e.g. 549. */
 export type Price = number;
 
+/**
+ * A category's id: the demo menu's, or one a restaurant added ("soups"): staff add and delete
+ * categories, so any id made from a name is one.
+ */
 export type CategoryId =
-  'starters' | 'mains' | 'meals' | 'pizza' | 'breads-rice' | 'desserts' | 'beverages';
+  | 'starters'
+  | 'mains'
+  | 'meals'
+  | 'pizza'
+  | 'breads-rice'
+  | 'desserts'
+  | 'beverages'
+  | (string & {});
 
 export interface Category {
   id: CategoryId;
@@ -27,6 +38,8 @@ export interface Variant {
   description?: string;
   price: Price;
   available?: boolean;
+  /** How many this size feeds ("Serves 2"), when the restaurant says. */
+  serves?: number;
 }
 
 export interface AddOn {

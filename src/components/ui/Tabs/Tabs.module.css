@@ -83,6 +83,20 @@
   font-weight: 700;
 }
 
+/* Something waiting on that tab. */
+.count {
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--brand-600);
+  color: var(--on-brand);
+  font: 700 11px/1 var(--f-ui);
+}
+
 /* Sliding indicator (positioned by JS under the active tab) */
 .indicator {
   position: absolute;

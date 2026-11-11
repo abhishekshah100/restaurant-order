@@ -19,6 +19,7 @@ export type AdminNavId =
   | 'home'
   | 'tables'
   | 'reservations'
+  | 'team'
   | 'orders'
   | 'requests'
   | 'kitchen'
@@ -37,6 +38,8 @@ export type AdminNavId =
 export interface NavCounts {
   service?: AdminServiceCounts;
   stock?: Pick<StockAlertsResponse, 'low' | 'out' | 'expiring' | 'expired'>;
+  /** Time off and swaps waiting for a planner. */
+  rotaRequests?: number;
 }
 
 /** The permissions that read the stock alerts (the server's READERS.inventoryList). */
@@ -97,6 +100,15 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     icon: 'calendar',
     tab: false,
     needs: ['reservations.manage'],
+  },
+  // Who works when (the rota), who came (attendance) and staff's requests.
+  {
+    id: 'team',
+    href: section('team'),
+    icon: 'clock',
+    tab: false,
+    badge: ({ rotaRequests }) => rotaRequests ?? 0,
+    needs: ['rota.plan', 'reports.view', 'attendance.fix'],
   },
   // The kitchen has its own workspace (lib/kitchenNav), outside this shell.
   { id: 'kitchen', href: ADMIN_PATHS.kitchen, icon: 'chef', tab: false, needs: ['kitchen.update'] },
@@ -211,6 +223,9 @@ export const ADMIN_LINKS = {
   unpaidOrders: `${section('orders')}unpaid/`,
   settings: section('settings'),
   cash: section('cash'),
+  rota: section('team'),
+  attendance: `${section('team')}attendance/`,
+  teamRequests: `${section('team')}requests/`,
 } as const;
 
 /** A settings page: /admin/dashboard/settings/floor-plan/. */

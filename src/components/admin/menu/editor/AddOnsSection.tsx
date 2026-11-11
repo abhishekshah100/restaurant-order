@@ -39,7 +39,16 @@ export function AddOnsSection({
         ].join(' · ');
 
   return (
-    <EditorSection title={t('adminMenu.editor.sections.addOns')} summary={summary} error={error}>
+    <EditorSection
+      title={t('adminMenu.editor.sections.addOns')}
+      summary={summary}
+      error={error}
+      empty={form.addOns.length === 0}
+      add={{
+        label: t('adminMenu.editor.addPart.addOns'),
+        hint: t('adminMenu.editor.addPart.addOnsHint'),
+      }}
+    >
       <p className={styles.hint}>{t('adminMenu.editor.addOnsHint')}</p>
       {form.addOns.length > 0 && (
         <ul className={styles.rows}>

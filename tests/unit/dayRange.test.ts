@@ -8,6 +8,7 @@ import {
   rangeProblem,
   shiftDay,
   groupByDay,
+  daysLabel,
 } from '@/lib/dayRange';
 
 /* The range of days staff look back at orders and payments over. */
@@ -103,5 +104,13 @@ describe('groupByDay', () => {
       ['2026-11-10', ['b', 'a']],
     ]);
     expect(groupByDay([], () => '')).toEqual([]);
+  });
+});
+
+describe('daysLabel', () => {
+  const date = (at: Date) => at.toISOString().slice(0, 10);
+  it('writes one day, or a run of days', () => {
+    expect(daysLabel(date, '2026-11-12', '2026-11-12')).toBe('2026-11-12');
+    expect(daysLabel(date, '2026-11-12', '2026-11-14')).toBe('2026-11-12 – 2026-11-14');
   });
 });

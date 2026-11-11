@@ -218,13 +218,58 @@ export interface StaffShift {
   autoClosed?: true;
 }
 
-/** One shift in Team › Shifts, with what the person did during it. */
+/** What the published rota planned for a shift. Times ISO; minutes from start to end. */
+export interface PlannedTimes {
+  startsAt: string;
+  endsAt: string;
+  minutes: number;
+  breakMinutes: number;
+}
+
+/** Why attendance times were fixed by hand. */
+export const SHIFT_FIX_REASONS = ['forgot_in', 'forgot_out', 'wrong_time', 'other'] as const;
+export type ShiftFixReason = (typeof SHIFT_FIX_REASONS)[number];
+
+/** A hand fix to a shift (no `before`: the shift was added by hand). Times ISO. */
+export interface ShiftFix {
+  at: string;
+  by?: string;
+  reason: ShiftFixReason;
+  note?: string;
+  before?: { startedAt: string; endedAt?: string; autoClosed?: true };
+  after: { startedAt: string; endedAt?: string };
+}
+
+/** PATCH …/shifts/:id: a shift's times fixed by hand (no end: still on going). */
+export interface FixShiftRequest {
+  startedAt: string;
+  endedAt?: string;
+  reason: ShiftFixReason;
+  note?: string;
+}
+
+/** POST …/shifts: a shift someone forgot, added by hand. */
+export interface AddShiftRequest extends FixShiftRequest {
+  staffId: string;
+}
+
+/** One shift in Team › Attendance, with what the person did during it. */
 export interface ShiftRow extends StaffShift {
+  /** The shift the published rota planned (absent: not on the rota). */
+  planned?: PlannedTimes;
+  /** Shifted in this long after the planned start. */
+  lateMinutes?: number;
+  /** Shifted out this long before the planned end. */
+  leftEarlyMinutes?: number;
+  /** Worked this much longer than planned. */
+  extraMinutes?: number;
   minutes: number;
   ordersTaken: number;
   payments: number;
   collected: number;
   tips: number;
+  /** Fixed by hand, oldest first. */
+  fixes?: ShiftFix[];
 }
 
 /** GET …/shifts?from=&to=: the shifts started on those days, newest first. */
@@ -232,6 +277,149 @@ export interface ShiftListResponse {
   from: string;
   to: string;
   shifts: ShiftRow[];
+  /** Planned on the published rota, nobody shifted in: newest first. */
+  missed?: MissedShift[];
+  /** Planned, not started yet (or under 30 minutes since): soonest first. */
+  expected?: MissedShift[];
+  /** Everyone working at the branch (to add a forgotten shift). */
+  people?: { id: string; name: string; role: string }[];
+}
+
+/** A planned shift nobody came for. */
+export interface MissedShift {
+  id: string;
+  staff: TableWaiter;
+  planned: PlannedTimes;
+}
+
+/* ---------- Rota (planned shifts) ---------- */
+
+/** The colours a shift type can have. */
+export const SHIFT_COLORS = ['olive', 'amber', 'sky', 'rose', 'violet', 'slate'] as const;
+export type ShiftColor = (typeof SHIFT_COLORS)[number];
+
+/** A branch's usual shift. Times "HH:MM" (ending at or before it starts: the next day). */
+export interface ShiftType {
+  id: string;
+  name: string;
+  startsAt: string;
+  endsAt: string;
+  breakMinutes: number;
+  color: ShiftColor;
+}
+
+/** One planned shift: a person, the day it starts, from and to, an unpaid break. */
+export interface RotaShift {
+  id: string;
+  staffId: string;
+  day: string;
+  startsAt: string;
+  endsAt: string;
+  breakMinutes: number;
+  /** Paid minutes (the break aside). */
+  minutes: number;
+  /** Planned as this shift type (absent: custom hours). */
+  typeId?: string;
+  note?: string;
+  /** Changed since the week was published (staff already see it). */
+  changed?: true;
+  /** Moved to this person by an approved swap: from whom. */
+  swappedFrom?: string;
+}
+
+/** Someone who can be put on the rota. */
+export interface RotaPerson {
+  id: string;
+  name: string;
+  role: string;
+  /** International form; on the planner's week only (WhatsApp). */
+  phone?: string;
+}
+
+/** GET …/rota?week=: a week, Monday to Sunday. */
+export interface RotaWeekResponse {
+  week: string;
+  days: string[];
+  /** ISO; absent while it's a draft. */
+  publishedAt?: string;
+  publishedBy?: string;
+  staff: RotaPerson[];
+  shifts: RotaShift[];
+  types: ShiftType[];
+  /** Above this many planned hours a week, a warning (null: no limit). */
+  weekHoursLimit: number | null;
+  /** Time off asked for or approved on these days. */
+  timeOff: TimeOffView[];
+}
+
+export type TimeOffStatus = 'pending' | 'approved' | 'declined' | 'cancelled';
+
+/** Days off someone asked for. Days "YYYY-MM-DD", inclusive. */
+export interface TimeOffView {
+  id: string;
+  staff: TableWaiter;
+  from: string;
+  to: string;
+  reason: string;
+  status: TimeOffStatus;
+  createdAt: string;
+  decidedBy?: string;
+  decidedAt?: string;
+  decisionNote?: string;
+}
+
+export type SwapStatus =
+  'awaitingColleague' | 'awaitingManager' | 'approved' | 'declined' | 'cancelled';
+
+/** Someone asking a colleague to take one of their shifts. */
+export interface SwapView {
+  id: string;
+  shift: { id: string; day: string; startsAt: string; endsAt: string };
+  from: TableWaiter;
+  to: TableWaiter;
+  status: SwapStatus;
+  note?: string;
+  createdAt: string;
+  colleagueAt?: string;
+  decidedBy?: string;
+  decidedAt?: string;
+  decisionNote?: string;
+}
+
+/** GET …/rota/requests: what waits for a planner, and the last 30 days decided. */
+export interface RotaRequestsResponse {
+  timeOff: TimeOffView[];
+  swaps: SwapView[];
+  waiting: number;
+}
+
+/** GET …/rota/mine: my published shifts, yesterday to 6 days on. */
+export interface MyRotaResponse {
+  shifts: RotaShift[];
+  /** My time off: pending, approved from today, recently declined. */
+  timeOff: TimeOffView[];
+  /** Swaps I asked for, and those asked of me (open). */
+  swaps: SwapView[];
+}
+
+/** POST …/rota/shifts: someone's shift on a day (a shift type, or hours of its own). */
+export interface SaveRotaShiftRequest {
+  staffId: string;
+  day: string;
+  typeId?: string;
+  startsAt?: string;
+  endsAt?: string;
+  breakMinutes?: number;
+  note?: string;
+}
+
+/** POST/PATCH …/rota/types: a shift type. */
+export interface ShiftTypeRequest {
+  name: string;
+  startsAt: string;
+  endsAt: string;
+  breakMinutes: number;
+  color: ShiftColor;
 }
 
 /** The quick tags a table's note can carry. */
@@ -447,6 +635,8 @@ export type StaffPermission =
   | 'branch.settings.manage'
   | 'branches.manage'
   | 'staff.manage'
+  | 'rota.plan'
+  | 'attendance.fix'
   | 'menu.manage'
   | 'menu.availability.update'
   | 'tables.manage'
@@ -504,8 +694,28 @@ export interface AdminStaffMember {
   active: boolean;
   /** ISO; absent until their first sign-in. */
   lastSignInAt?: string;
+  /** Sign-in off: why, when (ISO) and by whom. */
+  off?: { reason: string; at: string; by?: string };
   /** Still to choose their own password. */
   mustChangePassword: boolean;
   /** The one looking: their own role and status can't be changed. */
   you: boolean;
+}
+
+/** Someone removed from the team here (their history stays), to add back. */
+export interface RemovedStaffMember {
+  id: string;
+  name: string;
+  email: string;
+  /** International form: "+919876543210". */
+  phone: string;
+  /** The role they had (`id` null when that role has since been deleted). */
+  role: { id: string | null; name: string };
+  scope: StaffScope;
+  /** ISO. */
+  removedAt: string;
+  /** Who removed them. */
+  removedBy?: string;
+  /** Why they were removed. */
+  reason?: string;
 }

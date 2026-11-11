@@ -63,28 +63,43 @@ function Kot({
   const t = useContent('kitchen');
   const { clock } = useAdminWorkspace();
   const whereOf = useTicketWhere();
-  const allergy = allergensIn([ticket.kitchenNote, ...ticket.items.map((i) => i.note)]);
+  // As the board flags it: an allergy named in a note, or tagged on the table by the waiter.
+  const allergy = allergensIn([
+    ticket.kitchenNote,
+    ...ticket.items.map((i) => i.note),
+    ticket.allergy?.text,
+  ]);
+  const allergyFlagged = allergy.flagged || ticket.allergy !== undefined;
   const now = new Date();
 
   return (
     <article className={styles.kot}>
       <p className={styles.title}>{t('kot.title')}</p>
       <p className={styles.where}>{whereOf(ticket)}</p>
-      <p className={styles.line}>
-        {ticket.token !== undefined && <strong>{t('kot.token', { token: ticket.token })}</strong>}
-        <span>{t('kot.order', { order: ticket.orderId })}</span>
-        <span>{clock.dateTime(ticket.placedAt)}</span>
+      {/* Token and order on one line (each kept whole), then when it came in. */}
+      <div className={styles.ids}>
+        {ticket.token !== undefined && (
+          <span className={styles.token}>{t('kot.token', { token: ticket.token })}</span>
+        )}
+        <span className={styles.order}>{t('kot.order', { order: ticket.orderId })}</span>
+      </div>
+      <p className={styles.placed}>
+        {[
+          t('kot.placed', { time: clock.dateTime(ticket.placedAt) }),
+          ticket.roundCount > 1 &&
+            t('ticket.round', { round: ticket.round, count: ticket.roundCount }),
+        ]
+          .filter(Boolean)
+          .join(' · ')}
       </p>
-      {ticket.roundCount > 1 && (
-        <p className={styles.small}>
-          {t('ticket.round', { round: ticket.round, count: ticket.roundCount })}
-        </p>
-      )}
-      {allergy.flagged && (
+      {allergyFlagged && (
         <p className={styles.allergy}>
           {allergy.allergens.length > 0
             ? t('ticket.allergyWith', { list: allergy.allergens.join(', ') })
             : t('ticket.allergy')}
+          {ticket.allergy?.text && (
+            <span className={styles.allergyNote}>{ticket.allergy.text}</span>
+          )}
         </p>
       )}
       {ticket.kitchenNote && (
@@ -98,8 +113,8 @@ function Kot({
             const view = kitchenItem(item, dishOf(item.dishSlug));
             return (
               <li key={`${item.dishSlug}-${index}`}>
-                <span className={styles.qty}>{item.quantity}</span>
-                <span>
+                <span className={styles.qty}>{t('kot.quantity', { count: item.quantity })}</span>
+                <span className={styles.item}>
                   <strong>{item.name}</strong>
                   {view.size && <span className={styles.small}>{view.size}</span>}
                   {view.choices.map((c) => (

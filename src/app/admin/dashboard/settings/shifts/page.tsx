@@ -1,8 +1,7 @@
-import { adminMetadata } from '@/app/admin/dashboard/adminMetadata';
-import { ShiftsReport } from '@/components/admin/settings/shifts/ShiftsReport';
+import { MovedTo } from '@/components/admin/team/MovedTo';
+import { ADMIN_LINKS } from '@/lib/adminNav';
 
-export const generateMetadata = () => adminMetadata('shifts');
-
-export default function AdminShiftsPage() {
-  return <ShiftsReport />;
+/** Moved: Team › Attendance. */
+export default function OldShiftsPage() {
+  return <MovedTo href={ADMIN_LINKS.attendance} />;
 }

@@ -1,4 +1,7 @@
-/* The categories panel: one card per category (name, then short name and description). */
+/*
+ * Categories: a simple menu's note, or a card per category (number, name, move; its dishes,
+ * Details and Delete; Delete asks where its dishes go), then Add category.
+ */
 
 .dialog {
   width: min(560px, 100vw);
@@ -6,8 +9,44 @@
 
 .body {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
+
+/* ---------- A simple menu ---------- */
+
+.simple {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 22px 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-card);
+  background: var(--bg);
+  text-align: center;
+}
+
+.simpleIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: var(--surface);
+  color: var(--brand-600);
+}
+
+.simpleTitle {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.simpleBody {
+  max-width: 40ch;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+/* ---------- The categories ---------- */
 
 .list {
   display: grid;
@@ -17,24 +56,27 @@
 
 .row {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
   background: var(--surface);
 }
 
+.row[data-removing] {
+  border-color: color-mix(in srgb, var(--error) 40%, var(--line));
+}
+
 .head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: end;
+  align-items: center;
   gap: 10px;
 }
 
 .position {
-  width: 32px;
-  height: 32px;
-  margin-bottom: 8px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   border-radius: var(--r-round);
@@ -43,9 +85,94 @@
   font: var(--font-meta-strong);
 }
 
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding-left: 40px;
+}
+
+.count {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.rowActions {
+  display: flex;
+  gap: 4px;
+}
+
+.link,
+.danger {
+  position: relative;
+  min-height: 32px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  font: var(--font-meta-strong);
+  cursor: pointer;
+}
+
+.link {
+  color: var(--ink-2);
+}
+
+.danger {
+  color: var(--error);
+}
+
+.link:focus-visible,
+.danger:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .link:hover,
+  .danger:hover {
+    background: var(--bg);
+  }
+}
+
 .more {
   display: grid;
   gap: 10px;
+  padding-left: 40px;
+}
+
+.confirm {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+  padding: 12px;
+  border-radius: var(--r-md);
+  background: var(--error-tint);
+}
+
+.confirmText {
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.confirmButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dangerButton {
+  background: var(--error);
+}
+
+@media (hover: hover) {
+  .dangerButton:hover {
+    background: color-mix(in srgb, var(--error) 85%, black);
+  }
 }
 
 .error {
@@ -53,13 +180,44 @@
   font: var(--font-small);
 }
 
+/* ---------- Add category ---------- */
+
+.add {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.addTitle {
+  color: var(--ink);
+  font: var(--font-label);
+}
+
+.addRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  color: var(--ink-2);
+  font: var(--font-small);
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-600);
+}
+
 .note {
   color: var(--ink-3);
   font: var(--font-meta);
-}
-
-@media (min-width: 560px) {
-  .more {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  }
 }

@@ -8,6 +8,13 @@ import { withAcknowledged, withoutReadyRound, withoutRequest } from '@/lib/admin
 import type { AdminBranchService, AdminServiceRequest, ReservationRules } from '@/types/admin';
 import type { ServiceRequest } from '@/types/service';
 import { PROMO_REFUSALS } from '@/lib/promotions';
+import type { MenuData } from '@/types/menu';
+import type {
+  AddShiftRequest,
+  FixShiftRequest,
+  SaveRotaShiftRequest,
+  ShiftTypeRequest,
+} from '@/types/admin';
 import type { Order } from '@/types/order';
 import type {
   OrderInput,
@@ -815,6 +822,161 @@ export function useShiftClock() {
   });
 }
 
+/**
+ * Team › Attendance: fix a shift's times (`id`) or add a forgotten one (`add`); the list, my
+ * shift and (a shift closed) the floor read again.
+ */
+export function useFixAttendance() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (
+      target:
+        | { branchId: string; id: string; body: FixShiftRequest }
+        | { branchId: string; add: AddShiftRequest },
+    ): Promise<unknown> =>
+      'add' in target
+        ? api.addShift(requireToken(token), target.branchId, target.add)
+        : api.fixShift(requireToken(token), target.branchId, target.id, target.body),
+    onSettled: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: ['admin', 'shift'] }),
+        refreshFloor(client),
+      ]),
+  });
+}
+
+/** The rota (the planner's weeks and staff's own shifts) read again. */
+const refreshRota = (client: QueryClient) =>
+  client.invalidateQueries({ queryKey: ['admin', 'rota'] });
+
+/** POST …/rota/types (no `id`) or PATCH …/rota/types/:id, or archive (`archive`). */
+export function useSaveShiftType() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (
+      target:
+        | { branchId: string; id?: undefined; body: ShiftTypeRequest }
+        | { branchId: string; id: string; body: Partial<ShiftTypeRequest> }
+        | { branchId: string; id: string; archive: true },
+    ): Promise<unknown> =>
+      'archive' in target
+        ? api.archiveShiftType(requireToken(token), target.branchId, target.id)
+        : target.id === undefined
+          ? api.addShiftType(requireToken(token), target.branchId, target.body)
+          : api.updateShiftType(requireToken(token), target.branchId, target.id, target.body),
+    onSettled: () => refreshRota(client),
+  });
+}
+
+/** POST …/rota/shifts (someone's shift on a day), or DELETE …/rota/shifts/:id (`remove`). */
+export function useSaveRotaShift() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (
+      target:
+        { branchId: string; body: SaveRotaShiftRequest } | { branchId: string; remove: string },
+    ): Promise<unknown> =>
+      'remove' in target
+        ? api.removeRotaShift(requireToken(token), target.branchId, target.remove)
+        : api.saveRotaShift(requireToken(token), target.branchId, target.body),
+    onSettled: () => refreshRota(client),
+  });
+}
+
+/** PATCH …/rota/settings: the weekly hours warning. */
+export function useRotaSettings() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      weekHoursLimit,
+    }: {
+      branchId: string;
+      weekHoursLimit: number | null;
+    }) => api.rotaSettings(requireToken(token), branchId, weekHoursLimit),
+    onSettled: () => refreshRota(client),
+  });
+}
+
+/** Time off: ask (staff), cancel (one's own) or decide (a planner). */
+export function useTimeOff() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (
+      target:
+        | { branchId: string; ask: { from: string; to: string; reason: string } }
+        | { branchId: string; id: string; cancel: true }
+        | { branchId: string; id: string; decide: { approve: boolean; note?: string } },
+    ) =>
+      'ask' in target
+        ? api.askTimeOff(requireToken(token), target.branchId, target.ask)
+        : 'cancel' in target
+          ? api.timeOffAction(requireToken(token), target.branchId, target.id, 'cancel')
+          : api.timeOffAction(
+              requireToken(token),
+              target.branchId,
+              target.id,
+              'decide',
+              target.decide,
+            ),
+    onSettled: () => refreshRota(client),
+  });
+}
+
+/** Swaps: ask a colleague, the colleague's answer, cancel (the asker) or decide (a planner). */
+export function useShiftSwap() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (
+      target:
+        | { branchId: string; ask: { shiftId: string; toStaffId: string; note?: string } }
+        | { branchId: string; id: string; respond: boolean }
+        | { branchId: string; id: string; cancel: true }
+        | { branchId: string; id: string; decide: { approve: boolean; note?: string } },
+    ) =>
+      'ask' in target
+        ? api.askSwap(requireToken(token), target.branchId, target.ask)
+        : 'respond' in target
+          ? api.swapAction(requireToken(token), target.branchId, target.id, 'respond', {
+              accept: target.respond,
+            })
+          : 'cancel' in target
+            ? api.swapAction(requireToken(token), target.branchId, target.id, 'cancel')
+            : api.swapAction(
+                requireToken(token),
+                target.branchId,
+                target.id,
+                'decide',
+                target.decide,
+              ),
+    onSettled: () => refreshRota(client),
+  });
+}
+
+/** POST …/rota/copy | clear | publish {week}. */
+export function useRotaWeekAction() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      action,
+      week,
+    }: {
+      branchId: string;
+      action: 'copy' | 'clear' | 'publish';
+      week: string;
+    }) => api.rotaWeekAction(requireToken(token), branchId, action, week),
+    onSettled: () => refreshRota(client),
+  });
+}
+
 /** PATCH …/tables/:table/note: the guests' note for the visit; the floor and orders read again. */
 export function useSetTableNote() {
   const client = useQueryClient();
@@ -975,6 +1137,27 @@ export function useUpdateCategories() {
       api.updateCategories(requireToken(token), branchId, body),
     onSuccess: (menu, { branchId }) =>
       client.setQueryData(branchMenuQuery(branchId).queryKey, menu),
+    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+  });
+}
+
+/** POST …/menu/categories (`add`) or DELETE …/menu/categories/:id (`remove`, moving its dishes). */
+export function useCategoryChange() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: (
+      change:
+        | { branchId: string; add: { name: string; description?: string; drinks?: boolean } }
+        | { branchId: string; remove: string; moveTo?: string },
+    ): Promise<MenuData | void> =>
+      'add' in change
+        ? api.addCategory(requireToken(token), change.branchId, change.add)
+        : api.removeCategory(requireToken(token), change.branchId, change.remove, change.moveTo),
+    // Adding answers the menu; removing is read again (below).
+    onSuccess: (menu, { branchId }) => {
+      if (menu) client.setQueryData(branchMenuQuery(branchId).queryKey, menu);
+    },
     onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
   });
 }
@@ -1485,6 +1668,28 @@ export function useResetStaffPassword() {
   return useMutation({
     mutationFn: ({ branchId, id, password }: { branchId: string; id: string; password: string }) =>
       api.resetStaffPassword(requireToken(token), branchId, id, { password }),
+    onSettled: () => refreshStaff(client),
+  });
+}
+
+/** POST …/staff/:staffId/remove: removed from the team here, with why (soft; history stays). */
+export function useRemoveStaff() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id, reason }: { branchId: string; id: string; reason: string }) =>
+      api.removeStaff(requireToken(token), branchId, id, { reason }),
+    onSettled: () => refreshStaff(client),
+  });
+}
+
+/** POST …/staff/:staffId/restore: someone removed, back on the team. */
+export function useRestoreStaff() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id, roleId }: { branchId: string; id: string; roleId?: string }) =>
+      api.restoreStaff(requireToken(token), branchId, id, roleId ? { roleId } : {}),
     onSettled: () => refreshStaff(client),
   });
 }

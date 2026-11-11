@@ -1,4 +1,4 @@
-/* The Menu page: state filters and Add dish, then the panel with search, categories and dishes. */
+/* The Menu page: the summary line and its buttons, then the panel: search, categories, dishes. */
 
 .page {
   display: grid;
@@ -11,7 +11,87 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 12px 16px;
+}
+
+/* "56 dishes" and its states, each a tap to show only those. */
+.summary {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.total {
+  color: var(--ink);
+  font: var(--font-h2);
+}
+
+.states {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.stateChip {
+  --tone: var(--success);
+  position: relative;
+  min-height: 30px;
+  padding: 0 10px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.stateChip[data-state='soldOut'] {
+  --tone: var(--error);
+}
+
+.stateChip[data-state='offToday'] {
+  --tone: var(--ink-3);
+}
+
+.stateChip[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--tone) 45%, var(--line));
+  background: color-mix(in srgb, var(--tone) 10%, var(--surface));
+  color: var(--ink);
+}
+
+.stateDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--tone);
+}
+
+.stateChip:focus-visible,
+.showAll:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .stateChip:hover {
+    background: color-mix(in srgb, var(--tone) 8%, var(--surface));
+  }
+}
+
+.showAll {
+  min-height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--brand-600);
+  font: var(--font-small-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
 .actions {
@@ -20,7 +100,23 @@
   gap: 8px;
 }
 
-.filters,
+.reordering {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--info-tint);
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+/* ---------- More ---------- */
+
+.moreDialog {
+  max-width: 520px;
+}
+
 .categories {
   display: flex;
   gap: 8px;
@@ -29,12 +125,10 @@
   scrollbar-width: none;
 }
 
-.filters::-webkit-scrollbar,
 .categories::-webkit-scrollbar {
   display: none;
 }
 
-.filters > *,
 .categories > * {
   flex: none;
 }

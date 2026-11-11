@@ -114,3 +114,17 @@
     font: var(--font-display);
   }
 }
+
+/* Before shifting in: today's planned shift, then Shift in. */
+.planned {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.plannedText {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+}

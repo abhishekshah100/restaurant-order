@@ -28,7 +28,6 @@ import { SearchSuggestions } from './SearchSuggestions';
 import { SortMenu } from './SortMenu';
 import styles from './SearchView.module.css';
 
-const EMPTY_CATS: CategoryId[] = ['starters', 'mains', 'desserts', 'beverages'];
 
 /** Search: suggestions, loading, results, no results (04 · 05 · s04 · s05 · w04–ws05). */
 export function SearchView() {
@@ -210,9 +209,10 @@ export function SearchView() {
               actions={
                 <>
                   <div className={styles.emptyChips}>
-                    {EMPTY_CATS.map((id) => (
-                      <Chip key={id} href={`/menu/${id}/`}>
-                        {menu.getCategory(id)?.name}
+                    {/* The branch's own first categories (a simple menu has none to offer). */}
+                    {(menu.categories.length > 1 ? menu.categories.slice(0, 4) : []).map((c) => (
+                      <Chip key={c.id} href={`/menu/#${c.id}`}>
+                        {c.shortName ?? c.name}
                       </Chip>
                     ))}
                   </div>

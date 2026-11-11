@@ -70,10 +70,12 @@ export interface CategorySectionProps {
   category: Category;
   /** Draw the thick divider above (mobile). */
   divider?: boolean;
+  /** A simple menu's only category: no heading on screen. */
+  hideTitle?: boolean;
 }
 
 /** A category block on the menu home: heading, its count, and all its dishes. */
-export function CategorySection({ category, divider }: CategorySectionProps) {
+export function CategorySection({ category, divider, hideTitle }: CategorySectionProps) {
   const { filters } = useFilters();
   const menu = useMenu();
   const t = useContent('menu');
@@ -91,7 +93,8 @@ export function CategorySection({ category, divider }: CategorySectionProps) {
     <>
       {divider && <div className={styles.divider} aria-hidden="true" />}
       <section id={category.id} className={styles.section} aria-labelledby={titleId}>
-        <div className={styles.sectionHead}>
+        {/* A simple menu (one category): its name stays for screen readers only. */}
+        <div className={hideTitle ? 'visually-hidden' : styles.sectionHead}>
           <h2 id={titleId} className="t-h2">
             {category.name}
           </h2>

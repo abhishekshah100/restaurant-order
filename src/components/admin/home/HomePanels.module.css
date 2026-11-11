@@ -250,3 +250,122 @@ button.dishChip:focus-visible {
     padding: 4px 20px 20px;
   }
 }
+
+/* ---------- My rota ---------- */
+
+.rotaRow {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 9px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.rotaDay {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.rotaTime {
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.rotaOff .rotaDay,
+.rotaOff .rotaTime {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+.rotaNote {
+  grid-column: 2;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.rotaRow {
+  position: relative;
+}
+
+.rotaSwap {
+  position: absolute;
+  top: 6px;
+  right: 16px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--brand-700);
+  font: var(--font-meta-strong);
+  cursor: pointer;
+}
+
+.rotaSwap:focus-visible {
+  box-shadow: var(--focus);
+}
+
+/* ---------- My rota: requests ---------- */
+
+.rotaRequests {
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.rotaRequestsTitle {
+  margin: 0;
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rotaRequest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  font: var(--font-small);
+}
+
+.rotaRequestText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rotaRequestNote {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.rotaRequestActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.rotaAsk {
+  padding: 4px 16px 14px;
+}
+
+.askForm {
+  display: grid;
+  gap: 16px;
+}
+
+.askRow {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 560px) {
+  .askRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

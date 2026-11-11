@@ -55,7 +55,7 @@ export function OfferBanner({ categoryId }: { categoryId?: string }) {
                   )}
             </span>
             {only && only.id !== categoryId && (
-              <Link href={`/menu/${only.id}/`} className={styles.link}>
+              <Link href={`/menu/#${only.id}`} className={styles.link}>
                 {t('offers.link', { category: only.name })}
                 <Icon name="chev" size="xs" />
               </Link>

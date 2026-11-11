@@ -80,7 +80,7 @@ describe('settingsFor', () => {
     ]);
   });
 
-  it('groups 15 pages into 8 sections, each opening on its first page staff may open', () => {
+  it('groups 14 pages into 8 sections, each opening on its first page staff may open', () => {
     const all = settingsFor(() => true, true).flatMap((g) => g.topics);
     expect(all.map((tp) => tp.id)).toEqual([
       'info',
@@ -92,7 +92,7 @@ describe('settingsFor', () => {
       'team',
       'branches',
     ]);
-    expect(all.flatMap((tp) => tp.pages)).toHaveLength(15);
+    expect(all.flatMap((tp) => tp.pages)).toHaveLength(14);
     expect(all.find((tp) => tp.id === 'ordering')?.href).toBe(settingsPath('services'));
   });
 });

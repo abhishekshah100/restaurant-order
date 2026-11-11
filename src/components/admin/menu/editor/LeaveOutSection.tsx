@@ -36,6 +36,11 @@ export function LeaveOutSection({
 
   return (
     <EditorSection
+      empty={items === 0}
+      add={{
+        label: t('adminMenu.editor.addPart.leaveOut'),
+        hint: t('adminMenu.editor.addPart.leaveOutHint'),
+      }}
       title={t('adminMenu.editor.sections.leaveOut')}
       summary={
         items > 0

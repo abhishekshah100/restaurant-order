@@ -3,11 +3,10 @@ import { digitsOnly, parseAmount } from '@/components/admin/payments/PaymentFiel
 import { paymentHistoryPath, paymentsPath } from '@/lib/adminNav';
 import {
   changeDue,
-  daySummary,
   dueGroups,
+  dueSections,
   filterEntries,
   filterGroups,
-  ledgerEntries,
   ledgerOf,
   parsePaymentsView,
   refundable,
@@ -131,7 +130,10 @@ describe('the ledger', () => {
   });
 
   it('lists every payment and refund newest first, and filters by method, channel and search', () => {
-    const entries = ledgerEntries(all);
+    // Every order's payments and refunds, newest first.
+    const entries = all
+      .flatMap((o) => ledgerOf(o).map((t) => ({ ...t, order: o })))
+      .sort((a, b) => Date.parse(b.at) - Date.parse(a.at) || b.id.localeCompare(a.id));
     expect(entries[0].id).toBe('A101-T3');
     expect(entries.map((e) => e.order.id)).toContain('A102');
     const by = (filters: Partial<Parameters<typeof filterEntries>[1]>) =>
@@ -148,26 +150,8 @@ describe('the ledger', () => {
   });
 });
 
-describe('the day at a glance', () => {
-  it('adds up payments, refunds, tips, what is due and each method', () => {
-    const day = daySummary(all);
-    expect(day.collected).toBe(300 + 200 + 400 + 450 + 100);
-    expect(day.refunds).toBe(50 + 450);
-    expect(day.refundsPending).toBe(450);
-    expect(day.net).toBe(day.collected - day.refunds);
-    expect(day.tips).toBe(20);
-    expect(day.payments).toBe(5);
-    expect(day.online).toBe(850);
-    expect(day.inPerson).toBe(600);
-    expect(day.toCollect).toBe(600 + 200 + 250 + 350);
-    expect(day.unpaidOrders).toBe(4);
-    expect(day.paidOrders).toBe(2);
-    expect(day.averageBill).toBe(450);
-    expect(day.byMethod.map((m) => m.method)).toEqual(['online', 'cash', 'card', 'counter']);
-    // Cash taken and tipped, less cash handed back.
-    expect(day.cashInDrawer).toBe(300 + 20 - 50);
-  });
-  it('keeps what was left off a bill apart from the money taken', () => {
+describe('a bill partly left', () => {
+  it('can only refund what was taken', () => {
     // ₹401 due: ₹400 taken in cash, ₹1 left (no change).
     const waived = order('A108', {
       total: 401,
@@ -177,10 +161,6 @@ describe('the day at a glance', () => {
         transactions: [tx({ id: 'A108-T1', amount: 400, waived: 1, waiveReason: 'noChange' })],
       },
     });
-    const day = daySummary([waived]);
-    expect(day).toMatchObject({ collected: 400, cashInDrawer: 400, waived: 1, waivedCount: 1 });
-    expect(day).toMatchObject({ toCollect: 0, paidOrders: 1 });
-    // Only what was taken can go back.
     expect(refundable(waived)).toBe(400);
   });
 });
@@ -264,5 +244,41 @@ describe('amounts typed in', () => {
     }
     expect(digitsOnly('a1b2-3.4₹!')).toBe('1234');
     expect(digitsOnly('abc')).toBe('');
+  });
+});
+
+describe('the bills to collect, grouped', () => {
+  const request: BillRequest = {
+    id: 'R1',
+    kind: 'bill',
+    scope: 'table',
+    table: 3,
+    sessionId: 's',
+    requestedAt: '2026-10-15T13:40:00.000Z',
+    balance: 300,
+  };
+  const all = [
+    // Days ago, at a table nobody asked from: from earlier days.
+    order('A1', { table: 9, total: 400, placedAt: '2026-10-12T13:00:00.000Z' }),
+    // Asked for the bill (an older order there too): asked, whatever its age.
+    order('A2', { table: 3, total: 300, placedAt: '2026-10-14T20:00:00.000Z' }),
+    order('A3', { mode: 'takeaway', table: undefined, total: 250 }),
+    order('A4', { table: 5, total: 150, placedAt: '2026-10-15T12:00:00.000Z' }),
+  ];
+  const earlier = (since: string) => since < '2026-10-15';
+
+  it('puts asked first, then today, then earlier days, and totals every bill', () => {
+    const s = dueSections(dueGroups(all, [request]), earlier);
+    expect(s.asked.map((g) => g.key)).toEqual(['table-3']);
+    expect(s.today.map((g) => g.key)).toEqual(['table-5', 'order-A3']);
+    expect(s.earlier.map((g) => g.key)).toEqual(['table-9']);
+    // To collect is the whole list (1,100), not only today's orders.
+    expect(s.total).toBe(1100);
+    expect(s.earlierTotal).toBe(400);
+  });
+
+  it('is all empty with nothing due', () => {
+    const s = dueSections([], earlier);
+    expect([s.asked, s.today, s.earlier, s.total, s.earlierTotal]).toEqual([[], [], [], 0, 0]);
   });
 });

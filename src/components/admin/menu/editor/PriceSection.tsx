@@ -4,12 +4,14 @@ import { useContent } from '@/api/hooks';
 import { Chip, Input } from '@/components/ui';
 import { moveItem, newSizeRow, type DishForm, type SizeRow } from '@/lib/adminMenu';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
-import { Switch } from '../Switch';
 import { EditorSection } from './EditorSection';
 import { RowButtons } from './parts';
 import styles from './Editor.module.css';
 
-/** One price, or two or more sizes (name, price, on or off) with what they're called. */
+/**
+ * One price, or two or more sizes (name, price, how many it serves) with what they're called.
+ * Whether a size sells today is set from the Menu list (the dish's switch), not here.
+ */
 export function PriceSection({
   form,
   set,
@@ -89,10 +91,15 @@ export function PriceSection({
                       value={size.price}
                       onChange={(event) => setSize(size.key, { price: event.target.value })}
                     />
-                    <Switch
-                      checked={size.available}
-                      onChange={(available) => setSize(size.key, { available })}
-                      label={t('adminMenu.editor.sizeOn', { size: label })}
+                    <Input
+                      id={`${size.key}-serves`}
+                      label={t('adminMenu.editor.sizeServes')}
+                      hideLabel={index > 0}
+                      inputMode="numeric"
+                      placeholder={t('adminMenu.editor.sizeServesPlaceholder')}
+                      value={size.serves}
+                      maxLength={2}
+                      onChange={(event) => setSize(size.key, { serves: event.target.value })}
                     />
                     <RowButtons
                       name={label}
@@ -104,15 +111,18 @@ export function PriceSection({
                       onRemove={() => set({ sizes: form.sizes.filter((s) => s.key !== size.key) })}
                     />
                   </div>
-                  <Input
-                    id={`${size.key}-note`}
-                    label={t('adminMenu.editor.sizeNote', { size: label })}
-                    hideLabel
-                    maxLength={40}
-                    placeholder={t('adminMenu.editor.sizeNotePlaceholder')}
-                    value={size.note}
-                    onChange={(event) => setSize(size.key, { note: event.target.value })}
-                  />
+                  {/* A note from before stays editable; new sizes say "serves" instead. */}
+                  {size.note && (
+                    <Input
+                      id={`${size.key}-note`}
+                      label={t('adminMenu.editor.sizeNote', { size: label })}
+                      hideLabel
+                      maxLength={40}
+                      placeholder={t('adminMenu.editor.sizeNotePlaceholder')}
+                      value={size.note}
+                      onChange={(event) => setSize(size.key, { note: event.target.value })}
+                    />
+                  )}
                 </li>
               );
             })}

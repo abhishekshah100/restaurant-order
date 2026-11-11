@@ -1,0 +1,13 @@
+/* History at the end of a filter row: the clock alone (a square) on a phone. */
+
+@media (max-width: 599px) {
+  .button {
+    width: 40px;
+    padding-inline: 0;
+    justify-content: center;
+  }
+
+  .label {
+    display: none;
+  }
+}

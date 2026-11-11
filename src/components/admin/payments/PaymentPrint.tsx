@@ -5,7 +5,8 @@ import { createPortal, flushSync } from 'react-dom';
 import { useContent } from '@/api/hooks';
 import { useAdminName } from '@/hooks/useAdminSession';
 import { dueOn } from '@/lib/adminOrders';
-import { daySummary, ledgerEntries, ledgerOf, type DueGroup } from '@/lib/adminPayments';
+import type { PaymentHistoryResponse } from '@/api/contracts';
+import { ledgerOf, type DueGroup, type LedgerLine } from '@/lib/adminPayments';
 import { brandName } from '@/lib/branchParts';
 import { paidAmount } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
@@ -22,7 +23,10 @@ const PRINTING = 'printing-payments';
 
 type Printable =
   | { kind: 'bill'; orders: Order[] }
-  | { kind: 'report'; orders: Order[]; due: DueGroup[]; period: string };
+  | { kind: 'report'; money: DayMoney; lines: LedgerLine[]; due: DueGroup[]; period: string };
+
+/** The day's money as the server sums it (each payment on the day it was taken). */
+export type DayMoney = PaymentHistoryResponse['summary'];
 
 /** The branch a bill is printed for, and how it writes money and times. */
 export type PrintPlace = Pick<AdminWorkspace, 'region' | 'money' | 'clock'>;
@@ -37,9 +41,9 @@ function usePrintPlace(): PrintPlace {
 
 /**
  * Printing from the Payments page: `bill(orders)` prints the bill for an order or a table (a
- * receipt once it's paid: what was paid, how and when); `report(orders, due, period)` prints
- * the day report for the days in `period` (the day's money, by method, every payment and refund,
- * what's still to collect). The page is put in the document and the browser's print dialog
+ * receipt once it's paid: what was paid, how and when); `report(money, lines, due, period)`
+ * prints the day report for `period` (the day's money as it was taken, by method, every payment
+ * and refund, what's still to collect). The page is put in the document and the browser's print dialog
  * opens in the same click; it's taken away at the next tap or key press. The page has no margin, so browsers leave out their own header and
  * footer (date, title, address); the sheet keeps its own.
  */
@@ -205,7 +209,7 @@ function usePrintDoc(place: PrintPlace) {
           {doc.kind === 'bill' ? (
             <BillDoc orders={doc.orders} />
           ) : (
-            <ReportDoc orders={doc.orders} due={doc.due} period={doc.period} />
+            <ReportDoc money={doc.money} lines={doc.lines} due={doc.due} period={doc.period} />
           )}
         </div>
       </PrintPlaceContext.Provider>,
@@ -214,8 +218,8 @@ function usePrintDoc(place: PrintPlace) {
 
   return {
     bill: (orders: Order[]) => print({ kind: 'bill', orders }),
-    report: (orders: Order[], due: DueGroup[], period: string) =>
-      print({ kind: 'report', orders, due, period }),
+    report: (money: DayMoney, lines: LedgerLine[], due: DueGroup[], period: string) =>
+      print({ kind: 'report', money, lines, due, period }),
     sheet,
   };
 }
@@ -431,13 +435,24 @@ function BillDoc({ orders }: { orders: Order[] }) {
 }
 
 /** The day report: the day's money, by method, every payment and refund, and what's still due. */
-function ReportDoc({ orders, due, period }: { orders: Order[]; due: DueGroup[]; period: string }) {
+function ReportDoc({
+  money: day,
+  lines,
+  due,
+  period,
+}: {
+  money: DayMoney;
+  lines: LedgerLine[];
+  due: DueGroup[];
+  period: string;
+}) {
   const t = useContent('common');
   const { branch, clock } = useAdminWorkspace();
   const { amount, methodName, where } = usePaymentText();
   const name = useAdminName();
-  const day = daySummary(orders);
-  const entries = [...ledgerEntries(orders)].reverse();
+  // Oldest first, as the day went.
+  const entries = [...lines].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const toCollect = due.reduce((total, g) => total + g.due, 0);
   const now = new Date();
   const col = (key: Parameters<typeof t>[0]) => t(key);
 
@@ -461,9 +476,8 @@ function ReportDoc({ orders, due, period }: { orders: Order[]; due: DueGroup[]; 
             [t('adminPayments.today.refunds'), amount(day.refunds)],
             [t('adminPayments.today.tips'), amount(day.tips)],
             [t('adminPayments.today.left'), amount(day.waived)],
-            [t('adminPayments.today.average'), amount(day.averageBill)],
-            [t('adminPayments.today.toCollect'), amount(day.toCollect)],
-            [t('adminPayments.methods.drawer'), amount(day.cashInDrawer)],
+            [t('adminPayments.today.toCollect'), amount(toCollect)],
+            [t('adminPayments.methods.drawer'), amount(day.cashTaken)],
           ] as const
         ).map(([label, value]) => (
           <div key={label}>

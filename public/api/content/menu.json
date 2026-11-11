@@ -122,7 +122,11 @@
     "updateItem": "Update item",
     "unavailable": "Unavailable",
     "closedNow": "Closed now",
-    "loading": "Loading the dish"
+    "loading": "Loading the dish",
+    "servesSize": {
+      "one": "Serves {count}",
+      "other": "Serves {count}"
+    }
   },
   "allergens": {
     "dairy": "dairy",

@@ -42,6 +42,11 @@ export function ChoicesSection({
 
   return (
     <EditorSection
+      empty={form.groups.length === 0}
+      add={{
+        label: t('adminMenu.editor.addPart.choices'),
+        hint: t('adminMenu.editor.addPart.choicesHint'),
+      }}
       title={t('adminMenu.editor.sections.choices')}
       summary={
         form.groups.length > 0

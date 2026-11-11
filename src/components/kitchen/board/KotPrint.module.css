@@ -25,6 +25,7 @@
     display: block;
     color: #000;
     font: 600 11pt/1.35 var(--f-ui);
+    word-break: normal;
   }
 }
 
@@ -55,18 +56,36 @@
   text-align: center;
 }
 
-.line {
+/* Token (boxed, large) and order number on one line, each kept whole. */
+.ids {
   margin-top: 2mm;
-  padding-bottom: 2mm;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: 2mm;
-  border-bottom: 1.5px solid #000;
-  font-size: 10pt;
+  gap: 1.5mm 3mm;
 }
 
-.line strong {
+.token {
+  padding: 0.5mm 2mm;
+  border: 2px solid #000;
+  font-size: 14pt;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.order {
   font-size: 12pt;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.placed {
+  margin-top: 1mm;
+  padding-bottom: 2mm;
+  border-bottom: 1.5px solid #000;
+  font-size: 9.5pt;
+  font-weight: 500;
 }
 
 .small {
@@ -85,6 +104,13 @@
   text-transform: uppercase;
 }
 
+.allergyNote {
+  display: block;
+  font-size: 10pt;
+  font-weight: 600;
+  text-transform: none;
+}
+
 .note {
   margin-top: 2mm;
   padding: 1.5mm 2mm;
@@ -101,7 +127,8 @@
 
 .items li {
   display: grid;
-  grid-template-columns: 9mm minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
   gap: 2mm;
   padding: 1.5mm 0;
   border-bottom: 0.5px dashed #000;
@@ -109,8 +136,17 @@
 }
 
 .qty {
+  min-width: 8mm;
   font-size: 14pt;
   font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Names wrap between words, never inside one (a very long word alone may). */
+.item {
+  min-width: 0;
+  overflow-wrap: break-word;
+  hyphens: manual;
 }
 
 .removal {

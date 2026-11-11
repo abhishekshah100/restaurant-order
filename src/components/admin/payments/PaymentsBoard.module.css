@@ -47,9 +47,19 @@
   flex: none;
 }
 
-.views {
+/* The views, with History at the row's right end. */
+.viewsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 14px 14px 0;
 }
+
+.viewsRow > .views {
+  flex: 1;
+  min-width: 0;
+}
+
 
 .tools {
   display: grid;
@@ -77,16 +87,82 @@
 
 /* ---------- Lists ---------- */
 
-.dueList {
-  padding: 14px;
+/* To collect: asked for the bill, today, from earlier days; each a heading over its rows. */
+.dueSections {
   display: grid;
-  gap: 12px;
+}
+
+.dueSection + .dueSection {
+  border-top: 6px solid color-mix(in srgb, var(--bg) 60%, var(--surface));
+}
+
+.dueHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 40%, var(--surface));
+}
+
+.dueTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.dueHead[data-tone='asked'] .dueTitle {
+  color: var(--gold-ink);
+}
+
+.dueHead[data-tone='earlier'] .dueTitle,
+.dueHead[data-tone='earlier'] .dueTotal {
+  color: var(--warn);
+}
+
+.dueCount {
+  min-width: 22px;
+  padding: 0 7px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  text-align: center;
+}
+
+.dueTotal {
+  margin-left: auto;
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.dueHint {
+  flex-basis: 100%;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.dueList {
+  display: grid;
   list-style: none;
-  background: color-mix(in srgb, var(--bg) 45%, var(--surface));
+}
+
+.dueList > li:last-child {
+  border-bottom: 0;
 }
 
 .ledger {
   list-style: none;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 12px 14px 16px;
 }
 
 .side {
@@ -166,12 +242,6 @@
 @media (prefers-reduced-motion: reduce) {
   .skeleton > span {
     animation: none;
-  }
-}
-
-@media (min-width: 768px) {
-  .dueList {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

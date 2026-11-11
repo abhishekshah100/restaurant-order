@@ -1,0 +1,29 @@
+/* A shift type's colour, as --tone (the rota grid, chips and the colour picker). */
+
+.none {
+  --tone: var(--ink-3);
+}
+
+.olive {
+  --tone: var(--success);
+}
+
+.amber {
+  --tone: var(--gold);
+}
+
+.sky {
+  --tone: var(--info);
+}
+
+.rose {
+  --tone: var(--error);
+}
+
+.violet {
+  --tone: var(--reserved);
+}
+
+.slate {
+  --tone: var(--ink-3);
+}

@@ -38,10 +38,12 @@ export function CategorySidebar({ active, showAllergyNote }: CategorySidebarProp
             {t('sort.recommended')}
             <Icon name="chef" size="xs" />
           </Link>
-          {categories.map((cat) => (
+          {/* A simple menu (one category) lists none: it's all one list. */}
+          {(categories.length > 1 ? categories : []).map((cat) => (
             <Link
               key={cat.id}
-              href={active === 'recommended' ? `#${cat.id}` : `/menu/${cat.id}/`}
+              // Its section on the menu: works for a category added since the site was built.
+              href={active === 'recommended' ? `#${cat.id}` : `/menu/#${cat.id}`}
               className={cx(styles.cat, active === cat.id && styles.on)}
               aria-current={active === cat.id ? 'page' : undefined}
             >

@@ -10,6 +10,8 @@ export interface TabItem {
   label: string;
   /** When set, the tab is a link (navigation tabs). */
   href?: string;
+  /** Something waiting there (a small badge beside the label; none at 0). */
+  count?: number;
 }
 
 export interface TabsProps {
@@ -131,6 +133,7 @@ export function Tabs({ items, value, onChange, label, flush, className }: TabsPr
                 data-active={on || undefined}
               >
                 {item.label}
+                {item.count ? <span className={styles.count}>{item.count}</span> : null}
               </Link>
             );
           })}
@@ -160,6 +163,7 @@ export function Tabs({ items, value, onChange, label, flush, className }: TabsPr
                 onClick={() => onChange?.(item.id)}
               >
                 {item.label}
+                {item.count ? <span className={styles.count}>{item.count}</span> : null}
               </button>
             );
           })}

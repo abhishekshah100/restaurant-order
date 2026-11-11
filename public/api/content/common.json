@@ -299,7 +299,9 @@
       "inventory": "Inventory · Admin",
       "purchasing": "Purchasing · Admin",
       "orderHistory": "Order history · Admin",
-      "shifts": "Shifts · Settings · Admin"
+      "rota": "Rota · Team · Admin",
+      "attendance": "Attendance · Team · Admin",
+      "teamRequests": "Requests · Team · Admin"
     },
     "loading": "Loading your workspace",
     "noAccess": {
@@ -314,6 +316,7 @@
       "home": "Home",
       "tables": "Tables",
       "reservations": "Reservations",
+      "team": "Team",
       "orders": "Orders",
       "requests": "Requests",
       "kitchen": "Kitchen",
@@ -603,15 +606,83 @@
         "other": "At {count} tables"
       },
       "none": "Orders you take and payments you collect today add up here.",
-      "start": "Start shift",
+      "start": "Shift in",
       "since": "On shift since {time}",
-      "clockOut": "Clock out",
-      "started": "Shift started at {time}.",
-      "ended": "Clocked out. Your tables are free for the next waiter.",
-      "confirmTitle": "Clock out?",
+      "clockOut": "Shift out",
+      "started": "Shifted in at {time}.",
+      "ended": "Shifted out. Your tables are free for the next waiter.",
+      "confirmTitle": "Shift out?",
       "confirmBody": "Your tables will be released so the next waiter can take them.",
       "clockFailed": "Couldn't update your shift. Try again.",
-      "subtitleSince": "Since {time}"
+      "subtitleSince": "Since {time}",
+      "planned": "Your shift today {time}",
+      "plannedNext": "Next shift {day} {time}"
+    },
+    "rota": {
+      "title": "My rota",
+      "subtitle": "Your shifts this week",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "none": "No shifts planned for you this week.",
+      "off": "Off",
+      "askTimeOff": "Apply for leave",
+      "swap": "Swap",
+      "swapLabel": "Ask a colleague to take your shift on {day}",
+      "requests": "Your requests",
+      "timeOffLine": "Leave · {days}",
+      "swapOut": "{day}, {time} → {name}",
+      "swapIn": "{name} asks you to take {day}, {time}",
+      "accept": "Take it",
+      "decline": "No, sorry",
+      "cancel": "Cancel",
+      "status": {
+        "pending": "Waiting for manager",
+        "approved": "Approved",
+        "declined": "Declined",
+        "cancelled": "Cancelled",
+        "awaitingColleague": "Waiting for {name}",
+        "awaitingManager": "Waiting for manager"
+      },
+      "timeOffDialog": {
+        "title": "Apply for leave",
+        "body": "Pick the days and give a reason. Your manager approves or declines, and you'll see the answer here.",
+        "from": "From",
+        "to": "To",
+        "reason": "Reason",
+        "reasonPlaceholder": "For example: family function, exam, feeling unwell",
+        "reasonRequired": "Tell your manager why (at least 3 characters)",
+        "toBeforeFrom": "The last day can't be before the first",
+        "send": "Send leave request",
+        "already": "You've already asked for leave on {days} ({status}). Pick other days, or cancel that request first.",
+        "alreadyStatus": {
+          "pending": "waiting for an answer",
+          "approved": "approved"
+        }
+      },
+      "swapDialog": {
+        "title": "Swap your shift",
+        "body": "{day}, {time}. Pick who'll take it: they say yes, then your manager approves.",
+        "who": "Colleague",
+        "whoPlaceholder": "Pick a colleague",
+        "note": "Message",
+        "notePlaceholder": "e.g. I have an exam",
+        "send": "Ask them",
+        "person": "{name} · {role}"
+      },
+      "toast": {
+        "timeOffSent": "Leave request sent. Your manager will answer.",
+        "swapSent": "Asked {name}. You'll see their answer here.",
+        "accepted": "You said yes. Your manager approves next.",
+        "declined": "You said no.",
+        "cancelled": "Request cancelled.",
+        "failed": "Couldn't send. Try again.",
+        "colleagueBusy": "They already have a shift that day. Pick someone else.",
+        "swapOpen": "This shift already has a swap waiting.",
+        "timeOffOverlap": "You've already asked for leave on some of those days."
+      },
+      "reasonLine": "Your reason: {text}",
+      "managerNote": "{name}: {text}",
+      "managerNoteNoName": "Manager: {text}"
     }
   },
   "adminTables": {
@@ -989,12 +1060,6 @@
         "averageValue": "{count} min",
         "averageNone": "—"
       },
-      "columns": {
-        "when": "When",
-        "where": "Where",
-        "request": "Request",
-        "outcome": "Outcome"
-      },
       "outcome": {
         "resolved": "Done",
         "lapsed": "Not answered",
@@ -1005,7 +1070,6 @@
         "minutes": "Answered in {count} min"
       },
       "by": "by {name}",
-      "takenBy": "{name} went",
       "table": "Table {table}",
       "noTable": "Pickup / delivery",
       "empty": "No requests on these days.",
@@ -1085,10 +1149,6 @@
       "open": "Open order {order}",
       "pickupAt": "Pickup {time}",
       "deliveryTo": "To {area}",
-      "items": {
-        "one": "{count} item",
-        "other": "{count} items"
-      },
       "more": "+{count}"
     },
     "actions": {
@@ -1160,7 +1220,6 @@
       },
       "row": {
         "title": "{order} · {name}",
-        "token": "Token #{token}",
         "items": {
           "one": "{count} item",
           "other": "{count} items"
@@ -2258,13 +2317,12 @@
       "titleEdit": "Edit {dish}",
       "name": "Dish name",
       "namePlaceholder": "e.g. Paneer Butter Masala",
-      "description": "Short description",
-      "descriptionPlaceholder": "What's in it, in a line",
+      "description": "Description",
+      "descriptionPlaceholder": "What's in it, e.g. Paneer marinated in yoghurt and spices, grilled in the tandoor.",
       "category": "Category",
       "type": "Type",
       "veg": "Vegetarian",
       "nonVeg": "Non-vegetarian",
-      "pricing": "Price",
       "single": "One price",
       "sizes": "Sizes",
       "price": "Price ({currency})",
@@ -2273,13 +2331,8 @@
       "sizeName": "Size name",
       "sizeNamePlaceholder": "e.g. Half",
       "sizePrice": "Price",
-      "sizeOn": "{size} available",
       "addSize": "Add size",
       "removeSize": "Remove {size}",
-      "status": "Availability",
-      "statusAvailable": "Available",
-      "statusSoldOut": "Sold out",
-      "statusOffToday": "Off today",
       "errors": {
         "name": "Give the dish a name.",
         "price": "Enter a price above 0.",
@@ -2306,7 +2359,6 @@
         "addOns": "Add-ons",
         "leaveOut": "Leave out & kitchen notes",
         "details": "Details",
-        "availability": "Availability",
         "needsLook": "Needs a look"
       },
       "summary": {
@@ -2335,7 +2387,6 @@
       "upload": "Add picture",
       "replace": "Replace",
       "removePicture": "Remove picture",
-      "uploading": "Uploading…",
       "uploadFailed": "Couldn't use that picture. Try another one.",
       "pictureAlt": "Picture of {dish}",
       "onlyWith": "Offered with",
@@ -2357,7 +2408,6 @@
       "addOnName": "Add-on",
       "addOnNamePlaceholder": "e.g. Extra cheese",
       "addOnPrice": "Price ({currency})",
-      "freeHint": "0 or empty: free",
       "perSize": "Different price per size",
       "addAddOn": "Add add-on",
       "removeAddOn": "Remove {addOn}",
@@ -2373,8 +2423,6 @@
       "quickPlaceholder": "Type a note and press Add",
       "addQuick": "Add",
       "removeQuick": "Remove {note}",
-      "longDescription": "Full description",
-      "longDescriptionPlaceholder": "Shown on the dish's own page",
       "tags": "Highlights",
       "tag": {
         "chef": "Chef's pick",
@@ -2414,10 +2462,23 @@
       "removed": "{dish} removed from the menu",
       "sizeNote": "Note for {size}",
       "sizeNotePlaceholder": "Note guests see, e.g. Perfect for one (optional)",
-      "perSizeHint": "Empty: the add-on's own price"
+      "perSizeHint": "Empty: the add-on's own price",
+      "descriptionHint": "The first line shows on the menu; guests see all of it when they open the dish.",
+      "servesHint": "How many people it feeds, e.g. 2.",
+      "sizeServes": "Serves",
+      "sizeServesPlaceholder": "e.g. 2",
+      "addPart": {
+        "choices": "+ Add choices",
+        "choicesHint": "Guests pick one, e.g. spice level, or the dishes in a thali.",
+        "addOns": "+ Add extras",
+        "addOnsHint": "Things guests can add for a price, e.g. extra cheese.",
+        "leaveOut": "+ Let guests leave things out",
+        "leaveOutHint": "e.g. No onion, no garlic, and quick notes for the kitchen.",
+        "details": "+ Add details",
+        "detailsHint": "Bestseller or chef's special, spice level, cooking time, serves, allergens."
+      }
     },
     "reorder": "Reorder",
-    "reorderHint": "Pick a category to reorder its dishes.",
     "reorderDone": "Save order",
     "reorderCancel": "Cancel",
     "reordered": "Order saved",
@@ -2438,15 +2499,41 @@
     },
     "categoriesDialog": {
       "title": "Categories",
-      "subtitle": "Names and order guests see",
+      "subtitle": "The sections guests see on the menu, in this order.",
       "name": "Name",
       "shortName": "Short name",
       "description": "Description",
       "save": "Save categories",
       "saved": "Categories saved",
-      "errors": "Every category needs a name, and no name twice."
+      "errors": "Every category needs a name, and no name twice.",
+      "subtitleSimple": "Your menu is one simple list.",
+      "simpleTitle": "No categories: one simple list",
+      "simpleBody": "Guests see all {count} dishes in one list. Add a category to split the menu into sections, such as Starters and Mains.",
+      "simpleNote": "When you add your first category, your current dishes stay in one section you can rename.",
+      "toSimple": "Want one simple list instead? Delete categories until one is left; their dishes move to the one you keep.",
+      "dishes": {
+        "one": "{count} dish",
+        "other": "{count} dishes"
+      },
+      "details": "Details",
+      "shortNameHint": "Shown on phone tabs when the name is long.",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "deleteEmpty": "Delete {name}? It has no dishes.",
+      "moveFirst": {
+        "one": "It has {count} dish. Where should it go?",
+        "other": "It has {count} dishes. Where should they go?"
+      },
+      "moveTo": "Move dishes to",
+      "moveAndDelete": "Move dishes and delete",
+      "addTitle": "Add a category",
+      "addPlaceholder": "For example: Soups",
+      "add": "Add",
+      "drinks": "These are drinks (counted as drinks on the menu)",
+      "taken": "There's already a category with this name.",
+      "added": "{name} added.",
+      "removed": "{name} deleted."
     },
-    "suggestionsButton": "Suggestions",
     "suggestions": {
       "title": "Suggestions",
       "subtitles": {
@@ -2528,6 +2615,41 @@
       "close": "Close",
       "save": "Save",
       "saved": "Search suggestions saved"
+    },
+    "more": "More",
+    "moreTitle": "Menu options",
+    "moreItems": {
+      "suggestions": {
+        "title": "Search suggestions",
+        "body": "What guests see when they open search, and dishes suggested in the cart."
+      },
+      "reorder": {
+        "title": "Reorder dishes",
+        "body": "Pick a category, then move its dishes up or down.",
+        "bodySimple": "Move dishes up or down the menu."
+      }
+    },
+    "reordering": "Reordering {name}: use the arrows, then Save order.",
+    "recipe": "Recipe",
+    "editShort": "Edit",
+    "summary": {
+      "dishes": {
+        "one": "{count} dish",
+        "other": "{count} dishes"
+      },
+      "available": {
+        "one": "{count} available",
+        "other": "{count} available"
+      },
+      "soldOut": {
+        "one": "{count} sold out",
+        "other": "{count} sold out"
+      },
+      "offToday": {
+        "one": "{count} off today",
+        "other": "{count} off today"
+      },
+      "showAll": "Show all"
     }
   },
   "adminQr": {
@@ -2620,7 +2742,6 @@
       "hours": "{hours} h",
       "hoursMinutes": "{hours} h {minutes} min"
     },
-    "until": "Until {time}",
     "row": {
       "open": "Booking {id}: {name}, {time}, {state}",
       "seat": "Seat",
@@ -2660,7 +2781,6 @@
       "noShow": "Didn't come",
       "restore": "Restore booking",
       "openTable": "Open table {table}",
-      "call": "Call",
       "notYet": "You can seat the guests from an hour before their time.",
       "confirmCancel": {
         "title": "Cancel booking {id}?",
@@ -2726,10 +2846,8 @@
       "seatsPicked": "{seats} of {party} guests seated",
       "seatsShort": "{seats} seats picked · needs {count} more for {party} guests",
       "seatsEnough": "{seats} seats for {party} guests",
-      "picked": "{tables}",
       "useSuggested": "Use {tables}",
-      "clearTables": "Clear",
-      "otherArea": "A party sits in one area: picking a table in {area} starts again there."
+      "clearTables": "Clear"
     },
     "deposit": {
       "title": "Deposit",
@@ -2741,7 +2859,6 @@
         "kept": "{amount} deposit kept"
       },
       "by": "Taken by {name} · {time}",
-      "due": "Deposit asked: {amount}",
       "record": "Record deposit",
       "dialogTitle": "Deposit for {id}",
       "amount": "Amount",
@@ -2759,19 +2876,16 @@
     "remind": {
       "title": "Reminders",
       "body": "Bookings in the next 24 hours. Tap to send the guest a ready-made message.",
-      "none": "No reminders due.",
       "whatsapp": "WhatsApp",
       "sms": "SMS",
       "whatsappLabel": "Remind {name} on WhatsApp",
       "smsLabel": "Remind {name} by SMS",
-      "done": "Reminded",
       "reminded": "Reminded by {name} · {time}",
       "remindedNoName": "Reminded · {time}",
       "message": "Hello {name}, this is {brand}. A reminder of your table for {party} on {date} at {time}.{deposit} Reply to this message to change or cancel. See you soon!",
       "messageDeposit": " Your deposit of {amount} is held for you."
     },
     "guest": {
-      "history": "{bookings} bookings in the last 6 months · {noShows} no-shows",
       "noShows": {
         "one": "{count} no-show in the last 6 months",
         "other": "{count} no-shows in the last 6 months"
@@ -2797,9 +2911,6 @@
       "failed": "Couldn't save the rules. Try again."
     },
     "noShowStats": {
-      "label": "How these bookings went",
-      "rate": "No-show rate",
-      "noShows": "No-shows",
       "lostCovers": "Guests who didn't come",
       "depositsKept": "Deposits kept"
     },
@@ -2918,36 +3029,14 @@
     "failed": "That didn't go through. Try again.",
     "nothingToPay": "Nothing is left to pay on this bill. The list has been refreshed.",
     "today": {
-      "label": "Today's takings",
       "eyebrow": "Today · {date}",
-      "eyebrowDay": "{date}",
-      "eyebrowRange": "{from} – {to}",
       "net": "Net takings",
-      "netHint": "{collected} collected · {refunds} refunded",
       "online": "Online",
       "inPerson": "In person",
-      "split": "Online and in person",
       "toCollect": "To collect",
-      "toCollectHint": {
-        "one": "{count} unpaid order",
-        "other": "{count} unpaid orders"
-      },
-      "settled": "All settled",
       "tips": "Tips",
-      "tipsHint": "On top of the bills",
       "left": "Left off bills",
-      "leftHint": {
-        "one": "On {count} payment",
-        "other": "On {count} payments"
-      },
-      "average": "Average bill",
-      "averageHint": {
-        "one": "{count} paid bill",
-        "other": "{count} paid bills"
-      },
-      "refunds": "Refunds",
-      "refundsHint": "{amount} still on its way to guests",
-      "refundsNone": "Nothing on its way back"
+      "refunds": "Refunds"
     },
     "methods": {
       "title": "By payment method",
@@ -2959,8 +3048,8 @@
         "other": "{count} payments"
       },
       "refunded": "{amount} refunded",
-      "drawer": "Cash taken from these orders",
-      "drawerHint": "Cash payments and tips, less cash refunds. Not the drawer total: Cash register also counts the opening float and cash paid in or out."
+      "drawer": "Cash taken",
+      "drawerHint": "Cash payments and tips, less cash refunds. For the full drawer count, see Cash register."
     },
     "actions": {
       "report": "Day report",
@@ -2993,16 +3082,12 @@
         "one": "{count} order",
         "other": "{count} orders"
       },
-      "since": "Since {time}",
       "asked": "Asked for the bill {ago}",
       "askedOnWay": "Asked for the bill {ago} · {name} on the way",
       "partPaid": "{amount} paid so far",
-      "dueLabel": "Due",
       "collect": "Collect",
       "printBill": "Print bill",
-      "view": "Open",
       "pickup": "Pickup {time}",
-      "pickupAsap": "Pickup as soon as ready",
       "delivery": "Delivery to {area}"
     },
     "entry": {
@@ -3057,10 +3142,8 @@
         "one": "{count} order with something to pay",
         "other": "{count} orders with something to pay"
       },
-      "bill": "Bill",
       "orderLine": "#{order} · {name}",
       "paidSoFar": "Paid so far",
-      "due": "Due now",
       "toCollect": "To collect",
       "deposit": "Use booking deposit {id}: −{amount}",
       "summary": {
@@ -3124,7 +3207,6 @@
       "failed": "Couldn't upload",
       "failedHint": "A photo couldn't be uploaded. Remove it, then add it again.",
       "view": "View proof photos ({count})",
-      "viewTitle": "Proof photos · {method} {amount}",
       "loadFailed": "Couldn't load this photo."
     },
     "refund": {
@@ -3224,6 +3306,29 @@
         "count": "Payments",
         "refunds": "Refunds"
       }
+    },
+    "strip": {
+      "toCollect": "To collect",
+      "bills": {
+        "one": "{count} bill waiting",
+        "other": "{count} bills waiting"
+      },
+      "earlier": "{amount} from earlier days",
+      "settled": "All settled",
+      "taken": "Taken today",
+      "takenHint": "Paid today, after refunds",
+      "online": "Online",
+      "inPerson": "In person",
+      "tips": "Tips",
+      "refunds": "Refunds",
+      "left": "Left off bills",
+      "export": "Excel"
+    },
+    "sections": {
+      "asked": "Asked for the bill",
+      "today": "Today",
+      "earlier": "From earlier days",
+      "earlierHint": "Still unpaid. Collect or follow up."
     }
   },
   "adminSettings": {
@@ -3263,7 +3368,7 @@
       },
       "team": {
         "title": "Team & access",
-        "description": "Your staff, what each role can do, and who worked when."
+        "description": "Your staff, and what each role can do."
       },
       "branches": {
         "title": "Branches",
@@ -3282,8 +3387,7 @@
       "staff": "Staff",
       "roles": "Roles & permissions",
       "branches": "Branches",
-      "modules": "Modules",
-      "shifts": "Shifts"
+      "modules": "Modules"
     },
     "sections": {
       "details": {
@@ -3366,9 +3470,13 @@
         "title": "Staff",
         "description": "Who works here, their roles, and their sign-in."
       },
+      "rota": {
+        "title": "Rota",
+        "description": "Plan who works when, and publish it to your staff."
+      },
       "shifts": {
-        "title": "Shifts",
-        "description": "Who worked when, and what each person did on their shift."
+        "title": "Time sheet",
+        "description": "When each person shifted in and out, and what they did on their shift."
       }
     },
     "open": "Manage",
@@ -4166,6 +4274,14 @@
           "label": "Assign waiters to tables",
           "hint": "Give tables to waiters and clear everyone's sections."
         },
+        "rota_plan": {
+          "label": "Plan the rota",
+          "hint": "Shift types, who works when, and publishing the week to staff."
+        },
+        "attendance_fix": {
+          "label": "Fix attendance",
+          "hint": "Correct someone's shift in or shift out time, or add a shift they forgot."
+        },
         "branch_status_update": {
           "label": "Open and close the branch",
           "hint": "Pause, close or reopen ordering."
@@ -4221,7 +4337,7 @@
       }
     },
     "staff": {
-      "subtitle": "Everyone who works at {branch}, and your restaurant admins. Add people, give them a role, or turn their sign-in off.",
+      "subtitle": "Everyone who works at {branch}, and your restaurant admins. Add people, change their details, turn their sign-in off, or remove them from the team.",
       "add": "Add staff",
       "loading": "Loading staff",
       "failed": "Couldn't load the staff. Try again.",
@@ -4242,10 +4358,11 @@
         "emailExists": "Someone with this email is already on the staff here.",
         "phoneTaken": "This mobile number belongs to someone else.",
         "phone": "Enter a valid mobile number.",
-        "ownAccount": "You can't change your own role or turn off your own sign-in.",
+        "ownAccount": "You can't change your own role, turn off your own sign-in, or remove yourself.",
         "lastAdmin": "Your restaurant needs at least one active admin.",
         "forbidden": "You can only give roles whose permissions you have yourself.",
-        "failed": "Couldn't save. Try again."
+        "failed": "Couldn't save. Try again.",
+        "emailTaken": "This email belongs to someone else."
       },
       "dialog": {
         "addTitle": "Add staff",
@@ -4267,12 +4384,11 @@
         "generate": "New one",
         "copy": "Copy",
         "copied": "Copied",
-        "active": "Can sign in",
-        "activeOn": "They can sign in and work here.",
-        "activeOff": "They can't sign in. Turning this off signs them out at once.",
-        "youNote": "You can change your name here. Ask another admin to change your role.",
+        "youNote": "You can change your name and contact details here. Ask another admin to change your role.",
         "add": "Add staff",
-        "save": "Save changes"
+        "save": "Save changes",
+        "contactNote": "Changing the email or mobile number signs them out. They sign in again with the new one.",
+        "youContactNote": "Changing your email or mobile number signs you out on your other devices."
       },
       "reset": {
         "title": "New password for {name}",
@@ -4282,7 +4398,78 @@
       "toast": {
         "added": "{name} added",
         "saved": "{name} saved",
-        "reset": "New password set for {name}"
+        "reset": "New password set for {name}",
+        "off": "{name} can't sign in now",
+        "on": "{name} can sign in again",
+        "removed": "{name} removed from the team",
+        "restored": "{name} is back on the team",
+        "signedOut": "{name} saved and signed out. They sign in with the new details."
+      },
+      "filters": {
+        "label": "Show",
+        "active": "Active",
+        "inactive": "Inactive",
+        "removed": "Removed"
+      },
+      "emptyFilter": {
+        "active": "Nobody is active right now.",
+        "inactive": "Everyone can sign in. People whose sign-in you turn off show here.",
+        "removed": "Nobody has been removed. People you remove from the team show here, so you can add them back."
+      },
+      "more": "More",
+      "moreLabel": "More options for {name}",
+      "sheet": {
+        "resetHint": "Set a temporary password. They choose their own when they sign in.",
+        "turnOff": "Turn off sign-in",
+        "turnOffHint": "They can't sign in until you turn it back on.",
+        "turnOn": "Turn on sign-in",
+        "turnOnHint": "They can sign in again with their password.",
+        "remove": "Remove from team",
+        "removeHint": "Takes them off the staff. Their past orders and payments stay."
+      },
+      "confirmOff": {
+        "title": "Turn off sign-in for {name}?",
+        "body": "They're signed out now and can't sign in. Their tables are freed and an open shift is closed. Their orders and payments stay.",
+        "confirm": "Turn off sign-in"
+      },
+      "confirmRemove": {
+        "title": "Remove {name} from the team?",
+        "body": "They're signed out and taken off the staff list. Their name stays on past orders, payments and shifts. You can add them back any time from Removed.",
+        "admin": "{name} is an admin for all branches, so this removes them from every branch.",
+        "confirm": "Remove from team"
+      },
+      "cancel": "Cancel",
+      "removedOn": "Removed {date}",
+      "removedBy": "Removed {date} by {name}",
+      "wasRole": "Was {role}",
+      "addBack": "Add back",
+      "addBackLabel": "Add {name} back to the team",
+      "restore": {
+        "title": "Add {name} back?",
+        "body": "They join the team again and can sign in with their old password. If they've forgotten it, give them a new one after.",
+        "roleGone": "Their old role was deleted. Pick a role for them.",
+        "confirm": "Add back"
+      },
+      "offBy": "Sign-in turned off {date} by {name}",
+      "offOn": "Sign-in turned off {date}",
+      "reason": {
+        "label": "Reason",
+        "placeholder": "Why? For example: on leave until 20 Nov",
+        "picks": "Common reasons",
+        "required": "Tell us why (at least 3 characters)",
+        "shown": "Reason: {reason}",
+        "off": {
+          "leave": "On leave",
+          "suspended": "Suspended",
+          "security": "Security concern",
+          "notNeeded": "Not needed for now"
+        },
+        "remove": {
+          "left": "Left the job",
+          "contractEnded": "Contract ended",
+          "mistake": "Added by mistake",
+          "transferred": "Moved to another branch"
+        }
       }
     },
     "features": {
@@ -4300,39 +4487,185 @@
       "failed": "Couldn't change it. Try again."
     },
     "shifts": {
-      "subtitle": "Who worked when, and what they did on each shift. Staff clock in and out from the home page.",
-      "loading": "Loading shifts",
-      "failed": "Couldn't load the shifts. Try again.",
-      "empty": "No shifts on these days. Staff start a shift from the home page with Start shift.",
-      "people": "By person",
-      "byDay": "Each shift",
-      "export": "Export to Excel",
-      "exportFile": "shifts-{branch}-{date}.xlsx",
-      "presets": {
-        "week": "Last 7 days",
-        "month": "Last 30 days",
-        "quarter": "Last 3 months"
-      },
-      "minutes": "{minutes} min",
-      "hours": "{hours} h {minutes} min",
-      "span": "{from} – {to}",
-      "onNow": "{from} – on shift now",
-      "autoClosed": "Closed for them",
-      "orders": {
-        "one": "{count} order",
-        "other": "{count} orders"
-      },
-      "tips": "{amount} tips",
       "columns": {
         "name": "Name",
-        "shifts": "Shifts",
         "start": "Started",
         "end": "Ended",
         "hours": "Hours",
         "orders": "Orders taken",
         "collected": "Collected",
         "tips": "Tips",
-        "note": "Note"
+        "planned": "Planned",
+        "late": "Late",
+        "plannedStart": "Planned start",
+        "plannedEnd": "Planned end",
+        "lateMinutes": "Late (min)",
+        "earlyMinutes": "Left early (min)",
+        "extraMinutes": "Extra (min)"
+      }
+    },
+    "rota": {
+      "subtitle": "Plan who works when at {branch}, week by week. Staff see a week once you publish it.",
+      "loading": "Loading the rota",
+      "failed": "Couldn't load the rota. Try again.",
+      "retry": "Try again",
+      "prevWeek": "Previous week",
+      "nextWeek": "Next week",
+      "thisWeek": "This week",
+      "weekLabel": "Week of {date}",
+      "draft": "Draft · staff can't see this week yet",
+      "published": "Published {date} by {name}",
+      "publishedOn": "Published {date}",
+      "changes": {
+        "one": "{count} change since publishing · staff already see it",
+        "other": "{count} changes since publishing · staff already see them"
+      },
+      "types": "Shift types",
+      "copy": "Copy last week",
+      "clear": "Clear week",
+      "publish": "Publish",
+      "republish": "Publish again",
+      "person": "Staff",
+      "total": "Hours",
+      "coverage": "On shift",
+      "people": {
+        "one": "{count} person",
+        "other": "{count} people"
+      },
+      "nobody": "Nobody",
+      "hours": "{hours} h",
+      "hoursMinutes": "{hours} h {minutes} min",
+      "overLimit": "Over {limit} h this week",
+      "add": "Add a shift for {name} on {day}",
+      "edit": "{name} on {day}: {time}. Change",
+      "overnight": "ends next day",
+      "changed": "Changed",
+      "noStaff": "Nobody can be planned yet. Add staff in Team & access › Staff.",
+      "noTypes": "Tip: add shift types like Morning or Evening to plan in one tap.",
+      "dayPicker": "Day",
+      "confirmClear": {
+        "title": "Clear this week?",
+        "body": "Every shift planned for this week is taken off. Staff stop seeing them if the week was published.",
+        "confirm": "Clear week"
+      },
+      "confirmPublish": {
+        "title": "Publish this week?",
+        "body": "Your staff see their shifts for this week on their home page from now. Changes you make after this show to them straight away.",
+        "confirm": "Publish"
+      },
+      "cancel": "Cancel",
+      "toast": {
+        "saved": "Shift saved",
+        "removed": "Shift removed",
+        "copied": "Last week copied into empty days",
+        "nothingToCopy": "Nothing to copy: last week is empty, or those days are already planned",
+        "cleared": "Week cleared",
+        "published": "Week published. Staff can see their shifts now.",
+        "typeSaved": "{name} saved",
+        "typeRemoved": "{name} removed",
+        "failed": "Couldn't save. Try again.",
+        "typeExists": "There's already a shift type with this name.",
+        "colleagueBusy": "That colleague already has a shift that day."
+      },
+      "shift": {
+        "title": "{name} · {day}",
+        "type": "Shift",
+        "custom": "Custom hours",
+        "from": "From",
+        "to": "To",
+        "break": "Unpaid break",
+        "noBreak": "No break",
+        "breakMinutes": "{minutes} min",
+        "note": "Note",
+        "notePlaceholder": "e.g. Terrace, kitchen prep",
+        "paid": "{time} paid",
+        "sameTimes": "From and to can't be the same.",
+        "breakTooLong": "The break is longer than the shift.",
+        "save": "Save shift",
+        "remove": "Remove shift",
+        "timeOffWarn": "{name} has approved time off this day: “{reason}”.",
+        "timeOffPending": "{name} asked for time off this day: “{reason}”."
+      },
+      "typesDialog": {
+        "title": "Shift types",
+        "body": "Your usual shifts, to plan in one tap. Changing one doesn't change shifts already planned.",
+        "empty": "No shift types yet. Add your usual shifts, like Morning 10 AM – 4 PM.",
+        "add": "Add shift type",
+        "new": "New shift type",
+        "name": "Name",
+        "namePlaceholder": "e.g. Morning",
+        "nameRequired": "Give it a name",
+        "color": "Colour",
+        "save": "Save",
+        "edit": "Edit {name}",
+        "remove": "Remove {name}",
+        "back": "Back",
+        "colors": {
+          "olive": "Green",
+          "amber": "Amber",
+          "sky": "Blue",
+          "rose": "Red",
+          "violet": "Purple",
+          "slate": "Grey"
+        }
+      },
+      "timeOff": {
+        "approved": "On leave",
+        "pending": "Leave asked",
+        "clash": "On leave that day"
+      },
+      "swappedFrom": "From {name}",
+      "requests": {
+        "title": "Requests",
+        "body": "Leave and shift swaps from your staff. A swap comes here once the colleague says yes.",
+        "nothing": "Nothing waiting for you right now.",
+        "timeOffLine": "{name} · leave {days}",
+        "swapLine": "{from} → {to} · {day}, {time}",
+        "colleagueSaidYes": "{name} said yes to taking it.",
+        "note": "Note to them",
+        "approve": "Approve",
+        "decline": "Decline",
+        "approved": "Approved. They'll see it on their home page.",
+        "declined": "Declined. They'll see your note.",
+        "withColleague": "Waiting for the colleague",
+        "recent": "Last 30 days",
+        "decidedBy": "{name}, {date}",
+        "status": {
+          "pending": "Waiting",
+          "awaitingColleague": "With colleague",
+          "awaitingManager": "Waiting",
+          "approved": "Approved",
+          "declined": "Declined",
+          "cancelled": "Cancelled"
+        },
+        "quoted": "“{text}”",
+        "reason": "Reason: {text}",
+        "answer": "Your note: {text}"
+      },
+      "settings": {
+        "title": "Rota settings",
+        "limit": "Weekly hours warning",
+        "limitHint": "Show a warning when someone is planned for more hours than this in a week.",
+        "hours": "Hours a week",
+        "hoursInvalid": "Between 1 and 168 hours",
+        "save": "Save",
+        "saved": "Rota settings saved"
+      },
+      "whatsapp": {
+        "button": "Send on WhatsApp",
+        "title": "Send the rota on WhatsApp",
+        "body": "Tap Send to open WhatsApp with each person's week ready to go. You send it from your phone or WhatsApp Web.",
+        "send": "Send",
+        "opened": "Opened",
+        "noPhone": "No mobile number",
+        "done": "Done",
+        "shifts": {
+          "one": "{count} shift this week",
+          "other": "{count} shifts this week"
+        },
+        "hello": "Hi {name},",
+        "intro": "Your shifts at {branch} for {from} – {to}:",
+        "outro": "Ask your manager if anything needs to change. Thank you!"
       }
     }
   },
@@ -4448,6 +4781,200 @@
       "EUR": "Euro",
       "GBP": "British pound",
       "AED": "UAE dirham"
+    }
+  },
+  "adminTeam": {
+    "tabs": {
+      "label": "Team pages",
+      "rota": "Rota",
+      "attendance": "Attendance",
+      "requests": "Requests"
+    },
+    "rota": {
+      "lead": "Plan who works when this week, then publish it so staff can see their shifts.",
+      "more": "More",
+      "moreTitle": "Week options",
+      "publishChanges": "Publish changes",
+      "status": {
+        "empty": "Nothing planned for this week yet.",
+        "draft": "Not published yet · staff can't see this week.",
+        "changed": {
+          "one": "You changed {count} shift · staff still see the old one until you publish.",
+          "other": "You changed {count} shifts · staff still see the old ones until you publish."
+        },
+        "published": "Published · staff can see this week."
+      },
+      "steps": {
+        "label": "How to plan a week",
+        "types": {
+          "title": "Set up your shifts",
+          "body": "Your usual shifts once, for example Morning 10 AM – 4 PM and Evening 6 – 11 PM.",
+          "action": "Set up shifts",
+          "edit": "Edit shifts"
+        },
+        "fill": {
+          "title": "Fill the week",
+          "body": "Tap a box to give someone a shift, or use Copy last week."
+        },
+        "publish": {
+          "title": "Publish",
+          "body": "Staff see their shifts in the app, and you can send them on WhatsApp."
+        }
+      },
+      "moreItems": {
+        "copy": {
+          "title": "Copy last week",
+          "body": "Fill this week with last week's shifts."
+        },
+        "types": {
+          "title": "Shift types",
+          "body": "Your usual shifts: names, times and colours."
+        },
+        "limit": {
+          "title": "Weekly hours limit",
+          "body": "Get a warning when someone is planned for too many hours."
+        },
+        "whatsapp": {
+          "title": "Send on WhatsApp",
+          "body": "Send each person their shifts for this week."
+        },
+        "clear": {
+          "title": "Clear week",
+          "body": "Remove every shift planned this week."
+        }
+      }
+    },
+    "requests": {
+      "lead": "Leave requests and shift swaps from your staff. Anyone whose role can plan the rota answers them here, and staff see the answer in the app.",
+      "waiting": "Waiting for your answer"
+    },
+    "attendance": {
+      "lead": "Who came and when, compared with the rota.",
+      "leadFix": "Who came and when, compared with the rota. If someone forgot to shift in or out, use Fix times.",
+      "ranges": {
+        "label": "Show",
+        "today": "Today",
+        "week": "This week",
+        "lastWeek": "Last week",
+        "month": "This month",
+        "custom": "Pick days"
+      },
+      "add": "Add a shift",
+      "export": "Excel",
+      "exportFile": "attendance-{branch}-{date}.xlsx",
+      "kpi": {
+        "label": "At a glance",
+        "working": "Working now",
+        "done": "Finished",
+        "late": "Late",
+        "absent": "Absent",
+        "expected": "Still to come",
+        "planned": "Planned hours",
+        "worked": "Worked hours"
+      },
+      "attention": {
+        "title": "Needs your attention",
+        "auto": "Didn't shift out · the system closed it at {time}",
+        "long": "On shift since {time} · forgot to shift out?",
+        "absent": "Planned {from} – {to} · didn't shift in"
+      },
+      "people": {
+        "title": "By person",
+        "hint": "Tap a name to see only their shifts.",
+        "name": "Name",
+        "shifts": "Shifts",
+        "planned": "Planned",
+        "worked": "Worked",
+        "late": "Late",
+        "absent": "Absent",
+        "showing": "Only {name}"
+      },
+      "list": {
+        "title": "Shifts",
+        "columns": {
+          "person": "Person",
+          "planned": "Planned",
+          "times": "In – Out",
+          "hours": "Hours",
+          "status": "Status"
+        }
+      },
+      "notPlanned": "Not planned",
+      "span": "{from} – {to}",
+      "inOnly": "{from} – now",
+      "nextDay": "next day",
+      "status": {
+        "working": "Working now",
+        "outMissing": "Shift out missing",
+        "absent": "Absent",
+        "expected": "Starts {time}",
+        "late": "Late {time}",
+        "leftEarly": "Left early {time}",
+        "extra": "Extra {time}",
+        "unplanned": "Not on rota",
+        "onTime": "On time"
+      },
+      "edited": "Edited",
+      "editedBy": "Edited by {name}",
+      "fixTimes": "Fix times",
+      "addShift": "Add shift",
+      "minutes": "{minutes} min",
+      "hours": "{hours} h",
+      "hoursMinutes": "{hours} h {minutes} min",
+      "empty": {
+        "title": "No shifts here yet",
+        "body": "Staff tap Shift in on their Home page when they start work, and Shift out when they leave."
+      },
+      "loading": "Loading attendance",
+      "failed": "Couldn't load attendance. Try again.",
+      "retry": "Try again",
+      "fix": {
+        "titleFix": "Fix times",
+        "titleAdd": "Add a shift",
+        "person": "Person",
+        "date": "Date",
+        "in": "Shift in",
+        "out": "Shift out",
+        "stillWorking": "Still working (no shift out yet)",
+        "overnight": "Ends the next day",
+        "total": "Total: {time}",
+        "planned": "Planned that day: {from} – {to}",
+        "auto": "The system closed this shift at {time} because nobody shifted out. Enter the time they really left.",
+        "reason": "Why are you changing it?",
+        "reasons": {
+          "forgot_in": "Forgot to shift in",
+          "forgot_out": "Forgot to shift out",
+          "wrong_time": "Wrong time recorded",
+          "other": "Something else"
+        },
+        "note": "Note",
+        "notePlaceholder": "For example: told the manager she left at 10:45 PM",
+        "noteRequired": "Add a short note for “Something else”.",
+        "pickPerson": "Choose who the shift is for.",
+        "personOption": "{name} · {role}",
+        "save": "Save",
+        "cancel": "Cancel",
+        "saved": "Times saved.",
+        "added": "Shift added.",
+        "history": "Changes",
+        "historyBy": "{date} · {name}",
+        "historyAdded": "Added by hand",
+        "historyChange": "{before} → {after}",
+        "errors": {
+          "overlap": "These times overlap another shift of {name}'s.",
+          "future": "That time hasn't happened yet.",
+          "beforeStart": "Shift out must be after shift in.",
+          "tooLong": "A shift can't be longer than 24 hours.",
+          "required": "Enter the shift out time.",
+          "unchanged": "Nothing changed.",
+          "tooOld": "That's more than a year ago.",
+          "failed": "Couldn't save. Try again."
+        }
+      },
+      "columns": {
+        "status": "Status",
+        "fixed": "Fixed by hand"
+      }
     }
   }
 }

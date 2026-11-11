@@ -10,7 +10,7 @@ import type {
   ImageUploadResponse,
   SearchSuggestions,
 } from '@/api/contracts';
-import { dishForm, dishInputOf } from '@/lib/adminMenu';
+import { dishForm, dishInputOf, menuLine } from '@/lib/adminMenu';
 import { DEMO_ADMIN } from '@/api/mock/demoAdmin';
 import { defaultConfig, orderLine, unitPrice } from '@/lib/cartLine';
 import type { Dish, MenuData } from '@/types/menu';
@@ -196,8 +196,14 @@ describe('adding and editing dishes (mock)', () => {
           ...g,
           choices: g.choices.map((c) => (typeof c === 'string' ? { name: c } : c)),
         }));
+      // One description now: the full text, and the menu's line made from it.
+      const text = original.longDescription ?? original.description;
+      const line = menuLine(text);
+      const { longDescription: _long, ...rest } = original;
       expect({ ...saved, optionGroups: choices(saved) }, original.slug).toEqual({
-        ...original,
+        ...rest,
+        description: line,
+        ...(text.length > line.length ? { longDescription: text } : {}),
         optionGroups: choices(original),
       });
     }

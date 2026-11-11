@@ -26,6 +26,7 @@ import {
 import { cx } from '@/lib/cx';
 import type { Order } from '@/types/order';
 import type { PadTarget } from '../orderPad/OrderPad';
+import { HistoryButton } from '../HistoryButton';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { OrderDialogView } from './OrderDetailDialog';
 import { OrderListItem } from './OrderListItem';
@@ -86,6 +87,9 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
     );
   };
 
+  const history = (
+    <HistoryButton href={orderHistoryPath()} label={t('adminOrders.historyButton')} />
+  );
   let content;
   if (orders.data) {
     const all = orders.data.orders;
@@ -115,12 +119,16 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
           </div>
         </dl>
 
-        <div className={styles.views} role="group" aria-label={t('adminOrders.views.label')}>
-          {ORDER_VIEWS.map((v) => (
-            <Chip key={v} pressed={view === v} count={byView[v]} onClick={() => goTo(v)}>
-              {t(`adminOrders.views.${v}`)}
-            </Chip>
-          ))}
+        {/* The views on the left, Order history at the row's end. */}
+        <div className={styles.viewsRow}>
+          <div className={styles.views} role="group" aria-label={t('adminOrders.views.label')}>
+            {ORDER_VIEWS.map((v) => (
+              <Chip key={v} pressed={view === v} count={byView[v]} onClick={() => goTo(v)}>
+                {t(`adminOrders.views.${v}`)}
+              </Chip>
+            ))}
+          </div>
+          {history}
         </div>
 
         <section className={styles.panel} aria-label={t(`adminOrders.views.${view}`)}>
@@ -214,11 +222,8 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
     <div className={styles.page}>
       {/* The bar above already names the page; the heading is for screen readers. */}
       <h1 className="visually-hidden">{t('adminOrders.title')}</h1>
-      <div className={styles.toolbar}>
-        <Button href={orderHistoryPath()} variant="secondary" size="sm" iconStart="history">
-          {t('adminOrders.historyButton')}
-        </Button>
-      </div>
+      {/* Loading or failed: Order history stays reachable above. */}
+      {!orders.data && <div className={styles.toolbar}>{history}</div>}
       {content}
     </div>
   );

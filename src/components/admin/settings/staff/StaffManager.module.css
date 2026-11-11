@@ -147,3 +147,110 @@
   display: flex;
   gap: 8px;
 }
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.dangerButton {
+  background: var(--error);
+}
+
+/* ---------- More: a short list of what can be done for someone ---------- */
+
+.sheet {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheetRow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  padding: 12px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sheetRow:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .sheetRow:hover {
+    background: var(--bg);
+  }
+}
+
+.sheetRow > svg {
+  margin-top: 2px;
+  color: var(--ink-2);
+}
+
+.sheetRow.danger,
+.sheetRow.danger > svg {
+  color: var(--error);
+}
+
+.sheetText {
+  display: grid;
+  gap: 2px;
+}
+
+.sheetLabel {
+  font: var(--font-label);
+}
+
+.sheetHint {
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
+/* ---------- Filters and the removed ---------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.empty {
+  padding: 24px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-panel);
+  color: var(--ink-3);
+  font: var(--font-small);
+  text-align: center;
+}
+
+/* Why someone's sign-in is off, or why they were removed. */
+.why {
+  margin-top: 2px;
+  color: var(--ink-2);
+  font: var(--font-small);
+  overflow-wrap: anywhere;
+}
+
+.reason {
+  display: grid;
+  gap: 10px;
+}
+
+.picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

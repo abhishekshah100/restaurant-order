@@ -1,7 +1,7 @@
 'use client';
 
 import { useContent } from '@/api/hooks';
-import { Chip, Input, Textarea } from '@/components/ui';
+import { Chip, Input } from '@/components/ui';
 import type { DishForm } from '@/lib/adminMenu';
 import type { Allergen, DishTag, SpiceLevel } from '@/types/menu';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
@@ -45,6 +45,18 @@ export function DetailsSection({
 
   return (
     <EditorSection
+      empty={
+        form.tags.length === 0 &&
+        form.allergens.length === 0 &&
+        !form.spice &&
+        !form.prepTime.trim() &&
+        !form.serves.trim() &&
+        !form.meal
+      }
+      add={{
+        label: t('adminMenu.editor.addPart.details'),
+        hint: t('adminMenu.editor.addPart.detailsHint'),
+      }}
       title={t('adminMenu.editor.sections.details')}
       summary={[
         ...form.tags.map((tag) => t(`adminMenu.editor.tag.${tag}`)),
@@ -54,16 +66,6 @@ export function DetailsSection({
       ].join(' · ')}
       error={error}
     >
-      <Textarea
-        id="dish-long-description"
-        label={t('adminMenu.editor.longDescription')}
-        optional
-        rows={3}
-        maxLength={600}
-        placeholder={t('adminMenu.editor.longDescriptionPlaceholder')}
-        value={form.longDescription}
-        onChange={(event) => set({ longDescription: event.target.value })}
-      />
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>{t('adminMenu.editor.tags')}</legend>
         <div className={styles.chips}>
@@ -104,15 +106,19 @@ export function DetailsSection({
           error={errors.prepTime}
           onChange={(event) => set({ prepTime: event.target.value })}
         />
-        <Input
-          id="dish-serves"
-          label={t('adminMenu.editor.serves')}
-          optional
-          inputMode="numeric"
-          value={form.serves}
-          error={errors.serves}
-          onChange={(event) => set({ serves: event.target.value })}
-        />
+        {/* With sizes, each size says how many it serves (Price & sizes). */}
+        {form.pricing === 'single' && (
+          <Input
+            id="dish-serves"
+            label={t('adminMenu.editor.serves')}
+            hint={t('adminMenu.editor.servesHint')}
+            optional
+            inputMode="numeric"
+            value={form.serves}
+            error={errors.serves}
+            onChange={(event) => set({ serves: event.target.value })}
+          />
+        )}
       </div>
       <fieldset className={styles.fieldset}>
         <legend className={styles.legend}>{t('adminMenu.editor.allergens')}</legend>

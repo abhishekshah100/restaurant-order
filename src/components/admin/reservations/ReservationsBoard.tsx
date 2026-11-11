@@ -118,16 +118,34 @@ export function ReservationsBoard() {
             }
           />
           <div className={styles.actions}>
-            <Button variant="secondary" iconStart="history" href={ADMIN_LINKS.reservationHistory}>
-              {t('adminReservations.history.open')}
-            </Button>
-            {backend && reservations.data.rules && can('branch.settings.manage') && (
-              <Button variant="secondary" iconStart="sliders" onClick={() => setEditingRules(true)}>
-                {t('adminReservations.rules.open')}
+            {/* The look-ups as one quiet pair (icons alone on a phone), then the main action. */}
+            <div className={styles.quiet}>
+              <Button
+                variant="secondary"
+                size="sm"
+                iconStart="history"
+                href={ADMIN_LINKS.reservationHistory}
+                aria-label={t('adminReservations.history.open')}
+                className={styles.quietButton}
+              >
+                <span className={styles.quietLabel}>{t('adminReservations.history.open')}</span>
               </Button>
-            )}
+              {backend && reservations.data.rules && can('branch.settings.manage') && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  iconStart="sliders"
+                  aria-label={t('adminReservations.rules.open')}
+                  className={styles.quietButton}
+                  onClick={() => setEditingRules(true)}
+                >
+                  <span className={styles.quietLabel}>{t('adminReservations.rules.open')}</span>
+                </Button>
+              )}
+            </div>
             {can('reservations.manage') && (
               <Button
+                size="sm"
                 iconStart="plus"
                 className={styles.new}
                 onClick={() => setEditor({ kind: 'new' })}

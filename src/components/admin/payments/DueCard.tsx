@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useContent } from '@/api/hooks';
-import { Button, Icon } from '@/components/ui';
+import { Button, Icon, IconButton } from '@/components/ui';
 import { dueOn } from '@/lib/adminOrders';
 import type { DueGroup } from '@/lib/adminPayments';
 import { cx } from '@/lib/cx';
@@ -9,19 +10,23 @@ import { usePaymentText } from './usePaymentText';
 import styles from './DueCard.module.css';
 
 /**
- * One bill still open: a table (its orders with what's due on each) or a takeaway or delivery
- * order. A table whose guests asked for the bill says so first. What's due, anything paid so
- * far, and Print bill / Collect.
+ * One bill still open, as one compact row: where, whose and how long, what's due, then Print
+ * bill (icon) and Collect. Tapping the row opens the order; a table with several orders opens
+ * its list instead (each order opens). A table that asked for the bill says so in gold; a bill
+ * from an earlier day shows its date, not "170 h ago". (The badge says where: table, pickup.)
  */
 export function DueCard({
   group,
   now,
+  earlier = false,
   onCollect,
   onPrint,
   onOpenOrder,
 }: {
   group: DueGroup;
   now: Date | null;
+  /** Opened on an earlier day. */
+  earlier?: boolean;
   onCollect: () => void;
   onPrint: () => void;
   onOpenOrder: (orderId: string) => void;
@@ -29,56 +34,94 @@ export function DueCard({
   const t = useContent('common');
   const { clock, can } = useAdminWorkspace();
   const { amount, ago } = usePaymentText();
+  const [expanded, setExpanded] = useState(false);
   const request = group.kind === 'table' ? group.request : undefined;
   const orders = group.kind === 'table' ? group.orders : [group.order];
   const first = orders[0];
-  const titleId = `due-${group.key}`;
+  const several = orders.length > 1;
+  const listId = `due-orders-${group.key}`;
 
-  let title: string;
-  let meta: string;
+  const title =
+    group.kind === 'table'
+      ? several
+        ? t('adminPayments.due.table', { table: group.table })
+        : t('adminPayments.collect.orderLine', { order: first.id, name: first.customerName })
+      : t('adminPayments.collect.orderLine', {
+          order: group.order.id,
+          name: group.order.customerName,
+        });
+
+  // How long it's been open: the time for an earlier day, else "12 min ago".
+  const age = earlier ? clock.date(group.since) : now ? ago(group.since, now) : '';
+  let kind = '';
   if (group.kind === 'table') {
-    title = t('adminPayments.due.table', { table: group.table });
-    meta = `${t.plural('adminPayments.due.orders', orders.length)} · ${t('adminPayments.due.since', { time: clock.dateTime(group.since) })}`;
+    if (several) kind = t.plural('adminPayments.due.orders', orders.length);
   } else {
     const { order } = group;
-    title = t('adminPayments.collect.orderLine', { order: order.id, name: order.customerName });
-    meta = order.pickup
-      ? order.pickup.asap
-        ? t('adminPayments.due.pickupAsap')
-        : t('adminPayments.due.pickup', { time: clock.dateTime(order.pickup.at) })
-      : order.delivery
-        ? t('adminPayments.due.delivery', { area: order.delivery.address.area })
-        : order.table !== undefined
-          ? `${t('adminPayments.due.table', { table: order.table })} · ${t('adminPayments.due.since', { time: clock.dateTime(order.placedAt) })}`
-          : t('adminPayments.due.since', { time: clock.dateTime(order.placedAt) });
+    if (order.pickup && !order.pickup.asap) {
+      kind = t('adminPayments.due.pickup', { time: clock.dateTime(order.pickup.at) });
+    } else if (order.delivery) {
+      kind = t('adminPayments.due.delivery', { area: order.delivery.address.area });
+    }
   }
+  const meta = request
+    ? now
+      ? request.acknowledgedBy
+        ? t('adminPayments.due.askedOnWay', {
+            ago: ago(request.requestedAt, now),
+            name: request.acknowledgedBy,
+          })
+        : t('adminPayments.due.asked', { ago: ago(request.requestedAt, now) })
+      : ''
+    : [kind, age].filter(Boolean).join(' · ');
 
   return (
-    <li className={cx(styles.card, request && styles.asked)} aria-labelledby={titleId}>
-      {request && (
-        <p className={styles.request}>
-          <Icon name="bell" size="xs" />
-          {now &&
-            (request.acknowledgedBy
-              ? t('adminPayments.due.askedOnWay', {
-                  ago: ago(request.requestedAt, now),
-                  name: request.acknowledgedBy,
-                })
-              : t('adminPayments.due.asked', { ago: ago(request.requestedAt, now) }))}
-        </p>
-      )}
-      <div className={styles.head}>
+    <li className={cx(styles.row, request && styles.asked, earlier && !request && styles.earlier)}>
+      <button
+        type="button"
+        className={styles.main}
+        aria-expanded={several ? expanded : undefined}
+        aria-controls={several ? listId : undefined}
+        onClick={() => (several ? setExpanded((open) => !open) : onOpenOrder(first.id))}
+      >
         <WhereBadge table={first.table} mode={first.mode} />
-        <div className={styles.heading}>
-          <h3 id={titleId} className={styles.title}>
-            {title}
-          </h3>
-          <p className={styles.meta}>{meta}</p>
-        </div>
-      </div>
+        <span className={styles.text}>
+          <span className={styles.title}>{title}</span>
+          <span className={styles.meta}>
+            {request && <Icon name="bell" size="xs" />}
+            {meta}
+            {several && (
+              <Icon name="chevd" size="xs" className={cx(styles.chevron, expanded && styles.up)} />
+            )}
+          </span>
+        </span>
+      </button>
 
-      {group.kind === 'table' && (
-        <ul className={styles.orders}>
+      <span className={styles.amount}>
+        <strong className={styles.due}>{amount(group.due)}</strong>
+        {group.paid > 0 && (
+          <span className={styles.paid}>
+            {t('adminPayments.due.partPaid', { amount: amount(group.paid) })}
+          </span>
+        )}
+      </span>
+
+      <span className={styles.actions}>
+        <IconButton
+          icon="receipt"
+          label={t('adminPayments.due.printBill')}
+          className={styles.print}
+          onClick={onPrint}
+        />
+        {can('payments.collect') && (
+          <Button size="sm" iconStart="cash" className={styles.collect} onClick={onCollect}>
+            {t('adminPayments.due.collect')}
+          </Button>
+        )}
+      </span>
+
+      {several && expanded && (
+        <ul id={listId} className={styles.orders}>
           {orders.map((order) => (
             <li key={order.id}>
               <button type="button" className={styles.order} onClick={() => onOpenOrder(order.id)}>
@@ -95,38 +138,6 @@ export function DueCard({
           ))}
         </ul>
       )}
-
-      <div className={styles.foot}>
-        <div className={styles.amount}>
-          <span className={styles.amountLabel}>{t('adminPayments.due.dueLabel')}</span>
-          <strong className={styles.amountValue}>{amount(group.due)}</strong>
-          {group.paid > 0 && (
-            <span className={styles.paid}>
-              {t('adminPayments.due.partPaid', { amount: amount(group.paid) })}
-            </span>
-          )}
-        </div>
-        <div className={styles.actions}>
-          {group.kind === 'order' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              iconStart="eye"
-              onClick={() => onOpenOrder(group.order.id)}
-            >
-              {t('adminPayments.due.view')}
-            </Button>
-          )}
-          <Button variant="secondary" size="sm" iconStart="receipt" onClick={onPrint}>
-            {t('adminPayments.due.printBill')}
-          </Button>
-          {can('payments.collect') && (
-            <Button size="sm" iconStart="cash" onClick={onCollect}>
-              {t('adminPayments.due.collect')}
-            </Button>
-          )}
-        </div>
-      </div>
     </li>
   );
 }

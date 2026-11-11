@@ -13,9 +13,10 @@ import styles from './MenuDishRow.module.css';
 const DECORATIVE = '';
 
 /**
- * One dish for staff: its picture, name and type, sizes and prices, and whether guests can order
- * it. The switch takes it off (asking how: sold out, until when, off today) or puts it back;
- * the state opens the same choice; Edit opens the dish.
+ * One dish for staff: its picture, name and type, sizes and prices; then one switch with what
+ * it means beside it ("Available", "Sold out · back 8 PM"): the switch takes it off (asking how)
+ * or puts it back, the words open the same choice. Tapping the dish, or Edit, opens it; Recipe
+ * (inventory) opens its recipe.
  */
 export function MenuDishRow({
   dish,
@@ -64,6 +65,25 @@ export function MenuDishRow({
     ...(dish.addOns?.length ? [t.plural('adminMenu.meta.addOns', dish.addOns.length)] : []),
   ];
 
+  const details = (
+    <>
+      <span className={styles.name}>
+        <VegMark veg={dish.veg} />
+        <span className={styles.nameText}>{dish.name}</span>
+      </span>
+      <span className={styles.prices}>
+        {dish.variants && dish.variants.length > 0
+          ? dish.variants.map((v) => (
+              <span key={v.id} className={cx(v.available === false && styles.sizeOff)}>
+                {t('adminMenu.sizePrice', { size: v.name, price: money.format(v.price) })}
+              </span>
+            ))
+          : money.format(dish.price)}
+      </span>
+      {parts.length > 0 && <span className={styles.meta}>{parts.join(' · ')}</span>}
+    </>
+  );
+
   return (
     <li className={cx(styles.row, !on && styles.off)}>
       <span className={styles.thumb} aria-hidden="true">
@@ -82,37 +102,21 @@ export function MenuDishRow({
         )}
       </span>
 
-      <div className={styles.main}>
-        <p className={styles.name}>
-          <VegMark veg={dish.veg} />
-          {dish.name}
-        </p>
-        <p className={styles.prices}>
-          {dish.variants && dish.variants.length > 0
-            ? dish.variants.map((v) => (
-                <span key={v.id} className={cx(v.available === false && styles.sizeOff)}>
-                  {t('adminMenu.sizePrice', { size: v.name, price: money.format(v.price) })}
-                </span>
-              ))
-            : money.format(dish.price)}
-        </p>
-        {parts.length > 0 && <p className={styles.meta}>{parts.join(' · ')}</p>}
-      </div>
+      {/* Tapping the dish opens it (when it can be edited here). */}
+      {onEdit && !reorder ? (
+        <button
+          type="button"
+          className={cx(styles.main, styles.mainButton)}
+          onClick={onEdit}
+          aria-label={t('adminMenu.edit', { dish: dish.name })}
+        >
+          {details}
+        </button>
+      ) : (
+        <div className={styles.main}>{details}</div>
+      )}
 
-      <button
-        type="button"
-        className={cx(styles.status, styles[status])}
-        onClick={onAvailability}
-        aria-label={t('adminMenu.changeAvailability', { dish: dish.name })}
-      >
-        <span className={styles.dot} aria-hidden="true" />
-        {statusLabel}
-        {on && off.length > 0 && (
-          <span className={styles.partly}>{t.plural('adminMenu.sizesOff', off.length)}</span>
-        )}
-      </button>
-
-      <div className={styles.controls}>
+      <div className={styles.availability}>
         {reorder ? (
           <>
             <IconButton
@@ -136,29 +140,54 @@ export function MenuDishRow({
               onChange={onSwitch}
               label={t('adminMenu.toggle', { dish: dish.name })}
             />
-            {onRecipe && (
-              <button
-                type="button"
-                className={styles.edit}
-                onClick={onRecipe}
-                aria-label={t('adminInventory.recipes.open', { dish: dish.name })}
-              >
-                <Icon name="list" size="xs" />
-              </button>
-            )}
-            {onEdit && (
-              <button
-                type="button"
-                className={styles.edit}
-                onClick={onEdit}
-                aria-label={t('adminMenu.edit', { dish: dish.name })}
-              >
-                <Icon name="pencil" size="xs" />
-              </button>
-            )}
+            {/* What the switch means, in words: tap it to change how it's off. */}
+            <button
+              type="button"
+              className={cx(styles.status, styles[status])}
+              onClick={onAvailability}
+              aria-label={t('adminMenu.changeAvailability', { dish: dish.name })}
+            >
+              <span className={styles.dot} aria-hidden="true" />
+              <span>
+                {statusLabel}
+                {on && off.length > 0 && (
+                  <span className={styles.partly}>
+                    {' · '}
+                    {t.plural('adminMenu.sizesOff', off.length)}
+                  </span>
+                )}
+              </span>
+            </button>
           </>
         )}
       </div>
+
+      {!reorder && (onRecipe || onEdit) && (
+        <div className={styles.actions}>
+          {onRecipe && (
+            <button
+              type="button"
+              className={styles.action}
+              onClick={onRecipe}
+              aria-label={t('adminInventory.recipes.open', { dish: dish.name })}
+            >
+              <Icon name="list" size="xs" />
+              <span className={styles.actionLabel}>{t('adminMenu.recipe')}</span>
+            </button>
+          )}
+          {onEdit && (
+            <button
+              type="button"
+              className={cx(styles.action, styles.editAction)}
+              onClick={onEdit}
+              aria-label={t('adminMenu.edit', { dish: dish.name })}
+            >
+              <Icon name="pencil" size="xs" />
+              <span className={styles.actionLabel}>{t('adminMenu.editShort')}</span>
+            </button>
+          )}
+        </div>
+      )}
     </li>
   );
 }

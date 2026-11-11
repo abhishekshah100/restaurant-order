@@ -12,14 +12,67 @@
   gap: 12px;
 }
 
+/*
+ * History and Booking rules joined as one quiet pair (look-ups), then New reservation, the one
+ * strong button. One row everywhere: on a phone the pair shows icons alone and New reservation
+ * takes the rest of the width.
+ */
 .actions {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.new {
-  justify-self: stretch;
+.quiet {
+  display: flex;
+  flex: none;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.actions .quietButton {
+  height: 44px;
+  gap: 7px;
+  color: var(--ink-2);
+}
+
+.actions .quietButton:not(:first-child) {
+  margin-left: -1.5px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.actions .quietButton:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Over its neighbour, so the darker hover border shows on all four sides. */
+.actions .quietButton:hover,
+.actions .quietButton:focus-visible {
+  position: relative;
+  z-index: 1;
+  color: var(--ink);
+}
+
+.actions .new {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding-inline: 18px;
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--brand-600) 70%, transparent);
+}
+
+@media (max-width: 599px) {
+  .actions .quietButton {
+    width: 44px;
+    padding-inline: 0;
+  }
+
+  .quietLabel {
+    display: none;
+  }
 }
 
 /* ---------- The day ---------- */
@@ -166,6 +219,10 @@
   .top {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .actions .new {
+    flex: none;
   }
 
   .stats {

@@ -38,6 +38,16 @@ export function shiftDay(key: string, days: number): string {
 }
 
 /** Whether a text names a real calendar day ("2026-02-30" doesn't). */
+/**
+ * A run of the branch's days as staff read it: "12 Nov 2026", or "12 Nov 2026 – 14 Nov 2026".
+ * `date` writes one day (the branch clock's `date`); days are read at noon, so no time zone
+ * moves them.
+ */
+export const daysLabel = (date: (at: Date) => string, from: string, to: string): string => {
+  const one = (key: string) => date(new Date(`${key}T12:00:00Z`));
+  return from === to ? one(from) : `${one(from)} – ${one(to)}`;
+};
+
 export const isDayKey = (value: string): boolean =>
   DAY_KEY.test(value) && shiftDay(value, 0) === value;
 

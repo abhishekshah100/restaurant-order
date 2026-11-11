@@ -55,6 +55,22 @@
 
 /* ---------- Views and tools ---------- */
 
+.viewsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.viewsRow > .views {
+  flex: 1;
+  min-width: 0;
+}
+
+.viewsRow > :last-child {
+  flex: none;
+}
+
+
 .views,
 .modes {
   display: flex;

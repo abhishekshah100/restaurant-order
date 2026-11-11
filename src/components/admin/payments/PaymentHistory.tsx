@@ -3,20 +3,18 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { HistoryTransaction, PaymentHistoryResponse } from '@/api/contracts';
-import { api } from '@/api/endpoints';
+import type { PaymentHistoryResponse } from '@/api/contracts';
 import { useContent, usePaymentHistory } from '@/api/hooks';
 import { Button, Chip, EmptyState, Icon, SearchField } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
-import { useAdminToken } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { paymentHistoryPath, paymentsPath } from '@/lib/adminNav';
-import type { ChannelFilter, LedgerLine } from '@/lib/adminPayments';
+import type { ChannelFilter } from '@/lib/adminPayments';
 import { PAYMENT_HISTORY_LIMITS, parseDayRange, shiftDay, type DayRange } from '@/lib/dayRange';
-import type { WaiveReason } from '@/types/order';
 import { DateRangeFilter } from '../DateRangeFilter';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { toLine, useAllPayments } from './historyLines';
 import { LedgerRow } from './LedgerRow';
 import { MethodBreakdown } from './MethodBreakdown';
 import { useLedgerExport } from './paymentsExport';
@@ -38,29 +36,6 @@ const PRESETS = [
   { days: 365, key: 'year' },
 ] as const;
 
-/** A transaction as the rows show it (the order's number, guest, how it's served). */
-const toLine = (tx: HistoryTransaction): LedgerLine => ({
-  id: tx.id,
-  kind: tx.kind,
-  amount: tx.amount,
-  channel: tx.channel,
-  method: tx.method,
-  at: tx.at,
-  ...(tx.by ? { by: tx.by } : {}),
-  ...(tx.transactionRef ? { transactionRef: tx.transactionRef } : {}),
-  ...(tx.tip ? { tip: tx.tip } : {}),
-  ...(tx.waived ? { waived: tx.waived } : {}),
-  ...(tx.waiveReason ? { waiveReason: tx.waiveReason as WaiveReason } : {}),
-  ...(tx.reason ? { reason: tx.reason as LedgerLine['reason'] } : {}),
-  ...(tx.status ? { status: tx.status } : {}),
-  order: {
-    id: tx.orderId,
-    customerName: tx.customerName,
-    mode: tx.mode,
-    ...(tx.table !== undefined ? { table: tx.table } : {}),
-  },
-});
-
 /**
  * /admin/dashboard/payments/history/: the branch's money over the days picked, on a page of its
  * own (today's Payments stays about today). Quick ranges (7 days to a year) or any From–To up to
@@ -73,10 +48,10 @@ export function PaymentHistory() {
   const t = useContent('common');
   const router = useRouter();
   const { branch, clock } = useAdminWorkspace();
-  const token = useAdminToken();
   const { showToast } = useToast();
   const text = usePaymentText();
   const exportLedger = useLedgerExport();
+  const allPayments = useAllPayments();
   const now = useNow(60_000);
   const today = clock.dayKey(now ?? new Date());
   const fromParam = useQueryParam('from');
@@ -124,21 +99,10 @@ export function PaymentHistory() {
 
   /** Every matching transaction, a thousand at a time, into one Excel file. */
   const exportAll = async () => {
-    if (!token) return;
     setExporting(true);
     try {
-      const all: HistoryTransaction[] = [];
-      let cursor: string | undefined;
-      do {
-        const page = await api.paymentHistory(token, branch.id, {
-          ...query,
-          limit: 1000,
-          ...(cursor ? { cursor } : {}),
-        });
-        all.push(...page.transactions);
-        cursor = page.next;
-      } while (cursor);
-      exportLedger(all.map(toLine), days.from === days.to ? days.from : `${days.from}_${days.to}`);
+      const all = await allPayments(branch.id, query);
+      exportLedger(all, days.from === days.to ? days.from : `${days.from}_${days.to}`);
     } catch {
       showToast(t('adminPayments.failed'), { tone: 'error' });
     } finally {

@@ -17,6 +17,7 @@ import {
   type RequestFilter,
 } from '@/lib/adminRequests';
 import type { AdminServiceRequest } from '@/types/admin';
+import { HistoryButton } from '../HistoryButton';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { RequestCard } from './RequestCard';
 import { useRequestText } from './useRequestText';
@@ -46,6 +47,10 @@ export function RequestsBoard() {
   const resolve = useResolveRequest();
   const failed = () => showToast(t('adminRequests.failed'), { tone: 'error' });
 
+  const history = (
+    <HistoryButton href={REQUEST_HISTORY_PATH} label={t('adminRequests.historyButton')} />
+  );
+
   const card = (request: AdminServiceRequest) => (
     <RequestCard
       key={request.id}
@@ -68,12 +73,19 @@ export function RequestsBoard() {
     const { waiting, coming, done } = requestGroups(service.data, filter);
     content = (
       <>
-        <div className={styles.filters} role="group" aria-label={t('adminRequests.filters.label')}>
-          {REQUEST_FILTERS.map((f) => (
-            <Chip key={f} pressed={filter === f} count={counts[f]} onClick={() => setFilter(f)}>
-              {t(`adminRequests.filters.${f}`)}
-            </Chip>
-          ))}
+        <div className={styles.filtersRow}>
+          <div
+            className={styles.filters}
+            role="group"
+            aria-label={t('adminRequests.filters.label')}
+          >
+            {REQUEST_FILTERS.map((f) => (
+              <Chip key={f} pressed={filter === f} count={counts[f]} onClick={() => setFilter(f)}>
+                {t(`adminRequests.filters.${f}`)}
+              </Chip>
+            ))}
+          </div>
+          {history}
         </div>
 
         {waiting.length + coming.length === 0 ? (
@@ -148,11 +160,8 @@ export function RequestsBoard() {
     <div className={styles.page}>
       {/* The bar above already names the page; the heading is for screen readers. */}
       <h1 className="visually-hidden">{t('adminRequests.title')}</h1>
-      <div className={styles.toolbar}>
-        <Button href={REQUEST_HISTORY_PATH} variant="secondary" size="sm" iconStart="history">
-          {t('adminRequests.historyButton')}
-        </Button>
-      </div>
+      {/* Until the filters show, History waits on its own row, so it's always reachable. */}
+      {!service.data && <div className={styles.toolbar}>{history}</div>}
       {content}
     </div>
   );

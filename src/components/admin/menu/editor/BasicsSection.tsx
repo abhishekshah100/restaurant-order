@@ -40,28 +40,32 @@ export function BasicsSection({
       <Textarea
         id="dish-description"
         label={t('adminMenu.editor.description')}
+        hint={t('adminMenu.editor.descriptionHint')}
         optional
-        rows={2}
-        maxLength={200}
+        rows={3}
+        maxLength={600}
         placeholder={t('adminMenu.editor.descriptionPlaceholder')}
         value={form.description}
         onChange={(event) => set({ description: event.target.value })}
       />
       <div className={styles.twoUp}>
-        <Select
-          id="dish-category"
-          label={t('adminMenu.editor.category')}
-          value={form.categoryId}
-          onChange={(event) =>
-            set({ categoryId: menu.getCategory(event.target.value)?.id ?? form.categoryId })
-          }
-        >
-          {menu.categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
+        {/* A simple menu (one category) has nothing to pick. */}
+        {menu.categories.length > 1 && (
+          <Select
+            id="dish-category"
+            label={t('adminMenu.editor.category')}
+            value={form.categoryId}
+            onChange={(event) =>
+              set({ categoryId: menu.getCategory(event.target.value)?.id ?? form.categoryId })
+            }
+          >
+            {menu.categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        )}
         <fieldset className={styles.fieldset}>
           <legend className={styles.legend}>{t('adminMenu.editor.type')}</legend>
           <div className={styles.chips}>

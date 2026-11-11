@@ -10,6 +10,7 @@ import type {
   AdminServiceRequest,
   AdminSession,
   AdminStaffMember,
+  RemovedStaffMember,
   AdminTableDetail,
   AdminTableQrCodes,
   CancelReason,
@@ -187,6 +188,13 @@ export type ApiErrorCode =
   | 'role_system'
   | 'role_in_use'
   | 'staff_exists'
+  | 'shift_type_exists'
+  | 'colleague_busy'
+  | 'swap_open'
+  /** 409: those times overlap another shift of the person's. */
+  | 'shift_overlap'
+  /** 409: leave is already asked for or given on some of those days. */
+  | 'time_off_overlap'
   | 'own_account'
   | 'last_admin'
   | 'wrong_password'
@@ -1183,6 +1191,8 @@ export interface RoleInput {
  */
 export interface StaffResponse {
   staff: AdminStaffMember[];
+  /** Removed from the team here (soft) and not added back, newest first. */
+  removed: RemovedStaffMember[];
   roles: { id: string; name: string; scope: StaffScope }[];
 }
 
@@ -1204,14 +1214,39 @@ export interface AddStaffRequest {
 }
 
 /**
- * `PATCH /admin/branches/:branchId/staff/:staffId` — a new name, a role here, on or off (off
- * signs them out everywhere). 200 → `AdminStaffMember`. Errors: 403, 404, 409 own_account
+ * `PATCH /admin/branches/:branchId/staff/:staffId` — a new name, sign-in email or mobile number
+ * (either signs them out everywhere but one's own device), a role here, on or off (off signs
+ * them out everywhere and frees their tables). 200 → `AdminStaffMember`. Errors: 400 (`field`:
+ * phone), 403, 404, 409 staff_exists (the email or number is someone else's), 409 own_account
  * (one's own role or status), 409 last_admin (the restaurant's only active admin).
+ *
+ * `POST …/staff/:staffId/remove` (`RemoveStaffRequest`) — removed from the team here (soft: their
+ * history stays; signed out and switched off when they have no role anywhere else). 204.
+ * Errors: 400 (no reason), 403, 404, 409 own_account, 409 last_admin.
  */
 export interface UpdateStaffRequest {
   name?: string;
+  email?: string;
+  /** National digits, by the branch's mobile rules. */
+  phone?: string;
   roleId?: string;
+  /** Needed with `active: false`: why their sign-in is turned off (3–300 characters). */
+  reason?: string;
   active?: boolean;
+}
+
+/**
+ * `POST /admin/branches/:branchId/staff/:staffId/restore` — someone removed from here, back with
+ * the role they had (or `roleId`). 200 → `AdminStaffMember`. Errors: 400 roleId (their old role
+ * is gone), 403, 404.
+ */
+export interface RemoveStaffRequest {
+  /** Why (3–300 characters). */
+  reason: string;
+}
+
+export interface RestoreStaffRequest {
+  roleId?: string;
 }
 
 /**

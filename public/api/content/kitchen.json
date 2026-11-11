@@ -356,8 +356,9 @@
   "kot": {
     "title": "Kitchen order",
     "token": "Token {token}",
-    "order": "Order {order}",
-    "placed": "{time}",
+    "order": "#{order}",
+    "placed": "In at {time}",
+    "quantity": "{count}×",
     "round": "Round {round}",
     "note": "Note: {note}",
     "printed": "Printed {time}"
@@ -392,5 +393,24 @@
     "itemDone": "{dish} marked out of stock · waiters told",
     "orderDone": "Order #{order} cancelled (out of stock) · waiters told",
     "failed": "That didn't go through. Try again."
+  },
+  "shift": {
+    "button": "Shift",
+    "title": "My shift",
+    "open": "My shift: {status}",
+    "onShift": "On shift",
+    "today": "Your shift today {time}",
+    "noneToday": "No shift planned for you today. You can still shift in.",
+    "since": "On shift since {time}",
+    "shiftIn": "Shift in",
+    "shiftOut": "Shift out",
+    "confirmOut": "Yes, shift out",
+    "confirmBody": "Shift out now? Your time sheet ends here.",
+    "cancel": "Cancel",
+    "week": "This week",
+    "started": "Shifted in at {time}.",
+    "ended": "Shifted out. See you next shift.",
+    "failed": "Couldn't update your shift. Try again.",
+    "askTimeOff": "Apply for leave"
   }
 }
