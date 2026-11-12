@@ -197,7 +197,14 @@
       "same": "Choose a different password from the one you were given",
       "save": "Save and continue",
       "failed": "Couldn't save your password. Try again."
-    }
+    },
+    "idleSignedOut": "You were signed out because nobody used the screen for {minutes} minutes. This keeps the account safe on shared devices. Sign in again to carry on."
+  },
+  "adminIdle": {
+    "title": "Still there?",
+    "body": "Nobody has used this screen for a while. To keep the account safe, you'll be signed out in {seconds} seconds.",
+    "stay": "Stay signed in",
+    "signOut": "Sign out now"
   },
   "countryNames": {
     "IN": "India",
@@ -1263,221 +1270,327 @@
   },
   "adminCash": {
     "title": "Cash register",
-    "subtitle": "Open the drawer with a float, close it with a count.",
+    "subtitle": "Count the cash when you open the drawer and when you close it. The app keeps track of everything in between.",
     "tabs": {
-      "label": "Cash register views",
-      "register": "Register",
-      "day": "Day end",
+      "label": "Cash register pages",
+      "register": "Today's drawer",
+      "day": "End of day",
       "reports": "Reports"
     },
-    "needsReview": "Needs review",
+    "needsReview": "Needs a check",
     "backendOnly": "The cash register needs the server. It isn't available in the demo.",
-    "loading": "Loading the cash register",
-    "failed": "Couldn't load the cash register.",
+    "loading": "Loading the cash drawer",
+    "failed": "Couldn't load the cash drawer.",
     "retry": "Try again",
     "status": {
       "open": "Open",
       "closed": "Closed"
     },
-    "register": "Register #{number}",
+    "register": "Drawer #{number}",
     "openedBy": "Opened {time} by {name}",
     "opened": "Opened {time}",
     "open": {
-      "title": "Open the register",
-      "body": "Count the cash in the drawer and open the register. Cash can't be taken while it's closed.",
-      "float": "Opening float",
-      "floatHint": "The last close counted {amount}.",
+      "title": "Start the day",
+      "body": "Count the cash in the drawer, then open it. Cash payments can only be taken while the drawer is open.",
+      "float": "Cash in the drawer now",
       "count": "Count notes and coins",
-      "total": "Enter a total instead",
-      "confirm": "Open register",
-      "done": "Register opened with {amount}",
-      "exists": "The register is already open."
+      "total": "Type the total instead",
+      "confirm": "Open the drawer",
+      "done": "Drawer opened with {amount}",
+      "exists": "The drawer is already open.",
+      "useLast": "Same as last close: {amount}",
+      "confirmAmount": "Open the drawer with {amount}"
     },
     "counter": {
       "label": "Notes and coins",
-      "quantity": "Number of {value}",
-      "total": "Total {amount}"
+      "quantity": "How many {value}",
+      "total": "Total {amount}",
+      "hint": "Type how many of each note and coin you have."
     },
     "current": {
-      "float": "Opening float",
-      "taken": "Cash taken",
-      "tips": "incl. {amount} tips",
-      "refunded": "Cash refunds",
-      "paidIn": "Paid in",
-      "paidOut": "Paid out",
-      "expected": "Expected in drawer",
-      "blind": "The expected amount shows after the count at close."
+      "float": "Cash at start",
+      "taken": "Cash from bills",
+      "refunded": "Cash given back",
+      "paidIn": "Cash added",
+      "paidOut": "Cash taken out",
+      "expected": "Should be in the drawer now",
+      "blind": "You'll see if the cash matches when you close the drawer and count it.",
+      "equation": "How it adds up"
     },
     "actions": {
-      "payIn": "Pay in",
-      "payOut": "Pay out",
-      "close": "Close register"
+      "payIn": "Add cash",
+      "payOut": "Take cash out",
+      "close": "Close & count",
+      "payInHint": "e.g. change from the bank",
+      "payOutHint": "e.g. paid a supplier",
+      "closeHint": "When your shift ends"
     },
     "movements": {
-      "title": "Paid in and out",
-      "none": "Nothing paid in or out yet.",
+      "title": "Cash added or taken out",
+      "none": "No cash added or taken out yet.",
       "by": "by {name}"
     },
     "reasons": {
-      "float": "Float top-up",
-      "supplies": "Supplies",
-      "withdrawal": "Owner withdrawal",
-      "bank": "Bank deposit",
-      "other": "Other"
+      "float": "More change for the drawer",
+      "supplies": "Bought supplies",
+      "withdrawal": "Owner took cash",
+      "bank": "Put in the bank",
+      "other": "Something else"
     },
     "move": {
-      "titleIn": "Pay cash in",
-      "titleOut": "Pay cash out",
-      "amount": "Amount",
-      "reason": "Why",
+      "titleIn": "Add cash to the drawer",
+      "titleOut": "Take cash out of the drawer",
+      "amount": "How much?",
+      "reason": "What is it for?",
       "note": "Note",
-      "notePlaceholder": "e.g. Milk and bread",
-      "confirmIn": "Pay in {amount}",
-      "confirmOut": "Pay out {amount}",
-      "doneIn": "{amount} paid in",
-      "doneOut": "{amount} paid out"
+      "notePlaceholder": "For example: milk and bread from the shop",
+      "confirmIn": "Add {amount}",
+      "confirmOut": "Take out {amount}",
+      "doneIn": "{amount} added to the drawer",
+      "doneOut": "{amount} taken out of the drawer"
     },
     "close": {
-      "title": "Close register #{number}",
-      "countBody": "Count the cash in the drawer. You'll see the expected amount after.",
-      "counted": "Counted cash",
-      "check": "Check count",
-      "expected": "Expected",
-      "countedRow": "Counted",
+      "title": "Close drawer #{number}",
+      "countBody": "Count all the cash in the drawer. After you count, you'll see if it matches.",
+      "counted": "Cash in the drawer",
+      "check": "Check my count",
+      "expected": "Should be",
+      "countedRow": "You counted",
       "difference": "Difference",
-      "match": "Count matches",
+      "match": "Matches",
       "short": "{amount} short",
-      "over": "{amount} over",
-      "methodsTitle": "Card and UPI totals",
-      "methodsBody": "Optional: from the card machine's batch report and the UPI app. Leave blank to skip.",
+      "over": "{amount} extra",
+      "methodsTitle": "Card & UPI totals",
+      "methodsBody": "Copy the totals from the card machine's end-of-day slip and from the UPI app. This is optional: you can skip it.",
       "methodTotal": "{method} total",
       "cashRow": "Cash",
       "notChecked": "Not checked",
-      "why": "Why doesn't it match?",
-      "whyPlaceholder": "e.g. Wrong change given at table 4",
+      "why": "What happened?",
+      "whyPlaceholder": "For example: gave wrong change at table 4",
       "recount": "Count again",
-      "confirm": "Close register",
-      "done": "Register #{number} closed"
+      "confirm": "Close the drawer",
+      "done": "Drawer #{number} closed",
+      "stepCount": "Count the cash",
+      "stepCards": "Card & UPI",
+      "stepCheck": "Check",
+      "next": "Next",
+      "back": "Back",
+      "skip": "Skip this step",
+      "resultTitle": "The count doesn't match",
+      "resultShort": "{way}: {amount} less than it should be",
+      "resultOver": "{way}: {amount} more than it should be",
+      "whyHint": "Needed to close the drawer when the count doesn't match.",
+      "doneMatch": "Drawer #{number} closed. Everything matched."
     },
     "history": {
-      "title": "Recent sessions",
-      "none": "No closed sessions yet.",
+      "title": "Earlier drawers",
+      "none": "No closed drawers yet.",
       "when": "{from} – {to}",
-      "view": "View register #{number}"
+      "view": "See drawer #{number}"
     },
     "session": {
-      "title": "Register #{number}",
+      "title": "Drawer #{number}",
       "opened": "Opened",
       "closed": "Closed",
-      "note": "Reason given"
+      "note": "What happened",
+      "stillOpen": "Still open",
+      "result": "Did the cash match?",
+      "howItAddsUp": "How it adds up",
+      "counts": "Notes and coins counted",
+      "openingCount": "When it opened",
+      "closingCount": "When it closed",
+      "countLine": "{value} × {quantity}",
+      "methods": "Card & UPI",
+      "needsCheck": "This drawer needs a check",
+      "needsCheckBody": "The count was off by more than the allowed difference. Look into it, then mark it as checked.",
+      "needsCheckWait": "The count was off by more than the allowed difference. A manager will check it.",
+      "checkNote": "What did you find?",
+      "checkPlaceholder": "For example: Ravi gave ₹10 too much change; spoken to him",
+      "markChecked": "Mark as checked",
+      "checked": "Checked by {name} · {time}",
+      "checkedNoName": "Checked · {time}",
+      "checkedToast": "Drawer #{number} marked as checked",
+      "checkFailed": "Couldn't save that. Try again."
     },
     "day": {
       "date": "Day",
       "status": {
-        "signed": "Signed off by {name} · {time}",
-        "signedNoName": "Signed off · {time}",
-        "open": "A register is still open this day. Close it to sign off.",
-        "pending": "Not signed off yet",
-        "empty": "No register sessions this day."
+        "signed": "Checked and signed off by {name} · {time}",
+        "signedNoName": "Checked and signed off · {time}",
+        "open": "A drawer is still open on this day. Close it before signing off.",
+        "pending": "Waiting for a manager to sign off",
+        "empty": "No drawer was opened on this day."
       },
-      "cashTitle": "Cash",
-      "methodsTitle": "Card and UPI",
-      "sessionsTitle": "Register sessions",
+      "cashTitle": "Did the cash match?",
+      "methodsTitle": "Card & UPI",
+      "sessionsTitle": "Drawers on this day",
       "needsReview": {
-        "one": "{count} session needs review",
-        "other": "{count} sessions need review"
+        "one": "{count} needs a check",
+        "other": "{count} need a check"
       },
-      "way": "Way",
-      "expected": "Expected",
+      "way": "Paid by",
+      "expected": "Should be",
       "counted": "Counted",
       "difference": "Difference",
       "signOff": "Sign off the day",
-      "signOffNote": "Note for the record",
-      "signOffPlaceholder": "e.g. Short ₹50 explained by Ravi",
+      "signOffNote": "Note",
+      "signOffPlaceholder": "For example: ₹50 short, explained by Ravi",
       "signedToast": "{day} signed off",
-      "signFailed": "Couldn't sign off. Try again."
+      "signFailed": "Couldn't sign off. Try again.",
+      "closedCount": {
+        "one": "{count} drawer closed",
+        "other": "{count} drawers closed"
+      },
+      "openCount": {
+        "one": "{count} still open",
+        "other": "{count} still open"
+      },
+      "cashBody": "For the drawers closed on this day.",
+      "openNote": {
+        "one": "{count} drawer is still open, so it isn't counted here yet.",
+        "other": "{count} drawers are still open, so they aren't counted here yet."
+      },
+      "flowTitle": "Cash during the day",
+      "signOffBody": "Signing off means you've checked this day's cash. Do it once every drawer is closed.",
+      "prevDay": "Day before",
+      "nextDay": "Next day",
+      "today": "Today",
+      "yesterday": "Yesterday"
     },
     "report": {
       "from": "From",
       "to": "To",
       "daysTitle": "Day by day",
-      "staffTitle": "By staff",
-      "none": "No closed register sessions in these days.",
+      "staffTitle": "Who closed the drawers",
+      "none": "No drawers were closed on these days.",
       "day": "Day",
-      "sessions": "Sessions",
-      "expected": "Expected",
+      "sessions": "Drawers",
+      "expected": "Should be",
       "counted": "Counted",
       "difference": "Difference",
-      "review": "Review",
+      "review": "To check",
       "signedOff": "Signed off",
       "yes": "Yes",
-      "no": "No",
-      "name": "Closed by",
+      "no": "Not yet",
+      "name": "Name",
       "short": "Short",
-      "over": "Over",
+      "over": "Extra",
       "failed": "Couldn't load the report.",
-      "range": "Choose up to 92 days, ending today at the latest."
+      "range": "Pick up to 92 days, ending today at the latest.",
+      "kpiShort": "Total short",
+      "kpiOver": "Total extra",
+      "kpiDays": "Days with a difference",
+      "kpiReview": "Drawers to check",
+      "settings": "Settings"
     },
     "limit": {
-      "title": "Difference limit",
-      "body": "A difference bigger than this (cash, card or UPI) is marked Needs review. 0 means any difference.",
+      "title": "Allowed difference",
+      "body": "If a count is off by more than this, the drawer is marked for a manager to check. Set 0 to check every difference.",
       "label": "Allowed difference",
-      "save": "Save limit",
-      "saved": "Limit saved: {amount}",
-      "failed": "Couldn't save the limit."
+      "save": "Save",
+      "saved": "Allowed difference saved: {amount}",
+      "failed": "Couldn't save. Try again."
     },
     "errors": {
-      "closed": "The register is closed. Open it first.",
+      "closed": "The drawer is closed. Open it first.",
       "failed": "Couldn't save that. Try again."
-    }
+    },
+    "stale": "This drawer has been open since {date}. Close it and count the cash, then open a fresh one for today.",
+    "checked": "Checked"
   },
   "adminRefunds": {
     "title": "Refunds & cancellations",
-    "subtitle": "Every refund and cancelled order, why, and refunds still on their way to guests.",
+    "subtitle": "Give money back to a guest, cancel an order, and see every refund and cancellation.",
     "loading": "Loading refunds and cancellations",
     "failed": "Couldn't load refunds and cancellations.",
     "retry": "Try again",
-    "note": "Covers orders placed in the days chosen.",
+    "actions": {
+      "refund": "Refund an order",
+      "refundHint": "Give money back on a paid order",
+      "cancel": "Cancel an order",
+      "cancelHint": "Stop an order that isn't finished"
+    },
+    "ranges": {
+      "label": "Show",
+      "today": "Today",
+      "week": "Last 7 days",
+      "month": "This month",
+      "custom": "Pick days"
+    },
+    "countNote": "Refunds show on the day the money was given back. Cancelled orders show on the day of the order.",
     "summary": {
-      "refunded": "Refunded",
+      "refunded": "Money given back",
       "refundedSub": "{inPerson} in person · {online} online",
-      "cancelled": "Cancelled orders",
-      "cancelledSub": "{amount} in orders",
-      "pending": "Online refunds on their way"
+      "cancelled": "Orders cancelled",
+      "cancelledSub": "Orders worth {amount}",
+      "pending": "Online refunds on the way",
+      "pendingSub": "{amount} still to reach guests",
+      "pendingNone": "Nothing waiting",
+      "before": "{days}: {amount}",
+      "yesterday": "Yesterday",
+      "daysBefore": "{count} days before",
+      "pendingLate": "{count} late · check with the bank"
     },
     "pending": {
-      "title": "Online refunds on their way",
-      "body": "The payment partner takes 5–7 working days. Mark a refund received once the guest has it.",
-      "received": "Mark received",
-      "receivedToast": "Refund on #{order} marked received",
-      "failed": "Couldn't update the refund. Try again."
+      "title": "Waiting for the guest's bank",
+      "body": "Online refunds from the last 30 days that haven't reached the guest yet. They usually take 5–7 working days. When the guest says they got the money, tap Guest got it.",
+      "received": "Guest got it",
+      "receivedToast": "Marked as received: refund on #{order}",
+      "failed": "Couldn't update the refund. Try again.",
+      "late": "Late · check with the bank",
+      "lateHint": "It's been more than 7 days. Ask the guest for their bank's reference, or check with the payment partner."
     },
     "reasons": {
-      "title": "By reason",
+      "title": "Why",
+      "hint": "Tap a reason to see only those.",
       "none": "No reason given",
-      "count": "× {count}",
-      "option": "{kind} · {reason}"
+      "count": "{count}×",
+      "option": "{kind}: {reason}"
     },
     "filters": {
-      "kind": "Show",
-      "all": "Refunds and cancellations",
+      "label": "Show",
+      "all": "All",
       "refund": "Refunds",
       "cancel": "Cancellations",
+      "more": "More filters",
       "reason": "Reason",
-      "allReasons": "All reasons",
-      "staff": "Refunded by",
+      "allReasons": "Any reason",
+      "staff": "Given back by",
       "allStaff": "Anyone",
-      "search": "Order, guest or table"
+      "search": "Search order, guest or table",
+      "clear": "Clear filters"
     },
     "list": {
-      "title": "All refunds and cancellations",
-      "none": "Nothing refunded or cancelled in these days.",
-      "noMatch": "Nothing matches these filters.",
+      "title": "Every refund and cancellation",
+      "none": "Nothing was refunded or cancelled on these days.",
+      "noMatch": "Nothing matches. Try clearing the filters.",
       "refund": "Refund",
       "cancel": "Cancelled",
+      "refundLine": "{amount} given back · {method}",
+      "cancelLine": "Order cancelled · it was worth {amount}",
       "by": "by {name}",
       "byGuest": "by the guest",
-      "byRestaurant": "by the restaurant"
+      "byRestaurant": "by the restaurant",
+      "given": "Given back",
+      "onWay": "On its way",
+      "dayTotal": "{amount} given back",
+      "late": "Late",
+      "open": "Open order #{order}",
+      "openFailed": "Couldn't open the order. Try again."
+    },
+    "picker": {
+      "refundTitle": "Refund an order",
+      "cancelTitle": "Cancel an order",
+      "refundBody": "Pick the order to give money back on. Paid orders from the last 30 days are here.",
+      "cancelBody": "Pick the order to cancel. Today's orders that aren't finished are here.",
+      "search": "Search order number, guest or table",
+      "none": "There are no orders to pick right now.",
+      "noMatch": "No order matches “{query}”.",
+      "paid": "{amount} paid",
+      "loading": "Loading orders",
+      "refundHelp": "Not here? Orders older than 30 days, or already refunded in full, can't be refunded from here.",
+      "cancelHelp": "Not here? Paid or finished orders can't be cancelled. Give the money back instead.",
+      "switchToRefund": "Refund an order instead"
     }
   },
   "adminInventory": {
@@ -2649,6 +2762,7 @@
         "one": "{count} off today",
         "other": "{count} off today"
       },
+      "showOnly": "Show only:",
       "showAll": "Show all"
     }
   },
@@ -2988,12 +3102,12 @@
     "historyButton": "Payment history",
     "history": {
       "title": "Payment history",
-      "subtitle": "Every payment and refund on the days you pick, with totals by payment method.",
+      "subtitle": "Every payment and refund on the days you pick. Each one counts on the day it was taken.",
       "back": "Today's payments",
       "views": {
         "label": "Show",
-        "transactions": "Payments & refunds",
-        "refunds": "Refunds only"
+        "transactions": "All",
+        "refunds": "Refunds"
       },
       "period": {
         "day": "{date}",
@@ -3007,9 +3121,8 @@
         "half": "Last 6 months",
         "year": "Last year"
       },
-      "countedNote": "Each payment counts on the day it was taken. The totals cover every payment on these days; the filters only narrow the list.",
-      "net": "Net takings",
-      "netHint": "{collected} collected · {refunds} refunded",
+      "net": "Net taken",
+      "netHint": "{collected} collected · {refunds} refunded · {payments}",
       "online": "Online",
       "inPerson": "In person",
       "tips": "Tips",
@@ -3021,8 +3134,17 @@
       },
       "showing": "Showing {shown} of {total}",
       "more": "Show more",
-      "export": "Export to Excel",
-      "exporting": "Preparing the file…"
+      "export": "Excel",
+      "exporting": "Preparing the file…",
+      "days": "Days",
+      "cash": "Cash taken",
+      "left": "Left off bills",
+      "totalsNote": "The totals above still cover every payment on these days; filters only narrow this list.",
+      "channelAll": "Paid: all",
+      "methodAll": "Method: all",
+      "clear": "Clear filters",
+      "dayLine": "{count} · {amount}",
+      "exportLabel": "Download these payments as an Excel file"
     },
     "orderId": "#{order}",
     "loading": "Loading payments",
@@ -3329,7 +3451,8 @@
       "today": "Today",
       "earlier": "From earlier days",
       "earlierHint": "Still unpaid. Collect or follow up."
-    }
+    },
+    "methodWithChannel": "{method} · {channel}"
   },
   "adminSettings": {
     "title": "Settings",

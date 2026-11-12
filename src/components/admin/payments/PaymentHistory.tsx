@@ -5,25 +5,31 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { PaymentHistoryResponse } from '@/api/contracts';
 import { useContent, usePaymentHistory } from '@/api/hooks';
-import { Button, Chip, EmptyState, Icon, SearchField } from '@/components/ui';
+import { Button, Chip, EmptyState, Icon, SearchField, Select } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { paymentHistoryPath, paymentsPath } from '@/lib/adminNav';
 import type { ChannelFilter } from '@/lib/adminPayments';
-import { PAYMENT_HISTORY_LIMITS, parseDayRange, shiftDay, type DayRange } from '@/lib/dayRange';
+import {
+  PAYMENT_HISTORY_LIMITS,
+  groupByDay,
+  parseDayRange,
+  shiftDay,
+  type DayRange,
+} from '@/lib/dayRange';
 import { DateRangeFilter } from '../DateRangeFilter';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { toLine, useAllPayments } from './historyLines';
 import { LedgerRow } from './LedgerRow';
 import { MethodBreakdown } from './MethodBreakdown';
 import { useLedgerExport } from './paymentsExport';
-import { usePaymentText } from './usePaymentText';
+import { useMethodLabels, usePaymentText } from './usePaymentText';
 import styles from './PaymentsBoard.module.css';
 import own from './PaymentHistory.module.css';
-import cards from '../HistorySummary.module.css';
 
 const CHANNELS: readonly ChannelFilter[] = ['all', 'online', 'inPerson'];
+const NO_METHODS: readonly { method: string; channel: 'online' | 'inPerson' }[] = [];
 const VIEWS = ['transactions', 'refunds'] as const;
 type View = (typeof VIEWS)[number];
 /** Without days in the address: the last week, today included. */
@@ -39,10 +45,11 @@ const PRESETS = [
 /**
  * /admin/dashboard/payments/history/: the branch's money over the days picked, on a page of its
  * own (today's Payments stays about today). Quick ranges (7 days to a year) or any From–To up to
- * a year, back two years. The totals are summed on the server, so a year is exact: net takings,
- * online and in person, tips, refunds, by payment method; then every payment and refund, newest
- * first, 50 at a time, searchable and filtered (the filters narrow the list, not the totals),
- * with an Excel export of all of them. Each payment counts on the day it was taken.
+ * a year, back two years. A light summary the server adds up (exact over a year): net taken,
+ * then online, in person, tips, refunds, cash taken; Excel. Then All or Refunds, a search with
+ * Paid and Method as two drop-downs (the filters narrow the list, not the totals), and every
+ * payment and refund newest first, under its day with the day's count and total, 50 at a time;
+ * by payment method beside it (two methods with one name say how they were paid).
  */
 export function PaymentHistory() {
   const t = useContent('common');
@@ -85,6 +92,7 @@ export function PaymentHistory() {
   const pages = history.data?.pages ?? [];
   const first: PaymentHistoryResponse | undefined = pages[0];
   const lines = pages.flatMap((p) => p.transactions).map(toLine);
+  const methodLabel = useMethodLabels(first?.summary.byMethod ?? NO_METHODS);
 
   const goTo = (range: DayRange, next: View = view) =>
     router.replace(paymentHistoryPath(range, next), { scroll: false });
@@ -113,91 +121,104 @@ export function PaymentHistory() {
   let content;
   if (first) {
     const { summary } = first;
-    const paid = summary.online + summary.inPerson;
-    const onlineShare = paid > 0 ? (summary.online / paid) * 100 : 0;
     const methods = summary.byMethod
       .filter((m) => m.count > 0)
       .map((m) => m.method)
       .filter((m, i, all) => all.indexOf(m) === i);
     const filtered = search !== '' || method !== 'all' || channel !== 'all';
+    const clear = () => {
+      setTyped('');
+      setSearch('');
+      setChannel('all');
+      setMethod('all');
+    };
+    const small: { key: string; label: string; value: string; tone?: string }[] = [
+      {
+        key: 'online',
+        label: t('adminPayments.history.online'),
+        value: text.amount(summary.online),
+      },
+      {
+        key: 'inPerson',
+        label: t('adminPayments.history.inPerson'),
+        value: text.amount(summary.inPerson),
+      },
+      { key: 'tips', label: t('adminPayments.history.tips'), value: text.amount(summary.tips) },
+      {
+        key: 'refunds',
+        label: t('adminPayments.history.refunds'),
+        value: text.amount(summary.refunds),
+        tone: summary.refunds > 0 ? own.refunds : undefined,
+      },
+      ...(summary.waived > 0
+        ? [
+            {
+              key: 'left',
+              label: t('adminPayments.history.left'),
+              value: text.amount(summary.waived),
+            },
+          ]
+        : []),
+      {
+        key: 'cash',
+        label: t('adminPayments.history.cash'),
+        value: text.amount(summary.cashTaken),
+      },
+    ];
+    // Newest first, each day under its heading with what's listed that day.
+    const byDay = groupByDay(lines, (l) => clock.dayKey(l.at));
 
     content = (
       <>
         <section className={own.summary} aria-labelledby="history-net">
-          <div className={cards.hero}>
-            <p className={cards.eyebrow}>{period}</p>
-            <h2 id="history-net" className={cards.heroLabel}>
+          <div className={own.summaryHead}>
+            <p className={own.period}>{period}</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              iconStart="list"
+              loading={exporting}
+              aria-label={t('adminPayments.history.exportLabel')}
+              onClick={() => void exportAll()}
+            >
+              {exporting ? t('adminPayments.history.exporting') : t('adminPayments.history.export')}
+            </Button>
+          </div>
+          <div className={own.net}>
+            <h2 id="history-net" className={own.netLabel}>
               {t('adminPayments.history.net')}
             </h2>
-            <p className={cards.bigValue}>{text.amount(summary.net)}</p>
-            <p className={cards.heroHint}>
+            <p className={own.netValue}>{text.amount(summary.net)}</p>
+            <p className={own.netHint}>
               {t('adminPayments.history.netHint', {
                 collected: text.amount(summary.collected),
                 refunds: text.amount(summary.refunds),
+                payments: t.plural('adminPayments.history.payments', summary.payments),
               })}
-              {' · '}
-              {t.plural('adminPayments.history.payments', summary.payments)}
             </p>
-            <div className={own.bar} aria-hidden="true">
-              <span style={{ width: `${onlineShare}%` }} />
-            </div>
-            <div className={own.split}>
-              <span>
-                <i className={own.dotOnline} /> {t('adminPayments.history.online')}{' '}
-                <b>{text.amount(summary.online)}</b>
-              </span>
-              <span>
-                <i className={own.dotInPerson} /> {t('adminPayments.history.inPerson')}{' '}
-                <b>{text.amount(summary.inPerson)}</b>
-              </span>
-            </div>
-            <div className={cards.heroActions}>
-              <Button
-                variant="secondary"
-                size="sm"
-                iconStart="list"
-                loading={exporting}
-                onClick={() => void exportAll()}
-              >
-                {exporting
-                  ? t('adminPayments.history.exporting')
-                  : t('adminPayments.history.export')}
-              </Button>
-            </div>
           </div>
-          <div className={own.kpis}>
-            <div className={cards.kpi}>
-              <span className={cards.kpiLabel}>
-                <Icon name="heart" size="xs" />
-                {t('adminPayments.history.tips')}
-              </span>
-              <span className={cards.kpiValue}>{text.amount(summary.tips)}</span>
-            </div>
-            <div className={cards.kpi}>
-              <span className={cards.kpiLabel}>
-                <Icon name="refresh" size="xs" />
-                {t('adminPayments.history.refunds')}
-              </span>
-              <span className={cards.kpiValue}>{text.amount(summary.refunds)}</span>
-              {summary.refundsPending > 0 && (
-                <span className={cards.kpiHint}>
-                  {t('adminPayments.history.refundsHint', {
-                    pending: text.amount(summary.refundsPending),
-                  })}
-                </span>
-              )}
-            </div>
-          </div>
+          <dl className={own.small}>
+            {small.map((s) => (
+              <div key={s.key} className={own.item}>
+                <dt>{s.label}</dt>
+                <dd className={s.tone}>{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {summary.refundsPending > 0 && (
+            <p className={own.pending}>
+              <Icon name="clock" size="xs" />
+              {t('adminPayments.history.refundsHint', {
+                pending: text.amount(summary.refundsPending),
+              })}
+            </p>
+          )}
         </section>
-        <p className={cards.note}>
-          <Icon name="info" size="xs" />
-          {t('adminPayments.history.countedNote')}
-        </p>
 
         <div className={styles.columns}>
           <section className={styles.panel} aria-label={t(`adminPayments.history.views.${view}`)}>
             <div
-              className={styles.views}
+              className={own.views}
               role="group"
               aria-label={t('adminPayments.history.views.label')}
             >
@@ -214,51 +235,85 @@ export function PaymentHistory() {
                 </Chip>
               ))}
             </div>
-            <div className={styles.tools}>
+            <div className={own.tools}>
               <SearchField
                 value={typed}
                 onChange={setTyped}
                 label={t('adminPayments.search.ledger')}
                 placeholder={t('adminPayments.search.ledger')}
               />
-              <div className={styles.filters}>
-                <div
-                  className={styles.chips}
-                  role="group"
-                  aria-label={t('adminPayments.channels.label')}
+              <div className={own.selects}>
+                <Select
+                  id="history-channel"
+                  label={t('adminPayments.channels.label')}
+                  hideLabel
+                  value={channel}
+                  onChange={(event) =>
+                    setChannel(CHANNELS.find((c) => c === event.target.value) ?? 'all')
+                  }
                 >
                   {CHANNELS.map((c) => (
-                    <Chip key={c} pressed={channel === c} onClick={() => setChannel(c)}>
-                      {t(`adminPayments.channels.${c}`)}
-                    </Chip>
+                    <option key={c} value={c}>
+                      {c === 'all'
+                        ? t('adminPayments.history.channelAll')
+                        : t(`adminPayments.channels.${c}`)}
+                    </option>
                   ))}
-                </div>
+                </Select>
                 {methods.length > 1 && (
-                  <div
-                    className={styles.chips}
-                    role="group"
-                    aria-label={t('adminPayments.methodFilter.label')}
+                  <Select
+                    id="history-method"
+                    label={t('adminPayments.methodFilter.label')}
+                    hideLabel
+                    value={method}
+                    onChange={(event) => setMethod(event.target.value)}
                   >
-                    <Chip pressed={method === 'all'} onClick={() => setMethod('all')}>
-                      {t('adminPayments.methodFilter.all')}
-                    </Chip>
+                    <option value="all">{t('adminPayments.history.methodAll')}</option>
                     {methods.map((m) => (
-                      <Chip key={m} pressed={method === m} onClick={() => setMethod(m)}>
-                        {text.methodName(m)}
-                      </Chip>
+                      <option key={m} value={m}>
+                        {methodLabel(m)}
+                      </option>
                     ))}
-                  </div>
+                  </Select>
                 )}
               </div>
+              {filtered && (
+                <p className={own.filterNote}>
+                  <span>{t('adminPayments.history.totalsNote')}</span>
+                  <button type="button" className={own.clear} onClick={clear}>
+                    {t('adminPayments.history.clear')}
+                  </button>
+                </p>
+              )}
             </div>
             <div className={styles.body}>
               {lines.length > 0 ? (
                 <>
-                  <ul className={styles.ledger}>
-                    {lines.map((line) => (
-                      <LedgerRow key={line.id} entry={line} />
-                    ))}
-                  </ul>
+                  {byDay.map(({ day, items }) => {
+                    const net = items.reduce(
+                      (sum, l) => sum + (l.kind === 'refund' ? -l.amount : l.amount),
+                      0,
+                    );
+                    const count = items.filter((l) => l.kind === 'payment').length;
+                    return (
+                      <section key={day} className={own.day} aria-label={dayLabel(day)}>
+                        <h3 className={own.dayHead}>
+                          <span>{dayLabel(day)}</span>
+                          <span className={own.dayTotal}>
+                            {t('adminPayments.history.dayLine', {
+                              count: t.plural('adminPayments.history.payments', count),
+                              amount: text.amount(net),
+                            })}
+                          </span>
+                        </h3>
+                        <ul className={styles.ledger}>
+                          {items.map((line) => (
+                            <LedgerRow key={line.id} entry={line} />
+                          ))}
+                        </ul>
+                      </section>
+                    );
+                  })}
                   <div className={own.more}>
                     <span className="t-small c3">
                       {t('adminPayments.history.showing', {
@@ -290,6 +345,13 @@ export function PaymentHistory() {
                         : t('adminPayments.empty.transactionsTitle')
                   }
                   className={styles.state}
+                  actions={
+                    filtered ? (
+                      <Button variant="secondary" size="sm" onClick={clear}>
+                        {t('adminPayments.history.clear')}
+                      </Button>
+                    ) : undefined
+                  }
                 >
                   {search
                     ? t('adminPayments.empty.search', { query: search })
@@ -352,17 +414,19 @@ export function PaymentHistory() {
         <h1 className={styles.historyTitle}>{t('adminPayments.history.title')}</h1>
         <p className="t-small c2">{t('adminPayments.history.subtitle')}</p>
       </div>
-      <DateRangeFilter
-        id="payment-history-days"
-        range={days}
-        today={today}
-        limits={PAYMENT_HISTORY_LIMITS}
-        presets={PRESETS.map((p) => ({
-          days: p.days,
-          label: t(`adminPayments.history.presets.${p.key}`),
-        }))}
-        onChange={(range) => goTo(range)}
-      />
+      <section className={own.days} aria-label={t('adminPayments.history.days')}>
+        <DateRangeFilter
+          id="payment-history-days"
+          range={days}
+          today={today}
+          limits={PAYMENT_HISTORY_LIMITS}
+          presets={PRESETS.map((p) => ({
+            days: p.days,
+            label: t(`adminPayments.history.presets.${p.key}`),
+          }))}
+          onChange={(range) => goTo(range)}
+        />
+      </section>
       {content}
     </div>
   );

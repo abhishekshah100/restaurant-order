@@ -1,4 +1,5 @@
 import type { AdminSession } from '@/types/admin';
+import { clearIdleSignOut, clearLastActive, localStore, writeLastActive } from './idleSignOut';
 import { readJSON, removeKey, writeJSON } from './storage';
 
 const SESSION_KEY = 'olive.admin.session.v1';
@@ -48,6 +49,9 @@ export function isAdminSession(value: unknown): value is AdminSession {
 /** Keeps the session the server returned on this device. */
 export function signInAdmin(session: AdminSession) {
   writeJSON(SESSION_KEY, session);
+  // Signing in is using the screen: the idle sign-out counts from now.
+  writeLastActive(localStore(), Date.now());
+  clearIdleSignOut(localStore());
   notify();
 }
 
@@ -104,5 +108,6 @@ export function selectedAdminBranch<T extends { id: string }>(
 export function signOutAdmin() {
   removeKey(SESSION_KEY);
   removeKey(BRANCH_KEY);
+  clearLastActive(localStore());
   notify();
 }

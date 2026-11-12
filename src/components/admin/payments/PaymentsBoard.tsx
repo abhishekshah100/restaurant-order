@@ -40,7 +40,7 @@ import { MethodBreakdown } from './MethodBreakdown';
 import { useLedgerExport } from './paymentsExport';
 import { usePaymentPrint } from './PaymentPrint';
 import { TodayStrip } from './TodayStrip';
-import { usePaymentText } from './usePaymentText';
+import { useMethodLabels, usePaymentText } from './usePaymentText';
 import styles from './PaymentsBoard.module.css';
 
 // Popups: each downloaded the first time it opens.
@@ -67,6 +67,7 @@ const AGE_REFRESH_MS = 20_000;
 type CollectKey = { kind: 'order'; id: string } | { kind: 'table'; table: number };
 
 const CHANNELS: readonly ChannelFilter[] = ['all', 'online', 'inPerson'];
+const NO_METHODS: readonly { method: string; channel: 'online' | 'inPerson' }[] = [];
 
 /** Today's payments and refunds read at once (a busy day is a few hundred). */
 const TODAY_PAGE = 500;
@@ -114,6 +115,8 @@ export function PaymentsBoard() {
   // Today's money as it's taken: the totals and every payment and refund (filtered here, so the
   // day report always has the whole day). A busy day fits in one page; more load on request.
   const money = useTodayPayments(branch.id, { from: today, to: today, limit: TODAY_PAGE });
+  // Two methods with one name (UPI in person and online) say which is which.
+  const methodLabel = useMethodLabels(money.data?.pages[0]?.summary.byMethod ?? NO_METHODS);
   const moneyPages = money.data?.pages ?? [];
   const lines = moneyPages.flatMap((p) => p.transactions).map(toLine);
   // An order the lists don't hold (paid today, placed days ago), read when it's opened.
@@ -369,7 +372,7 @@ export function PaymentsBoard() {
                       </Chip>
                       {methods.map((m) => (
                         <Chip key={m} pressed={method === m} onClick={() => setMethod(m)}>
-                          {text.methodName(m)}
+                          {methodLabel(m)}
                         </Chip>
                       ))}
                     </div>

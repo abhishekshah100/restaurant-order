@@ -48,3 +48,29 @@ export function usePaymentWords(money: Money) {
     };
   }, [t, money]);
 }
+
+/**
+ * Each method's name as a list shows it: its name ("Cash", "UPI"), with how it was paid when two
+ * methods share a name ("UPI · In person", "UPI · Online"), so no two read the same.
+ */
+export function useMethodLabels(
+  methods: readonly { method: string; channel: 'online' | 'inPerson' }[],
+): (method: string) => string {
+  const t = useContent('common');
+  const { methodName } = usePaymentText();
+  return useMemo(() => {
+    const named = methods.map((m) => ({ ...m, name: methodName(m.method) }));
+    const labels = new Map(
+      named.map((m) => [
+        m.method,
+        named.some((o) => o.method !== m.method && o.name === m.name)
+          ? t('adminPayments.methodWithChannel', {
+              method: m.name,
+              channel: t(`adminPayments.channels.${m.channel}`),
+            })
+          : m.name,
+      ]),
+    );
+    return (method: string) => labels.get(method) ?? methodName(method);
+  }, [methods, methodName, t]);
+}

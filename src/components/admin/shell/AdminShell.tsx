@@ -25,6 +25,7 @@ import { ShellHeader } from './ShellHeader';
 import { Sidebar } from './Sidebar';
 import { useShellActions } from './useShellActions';
 import { useAlertsSetting, useServiceAlerts } from './useServiceAlerts';
+import { IdleSignOut } from './IdleSignOut';
 import styles from './AdminShell.module.css';
 import { useBranchEvents } from '@/api/liveEvents';
 
@@ -68,6 +69,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
 
   return (
     <div className={styles.shell}>
+      <IdleSignOut />
       <Sidebar
         active={active}
         counts={counts}

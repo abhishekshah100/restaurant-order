@@ -47,9 +47,12 @@ export function SessionRow({
                   ? t('adminCash.close.short', { amount: money.format(-(s.difference ?? 0)) })
                   : t('adminCash.close.over', { amount: money.format(s.difference ?? 0) })}
             </span>
-            {s.overLimit && (
-              <span className={cx(styles.chip, styles.short)}>{t('adminCash.needsReview')}</span>
-            )}
+            {s.overLimit &&
+              (s.checked ? (
+                <span className={cx(styles.chip, styles.match)}>{t('adminCash.checked')}</span>
+              ) : (
+                <span className={cx(styles.chip, styles.short)}>{t('adminCash.needsReview')}</span>
+              ))}
           </>
         ) : (
           <span className={cx(styles.chip, styles.isOpen)}>{t('adminCash.status.open')}</span>

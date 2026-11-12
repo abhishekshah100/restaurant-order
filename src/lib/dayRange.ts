@@ -37,6 +37,18 @@ export function shiftDay(key: string, days: number): string {
   return new Date(Date.UTC(year, month - 1, day) + days * DAY_MS).toISOString().slice(0, 10);
 }
 
+/** How many days a range covers ("2026-11-06" to "2026-11-12": 7). */
+export const dayCount = (range: DayRange): number =>
+  Math.round(
+    (Date.parse(`${range.to}T12:00:00Z`) - Date.parse(`${range.from}T12:00:00Z`)) / DAY_MS,
+  ) + 1;
+
+/** The same number of days just before a range (to compare with). */
+export const daysBefore = (range: DayRange): DayRange => ({
+  from: shiftDay(range.from, -dayCount(range)),
+  to: shiftDay(range.from, -1),
+});
+
 /** Whether a text names a real calendar day ("2026-02-30" doesn't). */
 /**
  * A run of the branch's days as staff read it: "12 Nov 2026", or "12 Nov 2026 – 14 Nov 2026".

@@ -64,6 +64,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['POST', 'admin/branches/:branchId/cash-register/close'],
   ['GET', 'admin/branches/:branchId/cash-register/days/:day'],
   ['POST', 'admin/branches/:branchId/cash-register/days/:day/sign-off'],
+  ['POST', 'admin/branches/:branchId/cash-register/sessions/:id/check'],
   ['GET', 'admin/branches/:branchId/cash-register/report'],
   ['PATCH', 'admin/branches/:branchId/cash-register/limit'],
   // Inventory: ingredients, each branch's stock, the ledger.

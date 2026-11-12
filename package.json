@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/add-csp.mjs",
     "start": "serve out -l 3000",
     "lint": "eslint --max-warnings=0 .",
     "format": "prettier --write .",

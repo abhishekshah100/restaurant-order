@@ -1,13 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
   filterRefunds,
+  isLateRefund,
   reasonTotals,
   refundStaff,
   refundsEntries,
   refundsSummary,
   transactionSeq,
 } from '@/lib/refundsReport';
+import { ledgerOf } from '@/lib/adminPayments';
 import type { Order, PaymentTransaction } from '@/types/order';
+
+/** The money given back, as the server lists it: each refund with its order. */
+const linesOf = (orders: readonly Order[]) =>
+  orders.flatMap((o) => ledgerOf(o).map((t) => ({ ...t, order: o })));
+const entriesOf = (orders: readonly Order[]) => refundsEntries(linesOf(orders), orders);
 
 /* Refunds & cancellations: one list, its totals, reasons and filters. */
 
@@ -69,7 +76,7 @@ const orders = [
 
 describe('refunds and cancellations', () => {
   it('lists every refund and cancellation, newest first', () => {
-    const entries = refundsEntries(orders);
+    const entries = entriesOf(orders);
     // At the same moment, the cancellation first.
     expect(entries.map((e) => e.key)).toEqual(['A2-cancel', 'A2-T2', 'A1-T2']);
     expect(transactionSeq('BLR-001-T12')).toBe(12);
@@ -77,7 +84,7 @@ describe('refunds and cancellations', () => {
   });
 
   it('adds up refunds by channel, cancellations and what is still on its way', () => {
-    expect(refundsSummary(refundsEntries(orders))).toEqual({
+    expect(refundsSummary(entriesOf(orders))).toEqual({
       refunded: 450,
       refundedInPerson: 50,
       refundedOnline: 400,
@@ -90,7 +97,7 @@ describe('refunds and cancellations', () => {
   });
 
   it('totals the reasons and filters by kind, reason, staff and search', () => {
-    const entries = refundsEntries(orders);
+    const entries = entriesOf(orders);
     expect(reasonTotals(entries).map((r) => [r.kind, r.reason, r.amount])).toEqual([
       ['cancel', 'An item ran out', 400],
       ['refund', 'cancelled', 400],
@@ -102,5 +109,14 @@ describe('refunds and cancellations', () => {
     expect(filterRefunds(entries, { ...all, staff: 'Meera' }).map((e) => e.key)).toEqual(['A1-T2']);
     expect(filterRefunds(entries, { ...all, query: 'a2' })).toHaveLength(2);
     expect(refundStaff(entries)).toEqual(['Meera']);
+  });
+
+  it('calls an online refund late after 7 days on its way', () => {
+    const [cancel, onWay, cash] = entriesOf(orders);
+    // Given 3 Nov 11:00.
+    expect(isLateRefund(onWay!, new Date('2026-11-10T10:00:00.000Z'))).toBe(false);
+    expect(isLateRefund(onWay!, new Date('2026-11-10T12:00:00.000Z'))).toBe(true);
+    expect(isLateRefund(cash!, new Date('2026-12-01T00:00:00.000Z'))).toBe(false);
+    expect(isLateRefund(cancel!, new Date('2026-12-01T00:00:00.000Z'))).toBe(false);
   });
 });

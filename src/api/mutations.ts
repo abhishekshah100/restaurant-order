@@ -82,16 +82,14 @@ import type {
   ValidatePromoRequest,
 } from './contracts';
 import { api } from './endpoints';
+import { branchOf, refreshAfter, type Change } from './refreshAfter';
 import { ApiError, isApiError } from './client';
 import {
   branchMenuQuery,
   adminSearchSuggestionsQuery,
   adminCartSuggestionsQuery,
-  searchSuggestionsQuery,
   branchOrdersQuery,
-  branchPromotionsQuery,
   branchServiceQuery,
-  branchesQuery,
   branchSettingsQuery,
   floorLayoutQuery,
   orderQuery,
@@ -100,28 +98,29 @@ import {
 } from './queries';
 
 /*
- * Every write, as a TanStack mutation over api/endpoints. After a write the affected reads are
- * updated or invalidated here, so screens never refresh caches themselves.
+ * Every write, as a TanStack mutation over api/endpoints. After a write, what it changed is read
+ * again through the one list in api/refreshAfter ("after X, refresh Y"), so screens never
+ * refresh caches themselves.
  */
 
 /** The order changed on the server meanwhile (too late, or cancelled): read it again. */
 function refreshIfStale(client: QueryClient, error: unknown) {
   if (isApiError(error, 'window_closed') || isApiError(error, 'order_closed')) {
-    return client.invalidateQueries({ queryKey: ['orders'] });
+    return refreshAfter(client, 'guestOrder');
   }
 }
 
 /** The server refused the cart's promo code: price it again, so the cart says why. */
 function refreshPromoIfRefused(client: QueryClient, error: unknown) {
   if (PROMO_REFUSALS.some((code) => isApiError(error, code))) {
-    return client.invalidateQueries({ queryKey: ['promo-quote'] });
+    return refreshAfter(client, 'promoRefused');
   }
 }
 
 /** Caches an order as the server returned it and refreshes every order list. */
 function storeOrders(client: QueryClient, orders: readonly Order[]) {
   for (const order of orders) client.setQueryData(orderQuery(order.id).queryKey, order);
-  return client.invalidateQueries({ queryKey: ['orders'] });
+  return refreshAfter(client, 'guestOrder');
 }
 
 /** POST /admin/sessions: a staff member signs in; resolves with the admin session. */
@@ -208,8 +207,7 @@ export function useCreatePayment() {
   return useMutation({
     mutationFn: api.createPayment,
     onError: async (error) => {
-      if (isApiError(error, 'nothing_to_pay'))
-        await client.invalidateQueries({ queryKey: ['orders'] });
+      if (isApiError(error, 'nothing_to_pay')) await refreshAfter(client, 'guestOrder');
       await refreshPromoIfRefused(client, error);
     },
   });
@@ -223,10 +221,7 @@ export function useSimulatePayment() {
       api.simulatePayment(id, { outcome }),
     onSuccess: async ({ orders }) => {
       if (orders.length === 0) return;
-      await Promise.all([
-        storeOrders(client, orders),
-        client.invalidateQueries({ queryKey: ['service-requests'] }),
-      ]);
+      await Promise.all([storeOrders(client, orders), refreshAfter(client, 'guestPaid')]);
     },
   });
 }
@@ -274,13 +269,13 @@ export function useCancelServiceRequest() {
 
 /**
  * The floor's cached service for this branch updated straight away (`update`); returns how to
- * put it back if the server refuses. Afterwards the floor and the guest-side reads (orders,
- * requests) are refreshed, so every screen in this browser agrees with the server.
+ * put it back if the server refuses. Afterwards what `change` touches is read again
+ * (api/refreshAfter), so every screen in this browser agrees with the server.
  */
 function useOptimisticService<V extends { branchId: string }, R>(
   send: (token: string, variables: V) => Promise<R>,
   update: (service: AdminBranchService, variables: V) => AdminBranchService,
-  refresh: readonly (readonly string[])[],
+  change: Change,
 ) {
   const client = useQueryClient();
   const token = useAdminToken();
@@ -299,12 +294,7 @@ function useOptimisticService<V extends { branchId: string }, R>(
     onError: (_error, _variables, context) => {
       if (context?.previous) client.setQueryData(context.queryKey, context.previous);
     },
-    onSettled: () =>
-      Promise.all(
-        [['admin', 'service'], ...refresh].map((queryKey) =>
-          client.invalidateQueries({ queryKey }),
-        ),
-      ),
+    onSettled: (_data, _error, variables) => refreshAfter(client, change, variables.branchId),
   });
 }
 
@@ -319,7 +309,7 @@ export const useAcknowledgeRequest = () =>
       { request }: { branchId: string; request: AdminServiceRequest; by: string; at: string },
     ) => api.acknowledgeServiceRequest(token, request.id),
     (service, { request, by, at }) => withAcknowledged(service, request.id, by, at),
-    [['service-requests']],
+    'requestHandled',
   );
 
 /**
@@ -331,7 +321,7 @@ export const useResolveRequest = () =>
     (token, { request }: { branchId: string; request: AdminServiceRequest }) =>
       api.resolveServiceRequest(token, request.id),
     (service, { request }) => withoutRequest(service, request.id),
-    [['service-requests']],
+    'requestHandled',
   );
 
 /**
@@ -343,7 +333,7 @@ export const useMarkServed = () =>
     (token, { orderId, round }: { branchId: string; orderId: string; round?: number }) =>
       api.markOrderServed(token, orderId, { round }),
     (service, { orderId, round }) => withoutReadyRound(service, orderId, round),
-    [['orders']],
+    'served',
   );
 
 /**
@@ -388,7 +378,8 @@ export function useSetKitchenStatus() {
     onError: (_error, _variables, context) => {
       if (context?.previous) client.setQueryData(context.queryKey, context.previous);
     },
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'kitchenStep', branchOf(variables)),
   });
 }
 
@@ -409,7 +400,8 @@ export function useSetRush() {
       orderId: string;
       rush: boolean;
     }) => api.setRush(requireToken(token), branchId, orderId, { rush }),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'orderChanged', branchOf(variables)),
   });
 }
 
@@ -427,7 +419,8 @@ export function useSendKitchenMessage() {
       ...body
     }: { branchId: string; orderId: string } & KitchenMessageRequest) =>
       api.sendKitchenMessage(requireToken(token), branchId, orderId, body),
-    onSettled: () => client.invalidateQueries({ queryKey: ['admin', 'service'] }),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'kitchenMessage', branchOf(variables)),
   });
 }
 
@@ -446,7 +439,8 @@ export function useCancelRound() {
       ...body
     }: { branchId: string; orderId: string; round: number } & CancelRoundRequest) =>
       api.cancelRound(requireToken(token), branchId, orderId, round, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'orderChanged', branchOf(variables)),
   });
 }
 
@@ -485,7 +479,8 @@ export function useMarkUnavailable() {
         : api.orderUnavailable(requireToken(token), target.branchId, target.orderId, {
             ...(target.note ? { note: target.note } : {}),
           }),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'itemUnavailable', branchOf(variables)),
   });
 }
 
@@ -570,14 +565,6 @@ function requireToken(token: string | null): string {
   return token;
 }
 
-/** After a waiter's order: the floor, the table and the guests' orders read fresh. */
-const refreshFloor = (client: QueryClient) =>
-  Promise.all(
-    [['admin', 'service'], ['orders'], ['admin', 'cash-register']].map((queryKey) =>
-      client.invalidateQueries({ queryKey }),
-    ),
-  );
-
 /** POST /admin/branches/:branchId/tables/:table/orders: a waiter takes a new order at the table. */
 export function useTakeTableOrder() {
   const client = useQueryClient();
@@ -592,7 +579,8 @@ export function useTakeTableOrder() {
       table: number;
       body: TakeTableOrderRequest;
     }) => api.takeTableOrder(requireToken(token), branchId, table, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'orderChanged', branchOf(variables)),
   });
 }
 
@@ -610,7 +598,8 @@ export function useAddStaffRound() {
       orderId: string;
       body: StaffRoundRequest;
     }) => api.addStaffRound(requireToken(token), branchId, orderId, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'orderChanged', branchOf(variables)),
   });
 }
 
@@ -628,7 +617,8 @@ export function useCollectPayment() {
       orderId: string;
       body: CollectPaymentRequest;
     }) => api.collectPayment(requireToken(token), branchId, orderId, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'paymentTaken', branchOf(variables)),
   });
 }
 
@@ -646,7 +636,8 @@ export function useRefundOrder() {
       orderId: string;
       body: RefundRequest;
     }) => api.refundOrder(requireToken(token), branchId, orderId, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'refundGiven', branchOf(variables)),
   });
 }
 
@@ -657,7 +648,8 @@ export function useRefundReceived() {
   return useMutation({
     mutationFn: ({ branchId, orderId, seq }: { branchId: string; orderId: string; seq: number }) =>
       api.refundReceived(requireToken(token), branchId, orderId, seq),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'refundReceived', branchOf(variables)),
   });
 }
 
@@ -668,7 +660,8 @@ export function useRecordDeposit() {
   return useMutation({
     mutationFn: ({ branchId, id, body }: { branchId: string; id: string; body: DepositRequest }) =>
       api.recordDeposit(requireToken(token), branchId, id, body),
-    onSettled: () => Promise.all([refreshFloor(client), refreshRegister(client)]),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'depositTaken', branchOf(variables)),
   });
 }
 
@@ -679,7 +672,8 @@ export function useMarkReminded() {
   return useMutation({
     mutationFn: ({ branchId, id }: { branchId: string; id: string }) =>
       api.reservationReminded(requireToken(token), branchId, id),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'bookingChanged', branchOf(variables)),
   });
 }
 
@@ -690,7 +684,8 @@ export function useSetReservationRules() {
   return useMutation({
     mutationFn: ({ branchId, rules }: { branchId: string; rules: ReservationRules }) =>
       api.setReservationRules(requireToken(token), branchId, rules),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'bookingChanged', branchOf(variables)),
   });
 }
 
@@ -708,7 +703,8 @@ export function useCancelByStaff() {
       orderId: string;
       body: CancelByStaffRequest;
     }) => api.cancelByStaff(requireToken(token), branchId, orderId, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'orderChanged', branchOf(variables)),
   });
 }
 
@@ -728,7 +724,8 @@ export function useEditStaffRound() {
       round: number;
       body: EditRoundRequest;
     }) => api.editStaffRound(requireToken(token), branchId, orderId, round, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'orderChanged', branchOf(variables)),
   });
 }
 
@@ -746,7 +743,8 @@ export function useCollectTablePayment() {
       table: number;
       body: CollectTableRequest;
     }) => api.collectTablePayment(requireToken(token), branchId, table, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'paymentTaken', branchOf(variables)),
   });
 }
 
@@ -763,12 +761,8 @@ export function useUpdateFloors() {
       api.updateFloors(requireToken(token), branchId, body),
     onSuccess: (layout, { branchId }) =>
       client.setQueryData(floorLayoutQuery(token, branchId).queryKey, layout),
-    onSettled: () =>
-      Promise.all(
-        [['admin'], branchesQuery().queryKey].map((queryKey) =>
-          client.invalidateQueries({ queryKey }),
-        ),
-      ),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'floorPlanChanged', branchOf(variables)),
   });
 }
 
@@ -779,7 +773,8 @@ export function useFreeTable() {
   return useMutation({
     mutationFn: ({ branchId, table }: { branchId: string; table: number }) =>
       api.freeTable(requireToken(token), branchId, table),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'tableChanged', branchOf(variables)),
   });
 }
 
@@ -801,7 +796,8 @@ export function useAssignTables() {
       /** A waiter's id, "me" (the signed-in staff member) or null (nobody). */
       waiterId: string | null;
     }) => api.assignTables(requireToken(token), branchId, { tables, waiterId }),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'tableChanged', branchOf(variables)),
   });
 }
 
@@ -814,11 +810,8 @@ export function useShiftClock() {
       action === 'start'
         ? api.startShift(requireToken(token), branchId)
         : api.endShift(requireToken(token), branchId),
-    onSettled: () =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: ['admin', 'shift'] }),
-        refreshFloor(client),
-      ]),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'shiftChanged', branchOf(variables)),
   });
 }
 
@@ -838,17 +831,10 @@ export function useFixAttendance() {
       'add' in target
         ? api.addShift(requireToken(token), target.branchId, target.add)
         : api.fixShift(requireToken(token), target.branchId, target.id, target.body),
-    onSettled: () =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: ['admin', 'shift'] }),
-        refreshFloor(client),
-      ]),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'shiftChanged', branchOf(variables)),
   });
 }
-
-/** The rota (the planner's weeks and staff's own shifts) read again. */
-const refreshRota = (client: QueryClient) =>
-  client.invalidateQueries({ queryKey: ['admin', 'rota'] });
 
 /** POST …/rota/types (no `id`) or PATCH …/rota/types/:id, or archive (`archive`). */
 export function useSaveShiftType() {
@@ -866,7 +852,8 @@ export function useSaveShiftType() {
         : target.id === undefined
           ? api.addShiftType(requireToken(token), target.branchId, target.body)
           : api.updateShiftType(requireToken(token), target.branchId, target.id, target.body),
-    onSettled: () => refreshRota(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'rotaChanged', branchOf(variables)),
   });
 }
 
@@ -882,7 +869,8 @@ export function useSaveRotaShift() {
       'remove' in target
         ? api.removeRotaShift(requireToken(token), target.branchId, target.remove)
         : api.saveRotaShift(requireToken(token), target.branchId, target.body),
-    onSettled: () => refreshRota(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'rotaChanged', branchOf(variables)),
   });
 }
 
@@ -898,7 +886,8 @@ export function useRotaSettings() {
       branchId: string;
       weekHoursLimit: number | null;
     }) => api.rotaSettings(requireToken(token), branchId, weekHoursLimit),
-    onSettled: () => refreshRota(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'rotaChanged', branchOf(variables)),
   });
 }
 
@@ -924,7 +913,8 @@ export function useTimeOff() {
               'decide',
               target.decide,
             ),
-    onSettled: () => refreshRota(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'rotaChanged', branchOf(variables)),
   });
 }
 
@@ -955,7 +945,8 @@ export function useShiftSwap() {
                 'decide',
                 target.decide,
               ),
-    onSettled: () => refreshRota(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'rotaChanged', branchOf(variables)),
   });
 }
 
@@ -973,7 +964,8 @@ export function useRotaWeekAction() {
       action: 'copy' | 'clear' | 'publish';
       week: string;
     }) => api.rotaWeekAction(requireToken(token), branchId, action, week),
-    onSettled: () => refreshRota(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'rotaChanged', branchOf(variables)),
   });
 }
 
@@ -993,7 +985,8 @@ export function useSetTableNote() {
       text: string;
       tags: string[];
     }) => api.setTableNote(requireToken(token), branchId, table, { text, tags }),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'tableChanged', branchOf(variables)),
   });
 }
 
@@ -1003,7 +996,8 @@ export function useClearSections() {
   return useMutation({
     mutationFn: ({ branchId }: { branchId: string }) =>
       api.clearSections(requireToken(token), branchId),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'tableChanged', branchOf(variables)),
   });
 }
 
@@ -1027,7 +1021,8 @@ export function useSaveReservation() {
       id
         ? api.updateReservation(requireToken(token), branchId, id, body)
         : api.createReservation(requireToken(token), branchId, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'bookingChanged', branchOf(variables)),
   });
 }
 
@@ -1045,13 +1040,10 @@ export function useSetReservationStatus() {
       id: string;
       body: SetReservationStatusRequest;
     }) => api.setReservationStatus(requireToken(token), branchId, id, body),
-    onSettled: () => refreshFloor(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'bookingChanged', branchOf(variables)),
   });
 }
-
-/** The branch's menu read again after a staff change (the guest app reads it after a minute). */
-const refreshMenu = (client: QueryClient, branchId: string) =>
-  client.invalidateQueries({ queryKey: branchMenuQuery(branchId).queryKey });
 
 /**
  * PATCH …/menu/dishes/:slug/availability: sold out, off today or back on (and sizes). The menu
@@ -1080,7 +1072,8 @@ export function useSetDishAvailability() {
     onError: (_error, _variables, context) => {
       if (context?.previous) client.setQueryData(context.queryKey, context.previous);
     },
-    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'menuChanged', branchOf(variables)),
   });
 }
 
@@ -1093,7 +1086,8 @@ export function useSaveDish() {
       slug
         ? api.updateDish(requireToken(token), branchId, slug, body)
         : api.createDish(requireToken(token), branchId, body),
-    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'menuChanged', branchOf(variables)),
   });
 }
 
@@ -1104,7 +1098,8 @@ export function useRemoveDish() {
   return useMutation({
     mutationFn: ({ branchId, slug }: { branchId: string; slug: string }) =>
       api.removeDish(requireToken(token), branchId, slug),
-    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'menuChanged', branchOf(variables)),
   });
 }
 
@@ -1124,7 +1119,8 @@ export function useReorderDishes() {
     }) => api.reorderDishes(requireToken(token), branchId, categoryId, { slugs }),
     onSuccess: (menu, { branchId }) =>
       client.setQueryData(branchMenuQuery(branchId).queryKey, menu),
-    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'menuChanged', branchOf(variables)),
   });
 }
 
@@ -1137,7 +1133,8 @@ export function useUpdateCategories() {
       api.updateCategories(requireToken(token), branchId, body),
     onSuccess: (menu, { branchId }) =>
       client.setQueryData(branchMenuQuery(branchId).queryKey, menu),
-    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'menuChanged', branchOf(variables)),
   });
 }
 
@@ -1158,7 +1155,8 @@ export function useCategoryChange() {
     onSuccess: (menu, { branchId }) => {
       if (menu) client.setQueryData(branchMenuQuery(branchId).queryKey, menu);
     },
-    onSettled: (_data, _error, { branchId }) => refreshMenu(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'menuChanged', branchOf(variables)),
   });
 }
 
@@ -1192,11 +1190,8 @@ export function useSaveSearchSuggestions() {
       api.updateSearchSuggestions(requireToken(token), branchId, body),
     onSuccess: (saved, { branchId }) =>
       client.setQueryData(adminSearchSuggestionsQuery(token, branchId).queryKey, saved),
-    onSettled: (_data, _error, { branchId }) =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: searchSuggestionsQuery(branchId).queryKey }),
-        client.invalidateQueries({ queryKey: branchMenuQuery(branchId).queryKey }),
-      ]),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'searchSuggestionsChanged', branchOf(variables)),
   });
 }
 
@@ -1219,22 +1214,10 @@ export function useSaveCartSuggestions() {
     }) => api.updateCartSuggestions(requireToken(token), branchId, body, preview),
     onSuccess: (saved, { branchId, preview }) =>
       client.setQueryData(adminCartSuggestionsQuery(token, branchId, preview).queryKey, saved),
-    onSettled: (_data, _error, { branchId }) =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: ['branches', branchId, 'cart-suggestions'] }),
-        client.invalidateQueries({ queryKey: branchMenuQuery(branchId).queryKey }),
-      ]),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'cartSuggestionsChanged', branchOf(variables)),
   });
 }
-
-/** The cash register changed: it and its sessions are read again. */
-const refreshRegister = (client: QueryClient) =>
-  Promise.all(
-    [
-      ['admin', 'cash-register'],
-      ['admin', 'cash-session'],
-    ].map((queryKey) => client.invalidateQueries({ queryKey })),
-  );
 
 /** POST …/cash-register/open: the drawer opens with a float. */
 export function useOpenRegister() {
@@ -1243,7 +1226,8 @@ export function useOpenRegister() {
   return useMutation({
     mutationFn: ({ branchId, body }: { branchId: string; body: OpenRegisterRequest }) =>
       api.openRegister(requireToken(token), branchId, body),
-    onSettled: () => refreshRegister(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'cashChanged', branchOf(variables)),
   });
 }
 
@@ -1254,7 +1238,8 @@ export function useMoveCash() {
   return useMutation({
     mutationFn: ({ branchId, body }: { branchId: string; body: CashMovementRequest }) =>
       api.moveCash(requireToken(token), branchId, body),
-    onSettled: () => refreshRegister(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'cashChanged', branchOf(variables)),
   });
 }
 
@@ -1265,7 +1250,8 @@ export function useCloseRegister() {
   return useMutation({
     mutationFn: ({ branchId, body }: { branchId: string; body: CloseRegisterRequest }) =>
       api.closeRegister(requireToken(token), branchId, body),
-    onSettled: () => refreshRegister(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'cashChanged', branchOf(variables)),
   });
 }
 
@@ -1276,7 +1262,20 @@ export function useSignOffCashDay() {
   return useMutation({
     mutationFn: ({ branchId, day, note }: { branchId: string; day: string; note?: string }) =>
       api.signOffCashDay(requireToken(token), branchId, day, note),
-    onSettled: () => refreshRegister(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'cashChanged', branchOf(variables)),
+  });
+}
+
+/** POST …/cash-register/sessions/:id/check: a manager checked a drawer that needed it. */
+export function useCheckCashSession() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, id, note }: { branchId: string; id: string; note?: string }) =>
+      api.checkCashSession(requireToken(token), branchId, id, note),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'cashChanged', branchOf(variables)),
   });
 }
 
@@ -1287,7 +1286,8 @@ export function useSetCashLimit() {
   return useMutation({
     mutationFn: ({ branchId, differenceLimit }: { branchId: string; differenceLimit: number }) =>
       api.setCashLimit(requireToken(token), branchId, differenceLimit),
-    onSettled: () => refreshRegister(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'cashChanged', branchOf(variables)),
   });
 }
 
@@ -1301,15 +1301,8 @@ export function useSetFeatures() {
   return useMutation({
     mutationFn: ({ branchId, inventory }: { branchId: string; inventory: boolean }) =>
       api.setFeatures(requireToken(token), branchId, { inventory }),
-    onSettled: (_data, _error, { branchId }) =>
-      Promise.all(
-        [
-          ['admin', 'features', branchId],
-          ['admin', 'branches'],
-          ['admin', 'inventory', branchId],
-          ['branches', branchId, 'menu'],
-        ].map((queryKey) => client.invalidateQueries({ queryKey })),
-      ),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'featuresChanged', branchOf(variables)),
   });
 }
 
@@ -1323,11 +1316,8 @@ function usePurchasingMutation<V extends { branchId: string }, R>(
   const token = useAdminToken();
   return useMutation({
     mutationFn: (variables: V) => call(requireToken(token), variables),
-    onSettled: (_data, _error, { branchId }) =>
-      Promise.all([
-        client.invalidateQueries({ queryKey: ['admin', 'purchasing', branchId] }),
-        client.invalidateQueries({ queryKey: ['admin', 'inventory', branchId] }),
-      ]),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'purchasingChanged', branchOf(variables)),
   });
 }
 
@@ -1393,10 +1383,6 @@ export function useUploadPurchaseProof() {
 
 /* ---------- Inventory (backend only) ---------- */
 
-/** A branch's stock changed: its stock, ledger, alerts and ingredients are read again. */
-const refreshInventory = (client: QueryClient, branchId: string) =>
-  client.invalidateQueries({ queryKey: ['admin', 'inventory', branchId] });
-
 /** A mutation on the branch's inventory that reads it all again afterwards. */
 function useInventoryMutation<V extends { branchId: string }, R>(
   call: (token: string, variables: V) => Promise<R>,
@@ -1405,7 +1391,8 @@ function useInventoryMutation<V extends { branchId: string }, R>(
   const token = useAdminToken();
   return useMutation({
     mutationFn: (variables: V) => call(requireToken(token), variables),
-    onSettled: (_data, _error, { branchId }) => refreshInventory(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'stockChanged', branchOf(variables)),
   });
 }
 
@@ -1503,11 +1490,8 @@ export function useSaveRecipe() {
   return useMutation({
     mutationFn: (v: { branchId: string; slug: string; lines: RecipeLineInput[] }) =>
       api.saveRecipe(requireToken(token), v.branchId, v.slug, v.lines),
-    onSettled: (_data, _error, { branchId }) =>
-      Promise.all([
-        refreshInventory(client, branchId),
-        client.invalidateQueries({ queryKey: ['branches', branchId, 'menu'] }),
-      ]),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'recipeChanged', branchOf(variables)),
   });
 }
 
@@ -1580,25 +1564,10 @@ export function useSetBranchStatus() {
   return useMutation({
     mutationFn: ({ branchId, body }: { branchId: string; body: SetBranchStatusRequest }) =>
       api.setBranchStatus(requireToken(token), branchId, body),
-    onSettled: () =>
-      Promise.all(
-        [['admin', 'branches'], ['branches']].map((queryKey) =>
-          client.invalidateQueries({ queryKey, exact: queryKey[0] === 'branches' }),
-        ),
-      ),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'branchStatusChanged', branchOf(variables)),
   });
 }
-
-/** After a change to a branch's setup: the admin's reads and every guest screen's branch data. */
-const refreshBranches = (client: QueryClient) =>
-  Promise.all([
-    client.invalidateQueries({ queryKey: ['admin'] }),
-    client.invalidateQueries({ queryKey: branchesQuery().queryKey, exact: true }),
-    // Each branch's rules (taxes, payments, delivery) are read on their own.
-    client.invalidateQueries({
-      predicate: ({ queryKey }) => queryKey[0] === 'branches' && queryKey[2] === 'config',
-    }),
-  ]);
 
 /**
  * PATCH /admin/branches/:branchId/settings (a Settings page's section): the page's draft
@@ -1612,7 +1581,8 @@ export function useUpdateBranchSettings() {
       api.updateBranchSettings(requireToken(token), branchId, body),
     onSuccess: (saved, { branchId }) =>
       client.setQueryData(branchSettingsQuery(token, branchId).queryKey, saved),
-    onSettled: () => refreshBranches(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'branchSetupChanged', branchOf(variables)),
   });
 }
 
@@ -1622,7 +1592,8 @@ export function useCreateBranch() {
   const token = useAdminToken();
   return useMutation({
     mutationFn: (body: CreateBranchRequest) => api.createBranch(requireToken(token), body),
-    onSettled: () => refreshBranches(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'branchSetupChanged', branchOf(variables)),
   });
 }
 
@@ -1632,18 +1603,12 @@ export function useRemoveBranch() {
   const token = useAdminToken();
   return useMutation({
     mutationFn: (branchId: string) => api.removeBranch(requireToken(token), branchId),
-    onSettled: () => refreshBranches(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'branchSetupChanged', branchOf(variables)),
   });
 }
 
 /** Offers changed: Settings › Offers lists them again, and the menu's prices follow. */
-/** Staff and the roles' staff counts read again after a change to who works here. */
-const refreshStaff = (client: QueryClient) =>
-  Promise.all([
-    client.invalidateQueries({ queryKey: ['admin', 'staff'] }),
-    client.invalidateQueries({ queryKey: ['admin', 'roles'] }),
-  ]);
-
 /** POST …/staff (no `id`) or PATCH …/staff/:staffId. */
 export function useSaveStaff() {
   const client = useQueryClient();
@@ -1657,7 +1622,8 @@ export function useSaveStaff() {
       target.id === undefined
         ? api.addStaff(requireToken(token), target.branchId, target.body)
         : api.updateStaff(requireToken(token), target.branchId, target.id, target.body),
-    onSettled: () => refreshStaff(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'staffChanged', branchOf(variables)),
   });
 }
 
@@ -1668,7 +1634,8 @@ export function useResetStaffPassword() {
   return useMutation({
     mutationFn: ({ branchId, id, password }: { branchId: string; id: string; password: string }) =>
       api.resetStaffPassword(requireToken(token), branchId, id, { password }),
-    onSettled: () => refreshStaff(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'staffChanged', branchOf(variables)),
   });
 }
 
@@ -1679,7 +1646,8 @@ export function useRemoveStaff() {
   return useMutation({
     mutationFn: ({ branchId, id, reason }: { branchId: string; id: string; reason: string }) =>
       api.removeStaff(requireToken(token), branchId, id, { reason }),
-    onSettled: () => refreshStaff(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'staffChanged', branchOf(variables)),
   });
 }
 
@@ -1690,7 +1658,8 @@ export function useRestoreStaff() {
   return useMutation({
     mutationFn: ({ branchId, id, roleId }: { branchId: string; id: string; roleId?: string }) =>
       api.restoreStaff(requireToken(token), branchId, id, roleId ? { roleId } : {}),
-    onSettled: () => refreshStaff(client),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'staffChanged', branchOf(variables)),
   });
 }
 
@@ -1711,7 +1680,8 @@ export function useSaveRole() {
       id
         ? api.updateRole(requireToken(token), branchId, id, body)
         : api.createRole(requireToken(token), branchId, body),
-    onSettled: () => client.invalidateQueries({ queryKey: ['admin', 'roles'] }),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'rolesChanged', branchOf(variables)),
   });
 }
 
@@ -1722,15 +1692,10 @@ export function useRemoveRole() {
   return useMutation({
     mutationFn: ({ branchId, id }: { branchId: string; id: string }) =>
       api.removeRole(requireToken(token), branchId, id),
-    onSettled: () => client.invalidateQueries({ queryKey: ['admin', 'roles'] }),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'rolesChanged', branchOf(variables)),
   });
 }
-
-const refreshOffers = (client: QueryClient, branchId: string) =>
-  Promise.all([
-    client.invalidateQueries({ queryKey: ['admin', 'offers', branchId] }),
-    client.invalidateQueries({ queryKey: branchPromotionsQuery(branchId).queryKey }),
-  ]);
 
 /** POST or PATCH …/offers: a new automatic offer, or one replaced in full. */
 export function useSaveOffer() {
@@ -1741,7 +1706,8 @@ export function useSaveOffer() {
       id
         ? api.updateOffer(requireToken(token), branchId, id, body)
         : api.createOffer(requireToken(token), branchId, body),
-    onSettled: (_data, _error, { branchId }) => refreshOffers(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'offersChanged', branchOf(variables)),
   });
 }
 
@@ -1752,6 +1718,7 @@ export function useRemoveOffer() {
   return useMutation({
     mutationFn: ({ branchId, id }: { branchId: string; id: string }) =>
       api.removeOffer(requireToken(token), branchId, id),
-    onSettled: (_data, _error, { branchId }) => refreshOffers(client, branchId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'offersChanged', branchOf(variables)),
   });
 }

@@ -6,6 +6,7 @@ import { useAdminToken } from '@/hooks/useAdminSession';
 import { backendUrl, isBackendEnabled } from './backend';
 import type { BranchEvent } from './contracts';
 import { eventsConnected, setEventsConnected, subscribeEventsConnected } from './liveState';
+import { refreshAfter, type Change } from './refreshAfter';
 
 /*
  * The branch's events (GET /admin/branches/:branchId/events, Server-Sent Events) for the staff
@@ -25,19 +26,17 @@ export function useEventsConnected(): boolean {
   return useSyncExternalStore(subscribeEventsConnected, eventsConnected, () => false);
 }
 
-/** What an event makes stale: orders, tables and the floor; requests; the menu; stock; everything. */
+/** What an event makes stale (api/refreshAfter): orders and money, requests, the menu, stock, everything. */
+const EVENT_CHANGE = {
+  orders: 'ordersEvent',
+  service: 'serviceEvent',
+  menu: 'menuEvent',
+  inventory: 'stockEvent',
+  resync: 'resyncEvent',
+} as const satisfies Record<BranchEvent['kind'], Change>;
+
 function refresh(client: QueryClient, branchId: string, kind: BranchEvent['kind']) {
-  if (kind === 'orders' || kind === 'service' || kind === 'resync') {
-    void client.invalidateQueries({ queryKey: ['admin', 'service'] });
-  }
-  if (kind === 'menu' || kind === 'resync') {
-    void client.invalidateQueries({ queryKey: ['branches', branchId, 'menu'] });
-    // Stock takes dishes off: the recipes list shows which.
-    void client.invalidateQueries({ queryKey: ['admin', 'inventory', branchId, 'recipes'] });
-  }
-  if (kind === 'inventory' || kind === 'resync') {
-    void client.invalidateQueries({ queryKey: ['admin', 'inventory', branchId] });
-  }
+  void refreshAfter(client, EVENT_CHANGE[kind], branchId);
 }
 
 /** The events in a chunk of the stream: blocks of `event:` and `data:` lines; the rest is left. */

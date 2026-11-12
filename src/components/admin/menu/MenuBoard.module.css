@@ -33,17 +33,28 @@
   gap: 4px 6px;
 }
 
+.statesLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 2px;
+  color: var(--ink-3);
+  font: var(--font-meta-strong);
+}
+
+/* Outlined pills with a pointer: they look like what they are, filters to tap. */
 .stateChip {
   --tone: var(--success);
   position: relative;
-  min-height: 30px;
-  padding: 0 10px 0 8px;
+  min-height: 32px;
+  padding: 0 12px 0 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid transparent;
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-pill);
-  background: none;
+  background: var(--surface);
+  box-shadow: var(--sh-1);
   color: var(--ink-2);
   font: var(--font-small-strong);
   cursor: pointer;
@@ -58,9 +69,14 @@
 }
 
 .stateChip[aria-pressed='true'] {
-  border-color: color-mix(in srgb, var(--tone) 45%, var(--line));
-  background: color-mix(in srgb, var(--tone) 10%, var(--surface));
+  border-color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 12%, var(--surface));
   color: var(--ink);
+}
+
+.stateClear {
+  margin-left: 2px;
+  color: var(--ink-2);
 }
 
 .stateDot {
@@ -77,6 +93,7 @@
 
 @media (hover: hover) {
   .stateChip:hover {
+    border-color: var(--tone);
     background: color-mix(in srgb, var(--tone) 8%, var(--surface));
   }
 }

@@ -141,7 +141,12 @@ export function MenuBoard() {
         <div className={styles.top}>
           <div className={styles.summary}>
             <p className={styles.total}>{t.plural('adminMenu.summary.dishes', counts.all)}</p>
+            {/* Filters, so they read as ones: "Show only", outlined pills, an × on the one in use. */}
             <div className={styles.states} role="group" aria-label={t('adminMenu.filters.label')}>
+              <span className={styles.statesLabel} aria-hidden="true">
+                <Icon name="sliders" size="xs" />
+                {t('adminMenu.summary.showOnly')}
+              </span>
               {STATES.filter((k) => k === 'available' || counts[k] > 0).map((k) => (
                 <button
                   key={k}
@@ -153,6 +158,7 @@ export function MenuBoard() {
                 >
                   <span className={styles.stateDot} aria-hidden="true" />
                   {t.plural(`adminMenu.summary.${k}`, counts[k])}
+                  {status === k && <Icon name="x" size="xs" className={styles.stateClear} />}
                 </button>
               ))}
               {status !== 'all' && (

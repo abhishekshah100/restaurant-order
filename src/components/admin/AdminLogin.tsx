@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -14,6 +14,7 @@ import { selectAdminBranch, signInAdmin } from '@/lib/adminAuth';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { adminLanding } from '@/lib/adminBranches';
 import { adminLoginSchema, type AdminLoginValues } from '@/lib/adminLogin';
+import { IDLE_LIMIT_MS, localStore, signedOutIdle } from '@/lib/idleSignOut';
 import { NewPasswordStep } from './NewPasswordStep';
 import styles from './AdminLogin.module.css';
 
@@ -21,6 +22,8 @@ const PHOTO = '/images/pasta-hero.jpg';
 const PHOTO_WIDTH = 780;
 const PHOTO_HEIGHT = 540;
 
+/** The sign-out note only changes on another page. */
+const noChange = () => () => undefined;
 export function AdminLogin() {
   const t = useContent('common');
   const brand = useBrandName();
@@ -30,6 +33,12 @@ export function AdminLogin() {
   // The branches of the session just started decide where to go (one: its dashboard).
   const branches = useAdminBranches();
   const token = useAdminToken();
+  // Signed out for nobody using the screen: said here until the next sign-in.
+  const idle = useSyncExternalStore(
+    noChange,
+    () => signedOutIdle(localStore()),
+    () => false,
+  );
   const signedInNow = login.isSuccess && token === login.data.token;
   // Signed in with a password an admin gave them: their own first (the server waits for it).
   const [passwordChosen, setPasswordChosen] = useState(false);
@@ -113,6 +122,12 @@ export function AdminLogin() {
                 <h1 className={styles.title}>{t('adminLogin.title')}</h1>
                 <p className={styles.subtitle}>{t('adminLogin.subtitle')}</p>
               </header>
+
+              {idle && !login.isError && (
+                <Banner tone="info" icon="lock" live="polite" className={styles.alert}>
+                  {t('adminLogin.idleSignedOut', { minutes: IDLE_LIMIT_MS / 60_000 })}
+                </Banner>
+              )}
 
               {(login.isError || branchesFailed) && (
                 <Banner tone="err" icon="alert" live="assertive" className={styles.alert}>

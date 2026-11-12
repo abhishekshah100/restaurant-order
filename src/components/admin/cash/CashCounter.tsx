@@ -26,6 +26,7 @@ export function CashCounter({
   return (
     <fieldset className={styles.counter}>
       <legend className={styles.counterLegend}>{t('adminCash.counter.label')}</legend>
+      <p className={styles.counterHint}>{t('adminCash.counter.hint')}</p>
       <ul className={styles.counterRows}>
         {values.map((value) => {
           const quantity = Number(state[String(value)] ?? '') || 0;

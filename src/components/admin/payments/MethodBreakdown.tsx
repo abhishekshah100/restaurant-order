@@ -1,7 +1,7 @@
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import type { DaySummary } from '@/lib/adminPayments';
-import { methodIcon, usePaymentText } from './usePaymentText';
+import { methodIcon, useMethodLabels, usePaymentText } from './usePaymentText';
 import styles from './MethodBreakdown.module.css';
 
 /**
@@ -16,7 +16,9 @@ export function MethodBreakdown({
   live?: boolean;
 }) {
   const t = useContent('common');
-  const { amount, methodName } = usePaymentText();
+  const { amount } = usePaymentText();
+  // Two methods with one name (UPI in person and online) say which is which.
+  const methodName = useMethodLabels(day.byMethod);
   const largest = Math.max(1, ...day.byMethod.map((m) => m.amount));
 
   return (

@@ -485,6 +485,13 @@ export const api = {
       note ? { note } : {},
       bearer(token),
     ),
+  /** A drawer that needed a check, checked by a manager (what they found, optional). */
+  checkCashSession: (token: string, branchId: string, id: string, note?: string) =>
+    apiPost<CashSession>(
+      `admin/branches/${seg(branchId)}/cash-register/sessions/${seg(id)}/check`,
+      note ? { note } : {},
+      bearer(token),
+    ),
   cashReport: (token: string, branchId: string, range: { from: string; to: string }) =>
     apiGet<CashReport>(
       `admin/branches/${seg(branchId)}/cash-register/report${searchOf(range)}`,

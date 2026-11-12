@@ -278,7 +278,7 @@ export const useOrder = (id: string | undefined) => useQuery(orderQuery(id));
  */
 export function usePaymentHistory(
   branchId: string | undefined,
-  query: Omit<PaymentHistoryQuery, 'cursor' | 'limit'>,
+  query: Omit<PaymentHistoryQuery, 'cursor'>,
 ) {
   const token = useAdminToken();
   return useInfiniteQuery({

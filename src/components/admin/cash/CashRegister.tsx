@@ -11,7 +11,6 @@ import { useNow } from '@/hooks/useNow';
 import { Button, Icon } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { cx } from '@/lib/cx';
-import { SumRows } from '../payments/PaymentFields';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { CashAmountField, useCashAmount } from './CashAmountField';
 import { CashDayEnd } from './CashDayEnd';
@@ -30,45 +29,6 @@ const CashSessionDialog = dynamic(
   () => import('./CashSessionDialog').then((m) => m.CashSessionDialog),
   { ssr: false },
 );
-
-/** A session's sums (float, cash taken and handed back, paid in and out, expected, counted). */
-export function CashTotalsRows({ session }: { session: CashSession }) {
-  const t = useContent('common');
-  const { money } = useAdminWorkspace();
-  const totals = session.totals;
-  if (!totals) return <p className={styles.muted}>{t('adminCash.current.blind')}</p>;
-  return (
-    <SumRows
-      rows={[
-        { label: t('adminCash.current.float'), value: money.format(session.float) },
-        {
-          label: totals.tips
-            ? `${t('adminCash.current.taken')} (${t('adminCash.current.tips', { amount: money.format(totals.tips) })})`
-            : t('adminCash.current.taken'),
-          value: money.format(totals.taken),
-        },
-        { label: t('adminCash.current.refunded'), value: money.format(-totals.refunded) },
-        { label: t('adminCash.current.paidIn'), value: money.format(totals.paidIn) },
-        { label: t('adminCash.current.paidOut'), value: money.format(-totals.paidOut) },
-        {
-          label: t('adminCash.current.expected'),
-          value: money.format(totals.expected),
-          tone: 'total',
-        },
-        ...(session.counted !== undefined
-          ? [
-              { label: t('adminCash.close.countedRow'), value: money.format(session.counted) },
-              {
-                label: t('adminCash.close.difference'),
-                value: money.format(session.difference ?? 0),
-                tone: (session.difference ?? 0) === 0 ? ('ok' as const) : ('due' as const),
-              },
-            ]
-          : []),
-      ]}
-    />
-  );
-}
 
 /** What was paid in and out of a session, oldest first. */
 export function MovementList({ session }: { session: CashSession }) {
@@ -110,13 +70,13 @@ export function MovementList({ session }: { session: CashSession }) {
   );
 }
 
-/** Closed: the float to open with (the last count by default), as a total or note by note. */
+/** Closed: start the day by counting the drawer (note by note), or one tap for the last count. */
 function OpenRegister({ lastCounted }: { lastCounted?: number }) {
   const t = useContent('common');
   const { branch, money } = useAdminWorkspace();
   const { showToast } = useToast();
   const open = useOpenRegister();
-  const cash = useCashAmount(lastCounted !== undefined ? String(lastCounted) : '');
+  const cash = useCashAmount();
   const submit = () => {
     if (cash.amount === null) return;
     open.mutate(
@@ -140,37 +100,87 @@ function OpenRegister({ lastCounted }: { lastCounted?: number }) {
     );
   };
   return (
-    <section className={styles.card} aria-labelledby="cash-open-title">
-      <h2 id="cash-open-title" className={styles.cardTitle}>
-        {t('adminCash.open.title')}
-      </h2>
-      <p className={styles.muted}>{t('adminCash.open.body')}</p>
+    <section className={cx(styles.card, styles.startCard)} aria-labelledby="cash-open-title">
+      <div className={styles.startHead}>
+        <span className={styles.startIcon} aria-hidden="true">
+          <Icon name="cash" size="md" />
+        </span>
+        <div>
+          <h2 id="cash-open-title" className={styles.cardTitle}>
+            {t('adminCash.open.title')}
+          </h2>
+          <p className={styles.muted}>{t('adminCash.open.body')}</p>
+        </div>
+      </div>
       <CashAmountField
         id="cash-open"
         label={t('adminCash.open.float')}
-        hint={
+        cash={cash}
+        suggestion={
           lastCounted !== undefined
-            ? t('adminCash.open.floatHint', { amount: money.format(lastCounted) })
+            ? {
+                label: t('adminCash.open.useLast', { amount: money.format(lastCounted) }),
+                amount: lastCounted,
+              }
             : undefined
         }
-        cash={cash}
       />
       <Button
+        block
         iconStart="check"
         disabled={cash.amount === null}
         loading={open.isPending}
         onClick={submit}
       >
-        {t('adminCash.open.confirm')}
+        {cash.amount !== null
+          ? t('adminCash.open.confirmAmount', { amount: money.format(cash.amount) })
+          : t('adminCash.open.confirm')}
       </Button>
     </section>
   );
 }
 
+/** How the drawer's cash adds up: start + bills − given back + added − taken out = should be. */
+export function CashEquation({ session }: { session: CashSession }) {
+  const t = useContent('common');
+  const { money } = useAdminWorkspace();
+  const totals = session.totals;
+  if (!totals) return null;
+  const terms: { key: string; sign: '' | '+' | '−'; label: string; value: number }[] = [
+    { key: 'float', sign: '', label: t('adminCash.current.float'), value: session.float },
+    { key: 'taken', sign: '+', label: t('adminCash.current.taken'), value: totals.taken },
+    { key: 'refunded', sign: '−', label: t('adminCash.current.refunded'), value: totals.refunded },
+    { key: 'paidIn', sign: '+', label: t('adminCash.current.paidIn'), value: totals.paidIn },
+    { key: 'paidOut', sign: '−', label: t('adminCash.current.paidOut'), value: totals.paidOut },
+  ];
+  return (
+    <ol className={styles.equation} aria-label={t('adminCash.current.equation')}>
+      {terms
+        .filter((term) => term.key === 'float' || term.key === 'taken' || term.value > 0)
+        .map((term) => (
+          <li key={term.key} className={styles.term}>
+            {term.sign && (
+              <span className={styles.sign} aria-hidden="true">
+                {term.sign}
+              </span>
+            )}
+            <span className={styles.termBody}>
+              <span className={styles.termLabel}>{term.label}</span>
+              <span className={styles.termValue}>{money.format(term.value)}</span>
+            </span>
+          </li>
+        ))}
+    </ol>
+  );
+}
+
 /**
- * /admin/dashboard/cash/: the branch's cash drawer. Closed, it opens with a float; open, it
- * shows who opened it, its sums (for staff who see reports: the close count is blind), cash paid
- * in and out, and closes with a count. Under it, the recent sessions. Backend only.
+ * /admin/dashboard/cash/: the branch's cash drawer. Closed: Start the day (count the cash, or
+ * the last count in one tap) and open it. Open: who opened it and when (and a warning when it was
+ * left open from an earlier day), what should be in it with how that adds up (for staff who see
+ * reports: the close count is blind for the rest), Add cash, Take cash out and Close & count, and
+ * the cash added or taken out. Under it, the earlier drawers. End of day and Reports are tabs.
+ * Backend only.
  */
 export function CashRegister() {
   const t = useContent('common');
@@ -204,47 +214,87 @@ export function CashRegister() {
     );
   } else {
     const { current, recent, lastCounted } = query.data;
+    const stale = current && clock.dayKey(current.openedAt) < today;
     body = (
       <>
         {current ? (
-          <section className={styles.card} aria-labelledby="cash-current-title">
-            <div className={styles.cardHead}>
-              <h2 id="cash-current-title" className={styles.cardTitle}>
-                {t('adminCash.register', { number: current.number })}
-              </h2>
-              <span className={cx(styles.chip, styles.isOpen)}>{t('adminCash.status.open')}</span>
+          <section
+            className={cx(styles.card, styles.drawerCard)}
+            aria-labelledby="cash-current-title"
+          >
+            <div className={styles.drawerHead}>
+              <span className={styles.liveDot} aria-hidden="true" />
+              <div className={styles.drawerWho}>
+                <h2 id="cash-current-title" className={styles.cardTitle}>
+                  {t('adminCash.register', { number: current.number })}
+                  <span className={cx(styles.chip, styles.isOpen)}>
+                    {t('adminCash.status.open')}
+                  </span>
+                </h2>
+                <p className={styles.muted}>
+                  {current.openedBy
+                    ? t('adminCash.openedBy', {
+                        time: clock.dateTime(current.openedAt),
+                        name: current.openedBy,
+                      })
+                    : t('adminCash.opened', { time: clock.dateTime(current.openedAt) })}
+                </p>
+              </div>
             </div>
-            <p className={styles.muted}>
-              {current.openedBy
-                ? t('adminCash.openedBy', {
-                    time: clock.dateTime(current.openedAt),
-                    name: current.openedBy,
-                  })
-                : t('adminCash.opened', { time: clock.dateTime(current.openedAt) })}
-            </p>
-            {current.totals ? (
-              <CashTotalsRows session={current} />
-            ) : (
-              <>
-                <SumRows
-                  rows={[
-                    { label: t('adminCash.current.float'), value: money.format(current.float) },
-                  ]}
-                />
-                <p className={styles.muted}>{t('adminCash.current.blind')}</p>
-              </>
+
+            {stale && (
+              <p className={styles.stale} role="alert">
+                <Icon name="alert" size="sm" />
+                {t('adminCash.stale', { date: clock.date(current.openedAt) })}
+              </p>
             )}
+
+            {current.totals ? (
+              <div className={styles.expectedBox}>
+                <p className={styles.expectedLabel}>{t('adminCash.current.expected')}</p>
+                <p className={styles.expectedValue}>{money.format(current.totals.expected)}</p>
+                <CashEquation session={current} />
+              </div>
+            ) : (
+              <p className={styles.blindNote}>
+                <Icon name="lock" size="xs" />
+                {t('adminCash.current.blind')}
+              </p>
+            )}
+
             {runs && (
-              <div className={styles.cardActions}>
-                <Button variant="secondary" iconStart="plus" onClick={() => setMoving('in')}>
-                  {t('adminCash.actions.payIn')}
-                </Button>
-                <Button variant="secondary" iconStart="minus" onClick={() => setMoving('out')}>
-                  {t('adminCash.actions.payOut')}
-                </Button>
-                <Button iconStart="lock" onClick={() => setClosing(true)}>
-                  {t('adminCash.actions.close')}
-                </Button>
+              <div className={styles.tiles}>
+                <button type="button" className={styles.tile} onClick={() => setMoving('in')}>
+                  <span className={cx(styles.tileIcon, styles.tileIn)} aria-hidden="true">
+                    <Icon name="plus" size="sm" />
+                  </span>
+                  <span className={styles.tileText}>
+                    <strong>{t('adminCash.actions.payIn')}</strong>
+                    <span>{t('adminCash.actions.payInHint')}</span>
+                  </span>
+                </button>
+                <button type="button" className={styles.tile} onClick={() => setMoving('out')}>
+                  <span className={cx(styles.tileIcon, styles.tileOut)} aria-hidden="true">
+                    <Icon name="minus" size="sm" />
+                  </span>
+                  <span className={styles.tileText}>
+                    <strong>{t('adminCash.actions.payOut')}</strong>
+                    <span>{t('adminCash.actions.payOutHint')}</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={cx(styles.tile, styles.tileMain)}
+                  onClick={() => setClosing(true)}
+                >
+                  <span className={styles.tileIcon} aria-hidden="true">
+                    <Icon name="lock" size="sm" />
+                  </span>
+                  <span className={styles.tileText}>
+                    <strong>{t('adminCash.actions.close')}</strong>
+                    <span>{t('adminCash.actions.closeHint')}</span>
+                  </span>
+                </button>
               </div>
             )}
             <MovementList session={current} />

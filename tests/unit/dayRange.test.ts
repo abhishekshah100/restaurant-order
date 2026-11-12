@@ -9,6 +9,8 @@ import {
   shiftDay,
   groupByDay,
   daysLabel,
+  dayCount,
+  daysBefore,
 } from '@/lib/dayRange';
 
 /* The range of days staff look back at orders and payments over. */
@@ -112,5 +114,20 @@ describe('daysLabel', () => {
   it('writes one day, or a run of days', () => {
     expect(daysLabel(date, '2026-11-12', '2026-11-12')).toBe('2026-11-12');
     expect(daysLabel(date, '2026-11-12', '2026-11-14')).toBe('2026-11-12 – 2026-11-14');
+  });
+});
+
+describe('days before', () => {
+  it('counts a range and gives the same number of days just before it', () => {
+    expect(dayCount({ from: '2026-11-12', to: '2026-11-12' })).toBe(1);
+    expect(dayCount({ from: '2026-11-06', to: '2026-11-12' })).toBe(7);
+    expect(daysBefore({ from: '2026-11-12', to: '2026-11-12' })).toEqual({
+      from: '2026-11-11',
+      to: '2026-11-11',
+    });
+    expect(daysBefore({ from: '2026-11-01', to: '2026-11-12' })).toEqual({
+      from: '2026-10-20',
+      to: '2026-10-31',
+    });
   });
 });

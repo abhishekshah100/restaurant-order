@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+// No eval: the site's Content-Security-Policy forbids it (scripts/add-csp.mjs), so zod doesn't
+// even try (trying is reported as a policy violation).
+z.config({ jitless: true });
+
 /** Validation messages for the admin login form (content: `adminLogin.validation`). */
 export interface AdminLoginMessages {
   identityRequired: string;

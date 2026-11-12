@@ -688,6 +688,8 @@ export interface HistoryTransaction {
   by?: string;
   transactionRef?: string;
   reason?: string;
+  /** What staff wrote with it ("Cold naan"). */
+  note?: string;
   status?: 'started' | 'done';
   /** ISO. */
   at: string;
@@ -1759,6 +1761,15 @@ export interface CashSession {
   /** Closed: a difference above the branch's limit then: it needs review. */
   overLimit?: boolean;
   note?: string;
+  /** A manager checked it (it needed a check). */
+  checked?: CashCheck;
+}
+
+/** A manager's check of a drawer that needed one: when, who, what they found. */
+export interface CashCheck {
+  at: string;
+  by?: string;
+  note?: string;
 }
 
 /** A way taken in person during a session, and what was counted (when checked). */
@@ -1781,6 +1792,7 @@ export interface CashSessionSummary {
   counted?: Price;
   difference?: Price;
   overLimit?: boolean;
+  checked?: CashCheck;
 }
 
 /**

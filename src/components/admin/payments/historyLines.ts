@@ -19,6 +19,7 @@ export const toLine = (tx: HistoryTransaction): LedgerLine => ({
   ...(tx.waived ? { waived: tx.waived } : {}),
   ...(tx.waiveReason ? { waiveReason: tx.waiveReason as WaiveReason } : {}),
   ...(tx.reason ? { reason: tx.reason as LedgerLine['reason'] } : {}),
+  ...(tx.note ? { note: tx.note } : {}),
   ...(tx.status ? { status: tx.status } : {}),
   order: {
     id: tx.orderId,

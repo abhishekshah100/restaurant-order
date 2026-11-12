@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { isApiError } from '@/api/client';
 import { useCashDay, useContent } from '@/api/hooks';
 import { useSignOffCashDay } from '@/api/mutations';
-import { Button, Textarea } from '@/components/ui';
+import { Button, Chip, Icon, IconButton, Textarea } from '@/components/ui';
+import { shiftDay } from '@/lib/dayRange';
 import { useToast } from '@/context/ToastContext';
 import { differenceKind } from '@/lib/cashRegister';
 import { cx } from '@/lib/cx';
@@ -15,9 +16,12 @@ import { SessionRow } from './SessionRow';
 import styles from './CashRegister.module.css';
 
 /**
- * Day end: a day at the register (the branch's calendar day, today by default). Its cash from
- * the floats to the count, card and UPI against what was counted, the sessions (those needing
- * review marked), and the sign-off: a manager accepts the day once its sessions are closed.
+ * End of day: a day at the drawer (the branch's calendar day, today by default). At the top where
+ * it stands (signed off, waiting, a drawer still open; how many closed, open, need a check); then
+ * did the cash match, for the drawers closed that day only (what should have been there against
+ * what was counted: a drawer still open isn't counted yet, so it's left out and said so); the
+ * cash during the day, card and UPI, the drawers, and Sign off the day (a manager, once every
+ * drawer is closed).
  */
 export function CashDayEnd({
   today,
@@ -36,6 +40,21 @@ export function CashDayEnd({
   const signOff = useSignOffCashDay();
   const summary = query.data;
   const dayLabel = clock.date(`${day}T12:00:00Z`);
+  // Did the cash match: the drawers closed that day only (one still open isn't counted yet).
+  const closed = summary?.sessions.filter((s) => s.closedAt !== undefined) ?? [];
+  const openCount = (summary?.sessions.length ?? 0) - closed.length;
+  const result = closed.reduce(
+    (sum, s) => {
+      const counted = s.counted ?? 0;
+      const difference = s.difference ?? 0;
+      return {
+        expected: sum.expected + (s.expected ?? counted - difference),
+        counted: sum.counted + counted,
+        difference: sum.difference + difference,
+      };
+    },
+    { expected: 0, counted: 0, difference: 0 },
+  );
 
   const sign = () =>
     signOff.mutate(
@@ -57,16 +76,40 @@ export function CashDayEnd({
 
   return (
     <div className={styles.form}>
-      <label className={styles.dateField}>
-        <span className={styles.label}>{t('adminCash.day.date')}</span>
-        <input
-          type="date"
-          className={styles.dateInput}
-          value={day}
-          max={today}
-          onChange={(event) => event.target.value && setDay(event.target.value)}
-        />
-      </label>
+      {/* The day, with the day before and after a tap away (managers check today or yesterday). */}
+      <div className={styles.dayPicker}>
+        <label className={styles.dateField}>
+          <span className={styles.label}>{t('adminCash.day.date')}</span>
+          <input
+            type="date"
+            className={styles.dateInput}
+            value={day}
+            max={today}
+            onChange={(event) => event.target.value && setDay(event.target.value)}
+          />
+        </label>
+        <div className={styles.dayQuick}>
+          <IconButton
+            icon="back"
+            variant="raised"
+            label={t('adminCash.day.prevDay')}
+            onClick={() => setDay(shiftDay(day, -1))}
+          />
+          <IconButton
+            icon="arrow"
+            variant="raised"
+            label={t('adminCash.day.nextDay')}
+            disabled={day >= today}
+            onClick={() => setDay(shiftDay(day, 1))}
+          />
+          <Chip pressed={day === shiftDay(today, -1)} onClick={() => setDay(shiftDay(today, -1))}>
+            {t('adminCash.day.yesterday')}
+          </Chip>
+          <Chip pressed={day === today} onClick={() => setDay(today)}>
+            {t('adminCash.day.today')}
+          </Chip>
+        </div>
+      </div>
 
       {!summary ? (
         <p className={styles.muted} aria-busy={!query.isError}>
@@ -76,37 +119,85 @@ export function CashDayEnd({
         <p className={styles.card}>{t('adminCash.day.status.empty')}</p>
       ) : (
         <>
-          <p
+          <section
             className={cx(
-              styles.dayStatus,
-              summary.signOff ? styles.match : summary.open ? undefined : styles.over,
+              styles.card,
+              styles.dayHead,
+              summary.signOff
+                ? styles.daySigned
+                : summary.open
+                  ? styles.dayOpen
+                  : styles.dayWaiting,
             )}
-            role="status"
+            aria-labelledby="day-status"
           >
-            {summary.signOff
-              ? summary.signOff.by
-                ? t('adminCash.day.status.signed', {
-                    name: summary.signOff.by,
-                    time: clock.dateTime(summary.signOff.at),
-                  })
-                : t('adminCash.day.status.signedNoName', {
-                    time: clock.dateTime(summary.signOff.at),
-                  })
-              : summary.open
-                ? t('adminCash.day.status.open')
-                : t('adminCash.day.status.pending')}
-            {summary.signOff?.note ? ` · ${summary.signOff.note}` : ''}
-          </p>
-          {summary.needsReview > 0 && (
-            <p className={cx(styles.chip, styles.short)}>
-              {t.plural('adminCash.day.needsReview', summary.needsReview)}
+            <p id="day-status" className={styles.dayHeadTitle}>
+              <Icon
+                name={summary.signOff ? 'checkc' : summary.open ? 'clock' : 'alert'}
+                size="sm"
+              />
+              {summary.signOff
+                ? summary.signOff.by
+                  ? t('adminCash.day.status.signed', {
+                      name: summary.signOff.by,
+                      time: clock.dateTime(summary.signOff.at),
+                    })
+                  : t('adminCash.day.status.signedNoName', {
+                      time: clock.dateTime(summary.signOff.at),
+                    })
+                : summary.open
+                  ? t('adminCash.day.status.open')
+                  : t('adminCash.day.status.pending')}
             </p>
+            {summary.signOff?.note && <p className={styles.muted}>{summary.signOff.note}</p>}
+            <p className={styles.dayCounts}>
+              {[
+                t.plural('adminCash.day.closedCount', closed.length),
+                openCount > 0 && t.plural('adminCash.day.openCount', openCount),
+                summary.needsReview > 0 &&
+                  t.plural('adminCash.day.needsReview', summary.needsReview),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+          </section>
+
+          {closed.length > 0 && (
+            <section className={styles.card} aria-labelledby="day-cash">
+              <h2 id="day-cash" className={styles.cardTitle}>
+                {t('adminCash.day.cashTitle')}
+              </h2>
+              <p className={styles.muted}>{t('adminCash.day.cashBody')}</p>
+              <dl className={styles.compare}>
+                <div>
+                  <dt>{t('adminCash.day.expected')}</dt>
+                  <dd>{money.format(result.expected)}</dd>
+                </div>
+                <div>
+                  <dt>{t('adminCash.day.counted')}</dt>
+                  <dd>{money.format(result.counted)}</dd>
+                </div>
+                <div className={styles[differenceKind(result.difference)]}>
+                  <dt>{t('adminCash.day.difference')}</dt>
+                  <dd>
+                    {result.difference === 0
+                      ? t('adminCash.close.match')
+                      : result.difference < 0
+                        ? t('adminCash.close.short', {
+                            amount: money.format(-result.difference),
+                          })
+                        : t('adminCash.close.over', { amount: money.format(result.difference) })}
+                  </dd>
+                </div>
+              </dl>
+              {openCount > 0 && (
+                <p className={styles.muted}>{t.plural('adminCash.day.openNote', openCount)}</p>
+              )}
+            </section>
           )}
 
-          <section className={styles.card} aria-labelledby="day-cash">
-            <h2 id="day-cash" className={styles.cardTitle}>
-              {t('adminCash.day.cashTitle')}
-            </h2>
+          <details className={styles.flow}>
+            <summary>{t('adminCash.day.flowTitle')}</summary>
             <SumRows
               rows={[
                 { label: t('adminCash.current.float'), value: money.format(summary.cash.float) },
@@ -120,23 +211,9 @@ export function CashDayEnd({
                   label: t('adminCash.current.paidOut'),
                   value: money.format(-summary.cash.paidOut),
                 },
-                {
-                  label: t('adminCash.current.expected'),
-                  value: money.format(summary.cash.expected),
-                  tone: 'total',
-                },
-                {
-                  label: t('adminCash.close.countedRow'),
-                  value: money.format(summary.cash.counted),
-                },
-                {
-                  label: t('adminCash.close.difference'),
-                  value: money.format(summary.cash.difference),
-                  tone: summary.cash.difference === 0 ? 'ok' : 'due',
-                },
               ]}
             />
-          </section>
+          </details>
 
           {summary.methods.length > 0 && (
             <section className={styles.card} aria-labelledby="day-methods">
@@ -196,6 +273,7 @@ export function CashDayEnd({
               <h2 id="day-sign" className={styles.cardTitle}>
                 {t('adminCash.day.signOff')}
               </h2>
+              <p className={styles.muted}>{t('adminCash.day.signOffBody')}</p>
               <Textarea
                 id="day-sign-note"
                 label={t('adminCash.day.signOffNote')}
@@ -207,6 +285,7 @@ export function CashDayEnd({
                 onChange={(event) => setNote(event.target.value)}
               />
               <Button
+                block
                 iconStart="check"
                 disabled={summary.open}
                 loading={signOff.isPending}
