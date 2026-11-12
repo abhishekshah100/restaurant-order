@@ -606,3 +606,18 @@
 .lateRow .late {
   background: var(--surface);
 }
+
+/* Cancellations: whole orders · rounds · ran out. */
+.parts {
+  margin-top: -4px;
+  padding-left: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-left: 2px solid var(--line);
+}
+
+.ranOutChip {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}

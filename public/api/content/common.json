@@ -1517,19 +1517,24 @@
       "month": "This month",
       "custom": "Pick days"
     },
-    "countNote": "Refunds show on the day the money was given back. Cancelled orders show on the day of the order.",
+    "countNote": "Refunds show on the day the money was given back. Cancellations (whole orders, rounds taken back and dishes that ran out) show on the day of the order.",
     "summary": {
       "refunded": "Money given back",
       "refundedSub": "{inPerson} in person · {online} online",
-      "cancelled": "Orders cancelled",
-      "cancelledSub": "Orders worth {amount}",
+      "cancelled": "Cancelled",
+      "cancelledParts": {
+        "orders": "Whole orders: {count}",
+        "rounds": "Rounds: {count}",
+        "ranOut": "Ran out: {count}"
+      },
       "pending": "Online refunds on the way",
       "pendingSub": "{amount} still to reach guests",
       "pendingNone": "Nothing waiting",
       "before": "{days}: {amount}",
       "yesterday": "Yesterday",
       "daysBefore": "{count} days before",
-      "pendingLate": "{count} late · check with the bank"
+      "pendingLate": "{count} late · check with the bank",
+      "cancelledNone": "Nothing cancelled"
     },
     "pending": {
       "title": "Waiting for the guest's bank",
@@ -1545,7 +1550,9 @@
       "hint": "Tap a reason to see only those.",
       "none": "No reason given",
       "count": "{count}×",
-      "option": "{kind}: {reason}"
+      "option": "{kind}: {reason}",
+      "guest": "Guest took it back",
+      "ranOut": "Ran out in the kitchen"
     },
     "filters": {
       "label": "Show",
@@ -1555,10 +1562,17 @@
       "more": "More filters",
       "reason": "Reason",
       "allReasons": "Any reason",
-      "staff": "Given back by",
+      "staff": "Done by",
       "allStaff": "Anyone",
       "search": "Search order, guest or table",
-      "clear": "Clear filters"
+      "clear": "Clear filters",
+      "parts": {
+        "label": "Which cancellations",
+        "all": "All",
+        "order": "Whole orders",
+        "round": "Rounds",
+        "ranOut": "Ran out"
+      }
     },
     "list": {
       "title": "Every refund and cancellation",
@@ -1576,7 +1590,12 @@
       "dayTotal": "{amount} given back",
       "late": "Late",
       "open": "Open order #{order}",
-      "openFailed": "Couldn't open the order. Try again."
+      "openFailed": "Couldn't open the order. Try again.",
+      "roundLine": "Round {round} taken back · it was worth {amount}",
+      "ranOutLine": "Ran out: {dishes} · {amount}",
+      "roundChip": "Round taken back",
+      "ranOutChip": "Ran out",
+      "autoRefund": "Money given back automatically"
     },
     "picker": {
       "refundTitle": "Refund an order",

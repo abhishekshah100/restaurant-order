@@ -55,6 +55,9 @@ interface BackendItem {
   offer?: OrderItem['offer'];
   plated?: true;
   unavailable?: number;
+  unavailableAt?: string;
+  unavailableBy?: string;
+  unavailableNote?: string;
 }
 
 interface BackendRound {
@@ -67,6 +70,8 @@ interface BackendRound {
   changeableUntil: string;
   changedAt?: string;
   dismissedAt?: string;
+  cancelledBy?: 'guest' | 'restaurant';
+  cancelReason?: string;
 }
 
 export interface BackendOrder {
@@ -177,6 +182,9 @@ function itemOf(item: BackendItem, status: OrderStatus, words: Words): OrderItem
     veg: item.veg,
     quantity: item.quantity,
     ...(item.unavailable ? { unavailable: item.unavailable } : {}),
+    ...(item.unavailableAt ? { unavailableAt: item.unavailableAt } : {}),
+    ...(item.unavailableBy ? { unavailableBy: item.unavailableBy } : {}),
+    ...(item.unavailableNote ? { unavailableNote: item.unavailableNote } : {}),
     ...(item.variantName ? { variant: item.variantName.split(' · ')[0] } : {}),
     details: options ? [options] : [],
     ...(instructions ? { note: instructions.replace(/^“|”$/g, '') } : {}),
@@ -236,6 +244,7 @@ function roundOf(round: BackendRound, order: BackendOrder, words: Words, now: nu
     if (event.status === 'ready' || event.status === 'outForDelivery') marks.ready = mark;
   }
   const handedOver = round.timeline.find((e) => e.status === finalStep(order.mode));
+  const cancelledAt = round.timeline.find((e) => e.status === 'cancelled');
   // Taken at the table by a waiter (the received step says who).
   const takenBy = round.timeline.find((e) => e.note === 'takenBy')?.by;
   // Waiting while the kitchen (or the rider) hasn't finished.
@@ -260,6 +269,22 @@ function roundOf(round: BackendRound, order: BackendOrder, words: Words, now: nu
     ...(handedOver ? { servedAt: handedOver.at } : {}),
     ...(marks.started || marks.ready ? { kitchen: marks } : {}),
     ...(takenBy ? { takenBy } : {}),
+    ...(cancelledAt
+      ? {
+          cancelled: {
+            at: cancelledAt.at,
+            ...(round.cancelledBy ? { who: round.cancelledBy } : {}),
+            ...(round.cancelReason
+              ? {
+                  reason: words.orders(
+                    `restaurantCancel.${round.cancelReason}` as Parameters<Words['orders']>[0],
+                  ),
+                }
+              : {}),
+            ...(cancelledAt.by ? { by: cancelledAt.by } : {}),
+          },
+        }
+      : {}),
   };
 }
 

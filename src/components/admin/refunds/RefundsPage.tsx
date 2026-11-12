@@ -177,7 +177,10 @@ export function RefundsPage() {
     );
   } else {
     const lines = refunds.data.pages.flatMap((p) => p.transactions).map(toLine);
-    const entries = refundsEntries(lines, orders.data.orders);
+    const entries = refundsEntries(lines, orders.data.orders, {
+      guest: t('adminRefunds.reasons.guest'),
+      ranOut: t('adminRefunds.reasons.ranOut'),
+    });
     const summary = refundsSummary(entries);
     const reasons = reasonTotals(entries);
     const staff = refundStaff(entries);
@@ -194,6 +197,7 @@ export function RefundsPage() {
     const shown = filterRefunds(entries, filters);
     const filtered =
       filters.kind !== 'all' ||
+      (filters.part ?? 'all') !== 'all' ||
       filters.reason !== 'all' ||
       filters.staff !== 'all' ||
       filters.query.trim() !== '';
@@ -201,6 +205,12 @@ export function RefundsPage() {
       all: entries.length,
       refund: entries.filter((e) => e.kind === 'refund').length,
       cancel: entries.filter((e) => e.kind === 'cancel').length,
+    };
+    const partCounts = {
+      all: counts.cancel,
+      order: summary.cancelled,
+      round: summary.cancelledRounds,
+      ranOut: summary.ranOut,
     };
     const largest = Math.max(1, ...reasons.map((r) => r.amount));
     const markReceived = (e: RefundsEntry) =>
@@ -250,11 +260,22 @@ export function RefundsPage() {
               <Icon name="x" size="xs" />
               {t('adminRefunds.summary.cancelled')}
             </dt>
-            <dd className={styles.tileValue}>{summary.cancelled}</dd>
+            <dd className={styles.tileValue}>{money.format(summary.cancelledValue)}</dd>
             <dd className={styles.tileSub}>
-              {t('adminRefunds.summary.cancelledSub', {
-                amount: money.format(summary.cancelledValue),
-              })}
+              {counts.cancel > 0
+                ? (
+                    [
+                      ['orders', summary.cancelled],
+                      ['rounds', summary.cancelledRounds],
+                      ['ranOut', summary.ranOut],
+                    ] as const
+                  )
+                    .filter(([, count]) => count > 0)
+                    .map(([part, count]) =>
+                      t(`adminRefunds.summary.cancelledParts.${part}`, { count }),
+                    )
+                    .join(' · ')
+                : t('adminRefunds.summary.cancelledNone')}
             </dd>
           </div>
           <div className={cx(styles.tile, pending.length > 0 && styles.tileWarn)}>
@@ -394,12 +415,30 @@ export function RefundsPage() {
                 key={k}
                 pressed={filters.kind === k}
                 count={counts[k]}
-                onClick={() => setFilters({ ...filters, kind: k })}
+                onClick={() => setFilters({ ...filters, kind: k, part: 'all' })}
               >
                 {t(`adminRefunds.filters.${k}`)}
               </Chip>
             ))}
           </div>
+          {filters.kind === 'cancel' && counts.cancel > 0 && (
+            <div
+              className={styles.parts}
+              role="group"
+              aria-label={t('adminRefunds.filters.parts.label')}
+            >
+              {(['all', 'order', 'round', 'ranOut'] as const).map((p) => (
+                <Chip
+                  key={p}
+                  pressed={(filters.part ?? 'all') === p}
+                  count={partCounts[p]}
+                  onClick={() => setFilters({ ...filters, part: p })}
+                >
+                  {t(`adminRefunds.filters.parts.${p}`)}
+                </Chip>
+              ))}
+            </div>
+          )}
           <div className={styles.searchRow}>
             <SearchField
               value={filters.query}
@@ -454,7 +493,9 @@ export function RefundsPage() {
             <button
               type="button"
               className={styles.clear}
-              onClick={() => setFilters({ kind: 'all', reason: 'all', staff: 'all', query: '' })}
+              onClick={() =>
+                setFilters({ kind: 'all', part: 'all', reason: 'all', staff: 'all', query: '' })
+              }
             >
               {t('adminRefunds.filters.clear')}
             </button>
@@ -493,7 +534,16 @@ export function RefundsPage() {
                           onClick={() => void openOrder(e.order.id)}
                         >
                           <span className={cx(styles.rowIcon, styles[e.kind])} aria-hidden="true">
-                            <Icon name={e.kind === 'refund' ? 'refresh' : 'x'} size="xs" />
+                            <Icon
+                              name={
+                                e.kind === 'refund'
+                                  ? 'refresh'
+                                  : e.part === 'ranOut'
+                                    ? 'alert'
+                                    : 'x'
+                              }
+                              size="xs"
+                            />
                           </span>
                           <span className={styles.rowMain}>
                             <strong>
@@ -502,9 +552,19 @@ export function RefundsPage() {
                                     amount: money.format(e.amount),
                                     method: methodName(e.transaction.method),
                                   })
-                                : t('adminRefunds.list.cancelLine', {
-                                    amount: money.format(e.amount),
-                                  })}
+                                : e.part === 'round'
+                                  ? t('adminRefunds.list.roundLine', {
+                                      round: e.round ?? 0,
+                                      amount: money.format(e.amount),
+                                    })
+                                  : e.part === 'ranOut'
+                                    ? t('adminRefunds.list.ranOutLine', {
+                                        dishes: e.dishes ?? '',
+                                        amount: money.format(e.amount),
+                                      })
+                                    : t('adminRefunds.list.cancelLine', {
+                                        amount: money.format(e.amount),
+                                      })}
                             </strong>
                             <span className={styles.rowOrder}>
                               {t('adminPayments.collect.orderLine', {
@@ -523,12 +583,20 @@ export function RefundsPage() {
                                     ]
                                       .filter(Boolean)
                                       .join(' · ')
-                                  : e.by &&
-                                    t(
-                                      e.by === 'guest'
-                                        ? 'adminRefunds.list.byGuest'
-                                        : 'adminRefunds.list.byRestaurant',
-                                    ),
+                                  : [
+                                      e.by
+                                        ? t('adminRefunds.list.by', { name: e.by })
+                                        : e.who &&
+                                          t(
+                                            e.who === 'guest'
+                                              ? 'adminRefunds.list.byGuest'
+                                              : 'adminRefunds.list.byRestaurant',
+                                          ),
+                                      e.note,
+                                      e.refundedAuto && t('adminRefunds.list.autoRefund'),
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' · '),
                               ]
                                 .filter(Boolean)
                                 .join(' · ')}
@@ -549,8 +617,17 @@ export function RefundsPage() {
                                     : t('adminRefunds.list.given')}
                               </span>
                             ) : (
-                              <span className={cx(styles.chip, styles.cancelChip)}>
-                                {t('adminRefunds.list.cancel')}
+                              <span
+                                className={cx(
+                                  styles.chip,
+                                  e.part === 'ranOut' ? styles.ranOutChip : styles.cancelChip,
+                                )}
+                              >
+                                {e.part === 'round'
+                                  ? t('adminRefunds.list.roundChip')
+                                  : e.part === 'ranOut'
+                                    ? t('adminRefunds.list.ranOutChip')
+                                    : t('adminRefunds.list.cancel')}
                               </span>
                             )}
                             <Icon name="chev" size="xs" />

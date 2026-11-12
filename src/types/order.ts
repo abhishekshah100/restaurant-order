@@ -94,6 +94,11 @@ export interface OrderItem {
   quantity: number;
   /** How many the kitchen couldn't make (sold out): off the bill, shown struck through. */
   unavailable?: number;
+  /** ISO: when the kitchen last marked some of it run out. */
+  unavailableAt?: string;
+  /** Staff only: who marked it run out, and their note to the waiters. */
+  unavailableBy?: string;
+  unavailableNote?: string;
   /** Variant label, e.g. "Full". */
   variant?: string;
   /** Detail lines, e.g. ["Full · 10 pcs · Medium spicy", "+ Extra mint chutney (free)"]. */
@@ -218,6 +223,18 @@ export interface OrderRound {
   kitchen?: KitchenMarks;
   /** The staff member who took it at the table; none when the guest ordered on their phone. */
   takenBy?: string;
+  /** Taken back: when, by the guest or the restaurant, why (worded), and (staff) who. */
+  cancelled?: RoundCancel;
+}
+
+/** A round taken back. Older rounds have only `at`. */
+export interface RoundCancel {
+  at: string;
+  who?: 'guest' | 'restaurant';
+  /** The restaurant's reason, as staff read it ("An item ran out in the kitchen"). */
+  reason?: string;
+  /** Staff only: the member of staff who did it. */
+  by?: string;
 }
 
 /** The guests' note at a table, as staff read it on an order. */
