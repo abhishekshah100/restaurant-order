@@ -1,0 +1,345 @@
+/* Inventory › Stock: four numbers, the list by category with a level bar per item. */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  list-style: none;
+}
+
+.tile {
+  padding: 12px 14px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.tileLabel {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.tileValue {
+  font: var(--font-price-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.tileLow {
+  border-color: var(--warn);
+  background: var(--warn-tint);
+}
+
+.tileOut {
+  border-color: var(--error);
+  background: var(--error-tint);
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Categories: one line, scrolled sideways when there are many. */
+.scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.scroll > * {
+  flex: none;
+}
+
+.group {
+  display: grid;
+  gap: 6px;
+}
+
+.groupTitle {
+  padding: 6px 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.groupTitle span {
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  font: var(--font-caption);
+}
+
+.rows {
+  display: grid;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.rows li + li {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  display: grid;
+  gap: 6px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: color-mix(in srgb, var(--warn-tint) 40%, transparent);
+}
+
+.row:focus-visible {
+  box-shadow: inset var(--focus);
+}
+
+.rowTop,
+.rowBottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.name {
+  min-width: 0;
+  font: var(--font-label);
+}
+
+.amount {
+  flex: none;
+  font: var(--font-label);
+  font-size: 1.0625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 6px;
+  display: block;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar > span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+}
+
+.bar_ok {
+  background: var(--success);
+}
+
+.bar_low {
+  background: var(--warn);
+}
+
+.bar_out {
+  background: var(--error);
+}
+
+.line {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font: var(--font-small);
+}
+
+.line_ok {
+  color: var(--ink-2);
+}
+
+.line_low {
+  color: var(--gold-ink);
+  font: var(--font-small-strong);
+}
+
+.line_out {
+  color: var(--error);
+  font: var(--font-small-strong);
+}
+
+.line_none {
+  color: var(--ink-2);
+  font-style: italic;
+}
+
+.date {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--error-tint);
+  color: var(--error);
+  font: var(--font-caption);
+  font-style: normal;
+}
+
+.worth {
+  flex: none;
+  color: var(--ink-2);
+  font: var(--font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The item view's top: how much, its bar, and what it's measured against. */
+.hero {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  border-radius: var(--r-panel);
+  background: var(--bg);
+}
+
+.heroTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.heroAmount {
+  font: var(--font-price-lg);
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.heroLine {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.facts div {
+  display: grid;
+  gap: 2px;
+}
+
+.facts dt {
+  color: var(--ink-2);
+  font: var(--font-caption);
+}
+
+.facts dd {
+  margin: 0;
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Settings for this item: folded away. */
+.settings {
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+}
+
+.settings > summary {
+  min-height: 48px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font: var(--font-label);
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings > summary::after {
+  content: '▾';
+  color: var(--ink-2);
+}
+
+.settings[open] > summary::after {
+  content: '▴';
+}
+
+.settingsBody {
+  padding: 0 16px 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.priceNote {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--warn-tint);
+  font: var(--font-small);
+}
+
+.stopRow {
+  padding-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+@media (max-width: 640px) {
+  .tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .row {
+    padding: 12px;
+  }
+}
+
+.stopButton {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+/* "About 3 days left": grey, amber when soon, red within a day. */
+.days {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  color: var(--ink-2);
+  font: var(--font-caption);
+  font-style: normal;
+}
+
+.daysSoon {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+.daysOut {
+  background: var(--error-tint);
+  color: var(--error);
+}

@@ -1,7 +1,12 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { Fragment, useMemo, useState } from 'react';
-import { useContent, useIngredients, useInventoryStock, useRecipe } from '@/api/hooks';
+import { useContent, useIngredients, useInventoryStock, useRecipe, useRecipes } from '@/api/hooks';
+import { recipeQuery } from '@/api/queries';
+import { useAdminToken } from '@/hooks/useAdminSession';
+import { applyTemplate, findTemplate, sizeFactor } from '@/lib/recipeTemplates';
+import { RECIPE_TEMPLATES } from './recipeTemplateList';
 import { useSaveRecipe } from '@/api/mutations';
 import { Button, Dialog, IconButton, Input, Select } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
@@ -17,6 +22,7 @@ import type {
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useInventoryText } from './useInventoryText';
 import styles from './Inventory.module.css';
+import quick from './RecipeQuick.module.css';
 
 interface Draft {
   key: number;
@@ -134,6 +140,77 @@ function RecipeEditor({ recipe, onClose }: { recipe: RecipeResponse; onClose: ()
     [stockData],
   );
   const dropped = recipe.lines.filter((l) => l.unknown).length;
+  const token = useAdminToken();
+  const client = useQueryClient();
+  const others = (useRecipes(branch.id).data?.dishes ?? []).filter(
+    (d) => d.lines > 0 && d.slug !== recipe.dish.slug,
+  );
+  const template = findTemplate(recipe.dish.name, RECIPE_TEMPLATES);
+  // What a quick start did: filled in, and what it couldn't (ingredients not added yet).
+  const [notice, setNotice] = useState<{ missing: string[] } | null>(null);
+  const [copying, setCopying] = useState(false);
+  /** The biggest size: templates are for a full plate. */
+  const fullSize = [...recipe.dish.sizes].sort(
+    (a, b) =>
+      (sizeFactor(b, { name: 'Full', price: 0 }) || b.price) -
+      (sizeFactor(a, { name: 'Full', price: 0 }) || a.price),
+  )[0];
+  const asDrafts = (
+    section: { part: RecipePart; code: string },
+    ls: readonly { ingredientId: string; quantity: number; unit?: InventoryUnit | '' }[],
+  ): Draft[] =>
+    ls.map((l) => ({
+      key: nextKey++,
+      part: section.part,
+      code: section.code,
+      choice: '',
+      ingredientId: l.ingredientId,
+      quantity: quantityText(l.quantity),
+      unit: l.unit ?? '',
+    }));
+  /** Replaces what every plate and each size use (add-ons and options stay). */
+  const replaceMain = (next: Draft[]) =>
+    setLines((all) => [...all.filter((l) => l.part !== 'dish' && l.part !== 'size'), ...next]);
+
+  const fillTemplate = () => {
+    if (!template) return;
+    if (recipe.dish.sizes.length > 0 && fullSize) {
+      const missing = new Set<string>();
+      const next = recipe.dish.sizes.flatMap((size) => {
+        const result = applyTemplate(template, ingredients, sizeFactor(size, fullSize));
+        result.missing.forEach((m) => missing.add(m));
+        return asDrafts({ part: 'size', code: size.code }, result.lines);
+      });
+      replaceMain(next);
+      setNotice({ missing: [...missing] });
+    } else {
+      const result = applyTemplate(template, ingredients);
+      replaceMain(asDrafts({ part: 'dish', code: '' }, result.lines));
+      setNotice({ missing: result.missing });
+    }
+  };
+
+  const copyFrom = async (slug: string) => {
+    if (!slug) return;
+    setCopying(true);
+    try {
+      const source = await client.fetchQuery(recipeQuery(token, branch.id, slug));
+      const known = source.lines.filter((l) => !l.unknown);
+      const dishLines = known.filter((l) => l.part === 'dish');
+      // No recipe for every plate: the biggest size's.
+      const biggest = [...source.dish.sizes].sort((a, b) => b.price - a.price)[0];
+      const from =
+        dishLines.length > 0
+          ? dishLines
+          : known.filter((l) => l.part === 'size' && l.code === biggest?.code);
+      replaceMain(asDrafts({ part: 'dish', code: '' }, from));
+      setNotice({ missing: [] });
+    } catch {
+      showToast(t('adminInventory.errors.failed'), { tone: 'error' });
+    } finally {
+      setCopying(false);
+    }
+  };
 
   const update = (key: number, change: Partial<Draft>) =>
     setLines((all) => all.map((l) => (l.key === key ? { ...l, ...change } : l)));
@@ -318,6 +395,37 @@ function RecipeEditor({ recipe, onClose }: { recipe: RecipeResponse; onClose: ()
             >
               {t('adminInventory.recipes.ownRecipe')}
             </Button>
+            {(() => {
+              // Another size with its own recipe: fill this one from it, scaled (Half = ½ Full).
+              const from = main.find(
+                (o) => o.part === 'size' && o.code !== s.code && inSection(o).length > 0,
+              );
+              const fromSize = recipe.dish.sizes.find((z) => z.code === from?.code);
+              const thisSize = recipe.dish.sizes.find((z) => z.code === s.code);
+              if (!from || !fromSize || !thisSize) return null;
+              const factor = sizeFactor(thisSize, fromSize);
+              return (
+                <Button
+                  variant="ghost"
+                  iconStart="copy"
+                  onClick={() =>
+                    inSection(from).forEach((b) => {
+                      const q = parseQuantity(b.quantity);
+                      add(s, {
+                        ingredientId: b.ingredientId,
+                        quantity:
+                          q === null
+                            ? b.quantity
+                            : quantityText(Math.round(q * factor * 1000) / 1000),
+                        unit: b.unit,
+                      });
+                    })
+                  }
+                >
+                  {t('adminInventory.recipes.scaleFrom', { name: fromSize.name, factor })}
+                </Button>
+              );
+            })()}
           </>
         ) : (
           own.map(renderLine)
@@ -351,8 +459,47 @@ function RecipeEditor({ recipe, onClose }: { recipe: RecipeResponse; onClose: ()
         )}
         {showCosts && (
           <p className={styles.muted}>
-            {t('adminInventory.recipes.target', { pct: recipe.foodCostTarget })}
+            {t('adminInventory.recipes.targetLine', { pct: recipe.foodCostTarget })}
           </p>
+        )}
+        {(template || others.length > 0) && (
+          <section className={quick.start} aria-labelledby="recipe-quick">
+            <h3 id="recipe-quick" className={quick.startTitle}>
+              {t('adminInventory.recipes.quickStart')}
+            </h3>
+            <div className={quick.startActions}>
+              {template && (
+                <Button iconStart="sparkle" onClick={fillTemplate}>
+                  {t('adminInventory.recipes.useTemplate', { name: template.dishes[0] ?? '' })}
+                </Button>
+              )}
+              {others.length > 0 && (
+                <Select
+                  id="recipe-copy"
+                  label={t('adminInventory.recipes.copyFrom')}
+                  value=""
+                  disabled={copying}
+                  onChange={(event) => void copyFrom(event.target.value)}
+                >
+                  <option value="" disabled>
+                    {t('adminInventory.recipes.copyPick')}
+                  </option>
+                  {others.map((d) => (
+                    <option key={d.slug} value={d.slug}>
+                      {d.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </div>
+            {notice && (
+              <p className={quick.notice} role="status">
+                {t('adminInventory.recipes.filled')}
+                {notice.missing.length > 0 &&
+                  ` ${t('adminInventory.recipes.missing', { names: notice.missing.join(', ') })}`}
+              </p>
+            )}
+          </section>
         )}
         {main.map(renderSection)}
         {rest.length > 0 &&

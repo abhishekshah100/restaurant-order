@@ -57,7 +57,9 @@
 
 .tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
   gap: 4px;
   padding: 4px;
   border-radius: var(--r-pill);
@@ -67,6 +69,8 @@
 }
 
 .tab {
+  flex: none;
+  white-space: nowrap;
   min-height: 36px;
   padding: 0 16px;
   border: 0;
@@ -330,6 +334,7 @@ button.row:focus-visible {
 }
 
 .facts dd {
+  margin: 0;
   font: var(--font-small-strong);
   font-variant-numeric: tabular-nums;
 }
@@ -423,4 +428,67 @@ button.row:focus-visible {
 .table thead th {
   font: var(--font-caption);
   color: var(--ink-2);
+}
+
+/* Inside Reports or More: which view. */
+.subViews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Phone and tablet: the daily jobs in a bar above the bottom menu (Today shows them itself). */
+.jobBar {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .withJobBar {
+    padding-bottom: 72px;
+  }
+
+  .jobBar {
+    position: fixed;
+    right: 0;
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    left: 0;
+    z-index: calc(var(--z-nav) - 1);
+    padding: 6px 12px;
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 6px;
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 96%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .jobBarItem {
+    min-height: 48px;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 2px;
+    border: 0;
+    border-radius: var(--r-md);
+    background: none;
+    color: var(--ink);
+    font: var(--font-caption);
+    cursor: pointer;
+  }
+
+  .jobBarItem:active {
+    background: var(--warn-tint);
+  }
+
+  .jobBarItem:focus-visible {
+    box-shadow: var(--focus);
+  }
+}
+
+/* Buttons the phone's job bar already offers. */
+@media (max-width: 1023px) {
+  .withJobBar .inJobBar {
+    display: none;
+  }
 }

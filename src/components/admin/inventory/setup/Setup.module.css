@@ -1,0 +1,437 @@
+/* Inventory › Get started: welcome, progress, four steps. */
+
+.setup {
+  display: grid;
+  gap: 14px;
+}
+
+.hero {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px 16px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: linear-gradient(135deg, var(--warn-tint), var(--surface) 70%);
+  box-shadow: var(--sh-1);
+}
+
+.heroIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--gold-ink);
+  box-shadow: var(--sh-1);
+}
+
+.heroText {
+  display: grid;
+  gap: 4px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.heroTitle {
+  color: var(--ink);
+  font: var(--font-h);
+  font-size: 1.375rem;
+}
+
+.progress {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+}
+
+.progressLabel {
+  font: var(--font-small-strong);
+}
+
+.progressBar {
+  height: 8px;
+  display: block;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progressBar > span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--success);
+  transition: width 0.3s;
+}
+
+.steps {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.step {
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.stepOpen {
+  border-color: var(--gold-ink);
+  box-shadow: var(--sh-1);
+}
+
+.stepHead {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+}
+
+.stepHead:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  font: var(--font-small-strong);
+}
+
+.stepNumberOpen {
+  border-color: var(--gold-ink);
+  color: var(--gold-ink);
+}
+
+.stepNumberDone {
+  border-color: var(--success);
+  background: var(--success);
+  color: var(--surface);
+}
+
+.stepText {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.stepTitle {
+  font: var(--font-label);
+}
+
+.stepShort {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.stepChip {
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font: var(--font-caption);
+  white-space: nowrap;
+}
+
+.chipDone {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.chipSkipped {
+  background: var(--line);
+  color: var(--ink-2);
+}
+
+.stepBody {
+  padding: 4px 16px 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.lead {
+  font: var(--font-body);
+}
+
+.hint {
+  margin-top: -6px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.note {
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: var(--r-md);
+  background: var(--success-tint);
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.note svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--success);
+}
+
+/* Step ①: tick what the kitchen buys. */
+.group {
+  display: grid;
+  gap: 8px;
+}
+
+.groupTitle {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  letter-spacing: 0.02em;
+}
+
+.picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pick {
+  min-height: 44px;
+  padding: 8px 14px 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.pick:hover:not(:disabled) {
+  border-color: var(--ink-2);
+}
+
+.pick:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.pickBox {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  color: var(--surface);
+}
+
+.pickOn {
+  border-color: var(--gold-ink);
+  background: var(--warn-tint);
+}
+
+.pickOn .pickBox {
+  border-color: var(--gold-ink);
+  background: var(--gold-ink);
+}
+
+.pickDone {
+  border-color: var(--success-tint);
+  background: var(--success-tint);
+  cursor: default;
+}
+
+.pickDone .pickBox {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.pickUnit {
+  color: var(--ink-2);
+  font: var(--font-caption);
+}
+
+.ownRow {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+/* Steps ② and ③: one row per ingredient, like a stock sheet. */
+.sheet {
+  display: grid;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.sheetRow {
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 12px;
+}
+
+.sheetRow + .sheetRow {
+  border-top: 1px solid var(--line);
+}
+
+.sheetRow:has(.sheetField:only-of-type) {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.sheetName {
+  align-self: center;
+  font: var(--font-small-strong);
+}
+
+.sheetField {
+  display: grid;
+  gap: 4px;
+}
+
+.sheetLabel {
+  color: var(--ink-2);
+  font: var(--font-caption);
+}
+
+.withUnit {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.withUnit:focus-within {
+  border-color: var(--ink);
+  box-shadow: var(--focus);
+}
+
+.box {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.suffix,
+.prefix {
+  padding: 0 10px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  white-space: nowrap;
+}
+
+.prefix {
+  padding-right: 0;
+}
+
+/* Bottom of a step: what's chosen, and its button. */
+.footer {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -16px -16px;
+  padding: 12px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.footerNote {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.footerError {
+  color: var(--error);
+  font: var(--font-small-strong);
+}
+
+.footerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ready {
+  padding: 24px 16px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.readyIcon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 16px;
+  }
+
+  .ownRow {
+    grid-template-columns: 1fr;
+  }
+
+  .sheetRow,
+  .sheetRow:has(.sheetField:only-of-type) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sheetName {
+    grid-column: 1 / -1;
+  }
+
+  .footer {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .footerActions {
+    width: 100%;
+  }
+
+  .footerActions > * {
+    flex: 1;
+  }
+}

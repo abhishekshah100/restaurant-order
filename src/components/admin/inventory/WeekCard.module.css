@@ -1,0 +1,118 @@
+/* Today: the week at a glance. */
+.card {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title {
+  font: var(--font-label);
+  font-size: 1.0625rem;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.figures div {
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+
+.figures dt {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.figures dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font: var(--font-price-lg);
+  font-size: 1.375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trend {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  font: var(--font-caption);
+}
+
+.better {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.worse {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.problem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.problem svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--error);
+}
+
+.wins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.win {
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-pill);
+  background: var(--success-tint);
+  color: var(--success);
+  font: var(--font-small-strong);
+}
+
+.prices {
+  justify-self: start;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--error);
+  border-radius: var(--r-pill);
+  background: var(--error-tint);
+  color: var(--error);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.prices:focus-visible {
+  box-shadow: var(--focus);
+}

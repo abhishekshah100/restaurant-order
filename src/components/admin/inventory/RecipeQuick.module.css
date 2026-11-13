@@ -1,0 +1,27 @@
+/* A recipe's quick start: from a template, or copied from another dish. */
+.start {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  border: 1px dashed var(--gold-ink);
+  border-radius: var(--r-panel);
+  background: var(--warn-tint);
+}
+
+.startTitle {
+  font: var(--font-small-strong);
+}
+
+.startActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: end;
+  gap: 10px;
+}
+
+.notice {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font: var(--font-small);
+}

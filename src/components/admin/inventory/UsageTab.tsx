@@ -11,6 +11,8 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useInventoryExport } from './useInventoryExport';
 import { useInventoryText } from './useInventoryText';
 import styles from './Inventory.module.css';
+import { InfoTip } from './InfoTip';
+import stock from './Stock.module.css';
 
 const percent = (n: number | undefined) =>
   n === undefined ? '—' : `${(Math.round(n * 10) / 10).toFixed(1)}%`;
@@ -74,13 +76,40 @@ export function UsageTab({ today }: { today: string }) {
                   { id: 'actual', value: text.value(data.total.actual) },
                   { id: 'theoretical', value: text.value(data.total.theoretical) },
                   { id: 'wastage', value: text.value(data.total.wastage) },
-                  { id: 'unexplained', value: text.signedWhole(-data.total.unexplained) },
+                  {
+                    id: 'unexplained',
+                    value:
+                      data.total.unexplained > 0
+                        ? text.value(data.total.unexplained)
+                        : t('adminInventory.usage.allExplained'),
+                  },
                   { id: 'foodCostActual', value: percent(data.foodCost?.actual) },
                   { id: 'foodCostTheoretical', value: percent(data.foodCost?.theoretical) },
                 ] as const
               ).map((tile) => (
-                <li key={tile.id} className={styles.tile}>
-                  <span className={styles.muted}>{t(`adminInventory.usage.tiles.${tile.id}`)}</span>
+                <li
+                  key={tile.id}
+                  className={cx(
+                    styles.tile,
+                    tile.id === 'unexplained' &&
+                      data.total &&
+                      data.total.unexplained > 0 &&
+                      styles.tileOut,
+                  )}
+                >
+                  <span className={styles.muted}>
+                    {t(`adminInventory.usage.tiles.${tile.id}`)}
+                    {tile.id === 'unexplained' && (
+                      <InfoTip label={t('adminInventory.tips.label')}>
+                        {t('adminInventory.tips.missing')}
+                      </InfoTip>
+                    )}
+                    {tile.id === 'foodCostActual' && (
+                      <InfoTip label={t('adminInventory.tips.label')}>
+                        {t('adminInventory.tips.foodCost')}
+                      </InfoTip>
+                    )}
+                  </span>
                   <span className={styles.tileValue}>{tile.value}</span>
                 </li>
               ))}
@@ -122,16 +151,48 @@ export function UsageTab({ today }: { today: string }) {
           {data.rows.length === 0 ? (
             <p className={styles.card}>{t('adminInventory.usage.empty')}</p>
           ) : (
-            <ul className={styles.list} aria-label={t('adminInventory.usage.items')}>
-              {data.rows.map((row) => (
-                <li key={row.ingredientId}>
-                  <UsageItem
-                    row={row}
-                    category={row.categoryId ? nameOf.get(row.categoryId) : undefined}
-                  />
-                </li>
-              ))}
-            </ul>
+            <>
+              {(() => {
+                const off = data.rows.filter((r) => r.quantity.unexplained !== 0);
+                const fine = data.rows.filter((r) => r.quantity.unexplained === 0);
+                const item = (row: UsageRow) => (
+                  <li key={row.ingredientId}>
+                    <UsageItem
+                      row={row}
+                      category={row.categoryId ? nameOf.get(row.categoryId) : undefined}
+                    />
+                  </li>
+                );
+                return (
+                  <>
+                    {off.length > 0 && (
+                      <section className={styles.block} aria-labelledby="usage-look">
+                        <h2 id="usage-look" className={styles.blockTitle}>
+                          {t.plural('adminInventory.usage.needsLook', off.length)}
+                        </h2>
+                        <p className={styles.muted}>{t('adminInventory.usage.missingHint')}</p>
+                        <ul className={styles.list}>{off.map(item)}</ul>
+                      </section>
+                    )}
+                    {fine.length > 0 &&
+                      (off.length === 0 ? (
+                        <ul className={styles.list} aria-label={t('adminInventory.usage.items')}>
+                          {fine.map(item)}
+                        </ul>
+                      ) : (
+                        <details className={stock.settings}>
+                          <summary>
+                            {t.plural('adminInventory.usage.restAddUp', fine.length)}
+                          </summary>
+                          <div className={stock.settingsBody}>
+                            <ul className={styles.list}>{fine.map(item)}</ul>
+                          </div>
+                        </details>
+                      ))}
+                  </>
+                );
+              })()}
+            </>
           )}
         </>
       )}
@@ -175,19 +236,19 @@ function UsageItem({ row, category }: { row: UsageRow; category?: string }) {
         >
           {q.unexplained === 0
             ? t('adminInventory.usage.allExplained')
-            : t('adminInventory.usage.unexplained', {
-                amount: text.change(-q.unexplained, row.unit),
-              })}
+            : q.unexplained > 0
+              ? t('adminInventory.usage.missing', { amount: qty(q.unexplained) })
+              : t('adminInventory.usage.extra', { amount: qty(-q.unexplained) })}
         </span>
         {row.value && row.value.unexplained !== 0 && (
-          <span className={styles.muted}>{text.signedWhole(-row.value.unexplained)}</span>
+          <span className={styles.muted}>{text.value(Math.abs(row.value.unexplained))}</span>
         )}
       </span>
     </div>
   );
 }
 
-/** What's unexplained, in value: missing (red) or more than expected. */
+/** What doesn't add up, in value: missing (red) or more than expected. */
 function Unexplained({ amount }: { amount: number; value: true }) {
   const t = useContent('common');
   const text = useInventoryText();
@@ -199,11 +260,12 @@ function Unexplained({ amount }: { amount: number; value: true }) {
           amount > 0 ? styles.negative : amount < 0 && styles.positive,
         )}
       >
-        {amount === 0 ? t('adminInventory.usage.allExplained') : text.signedWhole(-amount)}
+        {amount === 0
+          ? t('adminInventory.usage.allExplained')
+          : amount > 0
+            ? t('adminInventory.usage.missing', { amount: text.value(amount) })
+            : t('adminInventory.usage.extra', { amount: text.value(-amount) })}
       </span>
-      {amount !== 0 && (
-        <span className={styles.muted}>{t('adminInventory.usage.tiles.unexplained')}</span>
-      )}
     </span>
   );
 }

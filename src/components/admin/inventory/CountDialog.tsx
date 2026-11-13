@@ -2,18 +2,20 @@
 
 import { useMemo, useState } from 'react';
 import { ApiError, isApiError } from '@/api/client';
-import { useContent, useStockCount } from '@/api/hooks';
+import { useContent, useIngredients, useStockCount } from '@/api/hooks';
 import { useCountStep, useSaveCountLines } from '@/api/mutations';
-import { Button, Chip, Dialog, Input, SearchField, Select } from '@/components/ui';
+import { Button, Chip, Dialog, Icon, Input, SearchField, Select } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { cx } from '@/lib/cx';
 import { parseQuantity, unitsLike } from '@/lib/inventory';
 import type { CountLine, InventoryUnit } from '@/types/inventory';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { CountStatusChip } from './CountsTab';
+import { InfoTip } from './InfoTip';
 import { useInventoryExport } from './useInventoryExport';
 import { useInventoryText } from './useInventoryText';
 import styles from './Inventory.module.css';
+import quick from './QuickCount.module.css';
 
 /** What's typed for a line before it's saved: a quantity, in a unit or a pack. */
 interface Draft {
@@ -65,6 +67,13 @@ export function CountDialog({ id, onClose }: { id: string; onClose: () => void }
   // Lines worked on in this sitting stay in view ("Not counted" would hide them mid-typing).
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
   const [tried, setTried] = useState(false);
+  // Applied with every count matching the stock: said with a little celebration.
+  const [allMatch, setAllMatch] = useState(false);
+  // Phones and tablets count one item at a time; either view can switch to the other.
+  const [oneByOne, setOneByOne] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches,
+  );
+  const categories = useIngredients(branch.id).data?.categories;
 
   const counting = count?.status === 'counting' && can('inventory.count', 'inventory.manage');
   const manages = can('inventory.manage');
@@ -148,7 +157,16 @@ export function CountDialog({ id, onClose }: { id: string; onClose: () => void }
         },
         {
           onSuccess: () => {
-            showToast(t(`adminInventory.counts.done.${name}`), { tone: 'success' });
+            const counted = lines.filter((l) => l.counted !== undefined);
+            if (
+              name === 'apply' &&
+              counted.length > 0 &&
+              counted.every((l) => (l.difference ?? 0) === 0)
+            ) {
+              setAllMatch(true);
+            } else {
+              showToast(t(`adminInventory.counts.done.${name}`), { tone: 'success' });
+            }
             if (name !== 'apply') onClose();
           },
           onError: failed,
@@ -232,6 +250,15 @@ export function CountDialog({ id, onClose }: { id: string; onClose: () => void }
         </p>
       ) : (
         <div className={styles.form}>
+          {allMatch && (
+            <div className={quick.celebrate} role="status">
+              <span className={quick.celebrateIcon} aria-hidden="true">
+                <Icon name="checkc" size="md" />
+              </span>
+              <strong>{t('adminInventory.counts.allMatch')}</strong>
+              <span>{t('adminInventory.counts.allMatchBody')}</span>
+            </div>
+          )}
           <div className={styles.lineHead}>
             <CountStatusChip status={count.status} />
             <span className={styles.muted}>
@@ -244,51 +271,95 @@ export function CountDialog({ id, onClose }: { id: string; onClose: () => void }
           {count.status === 'submitted' && !manages && (
             <p className={styles.muted}>{t('adminInventory.counts.waiting')}</p>
           )}
-          {counting && <p className={styles.muted}>{t('adminInventory.counts.countHint')}</p>}
-          {!count.blind && open && (
-            <p className={styles.muted}>{t('adminInventory.counts.expectedHint')}</p>
-          )}
-          <SearchField
-            value={search}
-            onChange={setSearch}
-            label={t('adminInventory.stock.search')}
-            placeholder={t('adminInventory.stock.searchPlaceholder')}
-          />
-          <div className={styles.chips} role="group" aria-label={t('adminInventory.stock.filter')}>
-            {(['todo', 'all', ...(count.blind ? [] : ['differences'])] as Show[]).map((s) => (
-              <Chip key={s} pressed={show === s} onClick={() => setShow(s)}>
-                {t(`adminInventory.counts.show.${s}`)}
+          {counting && (
+            <div className={styles.chips} role="group" aria-label={t('adminInventory.quick.view')}>
+              <Chip pressed={oneByOne} onClick={() => setOneByOne(true)}>
+                {t('adminInventory.quick.oneByOne')}
               </Chip>
-            ))}
-          </div>
-          {shown.length === 0 ? (
-            <p className={styles.muted}>{t(`adminInventory.counts.none.${show}`)}</p>
+              <Chip pressed={!oneByOne} onClick={() => setOneByOne(false)}>
+                {t('adminInventory.quick.list')}
+              </Chip>
+            </div>
+          )}
+          {counting && oneByOne ? (
+            <QuickCount
+              lines={ordered(lines, categories)}
+              drafts={drafts}
+              saving={save.isPending}
+              invalid={(line) =>
+                drafts[line.ingredientId] !== undefined &&
+                countedOf(drafts[line.ingredientId] as Draft, line) === null
+              }
+              onDraft={(line, text) => {
+                setTouched((all) => new Set(all).add(line.ingredientId));
+                setDrafts((all) => ({ ...all, [line.ingredientId]: { text, measure: line.unit } }));
+              }}
+              onSave={(line, then) => flush(line.ingredientId, then)}
+              onFinish={() => {
+                setShow('all');
+                setOneByOne(false);
+              }}
+            />
           ) : (
-            <ul className={styles.list}>
-              {shown.map((line) => (
-                <li key={line.ingredientId}>
-                  <CountLineRow
-                    line={line}
-                    editable={counting}
-                    draft={drafts[line.ingredientId]}
-                    invalid={
-                      tried &&
-                      drafts[line.ingredientId] !== undefined &&
-                      countedOf(drafts[line.ingredientId] as Draft, line) === null
-                    }
-                    onDraft={(draft) => {
-                      setTouched((all) => new Set(all).add(line.ingredientId));
-                      setDrafts((all) => ({ ...all, [line.ingredientId]: draft }));
-                    }}
-                    onLeave={() => flush(line.ingredientId)}
-                    note={notes[line.ingredientId] ?? line.note ?? ''}
-                    noteEditable={open && manages && !count.blind}
-                    noteMissing={tried && missingNotes.includes(line)}
-                    onNote={(note) => setNotes((all) => ({ ...all, [line.ingredientId]: note }))}
-                  />
-                </li>
-              ))}
-            </ul>
+            <>
+              {counting && <p className={styles.muted}>{t('adminInventory.counts.countHint')}</p>}
+              {!count.blind && open && (
+                <p className={styles.muted}>
+                  {t('adminInventory.counts.expectedHint')}
+                  <InfoTip label={t('adminInventory.tips.label')}>
+                    {t('adminInventory.tips.expected')}
+                  </InfoTip>
+                </p>
+              )}
+              <SearchField
+                value={search}
+                onChange={setSearch}
+                label={t('adminInventory.stock.search')}
+                placeholder={t('adminInventory.stock.searchPlaceholder')}
+              />
+              <div
+                className={styles.chips}
+                role="group"
+                aria-label={t('adminInventory.stock.filter')}
+              >
+                {(['todo', 'all', ...(count.blind ? [] : ['differences'])] as Show[]).map((s) => (
+                  <Chip key={s} pressed={show === s} onClick={() => setShow(s)}>
+                    {t(`adminInventory.counts.show.${s}`)}
+                  </Chip>
+                ))}
+              </div>
+              {shown.length === 0 ? (
+                <p className={styles.muted}>{t(`adminInventory.counts.none.${show}`)}</p>
+              ) : (
+                <ul className={styles.list}>
+                  {shown.map((line) => (
+                    <li key={line.ingredientId}>
+                      <CountLineRow
+                        line={line}
+                        editable={counting}
+                        draft={drafts[line.ingredientId]}
+                        invalid={
+                          tried &&
+                          drafts[line.ingredientId] !== undefined &&
+                          countedOf(drafts[line.ingredientId] as Draft, line) === null
+                        }
+                        onDraft={(draft) => {
+                          setTouched((all) => new Set(all).add(line.ingredientId));
+                          setDrafts((all) => ({ ...all, [line.ingredientId]: draft }));
+                        }}
+                        onLeave={() => flush(line.ingredientId)}
+                        note={notes[line.ingredientId] ?? line.note ?? ''}
+                        noteEditable={open && manages && !count.blind}
+                        noteMissing={tried && missingNotes.includes(line)}
+                        onNote={(note) =>
+                          setNotes((all) => ({ ...all, [line.ingredientId]: note }))
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </div>
       )}
@@ -407,5 +478,138 @@ function CountLineRow({
         />
       )}
     </div>
+  );
+}
+
+/** Count lines in the stock list's order: by category (as the kitchen is laid out), then name. */
+function ordered(lines: readonly CountLine[], categories?: readonly { id: string }[]) {
+  const rank = new Map((categories ?? []).map((c, i) => [c.id, i]));
+  const at = (l: CountLine) => (l.categoryId ? (rank.get(l.categoryId) ?? 999) : 1000);
+  return [...lines].sort((a, b) => at(a) - at(b) || a.name.localeCompare(b.name));
+}
+
+/** How much + and − change a count by, for a unit. */
+const STEP: Record<InventoryUnit, number> = { kg: 0.5, l: 0.5, g: 50, ml: 50, pc: 1, dozen: 1 };
+
+/**
+ * Counting one item at a time (phones): its name big, a number box with − and +, Back, Skip and
+ * Next (Next saves it). "12 of 28" shows how far along; it starts at the first not yet counted.
+ * After the last, the list opens with every count for a last look before sending.
+ */
+function QuickCount({
+  lines,
+  drafts,
+  saving,
+  invalid,
+  onDraft,
+  onSave,
+  onFinish,
+}: {
+  lines: readonly CountLine[];
+  drafts: Record<string, Draft>;
+  saving: boolean;
+  invalid: (line: CountLine) => boolean;
+  onDraft: (line: CountLine, text: string) => void;
+  onSave: (line: CountLine, then: () => void) => void;
+  onFinish: () => void;
+}) {
+  const t = useContent('common');
+  const text = useInventoryText();
+  const [index, setIndex] = useState(() =>
+    Math.max(
+      0,
+      lines.findIndex((l) => l.counted === undefined),
+    ),
+  );
+  const line = lines[Math.min(index, lines.length - 1)];
+  if (!line) return null;
+  const counted = lines.filter((l) => l.counted !== undefined || drafts[l.ingredientId]).length;
+  const value =
+    drafts[line.ingredientId]?.text ?? (line.counted !== undefined ? String(line.counted) : '');
+  const last = index >= lines.length - 1;
+  const next = () => (last ? onFinish() : setIndex(index + 1));
+  const step = (by: number) => {
+    const current = parseQuantity(value) ?? 0;
+    const n = Math.max(0, Math.round((current + by) * 1000) / 1000);
+    onDraft(line, String(n));
+  };
+
+  return (
+    <section className={quick.quick} aria-label={t('adminInventory.quick.oneByOne')}>
+      <div className={quick.progress}>
+        <span>
+          {t('adminInventory.quick.position', { number: index + 1, total: lines.length })}
+        </span>
+        <span>{t('adminInventory.quick.counted', { count: counted, total: lines.length })}</span>
+      </div>
+      <span className={quick.bar} aria-hidden="true">
+        <span style={{ width: `${(counted / lines.length) * 100}%` }} />
+      </span>
+      <div className={quick.card}>
+        <h3 className={quick.name}>{line.name}</h3>
+        {line.counted !== undefined && !drafts[line.ingredientId] && (
+          <p className={quick.before}>
+            {t('adminInventory.quick.before', { quantity: text.quantity(line.counted, line.unit) })}
+          </p>
+        )}
+        <div className={quick.entry}>
+          <button
+            type="button"
+            className={quick.step}
+            aria-label={t('adminInventory.quick.less', {
+              step: text.quantity(STEP[line.unit], line.unit),
+            })}
+            onClick={() => step(-STEP[line.unit])}
+          >
+            −
+          </button>
+          <label className={quick.box}>
+            <span className={quick.boxLabel}>{t('adminInventory.entry.counted')}</span>
+            <input
+              key={line.ingredientId}
+              inputMode="decimal"
+              autoComplete="off"
+              autoFocus
+              value={value}
+              aria-invalid={invalid(line) || undefined}
+              onChange={(event) => onDraft(line, event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  onSave(line, next);
+                }
+              }}
+            />
+            <span className={quick.unit}>{text.unit(line.unit)}</span>
+          </label>
+          <button
+            type="button"
+            className={quick.step}
+            aria-label={t('adminInventory.quick.more', {
+              step: text.quantity(STEP[line.unit], line.unit),
+            })}
+            onClick={() => step(STEP[line.unit])}
+          >
+            +
+          </button>
+        </div>
+        {invalid(line) && <p className={quick.error}>{t('adminInventory.entry.quantityError')}</p>}
+      </div>
+      <div className={quick.nav}>
+        <Button variant="ghost" disabled={index === 0} onClick={() => setIndex(index - 1)}>
+          {t('adminInventory.quick.back')}
+        </Button>
+        <Button variant="secondary" onClick={next}>
+          {t('adminInventory.quick.skip')}
+        </Button>
+        <Button
+          iconEnd={last ? 'check' : 'arrow'}
+          loading={saving}
+          onClick={() => onSave(line, next)}
+        >
+          {last ? t('adminInventory.quick.finish') : t('adminInventory.quick.next')}
+        </Button>
+      </div>
+    </section>
   );
 }

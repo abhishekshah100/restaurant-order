@@ -1,0 +1,292 @@
+/* Inventory › Today: needs your attention, daily jobs, this week in numbers. */
+
+.today {
+  display: grid;
+  gap: 16px;
+}
+
+.muted {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.card {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  box-shadow: var(--sh-1);
+}
+
+.cardTitle,
+.sectionTitle {
+  font: var(--font-label);
+  font-size: 1.0625rem;
+}
+
+.allGood {
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--r-md);
+  background: var(--success-tint);
+  font: var(--font-small-strong);
+}
+
+.allGood svg {
+  color: var(--success);
+}
+
+/* What needs someone: a coloured edge by how soon. */
+.attention {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.item {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.itemIcon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.urgent {
+  border-left-color: var(--error);
+}
+
+.urgent .itemIcon {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.soon {
+  border-left-color: var(--warn);
+}
+
+.soon .itemIcon {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+.info {
+  border-left-color: var(--line);
+}
+
+.info .itemIcon {
+  background: var(--bg-2, var(--line));
+  color: var(--ink-2);
+}
+
+.itemText {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  font: var(--font-small-strong);
+}
+
+.itemWorth {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.itemActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* The four daily jobs: big, plain, one tap. */
+.jobsBlock {
+  display: grid;
+  gap: 10px;
+}
+
+.jobs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.job {
+  min-height: 120px;
+  padding: 16px;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: start;
+  cursor: pointer;
+  box-shadow: var(--sh-1);
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+
+.job:hover {
+  border-color: var(--ink-2);
+}
+
+.job:active {
+  transform: scale(0.99);
+}
+
+.job:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.jobIcon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+}
+
+.job_arrived .jobIcon {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.job_waste .jobIcon {
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.job_count .jobIcon {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}
+
+.job_correct .jobIcon {
+  background: var(--bg-2, var(--line));
+  color: var(--ink);
+}
+
+.jobTitle {
+  font: var(--font-label);
+}
+
+.jobHint {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+/* This week in three numbers. */
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.number {
+  padding: 14px 16px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.number dt {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.number dd {
+  margin: 0;
+  font: var(--font-price-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Setup not finished: a card to carry on. */
+.finish {
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--gold-ink);
+  border-radius: var(--r-panel);
+  background: linear-gradient(135deg, var(--warn-tint), var(--surface) 70%);
+}
+
+.finishText {
+  flex: 1 1 260px;
+  display: grid;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.finishTitle {
+  color: var(--ink);
+  font: var(--font-label);
+  font-size: 1.0625rem;
+}
+
+.finishBar {
+  height: 6px;
+  max-width: 320px;
+  display: block;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.finishBar > span {
+  height: 100%;
+  display: block;
+  background: var(--success);
+}
+
+@media (max-width: 640px) {
+  .item {
+    flex-wrap: wrap;
+  }
+
+  .itemText {
+    flex-basis: calc(100% - 50px);
+  }
+
+  .itemActions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .itemActions > * {
+    flex: 1;
+  }
+
+  .jobs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .job {
+    min-height: 108px;
+    padding: 12px;
+  }
+}

@@ -390,8 +390,6 @@
       },
       "failed": "Couldn't change the status. Try again."
     },
-    "lastOrders": "Last orders {time}",
-    "lastOrdersSoon": "Last orders in {minutes} min",
     "alerts": {
       "on": "Alerts on: sound and vibration for food ready, waiter calls and bills. Tap to turn off.",
       "off": "Alerts off on this device. Tap to turn on.",
@@ -1620,37 +1618,43 @@
     "failed": "Couldn't load the stock.",
     "retry": "Try again",
     "tabs": {
-      "label": "Inventory views",
+      "label": "Inventory",
+      "today": "Today",
+      "getStarted": "Get started",
       "stock": "Stock",
-      "ingredients": "Ingredients",
-      "wastage": "Wastage",
-      "ledger": "Ledger",
       "recipes": "Recipes",
-      "dashboard": "Dashboard",
-      "counts": "Counts",
-      "transfers": "Transfers",
-      "usage": "Usage"
+      "reports": "Reports",
+      "more": "More",
+      "usage": "Where stock went",
+      "ledger": "Every stock change",
+      "wastage": "Wastage",
+      "dashboard": "Charts",
+      "ingredients": "Ingredients",
+      "counts": "Stock counts",
+      "transfers": "Other branches"
     },
     "summary": {
       "label": "Stock at a glance",
-      "tracked": "Items tracked",
+      "tracked": "Items",
       "low": "Running low",
       "out": "Out of stock",
-      "value": "Stock value",
+      "value": "Stock worth",
       "wastedToday": "Wasted today",
       "expiring": "Expiring soon",
       "expired": "Expired"
     },
     "status": {
-      "ok": "In stock",
-      "low": "Low",
+      "ok": "Enough",
+      "low": "Running low",
       "out": "Out"
     },
     "filters": {
       "all": "All",
-      "low": "Low",
+      "low": "Running low",
       "out": "Out",
-      "ok": "In stock"
+      "ok": "Enough",
+      "expiring": "Date close",
+      "soon": "Running out soon"
     },
     "units": {
       "g": "g",
@@ -1674,14 +1678,14 @@
     "leaves": "Now {quantity}",
     "newCost": "New cost {cost}",
     "kinds": {
-      "opening": "Opening stock",
-      "adjustment": "Adjustment",
+      "opening": "Starting amount",
+      "adjustment": "Corrected",
       "wastage": "Wastage",
-      "revaluation": "Cost changed",
+      "revaluation": "Price changed",
       "consumption": "Used by orders",
-      "production_in": "Batch made",
-      "production_out": "Used in a batch",
-      "purchase": "Received",
+      "production_in": "Prep made",
+      "production_out": "Used for prep",
+      "purchase": "Delivery received",
       "purchase_return": "Returned to supplier",
       "purchase_price": "Price confirmed",
       "count": "Stock count",
@@ -1689,13 +1693,13 @@
       "transfer_in": "Received from a branch"
     },
     "reasons": {
-      "correction": "Correction",
-      "found": "Found",
-      "missing": "Missing",
+      "correction": "Typing mistake",
+      "found": "Found more",
+      "missing": "Missing / cannot find",
       "expired": "Expired",
       "spoiled": "Spoiled",
       "damaged": "Damaged",
-      "kitchen_mistake": "Kitchen mistake",
+      "kitchen_mistake": "Cooking mistake",
       "spilled": "Spilled",
       "guest_return": "Sent back by guest",
       "other": "Other",
@@ -1706,17 +1710,17 @@
     },
     "actions": {
       "opening": {
-        "one": "Enter opening stock ({count} item)",
-        "other": "Enter opening stock ({count} items)"
+        "one": "Enter starting amount ({count} item)",
+        "other": "Enter starting amounts ({count} items)"
       },
-      "adjust": "Adjust stock",
+      "adjust": "Correct a number",
       "waste": "Record wastage",
       "orderLow": "Order low stock"
     },
     "stock": {
       "label": "Stock list",
       "empty": "No ingredients are tracked here yet.",
-      "emptyHint": "Add ingredients on the Ingredients tab, then enter their opening stock.",
+      "emptyHint": "Use Get started on the Today tab to add ingredients and what you have now.",
       "search": "Search ingredients",
       "searchPlaceholder": "Name or code",
       "category": "Category",
@@ -1725,48 +1729,69 @@
       "filter": "Show",
       "noMatch": "Nothing matches.",
       "reorderAt": "Reorder at {quantity}",
-      "openingDue": "Opening stock not entered",
-      "switchedOn": "Inventory was switched on {time}. Stock didn't move while it was off: count or adjust it before relying on it."
+      "switchedOn": "Inventory was switched on {time}. Stock didn't move while it was off: count or adjust it before relying on it.",
+      "line": {
+        "out": "Out of stock",
+        "low": "Running low · warn at {quantity}",
+        "okAt": "Enough · warn at {quantity}",
+        "noLevel": "No warning level yet",
+        "opening": "No starting amount yet",
+        "expired": "Some is past its date",
+        "expiring": "Use first · good till {date}"
+      },
+      "daysLeft": {
+        "one": "about {count} day left",
+        "other": "about {count} days left"
+      },
+      "daysLeftToday": "runs out today"
     },
     "item": {
-      "onHand": "On hand",
-      "status": "Status",
-      "cost": "Average cost",
-      "value": "Value",
+      "onHand": "Now",
+      "cost": "Price (average)",
+      "value": "Worth",
       "lastMoved": "Last change",
-      "levels": "Levels and cost",
-      "reorderLevel": "Reorder level ({unit})",
-      "reorderHint": "Shows as low at or below this. Leave empty for never.",
-      "parLevel": "Full shelf ({unit})",
-      "parHint": "How much a full shelf holds.",
-      "costHint": "Changing it revalues what's on hand.",
-      "save": "Save levels and cost",
-      "saved": "Saved",
-      "history": "History",
+      "levels": "Settings for this item",
+      "reorderLevel": "Warn me at ({unit})",
+      "reorderHint": "Today warns you when stock drops to this. Leave empty for no warning.",
+      "parLevel": "Order up to ({unit})",
+      "parHint": "How much you keep when fully stocked. Used to suggest how much to order.",
+      "costHint": "What you pay per {unit}, on average.",
+      "save": "Save settings",
+      "saved": "Settings saved",
+      "history": "Recent changes",
       "noHistory": "Nothing has changed yet.",
-      "moreInLedger": "Older changes are on the Ledger tab.",
-      "untrack": "Stop tracking here",
-      "untracked": "{name} is no longer tracked here"
+      "moreInLedger": "Older changes are in Reports › Every stock change.",
+      "untrack": "Stop counting this item here",
+      "untracked": "{name} is no longer counted here",
+      "untrackHint": "It stays in your ingredient list. Its stock at this branch is no longer counted.",
+      "untrackConfirm": "Yes, stop counting it",
+      "warnAt": "Warn at {quantity}",
+      "orderUpTo": "Order up to {quantity}",
+      "noWarn": "No warning level set. Add one in Settings below.",
+      "orderMore": "Order more",
+      "priceChange": "Changing the price changes what your {quantity} is worth: {from} → {to}.",
+      "cancel": "Keep counting",
+      "perDay": "Uses about {quantity} a day (last 2 weeks)"
     },
     "entry": {
       "title": {
-        "opening": "Opening stock",
-        "adjustment": "Adjust stock",
+        "opening": "Starting amounts",
+        "adjustment": "Correct a number",
         "wastage": "Record wastage"
       },
       "body": {
-        "opening": "Enter what's on the shelf now and what it cost. This is done once per item; later changes are adjustments.",
-        "adjustment": "Correct the stock: set it to what you counted, or add or take away an amount.",
-        "wastage": "What was thrown away, and why. It comes off the stock at its average cost."
+        "opening": "Write what is on the shelf now. Each item's starting amount is entered once; later changes are corrections.",
+        "adjustment": "Fix stock that is wrong: write what you counted, or add or take away an amount.",
+        "wastage": "What was thrown away, and why. It comes off the stock."
       },
       "confirm": {
         "opening": {
-          "one": "Save opening stock",
-          "other": "Save opening stock ({count} items)"
+          "one": "Save starting amount",
+          "other": "Save starting amounts ({count} items)"
         },
         "adjustment": {
-          "one": "Save adjustment",
-          "other": "Save adjustments ({count} items)"
+          "one": "Save correction",
+          "other": "Save corrections ({count} items)"
         },
         "wastage": {
           "one": "Record wastage",
@@ -1775,12 +1800,12 @@
       },
       "done": {
         "opening": {
-          "one": "Opening stock saved",
-          "other": "Opening stock saved for {count} items"
+          "one": "Starting amount saved",
+          "other": "Starting amounts saved for {count} items"
         },
         "adjustment": {
-          "one": "Stock adjusted",
-          "other": "{count} items adjusted"
+          "one": "Stock corrected",
+          "other": "{count} items corrected"
         },
         "wastage": {
           "one": "Wastage recorded",
@@ -1788,7 +1813,7 @@
         }
       },
       "nothing": {
-        "opening": "Every tracked item already has its opening stock.",
+        "opening": "Every item already has its starting amount.",
         "adjustment": "No ingredients are tracked here yet.",
         "wastage": "No ingredients are tracked here yet."
       },
@@ -1798,34 +1823,34 @@
       "ingredient": "Ingredient",
       "pick": "Pick an ingredient.",
       "pickPlaceholder": "Choose an ingredient",
-      "onHand": "On hand now: {quantity}",
-      "how": "How it changes",
+      "onHand": "Now: {quantity}",
+      "how": "What to do",
       "modes": {
-        "count": "Set to count",
+        "count": "Set to what I counted",
         "add": "Add",
         "remove": "Take away"
       },
-      "quantity": "Quantity",
-      "counted": "Counted",
+      "quantity": "How much",
+      "counted": "What I counted",
       "quantityError": "Enter a number, up to 3 decimals.",
       "in": "Unit",
-      "cost": "Cost ({symbol} per {unit})",
+      "cost": "Price ({symbol} per {unit})",
       "costError": "Enter an amount, up to 2 decimals.",
       "reason": "Why",
       "reasonError": "Pick a reason.",
       "note": "Note",
-      "noteError": "Say what happened."
+      "noteError": "Write what happened."
     },
     "ingredients": {
-      "shared": "Ingredients are shared by every branch of the restaurant. Stock, levels and costs are kept per branch.",
+      "shared": "Ingredients are shared by all your branches. Each branch keeps its own stock.",
       "new": "New ingredient",
       "newTitle": "New ingredient",
       "editTitle": "Edit {name}",
       "name": "Name",
       "namePlaceholder": "e.g. Paneer",
       "nameRequired": "Give it a name.",
-      "unit": "Kept in",
-      "unitHint": "Weight, volume or count can only change before its stock moves.",
+      "unit": "Counted in",
+      "unitHint": "Can only change before any stock is entered.",
       "category": "Category",
       "sku": "Code",
       "packs": "Packs",
@@ -1839,13 +1864,14 @@
       "save": "Save changes",
       "added": "{name} added",
       "saved": "{name} saved",
-      "track": "Track at this branch",
-      "nowTracked": "{name} is now tracked here",
+      "track": "Count at this branch",
+      "nowTracked": "{name} is now counted here",
       "archive": "Archive ingredient",
       "archived": "{name} archived",
-      "tracked": "Tracked here",
-      "notTracked": "Not tracked here",
-      "empty": "No ingredients yet. Add the first one."
+      "tracked": "Counted here",
+      "notTracked": "Not counted here",
+      "empty": "No ingredients yet. Add the first one.",
+      "more": "More options (packs, expiry dates, made here)"
     },
     "categories": {
       "title": "Categories",
@@ -1865,7 +1891,8 @@
       "kind": "Change",
       "allKinds": "All changes",
       "allIngredients": "All ingredients",
-      "more": "Show older"
+      "more": "Show older",
+      "none": "No stock changes on these days. Try picking more days."
     },
     "errors": {
       "failed": "Couldn't save. Try again.",
@@ -1881,37 +1908,38 @@
       "allGood": "Nothing is running low."
     },
     "recipes": {
-      "summary": "Recipes at a glance",
+      "summary": "Dishes linked to ingredients",
       "coverage": "Dishes with a recipe",
-      "coverageValue": "{done} of {total}",
-      "offByStock": "Off the menu by stock",
-      "targetLabel": "Food cost target (%)",
-      "targetHint": "A portion's cost should stay under this share of its price.",
+      "coverageValue": "{done} of {total} dishes linked to ingredients",
+      "targetLabel": "Food cost goal (%)",
+      "targetHint": "What one plate's ingredients should cost, as a share of its price (before tax). 30–35% is common.",
       "targetError": "Enter a percentage from 1 to 100.",
-      "target": "Target food cost: {pct}% of the price (before tax).",
+      "target": "Food cost goal: {pct}% of the price · tap to change",
       "search": "Search dishes",
       "filters": {
         "all": "All",
-        "none": "No recipe",
-        "over": "Over target",
-        "off": "Off by stock"
+        "linked": "Linked",
+        "none": "Not linked yet",
+        "over": "Costs too much",
+        "price": "Price went up",
+        "off": "Off the menu (stock)"
       },
-      "noRecipe": "No recipe yet: uses no stock",
+      "noRecipe": "Not linked yet: uses no stock",
       "lines": {
-        "one": "{count} ingredient line",
-        "other": "{count} ingredient lines"
+        "one": "{count} ingredient",
+        "other": "{count} ingredients"
       },
       "unknown": {
         "one": "{count} line for a part the dish no longer has",
         "other": "{count} lines for parts the dish no longer has"
       },
-      "soldOut": "Off by stock",
-      "overTarget": "Over target",
+      "soldOut": "Off the menu (stock)",
+      "overTarget": "Costs too much",
       "open": "Recipe for {dish}",
       "title": "Recipe · {name}",
-      "body": "What one portion uses. The kitchen's stock goes down by this when it starts cooking.",
-      "every": "Every portion",
-      "everySizes": "Used by sizes that don't have their own recipe.",
+      "body": "What one plate uses. Stock goes down by this every time the kitchen starts cooking it.",
+      "every": "Every plate",
+      "everySizes": "Used by sizes that do not have their own recipe.",
       "size": "{name} size",
       "usesBase": "Uses the recipe above.",
       "ownRecipe": "Give it its own recipe",
@@ -1922,7 +1950,7 @@
       "showExtras": "Add-ons, options and leave-outs ({count})",
       "addLine": "Add an ingredient",
       "removeLine": "Remove this ingredient",
-      "perPortion": "Per portion",
+      "perPortion": "Per plate",
       "twice": "Already in this part.",
       "foodCost": "{pct}% food cost",
       "dropped": {
@@ -1930,7 +1958,30 @@
         "other": "{count} lines were for parts the dish no longer has. They go when you save."
       },
       "save": "Save recipe",
-      "saved": "Recipe for {name} saved"
+      "saved": "Recipe for {name} saved",
+      "coverageHint": "When a dish is linked, stock goes down by itself every time the kitchen cooks it. Start with the dishes you sell most. Dishes not linked use no stock.",
+      "offNote": {
+        "one": "{count} dish is off the menu because an ingredient ran out",
+        "other": "{count} dishes are off the menu because an ingredient ran out"
+      },
+      "targetSave": "Save goal",
+      "targetSaved": "Food cost goal saved",
+      "add": "Add recipe",
+      "linkedTitle": "Linked dishes",
+      "notLinkedTitle": {
+        "one": "{count} dish not linked yet",
+        "other": "{count} dishes not linked yet"
+      },
+      "portionCost": "{amount} a plate",
+      "quickStart": "Quick start",
+      "useTemplate": "Fill in a typical {name}",
+      "copyFrom": "Or copy from another dish",
+      "copyPick": "Choose a dish",
+      "filled": "Filled in. Check the amounts for your kitchen, then press Save recipe. Nothing is saved until then.",
+      "missing": "Not in your ingredients yet: {names}. Add them in More › Ingredients to use them.",
+      "scaleFrom": "Fill from {name} (× {factor})",
+      "targetLine": "Food cost goal: {pct}% of the price (before tax).",
+      "templateReady": "Template ready"
     },
     "prep": {
       "title": "Made here",
@@ -1941,15 +1992,15 @@
       "perBatch": "Per batch"
     },
     "production": {
-      "title": "Make a batch",
-      "body": "How much came out. What it uses leaves the stock, and the batch comes in at what that cost.",
-      "item": "Prepared item",
+      "title": "Make prep (gravy, dough…)",
+      "body": "How much you made. What it uses comes off the stock.",
+      "item": "What you made",
       "made": "Made",
       "batch": "One batch makes {quantity}",
       "uses": "It uses",
-      "confirm": "Save batch",
-      "done": "{name} batch saved",
-      "none": "Nothing is made in batches here yet. Mark an ingredient as made in batches on the Ingredients tab, and track it here."
+      "confirm": "Save prep",
+      "done": "{name} saved",
+      "none": "Nothing here is made as prep yet. In More › Ingredients, open an ingredient and turn on \"Made here\" (gravy, dough…)."
     },
     "export": {
       "csv": "Download CSV",
@@ -2021,7 +2072,7 @@
     },
     "counts": {
       "start": "Start a count",
-      "startBody": "Count what is on the shelves. The count is compared with the stock when it starts, so service can carry on meanwhile.",
+      "startBody": "Count what is on the shelves. Service can carry on while you count.",
       "startConfirm": "Start counting",
       "what": "What to count",
       "scopes": {
@@ -2038,8 +2089,8 @@
         "other": "{count} items chosen"
       },
       "pickItems": "Choose at least one item.",
-      "hint": "Staff count blind; a manager sees the differences and applies the count.",
-      "empty": "No counts yet. Counting regularly shows what goes missing.",
+      "hint": "Staff count without seeing the expected amount. A manager checks the differences and applies the count.",
+      "empty": "No counts yet. Counting once a week shows what goes missing.",
       "number": "Count #{number}",
       "continue": "Carry on count #{number}",
       "progress": "{counted} of {total} counted",
@@ -2047,7 +2098,7 @@
       "startedAt": "Started {time}",
       "status": {
         "counting": "Counting",
-        "submitted": "To apply",
+        "submitted": "Waiting for a manager",
         "applied": "Applied",
         "cancelled": "Cancelled"
       },
@@ -2080,7 +2131,9 @@
         "open": "Count #{number} is still open for some of these items. Finish or cancel it first.",
         "notes": "Say why for {names}.",
         "closed": "This count has already moved on. Reopen it to see."
-      }
+      },
+      "allMatch": "Everything adds up ✓",
+      "allMatchBody": "What is on the shelves matches the stock exactly. Great counting!"
     },
     "transfers": {
       "send": "Send to a branch",
@@ -2129,30 +2182,40 @@
       }
     },
     "usage": {
-      "hint": "What really went (stock at the start, plus what came in, less what is left) against what recipes say. Waste is what was recorded; the rest is unexplained.",
+      "hint": "Compares what the kitchen really used with what your recipes say it should have used. If more went than recipes and recorded waste explain, it shows as missing.",
       "countedAt": "Last count in this period: {time}. Actual usage is right up to then.",
       "noCount": "No count was applied in this period, so actual usage only shows what was recorded. Count stock for the real picture.",
       "summary": "Usage at a glance",
       "tiles": {
         "sales": "Food sales",
-        "actual": "Actually used",
+        "actual": "Really used",
         "theoretical": "Recipes say",
         "wastage": "Wasted",
-        "unexplained": "Unexplained",
-        "foodCostActual": "Food cost (actual)",
-        "foodCostTheoretical": "Food cost (recipes)"
+        "unexplained": "Missing",
+        "foodCostActual": "Food cost (real)",
+        "foodCostTheoretical": "Food cost (recipes say)"
       },
       "byCategory": "By category",
       "items": "Items",
       "empty": "Nothing was used in this period.",
       "used": "Used {amount}",
-      "recipes": "recipes {amount}",
+      "recipes": "recipes say {amount}",
       "wasted": "wasted {amount}",
       "opening": "Start {amount}",
       "cameIn": "came in {amount}",
-      "closing": "end {amount}",
-      "unexplained": "{amount} unexplained",
-      "allExplained": "All explained"
+      "closing": "left {amount}",
+      "allExplained": "Adds up",
+      "missing": "{amount} missing",
+      "extra": "{amount} more than expected",
+      "needsLook": {
+        "one": "{count} item needs a look",
+        "other": "{count} items need a look"
+      },
+      "missingHint": "Missing means more went than recipes and recorded waste explain. Check portion sizes, waste that was not recorded, or stock taken. More than expected usually means a delivery or count was not recorded.",
+      "restAddUp": {
+        "one": "{count} more item adds up",
+        "other": "{count} more items add up"
+      }
     },
     "expiry": {
       "title": "Expiry",
@@ -2179,7 +2242,7 @@
         "one": "Written off as expired.",
         "other": "{count} batches written off as expired."
       },
-      "batches": "Batches",
+      "batches": "Expiry dates",
       "noBatches": "No stock in batches.",
       "sources": {
         "receipt_line": "Delivery",
@@ -2205,6 +2268,340 @@
       "batchesMoved": "Batches {dates}",
       "useFirst": "Use first",
       "writeOffExpired": "Write off expired"
+    },
+    "views": {
+      "reports": "Which report",
+      "more": "More tools"
+    },
+    "setup": {
+      "title": "Set up inventory",
+      "intro": "Know what is in your kitchen, get a warning before something runs out, and see what gets wasted. Four short steps. You can stop any time and carry on later.",
+      "progress": "{done} of 4 done",
+      "notAllowed": "Inventory is not set up yet. Ask a manager to set it up here.",
+      "skip": "Skip for now",
+      "skipped": "Skipped",
+      "done": "Done",
+      "next": "Next step",
+      "steps": {
+        "ingredients": {
+          "title": "Add your ingredients",
+          "short": "What you buy for the kitchen"
+        },
+        "opening": {
+          "title": "Enter what you have now",
+          "short": "Today's stock, like a stock sheet"
+        },
+        "levels": {
+          "title": "When should we warn you?",
+          "short": "The amount at which you re-order"
+        },
+        "recipes": {
+          "title": "Link dishes to ingredients",
+          "short": "Optional: stock goes down by itself"
+        }
+      },
+      "ingredients": {
+        "body": "Tick what your kitchen buys. You can change names and units later, and add your own at the bottom.",
+        "added": "Added",
+        "yours": "Already in your restaurant (not counted at this branch yet)",
+        "own": "Add your own",
+        "ownName": "Ingredient name",
+        "ownNamePlaceholder": "e.g. Basmati rice",
+        "ownUnit": "Counted in",
+        "ownAdd": "Add to the list",
+        "ownDuplicate": "{name} is already on the list.",
+        "chosen": {
+          "one": "{count} ticked",
+          "other": "{count} ticked"
+        },
+        "save": {
+          "one": "Add {count} ingredient",
+          "other": "Add {count} ingredients"
+        },
+        "saving": "Adding {done} of {total}…",
+        "none": "Tick at least one ingredient.",
+        "savedToast": {
+          "one": "{count} ingredient added",
+          "other": "{count} ingredients added"
+        },
+        "failed": "Could not add {name}. Check your connection and try again.",
+        "have": {
+          "one": "You have {count} ingredient. Tick more to add them, or go to the next step.",
+          "other": "You have {count} ingredients. Tick more to add them, or go to the next step."
+        }
+      },
+      "opening": {
+        "body": "Write how much of each you have right now. Leave a box empty if you do not know yet. Write 0 if you have none.",
+        "quantity": "How much now",
+        "cost": "Price per {unit}",
+        "costOptional": "Price per {unit} (optional)",
+        "costHint": "The price helps show what your stock is worth. You can leave it empty and add it later.",
+        "save": {
+          "one": "Save stock for {count} item",
+          "other": "Save stock for {count} items"
+        },
+        "savedToast": {
+          "one": "Saved stock for {count} item",
+          "other": "Saved stock for {count} items"
+        },
+        "nothing": "Write at least one amount (0 if you have none).",
+        "left": {
+          "one": "{count} item still needs an amount",
+          "other": "{count} items still need an amount"
+        },
+        "failed": "Could not save. Check the amounts and try again.",
+        "allDone": "Every ingredient has its starting amount."
+      },
+      "levels": {
+        "body": "For each ingredient, write the amount at which you would order more. When stock drops to it, Today warns you.",
+        "label": "Warn me at",
+        "save": "Save warnings",
+        "savedToast": {
+          "one": "Warning set for {count} item",
+          "other": "Warnings set for {count} items"
+        },
+        "nothing": "Write at least one amount, or skip this step.",
+        "failed": "Could not save {name}. Try again.",
+        "set": {
+          "one": "{count} of {total} set",
+          "other": "{count} of {total} set"
+        }
+      },
+      "recipes": {
+        "body": "Tell Inventory what one plate of a dish uses, for example Paneer Tikka uses 150 g paneer. Then stock goes down by itself every time the kitchen cooks it. Start with the 5 dishes you sell most.",
+        "optional": "You can skip this. Counting stock and recording wastage work without recipes.",
+        "go": "Add recipes",
+        "linked": "{count} of {total} dishes linked"
+      },
+      "finish": {
+        "title": "Finish setting up",
+        "body": "{done} of 4 steps done. The last steps make warnings and stock more accurate.",
+        "go": "Continue"
+      },
+      "doneTitle": "Inventory is ready",
+      "doneBody": "From now on, Today shows what needs you. Record deliveries, wastage and counts as they happen.",
+      "goToday": "Go to Today"
+    },
+    "today": {
+      "attention": "Needs your attention",
+      "allGood": "All good. Nothing needs you right now.",
+      "jobs": "Daily jobs",
+      "jobsList": {
+        "arrived": {
+          "title": "Stock arrived",
+          "hint": "A delivery came in",
+          "short": "Arrived"
+        },
+        "waste": {
+          "title": "Record wastage",
+          "hint": "Something spoiled or was thrown away",
+          "short": "Wasted"
+        },
+        "count": {
+          "title": "Count stock",
+          "hint": "Check what is on the shelves",
+          "short": "Count"
+        },
+        "correct": {
+          "title": "Correct a number",
+          "hint": "Fix stock that looks wrong",
+          "short": "Correct"
+        }
+      },
+      "noSupplier": {
+        "title": "Add your supplier first",
+        "body": "\"Stock arrived\" records a delivery from a supplier. Add who you buy from in Purchasing, then record deliveries here.",
+        "go": "Go to suppliers"
+      },
+      "numbers": {
+        "label": "This week at a glance",
+        "value": "Stock worth",
+        "wasted": "Wasted this week",
+        "foodCost": "Food cost, last 30 days",
+        "none": "Not known yet"
+      },
+      "items": {
+        "out": {
+          "one": "{count} item is out of stock",
+          "other": "{count} items are out of stock"
+        },
+        "expired": {
+          "one": "{count} item is past its date",
+          "other": "{count} items are past their date"
+        },
+        "expiredWorth": "worth {amount}",
+        "low": {
+          "one": "{count} item is running low",
+          "other": "{count} items are running low"
+        },
+        "opening": {
+          "one": "{count} item has no starting amount",
+          "other": "{count} items have no starting amount"
+        },
+        "expiring": {
+          "one": "{count} item should be used first (date close)",
+          "other": "{count} items should be used first (date close)"
+        },
+        "deliveriesDue": {
+          "one": "{count} delivery is due",
+          "other": "{count} deliveries are due"
+        },
+        "pricesToConfirm": {
+          "one": "{count} price to confirm",
+          "other": "{count} prices to confirm"
+        },
+        "ordersToApprove": {
+          "one": "{count} order to approve",
+          "other": "{count} orders to approve"
+        },
+        "countsToApply": {
+          "one": "{count} stock count to apply",
+          "other": "{count} stock counts to apply"
+        },
+        "transfersToReceive": {
+          "one": "{count} transfer from a branch to receive",
+          "other": "{count} transfers from branches to receive"
+        },
+        "countDue": {
+          "one": "Stock not counted for {days} days",
+          "other": "Stock not counted for {days} days"
+        },
+        "runningOut": {
+          "one": "{count} item will run out in the next few days",
+          "other": "{count} items will run out in the next few days"
+        },
+        "priceUp": {
+          "one": "{count} ingredient costs more than before",
+          "other": "{count} ingredients cost more than before"
+        },
+        "priceDishes": {
+          "one": "{count} dish affected",
+          "other": "{count} dishes affected"
+        },
+        "priceOver": {
+          "one": "{count} now above your food cost goal",
+          "other": "{count} now above your food cost goal"
+        }
+      },
+      "actions": {
+        "see": "See them",
+        "order": "Order now",
+        "enter": "Enter now",
+        "open": "Open",
+        "countNow": "Count now",
+        "seeDishes": "See dishes"
+      }
+    },
+    "ready": {
+      "title": "Ready orders",
+      "body": "What is low, as draft orders for each supplier, in whole packs. Nothing is sent: you check and send each order in Purchasing.",
+      "has": "have {quantity}",
+      "packs": "{count} × {pack} ({size})",
+      "nothing": "Nothing needs ordering right now.",
+      "noSupplier": "No supplier sells {names} here yet. Add them to a supplier in Purchasing › Suppliers.",
+      "noLevel": "{names}: no \"Warn me at\" level, so no amount can be suggested. Set one on the item.",
+      "create": {
+        "one": "Create {count} draft order",
+        "other": "Create {count} draft orders"
+      },
+      "created": {
+        "one": "{count} draft order created",
+        "other": "{count} draft orders created"
+      },
+      "createdHint": "Open Purchasing to check each order and send it to the supplier.",
+      "openPurchasing": "Open Purchasing",
+      "failed": "Could not create every order. Check Purchasing for what was made, then try again."
+    },
+    "quick": {
+      "view": "How to count",
+      "oneByOne": "One at a time",
+      "list": "Whole list",
+      "position": "Item {number} of {total}",
+      "counted": "{count} of {total} counted",
+      "before": "You counted {quantity} earlier. Change it if needed.",
+      "less": "{step} less",
+      "more": "{step} more",
+      "back": "Back",
+      "skip": "Skip",
+      "next": "Next",
+      "finish": "Finish"
+    },
+    "waste": {
+      "body": "Tap what was thrown away, set how much, and tap why. It comes off the stock.",
+      "often": "Often wasted",
+      "pick": "Ingredients",
+      "search": "Find an ingredient",
+      "none": "Tap an ingredient above to add it.",
+      "remove": "Remove {name}",
+      "quantity": "How much {name}",
+      "quantityError": "Write how much, more than 0.",
+      "worth": "Wasting about {amount}",
+      "save": {
+        "one": "Record wastage ({count} item)",
+        "other": "Record wastage ({count} items)"
+      }
+    },
+    "week": {
+      "title": "Your week (last 7 days)",
+      "wasted": "Wasted",
+      "missing": "Missing",
+      "foodCost": "Food cost",
+      "down": "↓ {pct}%",
+      "up": "↑ {pct}%",
+      "problem": {
+        "wasted": "Biggest problem: {name}, {amount} wasted",
+        "missing": "Biggest problem: {name}, {amount} missing"
+      },
+      "wasteDown": "Waste down {pct}% from last week. Well done!",
+      "streak": "Counted {count} weeks in a row",
+      "share": "Share on WhatsApp",
+      "shareTitle": "{branch}: inventory, last 7 days",
+      "shareWasted": "Wasted: {amount}",
+      "shareMissing": "Missing: {amount}",
+      "shareFoodCost": "Food cost: {pct}"
+    },
+    "useFirst": {
+      "title": "Use these first",
+      "today": "Last day today",
+      "tomorrow": "Use by tomorrow",
+      "past": "Past its date"
+    },
+    "sheet": {
+      "print": "Print count sheet",
+      "title": "Stock count · {branch}",
+      "meta": "{date} · {count} items",
+      "countedBy": "Counted by: ______________________   Time: __________",
+      "item": "Item",
+      "unit": "Unit",
+      "counted": "Counted",
+      "note": "Note",
+      "after": "Write what is on the shelf. Then enter it in Inventory › Count stock (one at a time is quickest)."
+    },
+    "tips": {
+      "label": "What does this mean?",
+      "missing": "Stock that went but is not explained by recipes or recorded waste. Often portions are bigger than the recipe, waste was not recorded, or stock was taken.",
+      "foodCost": "What the ingredients cost as a share of what the food sold for. Lower is better; 30–35% is common.",
+      "daysLeft": "How long what you have will last, at the rate it was used over the last 2 weeks.",
+      "runningOut": "Not low yet, but at the rate you use it, it will run out within 3 days.",
+      "expected": "What the stock should be by the app, when the count started. A difference means something was not recorded.",
+      "priceUp": "Compared with the first delivery in the last 30 days. Change the alert level in Purchasing › Orders."
+    },
+    "prices": {
+      "title": "Price went up",
+      "body": "Ingredients that cost {alert}% or more than 30 days ago, and what that does to each plate.",
+      "none": "No price rises in the last 30 days.",
+      "options": "What you can do: raise the dish price, use a little less per plate, or ask another supplier for a better price.",
+      "price": "{from} → {to}",
+      "pct": "{pct}%",
+      "dishSize": "{name} ({size})",
+      "plate": "{from} → {to} a plate",
+      "foodCost": "food cost {from} → {to}",
+      "overGoal": "Now above your {goal} food cost goal",
+      "noDishes": "No dish uses it in a recipe yet.",
+      "openRecipe": "Open recipe",
+      "changePrice": "Change price",
+      "tag": "Price went up",
+      "weekly": "Prices up lately: {list}"
     }
   },
   "adminPurchasing": {

@@ -1,0 +1,68 @@
+/* Inventory › Recipes: how many dishes are linked, then the dishes. */
+
+.progress {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: linear-gradient(135deg, var(--warn-tint), var(--surface) 70%);
+}
+
+.progressText {
+  display: grid;
+  gap: 2px;
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.progressText strong {
+  color: var(--ink);
+  font: var(--font-label);
+  font-size: 1.0625rem;
+}
+
+.bar {
+  height: 8px;
+  display: block;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar > span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--success);
+}
+
+.offNote {
+  color: var(--error);
+  font: var(--font-small-strong);
+}
+
+.group {
+  display: grid;
+  gap: 6px;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.groupTitle span {
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  font: var(--font-caption);
+}
+
+.addChip {
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+}

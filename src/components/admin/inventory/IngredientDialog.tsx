@@ -16,6 +16,7 @@ import type { Ingredient, IngredientCategory, InventoryUnit } from '@/types/inve
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useInventoryText } from './useInventoryText';
 import styles from './Inventory.module.css';
+import stock from './Stock.module.css';
 
 interface InputDraft {
   key: number;
@@ -286,238 +287,255 @@ export function IngredientDialog({
           />
         )}
 
-        <section className={styles.block} aria-labelledby="ingredient-packs">
-          <h3 id="ingredient-packs" className={styles.blockTitle}>
-            {t('adminInventory.ingredients.packs')}
-          </h3>
-          <p className={styles.muted}>{t('adminInventory.ingredients.packsHint')}</p>
-          {packs.map((pack, index) => {
-            const row = packRows[index];
-            return (
-              <div key={pack.key} className={styles.ingredientLine}>
-                <Input
-                  id={`pack-${pack.key}-name`}
-                  label={t('adminInventory.ingredients.packName')}
-                  placeholder={t('adminInventory.ingredients.packNamePlaceholder')}
-                  maxLength={30}
-                  value={pack.name}
-                  error={
-                    tried && !row?.name ? t('adminInventory.ingredients.nameRequired') : undefined
-                  }
-                  onChange={(event) =>
-                    setPacks((all) =>
-                      all.map((p) => (p.key === pack.key ? { ...p, name: event.target.value } : p)),
-                    )
-                  }
-                />
-                <Input
-                  id={`pack-${pack.key}-quantity`}
-                  label={t('adminInventory.ingredients.packHolds', { unit: text.unit(unit) })}
-                  inputMode="decimal"
-                  value={pack.quantity}
-                  error={
-                    tried && !(row?.quantity && row.quantity > 0)
-                      ? t('adminInventory.entry.quantityError')
-                      : undefined
-                  }
-                  onChange={(event) =>
-                    setPacks((all) =>
-                      all.map((p) =>
-                        p.key === pack.key ? { ...p, quantity: event.target.value } : p,
-                      ),
-                    )
-                  }
-                />
-                <IconButton
-                  icon="trash"
-                  label={t('adminInventory.ingredients.removePack')}
-                  onClick={() => setPacks((all) => all.filter((p) => p.key !== pack.key))}
-                />
-              </div>
-            );
-          })}
-          {packs.length < 10 && (
-            <Button
-              variant="ghost"
-              iconStart="plus"
-              onClick={() =>
-                setPacks((all) => [...all, { key: nextKey++, name: '', quantity: '' }])
-              }
-            >
-              {t('adminInventory.ingredients.addPack')}
-            </Button>
-          )}
-        </section>
-
-        <section className={styles.block} aria-labelledby="ingredient-expiry">
-          <h3 id="ingredient-expiry" className={styles.blockTitle}>
-            {t('adminInventory.expiry.title')}
-          </h3>
-          <label className={styles.actions}>
-            <input
-              type="checkbox"
-              checked={expiryOn}
-              onChange={(event) => setExpiryOn(event.target.checked)}
-            />
-            <span>{t('adminInventory.expiry.toggle')}</span>
-          </label>
-          <p className={styles.muted}>
-            {expiryOn && !ingredient?.expiry && ingredient
-              ? t('adminInventory.expiry.startHint')
-              : t('adminInventory.expiry.hint')}
-          </p>
-          {expiryOn && (
-            <div className={styles.fieldRow}>
-              <Input
-                id="expiry-shelf-life"
-                label={t('adminInventory.expiry.shelfLife')}
-                hint={t('adminInventory.expiry.shelfLifeHint')}
-                inputMode="numeric"
-                autoComplete="off"
-                value={shelfLife}
-                error={
-                  tried && shelfValue === null
-                    ? t('adminInventory.expiry.shelfLifeError')
-                    : undefined
-                }
-                onChange={(event) => setShelfLife(event.target.value)}
-              />
-              <Input
-                id="expiry-warn"
-                label={t('adminInventory.expiry.warnDays')}
-                inputMode="numeric"
-                autoComplete="off"
-                value={warnDays}
-                error={
-                  tried && warnValue === null ? t('adminInventory.expiry.warnError') : undefined
-                }
-                onChange={(event) => setWarnDays(event.target.value)}
-              />
-            </div>
-          )}
-        </section>
-
-        <section className={styles.block} aria-labelledby="ingredient-prep">
-          <h3 id="ingredient-prep" className={styles.blockTitle}>
-            {t('adminInventory.prep.title')}
-          </h3>
-          <label className={styles.actions}>
-            <input
-              type="checkbox"
-              checked={prepOn}
-              onChange={(event) => setPrepOn(event.target.checked)}
-            />
-            <span>{t('adminInventory.prep.toggle')}</span>
-          </label>
-          <p className={styles.muted}>{t('adminInventory.prep.hint')}</p>
-          {prepOn && (
-            <>
-              <Input
-                id="prep-batch"
-                label={t('adminInventory.prep.batch', { unit: text.unit(unit) })}
-                inputMode="decimal"
-                value={batch}
-                error={
-                  tried && !(batchValue && batchValue > 0)
-                    ? t('adminInventory.entry.quantityError')
-                    : undefined
-                }
-                onChange={(event) => setBatch(event.target.value)}
-              />
-              {inputs.map((input, index) => {
-                const row = inputRows[index];
-                const chosen = byId.get(input.ingredientId);
+        {/* Packs, expiry dates and made here: most ingredients need none, so they're folded. */}
+        <details
+          className={stock.settings}
+          open={
+            Boolean(ingredient?.prep || ingredient?.expiry) || (ingredient?.packs.length ?? 0) > 0
+          }
+        >
+          <summary>{t('adminInventory.ingredients.more')}</summary>
+          <div className={stock.settingsBody}>
+            <section className={styles.block} aria-labelledby="ingredient-packs">
+              <h3 id="ingredient-packs" className={styles.blockTitle}>
+                {t('adminInventory.ingredients.packs')}
+              </h3>
+              <p className={styles.muted}>{t('adminInventory.ingredients.packsHint')}</p>
+              {packs.map((pack, index) => {
+                const row = packRows[index];
                 return (
-                  <div key={input.key} className={styles.ingredientLine}>
-                    <Select
-                      id={`prep-${input.key}-ingredient`}
-                      label={t('adminInventory.entry.ingredient')}
-                      value={input.ingredientId}
+                  <div key={pack.key} className={styles.ingredientLine}>
+                    <Input
+                      id={`pack-${pack.key}-name`}
+                      label={t('adminInventory.ingredients.packName')}
+                      placeholder={t('adminInventory.ingredients.packNamePlaceholder')}
+                      maxLength={30}
+                      value={pack.name}
                       error={
-                        tried && !input.ingredientId ? t('adminInventory.entry.pick') : undefined
+                        tried && !row?.name
+                          ? t('adminInventory.ingredients.nameRequired')
+                          : undefined
                       }
                       onChange={(event) =>
-                        setInputs((all) =>
-                          all.map((l) =>
-                            l.key === input.key
-                              ? { ...l, ingredientId: event.target.value, unit: '' }
-                              : l,
+                        setPacks((all) =>
+                          all.map((p) =>
+                            p.key === pack.key ? { ...p, name: event.target.value } : p,
                           ),
                         )
                       }
-                    >
-                      <option value="" disabled>
-                        {t('adminInventory.entry.pickPlaceholder')}
-                      </option>
-                      {raw.map((i) => (
-                        <option key={i.id} value={i.id}>
-                          {i.name}
-                        </option>
-                      ))}
-                    </Select>
+                    />
                     <Input
-                      id={`prep-${input.key}-quantity`}
-                      label={t('adminInventory.prep.perBatch')}
+                      id={`pack-${pack.key}-quantity`}
+                      label={t('adminInventory.ingredients.packHolds', { unit: text.unit(unit) })}
                       inputMode="decimal"
-                      value={input.quantity}
+                      value={pack.quantity}
                       error={
-                        tried && !(row?.value && row.value > 0)
+                        tried && !(row?.quantity && row.quantity > 0)
                           ? t('adminInventory.entry.quantityError')
                           : undefined
                       }
                       onChange={(event) =>
-                        setInputs((all) =>
-                          all.map((l) =>
-                            l.key === input.key ? { ...l, quantity: event.target.value } : l,
+                        setPacks((all) =>
+                          all.map((p) =>
+                            p.key === pack.key ? { ...p, quantity: event.target.value } : p,
                           ),
                         )
                       }
                     />
-                    {chosen && (
-                      <Select
-                        id={`prep-${input.key}-unit`}
-                        label={t('adminInventory.entry.in')}
-                        value={input.unit || chosen.unit}
-                        onChange={(event) =>
-                          setInputs((all) =>
-                            all.map((l) =>
-                              l.key === input.key
-                                ? { ...l, unit: event.target.value as InventoryUnit }
-                                : l,
-                            ),
-                          )
-                        }
-                      >
-                        {unitsLike(chosen.unit).map((u) => (
-                          <option key={u} value={u}>
-                            {text.unit(u)}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
                     <IconButton
                       icon="trash"
-                      label={t('adminInventory.recipes.removeLine')}
-                      onClick={() => setInputs((all) => all.filter((l) => l.key !== input.key))}
+                      label={t('adminInventory.ingredients.removePack')}
+                      onClick={() => setPacks((all) => all.filter((p) => p.key !== pack.key))}
                     />
                   </div>
                 );
               })}
-              <Button
-                variant="ghost"
-                iconStart="plus"
-                onClick={() =>
-                  setInputs((all) => [
-                    ...all,
-                    { key: nextKey++, ingredientId: '', quantity: '', unit: '' },
-                  ])
-                }
-              >
-                {t('adminInventory.recipes.addLine')}
-              </Button>
-            </>
-          )}
-        </section>
+              {packs.length < 10 && (
+                <Button
+                  variant="ghost"
+                  iconStart="plus"
+                  onClick={() =>
+                    setPacks((all) => [...all, { key: nextKey++, name: '', quantity: '' }])
+                  }
+                >
+                  {t('adminInventory.ingredients.addPack')}
+                </Button>
+              )}
+            </section>
+
+            <section className={styles.block} aria-labelledby="ingredient-expiry">
+              <h3 id="ingredient-expiry" className={styles.blockTitle}>
+                {t('adminInventory.expiry.title')}
+              </h3>
+              <label className={styles.actions}>
+                <input
+                  type="checkbox"
+                  checked={expiryOn}
+                  onChange={(event) => setExpiryOn(event.target.checked)}
+                />
+                <span>{t('adminInventory.expiry.toggle')}</span>
+              </label>
+              <p className={styles.muted}>
+                {expiryOn && !ingredient?.expiry && ingredient
+                  ? t('adminInventory.expiry.startHint')
+                  : t('adminInventory.expiry.hint')}
+              </p>
+              {expiryOn && (
+                <div className={styles.fieldRow}>
+                  <Input
+                    id="expiry-shelf-life"
+                    label={t('adminInventory.expiry.shelfLife')}
+                    hint={t('adminInventory.expiry.shelfLifeHint')}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={shelfLife}
+                    error={
+                      tried && shelfValue === null
+                        ? t('adminInventory.expiry.shelfLifeError')
+                        : undefined
+                    }
+                    onChange={(event) => setShelfLife(event.target.value)}
+                  />
+                  <Input
+                    id="expiry-warn"
+                    label={t('adminInventory.expiry.warnDays')}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={warnDays}
+                    error={
+                      tried && warnValue === null ? t('adminInventory.expiry.warnError') : undefined
+                    }
+                    onChange={(event) => setWarnDays(event.target.value)}
+                  />
+                </div>
+              )}
+            </section>
+
+            <section className={styles.block} aria-labelledby="ingredient-prep">
+              <h3 id="ingredient-prep" className={styles.blockTitle}>
+                {t('adminInventory.prep.title')}
+              </h3>
+              <label className={styles.actions}>
+                <input
+                  type="checkbox"
+                  checked={prepOn}
+                  onChange={(event) => setPrepOn(event.target.checked)}
+                />
+                <span>{t('adminInventory.prep.toggle')}</span>
+              </label>
+              <p className={styles.muted}>{t('adminInventory.prep.hint')}</p>
+              {prepOn && (
+                <>
+                  <Input
+                    id="prep-batch"
+                    label={t('adminInventory.prep.batch', { unit: text.unit(unit) })}
+                    inputMode="decimal"
+                    value={batch}
+                    error={
+                      tried && !(batchValue && batchValue > 0)
+                        ? t('adminInventory.entry.quantityError')
+                        : undefined
+                    }
+                    onChange={(event) => setBatch(event.target.value)}
+                  />
+                  {inputs.map((input, index) => {
+                    const row = inputRows[index];
+                    const chosen = byId.get(input.ingredientId);
+                    return (
+                      <div key={input.key} className={styles.ingredientLine}>
+                        <Select
+                          id={`prep-${input.key}-ingredient`}
+                          label={t('adminInventory.entry.ingredient')}
+                          value={input.ingredientId}
+                          error={
+                            tried && !input.ingredientId
+                              ? t('adminInventory.entry.pick')
+                              : undefined
+                          }
+                          onChange={(event) =>
+                            setInputs((all) =>
+                              all.map((l) =>
+                                l.key === input.key
+                                  ? { ...l, ingredientId: event.target.value, unit: '' }
+                                  : l,
+                              ),
+                            )
+                          }
+                        >
+                          <option value="" disabled>
+                            {t('adminInventory.entry.pickPlaceholder')}
+                          </option>
+                          {raw.map((i) => (
+                            <option key={i.id} value={i.id}>
+                              {i.name}
+                            </option>
+                          ))}
+                        </Select>
+                        <Input
+                          id={`prep-${input.key}-quantity`}
+                          label={t('adminInventory.prep.perBatch')}
+                          inputMode="decimal"
+                          value={input.quantity}
+                          error={
+                            tried && !(row?.value && row.value > 0)
+                              ? t('adminInventory.entry.quantityError')
+                              : undefined
+                          }
+                          onChange={(event) =>
+                            setInputs((all) =>
+                              all.map((l) =>
+                                l.key === input.key ? { ...l, quantity: event.target.value } : l,
+                              ),
+                            )
+                          }
+                        />
+                        {chosen && (
+                          <Select
+                            id={`prep-${input.key}-unit`}
+                            label={t('adminInventory.entry.in')}
+                            value={input.unit || chosen.unit}
+                            onChange={(event) =>
+                              setInputs((all) =>
+                                all.map((l) =>
+                                  l.key === input.key
+                                    ? { ...l, unit: event.target.value as InventoryUnit }
+                                    : l,
+                                ),
+                              )
+                            }
+                          >
+                            {unitsLike(chosen.unit).map((u) => (
+                              <option key={u} value={u}>
+                                {text.unit(u)}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+                        <IconButton
+                          icon="trash"
+                          label={t('adminInventory.recipes.removeLine')}
+                          onClick={() => setInputs((all) => all.filter((l) => l.key !== input.key))}
+                        />
+                      </div>
+                    );
+                  })}
+                  <Button
+                    variant="ghost"
+                    iconStart="plus"
+                    onClick={() =>
+                      setInputs((all) => [
+                        ...all,
+                        { key: nextKey++, ingredientId: '', quantity: '', unit: '' },
+                      ])
+                    }
+                  >
+                    {t('adminInventory.recipes.addLine')}
+                  </Button>
+                </>
+              )}
+            </section>
+          </div>
+        </details>
         {ingredient && (
           <div className={styles.actions}>
             {!ingredient.tracked && (

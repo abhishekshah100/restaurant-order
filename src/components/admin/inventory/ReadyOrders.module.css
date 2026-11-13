@@ -1,0 +1,102 @@
+/* Ready orders: one card per supplier, its lines in packs. */
+
+.muted {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.body {
+  display: grid;
+  gap: 12px;
+}
+
+.order {
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+}
+
+.supplier {
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--bg);
+  font: var(--font-label);
+}
+
+.total {
+  font-variant-numeric: tabular-nums;
+}
+
+.lines {
+  display: grid;
+  list-style: none;
+}
+
+.line {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.lineName {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  font: var(--font-small-strong);
+}
+
+.lineQty {
+  flex: none;
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.gap,
+.nothing {
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: var(--r-md);
+  background: var(--warn-tint);
+  font: var(--font-small);
+}
+
+.nothing {
+  background: var(--success-tint);
+}
+
+.gap svg,
+.nothing svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.done {
+  padding: 16px 8px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.doneIcon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.doneTitle {
+  font: var(--font-label);
+  font-size: 1.0625rem;
+}

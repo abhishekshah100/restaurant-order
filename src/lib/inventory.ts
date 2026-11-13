@@ -73,17 +73,34 @@ export function formatQuantity(quantity: number, locale: string): string {
 export const quantityText = (quantity: number): string =>
   quantity === 0 ? '' : String(Math.round(quantity * 1000) / 1000);
 
-export type StockFilter = 'all' | StockStatus;
+/** By status; `expiring`: stock near or past its date; `soon`: running out within days. */
+export type StockFilter = 'all' | StockStatus | 'expiring' | 'soon';
 
 /** The stock list as filtered: by status, category and a search of names and codes. */
 export function filterStock(
   items: readonly StockItem[],
-  { status, category, query }: { status: StockFilter; category: string; query: string },
+  {
+    status,
+    category,
+    query,
+    soon,
+  }: {
+    status: StockFilter;
+    category: string;
+    query: string;
+    /** For `soon`: the items running out within days (lib/inventoryPlanning). */
+    soon?: ReadonlySet<string>;
+  },
 ): StockItem[] {
   const q = query.trim().toLowerCase();
   return items.filter(
     (i) =>
-      (status === 'all' || i.status === status) &&
+      (status === 'all' ||
+        (status === 'expiring'
+          ? Boolean(i.expiry && i.expiry.expiring + i.expiry.expired > 0)
+          : status === 'soon'
+            ? (soon?.has(i.ingredientId) ?? false)
+            : i.status === status)) &&
       (category === 'all' ||
         (category === 'none' ? i.categoryId === null : i.categoryId === category)) &&
       (!q || i.name.toLowerCase().includes(q) || i.sku?.toLowerCase().includes(q)),

@@ -1,0 +1,49 @@
+/* ⓘ and its one-sentence explanation. */
+.tip {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.button {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.button:hover,
+.button[aria-expanded='true'] {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.button:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.bubble {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 20;
+  width: max-content;
+  max-width: min(260px, 80vw);
+  padding: 10px 12px;
+  transform: translateX(-50%);
+  border-radius: var(--r-md);
+  background: var(--ink);
+  color: var(--surface);
+  font: var(--font-small);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-align: start;
+  text-transform: none;
+  white-space: normal;
+  box-shadow: var(--sh-2, var(--sh-1));
+}

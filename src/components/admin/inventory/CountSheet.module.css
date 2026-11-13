@@ -1,0 +1,90 @@
+/* The paper count sheet: hidden on screen; when printing, the only thing on the page. */
+.sheet {
+  display: none;
+}
+
+@media print {
+  :global(html.printing-count) body > :not([data-count-sheet]) {
+    display: none !important;
+  }
+
+  :global(html.printing-count) body {
+    background: #fff;
+  }
+
+  .sheet {
+    display: block;
+    color: #000;
+    font:
+      11pt/1.35 system-ui,
+      sans-serif;
+  }
+
+  .head h1 {
+    margin: 0 0 2mm;
+    font-size: 16pt;
+  }
+
+  .head p {
+    margin: 0 0 1mm;
+  }
+
+  .fill {
+    margin-top: 3mm !important;
+  }
+
+  .table {
+    width: 100%;
+    margin-top: 5mm;
+    border-collapse: collapse;
+    break-inside: auto;
+  }
+
+  .table caption {
+    padding: 0 0 1.5mm;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .table th,
+  .table td {
+    height: 9mm;
+    padding: 0 2mm;
+    border: 0.3mm solid #555;
+    text-align: left;
+  }
+
+  .table th {
+    height: 7mm;
+    background: #eee;
+    font-size: 9pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .table th:nth-child(1) {
+    width: 40%;
+  }
+
+  .table th:nth-child(2) {
+    width: 10%;
+  }
+
+  .table th:nth-child(3) {
+    width: 20%;
+  }
+
+  .table tr {
+    break-inside: avoid;
+  }
+
+  .footnote {
+    margin-top: 5mm;
+    font-size: 9pt;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+}

@@ -502,6 +502,26 @@ export interface DashboardBranch {
   lastCount?: { number: number; at: string; differenceValue?: number };
 }
 
+/** An ingredient whose purchase price rose past the branch's alert, and the dishes it touches. */
+export interface PriceRise {
+  ingredientId: string;
+  name: string;
+  unit: InventoryUnit;
+  from: number;
+  to: number;
+  /** Percent. */
+  change: number;
+  dishes: {
+    slug: string;
+    name: string;
+    size?: string;
+    costFrom: number;
+    costTo: number;
+    foodCostFrom?: number;
+    foodCostTo?: number;
+  }[];
+}
+
 export interface InventoryDashboard extends DashboardBranch {
   todo: {
     countsToApply: number;
@@ -529,6 +549,11 @@ export interface InventoryDashboard extends DashboardBranch {
     to: number;
     change: number;
   }[];
+  /** Costs only: prices that rose past the alert, and the dishes they touch. */
+  priceRises?: PriceRise[];
+  /** Costs only: the food cost goal and the price alert, in percent. */
+  foodCostTarget?: number;
+  priceAlert?: number;
   branches?: DashboardBranch[];
 }
 

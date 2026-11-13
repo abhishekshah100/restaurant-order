@@ -3,7 +3,8 @@
 import dynamic from 'next/dynamic';
 import { isBackendEnabled } from '@/api/backend';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
-import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { useBranchMenu } from '@/api/adminDashboard';
 import { useContent } from '@/api/hooks';
 import { useReorderDishes, useSetDishAvailability } from '@/api/mutations';
@@ -353,6 +354,11 @@ export function MenuBoard() {
         {open?.kind === 'suggestions' && (
           <SearchSuggestionsDialog menu={menu} onClose={() => setOpen(null)} />
         )}
+        {manage && (
+          <Suspense fallback={null}>
+            <LinkedDish menu={menu} />
+          </Suspense>
+        )}
         {open?.kind === 'edit' && (
           <DishEditor
             menu={menu}
@@ -384,5 +390,26 @@ export function MenuBoard() {
       <h1 className="visually-hidden">{t('adminMenu.title')}</h1>
       {content}
     </div>
+  );
+}
+
+/**
+ * Opened as /menu/?dish=<slug> (Inventory's "Change price"): that dish's editor, straight away.
+ * The address is read with Next's useSearchParams, which knows it even before the browser's
+ * shows it (a tap from another page); closing the editor clears it.
+ */
+function LinkedDish({ menu }: { menu: NonNullable<ReturnType<typeof useBranchMenu>['menu']> }) {
+  const slug = useSearchParams().get('dish');
+  const router = useRouter();
+  const pathname = usePathname();
+  const dish = slug ? menu.getDish(slug) : undefined;
+  if (!dish) return null;
+  return (
+    <DishEditor
+      menu={menu}
+      dish={dish}
+      category={dish.categoryId}
+      onClose={() => router.replace(pathname, { scroll: false })}
+    />
   );
 }

@@ -8,6 +8,7 @@ import { cx } from '@/lib/cx';
 import type { CountStatus, StockCount } from '@/types/inventory';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useInventoryText } from './useInventoryText';
+import { useCountSheet } from './CountSheet';
 import styles from './Inventory.module.css';
 
 const StartCountDialog = dynamic(
@@ -45,6 +46,7 @@ export function CountsTab() {
   const [open, setOpen] = useState<string | null>(null);
   const counts = query.data?.counts;
   const mayCount = can('inventory.count', 'inventory.manage');
+  const sheet = useCountSheet();
 
   if (query.isError) {
     return (
@@ -65,7 +67,13 @@ export function CountsTab() {
             {t('adminInventory.counts.start')}
           </Button>
         )}
+        {sheet.ready && (
+          <Button variant="secondary" iconStart="receipt" onClick={sheet.print}>
+            {t('adminInventory.sheet.print')}
+          </Button>
+        )}
       </div>
+      {sheet.sheet}
       <p className={styles.muted}>{t('adminInventory.counts.hint')}</p>
       {!counts ? (
         <p className={styles.muted} aria-busy="true">

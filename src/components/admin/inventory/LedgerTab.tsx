@@ -47,6 +47,9 @@ function LedgerPage({
       </p>
     );
   }
+  if (data.movements.length === 0 && !query.before) {
+    return <li className={styles.muted}>{t('adminInventory.ledger.none')}</li>;
+  }
   return (
     <>
       {data.movements.map((m) => (

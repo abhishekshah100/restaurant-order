@@ -1,0 +1,197 @@
+/* Record wastage: tap what, how much, why. */
+
+.body {
+  display: grid;
+  gap: 14px;
+}
+
+.muted {
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.pick {
+  display: grid;
+  gap: 8px;
+}
+
+.title {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.choices {
+  max-height: 168px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.choice {
+  min-height: 40px;
+  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.choice:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.chosen {
+  border-color: var(--error);
+  background: var(--error-tint);
+  color: var(--error);
+}
+
+.empty {
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  font: var(--font-small);
+  text-align: center;
+}
+
+.lines {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.line {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+
+.lineHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lineHead strong {
+  font: var(--font-label);
+}
+
+.lineHead span {
+  flex: 1;
+}
+
+.amount {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  gap: 8px;
+}
+
+.step {
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-h);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.step:active {
+  background: var(--warn-tint);
+}
+
+.box {
+  height: 48px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--ink-2);
+  border-radius: var(--r-md);
+}
+
+.box:focus-within {
+  border-color: var(--ink);
+  box-shadow: var(--focus);
+}
+
+.box input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--font-label);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  outline: none;
+}
+
+.box span {
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+}
+
+.box:has(input[aria-invalid='true']) {
+  border-color: var(--error);
+}
+
+.reasons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+}
+
+.reason {
+  min-height: 56px;
+  padding: 6px 4px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: var(--font-caption);
+  text-align: center;
+  cursor: pointer;
+}
+
+.reason:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.reasonOn {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.error {
+  color: var(--error);
+  font: var(--font-small-strong);
+}
+
+.footer {
+  display: grid;
+  gap: 8px;
+}
+
+.worth {
+  color: var(--error);
+  font: var(--font-small-strong);
+  text-align: center;
+}

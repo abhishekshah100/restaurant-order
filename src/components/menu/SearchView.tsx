@@ -28,7 +28,6 @@ import { SearchSuggestions } from './SearchSuggestions';
 import { SortMenu } from './SortMenu';
 import styles from './SearchView.module.css';
 
-
 /** Search: suggestions, loading, results, no results (04 · 05 · s04 · s05 · w04–ws05). */
 export function SearchView() {
   const router = useRouter();
