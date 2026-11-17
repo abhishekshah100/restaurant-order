@@ -29,6 +29,7 @@ export type AdminNavId =
   | 'refunds'
   | 'inventory'
   | 'purchasing'
+  | 'audit'
   | 'settings';
 
 /**
@@ -155,6 +156,8 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     tab: false,
     needs: PURCHASING_READERS,
   },
+  // Who did what (refunds, write-offs, discounts, prices, staff…): owners, and whom they let.
+  { id: 'audit', href: section('audit'), icon: 'shield', tab: false, needs: ['audit.view'] },
   {
     id: 'settings',
     href: section('settings'),

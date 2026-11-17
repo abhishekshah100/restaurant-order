@@ -23,6 +23,8 @@ type AdminPage =
   | 'refunds'
   | 'inventory'
   | 'purchasing'
+  | 'audit'
+  | 'invoices'
   | 'settings'
   | 'floorPlan'
   | 'branchDetails'

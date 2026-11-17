@@ -105,7 +105,15 @@
     "offers": {
       "happyHour": "Happy hour"
     },
-    "promoCode": "Promo {code}"
+    "promoCode": "Promo {code}",
+    "manual": "Discount ({reason})",
+    "manualReasons": {
+      "regular": "regular guest",
+      "complaint": "sorry for the trouble",
+      "staffMeal": "staff meal",
+      "manager": "from the manager",
+      "other": "special"
+    }
   },
   "toast": {
     "added": "{dish} added",

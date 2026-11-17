@@ -1,6 +1,7 @@
 import type { Branch, TaxConfig } from '@/types/branch';
 import type { Price } from '@/types/menu';
 import type { ChargeLine } from '@/types/order';
+import type { ManualDiscountReason } from '@/types/promotion';
 
 interface PriceLine {
   unitPrice: Price;
@@ -13,7 +14,9 @@ export type BillLine = ChargeLine;
 /** A discount on the bill, in minor units: an automatic offer (happy hour) or a promo code. */
 export type BillDiscount =
   | { kind: 'offer'; id: string; labelKey: string; name?: string; amountMinor: number }
-  | { kind: 'code'; code: string; amountMinor: number };
+  | { kind: 'code'; code: string; amountMinor: number }
+  /** Given by staff by hand, for `reason` (orders from the server only). */
+  | { kind: 'manual'; id: string; reason: ManualDiscountReason; amountMinor: number };
 
 /** Bill breakdown, worked out from the branch's tax rules (GET /branches › tax). */
 export interface Bill {
@@ -209,7 +212,12 @@ export function combineBills(bills: readonly Bill[]): Bill {
   const sum = (pick: (b: Bill) => number) => bills.reduce((s, b) => s + pick(b), 0);
   const discounts = new Map<string, BillDiscount>();
   for (const d of bills.flatMap((b) => b.discounts)) {
-    const key = d.kind === 'offer' ? `offer|${d.id}|${d.name ?? ''}` : `code|${d.code}`;
+    const key =
+      d.kind === 'offer'
+        ? `offer|${d.id}|${d.name ?? ''}`
+        : d.kind === 'manual'
+          ? `manual|${d.reason}`
+          : `code|${d.code}`;
     const seen = discounts.get(key);
     discounts.set(key, seen ? { ...seen, amountMinor: seen.amountMinor + d.amountMinor } : d);
   }

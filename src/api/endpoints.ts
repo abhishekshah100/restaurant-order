@@ -1,6 +1,7 @@
 import type {
   AdminBranch,
   AdminServiceRequest,
+  AdminTableDetail,
   FloorPlanLayout,
   GuestHistory,
   Reservation,
@@ -184,6 +185,11 @@ import type {
   ValidatePromoRequest,
   VerifyOtpRequest,
   VerifyOtpResponse,
+  DiscountRequest,
+  AuditLogResponse,
+  AuditQuery,
+  InvoiceDetail,
+  InvoicesResponse,
 } from './contracts';
 
 /*
@@ -719,6 +725,67 @@ export const api = {
   /** An invoice photo's bytes (private). Backend only. */
   purchaseProof: (token: string, branchId: string, key: string) =>
     backendBlob(`${purchasing(branchId)}/proofs/${seg(key)}`, bearer(token)),
+  /** PATCH …/orders/:id/buyer: a business customer's details for the order's invoice (backend only). */
+  setOrderBuyer: (
+    token: string,
+    branchId: string,
+    orderId: string,
+    body: { name: string; taxId?: string; address?: string },
+  ) =>
+    apiPatch<{ buyer: { name: string; taxId?: string; address?: string } }>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/buyer`,
+      body,
+      bearer(token),
+    ),
+  clearOrderBuyer: (token: string, branchId: string, orderId: string) =>
+    apiDelete(`admin/branches/${seg(branchId)}/orders/${seg(orderId)}/buyer`, bearer(token)),
+  /** POST …/orders/:id/discounts: money off the bill or an item by hand (backend only). */
+  giveDiscount: (token: string, branchId: string, orderId: string, body: DiscountRequest) =>
+    apiPost<OrderResponse>(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/discounts`,
+      body,
+      bearer(token),
+    ),
+  /** DELETE …/orders/:id/discounts/:discountId: a manual discount taken off. */
+  removeDiscount: (token: string, branchId: string, orderId: string, discountId: string) =>
+    apiDelete(
+      `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/discounts/${seg(discountId)}`,
+      bearer(token),
+    ),
+  /** POST …/invoices/:id/prints: printed or downloaded now; which copy it is (0: the original). */
+  invoicePrinted: (
+    token: string,
+    branchId: string,
+    invoiceId: string,
+    channel: 'print' | 'download',
+  ) =>
+    apiPost<{ copy: number }>(
+      `admin/branches/${seg(branchId)}/invoices/${seg(invoiceId)}/prints`,
+      { channel },
+      bearer(token),
+    ),
+  /** GET …/invoices: the invoices and credit notes issued on these days (backend only). */
+  invoices: (
+    token: string,
+    branchId: string,
+    query: { from: string; to: string; kind?: 'invoice' | 'creditNote' },
+  ) =>
+    apiGet<InvoicesResponse>(
+      `admin/branches/${seg(branchId)}/invoices${searchOf(query)}`,
+      bearer(token),
+    ),
+  /** GET …/invoices/:id: one in full, as issued. */
+  invoice: (token: string, branchId: string, invoiceId: string) =>
+    apiGet<InvoiceDetail>(
+      `admin/branches/${seg(branchId)}/invoices/${seg(invoiceId)}`,
+      bearer(token),
+    ),
+  /** The sales register (every invoice and credit note) as CSV bytes (backend only). */
+  salesRegister: (token: string, branchId: string, range: { from: string; to: string }) =>
+    backendBlob(
+      `admin/branches/${seg(branchId)}/invoices/register.csv${searchOf(range)}`,
+      bearer(token),
+    ),
   refundReceived: (token: string, branchId: string, orderId: string, seq: number) =>
     apiPost<OrderResponse>(
       `admin/branches/${seg(branchId)}/orders/${seg(orderId)}/refunds/${seq}/received`,
@@ -865,6 +932,13 @@ export const api = {
     ),
   tableQrCodes: (token: string, branchId: string) =>
     apiGet<TableQrCodesResponse>(`admin/branches/${seg(branchId)}/tables/qr-codes`, bearer(token)),
+  /** POST …/tables/:table/move {to}: the guests to a free table (backend only); answers it. */
+  moveTable: (token: string, branchId: string, table: number, to: number) =>
+    apiPost<AdminTableDetail>(
+      `admin/branches/${seg(branchId)}/tables/${table}/move`,
+      { to },
+      bearer(token),
+    ),
   freeTable: (token: string, branchId: string, table: number) =>
     apiPost<FreeTableResponse>(
       `admin/branches/${seg(branchId)}/tables/${table}/free`,
@@ -1050,6 +1124,18 @@ export const api = {
   /** One order at the branch by its code, as staff see it (Orders › History opens it). */
   branchOrder: (token: string, branchId: string, id: string) =>
     apiGet<OrderResponse>(`admin/branches/${seg(branchId)}/orders/${seg(id)}`, bearer(token)),
+  /** GET …/audit: the audit log on these days, a page at a time (backend only). */
+  auditLog: (token: string, branchId: string, query: AuditQuery) =>
+    apiGet<AuditLogResponse>(
+      `admin/branches/${seg(branchId)}/audit${searchOf(query)}`,
+      bearer(token),
+    ),
+  /** GET …/audit/export.csv: every entry on these days (as filtered), as CSV bytes. */
+  auditExport: (token: string, branchId: string, query: Omit<AuditQuery, 'before'>) =>
+    backendBlob(
+      `admin/branches/${seg(branchId)}/audit/export.csv${searchOf(query)}`,
+      bearer(token),
+    ),
   requestHistory: (
     token: string,
     branchId: string,

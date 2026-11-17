@@ -2,19 +2,23 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '@/api/endpoints';
 import { useContent } from '@/api/hooks';
-import { useAdminName } from '@/hooks/useAdminSession';
+import { refreshAfter } from '@/api/refreshAfter';
+import { useAdminName, useAdminToken } from '@/hooks/useAdminSession';
 import { dueOn } from '@/lib/adminOrders';
-import type { PaymentHistoryResponse } from '@/api/contracts';
+import type { InvoiceDetail, PaymentHistoryResponse } from '@/api/contracts';
 import { ledgerOf, type DueGroup, type LedgerLine } from '@/lib/adminPayments';
 import { brandName } from '@/lib/branchParts';
 import { paidAmount } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
 import { canShareFile, downloadFile, needsTap, shareFile } from '@/lib/saveFile';
-import type { Order } from '@/types/order';
+import type { Order, OrderInvoice } from '@/types/order';
 import { Button, Dialog } from '@/components/ui';
 import { billRows } from '../../cart/PriceSummary';
 import { useAdminWorkspace, type AdminWorkspace } from '../shell/AdminWorkspace';
+import { InvoiceDoc } from './InvoiceDoc';
 import { usePaymentText, usePaymentWords } from './usePaymentText';
 import styles from './PaymentPrint.module.css';
 
@@ -22,7 +26,10 @@ import styles from './PaymentPrint.module.css';
 const PRINTING = 'printing-payments';
 
 type Printable =
-  | { kind: 'bill'; orders: Order[] }
+  /** `copy`: which print of its tax invoice this is (more than 0: a copy, so marked). */
+  | { kind: 'bill'; orders: Order[]; copy?: number }
+  /** An invoice or credit note from its saved copy; `copy` as for a bill. */
+  | { kind: 'invoice'; detail: InvoiceDetail; copy: number }
   | { kind: 'report'; money: DayMoney; lines: LedgerLine[]; due: DueGroup[]; period: string };
 
 /** The day's money as the server sums it (each payment on the day it was taken). */
@@ -48,8 +55,32 @@ function usePrintPlace(): PrintPlace {
  * footer (date, title, address); the sheet keeps its own.
  */
 export function usePaymentPrint() {
-  return usePrintDoc(useAdminWorkspace());
+  const workspace = useAdminWorkspace();
+  const token = useAdminToken();
+  const client = useQueryClient();
+  // Each tax invoice printed is recorded (the original, then copies), after the dialog opened:
+  // the print can't wait for the server (phones print only from the tap itself).
+  const record = (ids: readonly string[]) => {
+    if (!token || ids.length === 0) return;
+    void Promise.allSettled(
+      ids.map((id) => api.invoicePrinted(token, workspace.branch.id, id, 'print')),
+    ).then(() => refreshAfter(client, 'invoicePrinted', workspace.branch.id));
+  };
+  const recordPrints = (doc: Printable) => {
+    if (doc.kind === 'invoice') record([doc.detail.id]);
+    if (doc.kind === 'bill') record(doc.orders.flatMap((o) => (o.invoice ? [o.invoice.id] : [])));
+  };
+  return usePrintDoc(workspace, recordPrints);
 }
+
+/** What a tax invoice is called (service › region.taxInvoice). */
+const INVOICE_TITLES = ['gst', 'vat', 'billOfSupply', 'bill'] as const;
+
+/** The order's tax invoices, when every one of them has one. */
+const invoicesOf = (orders: Order[]): OrderInvoice[] | null => {
+  const invoices = orders.flatMap((o) => (o.invoice ? [o.invoice] : []));
+  return invoices.length > 0 && invoices.length === orders.length ? invoices : null;
+};
 
 /**
  * The same bill for a guest's order (the order page's "Get invoice"), as a PDF file to keep:
@@ -157,7 +188,7 @@ export function useBillDownload(place: PrintPlace) {
   return { download, busy, sheet };
 }
 
-function usePrintDoc(place: PrintPlace) {
+function usePrintDoc(place: PrintPlace, onPrinted?: (doc: Printable) => void) {
   const t = useContent('common');
   const [doc, setDoc] = useState<Printable | null>(null);
 
@@ -196,9 +227,12 @@ function usePrintDoc(place: PrintPlace) {
     document.title =
       next.kind === 'bill'
         ? t('adminPayments.receipt.fileName', { orders: next.orders.map((o) => o.id).join(', ') })
-        : t('adminPayments.report.fileName', { period: next.period });
+        : next.kind === 'invoice'
+          ? next.detail.number
+          : t('adminPayments.report.fileName', { period: next.period });
     window.addEventListener('afterprint', () => (document.title = pageTitle), { once: true });
     window.print();
+    onPrinted?.(next);
   };
 
   const sheet =
@@ -207,7 +241,9 @@ function usePrintDoc(place: PrintPlace) {
       <PrintPlaceContext.Provider value={place}>
         <div className={styles.sheet} data-print-sheet="">
           {doc.kind === 'bill' ? (
-            <BillDoc orders={doc.orders} />
+            <BillDoc orders={doc.orders} copy={doc.copy} />
+          ) : doc.kind === 'invoice' ? (
+            <InvoiceDoc doc={doc.detail.document} copy={doc.copy} />
           ) : (
             <ReportDoc money={doc.money} lines={doc.lines} due={doc.due} period={doc.period} />
           )}
@@ -217,31 +253,54 @@ function usePrintDoc(place: PrintPlace) {
     );
 
   return {
-    bill: (orders: Order[]) => print({ kind: 'bill', orders }),
+    bill: (orders: Order[]) => {
+      // Printed before: this one's a copy (the highest count of the bill's invoices).
+      const invoices = invoicesOf(orders);
+      const copy = invoices ? Math.max(...invoices.map((i) => i.prints)) : undefined;
+      print({ kind: 'bill', orders, ...(copy ? { copy } : {}) });
+    },
+    /** An invoice or credit note as issued: the original, or (printed before) a copy. */
+    invoice: (detail: InvoiceDetail) => print({ kind: 'invoice', detail, copy: detail.prints }),
     report: (money: DayMoney, lines: LedgerLine[], due: DueGroup[], period: string) =>
       print({ kind: 'report', money, lines, due, period }),
     sheet,
   };
 }
 
-function PrintHead({ title }: { title: string }) {
+function PrintHead({ title, invoice }: { title: string; invoice?: OrderInvoice }) {
   const t = useContent('common');
   const { region } = usePrintPlace();
+  // A tax invoice prints the seller as it was registered when issued.
+  const brand = brandName(region.name);
+  const taxId = invoice ? invoice.seller.taxId : region.tax.taxId;
   return (
     <header className={styles.head}>
-      <p className={styles.brand}>{brandName(region.name)}</p>
+      <p className={styles.brand}>{brand}</p>
+      {invoice && invoice.seller.name !== brand && invoice.seller.name !== region.name && (
+        <p className={styles.branch}>{invoice.seller.name}</p>
+      )}
       <p className={styles.branch}>{region.shortName}</p>
       {region.address && <p className={styles.address}>{region.address}</p>}
-      {(region.phone || region.tax.taxId) && (
+      {(region.phone || taxId) && (
         <p className={styles.contact}>
           {region.phone && <span>{t('adminPayments.receipt.phone', { phone: region.phone })}</span>}
-          {region.tax.taxId && (
+          {taxId && (
             <span>
               {t('adminPayments.receipt.taxId', {
                 label: t(`adminPayments.receipt.taxIdLabels.${region.tax.taxIdKey}`),
-                id: region.tax.taxId,
+                id: taxId,
               })}
             </span>
+          )}
+        </p>
+      )}
+      {invoice && (invoice.seller.sacCode || invoice.seller.fssai) && (
+        <p className={styles.contact}>
+          {invoice.seller.sacCode && (
+            <span>{t('adminPayments.receipt.sac', { code: invoice.seller.sacCode })}</span>
+          )}
+          {invoice.seller.fssai && (
+            <span>{t('adminPayments.receipt.fssai', { number: invoice.seller.fssai })}</span>
           )}
         </p>
       )}
@@ -265,9 +324,10 @@ function useBillTitle(due: number): string {
  * (service charge, taxes, round off, as the guest's bill lists them), the total, what was paid
  * and what's due, and the payments taken.
  */
-function BillDoc({ orders }: { orders: Order[] }) {
+function BillDoc({ orders, copy }: { orders: Order[]; copy?: number }) {
   const t = useContent('common');
   const cart = useContent('cart');
+  const service = useContent('service');
   const { clock, region, money } = usePrintPlace();
   const { amount, methodName, where } = usePaymentWords(money);
   const due = orders.reduce((s, o) => s + dueOn(o), 0);
@@ -277,16 +337,33 @@ function BillDoc({ orders }: { orders: Order[] }) {
   const left = payments.reduce((s, e) => s + (e.waived ?? 0), 0);
   const paid = orders.reduce((s, o) => s + paidAmount(o), 0) - left;
   const refunded = payments.filter((e) => e.kind === 'refund').reduce((s, e) => s + e.amount, 0);
-  const title = useBillTitle(due);
+  const billTitle = useBillTitle(due);
+  // Paid in full on the server: its tax invoice ("GST invoice", "VAT invoice", "Bill of supply").
+  const invoices = invoicesOf(orders);
+  const invoice = invoices?.[0];
+  const titleKey = INVOICE_TITLES.find((k) => k === invoice?.titleKey);
+  const title = titleKey ? service(`region.taxInvoice.${titleKey}`) : billTitle;
+  const creditNotes = invoices?.flatMap((i) => i.creditNotes ?? []) ?? [];
+  const buyer = invoice?.buyer.business ? invoice.buyer : undefined;
   const first = orders[0];
   const guests = [...new Set(orders.map((o) => o.customerName))].join(', ');
   const now = new Date();
 
   return (
     <article className={styles.bill}>
-      <PrintHead title={title} />
+      <PrintHead title={title} invoice={invoice} />
+      {copy !== undefined && copy > 0 && (
+        <p className={styles.thanks}>{t('adminPayments.receipt.copy', { n: copy })}</p>
+      )}
+      {due > 0 && <p className={styles.printed}>{t('adminPayments.receipt.proforma')}</p>}
 
       <dl className={styles.meta}>
+        {invoices && (
+          <div>
+            <dt>{t('adminPayments.receipt.invoiceNo')}</dt>
+            <dd>{invoices.map((i) => i.number).join(', ')}</dd>
+          </div>
+        )}
         <div>
           <dt>{t('adminPayments.receipt.billNo')}</dt>
           <dd>{orders.map((o) => o.id).join(', ')}</dd>
@@ -300,14 +377,56 @@ function BillDoc({ orders }: { orders: Order[] }) {
             })}
           </dd>
         </div>
+        {invoice?.date.bs && (
+          <div>
+            <dt>{t('adminPayments.receipt.dateBs')}</dt>
+            <dd>{invoice.date.bs}</dd>
+          </div>
+        )}
         <div>
           <dt>{t('adminPayments.receipt.servedAt')}</dt>
           <dd>{where(first)}</dd>
         </div>
-        <div>
-          <dt>{t('adminPayments.receipt.guestLabel')}</dt>
-          <dd>{guests}</dd>
-        </div>
+        {invoice?.placeOfSupply && (
+          <div>
+            <dt>{t('adminPayments.receipt.placeOfSupply')}</dt>
+            <dd>{t('adminPayments.receipt.placeOfSupplyValue', invoice.placeOfSupply)}</dd>
+          </div>
+        )}
+        {buyer ? (
+          <div>
+            <dt>{t('adminPayments.receipt.billTo')}</dt>
+            <dd>
+              {buyer.name}
+              {buyer.taxId &&
+                ` · ${t('adminPayments.receipt.taxId', {
+                  label: t(`adminPayments.receipt.taxIdLabels.${region.tax.taxIdKey}`),
+                  id: buyer.taxId,
+                })}`}
+              {buyer.address && ` · ${buyer.address}`}
+            </dd>
+          </div>
+        ) : (
+          <div>
+            <dt>{t('adminPayments.receipt.guestLabel')}</dt>
+            <dd>{guests}</dd>
+          </div>
+        )}
+        {creditNotes.length > 0 && (
+          <div>
+            <dt>{t('adminPayments.receipt.creditNotes')}</dt>
+            <dd>
+              {creditNotes
+                .map((n) =>
+                  t('adminPayments.receipt.creditNote', {
+                    number: n.number,
+                    amount: amount(-n.total),
+                  }),
+                )
+                .join(', ')}
+            </dd>
+          </div>
+        )}
       </dl>
 
       {orders.map((order) => {

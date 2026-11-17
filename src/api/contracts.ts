@@ -151,6 +151,16 @@ export type ApiErrorCode =
   | 'day_open'
   /** 409: the day was already signed off. */
   | 'day_signed_off'
+  /** The order's tax invoice is issued: its buyer can't change. */
+  | 'invoice_issued'
+  /** 409: the table to move to has guests (`status`): free or settle it first. */
+  | 'table_occupied'
+  /** 409: nobody is at the table to move. */
+  | 'nothing_to_move'
+  /** 409: the bill is paid in full: money back is a refund, not a discount. */
+  | 'bill_paid'
+  /** 403: more off than the giver's discount limit (`limit`, a percentage). */
+  | 'discount_limit'
   /** 409: the booking already has a deposit (one at most). */
   | 'deposit_exists'
   /** 409: another ingredient or category has that name (`field`). */
@@ -1185,6 +1195,8 @@ export interface RoleInput {
   name: string;
   description?: string;
   permissions: StaffPermission[];
+  /** The most its staff may take off a bill by hand (basis points, 0–10000). Server only. */
+  discountLimitBp?: number;
 }
 
 /**
@@ -1919,3 +1931,188 @@ export interface DepositRequest {
   method: string;
   proofs?: string[];
 }
+
+/**
+ * POST /admin/branches/:branchId/orders/:id/discounts: off the bill, or one item (its round and
+ * line); a percentage (0.01 to 100) or an amount, one of the two; why, and a note.
+ */
+export interface DiscountRequest {
+  scope: 'bill' | 'item';
+  round?: number;
+  position?: number;
+  percent?: number;
+  amount?: number;
+  reason: 'regular' | 'complaint' | 'staffMeal' | 'manager' | 'other';
+  note?: string;
+}
+
+/* ---------- The audit log (Admin › Audit log, `audit.view`; the server's only) ---------- */
+
+/** Everything the log records (restaurant-backend › audit.types.ts › AUDIT_ACTIONS). */
+export type AuditAction =
+  | 'order.cancelled'
+  | 'order.roundCancelled'
+  | 'order.roundChanged'
+  | 'order.itemUnavailable'
+  | 'order.refunded'
+  | 'order.refundReceived'
+  | 'order.discountGiven'
+  | 'order.discountRemoved'
+  | 'bill.waived'
+  | 'table.freed'
+  | 'table.moved'
+  | 'invoice.issued'
+  | 'invoice.creditNoteIssued'
+  | 'invoice.printed'
+  | 'order.buyerSet'
+  | 'order.buyerCleared'
+  | 'cash.opened'
+  | 'cash.moved'
+  | 'cash.closed'
+  | 'cash.checked'
+  | 'cash.signedOff'
+  | 'cash.limitChanged'
+  | 'menu.priceChanged'
+  | 'menu.availabilityChanged'
+  | 'menu.dishRemoved'
+  | 'settings.changed'
+  | 'staff.added'
+  | 'staff.changed'
+  | 'staff.removed'
+  | 'staff.restored'
+  | 'staff.passwordReset'
+  | 'role.created'
+  | 'role.changed'
+  | 'role.removed'
+  | 'session.signedIn'
+  | 'session.signedOut';
+
+/** The log's areas, as the page filters them. */
+export type AuditArea = 'orders' | 'tables' | 'invoices' | 'cash' | 'menu' | 'settings' | 'staff';
+
+/** One entry: who did what to what, when, why; `details` as the action recorded them (major units). */
+export interface AuditEvent {
+  id: string;
+  at: string;
+  /** Who, with the roles they held there then; none: the system did it. */
+  by: { id: string; name: string; roles?: string[] } | null;
+  action: AuditAction;
+  target?: {
+    type:
+      | 'order'
+      | 'invoice'
+      | 'table'
+      | 'cashSession'
+      | 'cashDay'
+      | 'dish'
+      | 'branch'
+      | 'staff'
+      | 'role';
+    id: string;
+  };
+  reason?: string;
+  details?: Record<string, unknown>;
+}
+
+/** GET /admin/branches/:branchId/audit?from&to&area&staffId&before */
+export interface AuditLogResponse {
+  from: string;
+  to: string;
+  /** Newest first, 100 at a time. */
+  events: AuditEvent[];
+  /** `before` for the next (older) page; absent on the last. */
+  next?: string;
+  /** Everyone with an entry on these days: the staff filter's choices. */
+  staff: { id: string; name: string }[];
+}
+
+export interface AuditQuery {
+  from: string;
+  to: string;
+  area?: AuditArea;
+  staffId?: string;
+  before?: string;
+}
+
+/* ---------- Tax invoices and credit notes (Payments › Invoices; the server's only) ---------- */
+
+/** One row of GET /admin/branches/:branchId/invoices (money in major units). */
+export interface InvoiceRow {
+  id: string;
+  kind: 'invoice' | 'creditNote';
+  number: string;
+  fiscalYear: string;
+  issuedAt: string;
+  date: { ad: string; bs?: string };
+  order: string;
+  buyer: { name: string; taxId?: string };
+  taxable: number;
+  tax: number;
+  total: number;
+  /** A credit note's invoice; an invoice's credit notes. */
+  invoice?: string;
+  creditNotes?: string[];
+  /** An invoice not wholly credited back (credit notes: always). */
+  active: boolean;
+  /** How many times printed or downloaded (0: never). */
+  prints: number;
+  synced: boolean;
+}
+
+export interface InvoicesResponse {
+  from: string;
+  to: string;
+  invoices: InvoiceRow[];
+}
+
+/** A bill line as issued: the service charge or a tax (with its CGST/SGST parts). */
+export interface InvoiceChargeLine {
+  id: string;
+  labelKey: string;
+  vars: { rate: string };
+  amount: number;
+  parts?: InvoiceChargeLine[];
+}
+
+/** The document as issued (major units): what a printed invoice or credit note says. */
+export interface InvoiceDocument {
+  kind: 'invoice' | 'creditNote';
+  titleKey: string;
+  number: string;
+  fiscalYear: string;
+  issuedAt: string;
+  date: { ad: string; bs?: string };
+  seller: {
+    name: string;
+    branch?: string;
+    address: string;
+    phone: string;
+    taxId?: string;
+    taxIdKey: 'gstin' | 'pan' | 'taxId';
+    country: string;
+    sacCode?: string;
+    fssai?: string;
+  };
+  placeOfSupply?: { code: string; name: string };
+  buyer: { name: string; taxId?: string; address?: string; business?: true };
+  order: { code: string; mode: string; table?: number };
+  currency: { code: string; minorUnit: number };
+  lines?: { name: string; variant?: string; quantity: number; unitPrice: number; amount: number }[];
+  itemTotal?: number;
+  discounts?: { name?: string; labelKey?: string; amount: number }[];
+  deliveryFee?: number;
+  charges: { lines: InvoiceChargeLine[]; roundOff: number };
+  waived?: number;
+  refunded?: number;
+  taxable: number;
+  tax: number;
+  total: number;
+  creditNote?: { invoiceNumber: string; invoiceDate: string; reason: string };
+}
+
+/** GET /admin/branches/:branchId/invoices/:invoiceId: one in full, with its prints. */
+export interface InvoiceDetail extends InvoiceRow {
+  document: InvoiceDocument;
+  printLog: { copy: number; at: string; by: string }[];
+}
+

@@ -7,9 +7,12 @@ import { Button, Dialog } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import type { Order } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { BusinessBuyer } from './BusinessBuyer';
+import { DiscountPanel } from './DiscountPanel';
 import { CollectFields, useCollectChoice } from './CollectFields';
 import { usePaymentText } from './usePaymentText';
 import styles from './PaymentDialogs.module.css';
+import extras from './CollectExtras.module.css';
 
 /** What's being paid: one order, or everything due at a table. */
 export type CollectTarget =
@@ -133,6 +136,10 @@ function CollectForm({
       }
     >
       <CollectFields orders={orders} choice={choice} />
+      <div className={extras.stack}>
+        <DiscountPanel orders={orders} />
+        <BusinessBuyer orders={orders} />
+      </div>
     </Dialog>
   );
 }

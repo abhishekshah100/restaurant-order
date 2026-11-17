@@ -287,12 +287,17 @@ export function discountsFor(
   return amountMinor > 0 ? [...offers, { kind: 'code', code: promo.code, amountMinor }] : offers;
 }
 
-/** A bill's discounts as an order records them (major units). */
+/**
+ * A bill's discounts as an order records them (major units): offers and codes, as the mock
+ * prices them (manual discounts are the server's own).
+ */
 export const toOrderDiscounts = (
   discounts: readonly BillDiscount[],
   minorUnit: number,
 ): OrderDiscount[] =>
-  discounts.map(({ amountMinor, ...d }) => ({ ...d, amount: amountMinor / minorUnit }));
+  discounts.flatMap(({ amountMinor, ...d }) =>
+    d.kind === 'manual' ? [] : [{ ...d, amount: amountMinor / minorUnit }],
+  );
 
 /** An order's recorded discounts as bill lines (minor units). */
 export const fromOrderDiscounts = (

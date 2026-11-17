@@ -57,6 +57,21 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['GET', 'admin/branches/:branchId/reservations/guests/:phone'],
   ['PATCH', 'admin/branches/:branchId/reservations/rules'],
   ['POST', 'admin/branches/:branchId/orders/:id/refunds/:seq/received'],
+  // Tax invoices: a business buyer's details, prints, the list and the sales register.
+  ['PATCH', 'admin/branches/:branchId/orders/:id/buyer'],
+  ['DELETE', 'admin/branches/:branchId/orders/:id/buyer'],
+  // Guests moved to another table.
+  ['POST', 'admin/branches/:branchId/tables/:table/move'],
+  // Discounts staff give by hand.
+  ['POST', 'admin/branches/:branchId/orders/:id/discounts'],
+  ['DELETE', 'admin/branches/:branchId/orders/:id/discounts/:discountId'],
+  ['GET', 'admin/branches/:branchId/invoices'],
+  ['GET', 'admin/branches/:branchId/invoices/register.csv'],
+  ['GET', 'admin/branches/:branchId/invoices/:invoiceId'],
+  ['POST', 'admin/branches/:branchId/invoices/:invoiceId/prints'],
+  // The audit log.
+  ['GET', 'admin/branches/:branchId/audit'],
+  ['GET', 'admin/branches/:branchId/audit/export.csv'],
   ['GET', 'admin/branches/:branchId/cash-register'],
   ['GET', 'admin/branches/:branchId/cash-register/sessions/:id'],
   ['POST', 'admin/branches/:branchId/cash-register/open'],

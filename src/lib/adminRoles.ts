@@ -21,6 +21,7 @@ export const PERMISSION_GROUPS: readonly {
     permissions: [
       'orders.view',
       'orders.take',
+      'tables.move',
       'service.respond',
       'payments.collect',
       'cash.manage',
@@ -32,9 +33,11 @@ export const PERMISSION_GROUPS: readonly {
     permissions: [
       'orders.cancel',
       'refunds.give',
+      'discounts.give',
       'tables.assign',
       'reservations.manage',
       'reports.view',
+      'audit.view',
       'cash.review',
       'rota.plan',
       'attendance.fix',
@@ -85,10 +88,12 @@ export type PermissionWord =
   | 'menu_availability_update'
   | 'tables_manage'
   | 'tables_assign'
+  | 'tables_move'
   | 'orders_view'
   | 'orders_take'
   | 'orders_cancel'
   | 'refunds_give'
+  | 'discounts_give'
   | 'payments_collect'
   | 'cash_manage'
   | 'cash_review'
@@ -96,6 +101,7 @@ export type PermissionWord =
   | 'kitchen_update'
   | 'reservations_manage'
   | 'reports_view'
+  | 'audit_view'
   | 'inventory_view'
   | 'inventory_manage'
   | 'inventory_adjust'
@@ -110,6 +116,8 @@ export interface RoleDraft {
   name: string;
   description: string;
   permissions: StaffPermission[];
+  /** With `discounts.give`: the most its staff may take off by hand (basis points). */
+  discountLimitBp?: number;
 }
 
 /** The form for a new role, one to change, or a copy of one ("Copy of Waiter"). */
@@ -118,6 +126,7 @@ export function roleDraft(from?: AdminRole, copyName?: string): RoleDraft {
     name: copyName ?? from?.name ?? '',
     description: from?.description ?? '',
     permissions: [...(from?.permissions ?? [])],
+    ...(from?.discountLimitBp !== undefined ? { discountLimitBp: from.discountLimitBp } : {}),
   };
 }
 
@@ -128,6 +137,12 @@ export function roleInput(draft: RoleDraft) {
     name: draft.name.trim(),
     description: draft.description.trim(),
     permissions: order.filter((p) => draft.permissions.includes(p)),
+    // Only with discounts: a role without them gives nothing off.
+    ...(draft.discountLimitBp !== undefined
+      ? {
+          discountLimitBp: draft.permissions.includes('discounts.give') ? draft.discountLimitBp : 0,
+        }
+      : {}),
   };
 }
 

@@ -269,6 +269,157 @@
       "refund-started": "refund started"
     }
   },
+  "adminAudit": {
+    "title": "Audit log",
+    "subtitle": "Who did what: refunds, write-offs, discounts, cancellations, the cash drawer, prices, settings and staff. Entries can't be changed or deleted.",
+    "areas": {
+      "label": "What",
+      "all": "Everything",
+      "orders": "Orders & bills",
+      "tables": "Tables",
+      "invoices": "Invoices",
+      "cash": "Cash drawer",
+      "menu": "Menu prices",
+      "settings": "Settings",
+      "staff": "Staff & roles"
+    },
+    "staff": "Who",
+    "everyone": "Everyone",
+    "export": "Download CSV",
+    "exportLabel": "Download these entries as a CSV file",
+    "exportFailed": "Couldn't download the log. Try again.",
+    "count": {
+      "one": "{count} entry",
+      "other": "{count} entries"
+    },
+    "more": "Load more",
+    "empty": "Nothing recorded on these days.",
+    "emptyFiltered": "Nothing matches. Try another filter.",
+    "error": "Couldn't load the audit log",
+    "loading": "Loading the audit log",
+    "nobody": "System",
+    "reason": "Why: {reason}",
+    "actions": {
+      "order_cancelled": "Cancelled order #{order}",
+      "order_roundCancelled": "Took back round {round} of #{order}",
+      "order_roundChanged": "Changed round {round} of #{order}",
+      "order_itemUnavailable": "Marked {quantity} × {item} unavailable on #{order}",
+      "order_refunded": "Refunded {amount} on #{order}",
+      "order_refundReceived": "Online refund reached the guest on #{order}",
+      "order_discountGiven": "Gave {amount} off #{order}",
+      "order_discountRemoved": "Took a {amount} discount off #{order}",
+      "bill_waived": "Left {waived} off the bill of #{order}",
+      "table_freed": "Freed table {table}",
+      "table_moved": "Moved guests from table {table} to table {to}",
+      "invoice_issued": "Issued invoice {number} for #{order}",
+      "invoice_creditNoteIssued": "Issued credit note {number} against {invoice}",
+      "invoice_printed": "Printed invoice {number}",
+      "invoice_printedCopy": "Printed copy {copy} of invoice {number}",
+      "order_buyerSet": "Added business details ({name}) to #{order}",
+      "order_buyerCleared": "Removed business details from #{order}",
+      "cash_opened": "Opened the cash drawer with {float}",
+      "cash_movedIn": "Put {amount} into the cash drawer",
+      "cash_movedOut": "Took {amount} out of the cash drawer",
+      "cash_closed": "Closed the cash drawer",
+      "cash_checked": "Checked a closed drawer that needed review",
+      "cash_signedOff": "Signed off the day {day}",
+      "cash_limitChanged": "Changed the cash difference limit from {before} to {after}",
+      "menu_priceChanged": "Changed the price of {dish}: {before} → {after}",
+      "menu_dishRemoved": "Removed {dish} from the menu",
+      "menu_availabilityChanged": "{dish}: {before} → {after}",
+      "settings_changed": "Changed settings: {sections}",
+      "staff_added": "Added {name} as {role}",
+      "staff_changed": "Changed {name}: {changes}",
+      "staff_removed": "Removed {name} ({role})",
+      "staff_restored": "Brought back {name} as {role}",
+      "staff_passwordReset": "Reset {name}'s password",
+      "role_created": "Created the role {name}",
+      "role_changed": "Changed the role {name}",
+      "role_removed": "Deleted the role {name}",
+      "session_signedIn": "Signed in",
+      "session_signedOut": "Signed out"
+    },
+    "details": {
+      "bill": "Bill {before} → {after}",
+      "refunded": "{amount} refunded",
+      "total": "Total {amount}",
+      "on": "on {item}",
+      "givenBy": "given by {name}",
+      "counted": "Expected {expected} · counted {counted} · difference {difference}",
+      "permissions": "Added {added} · removed {removed}",
+      "limit": "Discount limit {before}% → {after}%",
+      "change": "{field}: {before} → {after}",
+      "empty": "empty",
+      "availability": {
+        "available": "On the menu",
+        "sold-out": "Sold out",
+        "unavailable-today": "Off today"
+      },
+      "sizesOff": "sizes off: {sizes}",
+      "none": "none"
+    }
+  },
+  "adminInvoices": {
+    "title": "Invoices & credit notes",
+    "subtitle": "Every tax invoice and credit note issued, as issued. View one to print it or a copy.",
+    "back": "Payment history",
+    "link": "Invoices",
+    "kinds": {
+      "label": "Show",
+      "all": "All",
+      "invoice": "Invoices",
+      "creditNote": "Credit notes"
+    },
+    "register": "Sales register",
+    "empty": "No invoices on these days.",
+    "error": "Couldn't load the invoices",
+    "loading": "Loading invoices",
+    "view": "View",
+    "order": "#{order}",
+    "kind": {
+      "invoice": "Invoice",
+      "creditNote": "Credit note"
+    },
+    "printed": {
+      "zero": "Not printed",
+      "one": "Printed once",
+      "other": "Printed {count}×"
+    },
+    "credited": "Credited: {notes}",
+    "fullyCredited": "Fully credited",
+    "against": "Against {number}",
+    "dialog": {
+      "title": "{number}",
+      "print": "Print",
+      "printCopy": "Print copy {n}",
+      "close": "Close",
+      "log": "Printed: {list}",
+      "never": "Not printed yet",
+      "failed": "Couldn't load the invoice. Try again."
+    },
+    "doc": {
+      "invoice": "Invoice",
+      "creditNote": "Credit note",
+      "creditNoteNo": "Credit note no.",
+      "table": "Table {table}",
+      "discount": "Discount",
+      "against": "Against invoice",
+      "againstValue": "{number} of {date}",
+      "reason": "Reason",
+      "reasons": {
+        "cancelled": "Order cancelled",
+        "itemsRemoved": "Items taken off the bill",
+        "complaint": "Complaint",
+        "wrongItem": "Wrong item",
+        "overcharged": "Overcharged",
+        "goodwill": "Goodwill",
+        "other": "Other"
+      },
+      "taxable": "Taxable value",
+      "credited": "Credited",
+      "taxLine": "Taxable value {taxable} · tax {tax}"
+    }
+  },
   "adminShell": {
     "meta": {
       "home": "Home · Admin",
@@ -305,6 +456,8 @@
       "staff": "Staff · Settings · Admin",
       "inventory": "Inventory · Admin",
       "purchasing": "Purchasing · Admin",
+      "audit": "Audit log · Admin",
+      "invoices": "Invoices · Payments · Admin",
       "orderHistory": "Order history · Admin",
       "rota": "Rota · Team · Admin",
       "attendance": "Attendance · Team · Admin",
@@ -334,7 +487,8 @@
       "more": "More",
       "settings": "Settings",
       "inventory": "Inventory",
-      "purchasing": "Purchasing"
+      "purchasing": "Purchasing",
+      "audit": "Audit log"
     },
     "badge": {
       "orders": "{count} ready to serve",
@@ -845,6 +999,27 @@
         "keep": "Not yet",
         "done": "Table {table} is free",
         "failed": "Couldn't free the table. Try again."
+      },
+      "move": {
+        "action": "Move table",
+        "title": "Move Table {table}",
+        "body": "Pick a free table. Their orders, calls, note and phones go with them, and Table {table} becomes free.",
+        "legend": "Free tables",
+        "floor": "{floor}",
+        "tile": "Table {table}",
+        "seats": {
+          "one": "{count} seat",
+          "other": "{count} seats"
+        },
+        "none": "No table is free right now. Free one first.",
+        "confirm": "Move to Table {table}",
+        "pick": "Pick a table",
+        "keep": "Cancel",
+        "done": "Moved to Table {table}",
+        "occupied": "Table {table} isn't free any more. Pick another.",
+        "disabled": "Table {table} is out of service. Pick another.",
+        "nothing": "Nobody is at this table to move.",
+        "failed": "Couldn't move the table. Try again."
       },
       "reserve": "Reserve",
       "outOfService": {
@@ -3560,7 +3735,10 @@
       "methodAll": "Method: all",
       "clear": "Clear filters",
       "dayLine": "{count} · {amount}",
-      "exportLabel": "Download these payments as an Excel file"
+      "exportLabel": "Download these payments as an Excel file",
+      "register": "Sales register",
+      "registerLabel": "Download every tax invoice and credit note on these days as a CSV file, for your accountant or tax return",
+      "registerFailed": "Couldn't download the sales register. Try again."
     },
     "orderId": "#{order}",
     "loading": "Loading payments",
@@ -3672,6 +3850,65 @@
       "search": "Nothing matches “{query}”."
     },
     "refundsSummary": "{amount} refunded today · {pending} still on its way to guests",
+    "discount": {
+      "give": "Give a discount",
+      "title": "Discount",
+      "hint": "Comes off before the service charge and taxes.",
+      "on": "On",
+      "wholeBill": "Whole bill",
+      "oneItem": "One item",
+      "item": "{name} (round {round})",
+      "kind": "How much",
+      "percent": "Percent",
+      "amount": "Amount",
+      "value": "Value",
+      "reason": "Why",
+      "reasons": {
+        "regular": "Regular guest",
+        "complaint": "Sorry for the trouble",
+        "staffMeal": "Staff meal",
+        "manager": "Manager's choice",
+        "other": "Other"
+      },
+      "note": "Note",
+      "notePlaceholder": "Add a note (optional)",
+      "confirm": "Give discount",
+      "cancel": "Cancel",
+      "forOrder": "For order",
+      "orderOption": "#{order} · {name} · {total}",
+      "line": "{label}: {amount} · by {by}",
+      "remove": "Take off",
+      "given": "Discount given",
+      "removed": "Discount taken off",
+      "errors": {
+        "value": "Enter how much",
+        "limit": "That's more than your limit of {limit}% off. Ask a manager to give it.",
+        "paid": "The bill is already paid: give a refund instead.",
+        "nothing": "That takes nothing off.",
+        "failed": "Couldn't save the discount. Try again."
+      }
+    },
+    "business": {
+      "add": "Add business details for the invoice",
+      "title": "Business customer",
+      "hint": "Their registered name and tax number go on the tax invoice.",
+      "name": "Registered name",
+      "address": "Address",
+      "save": "Save details",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "optional": "(optional)",
+      "remove": "Remove",
+      "saved": "Business details saved",
+      "removed": "Business details removed",
+      "on": "Invoice to {name}",
+      "errors": {
+        "name": "Enter the business name",
+        "taxId": "This number doesn't look right",
+        "issued": "The invoice is already issued",
+        "failed": "Couldn't save the details. Try again."
+      }
+    },
     "collect": {
       "titleOrder": "Collect payment",
       "titleTable": "Collect for table {table}",
@@ -3783,6 +4020,17 @@
       "title": "Bill",
       "titleNoTax": "Bill of supply",
       "receiptTitle": "Receipt",
+      "invoiceNo": "Invoice no.",
+      "dateBs": "Date (BS)",
+      "placeOfSupply": "Place of supply",
+      "placeOfSupplyValue": "{code} – {name}",
+      "sac": "SAC {code}",
+      "fssai": "FSSAI Lic. No. {number}",
+      "billTo": "Bill to",
+      "proforma": "Proforma bill, not a tax invoice. The tax invoice is issued once it's paid.",
+      "copy": "Copy of original – {n}",
+      "creditNotes": "Credit notes",
+      "creditNote": "{number}: {amount}",
       "taxId": "{label}: {id}",
       "phone": "Tel. {phone}",
       "fileName": "Bill {orders}",
@@ -4202,6 +4450,10 @@
       "faqAnswer": "Each question needs an answer, up to 1000 characters",
       "orderPrefix": "Use 1 to 5 capital letters, e.g. BLR",
       "taxId": "This number doesn't look right. Check it against your registration.",
+      "legalName": "Keep the name to 120 characters",
+      "sacCode": "Use 4 to 8 digits, e.g. 996331",
+      "fssai": "Use the 14 digits of the licence",
+      "invoicePrefix": "Use 1 to 5 capital letters, e.g. OLV",
       "orderStart": "Use a whole number from 1 to 999999",
       "image": "This photo can't be used. Upload it again.",
       "noOpenDay": "Open the branch on at least one day.",
@@ -4384,6 +4636,18 @@
     },
     "tax": {
       "subtitle": "How this branch's bills are worked out. New bills use these straight away.",
+      "invoice": {
+        "title": "Tax invoices",
+        "hint": "Printed on every invoice. Invoices already issued keep what they had.",
+        "legalName": "Registered business name",
+        "legalNameHint": "As on your tax registration. Leave empty to use the branch name.",
+        "prefix": "Invoice number prefix",
+        "prefixHint": "1 to 5 capital letters, e.g. OLV for OLV/26-27/000001. Leave empty to use the order prefix. New invoices only.",
+        "sacCode": "SAC code",
+        "sacCodeHint": "Leave empty for 996331 (restaurant service).",
+        "fssai": "FSSAI licence number",
+        "fssaiHint": "14 digits, printed on invoices."
+      },
       "taxes": "Taxes",
       "taxesHint": "Your region's taxes. Change a rate when the law changes.",
       "taxNames": {
@@ -4727,6 +4991,8 @@
       "saved": "{name} saved",
       "dialog": {
         "newTitle": "New role",
+        "discountLimit": "Discount limit (%)",
+        "discountLimitHint": "The most this role's staff can take off a bill by hand, all discounts together. Up to your own limit.",
         "editTitle": "Edit {name}",
         "viewTitle": "{name}",
         "name": "Role name",
@@ -4793,6 +5059,10 @@
           "label": "Give refunds",
           "hint": "Give money back, and mark online refunds as received."
         },
+        "discounts_give": {
+          "label": "Give discounts",
+          "hint": "Take money off a bill or an item by hand, up to the role's discount limit."
+        },
         "reservations_manage": {
           "label": "Manage bookings",
           "hint": "Take, change, seat and cancel reservations."
@@ -4800,6 +5070,10 @@
         "reports_view": {
           "label": "See reports",
           "hint": "Sales, payments and history."
+        },
+        "audit_view": {
+          "label": "See the audit log",
+          "hint": "Who cancelled, refunded or wrote off bills, and changed prices, settings, staff or roles."
         },
         "menu_manage": {
           "label": "Edit the menu",
@@ -4812,6 +5086,10 @@
         "tables_assign": {
           "label": "Assign waiters to tables",
           "hint": "Give tables to waiters and clear everyone's sections."
+        },
+        "tables_move": {
+          "label": "Move tables",
+          "hint": "Move guests to another free table, with their orders, calls and note."
         },
         "rota_plan": {
           "label": "Plan the rota",

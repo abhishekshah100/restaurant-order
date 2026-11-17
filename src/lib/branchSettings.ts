@@ -101,6 +101,10 @@ export type SettingsError =
   | 'faqQuestion'
   | 'faqAnswer'
   | 'taxId'
+  | 'legalName'
+  | 'sacCode'
+  | 'fssai'
+  | 'invoicePrefix'
   | 'country'
   | 'timezone'
   | 'locale'
@@ -437,6 +441,13 @@ export const cleanTaxId = (value: string) => value.replace(/\s+/g, '').toUpperCa
 export function taxErrors(t: TaxSettings, current: TaxSettings, country = ''): SettingsError[] {
   const errors: SettingsError[] = [];
   if (t.taxId && !taxIdOf(country).pattern.test(cleanTaxId(t.taxId))) errors.push('taxId');
+  // What tax invoices print (the server's own fields: the mock has none).
+  if (t.legalName && t.legalName.trim().length > 120) errors.push('legalName');
+  if (t.sacCode && !/^\d{4,8}$/.test(t.sacCode.replace(/\s+/g, ''))) errors.push('sacCode');
+  if (t.fssai && !/^\d{14}$/.test(t.fssai.replace(/\s+/g, ''))) errors.push('fssai');
+  if (t.invoicePrefix && !/^[A-Z]{1,5}$/.test(t.invoicePrefix.trim().toUpperCase())) {
+    errors.push('invoicePrefix');
+  }
   const sameLines =
     t.lines.length === current.lines.length &&
     t.lines.every((l, i) => l.id === current.lines[i].id);

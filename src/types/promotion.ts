@@ -86,6 +86,26 @@ export interface AppliedOffer {
 }
 
 /** A discount on a placed order, in major units (shown as a bill line). */
+/** Why staff took money off by hand. */
+export type ManualDiscountReason = 'regular' | 'complaint' | 'staffMeal' | 'manager' | 'other';
+
 export type OrderDiscount =
   | { kind: 'offer'; id: string; labelKey: string; name?: string; amount: Price }
-  | { kind: 'code'; code: string; amount: Price };
+  | { kind: 'code'; code: string; amount: Price }
+  /**
+   * Given by staff by hand (the server's: none in the mock): off the bill or one item (its round,
+   * line and name); a percentage (`percent`: 10 for 10%) or an amount; `amount` is what it takes
+   * off now.
+   */
+  | {
+      kind: 'manual';
+      id: string;
+      scope: 'bill' | 'item';
+      item?: { round: number; position: number; name: string };
+      percent?: number;
+      reason: ManualDiscountReason;
+      note?: string;
+      by: string;
+      at: string;
+      amount: Price;
+    };

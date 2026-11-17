@@ -94,6 +94,78 @@ export function TaxEditor() {
               />
             </SettingsCard>
 
+            {/* What invoices print: the server's fields (a branch read from the mock has none). */}
+            {value.legalName !== undefined && (
+              <SettingsCard
+                title={t('adminSettings.tax.invoice.title')}
+                hint={t('adminSettings.tax.invoice.hint')}
+              >
+                <Input
+                  id="tax-legal-name"
+                  label={t('adminSettings.tax.invoice.legalName')}
+                  hint={t('adminSettings.tax.invoice.legalNameHint')}
+                  value={value.legalName}
+                  optional
+                  maxLength={120}
+                  error={
+                    errors.includes('legalName') ? t('adminSettings.errors.legalName') : undefined
+                  }
+                  onChange={(event) => set({ ...value, legalName: event.target.value })}
+                />
+                <Input
+                  id="tax-invoice-prefix"
+                  label={t('adminSettings.tax.invoice.prefix')}
+                  hint={t('adminSettings.tax.invoice.prefixHint')}
+                  value={value.invoicePrefix ?? ''}
+                  optional
+                  autoComplete="off"
+                  spellCheck={false}
+                  maxLength={5}
+                  className={styles.taxId}
+                  error={
+                    errors.includes('invoicePrefix')
+                      ? t('adminSettings.errors.invoicePrefix')
+                      : undefined
+                  }
+                  onChange={(event) =>
+                    set({ ...value, invoicePrefix: event.target.value.toUpperCase() })
+                  }
+                />
+                {region.country === 'IN' && (
+                  <>
+                    <Input
+                      id="tax-sac"
+                      label={t('adminSettings.tax.invoice.sacCode')}
+                      hint={t('adminSettings.tax.invoice.sacCodeHint')}
+                      value={value.sacCode ?? ''}
+                      optional
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={8}
+                      className={styles.taxId}
+                      error={
+                        errors.includes('sacCode') ? t('adminSettings.errors.sacCode') : undefined
+                      }
+                      onChange={(event) => set({ ...value, sacCode: event.target.value })}
+                    />
+                    <Input
+                      id="tax-fssai"
+                      label={t('adminSettings.tax.invoice.fssai')}
+                      hint={t('adminSettings.tax.invoice.fssaiHint')}
+                      value={value.fssai ?? ''}
+                      optional
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={14}
+                      className={styles.taxId}
+                      error={errors.includes('fssai') ? t('adminSettings.errors.fssai') : undefined}
+                      onChange={(event) => set({ ...value, fssai: event.target.value })}
+                    />
+                  </>
+                )}
+              </SettingsCard>
+            )}
+
             {value.enabled && (
               <SettingsCard
                 title={t('adminSettings.tax.taxes')}

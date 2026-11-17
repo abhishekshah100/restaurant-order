@@ -42,6 +42,7 @@ export const READS = {
   promoQuote: under('promo-quote'),
   requestHistory: under('admin', 'request-history'),
   paymentHistory: under('admin', 'payment-history'),
+  invoices: under('admin', 'invoices'),
   cashRegister: under('admin', 'cash-register'),
   cashSession: under('admin', 'cash-session'),
   shifts: under('admin', 'shift'),
@@ -88,9 +89,9 @@ export const AFTER = {
   kitchenStep: ['floor', 'guestOrders', 'stock', 'menu'],
   kitchenMessage: ['floor'],
   /** An order taken, a round added, edited or cancelled, rush, cancelled by staff. */
-  orderChanged: ['floor', 'guestOrders', 'stock', 'cashRegister'],
+  orderChanged: ['floor', 'guestOrders', 'stock', 'cashRegister', 'invoices'],
   /** The kitchen ran out of something (the bill comes down; the dish may be off the menu). */
-  itemUnavailable: ['floor', 'guestOrders', 'stock', 'menu', 'cashRegister'],
+  itemUnavailable: ['floor', 'guestOrders', 'stock', 'menu', 'cashRegister', 'invoices'],
   /** Money taken for an order or a table (a bill request is closed with it). */
   paymentTaken: [
     'floor',
@@ -99,11 +100,24 @@ export const AFTER = {
     'paymentHistory',
     'cashRegister',
     'cashSession',
+    'invoices',
   ],
   /** Money given back. */
-  refundGiven: ['floor', 'guestOrders', 'paymentHistory', 'cashRegister', 'cashSession'],
+  refundGiven: [
+    'floor',
+    'guestOrders',
+    'paymentHistory',
+    'cashRegister',
+    'cashSession',
+    'invoices',
+  ],
   /** An online refund reached the guest. */
   refundReceived: ['floor', 'guestOrders', 'paymentHistory'],
+  /** A business buyer's details on an order, or an invoice printed (its copy count). */
+  orderBuyerChanged: ['floor'],
+  invoicePrinted: ['floor', 'invoices'],
+  /** Money off a bill by hand, or taken back off. */
+  discountChanged: ['floor', 'guestOrders'],
   /** A booking's deposit taken. */
   depositTaken: ['floor', 'paymentHistory', 'cashRegister', 'cashSession'],
   /** A booking made, changed, seated, cancelled or reminded; the booking rules. */
@@ -143,7 +157,7 @@ export const AFTER = {
 
   /* Live events from other devices (api/liveEvents) */
   /** Orders or payments changed on another device. */
-  ordersEvent: ['floor', 'paymentHistory', 'cashRegister', 'cashSession'],
+  ordersEvent: ['floor', 'paymentHistory', 'cashRegister', 'cashSession', 'invoices'],
   /** Requests changed on another device. */
   serviceEvent: ['floor', 'requestHistory'],
   menuEvent: ['menu', 'stock'],

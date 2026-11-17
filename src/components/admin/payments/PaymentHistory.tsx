@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { isBackendEnabled } from '@/api/backend';
+import { api } from '@/api/endpoints';
+import { useAdminToken } from '@/hooks/useAdminSession';
 import type { PaymentHistoryResponse } from '@/api/contracts';
 import { useContent, usePaymentHistory } from '@/api/hooks';
 import { Button, Chip, EmptyState, Icon, SearchField, Select } from '@/components/ui';
@@ -23,6 +26,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { toLine, useAllPayments } from './historyLines';
 import { LedgerRow } from './LedgerRow';
 import { MethodBreakdown } from './MethodBreakdown';
+import { INVOICES_PATH } from './InvoiceList';
 import { useLedgerExport } from './paymentsExport';
 import { useMethodLabels, usePaymentText } from './usePaymentText';
 import styles from './PaymentsBoard.module.css';
@@ -54,7 +58,9 @@ const PRESETS = [
 export function PaymentHistory() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, clock } = useAdminWorkspace();
+  const { branch, clock, can } = useAdminWorkspace();
+  const token = useAdminToken();
+  const [registerBusy, setRegisterBusy] = useState(false);
   const { showToast } = useToast();
   const text = usePaymentText();
   const exportLedger = useLedgerExport();
@@ -118,6 +124,25 @@ export function PaymentHistory() {
     }
   };
 
+  /** The sales register (every tax invoice and credit note on these days) as a CSV file. */
+  const downloadRegister = async () => {
+    if (!token || registerBusy) return;
+    setRegisterBusy(true);
+    try {
+      const blob = await api.salesRegister(token, branch.id, { from: days.from, to: days.to });
+      const url = URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `sales-register-${branch.id}-${days.from}-${days.to}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      showToast(t('adminPayments.history.registerFailed'), { tone: 'error' });
+    } finally {
+      setRegisterBusy(false);
+    }
+  };
+
   let content;
   if (first) {
     const { summary } = first;
@@ -173,16 +198,38 @@ export function PaymentHistory() {
         <section className={own.summary} aria-labelledby="history-net">
           <div className={own.summaryHead}>
             <p className={own.period}>{period}</p>
-            <Button
-              variant="secondary"
-              size="sm"
-              iconStart="list"
-              loading={exporting}
-              aria-label={t('adminPayments.history.exportLabel')}
-              onClick={() => void exportAll()}
-            >
-              {exporting ? t('adminPayments.history.exporting') : t('adminPayments.history.export')}
-            </Button>
+            <div className={own.actions}>
+              {/* Tax invoices are the server's: the mock issues none. */}
+              {isBackendEnabled() && (
+                <Button variant="secondary" size="sm" iconStart="receipt" href={INVOICES_PATH}>
+                  {t('adminInvoices.link')}
+                </Button>
+              )}
+              {isBackendEnabled() && can('reports.view') && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  iconStart="receipt"
+                  loading={registerBusy}
+                  aria-label={t('adminPayments.history.registerLabel')}
+                  onClick={() => void downloadRegister()}
+                >
+                  {t('adminPayments.history.register')}
+                </Button>
+              )}
+              <Button
+                variant="secondary"
+                size="sm"
+                iconStart="list"
+                loading={exporting}
+                aria-label={t('adminPayments.history.exportLabel')}
+                onClick={() => void exportAll()}
+              >
+                {exporting
+                  ? t('adminPayments.history.exporting')
+                  : t('adminPayments.history.export')}
+              </Button>
+            </div>
           </div>
           <div className={own.net}>
             <h2 id="history-net" className={own.netLabel}>

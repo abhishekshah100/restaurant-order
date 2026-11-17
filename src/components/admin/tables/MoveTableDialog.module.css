@@ -1,0 +1,22 @@
+/* "Move Table 5": the free tables by area, as tiles; then Cancel / Move to Table N. */
+
+.body {
+  display: grid;
+  gap: 16px;
+  width: min(480px, 100%);
+}
+
+.none {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: var(--font-small);
+}
+
+.actions {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+}

@@ -87,7 +87,11 @@ export function billRows(
     ],
     // Discounts come straight off the items: "Happy hour −₹40.00", "Promo WELCOME10 −₹100.00".
     ...bill.discounts.map((d): BillRow => [
-      d.kind === 'offer' ? offerLabel(d, t) : t('priceSummary.promoCode', { code: d.code }),
+      d.kind === 'offer'
+        ? offerLabel(d, t)
+        : d.kind === 'manual'
+          ? t('priceSummary.manual', { reason: t(`priceSummary.manualReasons.${d.reason}`) })
+          : t('priceSummary.promoCode', { code: d.code }),
       money.formatMinor(-d.amountMinor),
       true,
     ]),

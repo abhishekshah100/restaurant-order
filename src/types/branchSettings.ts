@@ -85,6 +85,14 @@ export interface TaxSettings {
   enabled: boolean;
   /** The GSTIN (India) or PAN (Nepal) printed on bills; empty when there's none. */
   taxId: string;
+  /** The registered business name on tax invoices; empty: the branch's name. (Server only.) */
+  legalName?: string;
+  /** India: the SAC code on invoices; empty: 996331, restaurant service. (Server only.) */
+  sacCode?: string;
+  /** India: the FSSAI licence number on invoices. (Server only.) */
+  fssai?: string;
+  /** What invoice numbers start with (1–5 capitals); empty: the order prefix. (Server only.) */
+  invoicePrefix?: string;
   /** The service charge on the item total, or null for none. */
   serviceChargeBp: number | null;
   lines: TaxLineSettings[];

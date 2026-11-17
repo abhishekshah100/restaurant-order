@@ -172,6 +172,25 @@ export function RoleDialog({
             })}
           </fieldset>
         ))}
+        {draft.permissions.includes('discounts.give') && (
+          <Input
+            id="role-discount-limit"
+            label={t('adminSettings.roles.dialog.discountLimit')}
+            hint={t('adminSettings.roles.dialog.discountLimitHint')}
+            inputMode="decimal"
+            disabled={readOnly}
+            value={draft.discountLimitBp === undefined ? '' : String(draft.discountLimitBp / 100)}
+            onChange={(event) => {
+              const percent = Number(event.target.value.replace(/[^\d.]/g, ''));
+              setDraft({
+                ...draft,
+                discountLimitBp: Number.isFinite(percent)
+                  ? Math.min(10_000, Math.max(0, Math.round(percent * 100)))
+                  : 0,
+              });
+            }}
+          />
+        )}
       </div>
     </Dialog>
   );

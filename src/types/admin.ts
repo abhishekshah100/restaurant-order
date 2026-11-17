@@ -641,10 +641,12 @@ export type StaffPermission =
   | 'menu.availability.update'
   | 'tables.manage'
   | 'tables.assign'
+  | 'tables.move'
   | 'orders.view'
   | 'orders.take'
   | 'orders.cancel'
   | 'refunds.give'
+  | 'discounts.give'
   | 'payments.collect'
   | 'cash.manage'
   | 'cash.review'
@@ -652,6 +654,7 @@ export type StaffPermission =
   | 'kitchen.update'
   | 'reservations.manage'
   | 'reports.view'
+  | 'audit.view'
   | 'inventory.view'
   | 'inventory.manage'
   | 'inventory.adjust'
@@ -674,6 +677,8 @@ export interface AdminRole {
   permissions: StaffPermission[];
   /** How many staff hold it at the restaurant. */
   staff: number;
+  /** The most its staff may take off a bill by hand (basis points, 1000 = 10%). Server only. */
+  discountLimitBp?: number;
 }
 
 /* ---------- Staff (Settings › Staff) ---------- */

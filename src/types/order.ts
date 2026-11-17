@@ -243,6 +243,33 @@ export interface TableNoteBrief {
   tags: string[];
 }
 
+/** A business customer's details for the order's tax invoice (their GSTIN or PAN). */
+export interface OrderBuyer {
+  name: string;
+  taxId?: string;
+  address?: string;
+}
+
+/**
+ * The order's tax invoice, once it's paid in full (the server's: none in the mock). What a
+ * printed bill or PDF adds to the order: the number, the dates (in Nepal also the Nepali date),
+ * the registered seller, place of supply and buyer; how many times it was printed (more than 0:
+ * the next print is a copy); any credit notes.
+ */
+export interface OrderInvoice {
+  id: string;
+  number: string;
+  /** "gst" (Tax invoice), "vat", "billOfSupply", "bill". */
+  titleKey: string;
+  issuedAt: string;
+  date: { ad: string; bs?: string };
+  seller: { name: string; taxId?: string; sacCode?: string; fssai?: string };
+  placeOfSupply?: { code: string; name: string };
+  buyer: OrderBuyer & { business?: true };
+  prints: number;
+  creditNotes?: { id: string; number: string; total: number; issuedAt: string }[];
+}
+
 export interface Order {
   /** "BLR-001": the branch's prefix and number ("A105" on orders from before prefixes). */
   id: string;
@@ -323,6 +350,10 @@ export interface Order {
   tableNote?: TableNoteBrief;
   /** Set by the server on a read: true while the kitchen is still updating the order (poll it). */
   live?: boolean;
+  /** Its tax invoice, once paid in full (staff and whoever placed it). */
+  invoice?: OrderInvoice;
+  /** A business customer's details for the invoice, before it's issued. */
+  buyer?: OrderBuyer;
   /**
    * ISO: when staff marked it served or handed over (POST /admin/orders/:id/served). Orders with
    * rounds record it on each round instead.

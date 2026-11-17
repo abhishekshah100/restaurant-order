@@ -31,6 +31,7 @@ import type {
   ReservationsFilter,
   PaymentHistoryQuery,
   OrderHistoryQuery,
+  AuditQuery,
 } from './contracts';
 import { liveRefresh } from './liveState';
 import {
@@ -447,6 +448,50 @@ export const useBranchOrder = (branchId: string | undefined, id: string | null) 
   useQuery(branchOrderQuery(useAdminToken(), branchId, id));
 
 /** Requests › History: the branch's requests on these days (of one kind, or all). */
+/**
+ * Admin › Audit log: who did what on these days (as filtered), newest first, 100 at a time
+ * ("Load more" reads the next). The server's only.
+ */
+export function useAuditLog(branchId: string | undefined, query: Omit<AuditQuery, 'before'>) {
+  const token = useAdminToken();
+  return useInfiniteQuery({
+    queryKey: ['admin', 'audit', branchId, token, query] as const,
+    queryFn:
+      token && branchId
+        ? ({ pageParam }) =>
+            api.auditLog(token, branchId, { ...query, ...(pageParam ? { before: pageParam } : {}) })
+        : skipToken,
+    initialPageParam: '',
+    getNextPageParam: (page) => page.next,
+    staleTime: 15_000,
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** Payments › Invoices: the invoices and credit notes issued on these days (the server's). */
+export function useInvoices(
+  branchId: string | undefined,
+  query: { from: string; to: string; kind?: 'invoice' | 'creditNote' },
+) {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'invoices', branchId, token, query] as const,
+    queryFn: token && branchId ? () => api.invoices(token, branchId, query) : skipToken,
+    staleTime: 15_000,
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** One invoice or credit note in full, as issued, to see and print. */
+export function useInvoice(branchId: string | undefined, invoiceId: string | null) {
+  const token = useAdminToken();
+  return useQuery({
+    queryKey: ['admin', 'invoices', branchId, token, 'one', invoiceId] as const,
+    queryFn:
+      token && branchId && invoiceId ? () => api.invoice(token, branchId, invoiceId) : skipToken,
+  });
+}
+
 export const useRequestHistory = (
   branchId: string | undefined,
   from: string,

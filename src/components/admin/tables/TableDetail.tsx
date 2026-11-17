@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import Link from 'next/link';
 import { useState } from 'react';
+import { isBackendEnabled } from '@/api/backend';
 import { ApiError } from '@/api/client';
 import { useContent, useTableDetail } from '@/api/hooks';
 import { Banner, Button, EmptyState, Icon } from '@/components/ui';
@@ -49,6 +50,10 @@ const ReservationEditor = dynamic(
   },
 );
 const FreeTableDialog = dynamic(() => import('./FreeTableDialog').then((m) => m.FreeTableDialog), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+const MoveTableDialog = dynamic(() => import('./MoveTableDialog').then((m) => m.MoveTableDialog), {
   ssr: false,
   loading: () => <LoadingSignal />,
 });
@@ -147,6 +152,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
   const [pad, setPad] = useState<PadTarget | null>(null);
   const [collectingTable, setCollectingTable] = useState(false);
   const [freeing, setFreeing] = useState(false);
+  const [moving, setMoving] = useState(false);
   const [showingQr, setShowingQr] = useState(false);
   const [booking, setBooking] = useState<EditorTarget | null>(null);
   // Looked up on every poll, so an open order shows its latest state.
@@ -218,6 +224,17 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <Icon name="history" size="xs" />
               {t('adminTables.detail.history.action')}
             </Link>
+            {/* Guests to another free table (the server's: the mock can't move them). */}
+            {isBackendEnabled() &&
+              can('tables.move') &&
+              detail.status !== 'available' &&
+              detail.status !== 'reserved' &&
+              detail.status !== 'outOfService' && (
+                <button type="button" className={styles.free} onClick={() => setMoving(true)}>
+                  <Icon name="swap" size="xs" />
+                  {t('adminTables.detail.move.action')}
+                </button>
+              )}
             {can('service.respond') &&
               detail.status !== 'available' &&
               detail.status !== 'reserved' &&
@@ -364,6 +381,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
           onClose={() => setFreeing(false)}
         />
       )}
+      {moving && <MoveTableDialog detail={detail} onClose={() => setMoving(false)} />}
       {showingQr && <TableQrDialog table={detail.table} onClose={() => setShowingQr(false)} />}
       {booking && <ReservationEditor target={booking} onClose={() => setBooking(null)} />}
     </>

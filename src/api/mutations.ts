@@ -80,6 +80,7 @@ import type {
   UpdateSessionRequest,
   UpdateStaffRequest,
   ValidatePromoRequest,
+  DiscountRequest,
 } from './contracts';
 import { api } from './endpoints';
 import { branchOf, refreshAfter, type Change } from './refreshAfter';
@@ -641,6 +642,69 @@ export function useRefundOrder() {
   });
 }
 
+/**
+ * PATCH …/orders/:id/buyer (or DELETE with `buyer` null): a business customer's details for the
+ * order's tax invoice, before it's paid.
+ */
+export function useOrderBuyer() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      buyer,
+    }: {
+      branchId: string;
+      orderId: string;
+      buyer: { name: string; taxId?: string; address?: string } | null;
+    }) =>
+      buyer
+        ? api.setOrderBuyer(requireToken(token), branchId, orderId, buyer).then(() => undefined)
+        : api.clearOrderBuyer(requireToken(token), branchId, orderId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'orderBuyerChanged', branchOf(variables)),
+  });
+}
+
+/** POST …/orders/:id/discounts: money off the bill or an item by hand (the order, priced again). */
+export function useGiveDiscount() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      body,
+    }: {
+      branchId: string;
+      orderId: string;
+      body: DiscountRequest;
+    }) => api.giveDiscount(requireToken(token), branchId, orderId, body),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'discountChanged', branchOf(variables)),
+  });
+}
+
+/** DELETE …/orders/:id/discounts/:discountId: a manual discount taken off. */
+export function useRemoveDiscount() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({
+      branchId,
+      orderId,
+      discountId,
+    }: {
+      branchId: string;
+      orderId: string;
+      discountId: string;
+    }) => api.removeDiscount(requireToken(token), branchId, orderId, discountId),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'discountChanged', branchOf(variables)),
+  });
+}
+
 /** POST …/orders/:id/refunds/:seq/received: an online refund reached the guest. */
 export function useRefundReceived() {
   const client = useQueryClient();
@@ -767,6 +831,21 @@ export function useUpdateFloors() {
 }
 
 /** POST /admin/branches/:branchId/tables/:table/free: the guests left, the table is free. */
+/**
+ * POST …/tables/:table/move: the guests, with their orders, calls, phones and note, to a free
+ * table. The floor and the guests' orders are read again.
+ */
+export function useMoveTable() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, table, to }: { branchId: string; table: number; to: number }) =>
+      api.moveTable(requireToken(token), branchId, table, to),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'tableChanged', branchOf(variables)),
+  });
+}
+
 export function useFreeTable() {
   const client = useQueryClient();
   const token = useAdminToken();

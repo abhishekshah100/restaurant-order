@@ -1,0 +1,244 @@
+/*
+ * Collect payment's extras, under how it's paid: discounts (those given, one tidy line each)
+ * and a business customer's details for the invoice. Each folds into a link, and opens as the
+ * dialog's dashed card with compact, evenly spaced fields.
+ */
+
+/* The extras together, under how it's paid: apart from it and from each other. */
+.stack {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.stack:empty {
+  display: none;
+}
+
+.panel {
+  display: grid;
+  gap: 8px;
+}
+
+/* ---------- Discounts on the bill ---------- */
+
+.given {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.givenRow {
+  min-height: 44px;
+  padding: 8px 8px 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--r-md);
+  background: var(--brand-tint-2);
+  color: var(--ink);
+}
+
+.givenIcon {
+  flex: none;
+  color: var(--brand-600);
+}
+
+.givenText {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.givenLabel {
+  font: var(--font-small-strong);
+  overflow-wrap: anywhere;
+}
+
+.givenMeta {
+  color: var(--ink-2);
+  font: var(--font-meta);
+}
+
+.givenAmount {
+  flex: none;
+  color: var(--brand-600);
+  font: var(--font-small-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.takeOff {
+  flex: none;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.takeOff:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.takeOff:focus-visible {
+  box-shadow: var(--focus);
+}
+
+/* ---------- The form ---------- */
+
+.row {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font: var(--font-label);
+}
+
+/* "%" or the currency, beside the amount: two small pills. */
+.valueRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.valueRow > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.unit {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+}
+
+.unitButton {
+  min-width: 40px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-2);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.unitButton[aria-checked='true'] {
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+.unitButton:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.itemPicker {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+}
+
+.fieldLabel {
+  color: var(--ink);
+  font: var(--font-small-strong);
+}
+
+.optional {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.fieldError {
+  color: var(--error);
+  font: var(--font-meta);
+}
+
+.invalidInput {
+  border-color: var(--error);
+}
+
+/* Links beside a saved line: Edit, Remove. */
+.links {
+  flex: none;
+  display: flex;
+  gap: 2px;
+}
+
+.noteInput {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small);
+}
+
+.itemPicker:focus-visible,
+.noteInput:focus {
+  border-color: var(--brand-600);
+  box-shadow: var(--halo);
+  outline: none;
+}
+
+.hint {
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+/* The discount's value: "%" or the currency before it, decimals allowed. */
+.valueBox {
+  min-height: 44px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.valueBox:focus-within {
+  border-color: var(--brand-600);
+  box-shadow: var(--halo);
+}
+
+.valueSymbol {
+  color: var(--ink-3);
+  font: var(--font-label);
+}
+
+.valueInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: var(--font-h3);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
