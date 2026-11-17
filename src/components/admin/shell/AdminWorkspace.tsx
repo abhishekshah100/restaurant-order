@@ -21,6 +21,7 @@ export type WorkspaceBranch = Pick<
   | 'locale'
   | 'permissions'
   | 'features'
+  | 'fiscalYears'
 >;
 
 /** Whether the staff member holds any of these permissions at the branch. */

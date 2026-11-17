@@ -11,6 +11,7 @@ import { MODE_FILTERS, type ModeFilter } from '@/lib/adminOrders';
 import { cx } from '@/lib/cx';
 import {
   KITCHEN_LANES,
+  PASS_STATION,
   allDay,
   boardStats,
   boardTickets,
@@ -26,6 +27,7 @@ import { TEXT_SCALE, useKitchenPrefs } from '../shell/useKitchenPrefs';
 import { useKitchenThemeClass } from '../shell/useKitchenTheme';
 import { useSoundUnlock } from '../shell/useSoundUnlock';
 import { useAdminWorkspace } from '@/components/admin/shell/AdminWorkspace';
+import { useKitchenOutbox } from '../useKitchenOutbox';
 import { useKitchenTickets } from '../useKitchenTickets';
 import { useTicketWhere } from '../useTicketWhere';
 import { AllDayList } from './AllDayList';
@@ -37,6 +39,7 @@ import { useBoardKeyboard } from './useBoardKeyboard';
 import { useConnection } from './useConnection';
 import { useWaitingReminder } from './useWaitingReminder';
 import { useDismissTicket } from '@/api/mutations';
+import type { CategoryId } from '@/types/menu';
 import styles from './KitchenBoard.module.css';
 
 // Popups: each downloaded the first time it opens.
@@ -59,7 +62,7 @@ const LANE_ICONS = { new: 'bell', cooking: 'flame', ready: 'cloche' } as const;
  * and waiters send is a ticket, oldest first, in three lanes — New, Cooking, Ready — under one
  * row of tools: order type, station (a menu category), search, the kitchen's numbers (late in
  * red, dishes to cook, the average ticket) and All day (a side panel). From 1024px the lanes
- * sit side by side, each scrolling on its own, a busy lane wider and an empty one a strip. Below
+ * sit side by side in three equal columns, each scrolling on its own. Below
  * 1024px one lane at a time, picked from tabs. Start cooking and Mark ready move a ticket on at
  * once; guests' tracking and the waiters' Ready to serve follow. New tickets chime (and print,
  * if this screen prints them), and a ticket left in New reminds; a ticket opens large from its
@@ -98,7 +101,10 @@ export function KitchenBoard() {
     updatePrefs({ station: stationParam });
   }, [stationParam, updatePrefs]);
   // A station gone from the menu since shows everything.
-  const station: StationFilter = categories.find((c) => c.id === prefs.station)?.id ?? 'all';
+  const station: StationFilter =
+    prefs.station === PASS_STATION
+      ? PASS_STATION
+      : (categories.find((c) => c.id === prefs.station)?.id ?? 'all');
   const setStation = (next: StationFilter) => updatePrefs({ station: next });
   const [lane, setLane] = useState<KitchenLane>('new');
   const [allDayOpen, setAllDayOpen] = useState(false);
@@ -135,6 +141,8 @@ export function KitchenBoard() {
     [],
   );
   useWaitingReminder(tickets, prefs.sound && prefs.reminders);
+  // This screen's taps not sent yet (no connection), at this branch.
+  const unsent = useKitchenOutbox().filter((e) => e.branchId === branch.id && e.tries > 0).length;
 
   const view = useMemo(() => {
     if (!tickets) return null;
@@ -176,6 +184,18 @@ export function KitchenBoard() {
   const cantMakeTicket = cantMake
     ? tickets?.find((ticket) => ticket.key === cantMake.key)
     : undefined;
+  const stationNameOf = useCallback(
+    (id: CategoryId | undefined) => {
+      const category = categories.find((c) => c.id === id);
+      return category ? (category.shortName ?? category.name) : t('pass.other');
+    },
+    [categories, t],
+  );
+  const { setPlated } = actions;
+  const onStationDone = useCallback(
+    (ticket: KitchenTicket, indexes: number[]) => setPlated(ticket, indexes, true),
+    [setPlated],
+  );
   const cardProps = (ticket: KitchenTicket) => ({
     ticket,
     now,
@@ -187,12 +207,15 @@ export function KitchenBoard() {
     onDismiss: dismiss,
     onMessage: setMessageKey,
     onStep: actions.step,
-    pending: actions.pending.has(ticket.key),
+    waiting: actions.waiting.has(ticket.key),
+    stationNameOf,
+    onStationDone,
   });
 
   let content;
   if (tickets && view) {
-    const filtered = mode !== 'all' || station !== 'all' || query.trim() !== '';
+    const filtered =
+      mode !== 'all' || (station !== 'all' && station !== PASS_STATION) || query.trim() !== '';
     const allDayCount = view.allDay.reduce((n, g) => n + g.quantity, 0);
     content = (
       <>
@@ -221,6 +244,7 @@ export function KitchenBoard() {
             onChange={(event) => setStation(event.target.value as StationFilter)}
           >
             <option value="all">{t('board.filters.allStations')}</option>
+            <option value={PASS_STATION}>{t('board.filters.pass')}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.shortName ?? category.name}
@@ -274,6 +298,12 @@ export function KitchenBoard() {
             })}
           </p>
         )}
+        {unsent > 0 && (
+          <p className={styles.banner} data-tone="warn" role="status">
+            <Icon name="wifioff" size="sm" />
+            {t.plural('outbox.banner', unsent)}
+          </p>
+        )}
         {soundBlocked && (
           <p className={styles.banner} data-tone="info">
             <Icon name="bell" size="sm" />
@@ -299,11 +329,8 @@ export function KitchenBoard() {
             ))}
           </div>
 
-          {/* A busy lane gets the room, an empty one shrinks to a strip (from 1024px). */}
-          <div
-            className={styles.lanes}
-            style={{ '--lanes': laneColumns(view.lanes) } as CSSProperties}
-          >
+          {/* Three equal columns (from 1024px), however many tickets each holds. */}
+          <div className={styles.lanes}>
             {KITCHEN_LANES.map((l) => {
               const list = view.lanes[l];
               return (
@@ -337,9 +364,12 @@ export function KitchenBoard() {
                       ))}
                     </ul>
                   ) : (
-                    <p className={styles.laneEmpty}>
-                      {filtered ? t('board.lanes.noMatch') : t(`board.lanes.empty.${l}`)}
-                    </p>
+                    <div className={styles.laneEmpty}>
+                      <span className={styles.laneEmptyIcon} aria-hidden="true">
+                        <Icon name={filtered ? 'search' : LANE_ICONS[l]} size="md" />
+                      </span>
+                      <p>{filtered ? t('board.lanes.noMatch') : t(`board.lanes.empty.${l}`)}</p>
+                    </div>
                   )}
                 </section>
               );
@@ -434,12 +464,4 @@ export function KitchenBoard() {
       {content}
     </div>
   );
-}
-
-/** Lane widths: as many shares as tickets (up to three), a narrow strip when empty. */
-function laneColumns(lanes: Record<KitchenLane, readonly unknown[]>): string {
-  return KITCHEN_LANES.map((l) => {
-    const n = lanes[l].length;
-    return n === 0 ? 'minmax(210px, 0.6fr)' : `minmax(300px, ${Math.min(n, 3)}fr)`;
-  }).join(' ');
 }

@@ -4,8 +4,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { type ReactNode, useEffect } from 'react';
 import { useContent, useRotaRequests } from '@/api/hooks';
 import { isBackendEnabled } from '@/api/backend';
-import { Tabs } from '@/components/ui';
-import { ADMIN_LINKS } from '@/lib/adminNav';
+import { Button, Tabs } from '@/components/ui';
+import { ADMIN_LINKS, settingsPath } from '@/lib/adminNav';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { NoAccess } from '../shell/NoAccess';
 import styles from './TeamFrame.module.css';
@@ -16,10 +16,11 @@ const withSlash = (path: string) => `${path.replace(/\/+$/, '')}/`;
 type TeamPage = 'rota' | 'attendance' | 'requests';
 
 /**
- * Team (main menu), three tabs for whoever may open them: Rota (plan the week: `rota.plan`),
+ * Shifts & attendance (main menu), three tabs for whoever may open them: Rota (plan the week: `rota.plan`),
  * Attendance (who came and when: `reports.view`, `staff.manage` or `attendance.fix`) and
  * Requests (time off and swaps to answer, with how many wait: `rota.plan`). Someone who opens a
- * tab they can't use goes to the first one they can.
+ * tab they can't use goes to the first one they can. Those who manage staff get a shortcut to
+ * Settings › Staff & roles.
  */
 export function TeamFrame({ children }: { children: ReactNode }) {
   const t = useContent('common');
@@ -27,6 +28,7 @@ export function TeamFrame({ children }: { children: ReactNode }) {
   const path = withSlash(usePathname());
   const { branch, can } = useAdminWorkspace();
   const plans = can('rota.plan');
+  const manages = can('staff.manage');
   const waiting = useRotaRequests(branch.id, isBackendEnabled() && plans).data?.waiting ?? 0;
   const pages: { id: TeamPage; href: string; count?: number }[] = [
     ...(plans ? [{ id: 'rota' as const, href: ADMIN_LINKS.rota }] : []),
@@ -52,17 +54,33 @@ export function TeamFrame({ children }: { children: ReactNode }) {
   if (!allowed) return elsewhere ? null : <NoAccess />;
   return (
     <div className={styles.frame}>
-      {pages.length > 1 && (
-        <Tabs
-          label={t('adminTeam.tabs.label')}
-          value={active}
-          items={pages.map((p) => ({
-            id: p.id,
-            label: t(`adminTeam.tabs.${p.id}`),
-            href: p.href,
-            count: p.count,
-          }))}
-        />
+      {(pages.length > 1 || manages) && (
+        <div className={styles.top}>
+          {pages.length > 1 && (
+            <Tabs
+              label={t('adminTeam.tabs.label')}
+              value={active}
+              items={pages.map((p) => ({
+                id: p.id,
+                label: t(`adminTeam.tabs.${p.id}`),
+                href: p.href,
+                count: p.count,
+              }))}
+            />
+          )}
+          {/* Who works here and what they may do is set up in Settings: one tap there. */}
+          {manages && (
+            <Button
+              href={settingsPath('staff')}
+              variant="secondary"
+              size="sm"
+              iconStart="user"
+              className={styles.manage}
+            >
+              {t('adminTeam.manageStaff')}
+            </Button>
+          )}
+        </div>
       )}
       {children}
     </div>

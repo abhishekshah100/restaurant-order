@@ -2,101 +2,46 @@
 
 import { useState } from 'react';
 import { isApiError } from '@/api/client';
-import { useContent, usePurchaseOrders, useSuppliers } from '@/api/hooks';
-import { useSetPurchasingSettings, useSuggestPurchaseOrder } from '@/api/mutations';
-import { Button, Chip, Input, Select } from '@/components/ui';
+import { useContent, usePurchaseOrders } from '@/api/hooks';
+import { usePurchaseOrderStep } from '@/api/mutations';
+import { Button, Chip, Icon, SearchField } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
-import { parseCost } from '@/lib/inventory';
-import type { PoStatus, PurchaseOrdersResponse } from '@/types/purchasing';
-import styles from '../inventory/Inventory.module.css';
+import { cx } from '@/lib/cx';
+import {
+  ORDER_VIEWS,
+  inView,
+  matchesOrder,
+  nextAction,
+  viewCounts,
+  type OrderView,
+} from '@/lib/purchasingFlow';
+import type { PurchaseOrder } from '@/types/purchasing';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { OrderProgress } from './OrderProgress';
 import { StatusChip } from './StatusChip';
+import { useSendOrder, whatsAppNumber } from './useSendOrder';
 import { docNumber, usePurchasingText } from './usePurchasingText';
-
-type Filter = 'open' | 'draft' | 'done' | 'all';
-const FILTERS: readonly Filter[] = ['open', 'draft', 'done', 'all'];
-const IN: Record<Filter, readonly PoStatus[] | null> = {
-  open: ['draft', 'approved', 'sent', 'partly_received'],
-  draft: ['draft'],
-  done: ['received', 'closed', 'cancelled'],
-  all: null,
-};
-
-/** The approval limit and the price alert (approvers), saved together. */
-function Settings({ data }: { data: PurchaseOrdersResponse }) {
-  const t = useContent('common');
-  const { branch } = useAdminWorkspace();
-  const { showToast } = useToast();
-  const save = useSetPurchasingSettings();
-  const [limit, setLimit] = useState(String(data.approvalLimit ?? 0));
-  const [alert, setAlert] = useState(String(data.priceAlert));
-  const valid = parseCost(limit) !== null && parseCost(alert) !== null && Number(alert) <= 100;
-  return (
-    <section className={styles.card} aria-labelledby="po-settings">
-      <h2 id="po-settings" className={styles.blockTitle}>
-        {t('adminPurchasing.settings.title')}
-      </h2>
-      <div className={styles.fieldRow}>
-        <Input
-          id="po-limit"
-          label={t('adminPurchasing.settings.limit')}
-          hint={t('adminPurchasing.settings.limitHint')}
-          inputMode="decimal"
-          value={limit}
-          onChange={(e) => setLimit(e.target.value)}
-        />
-        <Input
-          id="po-alert"
-          label={t('adminPurchasing.settings.alert')}
-          hint={t('adminPurchasing.settings.alertHint')}
-          inputMode="decimal"
-          value={alert}
-          onChange={(e) => setAlert(e.target.value)}
-        />
-      </div>
-      <Button
-        variant="secondary"
-        disabled={!valid}
-        loading={save.isPending}
-        onClick={() =>
-          save.mutate(
-            {
-              branchId: branch.id,
-              body: { approvalLimit: parseCost(limit) ?? 0, priceAlert: Number(alert) },
-            },
-            {
-              onSuccess: () => showToast(t('adminInventory.item.saved'), { tone: 'success' }),
-              onError: () => showToast(t('adminInventory.errors.failed'), { tone: 'error' }),
-            },
-          )
-        }
-      >
-        {t('adminPurchasing.settings.save')}
-      </Button>
-    </section>
-  );
-}
+import styles from './Purchasing.module.css';
 
 /**
- * Purchase orders: new or suggested from what's low, by status; one opens its page. Approvers
- * set the limit above which orders need them, and the price alert.
+ * Purchasing › Orders: every order as a card (supplier, number, items, total, when it's due, how
+ * far along: placed, sent, arrived) with the one next step on it for whoever may take it:
+ * Approve, Send on WhatsApp (which marks it sent), Receive. Views: to do, on the way, done, all,
+ * each with its count; search by number or supplier. A card opens the order.
  */
 export function OrdersTab({
   onOpen,
   onReceive,
 }: {
   onOpen: (id: string | 'new') => void;
-  onReceive: () => void;
+  onReceive: (orderId?: string) => void;
 }) {
   const t = useContent('common');
   const { branch, can, clock } = useAdminWorkspace();
-  const text = usePurchasingText();
-  const { showToast } = useToast();
   const query = usePurchaseOrders(branch.id, {});
-  const suppliers = useSuppliers(branch.id).data?.suppliers ?? [];
-  const suggest = useSuggestPurchaseOrder();
-  const [filter, setFilter] = useState<Filter>('open');
-  const [supplier, setSupplier] = useState('');
+  const [view, setView] = useState<OrderView>('todo');
+  const [search, setSearch] = useState('');
+  const today = clock.dayKey(new Date());
 
   if (!query.data) {
     return (
@@ -105,107 +50,173 @@ export function OrdersTab({
       </p>
     );
   }
-  const shown = query.data.orders.filter((o) => IN[filter]?.includes(o.status) ?? true);
+  const orders = query.data.orders;
+  const counts = viewCounts(orders);
+  const shown = orders.filter((o) => inView(o, view) && matchesOrder(o, search));
 
   return (
-    <>
-      {can('purchase.approve') && <Settings data={query.data} />}
-      <div className={styles.actions}>
-        {can('purchase.manage') && (
-          <Button iconStart="plus" onClick={() => onOpen('new')}>
-            {t('adminPurchasing.orders.new')}
-          </Button>
-        )}
-        {can('purchase.receive', 'purchase.manage') && (
-          <Button variant="secondary" iconStart="bag" onClick={onReceive}>
-            {t('adminPurchasing.receive.title')}
-          </Button>
-        )}
-      </div>
-      {can('purchase.manage') && suppliers.length > 0 && (
-        <div className={styles.filters}>
-          <Select
-            id="po-suggest"
-            label={t('adminPurchasing.orders.suggestFrom')}
-            value={supplier}
-            onChange={(e) => setSupplier(e.target.value)}
-          >
-            <option value="" disabled>
-              {t('adminPurchasing.orders.pickSupplier')}
-            </option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </Select>
-          <Button
-            variant="secondary"
-            iconStart="sparkle"
-            disabled={!supplier}
-            loading={suggest.isPending}
-            onClick={() =>
-              suggest.mutate(
-                { branchId: branch.id, supplierId: supplier },
-                {
-                  onSuccess: (order) => onOpen(order.id),
-                  onError: (error) =>
-                    showToast(
-                      isApiError(error, 'nothing_to_order')
-                        ? t('adminPurchasing.errors.nothingLow')
-                        : t('adminInventory.errors.failed'),
-                      { tone: isApiError(error, 'nothing_to_order') ? 'info' : 'error' },
-                    ),
-                },
-              )
-            }
-          >
-            {t('adminPurchasing.orders.suggest')}
-          </Button>
+    <div className={styles.today}>
+      <div className={styles.toolbar}>
+        <div className={styles.quick}>
+          {can('purchase.manage') && (
+            <Button iconStart="plus" onClick={() => onOpen('new')}>
+              {t('adminPurchasing.orders.new')}
+            </Button>
+          )}
+          {can('purchase.receive', 'purchase.manage') && (
+            <Button variant="secondary" iconStart="bag" onClick={() => onReceive()}>
+              {t('adminPurchasing.receive.title')}
+            </Button>
+          )}
         </div>
-      )}
-      <div className={styles.chips} role="group" aria-label={t('adminInventory.stock.filter')}>
-        {FILTERS.map((f) => (
-          <Chip key={f} pressed={filter === f} onClick={() => setFilter(f)}>
-            {t(`adminPurchasing.orders.filters.${f}`)}
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          label={t('adminPurchasing.orders.search')}
+          placeholder={t('adminPurchasing.orders.search')}
+          className={styles.search}
+        />
+      </div>
+      <div
+        className={styles.views}
+        role="group"
+        aria-label={t('adminPurchasing.orders.views.label')}
+      >
+        {ORDER_VIEWS.map((v) => (
+          <Chip key={v} pressed={view === v} onClick={() => setView(v)}>
+            {t(`adminPurchasing.orders.views.${v}`)}
+            <span className={styles.viewCount}>{counts[v]}</span>
           </Chip>
         ))}
       </div>
       {shown.length === 0 ? (
-        <p className={styles.muted}>{t('adminPurchasing.orders.none')}</p>
+        <div className={styles.empty}>
+          <Icon name="receipt" size="md" />
+          <p>
+            {search
+              ? t('adminPurchasing.orders.noMatch')
+              : t(`adminPurchasing.orders.empty.${view}`)}
+          </p>
+          {view === 'todo' && !search && orders.length === 0 && can('purchase.manage') && (
+            <Button size="sm" iconStart="plus" onClick={() => onOpen('new')}>
+              {t('adminPurchasing.orders.new')}
+            </Button>
+          )}
+        </div>
       ) : (
-        <ul className={styles.list}>
+        <ul className={styles.orderCards}>
           {shown.map((o) => (
             <li key={o.id}>
-              <button type="button" className={styles.row} onClick={() => onOpen(o.id)}>
-                <span className={styles.rowMain}>
-                  <span className={styles.rowName}>
-                    {[docNumber('PO', o.number), o.supplier.name].join(' · ')}
-                  </span>
-                  <span className={styles.muted}>
-                    {[
-                      clock.date(o.createdAt),
-                      t.plural('adminPurchasing.orders.lineCount', o.lines.length),
-                      o.expectedOn &&
-                        t('adminPurchasing.orders.expected', {
-                          date: clock.date(`${o.expectedOn}T12:00:00Z`),
-                        }),
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                </span>
-                <span className={styles.rowSide}>
-                  <StatusChip status={o.status} />
-                  {o.total !== undefined && (
-                    <span className={styles.muted}>{text.value(o.total)}</span>
-                  )}
-                </span>
-              </button>
+              <OrderCard order={o} today={today} onOpen={onOpen} onReceive={onReceive} />
             </li>
           ))}
         </ul>
       )}
-    </>
+    </div>
+  );
+}
+
+/** One order on the list, with its next step. */
+function OrderCard({
+  order,
+  today,
+  onOpen,
+  onReceive,
+}: {
+  order: PurchaseOrder;
+  today: string;
+  onOpen: (id: string) => void;
+  onReceive: (orderId?: string) => void;
+}) {
+  const t = useContent('common');
+  const { branch, can, clock } = useAdminWorkspace();
+  const text = usePurchasingText();
+  const { showToast } = useToast();
+  const step = usePurchaseOrderStep();
+  const { send } = useSendOrder();
+  const next = nextAction(order, {
+    approve: can('purchase.approve'),
+    manage: can('purchase.manage'),
+    receive: can('purchase.receive', 'purchase.manage'),
+  });
+  const late =
+    order.expectedOn !== undefined &&
+    order.expectedOn < today &&
+    ['approved', 'sent', 'partly_received'].includes(order.status);
+
+  const approve = () =>
+    step.mutate(
+      { branchId: branch.id, id: order.id, step: 'approve' },
+      {
+        onSuccess: () => showToast(t('adminPurchasing.orders.done.approve'), { tone: 'success' }),
+        onError: (error) =>
+          showToast(
+            isApiError(error, 'po_not_editable')
+              ? t('adminPurchasing.errors.notEditable')
+              : t('adminInventory.errors.failed'),
+            { tone: 'error' },
+          ),
+      },
+    );
+
+  let action = null;
+  if (next === 'approve') {
+    action = (
+      <Button size="sm" iconStart="check" loading={step.isPending} onClick={approve}>
+        {t('adminPurchasing.orders.approve')}
+      </Button>
+    );
+  } else if (next === 'send') {
+    action = whatsAppNumber(order) ? (
+      <Button size="sm" iconStart="whatsapp" onClick={() => send(order, 'whatsApp')}>
+        {t('adminPurchasing.orders.whatsApp')}
+      </Button>
+    ) : (
+      <Button size="sm" iconStart="arrow" onClick={() => onOpen(order.id)}>
+        {t('adminPurchasing.orders.sendOpen')}
+      </Button>
+    );
+  } else if (next === 'receive') {
+    action = (
+      <Button size="sm" iconStart="bag" onClick={() => onReceive(order.id)}>
+        {t('adminPurchasing.orders.receive')}
+      </Button>
+    );
+  }
+
+  return (
+    <article className={cx(styles.orderCard, late && styles.orderLate)}>
+      <button type="button" className={styles.orderOpen} onClick={() => onOpen(order.id)}>
+        <span className={styles.orderTop}>
+          <span className={styles.orderSupplier}>{order.supplier.name}</span>
+          <StatusChip status={order.status} />
+        </span>
+        <span className={styles.orderMeta}>
+          {[
+            docNumber('PO', order.number),
+            t.plural('adminPurchasing.orders.lineCount', order.lines.length),
+            order.total !== undefined && text.money(order.total),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </span>
+        {order.expectedOn && (
+          <span className={cx(styles.orderDue, late && styles.orderDueLate)}>
+            <Icon name="calendar" size="xs" />
+            {late
+              ? t('adminPurchasing.today.lateSince', {
+                  date: clock.date(`${order.expectedOn}T12:00:00Z`),
+                })
+              : t('adminPurchasing.orders.expected', {
+                  date: clock.date(`${order.expectedOn}T12:00:00Z`),
+                })}
+          </span>
+        )}
+      </button>
+      <div className={styles.orderFoot}>
+        <OrderProgress status={order.status} />
+        {action}
+      </div>
+    </article>
   );
 }

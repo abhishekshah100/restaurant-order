@@ -3,7 +3,7 @@ import type { StaffPermission } from '@/types/admin';
 import { settingsPath } from './adminNav';
 
 /*
- * The Settings menu: a few sections named for the job ("How guests order", "Team & access"),
+ * The Settings menu: a few sections named for the job ("How guests order", "Staff & roles"),
  * each one page or a few pages shown as tabs. Every page keeps its own address (old links still
  * open it); the menu and the overview list the sections, the tabs the pages. A new setting is a
  * page under app/admin/dashboard/settings/, an entry here (in its section) and its words

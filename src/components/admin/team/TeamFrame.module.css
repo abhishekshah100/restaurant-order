@@ -1,8 +1,27 @@
-/* Team: its tabs (Rota · Attendance · Requests) above the page. */
+/* Shifts & attendance: its tabs (Rota · Attendance · Requests) and Staff & roles above the page. */
 
 .frame {
   min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+}
+
+.top {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The tabs keep their width; Staff & roles goes under them when there isn't room. */
+.top > :first-child {
+  flex: 1 1 340px;
+  min-width: 0;
+}
+
+.manage {
+  flex: none;
+  margin-left: auto;
 }

@@ -159,6 +159,13 @@
 
 /* ---------- The table page's dialog ---------- */
 
+.dialogError {
+  padding: 24px 16px;
+  color: var(--error);
+  font: var(--font-small);
+  text-align: center;
+}
+
 .dialogBody {
   width: min(320px, 100%);
   margin: 0 auto;

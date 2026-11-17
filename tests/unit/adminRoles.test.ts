@@ -25,8 +25,8 @@ const waiter: AdminRole = {
 describe('roles', () => {
   it('groups every permission once', () => {
     const all = PERMISSION_GROUPS.flatMap((g) => g.permissions);
-    expect(all).toHaveLength(33);
-    expect(new Set(all).size).toBe(33);
+    expect(all).toHaveLength(34);
+    expect(new Set(all).size).toBe(34);
     expect(permissionWord('menu.availability.update')).toBe('menu_availability_update');
   });
 

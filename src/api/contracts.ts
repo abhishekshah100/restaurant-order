@@ -13,6 +13,7 @@ import type {
   RemovedStaffMember,
   AdminTableDetail,
   AdminTableQrCodes,
+  TableQrCode,
   CancelReason,
   FloorPlanLayout,
   Reservation,
@@ -182,7 +183,6 @@ export type ApiErrorCode =
   /** 409: the supplier has open purchase orders (`orders`: their numbers). */
   | 'supplier_in_use'
   /** 409: nothing the supplier sells is low. */
-  | 'nothing_to_order'
   /** 403: the restaurant doesn't have this feature (`feature`): the platform switches it on. */
   | 'feature_disabled'
   /** 409: some items are in another open count (`count`: its number). */
@@ -285,6 +285,15 @@ export interface AdminSignInRequest {
 }
 
 export type AdminSignInResponse = AdminSession;
+
+/**
+ * `POST /admin/sessions/current/renew` — a sign-in in use (the kitchen screen all service, an
+ * admin page being worked on) lasts on: its new end (ms since epoch), the session length from
+ * now but never past a day after signing in. Errors: 401 once it has ended. Backend only.
+ */
+export interface RenewSessionResponse {
+  expiresAt: number;
+}
 
 /**
  * `DELETE /admin/sessions/current` — signs out: the session's token stops working at once, on
@@ -391,6 +400,14 @@ export type TableDetailResponse = AdminTableDetail;
  * Errors: 401, 403. Mock: a token worked out from the branch and table (not a real signature).
  */
 export type TableQrCodesResponse = AdminTableQrCodes;
+
+/**
+ * `GET /admin/branches/:branchId/tables/:table/qr` — one table's QR link (as in
+ * TableQrCodesResponse), for staff who may show it (`tables.qr`: a torn sticker, a guest who
+ * can't scan) or manage tables. Each one shown is in the audit log. 200 → `TableQrCodeResponse`.
+ * Errors: 401, 403, 404 (no such table, or not in use).
+ */
+export type TableQrCodeResponse = TableQrCode;
 
 /**
  * `POST /admin/branches/:branchId/tables/:table/free` — the guests have left: the table's
@@ -1961,6 +1978,7 @@ export type AuditAction =
   | 'bill.waived'
   | 'table.freed'
   | 'table.moved'
+  | 'table.qrShown'
   | 'invoice.issued'
   | 'invoice.creditNoteIssued'
   | 'invoice.printed'
@@ -2115,4 +2133,3 @@ export interface InvoiceDetail extends InvoiceRow {
   document: InvoiceDocument;
   printLog: { copy: number; at: string; by: string }[];
 }
-

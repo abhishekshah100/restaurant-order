@@ -175,7 +175,9 @@ import type {
   StaffRoundRequest,
   TableDetailResponse,
   TablePaymentResponse,
+  RenewSessionResponse,
   TableQrCodesResponse,
+  TableQrCodeResponse,
   TakeTableOrderRequest,
   UpdateBranchSettingsRequest,
   UpdateCategoriesRequest,
@@ -222,6 +224,8 @@ export const api = {
   createAdminSession: (body: AdminSignInRequest) =>
     apiPost<AdminSignInResponse>('admin/sessions', body),
   endAdminSession: (token: string) => apiDelete('admin/sessions/current', bearer(token)),
+  renewAdminSession: (token: string) =>
+    apiPost<RenewSessionResponse>('admin/sessions/current/renew', {}, bearer(token)),
   changeOwnPassword: (token: string, body: ChangePasswordRequest) =>
     apiPatch<void>('admin/sessions/current/password', body, bearer(token)),
   staff: (token: string, branchId: string) =>
@@ -676,12 +680,6 @@ export const api = {
     apiGet<PurchaseOrder>(`${purchasing(branchId)}/orders/${seg(id)}`, bearer(token)),
   createPurchaseOrder: (token: string, branchId: string, body: OrderInput) =>
     apiPost<PurchaseOrder>(`${purchasing(branchId)}/orders`, body, bearer(token)),
-  suggestPurchaseOrder: (token: string, branchId: string, supplierId: string) =>
-    apiPost<PurchaseOrder>(
-      `${purchasing(branchId)}/orders/suggest${searchOf({ supplier: supplierId })}`,
-      {},
-      bearer(token),
-    ),
   updatePurchaseOrder: (
     token: string,
     branchId: string,
@@ -932,6 +930,11 @@ export const api = {
     ),
   tableQrCodes: (token: string, branchId: string) =>
     apiGet<TableQrCodesResponse>(`admin/branches/${seg(branchId)}/tables/qr-codes`, bearer(token)),
+  tableQrCode: (token: string, branchId: string, table: number) =>
+    apiGet<TableQrCodeResponse>(
+      `admin/branches/${seg(branchId)}/tables/${table}/qr`,
+      bearer(token),
+    ),
   /** POST …/tables/:table/move {to}: the guests to a free table (backend only); answers it. */
   moveTable: (token: string, branchId: string, table: number, to: number) =>
     apiPost<AdminTableDetail>(

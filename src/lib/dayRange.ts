@@ -28,6 +28,30 @@ export interface DayRange {
   to: string;
 }
 
+/**
+ * "This FY" and "Last FY" as day ranges: this one up to today (not days still to come). Only
+ * those the page's limits allow (how far back, how long).
+ */
+export function fiscalYearRanges(
+  years: { current: DayRange & { label: string }; previous: DayRange & { label: string } },
+  today: string,
+  limits?: DayLimits,
+): { key: 'current' | 'previous'; label: string; range: DayRange }[] {
+  const ranges = [
+    {
+      key: 'current' as const,
+      label: years.current.label,
+      range: { from: years.current.from, to: years.current.to < today ? years.current.to : today },
+    },
+    {
+      key: 'previous' as const,
+      label: years.previous.label,
+      range: { from: years.previous.from, to: years.previous.to },
+    },
+  ];
+  return ranges.filter((r) => rangeProblem(r.range, today, limits) === null);
+}
+
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86_400_000;
 

@@ -1,0 +1,152 @@
+/*
+ * A purchase order on paper: hidden on screen; when printing, the only thing on the page — A4,
+ * black on white, the restaurant and the order's number at the top, then the supplier and dates,
+ * the items as a ruled table, the totals and the note.
+ */
+
+.sheet {
+  display: none;
+}
+
+@media print {
+  :global(html.printing-po) body > :not([data-print-sheet]) {
+    display: none !important;
+  }
+
+  :global(html.printing-po) body {
+    background: #fff;
+  }
+
+  .sheet {
+    display: grid;
+    gap: 8mm;
+    color: #111;
+    font: 11pt/1.45 var(--f-ui);
+  }
+
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10mm;
+  padding-bottom: 4mm;
+  border-bottom: 2px solid #111;
+}
+
+.brand {
+  margin: 0;
+  font-size: 18pt;
+  font-weight: 700;
+}
+
+.muted {
+  margin: 0;
+  color: #555;
+}
+
+.titleBox {
+  text-align: right;
+}
+
+.title {
+  margin: 0;
+  font-size: 14pt;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.number {
+  margin: 0;
+  font-size: 13pt;
+  font-weight: 700;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 4mm;
+  margin: 0;
+}
+
+.facts dt {
+  color: #555;
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.facts dd {
+  display: grid;
+  margin: 1mm 0 0;
+}
+
+.items {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.items th {
+  padding: 2mm;
+  border-bottom: 1.5px solid #111;
+  font-size: 9pt;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.items td {
+  padding: 2.5mm 2mm;
+  border-bottom: 1px solid #ccc;
+  vertical-align: top;
+}
+
+.n {
+  width: 8mm;
+  color: #555;
+}
+
+.num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.sums {
+  justify-self: end;
+  min-width: 70mm;
+  display: grid;
+  gap: 1mm;
+  margin: 0;
+}
+
+.sums > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8mm;
+}
+
+.sums dd {
+  margin: 0;
+}
+
+.grand {
+  padding-top: 2mm;
+  border-top: 1.5px solid #111;
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+.note {
+  margin: 0;
+}
+
+.foot {
+  margin: 0;
+  color: #777;
+  font-size: 8pt;
+}

@@ -13,7 +13,13 @@ import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { paymentHistoryPath } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
-import { isTodayOnly, parseDayRange, type DayLimits, type DayRange } from '@/lib/dayRange';
+import {
+  fiscalYearRanges,
+  isTodayOnly,
+  parseDayRange,
+  type DayLimits,
+  type DayRange,
+} from '@/lib/dayRange';
 import { DateRangeFilter } from '../DateRangeFilter';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { InvoiceDoc } from './InvoiceDoc';
@@ -26,6 +32,9 @@ const isKind = (v: string | null): v is KindFilter => KINDS.some((k) => k === v)
 
 /** The server's limits: seven years back (GST keeps six), 31 days at a time. */
 const INVOICE_LIMITS: DayLimits = { historyDays: 7 * 366, rangeDays: 31 };
+
+/** The sales register downloads up to a year at a time (a whole financial year). */
+const REGISTER_LIMITS: DayLimits = { historyDays: 7 * 366, rangeDays: 366 };
 
 export const INVOICES_PATH = '/admin/dashboard/payments/invoices/';
 
@@ -54,6 +63,11 @@ export function InvoiceList() {
   });
   const [viewing, setViewing] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [choosing, setChoosing] = useState(false);
+  // The register's financial years (This FY so far, Last FY), where the branch has them.
+  const years = branch.fiscalYears
+    ? fiscalYearRanges(branch.fiscalYears, today, REGISTER_LIMITS)
+    : [];
 
   const goTo = (range: DayRange, nextKind: KindFilter = kind) => {
     const search = new URLSearchParams();
@@ -66,15 +80,19 @@ export function InvoiceList() {
     router.replace(qs ? `${INVOICES_PATH}?${qs}` : INVOICES_PATH, { scroll: false });
   };
 
-  const register = async () => {
+  /** The sales register for these days (named for its financial year, when it's one). */
+  const register = async (range: DayRange = days, fiscalYear?: string) => {
     if (!token || downloading) return;
+    setChoosing(false);
     setDownloading(true);
     try {
-      const blob = await api.salesRegister(token, branch.id, { from: days.from, to: days.to });
+      const blob = await api.salesRegister(token, branch.id, { from: range.from, to: range.to });
       const url = URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
       const link = document.createElement('a');
       link.href = url;
-      link.download = `sales-register-${branch.id}-${days.from}-${days.to}.csv`;
+      link.download = fiscalYear
+        ? `sales-register-${branch.id}-FY${fiscalYear}.csv`
+        : `sales-register-${branch.id}-${range.from}-${range.to}.csv`;
       link.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -181,7 +199,8 @@ export function InvoiceList() {
               size="sm"
               iconStart="list"
               loading={downloading}
-              onClick={() => void register()}
+              aria-haspopup={years.length > 0 ? 'dialog' : undefined}
+              onClick={() => (years.length > 0 ? setChoosing(true) : void register())}
             >
               {t('adminInvoices.register')}
             </Button>
@@ -205,6 +224,39 @@ export function InvoiceList() {
       </div>
       {content}
       {viewing && <InvoiceDialog id={viewing} onClose={() => setViewing(null)} />}
+      {/* Which days: those shown, or a whole financial year (for the year's returns). */}
+      {choosing && (
+        <Dialog
+          open
+          onClose={() => setChoosing(false)}
+          presentation="adaptive"
+          title={t('adminInvoices.registerDialog.title')}
+          description={t('adminInvoices.registerDialog.hint')}
+        >
+          <div className={styles.registerChoices}>
+            <Button variant="secondary" iconStart="list" onClick={() => void register()}>
+              {t('adminInvoices.registerDialog.shown', {
+                from: clock.date(`${days.from}T12:00:00Z`),
+                to: clock.date(`${days.to}T12:00:00Z`),
+              })}
+            </Button>
+            {years.map((y) => (
+              <Button
+                key={y.key}
+                variant="secondary"
+                iconStart="list"
+                onClick={() => void register(y.range, y.label)}
+              >
+                {t(`adminInvoices.registerDialog.${y.key}`, {
+                  label: y.label,
+                  from: clock.date(`${y.range.from}T12:00:00Z`),
+                  to: clock.date(`${y.range.to}T12:00:00Z`),
+                })}
+              </Button>
+            ))}
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 }

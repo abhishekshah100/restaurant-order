@@ -82,6 +82,7 @@ import {
   floorLayoutQuery,
   floorPlanQuery,
   tableDetailQuery,
+  tableQrCodeQuery,
   tableQrCodesQuery,
   reservationHistoryQuery,
   reservationsQuery,
@@ -747,6 +748,8 @@ export const useFloorLayout = (branchId: string | undefined) =>
   useQuery(floorLayoutQuery(useAdminToken(), branchId));
 
 /** GET /admin/branches/:branchId/tables/qr-codes: the link to print on each table. */
+export const useTableQrCode = (branchId: string | undefined, table: number) =>
+  useQuery(tableQrCodeQuery(useAdminToken(), branchId, table));
 export const useTableQrCodes = (branchId: string | undefined) =>
   useQuery(tableQrCodesQuery(useAdminToken(), branchId));
 

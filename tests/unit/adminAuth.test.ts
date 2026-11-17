@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   adminSession,
   adminUsername,
+  extendAdminSession,
   isAdminSignedIn,
   selectAdminBranch,
   selectedAdminBranch,
@@ -42,6 +43,16 @@ describe('admin session on this device', () => {
     expect(isAdminSignedIn(NOW + 59_999)).toBe(true);
     expect(isAdminSignedIn(NOW + 60_000)).toBe(false);
     expect(adminSession(NOW + 60_000)).toBeNull();
+  });
+
+  it('extends the stored sign-in when renewed, only later and only its own', () => {
+    signInAdmin(session());
+    extendAdminSession('token-1', NOW + 120_000);
+    expect(isAdminSignedIn(NOW + 90_000)).toBe(true);
+    // Never shortened, and another sign-in's renewal changes nothing.
+    extendAdminSession('token-1', NOW + 30_000);
+    extendAdminSession('token-2', NOW + 999_000);
+    expect(adminSession(NOW)?.expiresAt).toBe(NOW + 120_000);
   });
 
   it('ignores a stored value that is not a session', () => {

@@ -719,6 +719,18 @@ export const branchSettingsQuery = (token: string | null, branchId: string | und
   });
 
 /** GET /admin/branches/:branchId/tables/qr-codes: the links to print; they change rarely. */
+/** One table's QR code (Show QR on its page): each time it's opened is audited, so kept a while. */
+export const tableQrCodeQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  table: number,
+) =>
+  queryOptions({
+    queryKey: ['admin', 'qr-code', branchId, table, token] as const,
+    queryFn: token && branchId ? () => api.tableQrCode(token, branchId, table) : skipToken,
+    staleTime: 10 * 60_000,
+  });
+
 export const tableQrCodesQuery = (token: string | null, branchId: string | undefined) =>
   queryOptions({
     queryKey: ['admin', 'qr-codes', branchId, token] as const,

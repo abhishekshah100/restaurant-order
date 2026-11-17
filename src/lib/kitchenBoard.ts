@@ -284,7 +284,14 @@ export function isScheduled(
 /* ---------- Filters ---------- */
 
 /** "All stations" or a menu category (each category is a station: starters, mains, pizza…). */
-export type StationFilter = 'all' | CategoryId;
+/**
+ * What a kitchen screen shows: every dish (`all`), one station's (a menu category), or the pass
+ * (`pass`): whole tickets with how far along each station is, to call them ready.
+ */
+export type StationFilter = 'all' | 'pass' | CategoryId;
+
+/** The pass: the screen that sees every station's progress and calls tickets ready. */
+export const PASS_STATION = 'pass';
 
 export interface TicketFilters {
   mode: ModeFilter;
@@ -295,13 +302,13 @@ export interface TicketFilters {
 /** The menu category of a dish, when it's still on the menu. */
 export type CategoryOf = (dishSlug: string) => CategoryId | undefined;
 
-/** The ticket's items cooked at the station (every item for All stations). */
+/** The ticket's items cooked at the station (every item for All stations and the pass). */
 export const stationItems = (
   ticket: Pick<KitchenTicket, 'items'>,
   station: StationFilter,
   categoryOf: CategoryOf,
 ) =>
-  station === 'all'
+  station === 'all' || station === PASS_STATION
     ? ticket.items
     : ticket.items.filter((item) => categoryOf(item.dishSlug) === station);
 
@@ -560,3 +567,50 @@ export function withDismissed(
 
 /** Whole minutes a ticket has waited (what its timer shows: "12 min"); 0 before the first. */
 export const elapsedMinutes = (ms: number): number => Math.max(0, Math.floor(ms / MINUTE_MS));
+
+/** A dish the kitchen is done with: ticked off as plated, or none of it left to make. */
+export const itemDone = (item: Pick<OrderItem, 'plated' | 'quantity' | 'unavailable'>) =>
+  item.plated === true || (item.unavailable ?? 0) >= item.quantity;
+
+/** How far along one station is on a ticket: its dishes done, of all its dishes. */
+export interface StationProgress {
+  /** The menu category; undefined for a dish no longer on the menu. */
+  station: CategoryId | undefined;
+  done: number;
+  total: number;
+}
+
+/** Each station's dishes on the ticket, done and in all, in the order they first appear. */
+export function stationProgress(
+  ticket: Pick<KitchenTicket, 'items'>,
+  categoryOf: CategoryOf,
+): StationProgress[] {
+  const progress: StationProgress[] = [];
+  for (const item of ticket.items) {
+    const station = categoryOf(item.dishSlug);
+    let row = progress.find((p) => p.station === station);
+    if (!row) {
+      row = { station, done: 0, total: 0 };
+      progress.push(row);
+    }
+    row.total += 1;
+    if (itemDone(item)) row.done += 1;
+  }
+  return progress;
+}
+
+/** Every dish on the ticket is done: it can go to the pass. */
+export const allDishesDone = (ticket: Pick<KitchenTicket, 'items'>) =>
+  ticket.items.length > 0 && ticket.items.every(itemDone);
+
+/** The places on the ticket of the station's dishes still to finish ("My dishes done"). */
+export function stationDishesLeft(
+  ticket: Pick<KitchenTicket, 'items'>,
+  station: StationFilter,
+  categoryOf: CategoryOf,
+): number[] {
+  const shown = stationItems(ticket, station, categoryOf);
+  return ticket.items.flatMap((item, index) =>
+    shown.includes(item) && !itemDone(item) ? [index] : [],
+  );
+}

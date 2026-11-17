@@ -9,7 +9,7 @@ import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Button, EmptyState } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
-import { floorPath, qrCodesPath, reservationsPath } from '@/lib/adminNav';
+import { floorPath, qrCodesPath, reservationsPath, settingsPath } from '@/lib/adminNav';
 import { legendCounts, openFloor } from '@/lib/adminTables';
 import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
@@ -32,7 +32,7 @@ const SKELETON_TILES = 8;
 /**
  * /admin/dashboard/tables/: the floor plan. One tab per area (Ground floor, First floor,
  * Outdoor…; none when there's only one), the open area's tables counted by state, and a card per table that opens its
- * page; Reservations and QR codes beside the tabs. The open area is in the address (?floor=), so coming back from a table keeps it.
+ * page; Reservations, QR codes and Edit floor plan (Settings) beside the tabs. The open area is in the address (?floor=), so coming back from a table keeps it.
  * Read from GET /admin/branches/:branchId/tables, polled every 15 s.
  */
 export function FloorPlan() {
@@ -71,9 +71,14 @@ export function FloorPlan() {
               {t('adminTables.openReservations')}
             </Button>
             {can('tables.manage') && (
-              <Button href={qrCodesPath()} variant="secondary" iconStart="qr">
-                {t('adminTables.openQr')}
-              </Button>
+              <>
+                <Button href={qrCodesPath()} variant="secondary" iconStart="qr">
+                  {t('adminTables.openQr')}
+                </Button>
+                <Button href={settingsPath('floor-plan')} variant="secondary" iconStart="sliders">
+                  {t('adminTables.editFloor')}
+                </Button>
+              </>
             )}
           </div>
         </div>

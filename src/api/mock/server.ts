@@ -67,6 +67,7 @@ import {
   branchFloors,
   branchTable,
   freeTable,
+  tableQrCode,
   tableQrCodes,
   updateFloors,
 } from './handlers/adminTables';
@@ -111,6 +112,7 @@ const ROUTES: [HttpMethod, string, Handler][] = [
   ['GET', 'admin/branches/:branchId/floors', branchFloors],
   ['PATCH', 'admin/branches/:branchId/floors', updateFloors],
   ['GET', 'admin/branches/:branchId/tables/qr-codes', tableQrCodes],
+  ['GET', 'admin/branches/:branchId/tables/:table/qr', tableQrCode],
   ['GET', 'admin/branches/:branchId/tables/:table', branchTable],
   ['POST', 'admin/branches/:branchId/tables/:table/orders', takeTableOrder],
   ['POST', 'admin/branches/:branchId/tables/:table/payment', collectTablePayment],

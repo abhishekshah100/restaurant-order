@@ -78,6 +78,8 @@ export const STORAGE_KEYS = {
   kitchenTheme: 'olive.kitchen-theme.v1',
   /** The kitchen screen's own settings on this device: sound, staying awake, text size… */
   kitchenPrefs: 'olive.kitchen-prefs.v1',
+  /** The kitchen's taps waiting to reach the server (lib/kitchenOutbox): kept while offline. */
+  kitchenOutbox: 'olive.kitchen-outbox.v1',
   /** Floor staff alerts on this device (sound and vibration): "on" or "off". */
   staffAlerts: 'olive.staff-alerts.v1',
 } as const;

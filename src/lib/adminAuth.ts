@@ -61,6 +61,16 @@ export function adminSession(now = Date.now()): AdminSession | null {
   return session && session.expiresAt > now ? session : null;
 }
 
+/**
+ * The sign-in was renewed (POST /admin/sessions/current/renew): it lasts until `expiresAt` now.
+ * Only ever later, and only for the session still stored.
+ */
+export function extendAdminSession(token: string, expiresAt: number) {
+  const session = readJSON(SESSION_KEY, isAdminSession);
+  if (!session || session.token !== token || expiresAt <= session.expiresAt) return;
+  writeJSON(SESSION_KEY, { ...session, expiresAt });
+}
+
 export const isAdminSignedIn = (now = Date.now()): boolean => adminSession(now) !== null;
 
 /** The bearer token for admin requests while signed in, else null. */

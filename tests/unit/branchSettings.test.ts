@@ -562,6 +562,10 @@ describe('help page', () => {
     expect(isSocialUrl('instagram', 'https://instagram.com/olive')).toBe(true);
     expect(helpErrors({ ...help, social: { instagram: 'instagram.com/olive' } })).toEqual([]);
     expect(helpErrors({ ...help, social: { youtube: 'vimeo.com/olive' } })).toEqual(['youtubeUrl']);
+    expect(helpErrors({ ...help, social: { tiktok: 'tiktok.com/@olive' } })).toEqual([]);
+    expect(helpErrors({ ...help, social: { tiktok: 'instagram.com/olive' } })).toEqual([
+      'tiktokUrl',
+    ]);
   });
 
   it('drops an empty question, and asks for the missing half of a half-filled one', () => {

@@ -11,6 +11,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   // Staff sign-in, sign-out, branches and their status.
   ['POST', 'admin/sessions'],
   ['DELETE', 'admin/sessions/current'],
+  ['POST', 'admin/sessions/current/renew'],
   ['PATCH', 'admin/sessions/current/password'],
   // Settings › Staff.
   ['GET', 'admin/branches/:branchId/staff'],
@@ -128,7 +129,6 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/purchasing/suppliers/:id/items'],
   ['GET', 'admin/branches/:branchId/purchasing/orders'],
   ['POST', 'admin/branches/:branchId/purchasing/orders'],
-  ['POST', 'admin/branches/:branchId/purchasing/orders/suggest'],
   ['GET', 'admin/branches/:branchId/purchasing/orders/:id'],
   ['PATCH', 'admin/branches/:branchId/purchasing/orders/:id'],
   ['POST', 'admin/branches/:branchId/purchasing/orders/:id/:step'],
@@ -163,6 +163,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['POST', 'otp'],
   ['POST', 'otp/verify'],
   ['GET', 'admin/branches/:branchId/tables/qr-codes'],
+  ['GET', 'admin/branches/:branchId/tables/:table/qr'],
   // Orders: the guest's checkout, rounds, changes and cancellations, their orders and bill.
   ['POST', 'orders'],
   ['GET', 'orders/:id'],
@@ -213,7 +214,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   // Team › Attendance: fixing times, adding a forgotten shift.
   ['PATCH', 'admin/branches/:branchId/shifts/:id'],
   ['POST', 'admin/branches/:branchId/shifts'],
-  // Settings › Team & access › Rota, and staff's own shifts.
+  // Shifts & attendance › Rota, and staff's own shifts.
   ['GET', 'admin/branches/:branchId/rota'],
   ['GET', 'admin/branches/:branchId/rota/mine'],
   ['GET', 'admin/branches/:branchId/rota/types'],

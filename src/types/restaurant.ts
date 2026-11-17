@@ -13,7 +13,7 @@ export interface Restaurant {
   social: SocialLink[];
 }
 
-export type SocialNetwork = 'instagram' | 'facebook' | 'youtube' | 'x';
+export type SocialNetwork = 'instagram' | 'facebook' | 'youtube' | 'tiktok' | 'x';
 
 export interface SocialLink {
   network: SocialNetwork;

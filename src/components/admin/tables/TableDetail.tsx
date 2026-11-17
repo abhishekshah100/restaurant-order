@@ -214,7 +214,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
                 {t('adminTables.detail.reserve')}
               </button>
             )}
-            {can('tables.manage') && (
+            {can('tables.manage', 'tables.qr') && (
               <button type="button" className={styles.free} onClick={() => setShowingQr(true)}>
                 <Icon name="qr" size="xs" />
                 {t('adminQr.tableButton')}

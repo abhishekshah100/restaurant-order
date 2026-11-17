@@ -7,11 +7,15 @@ import { useAdminWorkspace } from '@/components/admin/shell/AdminWorkspace';
 import { Button, Icon } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import {
+  PASS_STATION,
+  allDishesDone,
   isScheduled,
   justChanged,
   minutesLeft,
   nextKitchenStep,
+  stationDishesLeft,
   stationItems,
+  stationProgress,
   ticketStartBy,
   ticketUrgency,
   type CategoryOf,
@@ -19,7 +23,7 @@ import {
   type StationFilter,
 } from '@/lib/kitchenBoard';
 import { allergensIn, stockIssue } from '@/lib/kitchenItems';
-import type { Dish } from '@/types/menu';
+import type { CategoryId, Dish } from '@/types/menu';
 import { useTicketWhere } from '../useTicketWhere';
 import { TicketItem } from './TicketItem';
 import { TicketTimer } from './TicketTimer';
@@ -49,8 +53,12 @@ export interface TicketCardProps {
   onMessage?: (key: string) => void;
   /** The kitchen can't make an item (its place on the ticket): off the bill, waiters told. */
   onCantMake: (ticket: KitchenTicket, index: number) => void;
-  /** A step was sent and the server hasn't answered yet. */
-  pending: boolean;
+  /** A tap on it couldn't be sent yet (no connection): it goes when the connection is back. */
+  waiting: boolean;
+  /** A station's name (the pass lists each station's progress). */
+  stationNameOf?: (station: CategoryId | undefined) => string;
+  /** Ticks the station's dishes still to finish as plated ("My dishes done"). */
+  onStationDone?: (ticket: KitchenTicket, indexes: number[]) => void;
   /** Picked from the keyboard (or a bump bar). */
   picked?: boolean;
   /** Opens the ticket large; the place in its head is the button. */
@@ -80,7 +88,9 @@ export const TicketCard = memo(function TicketCard({
   onDismiss,
   onMessage,
   onCantMake,
-  pending,
+  waiting,
+  stationNameOf,
+  onStationDone,
   picked = false,
   onOpen,
   large = false,
@@ -98,6 +108,13 @@ export const TicketCard = memo(function TicketCard({
   const where = whereOf(ticket);
   const toCook = ticket.stage === 'new' || ticket.stage === 'cooking';
   const cancelled = ticket.stage === 'cancelled';
+  // Stations: every dish done (ready for the pass); the pass sees each station's progress; a
+  // station's own screen ticks off all of its dishes at once.
+  const allDone = toCook && allDishesDone(ticket);
+  const atPass = station === PASS_STATION;
+  const progress = atPass && toCook ? stationProgress(ticket, categoryOf) : [];
+  const ownStation = station !== 'all' && !atPass;
+  const mineLeft = ownStation && toCook ? stationDishesLeft(ticket, station, categoryOf) : [];
   // Changed by the guest or a waiter in the last few minutes: read it again.
   const changed = now !== null && justChanged(ticket, now);
   // Items still to cook that can't be made now: the waiter has to tell the guest.
@@ -141,6 +158,7 @@ export const TicketCard = memo(function TicketCard({
       data-rush={(ticket.rush && !cancelled) || undefined}
       data-urgency={urgency}
       data-fresh={fresh || undefined}
+      data-done={allDone || undefined}
       aria-label={t('ticket.label', { order: ticket.orderId, where })}
     >
       <header className={styles.head}>
@@ -209,6 +227,12 @@ export const TicketCard = memo(function TicketCard({
               {t('ticket.round', { round: ticket.round, count: ticket.roundCount })}
             </span>
           )}
+          {waiting && (
+            <span className={styles.unsent} role="status">
+              <Icon name="wifioff" size="xs" />
+              {t('outbox.waiting')}
+            </span>
+          )}
         </h3>
         <p className={styles.meta}>
           <span>{ticket.customerName}</span>
@@ -262,6 +286,31 @@ export const TicketCard = memo(function TicketCard({
         </p>
       )}
 
+      {progress.length > 1 && (
+        <ul className={styles.progress} aria-label={t('pass.progress')}>
+          {progress.map((p) => (
+            <li
+              key={p.station ?? 'other'}
+              className={styles.stationChip}
+              data-done={p.done === p.total || undefined}
+            >
+              {p.done === p.total && <Icon name="check" size="xs" />}
+              <span>{stationNameOf?.(p.station) ?? t('pass.other')}</span>
+              <span className={styles.stationCount}>
+                {t('pass.count', { done: p.done, total: p.total })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {allDone && (
+        <p className={styles.allDone} role="status">
+          <Icon name="check" size="xs" />
+          {t('pass.allDone')}
+        </p>
+      )}
+
       <ul className={styles.items}>
         {ticket.items.map((item, index) =>
           shown.includes(item) ? (
@@ -279,6 +328,24 @@ export const TicketCard = memo(function TicketCard({
       {elsewhere > 0 && (
         <p className={styles.elsewhere}>{t.plural('ticket.otherStation', elsewhere)}</p>
       )}
+      {ownStation && toCook && onStationDone && mineLeft.length > 0 && (
+        <Button
+          variant="secondary"
+          size="sm"
+          iconStart="check"
+          className={styles.mineDone}
+          onClick={() => onStationDone(ticket, mineLeft)}
+          aria-label={t('station.doneLabel', { order: ticket.orderId })}
+        >
+          {t.plural('station.done', mineLeft.length)}
+        </Button>
+      )}
+      {ownStation && toCook && mineLeft.length === 0 && !allDone && (
+        <p className={styles.mineFinished}>
+          <Icon name="check" size="xs" />
+          {t('station.finished')}
+        </p>
+      )}
 
       <footer className={styles.foot}>
         {step === 'preparing' && (
@@ -286,7 +353,6 @@ export const TicketCard = memo(function TicketCard({
             <Button
               iconStart="flame"
               className={styles.primary}
-              loading={pending}
               onClick={() => onStep(ticket, 'preparing')}
               aria-label={t('ticket.actions.startLabel', { order: ticket.orderId })}
             >
@@ -295,7 +361,6 @@ export const TicketCard = memo(function TicketCard({
             <Button
               variant="secondary"
               className={styles.skip}
-              disabled={pending}
               onClick={() => onStep(ticket, 'ready')}
               aria-label={t('ticket.actions.skipLabel', { order: ticket.orderId })}
             >
@@ -307,7 +372,6 @@ export const TicketCard = memo(function TicketCard({
           <Button
             iconStart={ticket.mode === 'delivery' ? 'scooter' : 'check'}
             className={cx(styles.primary, styles.readyAction)}
-            loading={pending}
             onClick={() => onStep(ticket, 'ready')}
             aria-label={t('ticket.actions.readyLabel', { order: ticket.orderId })}
           >
@@ -329,7 +393,6 @@ export const TicketCard = memo(function TicketCard({
             size="sm"
             iconStart="back"
             className={styles.recall}
-            disabled={pending}
             onClick={() => onStep(ticket, 'preparing', true)}
             aria-label={t('ticket.actions.recallLabel', { order: ticket.orderId })}
           >

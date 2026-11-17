@@ -22,6 +22,7 @@ export const PERMISSION_GROUPS: readonly {
       'orders.view',
       'orders.take',
       'tables.move',
+      'tables.qr',
       'service.respond',
       'payments.collect',
       'cash.manage',
@@ -89,6 +90,7 @@ export type PermissionWord =
   | 'tables_manage'
   | 'tables_assign'
   | 'tables_move'
+  | 'tables_qr'
   | 'orders_view'
   | 'orders_take'
   | 'orders_cancel'

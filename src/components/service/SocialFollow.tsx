@@ -8,6 +8,7 @@ const NETWORK_ICON: Record<HelpSocialNetwork, IconName> = {
   instagram: 'instagram',
   facebook: 'facebook',
   youtube: 'youtube',
+  tiktok: 'tiktok',
   x: 'xbrand',
   whatsapp: 'whatsapp',
   googleReviews: 'google',

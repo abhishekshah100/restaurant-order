@@ -1,10 +1,9 @@
 /*
  * The kitchen board: one row of tools, then the lanes (New in violet, Cooking amber, Ready blue:
- * red is kept for late). Flat and quiet: the lanes are columns
- * under a thin line in their colour (no panels around them), so the tickets are what stands
- * out. Below 1024px one lane at a time (tabs pick it; two tickets to a row from 768px). From
- * 1024px the three lanes side by side, each scrolling on its own under its pinned header, their
- * widths following how busy they are. All day opens as a side panel.
+ * red is kept for late). Each lane is a quiet panel with a coloured top edge and a pinned
+ * header (icon, name, hint, count), so the tickets stand out on it. Below 1024px one lane at a
+ * time (tabs pick it; two tickets to a row from 768px). From 1024px the three lanes side by
+ * side in three equal, fixed columns, each scrolling on its own. All day opens as a side panel.
  */
 
 .page {
@@ -20,6 +19,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--sh-1);
 }
 
 /* Order type as one segmented control. */
@@ -31,7 +35,7 @@
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--surface);
+  background: var(--bg);
   scrollbar-width: none;
 }
 
@@ -58,7 +62,7 @@
 }
 
 .mode[aria-pressed='true'] {
-  background: var(--sand);
+  background: var(--surface);
   color: var(--ink);
   box-shadow: var(--sh-1);
 }
@@ -84,8 +88,8 @@
 }
 
 .station {
-  flex: 1 1 130px;
-  min-width: 0;
+  flex: 1 1 160px;
+  min-width: 150px;
   max-width: 210px;
 }
 
@@ -115,7 +119,7 @@
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--surface);
+  background: var(--bg);
   scrollbar-width: none;
 }
 
@@ -265,23 +269,27 @@
 
 .laneIcon {
   flex: none;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--lane) 16%, transparent);
   color: var(--lane);
 }
 
 .laneTitle {
   flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+  display: grid;
+  gap: 0;
 }
 
 .laneTitle h2 {
   overflow: hidden;
   color: var(--ink);
-  font: 700 16px/22px var(--f-ui);
+  font: 800 17px/22px var(--f-ui);
+  letter-spacing: -0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -295,15 +303,16 @@
 }
 
 .laneCount {
-  min-width: 30px;
-  height: 26px;
-  padding: 0 9px;
+  flex: none;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 10px;
   display: grid;
   place-items: center;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--lane) 16%, transparent);
-  color: var(--lane);
-  font: 800 14px/18px var(--f-ui);
+  background: var(--lane);
+  color: var(--kitchen-on-solid, var(--white));
+  font: 800 16px/20px var(--f-ui);
   font-variant-numeric: tabular-nums;
 }
 
@@ -313,10 +322,29 @@
 }
 
 .laneEmpty {
-  padding: 32px 12px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 36px 16px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 14px;
   color: var(--ink-3);
   font: 500 14px/20px var(--f-ui);
   text-align: center;
+}
+
+.laneEmptyIcon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-round);
+  background: color-mix(in srgb, var(--lane) 12%, transparent);
+  color: var(--lane);
+}
+
+.laneEmpty p {
+  max-width: 26ch;
 }
 
 /* ---------- Loading, error ---------- */
@@ -360,16 +388,23 @@
     display: none;
   }
 
-  /* The lanes fill the screen under the tools; each scrolls on its own. */
+  /* Three equal, fixed columns filling the screen under the tools; each scrolls on its own. */
   .lanes {
-    grid-template-columns: var(--lanes, repeat(3, minmax(0, 1fr)));
-    height: calc(100dvh - 150px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    height: calc(100dvh - 200px);
     min-height: 480px;
   }
 
+  /* Each lane a panel: its colour along the top, a faint wash of it behind the tickets. */
   .lane {
     display: flex;
     flex-direction: column;
+    padding: 0 12px 12px;
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--lane);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--lane) 4%, var(--surface));
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: thin;
@@ -386,23 +421,16 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    padding: 6px 2px 10px;
-    border-bottom: 2px solid var(--lane);
-    background: var(--bg);
+    margin: 0 -12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    border-radius: 13px 13px 0 0;
+    background: color-mix(in srgb, var(--lane) 7%, var(--surface));
   }
 
-  .tickets,
-  .laneEmpty {
-    margin-top: 12px;
-  }
-
-  /* A wide lane lays its tickets side by side. */
+  /* One ticket to a row; on a very wide screen (a lane over ~640px) two. */
   .tickets {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  }
-
-  .lane[data-empty] .laneHint {
-    display: none;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   }
 }
 

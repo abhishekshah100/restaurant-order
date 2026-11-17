@@ -17,16 +17,22 @@ export function ProofPicker({
   photos,
   onAdd,
   onRemove,
+  label,
+  max = MAX_PROOFS,
 }: {
   id: string;
   photos: readonly ProofPhoto[];
   onAdd: (files: File[]) => void;
   onRemove: (photoId: string) => void;
+  /** What the photos are ("Bill photo"); proof of payment by default. */
+  label?: string;
+  /** How many it takes (MAX_PROOFS by default). */
+  max?: number;
 }) {
   const t = useContent('common');
   const camera = useRef<HTMLInputElement>(null);
   const gallery = useRef<HTMLInputElement>(null);
-  const full = photos.length >= MAX_PROOFS;
+  const full = photos.length >= max;
   const picked = (input: HTMLInputElement) => {
     onAdd(Array.from(input.files ?? []));
     // The same photo can be picked again after it's removed.
@@ -36,9 +42,9 @@ export function ProofPicker({
   return (
     <div className={styles.picker} role="group" aria-labelledby={`${id}-label`}>
       <p id={`${id}-label`} className={styles.label}>
-        {t('adminPayments.proofs.label')}
+        {label ?? t('adminPayments.proofs.label')}
         <span className={styles.count}>
-          {t('adminPayments.proofs.count', { count: photos.length, max: MAX_PROOFS })}
+          {t('adminPayments.proofs.count', { count: photos.length, max })}
         </span>
       </p>
       {photos.length > 0 && (
@@ -104,7 +110,7 @@ export function ProofPicker({
         ref={gallery}
         type="file"
         accept="image/*"
-        multiple
+        multiple={max > 1}
         hidden
         onChange={(event) => picked(event.currentTarget)}
       />

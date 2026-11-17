@@ -19,6 +19,11 @@
       "url": "https://www.youtube.com/"
     },
     {
+      "network": "tiktok",
+      "label": "TikTok",
+      "url": "https://www.tiktok.com/"
+    },
+    {
       "network": "x",
       "label": "X",
       "url": "https://x.com/"

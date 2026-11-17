@@ -31,6 +31,13 @@ export interface AdminSession {
  * A branch this admin manages, as `GET /admin/branches` returns it: what the branch picker
  * shows, not the guest-facing region rules (those stay on `GET /branches`).
  */
+/** A financial year: its label ("26-27", "2083-84", as on invoice numbers) and its days. */
+export interface FiscalYear {
+  label: string;
+  from: string;
+  to: string;
+}
+
 export interface AdminBranch {
   id: string;
   name: string;
@@ -55,6 +62,12 @@ export interface AdminBranch {
   /** ISO 4217, e.g. "INR", "NPR". */
   currencyCode: string;
   image?: BranchImage;
+  /**
+   * This financial year and the one before, on the branch's today (the date filters' "This FY"
+   * and "Last FY"): India April to March, Nepal Shrawan to Asar, in English dates. The server's
+   * (it has the Nepali calendar); none in the mock.
+   */
+  fiscalYears?: { current: FiscalYear; previous: FiscalYear };
   /** What the signed-in staff member may do here (their roles' permissions at this branch). */
   permissions?: StaffPermission[];
   /** Optional modules the branch's restaurant has ("inventory"); none from the mock. */
@@ -642,6 +655,7 @@ export type StaffPermission =
   | 'tables.manage'
   | 'tables.assign'
   | 'tables.move'
+  | 'tables.qr'
   | 'orders.view'
   | 'orders.take'
   | 'orders.cancel'

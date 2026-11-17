@@ -489,6 +489,7 @@ export function OrderHistory() {
         range={days}
         today={today}
         limits={ORDER_HISTORY_LIMITS}
+        fiscalYears
         presets={PRESETS.map((p) => ({
           days: p.days,
           label: t(`adminOrders.history.presets.${p.key}`),

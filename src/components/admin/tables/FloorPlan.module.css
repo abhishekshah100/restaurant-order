@@ -19,7 +19,8 @@
   gap: 8px;
 }
 
-@media (min-width: 900px) {
+/* Side by side only where the area tabs keep their room (four links take ~680px). */
+@media (min-width: 1600px) {
   .bar {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;

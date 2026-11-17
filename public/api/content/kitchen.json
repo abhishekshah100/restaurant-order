@@ -57,7 +57,8 @@
       "modes": "Order type",
       "allModes": "All types",
       "stations": "Station",
-      "allStations": "All stations"
+      "allStations": "All stations",
+      "pass": "Pass"
     },
     "lanes": {
       "label": "Tickets by stage",
@@ -412,5 +413,31 @@
     "ended": "Shifted out. See you next shift.",
     "failed": "Couldn't update your shift. Try again.",
     "askTimeOff": "Apply for leave"
+  },
+  "outbox": {
+    "waiting": "Waiting to send",
+    "banner": {
+      "one": "1 tap is waiting to send. It goes as soon as the connection is back.",
+      "other": "{count} taps are waiting to send. They go as soon as the connection is back."
+    },
+    "expired": {
+      "one": "1 kitchen tap was over 2 hours old and wasn't sent.",
+      "other": "{count} kitchen taps were over 2 hours old and weren't sent."
+    },
+    "refused": "Order {order} changed meanwhile (cancelled or served), so your tap wasn't saved."
+  },
+  "pass": {
+    "progress": "Each station's dishes",
+    "count": "{done}/{total}",
+    "other": "Other",
+    "allDone": "All dishes done – ready for the pass"
+  },
+  "station": {
+    "done": {
+      "one": "My dish done",
+      "other": "My {count} dishes done"
+    },
+    "doneLabel": "Mark this station's dishes on order {order} done",
+    "finished": "Your dishes are done – waiting on other stations"
   }
 }

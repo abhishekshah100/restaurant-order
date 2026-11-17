@@ -114,6 +114,8 @@ export function useAuditText() {
         };
       case 'table.freed':
         return { title: say('table_freed', { table: target }) };
+      case 'table.qrShown':
+        return { title: say('table_qrShown', { table: target }) };
       case 'table.moved':
         return {
           title: say('table_moved', { table: target, to: num('to') ?? '' }),

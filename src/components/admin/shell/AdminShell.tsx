@@ -26,6 +26,7 @@ import { Sidebar } from './Sidebar';
 import { useShellActions } from './useShellActions';
 import { useAlertsSetting, useServiceAlerts } from './useServiceAlerts';
 import { IdleSignOut } from './IdleSignOut';
+import { SessionRenewal } from './SessionRenewal';
 import styles from './AdminShell.module.css';
 import { useBranchEvents } from '@/api/liveEvents';
 
@@ -156,7 +157,10 @@ export function WorkspaceGate({
 }) {
   return (
     <AdminAccess fallback={fallback}>
-      <Workspace fallback={fallback}>{children}</Workspace>
+      <Workspace fallback={fallback}>
+        <SessionRenewal />
+        {children}
+      </Workspace>
     </AdminAccess>
   );
 }

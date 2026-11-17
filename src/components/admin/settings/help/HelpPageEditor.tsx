@@ -14,6 +14,7 @@ const NETWORK_ICON = {
   instagram: 'instagram',
   facebook: 'facebook',
   youtube: 'youtube',
+  tiktok: 'tiktok',
   x: 'xbrand',
   whatsapp: 'whatsapp',
   googleReviews: 'google',

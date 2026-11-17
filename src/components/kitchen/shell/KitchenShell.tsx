@@ -9,7 +9,9 @@ import { NoAccess } from '@/components/admin/shell/NoAccess';
 import { KitchenBar } from './KitchenBar';
 import { cx } from '@/lib/cx';
 import { KITCHEN_NAV, activeKitchenNavId } from '@/lib/kitchenNav';
+import { useKitchenOutboxSender } from '../useKitchenOutbox';
 import { useKitchenPrefs } from './useKitchenPrefs';
+import { useKitchenKeepAlive } from './useKitchenKeepAlive';
 import { useKitchenThemeClass } from './useKitchenTheme';
 import { useWakeLock } from './useWakeLock';
 import styles from './KitchenShell.module.css';
@@ -30,6 +32,11 @@ function KitchenFallback() {
 /** A kitchen page for those whose role includes it (kitchenNav › needs); no access for the rest. */
 function KitchenPage({ children }: { children: ReactNode }) {
   const { can } = useAdminWorkspace();
+  // The kitchen's taps go out from every kitchen page (the board, Stock, Activity).
+  useKitchenOutboxSender();
+  // Open and on screen, the kitchen keeps the device signed in (an admin tab beside it can't
+  // sign it out for being idle).
+  useKitchenKeepAlive();
   const active = activeKitchenNavId(usePathname());
   const needs = KITCHEN_NAV.find((item) => item.id === active)?.needs ?? ['kitchen.update'];
   return can(...needs) ? children : <NoAccess />;

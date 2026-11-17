@@ -337,7 +337,8 @@
       "role_changed": "Changed the role {name}",
       "role_removed": "Deleted the role {name}",
       "session_signedIn": "Signed in",
-      "session_signedOut": "Signed out"
+      "session_signedOut": "Signed out",
+      "table_qrShown": "Showed the QR code for table {table}"
     },
     "details": {
       "bill": "Bill {before} → {after}",
@@ -418,6 +419,13 @@
       "taxable": "Taxable value",
       "credited": "Credited",
       "taxLine": "Taxable value {taxable} · tax {tax}"
+    },
+    "registerDialog": {
+      "title": "Download sales register",
+      "hint": "Every invoice and credit note for the days you pick, as a CSV for your accountant or tax returns.",
+      "shown": "Days shown · {from} – {to}",
+      "current": "This FY {label} · {from} – {to} (so far)",
+      "previous": "Last FY {label} · {from} – {to}"
     }
   },
   "adminShell": {
@@ -459,9 +467,9 @@
       "audit": "Audit log · Admin",
       "invoices": "Invoices · Payments · Admin",
       "orderHistory": "Order history · Admin",
-      "rota": "Rota · Team · Admin",
-      "attendance": "Attendance · Team · Admin",
-      "teamRequests": "Requests · Team · Admin"
+      "rota": "Rota · Shifts & attendance · Admin",
+      "attendance": "Attendance · Shifts & attendance · Admin",
+      "teamRequests": "Requests · Shifts & attendance · Admin"
     },
     "loading": "Loading your workspace",
     "noAccess": {
@@ -476,7 +484,7 @@
       "home": "Home",
       "tables": "Tables",
       "reservations": "Reservations",
-      "team": "Team",
+      "team": "Shifts & attendance",
       "orders": "Orders",
       "requests": "Requests",
       "kitchen": "Kitchen",
@@ -1085,7 +1093,8 @@
         "regular": "Regular",
         "highChair": "High chair"
       }
-    }
+    },
+    "editFloor": "Edit floor plan"
   },
   "adminOrder": {
     "title": "Order {order}",
@@ -2781,31 +2790,52 @@
   },
   "adminPurchasing": {
     "title": "Purchasing",
-    "subtitle": "Order from suppliers, receive deliveries, send back what's wrong.",
+    "subtitle": "Buy from your suppliers, check deliveries, and keep the kitchen stocked.",
     "backendOnly": "Purchasing needs the server. It isn't available in the demo.",
     "tabs": {
       "label": "Purchasing views",
+      "today": "Today",
       "orders": "Orders",
       "receipts": "Deliveries",
       "suppliers": "Suppliers"
     },
     "pack": "{name} ({size})",
     "status": {
-      "draft": "To approve",
-      "approved": "Approved",
+      "draft": "Waiting approval",
+      "approved": "Ready to send",
       "sent": "Sent",
-      "partly_received": "Part received",
-      "received": "Received",
+      "partly_received": "Part arrived",
+      "received": "Arrived",
       "cancelled": "Cancelled",
-      "closed": "Closed short"
+      "closed": "Finished (part)"
     },
     "settings": {
-      "title": "Approval and price alerts",
+      "open": "Settings",
+      "title": "Purchasing settings",
+      "intro": "How orders are checked before they go out, and when a delivered price should catch your eye.",
+      "approval": "Do orders need approval before they're sent?",
+      "approvalChoices": {
+        "off": {
+          "label": "No, send them straight away",
+          "hint": "Best for most restaurants. Anyone who buys can send an order."
+        },
+        "all": {
+          "label": "Yes, every order",
+          "hint": "An owner or manager approves each order before it goes out."
+        },
+        "above": {
+          "label": "Only big orders",
+          "hint": "Orders above an amount you choose wait for approval."
+        }
+      },
       "limit": "Approve orders above",
-      "limitHint": "Before tax. 0 means every order needs approval.",
-      "alert": "Flag prices more than (%) above expected",
-      "alertHint": "Compared with the order's price, or the supplier's last.",
-      "save": "Save settings"
+      "limitHint": "Before tax.",
+      "limitError": "Enter an amount above 0.",
+      "alert": "Warn me when a price is more than (%) higher",
+      "alertHint": "Compared with the price on the order, or what you paid last time.",
+      "alertError": "Enter a number from 0 to 100.",
+      "save": "Save settings",
+      "saved": "Settings saved"
     },
     "orders": {
       "new": "New order",
@@ -2822,14 +2852,7 @@
       "create": "Create order",
       "save": "Save order",
       "saved": "{number} saved",
-      "suggestFrom": "Suggest from low stock for",
-      "suggest": "Suggest order",
-      "filters": {
-        "open": "Open",
-        "draft": "To approve",
-        "done": "Done",
-        "all": "All"
-      },
+      "suggest": "order {count}",
       "none": "No orders here.",
       "lineCount": {
         "one": "{count} item",
@@ -2838,7 +2861,7 @@
       "expected": "Expected {date}",
       "createdBy": "Created {time} by {name}",
       "approvedBy": "approved by {name}",
-      "needsApproval": "Above the approval limit: it needs approval before it's sent.",
+      "needsApproval": "This order is waiting for an owner or manager to approve it before it's sent.",
       "received": "{quantity} received",
       "taxRate": "{rate}% tax",
       "total": "Total {total} + {tax} tax",
@@ -2850,48 +2873,152 @@
       "email": "Send by email",
       "print": "Print",
       "cancel": "Cancel order",
-      "close": "Close short",
+      "close": "Stop waiting for the rest",
       "done": {
         "approve": "Order approved",
         "send": "Order marked as sent",
         "cancel": "Order cancelled",
-        "close": "Order closed short"
+        "close": "We're no longer waiting for the rest"
       },
-      "message": "Purchase order {number} from {brand}. Please deliver {date}:"
+      "message": "Purchase order {number} from {brand}. Please deliver {date}:",
+      "supplierQuestion": "Who are you ordering from?",
+      "whatToOrder": "What do you need?",
+      "fillLow": {
+        "one": "Fill the 1 low item",
+        "other": "Fill the {count} low items"
+      },
+      "low": "Low",
+      "inStock": "{quantity} in stock",
+      "qtyLabel": "How many of {item}",
+      "searchItems": "Search their items",
+      "noCatalog": "You haven't said what this supplier sells yet. Add items below, or set up their list in Suppliers so it fills in next time.",
+      "noSuppliers": "Add a supplier first (Suppliers tab), then come back to order from them.",
+      "extraTitle": "Something not on their list",
+      "addExtra": "Add something not on their list",
+      "nothingChosen": "Choose at least one item and how many.",
+      "whenQuestion": "When should it come?",
+      "days": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "pick": "Pick a date"
+      },
+      "noteLabel": "Note for the supplier",
+      "moreOptions": "More options (tax, prices)",
+      "taxAll": "Tax on this order (%)",
+      "taxAllHint": "Applied to every item. Leave empty if prices already include tax.",
+      "estimate": "About {total}",
+      "saveOnly": "Save order",
+      "saveAndSend": "Save and send on WhatsApp",
+      "savedForApproval": "{number} saved. It's waiting for approval before it can be sent.",
+      "search": "Search orders",
+      "views": {
+        "label": "Show orders",
+        "todo": "To do",
+        "waiting": "On the way",
+        "done": "Done",
+        "all": "All"
+      },
+      "empty": {
+        "todo": "Nothing to approve or send.",
+        "waiting": "No orders on the way.",
+        "done": "No finished orders yet.",
+        "all": "No orders yet."
+      },
+      "noMatch": "No orders match your search.",
+      "sendOpen": "Send",
+      "sentOtherWay": "I sent it another way",
+      "sentVia": "Order sent on {channel} and marked as sent",
+      "channels": {
+        "whatsApp": "WhatsApp",
+        "email": "email"
+      },
+      "cols": {
+        "item": "Item",
+        "qty": "Ordered",
+        "came": "Came",
+        "total": "Amount"
+      },
+      "subtotal": "Before tax",
+      "taxTotal": "Tax",
+      "grand": "Total",
+      "more": "More actions",
+      "confirmCancel": "Tap again to cancel the order",
+      "confirmClose": "Tap again to stop waiting",
+      "less": "One less {item}",
+      "moreOf": "One more {item}"
     },
     "receive": {
-      "title": "Receive delivery",
+      "title": "Receive a delivery",
       "titleOrder": "Receive {number}",
-      "noPrices": "Count what came. Prices are confirmed by a manager later.",
+      "noPrices": "Just count what came. A manager checks the prices later.",
       "order": "Against order",
       "noOrder": "No order (bought direct)",
       "ordered": "ordered {quantity}, {received} so far",
-      "came": "Came",
+      "came": "How many came",
       "rejected": "Refused at the door",
       "rejectedError": "No more than came.",
-      "rejectReason": "Why refused",
+      "rejectReason": "Why was it refused?",
       "invoice": "Supplier invoice number",
       "confirm": "Save delivery",
-      "done": "{number} saved"
+      "done": "{number} saved",
+      "titleDirect": "Receive without an order",
+      "whichIntro": "What has arrived? Pick the order it's for.",
+      "noneOnTheWay": "No orders are on the way. You can still record something you bought without an order.",
+      "direct": "Bought without an order",
+      "directHint": "From the market, the milk van, or anyone not ordered in the app.",
+      "changeSource": "Back to what arrived",
+      "checkIntro": "Tick what came. Tap Different if something was missing, damaged or priced differently.",
+      "allCame": "Everything came as ordered",
+      "tick": "{item} came as ordered",
+      "different": "Different",
+      "checked": "{done} of {total} items checked",
+      "nothingLeft": "Everything on this order has already arrived.",
+      "nothingChecked": "Tick what came, or tap Different.",
+      "cameOf": "How many {item} came",
+      "billPrice": "Price on the bill",
+      "fromWho": "Who did you buy from?",
+      "addItem": "Add what you bought",
+      "nothingCame": "Enter how many came of at least one item.",
+      "billTitle": "Supplier's bill",
+      "billHint": "Take a photo of the bill so you can find it later.",
+      "billMore": "Bill number and note",
+      "uploading": "Uploading photo…",
+      "photoLabel": "Bill photo"
     },
     "receipts": {
       "title": "Delivery {number}",
       "list": "Deliveries",
-      "none": "No deliveries in these days.",
+      "none": "No deliveries on these days.",
       "priceChanges": "Prices to look at",
       "toConfirm": "Price to confirm",
       "flagged": "Above {expected}",
       "refused": "{quantity} refused: {reason}",
       "returned": "{quantity} sent back",
       "invoiceNo": "Invoice {number}",
-      "photo": "View invoice photo",
-      "prices": "Prices",
+      "photo": "View bill photo",
+      "prices": "Check the prices",
       "confirmPrices": "Save prices",
-      "pricesSaved": "Prices saved"
+      "pricesSaved": "Prices saved",
+      "lastDays": {
+        "one": "Today",
+        "other": "Last {count} days"
+      },
+      "priceUp": "Price went up",
+      "refusedCount": {
+        "one": "1 item refused",
+        "other": "{count} items refused"
+      },
+      "someReturned": "Some sent back",
+      "hasPhoto": "Bill photo",
+      "priceCol": "Price",
+      "pricesIntro": "Type the price per pack from the supplier's bill. Only the ones you change are saved.",
+      "expectedPrice": "expected {price}",
+      "pricePer": "Price per {pack}",
+      "correctPrices": "Correct a price"
     },
     "returns": {
       "start": "Send items back",
-      "title": "Send back to supplier",
+      "title": "Send items back to the supplier",
       "list": "Returns",
       "left": "{quantity} can go back",
       "quantity": "How many",
@@ -2904,15 +3031,21 @@
         "expired": "Expired",
         "excess": "Too many",
         "other": "Other"
-      }
+      },
+      "intro": "Choose how many of each item go back, and why. The supplier owes you for them.",
+      "howMany": "How many {item} go back",
+      "why": "Why?",
+      "pickWhy": "choose a reason",
+      "cancel": "Cancel",
+      "toSupplier": "Sent back to {name}"
     },
     "suppliers": {
       "new": "New supplier",
       "newTitle": "New supplier",
-      "empty": "No suppliers yet. Add the first one.",
-      "name": "Name",
-      "contact": "Contact person",
-      "phone": "Phone",
+      "empty": "No suppliers yet. Add the shop or wholesaler you buy from.",
+      "name": "Shop or company name",
+      "contact": "Who to ask for",
+      "phone": "Phone (for WhatsApp orders)",
       "phoneHint": "With country code: +919876543210",
       "email": "Email",
       "taxId": "GSTIN / PAN",
@@ -2922,7 +3055,7 @@
       "save": "Save details",
       "saved": "{name} saved",
       "items": "What they sell",
-      "itemsHint": "Each ingredient in the pack it comes in, at its last price. Deliveries update the price.",
+      "itemsHint": "Each item, the pack it comes in and its price. ★ marks them as the supplier to buy it from. Deliveries keep prices up to date.",
       "preferred": "Preferred supplier for this",
       "saveItems": "Save what they sell",
       "itemsSaved": "Saved",
@@ -2935,15 +3068,139 @@
       "openOrders": {
         "one": "{count} open order",
         "other": "{count} open orders"
-      }
+      },
+      "search": "Search suppliers",
+      "panes": "Supplier",
+      "pane": {
+        "details": "Details",
+        "items": "What they sell"
+      },
+      "namePlaceholder": "e.g. Sharma Vegetables",
+      "moreDetails": "More details (email, tax number, address)",
+      "addNext": "Save and add what they sell",
+      "nextHint": "Next, you'll add what they sell so orders fill in by themselves.",
+      "confirmArchive": "Tap again to archive this supplier",
+      "noItems": "Nothing yet. Add the ingredients you buy from them.",
+      "addFromIngredients": "Add from my ingredients",
+      "pickTitle": "Tick what you buy from them",
+      "searchIngredients": "Search ingredients",
+      "nothingToAdd": "All your ingredients are on their list already. Add new ones in Inventory.",
+      "addPicked": {
+        "one": "Add 1 item",
+        "other": "Add {count} items"
+      },
+      "preferredFor": "Buy {item} from this supplier",
+      "comesIn": "Comes in",
+      "price": "Price per pack",
+      "priceError": "Enter a price.",
+      "noPhone": "No phone yet",
+      "noItemsYet": "No items yet",
+      "call": "Call",
+      "whatsApp": "WhatsApp",
+      "order": "Order from them",
+      "addItems": "Add their items"
     },
     "errors": {
       "notEditable": "That order can't change now.",
       "notApproved": "It needs approval before it's sent.",
       "closed": "Nothing more can be received on that order.",
       "returnExceeds": "That's more than came in.",
-      "supplierInUse": "The supplier has open orders. Close them first.",
-      "nothingLow": "Nothing from this supplier is low."
+      "supplierInUse": "The supplier has open orders. Close them first."
+    },
+    "today": {
+      "suppliers": "Suppliers",
+      "dueToday": "due today",
+      "lateSince": "late, was due {date}",
+      "setup": {
+        "title": "Set up purchasing",
+        "intro": "Four short steps. After that, the app tells you what to buy and from whom.",
+        "progress": "{done} of {total} done",
+        "ingredients": {
+          "title": "Add the ingredients you buy",
+          "hint": "Done in Inventory: onions, milk, rice…",
+          "action": "Open Inventory"
+        },
+        "supplier": {
+          "title": "Add a supplier",
+          "hint": "The shop or wholesaler you buy from, with their phone number.",
+          "action": "Add a supplier"
+        },
+        "items": {
+          "title": "Say what they sell",
+          "hint": "Their items and prices, so orders fill in by themselves.",
+          "action": "Add their items"
+        },
+        "order": {
+          "title": "Place your first order",
+          "hint": "Pick the supplier, tick what you need, send it on WhatsApp.",
+          "action": "New order"
+        }
+      },
+      "low": {
+        "title": "Running low",
+        "hint": "Make an order with the right amounts filled in. You can check it before sending.",
+        "make": "Make order",
+        "noSupplier": "No supplier sells {names} yet: add it to a supplier's items."
+      },
+      "arriving": {
+        "title": "Arriving",
+        "hint": "Due today. Receive them when they come.",
+        "late": {
+          "one": "1 is late.",
+          "other": "{count} are late."
+        },
+        "receive": "Receive"
+      },
+      "approve": {
+        "title": "Waiting for your approval",
+        "hint": "Check and approve, then they can be sent.",
+        "open": "Check"
+      },
+      "send": {
+        "title": "Ready to send",
+        "hint": "Approved, but the supplier doesn't have them yet.",
+        "open": "Send"
+      },
+      "prices": {
+        "title": "Prices to check",
+        "hint": "Delivered prices to confirm, or much higher than expected.",
+        "was": "{price}, expected {expected}"
+      },
+      "allGood": {
+        "title": "All caught up",
+        "hint": "Nothing is low, late or waiting. We'll show it here when something is."
+      }
+    },
+    "flow": {
+      "label": "Order progress",
+      "placed": "Placed",
+      "sent": "Sent",
+      "arrived": "Arrived",
+      "states": {
+        "done": "done",
+        "now": "now",
+        "later": "not yet"
+      }
+    },
+    "print": {
+      "title": "Purchase order",
+      "to": "Supplier",
+      "date": "Date",
+      "deliverBy": "Deliver by",
+      "by": "Ordered by",
+      "qty": "Quantity",
+      "price": "Price",
+      "printed": "Printed {time}",
+      "n": "#"
+    },
+    "tips": {
+      "approval": "Approval means an owner or manager checks an order before it goes to the supplier. Most restaurants don't need it; turn it on if many people place orders.",
+      "low": "An item is low when its stock is at or below its \"Warn me at\" level in Inventory. The amount suggested fills it back up to \"Order up to\", in whole packs.",
+      "prices": "A delivered price shows here when someone counted the delivery without the bill (it needs confirming), or when it's higher than expected by more than your price warning in Settings.",
+      "suggested": "\"Low\" items and the amounts after \"order\" come from each item's levels in Inventory. Tap \"Fill the low items\" to use them, then change any number.",
+      "refused": "Refused at the door means you didn't accept it, so it never goes into stock. If you notice a problem later, use \"Send items back\" on the delivery instead.",
+      "bill": "A photo of the supplier's bill is kept with the delivery, so you can check the prices and amounts later or show them to your accountant.",
+      "returns": "Items sent back after a delivery was accepted. They come out of stock, and the supplier owes you the amount shown as credit."
     }
   },
   "adminTableCollect": {
@@ -3394,7 +3651,8 @@
     "linkLabel": "Link",
     "tip": "Tip: print on card and laminate it, or use a stand. Reprints show the same code.",
     "loading": "Loading the QR codes",
-    "failed": "Couldn't make the file. Try again."
+    "failed": "Couldn't make the file. Try again.",
+    "oneFailed": "Couldn't load this table's QR code. Close and try again."
   },
   "adminReservations": {
     "title": "Reservations",
@@ -3686,6 +3944,10 @@
       "outside": "Pick days from {first} to today.",
       "order": "From must be on or before To.",
       "tooLong": "Pick up to {days} days at a time. Move From or To closer together."
+    },
+    "fiscalYear": {
+      "current": "This FY ({label})",
+      "previous": "Last FY ({label})"
     }
   },
   "adminPayments": {
@@ -4138,7 +4400,7 @@
         "description": "When you're open each day, special dates, and when the kitchen takes last orders."
       },
       "tables": {
-        "title": "Tables",
+        "title": "Floor plan",
         "description": "Your floor plan: areas, tables and seats."
       },
       "ordering": {
@@ -4154,7 +4416,7 @@
         "description": "Happy hours and other automatic discounts."
       },
       "team": {
-        "title": "Team & access",
+        "title": "Staff & roles",
         "description": "Your staff, and what each role can do."
       },
       "branches": {
@@ -4442,6 +4704,7 @@
       "instagramUrl": "Use your Instagram link, e.g. https://instagram.com/yourname",
       "facebookUrl": "Use your Facebook link, e.g. https://facebook.com/yourpage",
       "youtubeUrl": "Use your YouTube link, e.g. https://youtube.com/@yourchannel",
+      "tiktokUrl": "Use your TikTok link, e.g. https://tiktok.com/@yourname",
       "xUrl": "Use your X link, e.g. https://x.com/yourname",
       "whatsappUrl": "Use a WhatsApp link, e.g. https://wa.me/919876543210",
       "googleReviewsUrl": "Use your Google review link, e.g. https://g.page/r/…/review",
@@ -4509,6 +4772,7 @@
         "instagram": "Instagram",
         "facebook": "Facebook",
         "youtube": "YouTube",
+        "tiktok": "TikTok",
         "x": "X (Twitter)",
         "whatsapp": "WhatsApp",
         "googleReviews": "Google reviews"
@@ -4517,6 +4781,7 @@
         "instagram": "instagram.com/yourname",
         "facebook": "facebook.com/yourpage",
         "youtube": "youtube.com/@yourchannel",
+        "tiktok": "tiktok.com/@yourname",
         "x": "x.com/yourname",
         "whatsapp": "wa.me/919876543210",
         "googleReviews": "g.page/r/…/review"
@@ -5091,6 +5356,10 @@
           "label": "Move tables",
           "hint": "Move guests to another free table, with their orders, calls and note."
         },
+        "tables_qr": {
+          "label": "Show table QR",
+          "hint": "Show or print one table's QR code (a torn sticker, a guest who can't scan). Can't change the floor plan."
+        },
         "rota_plan": {
           "label": "Plan the rota",
           "hint": "Shift types, who works when, and publishing the week to staff."
@@ -5357,7 +5626,7 @@
       "edit": "{name} on {day}: {time}. Change",
       "overnight": "ends next day",
       "changed": "Changed",
-      "noStaff": "Nobody can be planned yet. Add staff in Team & access › Staff.",
+      "noStaff": "Nobody can be planned yet. Add staff in Settings › Staff & roles › Staff.",
       "noTypes": "Tip: add shift types like Morning or Evening to plan in one tap.",
       "dayPicker": "Day",
       "confirmClear": {
@@ -5792,6 +6061,7 @@
         "status": "Status",
         "fixed": "Fixed by hand"
       }
-    }
+    },
+    "manageStaff": "Staff & roles"
   }
 }

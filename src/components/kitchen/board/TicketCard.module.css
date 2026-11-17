@@ -690,3 +690,84 @@
 .gone .removals {
   opacity: 0.5;
 }
+
+/* ---------- Not sent yet, stations and the pass ---------- */
+
+/* A tap made while offline: on the ticket already, on its way to the server. */
+.unsent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--warn-tint);
+  color: var(--gold-ink);
+  font: 700 11px/16px var(--f-ui);
+  letter-spacing: 0.02em;
+}
+
+/* The pass: each station's dishes done, of all of them; green once a station is finished. */
+.progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stationChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--sand);
+  color: var(--ink-2);
+  font: 600 13px/18px var(--f-ui);
+}
+
+.stationChip[data-done] {
+  border-color: color-mix(in srgb, var(--success) 50%, transparent);
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+.stationCount {
+  color: var(--ink);
+  font: 800 13px/18px var(--f-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.stationChip[data-done] .stationCount {
+  color: var(--success);
+}
+
+/* Every dish done: the ticket waits on Mark ready, in green. */
+.allDone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--success-tint);
+  color: var(--success);
+  font: 700 14px/20px var(--f-ui);
+}
+
+.ticket[data-done] {
+  border-color: color-mix(in srgb, var(--success) 55%, var(--line));
+}
+
+/* A station's own screen: its dishes all ticked at once, or done and waiting on the others. */
+.mineDone {
+  justify-self: start;
+  min-height: 40px;
+}
+
+.mineFinished {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success);
+  font: 600 13px/18px var(--f-ui);
+}

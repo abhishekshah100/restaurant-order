@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  fiscalYearRanges,
   inDayRange,
   isDayKey,
   ordersFilter,
@@ -129,5 +130,27 @@ describe('days before', () => {
       from: '2026-10-20',
       to: '2026-10-31',
     });
+  });
+});
+
+describe('financial years as day ranges', () => {
+  const nepal = {
+    current: { label: '2083-84', from: '2026-07-17', to: '2027-07-16' },
+    previous: { label: '2082-83', from: '2025-07-17', to: '2026-07-16' },
+  };
+  const year = { historyDays: 730, rangeDays: 366 };
+
+  it('gives This FY up to today and the whole of Last FY', () => {
+    expect(fiscalYearRanges(nepal, '2026-11-17', year)).toEqual([
+      { key: 'current', label: '2083-84', range: { from: '2026-07-17', to: '2026-11-17' } },
+      { key: 'previous', label: '2082-83', range: { from: '2025-07-17', to: '2026-07-16' } },
+    ]);
+  });
+
+  it('leaves out what the page can’t show (a month at a time, a short history)', () => {
+    expect(fiscalYearRanges(nepal, '2026-11-17', { historyDays: 730, rangeDays: 31 })).toEqual([]);
+    expect(
+      fiscalYearRanges(nepal, '2026-11-17', { historyDays: 200, rangeDays: 366 }).map((r) => r.key),
+    ).toEqual(['current']);
   });
 });

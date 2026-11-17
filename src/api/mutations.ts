@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { withAvailability } from '@/lib/adminMenu';
-import { withDismissed, withKitchenStep, withPlated } from '@/lib/kitchenBoard';
+import { withDismissed } from '@/lib/kitchenBoard';
 import { withAcknowledged, withoutReadyRound, withoutRequest } from '@/lib/adminService';
 import type { AdminBranchService, AdminServiceRequest, ReservationRules } from '@/types/admin';
 import type { ServiceRequest } from '@/types/service';
@@ -61,7 +61,6 @@ import type {
   OpenRegisterRequest,
   ItemUnavailableRequest,
   KitchenMessageRequest,
-  KitchenStep,
   OfferRequest,
   OrderUnavailableRequest,
   RefundRequest,
@@ -338,53 +337,6 @@ export const useMarkServed = () =>
   );
 
 /**
- * PATCH /admin/branches/:branchId/orders/:id/rounds/:round/status: the kitchen started a round
- * or has it ready, or (`back`: an undo, a recall) moved it back. The ticket moves lanes at once
- * (back if the server refuses); then the floor (Ready to serve, the Orders page) and the guests'
- * tracking read fresh.
- */
-export function useSetKitchenStatus() {
-  const client = useQueryClient();
-  const token = useAdminToken();
-  return useMutation({
-    mutationFn: ({
-      branchId,
-      orderId,
-      round,
-      step,
-      back,
-    }: {
-      branchId: string;
-      orderId: string;
-      round: number;
-      step: KitchenStep;
-      back?: boolean;
-    }) =>
-      api.setKitchenStatus(requireToken(token), branchId, orderId, round, {
-        status: step,
-        ...(back ? { back: true } : {}),
-      }),
-    onMutate: async ({ branchId, orderId, round, step }) => {
-      const { queryKey } = branchOrdersQuery(token, branchId);
-      await client.cancelQueries({ queryKey });
-      const previous = client.getQueryData(queryKey);
-      if (previous) {
-        client.setQueryData(queryKey, {
-          ...previous,
-          orders: withKitchenStep(previous.orders, orderId, round, step),
-        });
-      }
-      return { queryKey, previous };
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previous) client.setQueryData(context.queryKey, context.previous);
-    },
-    onSettled: (_data, _error, variables) =>
-      refreshAfter(client, 'kitchenStep', branchOf(variables)),
-  });
-}
-
-/**
  * PATCH …/orders/:id/rush: a waiter marks the order rush (or not). Then the floor and the kitchen
  * read fresh (the kitchen also hears it from the branch's events).
  */
@@ -482,46 +434,6 @@ export function useMarkUnavailable() {
           }),
     onSettled: (_data, _error, variables) =>
       refreshAfter(client, 'itemUnavailable', branchOf(variables)),
-  });
-}
-
-/**
- * PATCH …/orders/:id/rounds/:round/items/:position/plated: an item ticked off as plated (or not).
- * The tick shows at once (taken back if the server refuses); other kitchen screens see it from
- * the branch's events.
- */
-export function useSetPlated() {
-  const client = useQueryClient();
-  const token = useAdminToken();
-  return useMutation({
-    mutationFn: ({
-      branchId,
-      orderId,
-      round,
-      index,
-      plated,
-    }: {
-      branchId: string;
-      orderId: string;
-      round: number;
-      index: number;
-      plated: boolean;
-    }) => api.setPlated(requireToken(token), branchId, orderId, round, index, { plated }),
-    onMutate: async ({ branchId, orderId, round, index, plated }) => {
-      const { queryKey } = branchOrdersQuery(token, branchId);
-      await client.cancelQueries({ queryKey });
-      const previous = client.getQueryData(queryKey);
-      if (previous) {
-        client.setQueryData(queryKey, {
-          ...previous,
-          orders: withPlated(previous.orders, orderId, round, index, plated),
-        });
-      }
-      return { queryKey, previous };
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previous) client.setQueryData(context.queryKey, context.previous);
-    },
   });
 }
 
@@ -1423,10 +1335,6 @@ export const useSavePurchaseOrder = () =>
           ...(v.body.note ? { note: v.body.note } : {}),
         })
       : api.createPurchaseOrder(token, v.branchId, v.body),
-  );
-export const useSuggestPurchaseOrder = () =>
-  usePurchasingMutation((token, v: { branchId: string; supplierId: string }) =>
-    api.suggestPurchaseOrder(token, v.branchId, v.supplierId),
   );
 export const usePurchaseOrderStep = () =>
   usePurchasingMutation(

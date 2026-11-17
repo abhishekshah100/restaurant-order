@@ -318,6 +318,16 @@ export const tableQrCodes: Handler = async (ctx, { params, headers }) => {
   return ok(response);
 };
 
+/** GET /admin/branches/:branchId/tables/:table/qr: one table's, as in the list. */
+export const tableQrCode: Handler = async (ctx, request) => {
+  const list = await tableQrCodes(ctx, request);
+  const code = (list.body as TableQrCodesResponse).codes.find(
+    (c) => c.table === Number(request.params.table),
+  );
+  if (!code) fail(404, 'not_found');
+  return ok(code);
+};
+
 /* ---------- Settings › Floor plan ---------- */
 
 /** Whether a body is a floor plan in the floors.json shape (every field there, of its type). */

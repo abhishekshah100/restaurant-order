@@ -94,6 +94,7 @@ export type SettingsError =
   | 'instagramUrl'
   | 'facebookUrl'
   | 'youtubeUrl'
+  | 'tiktokUrl'
   | 'xUrl'
   | 'whatsappUrl'
   | 'googleReviewsUrl'
@@ -846,6 +847,7 @@ const SOCIAL_HOSTS: Record<HelpSocialNetwork, readonly string[]> = {
   instagram: ['instagram.com'],
   facebook: ['facebook.com', 'fb.com', 'fb.me'],
   youtube: ['youtube.com', 'youtu.be'],
+  tiktok: ['tiktok.com', 'vm.tiktok.com', 'vt.tiktok.com'],
   x: ['x.com', 'twitter.com'],
   whatsapp: ['wa.me', 'whatsapp.com', 'api.whatsapp.com', 'chat.whatsapp.com'],
   googleReviews: ['g.page', 'goo.gl', 'maps.app.goo.gl', 'google.com', 'search.google.com'],

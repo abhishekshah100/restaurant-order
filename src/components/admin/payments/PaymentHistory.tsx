@@ -467,6 +467,7 @@ export function PaymentHistory() {
           range={days}
           today={today}
           limits={PAYMENT_HISTORY_LIMITS}
+          fiscalYears
           presets={PRESETS.map((p) => ({
             days: p.days,
             label: t(`adminPayments.history.presets.${p.key}`),

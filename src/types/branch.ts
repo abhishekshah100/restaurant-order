@@ -339,6 +339,7 @@ export const SOCIAL_NETWORKS = [
   'instagram',
   'facebook',
   'youtube',
+  'tiktok',
   'x',
   'whatsapp',
   'googleReviews',

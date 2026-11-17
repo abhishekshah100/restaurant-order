@@ -4,6 +4,7 @@ import { Button, Chip, Input } from '@/components/ui';
 import {
   RANGE_DAYS,
   firstDay,
+  fiscalYearRanges,
   isDayKey,
   isTodayOnly,
   rangeProblem,
@@ -27,6 +28,7 @@ export function DateRangeFilter({
   onChange,
   limits,
   presets,
+  fiscalYears = false,
 }: {
   /** Prefix for the fields' ids (two filters can share a page). */
   id: string;
@@ -38,9 +40,13 @@ export function DateRangeFilter({
   limits?: DayLimits;
   /** Quick ranges ending today, in days ("Last 7 days", "Last 6 months"…). */
   presets?: readonly { days: number; label: string }[];
+  /** Offer "This FY" and "Last FY" too (the branch's financial years, where the limits allow). */
+  fiscalYears?: boolean;
 }) {
   const t = useContent('common');
-  const { clock } = useAdminWorkspace();
+  const { clock, branch } = useAdminWorkspace();
+  const years =
+    fiscalYears && branch.fiscalYears ? fiscalYearRanges(branch.fiscalYears, today, limits) : [];
   const min = firstDay(today, limits);
   const rangeDays = limits?.rangeDays ?? RANGE_DAYS;
   // The days as typed; the page's range until staff change one.
@@ -105,9 +111,9 @@ export function DateRangeFilter({
               : t('adminDateRange.problems.tooLong', { days: rangeDays })}
         </p>
       )}
-      {presets && presets.length > 0 && (
+      {((presets && presets.length > 0) || years.length > 0) && (
         <div className={styles.presets} role="group" aria-label={t('adminDateRange.presets')}>
-          {presets.map((p) => {
+          {(presets ?? []).map((p) => {
             const range = { from: shiftDay(today, -(p.days - 1)), to: today };
             return (
               <Chip
@@ -119,6 +125,15 @@ export function DateRangeFilter({
               </Chip>
             );
           })}
+          {years.map((y) => (
+            <Chip
+              key={y.key}
+              pressed={draft.from === y.range.from && draft.to === y.range.to}
+              onClick={() => pick(y.range)}
+            >
+              {t(`adminDateRange.fiscalYear.${y.key}`, { label: y.label })}
+            </Chip>
+          ))}
         </div>
       )}
     </div>

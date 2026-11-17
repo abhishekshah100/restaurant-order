@@ -1,30 +1,28 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useContent } from '@/api/hooks';
 import type { KitchenStep } from '@/api/contracts';
-import { useSetKitchenStatus, useSetPlated } from '@/api/mutations';
 import { useAdminWorkspace } from '@/components/admin/shell/AdminWorkspace';
 import { useToast } from '@/context/ToastContext';
 import type { KitchenTicket } from '@/lib/kitchenBoard';
+import { queueKitchenTap, useKitchenOutbox, waitingTickets } from '../useKitchenOutbox';
 import { useTicketWhere } from '../useTicketWhere';
 
 /**
- * Moving tickets on (Start cooking, Mark ready) and back (a recall), with the ticket's button
- * busy until the server answers, a polite announcement when it's done and a toast when it isn't.
- * A step forward offers Undo for a few seconds (and `undoLast` for the keyboard's Backspace).
- * Items ticked off as plated are saved on the order, so every kitchen screen shows them.
+ * Moving tickets on (Start cooking, Mark ready) and back (a recall), and dishes ticked off as
+ * plated. Each tap shows at once and goes out from this screen's queue (useKitchenOutbox), so a
+ * tap made while the connection is down isn't lost: it's sent when it's back. A polite
+ * announcement says what moved; a step forward offers Undo for a few seconds (and `undoLast`
+ * for the keyboard's Backspace). `waiting` holds the tickets with a tap not sent yet.
  */
 export function useTicketActions() {
   const t = useContent('kitchen');
   const { branch } = useAdminWorkspace();
   const { showToast } = useToast();
   const whereOf = useTicketWhere();
-  // `mutateAsync` is stable, so `step` (passed to every ticket) is too; its promise settles per
-  // call, so two tickets bumped at once each get their answer.
-  const { mutateAsync } = useSetKitchenStatus();
-  const { mutate: setPlated } = useSetPlated();
-  const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
+  const outbox = useKitchenOutbox();
+  const waiting = useMemo(() => waitingTickets(outbox), [outbox]);
   const [announcement, setAnnouncement] = useState('');
   // The last step forward, to take back (Undo, Backspace).
   const last = useRef<{ ticket: KitchenTicket; back: KitchenStep } | null>(null);
@@ -33,56 +31,46 @@ export function useTicketActions() {
     (ticket: KitchenTicket, next: KitchenStep, back = false) => {
       // Its own function, so Undo (in the toast) can send the step back the same way.
       function run(ticket: KitchenTicket, next: KitchenStep, back: boolean) {
-        setPending((keys) => new Set(keys).add(ticket.key));
-        mutateAsync({
+        queueKitchenTap({
+          kind: 'step',
           branchId: branch.id,
           orderId: ticket.orderId,
           round: ticket.round,
           step: next,
-          back,
-        })
-          .then(() => {
-            const order = ticket.orderId;
-            if (back) {
-              last.current = null;
-              setAnnouncement(
-                t(next === 'received' ? 'board.announce.received' : 'board.announce.recalled', {
-                  order,
-                }),
-              );
-              return;
-            }
-            setAnnouncement(
-              t(next === 'ready' ? 'board.announce.ready' : 'board.announce.preparing', { order }),
-            );
-            // Taken back to where it was: New, or Cooking.
-            const undo = {
-              ticket,
-              back: ticket.stage === 'cooking' ? 'preparing' : 'received',
-            } as const;
-            last.current = undo;
-            showToast(
-              t(next === 'ready' ? 'ticket.undo.ready' : 'ticket.undo.preparing', {
-                where: whereOf(ticket),
-              }),
-              {
-                actionLabel: t('ticket.undo.action'),
-                onAction: () => run(undo.ticket, undo.back, true),
-              },
-            );
-          })
-          .catch(() => showToast(t('failed'), { tone: 'error' }))
-          .finally(() =>
-            setPending((keys) => {
-              const rest = new Set(keys);
-              rest.delete(ticket.key);
-              return rest;
+          ...(back ? { back: true as const } : {}),
+        });
+        const order = ticket.orderId;
+        if (back) {
+          last.current = null;
+          setAnnouncement(
+            t(next === 'received' ? 'board.announce.received' : 'board.announce.recalled', {
+              order,
             }),
           );
+          return;
+        }
+        setAnnouncement(
+          t(next === 'ready' ? 'board.announce.ready' : 'board.announce.preparing', { order }),
+        );
+        // Taken back to where it was: New, or Cooking.
+        const undo = {
+          ticket,
+          back: ticket.stage === 'cooking' ? 'preparing' : 'received',
+        } as const;
+        last.current = undo;
+        showToast(
+          t(next === 'ready' ? 'ticket.undo.ready' : 'ticket.undo.preparing', {
+            where: whereOf(ticket),
+          }),
+          {
+            actionLabel: t('ticket.undo.action'),
+            onAction: () => run(undo.ticket, undo.back, true),
+          },
+        );
       }
       run(ticket, next, back);
     },
-    [branch.id, mutateAsync, showToast, t, whereOf],
+    [branch.id, showToast, t, whereOf],
   );
 
   /** Takes back the last step forward (Backspace); nothing once it's been undone. */
@@ -91,23 +79,30 @@ export function useTicketActions() {
     if (undo) step(undo.ticket, undo.back, true);
   }, [step]);
 
-  const togglePlated = useCallback(
-    (ticket: KitchenTicket, index: number) => {
-      setPlated(
-        {
+  /** Ticks dishes (their places on the ticket) as plated, or unticks them. */
+  const setPlated = useCallback(
+    (ticket: KitchenTicket, indexes: readonly number[], plated: boolean) => {
+      for (const index of indexes) {
+        queueKitchenTap({
+          kind: 'plated',
           branchId: branch.id,
           orderId: ticket.orderId,
           round: ticket.round,
           index,
-          plated: ticket.items[index]?.plated !== true,
-        },
-        { onError: () => showToast(t('ticket.platedFailed'), { tone: 'error' }) },
-      );
+          plated,
+        });
+      }
     },
-    [branch.id, setPlated, showToast, t],
+    [branch.id],
   );
 
-  return { step, undoLast, pending, togglePlated, announcement, setAnnouncement };
+  const togglePlated = useCallback(
+    (ticket: KitchenTicket, index: number) =>
+      setPlated(ticket, [index], ticket.items[index]?.plated !== true),
+    [setPlated],
+  );
+
+  return { step, undoLast, waiting, togglePlated, setPlated, announcement, setAnnouncement };
 }
 
 /**

@@ -75,7 +75,11 @@ export interface PurchaseOrder {
 }
 
 export interface PurchasingSettings {
-  approvalLimit?: number;
+  /**
+   * Orders above this (before tax) need approval; 0: every one; null: approval is off (the
+   * default). Only for staff who see prices.
+   */
+  approvalLimit?: number | null;
   priceAlert: number;
 }
 
