@@ -747,11 +747,29 @@ describe('Payments for staff: split bills, tips and refunds (mock)', () => {
     await collect(placed.id, { method: 'cash' });
 
     expect((await refund(placed.id, { amount: 10, reason: 'bored' })).status).toBe(400);
+    expect((await refund(placed.id, { amount: placed.total + 1, reason: 'goodwill' })).status).toBe(
+      400,
+    );
+    // A complaint or a wrong item names its dishes, never more than were served.
+    const first = { round: 1, position: 0 };
+    expect((await refund(placed.id, { amount: 50, reason: 'wrongItem' })).status).toBe(400);
     expect(
-      (await refund(placed.id, { amount: placed.total + 1, reason: 'complaint' })).status,
+      (
+        await refund(placed.id, {
+          amount: 50,
+          reason: 'wrongItem',
+          items: [{ ...first, quantity: 99 }],
+        })
+      ).status,
     ).toBe(400);
-    const part = (await refund(placed.id, { amount: 50, reason: 'wrongItem', note: 'Cold naan' }))
-      .body as Order;
+    const part = (
+      await refund(placed.id, {
+        amount: 50,
+        reason: 'wrongItem',
+        note: 'Cold naan',
+        items: [{ ...first, quantity: 1 }],
+      })
+    ).body as Order;
     expect(part.payment).toMatchObject({ status: 'paid', refundAmount: 50 });
     expect(part.payment.transactions?.at(-1)).toMatchObject({
       kind: 'refund',
@@ -762,6 +780,7 @@ describe('Payments for staff: split bills, tips and refunds (mock)', () => {
       note: 'Cold naan',
       status: 'done',
       by: DEMO_ADMIN.name,
+      items: [expect.objectContaining({ ...first, quantity: 1, amount: 50 })],
     });
     // The rest, then nothing more.
     expect(

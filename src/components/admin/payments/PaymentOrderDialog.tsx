@@ -11,6 +11,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { methodIcon, usePaymentText } from './usePaymentText';
 import { ProofThumbs } from './ProofThumbs';
 import styles from './PaymentDialogs.module.css';
+import { refundedDishes } from '@/lib/refundItems';
 
 /**
  * One order from the Payments page: everything on it (items, bill, status), every payment and
@@ -115,6 +116,13 @@ export function PaymentOrderDialog({
                           .filter(Boolean)
                           .join(' · ')}
                       </span>
+                      {entry.items && entry.items.length > 0 && (
+                        <span className={styles.historyNote}>
+                          {t('adminPayments.entry.refundedDishes', {
+                            dishes: refundedDishes(entry.items),
+                          })}
+                        </span>
+                      )}
                       {entry.note && <span className={styles.historyNote}>{entry.note}</span>}
                       {entry.proofs && entry.proofs.length > 0 && (
                         <ProofThumbs proofs={entry.proofs} />

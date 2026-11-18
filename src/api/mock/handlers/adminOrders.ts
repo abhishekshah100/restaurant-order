@@ -2,6 +2,7 @@ import { createClock } from '@/lib/clock';
 import { CANCEL_REASONS } from '@/lib/adminOrders';
 import { MAX_REFUND_NOTE, REFUND_REASONS, WAIVE_REASONS, refundable } from '@/lib/adminPayments';
 import { isFinished, isToday } from '@/lib/orders';
+import { refundLineKey, refundNeedsItems, refundableLines, valueOfPicks } from '@/lib/refundItems';
 import { amountDue, paidAmount } from '@/lib/lifecycle';
 import { calculateBill } from '@/lib/pricing';
 import { discountsFor, findPromo } from '@/lib/promotions';
@@ -294,9 +295,45 @@ export const refundOrder: Handler = async (ctx, { params, body, headers }) => {
   const rawNote = isObject(body) && typeof body.note === 'string' ? body.note.trim() : '';
   const order = await storedOrder(ctx, branch, params.id);
   const now = new Date(ctx.now());
-  const available = refundable(liveOrder(order, now.getTime(), branch));
+  const live = liveOrder(order, now.getTime(), branch);
+  const available = refundable(live);
   if (available <= 0) fail(409, 'nothing_to_refund');
   if (amount > available) fail(400, 'invalid_request');
+  // The dishes it's for, as the server checks them (orders › refund-items.ts).
+  const picks = refundPicks(body);
+  if (refundNeedsItems(reason) && picks.length === 0) fail(400, 'invalid_request');
+  const lines = new Map(refundableLines(live).map((l) => [refundLineKey(l), l]));
+  if (picks.some((p) => p.quantity > (lines.get(refundLineKey(p))?.left ?? 0))) {
+    fail(400, 'invalid_request');
+  }
+  if (picks.length > 0 && amount > valueOfPicks(live, picks, branch.currency.minorUnit)) {
+    fail(400, 'invalid_request');
+  }
+  const minor = branch.currency.minorUnit;
+  const weights = picks.map((p) => {
+    const line = lines.get(refundLineKey(p));
+    return line ? Math.round(line.item.unitPrice * minor) * p.quantity : 0;
+  });
+  const weightTotal = weights.reduce((sum, w) => sum + w, 0);
+  let leftMinor = Math.round(amount * minor);
+  const items = picks.map((p, i) => {
+    const line = lines.get(refundLineKey(p));
+    const share =
+      i === picks.length - 1
+        ? leftMinor
+        : weightTotal > 0
+          ? Math.floor((Math.round(amount * minor) * weights[i]) / weightTotal)
+          : 0;
+    leftMinor -= share;
+    return {
+      round: p.round,
+      position: p.position,
+      name: line?.item.name ?? '',
+      ...(line?.item.variant ? { variant: line.item.variant } : {}),
+      quantity: p.quantity,
+      amount: share / minor,
+    };
+  });
   // The bill stays settled: the refund is recorded beside it.
   const refunded: Order = {
     ...order,
@@ -311,10 +348,31 @@ export const refundOrder: Handler = async (ctx, { params, body, headers }) => {
       at: now.toISOString(),
       by: account.name,
       ...(rawNote ? { note: rawNote.slice(0, MAX_REFUND_NOTE) } : {}),
+      ...(items.length > 0 ? { items } : {}),
     }),
     now,
   );
 };
+
+/** A refund body's dishes: whole lines and counts only (anything else: 400). */
+function refundPicks(body: unknown): { round: number; position: number; quantity: number }[] {
+  if (!isObject(body) || body.items === undefined) return [];
+  if (!Array.isArray(body.items)) fail(400, 'invalid_request');
+  return body.items.map((raw: unknown) => {
+    const ok =
+      isObject(raw) &&
+      Number.isInteger(raw.round) &&
+      Number.isInteger(raw.position) &&
+      Number.isInteger(raw.quantity) &&
+      (raw.quantity as number) > 0;
+    if (!ok) fail(400, 'invalid_request');
+    return {
+      round: raw.round as number,
+      position: raw.position as number,
+      quantity: raw.quantity as number,
+    };
+  });
+}
 
 /** POST /admin/branches/:branchId/tables/:table/payment */
 export const collectTablePayment: Handler = async (ctx, { params, body, headers }) => {

@@ -5,6 +5,7 @@ import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { methodIcon, usePaymentText } from './usePaymentText';
 import styles from './LedgerRow.module.css';
+import { refundedDishes } from '@/lib/refundItems';
 
 /**
  * One payment or refund: the method, the order and where, when and who took it (or why it was
@@ -54,6 +55,11 @@ export function LedgerRow({ entry, onOpen }: { entry: LedgerLine; onOpen?: () =>
               {entry.reason && t(`adminPayments.entry.reasons.${entry.reason}`)}
               {entry.reason && entry.note && ' — '}
               {entry.note}
+            </span>
+          )}
+          {entry.items && entry.items.length > 0 && (
+            <span className={styles.reason}>
+              {t('adminPayments.entry.refundedDishes', { dishes: refundedDishes(entry.items) })}
             </span>
           )}
         </span>

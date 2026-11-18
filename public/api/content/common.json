@@ -4099,7 +4099,8 @@
         "complaint": "Complaint",
         "other": "Other"
       },
-      "open": "{kind} of {amount} on order {order}"
+      "open": "{kind} of {amount} on order {order}",
+      "refundedDishes": "For: {dishes}"
     },
     "empty": {
       "collectTitle": "Everything's settled",
@@ -4255,11 +4256,17 @@
       "amount": "How much",
       "amounts": {
         "full": "Everything ({amount})",
-        "custom": "Part of it"
+        "custom": "Part of it",
+        "dishes": "For these dishes ({amount})"
       },
       "customAmount": "Amount to refund",
       "customError": "Enter an amount up to {amount}",
       "reason": "Why",
+      "dishes": "Which dishes",
+      "dishesNeeded": "Pick the dishes this refund is for.",
+      "dishesOptional": "Optional: pick them if it's for particular dishes.",
+      "dishesNone": "No dishes left to refund on this order. Choose another reason.",
+      "dishLeft": "{count} left · {price} each",
       "note": "Note",
       "notePlaceholder": "What happened (for the day report)",
       "online": "Goes back to {method} through the payment partner. The guest gets it in 5–7 working days.",

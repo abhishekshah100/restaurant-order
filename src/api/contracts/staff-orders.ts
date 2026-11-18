@@ -99,10 +99,23 @@ export interface CollectPaymentRequest {
  * (`done`). The order stays paid; `payment.refundAmount` and a refund transaction record it.
  * 200 → `Order`. Errors: 400 (amount or reason), 401, 403, 404 not_found, 409 nothing_to_refund.
  */
+/** A dish named on a refund: a line of a round (its position, from 0) and how many of it. */
+export interface RefundPick {
+  round: number;
+  position: number;
+  quantity: number;
+}
+
 export interface RefundRequest {
   amount: Price;
   reason: RefundReason;
   note?: string;
+  /**
+   * The dishes it's for: a line of a round (its position, from 0) and how many of it. Needed
+   * for a complaint or a wrong item (400 `items` without); the amount can't be more than they
+   * came to on the bill (400 `amount`).
+   */
+  items?: RefundPick[];
 }
 
 /**

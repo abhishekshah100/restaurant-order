@@ -21,6 +21,7 @@ export const toLine = (tx: HistoryTransaction): LedgerLine => ({
   ...(tx.reason ? { reason: tx.reason as LedgerLine['reason'] } : {}),
   ...(tx.note ? { note: tx.note } : {}),
   ...(tx.status ? { status: tx.status } : {}),
+  ...(tx.items ? { items: tx.items } : {}),
   order: {
     id: tx.orderId,
     customerName: tx.customerName,

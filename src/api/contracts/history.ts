@@ -1,6 +1,6 @@
 import type { AdminServiceRequest, CancelReason } from '@/types/admin';
 import type { OrderMode } from '@/types/branch';
-import type { OrderStatus, PaymentStatus as OrderPaymentStatus } from '@/types/order';
+import type { OrderStatus, PaymentStatus as OrderPaymentStatus, RefundedItem } from '@/types/order';
 
 /* ---------- Order, payment and request history ---------- */
 
@@ -26,6 +26,8 @@ export interface HistoryTransaction {
   /** What staff wrote with it ("Cold naan"). */
   note?: string;
   status?: 'started' | 'done';
+  /** Staff refunds: the dishes it was for (Order › payment › transactions › items). */
+  items?: RefundedItem[];
   /** ISO. */
   at: string;
 }

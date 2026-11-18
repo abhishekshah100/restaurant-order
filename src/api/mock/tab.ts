@@ -145,7 +145,7 @@ export function addTransaction(
 export function withRefund(
   order: Order,
   paidFrom: Order,
-  refund: Pick<PaymentTransaction, 'amount' | 'reason' | 'at' | 'by' | 'note'>,
+  refund: Pick<PaymentTransaction, 'amount' | 'reason' | 'at' | 'by' | 'note' | 'items'>,
 ): Order {
   if (refund.amount <= 0) return order;
   const payments = ledgerOf(paidFrom).filter((t) => t.kind === 'payment');

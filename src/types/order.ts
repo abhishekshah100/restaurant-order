@@ -82,6 +82,22 @@ export interface PaymentTransaction {
    * with the admin's token (api › paymentProof).
    */
   proofs?: string[];
+  /**
+   * Staff refunds: the dishes it's for (round, its line's position from 0, how many) and each
+   * one's part of the amount. Missing when it names none (goodwill, or given before dishes
+   * were recorded).
+   */
+  items?: RefundedItem[];
+}
+
+/** A dish a staff refund was for. */
+export interface RefundedItem {
+  round: number;
+  position: number;
+  name: string;
+  variant?: string;
+  quantity: number;
+  amount: Price;
 }
 
 export interface OrderItem {
