@@ -25,15 +25,9 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { Qty } from './Qty';
 import { docNumber, usePurchasingText } from './usePurchasingText';
 import styles from './Purchasing.module.css';
+import { ReceivePicker } from './ReceivePicker';
+import { RETURN_REASONS } from '@/lib/purchasingFlow';
 
-/** Why something was refused at the door (said on the delivery, in the staff's words). */
-const REFUSE_REASONS: readonly ReturnReason[] = [
-  'damaged',
-  'wrong_item',
-  'expired',
-  'excess',
-  'other',
-];
 const ON_THE_WAY = ['approved', 'sent', 'partly_received'];
 const PHOTO = 'invoice';
 
@@ -230,81 +224,15 @@ export function ReceiveDialog({
   /* ---------- What arrived? ---------- */
   if (source === null) {
     return (
-      <Dialog
-        open
+      <ReceivePicker
+        onTheWay={onTheWay}
+        today={today}
         onClose={onClose}
-        presentation="adaptive"
-        title={t('adminPurchasing.receive.title')}
-        description={t('adminPurchasing.receive.whichIntro')}
-      >
-        <div className={styles.editor}>
-          {onTheWay.length > 0 ? (
-            <ul className={styles.pickList}>
-              {onTheWay.map((o) => {
-                const late = o.expectedOn !== undefined && o.expectedOn < today;
-                return (
-                  <li key={o.id}>
-                    <button
-                      type="button"
-                      className={styles.pick}
-                      onClick={() => {
-                        setLines(null);
-                        setSource(o.id);
-                      }}
-                    >
-                      <span className={styles.pickIcon} aria-hidden="true">
-                        <Icon name="bag" size="sm" />
-                      </span>
-                      <span className={styles.rowMain}>
-                        <span className={styles.rowTitle}>{o.supplier.name}</span>
-                        <span className={cx(styles.rowMeta, late && styles.lateText)}>
-                          {[
-                            docNumber('PO', o.number),
-                            t.plural('adminPurchasing.orders.lineCount', o.lines.length),
-                            o.expectedOn &&
-                              (late
-                                ? t('adminPurchasing.today.lateSince', {
-                                    date: clock.date(`${o.expectedOn}T12:00:00Z`),
-                                  })
-                                : t('adminPurchasing.orders.expected', {
-                                    date: clock.date(`${o.expectedOn}T12:00:00Z`),
-                                  })),
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </span>
-                      </span>
-                      <Icon name="chev" size="sm" className={styles.rowChev} />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className={styles.note}>
-              <Icon name="info" size="xs" />
-              {t('adminPurchasing.receive.noneOnTheWay')}
-            </p>
-          )}
-          <button
-            type="button"
-            className={cx(styles.pick, styles.pickDirect)}
-            onClick={() => {
-              setLines([]);
-              setSource('direct');
-            }}
-          >
-            <span className={styles.pickIcon} aria-hidden="true">
-              <Icon name="store" size="sm" />
-            </span>
-            <span className={styles.rowMain}>
-              <span className={styles.rowTitle}>{t('adminPurchasing.receive.direct')}</span>
-              <span className={styles.rowMeta}>{t('adminPurchasing.receive.directHint')}</span>
-            </span>
-            <Icon name="chev" size="sm" className={styles.rowChev} />
-          </button>
-        </div>
-      </Dialog>
+        onPick={(next) => {
+          setLines(next === 'direct' ? [] : null);
+          setSource(next);
+        }}
+      />
     );
   }
 
@@ -391,7 +319,7 @@ export function ReceiveDialog({
                 {t('adminPurchasing.tips.refused')}
               </InfoTip>
             </span>
-            {REFUSE_REASONS.map((r) => (
+            {RETURN_REASONS.map((r) => (
               <button
                 key={r}
                 type="button"

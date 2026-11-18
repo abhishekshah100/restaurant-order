@@ -10,8 +10,7 @@ import type { RotaWeekResponse } from '@/types/admin';
 import { ToggleRow } from '../settings/shared/SettingsEditor';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './RotaPlanner.module.css';
-
-const atNoon = (day: string) => new Date(`${day}T12:00:00Z`);
+import { atNoon } from '@/lib/dayRange';
 
 /** Rota settings: the weekly hours warning (on, at how many hours, or off). */
 export function RotaSettingsDialog({

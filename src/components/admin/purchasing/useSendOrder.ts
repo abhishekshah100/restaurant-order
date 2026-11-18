@@ -34,7 +34,7 @@ export function useSendOrder() {
         t('adminPurchasing.orders.message', {
           number: docNumber('PO', order.number),
           brand,
-          date: order.expectedOn ? clock.date(`${order.expectedOn}T12:00:00Z`) : '',
+          date: order.expectedOn ? clock.day(order.expectedOn) : '',
         }),
         ...order.lines.map((l) => `• ${l.name}: ${text.packs(l.quantity, l.pack)}`),
         order.note ?? '',

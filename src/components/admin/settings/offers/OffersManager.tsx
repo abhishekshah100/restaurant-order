@@ -120,7 +120,7 @@ export function OffersManager() {
 
   /** "1 Nov 2026 – 30 Nov 2026", "From 1 Nov 2026", or nothing without dates. */
   const dates = (offer: AutoOffer) => {
-    const day = (key: string) => clock.date(`${key}T12:00:00Z`);
+    const day = (key: string) => clock.day(key);
     if (offer.startsOn && offer.endsOn) {
       return t('adminSettings.offers.dates', { from: day(offer.startsOn), to: day(offer.endsOn) });
     }
@@ -166,7 +166,7 @@ export function OffersManager() {
         <ul className={styles.list}>
           {offers.map((offer) => {
             const standing = now ? offerStanding(offer, now, region.timezone) : null;
-            const day = (key?: string) => (key ? clock.date(`${key}T12:00:00Z`) : '');
+            const day = (key?: string) => (key ? clock.day(key) : '');
             const range = dates(offer);
             return (
               <li key={offer.id} className={styles.offer} data-paused={!offer.active || undefined}>

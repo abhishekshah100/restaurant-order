@@ -1,4 +1,5 @@
 import type { AddressLabel, DeliveryAddress } from '@/types/order';
+import { isObject } from '@/lib/isObject';
 
 /** Address labels, in the order they're offered. */
 export const ADDRESS_LABELS: readonly AddressLabel[] = ['home', 'work', 'other'];
@@ -9,7 +10,6 @@ export const ADDRESS_FIELD_MAX = 160;
 /** How many addresses a device remembers per branch. */
 export const SAVED_ADDRESS_LIMIT = 3;
 
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isOptionalString = (v: unknown) => v === undefined || typeof v === 'string';
 
 /** Runtime guard for a delivery address (saved on the device or in the checkout). */
@@ -50,7 +50,7 @@ export function cleanAddress(address: DeliveryAddress): DeliveryAddress {
 }
 
 /** Same place (ignoring the label and notes). */
-export const sameAddress = (a: DeliveryAddress, b: DeliveryAddress) =>
+const sameAddress = (a: DeliveryAddress, b: DeliveryAddress) =>
   a.line.trim().toLowerCase() === b.line.trim().toLowerCase() && a.area === b.area;
 
 /** Puts an address first in a list of saved ones, dropping an older copy and the oldest beyond the limit. */

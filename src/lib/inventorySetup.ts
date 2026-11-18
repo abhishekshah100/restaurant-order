@@ -108,7 +108,7 @@ export interface Attention {
 }
 
 /** Dishes a price rise touches, and those whose food cost it takes over the goal. */
-export function priceImpact(rises: readonly PriceRise[], goal: number | undefined) {
+function priceImpact(rises: readonly PriceRise[], goal: number | undefined) {
   const dishes = new Set<string>();
   const over = new Set<string>();
   for (const rise of rises) {
@@ -137,7 +137,7 @@ function priceLine(dashboard: InventoryDashboard | undefined): Attention[] {
 }
 
 /** A stock count is due this many days after the last. */
-export const COUNT_EVERY_DAYS = 7;
+const COUNT_EVERY_DAYS = 7;
 const DAY_MS = 86_400_000;
 
 /**

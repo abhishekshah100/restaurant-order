@@ -205,10 +205,10 @@ function OrderCard({
             <Icon name="calendar" size="xs" />
             {late
               ? t('adminPurchasing.today.lateSince', {
-                  date: clock.date(`${order.expectedOn}T12:00:00Z`),
+                  date: clock.day(order.expectedOn),
                 })
               : t('adminPurchasing.orders.expected', {
-                  date: clock.date(`${order.expectedOn}T12:00:00Z`),
+                  date: clock.day(order.expectedOn),
                 })}
           </span>
         )}

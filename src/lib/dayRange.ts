@@ -6,7 +6,7 @@ import type { AdminOrdersFilter } from '@/api/contracts';
  * server's limits on GET /admin/branches/:branchId/orders).
  */
 
-export const HISTORY_DAYS = 365;
+const HISTORY_DAYS = 365;
 export const RANGE_DAYS = 31;
 
 /** How far back a page can look, and how long one range can be. */
@@ -52,6 +52,9 @@ export function fiscalYearRanges(
   return ranges.filter((r) => rangeProblem(r.range, today, limits) === null);
 }
 
+/** A calendar day ("2026-11-01") as a moment: midday UTC, the same day in every time zone. */
+export const atNoon = (day: string): Date => new Date(`${day}T12:00:00Z`);
+
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86_400_000;
 
@@ -80,7 +83,7 @@ export const daysBefore = (range: DayRange): DayRange => ({
  * moves them.
  */
 export const daysLabel = (date: (at: Date) => string, from: string, to: string): string => {
-  const one = (key: string) => date(new Date(`${key}T12:00:00Z`));
+  const one = (key: string) => date(atNoon(key));
   return from === to ? one(from) : `${one(from)} – ${one(to)}`;
 };
 

@@ -56,7 +56,7 @@ export interface SettingsGroup {
 
 const MANAGE: StaffPermission = 'branch.settings.manage';
 
-export const SETTINGS_GROUPS: readonly SettingsGroup[] = [
+const SETTINGS_GROUPS: readonly SettingsGroup[] = [
   {
     id: 'branch',
     topics: [
@@ -173,10 +173,6 @@ export function activeSettingsSection(pathname: string): SettingsSectionId | und
   const path = `${pathname.replace(/\/+$/, '')}/`;
   return ALL_PAGES.find((s) => path.startsWith(s.href))?.id;
 }
-
-/** The section a page belongs to. */
-export const topicOf = (page: SettingsSectionId): SettingsTopic | undefined =>
-  ALL_TOPICS.find((t) => t.pages.some((p) => p.id === page));
 
 /** A page by its id. */
 export const settingsPage = (page: SettingsSectionId): SettingsSection | undefined =>

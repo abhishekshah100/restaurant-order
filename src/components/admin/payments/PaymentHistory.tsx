@@ -31,6 +31,7 @@ import { useLedgerExport } from './paymentsExport';
 import { useMethodLabels, usePaymentText } from './usePaymentText';
 import styles from './PaymentsBoard.module.css';
 import own from './PaymentHistory.module.css';
+import { downloadFile } from '@/lib/saveFile';
 
 const CHANNELS: readonly ChannelFilter[] = ['all', 'online', 'inPerson'];
 const NO_METHODS: readonly { method: string; channel: 'online' | 'inPerson' }[] = [];
@@ -102,7 +103,7 @@ export function PaymentHistory() {
 
   const goTo = (range: DayRange, next: View = view) =>
     router.replace(paymentHistoryPath(range, next), { scroll: false });
-  const dayLabel = (key: string) => clock.date(`${key}T12:00:00Z`);
+  const dayLabel = (key: string) => clock.day(key);
   const period =
     days.from === days.to
       ? t('adminPayments.history.period.day', { date: dayLabel(days.from) })
@@ -130,12 +131,10 @@ export function PaymentHistory() {
     setRegisterBusy(true);
     try {
       const blob = await api.salesRegister(token, branch.id, { from: days.from, to: days.to });
-      const url = URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `sales-register-${branch.id}-${days.from}-${days.to}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadFile(
+        new Blob([blob], { type: 'text/csv' }),
+        `sales-register-${branch.id}-${days.from}-${days.to}.csv`,
+      );
     } catch {
       showToast(t('adminPayments.history.registerFailed'), { tone: 'error' });
     } finally {

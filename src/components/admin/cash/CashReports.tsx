@@ -80,7 +80,7 @@ export function CashReports({ today, limit }: { today: string; limit: number }) 
   const [to, setTo] = useState(today);
   const valid = from <= to && to <= today && from >= shiftDay(to, -(MAX_DAYS - 1));
   const report = useCashReport(branch.id, valid ? { from, to } : { from: to, to }).data;
-  const dayLabel = (day: string) => clock.date(`${day}T12:00:00Z`);
+  const dayLabel = (day: string) => clock.day(day);
   const [settings, setSettings] = useState(false);
   // The days at a glance: what went missing, what was extra, how often, what to check.
   const kpis = report

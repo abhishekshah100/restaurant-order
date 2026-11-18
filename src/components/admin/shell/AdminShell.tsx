@@ -132,7 +132,7 @@ function Workspace({ children, fallback }: { children: ReactNode; fallback: Reac
 }
 
 /** The page's colours while the session and branch are checked, so nothing flashes. */
-export function ShellFallback() {
+function ShellFallback() {
   const t = useContent('common');
   return (
     <div className={styles.fallback} aria-busy="true">

@@ -23,7 +23,7 @@ export function validateDetails(name: string, phone: string, rules: MobileRules)
 export const hasErrors = (e: DetailsErrors) => Boolean(e.name || e.phone);
 
 /** Digits in a one-time code. */
-export const OTP_LENGTH = 6;
+const OTP_LENGTH = 6;
 
 /** Whether every digit of the code has been entered (the server checks the code itself). */
 export const isCompleteOtp = (code: string) => code.length >= OTP_LENGTH;

@@ -517,7 +517,7 @@ export function RefundsPage() {
               return (
                 <section key={day} className={styles.day} aria-label={day}>
                   <h3 className={styles.dayHead}>
-                    <span>{clock.date(`${day}T12:00:00Z`)}</span>
+                    <span>{clock.day(day)}</span>
                     {givenBack > 0 && (
                       <span className={styles.muted}>
                         {t('adminRefunds.list.dayTotal', { amount: money.format(givenBack) })}

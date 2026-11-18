@@ -92,7 +92,7 @@ export const activeOffers = (
   );
 
 /** Whether an offer covers a dish (its category, or the dish itself). */
-export const offerCovers = (
+const offerCovers = (
   { scope }: Pick<AutoOffer, 'scope'>,
   dish: Pick<Dish, 'slug' | 'categoryId'>,
 ) => Boolean(scope.dishes?.includes(dish.slug) || scope.categories?.includes(dish.categoryId));

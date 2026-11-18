@@ -3,9 +3,9 @@
 import { useEffect, useRef } from 'react';
 import { AddButton, QuantityStepper } from '@/components/ui';
 import { useContent } from '@/api/hooks';
+import { useDishCardShared } from '@/context/DishCardContext';
 import { useQuickAdd } from '@/context/QuickAddContext';
 import { useCartActions, useDishLines } from '@/hooks/useCart';
-import { useOrderingAvailability } from '@/hooks/useRestaurantStatus';
 import { defaultConfig } from '@/lib/cartLine';
 import { cx } from '@/lib/cx';
 import { isCustomisable } from '@/lib/menu';
@@ -32,7 +32,7 @@ export function AddControl({ dish, size = 'md', customisableHint, className }: A
   const { openQuickAdd } = useQuickAdd();
   const lines = useDishLines(dish.slug);
   const count = lines.reduce((n, l) => n + l.quantity, 0);
-  const { canAdd } = useOrderingAvailability();
+  const { canAdd } = useDishCardShared();
   const t = useContent('menu');
   // While the restaurant is closed the menu is read-only.
   const unavailable = unavailableLabel(t, dish) ?? (canAdd ? undefined : t('availability.closed'));

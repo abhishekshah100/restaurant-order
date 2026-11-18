@@ -307,7 +307,7 @@ export const refundStaff = (entries: readonly RefundsEntry[]): string[] =>
   [...new Set(entries.flatMap((e) => (e.by ? [e.by] : [])))].sort();
 
 /** An online refund still not with the guest this many days after it was given is late. */
-export const LATE_REFUND_DAYS = 7;
+const LATE_REFUND_DAYS = 7;
 const DAY_MS = 86_400_000;
 
 /** Whether an online refund on its way has taken longer than it should (check with the bank). */

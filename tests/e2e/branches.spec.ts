@@ -132,7 +132,7 @@ test('Nepal: pay at the counter, then pay the bill with Khalti; the copy names N
   // The bill hint and the payment help name Nepal's ways to pay and its VAT invoice.
   await page.goto('/help/bill/');
   await expect(
-    visible(page, 'You can pay by card, eSewa, Khalti, Fonepay QR or cash.'),
+    visible(page, 'You can pay them by card, eSewa, Khalti, Fonepay QR or cash.'),
   ).toBeVisible();
   await page.goto('/help/');
   await page.getByRole('button', { name: /Payment help/ }).click();

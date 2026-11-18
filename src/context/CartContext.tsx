@@ -26,9 +26,10 @@ import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage';
 import { useGuestSession } from './GuestSessionContext';
 import { DESKTOP_QUERY, matchesNow } from '@/hooks/useMediaQuery';
 import { useToast } from './ToastContext';
+import { isObject } from '@/lib/isObject';
 
 /** How long "Paneer Tikka added" shows: on the cart bar, or as a toast without one. */
-export const ADDED_FLASH_MS = 1500;
+const ADDED_FLASH_MS = 1500;
 const ADDED_TOAST_MS = 2000;
 
 /** Cart actions. Stable for the provider's lifetime. */
@@ -211,8 +212,6 @@ function reconcile(saved: CartState, menu: MenuCatalog): CartState {
   const stash = { ...editing.stash, lines: repriceLines(editing.stash.lines, menu) };
   return { ...cart, editing: { ...editing, stash } };
 }
-
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 
 /**
  * The saved cart if it belongs to this guest session (not yet on the current menu); another

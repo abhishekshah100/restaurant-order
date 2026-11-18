@@ -304,6 +304,3 @@ export function changeDue(received: Price, owed: Price, minorUnit: number): Pric
   const change = Math.round((received - owed) * minorUnit) / minorUnit;
   return change < 0 ? null : change;
 }
-
-/** Tip choices staff offer, as percentages of the amount (0 is no tip). */
-export const TIP_PERCENTS = [0, 5, 10] as const;

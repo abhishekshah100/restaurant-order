@@ -39,7 +39,7 @@ export function CashDayEnd({
   const query = useCashDay(branch.id, day);
   const signOff = useSignOffCashDay();
   const summary = query.data;
-  const dayLabel = clock.date(`${day}T12:00:00Z`);
+  const dayLabel = clock.day(day);
   // Did the cash match: the drawers closed that day only (one still open isn't counted yet).
   const closed = summary?.sessions.filter((s) => s.closedAt !== undefined) ?? [];
   const openCount = (summary?.sessions.length ?? 0) - closed.length;

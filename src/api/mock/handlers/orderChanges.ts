@@ -189,7 +189,7 @@ function save(
  * A new round on the guest's running dine-in order (its timeline noting how it's paid), and the
  * order re-priced with it.
  */
-export function planRound(target: Target, body: Record<string, unknown>, note?: string) {
+function planRound(target: Target, body: Record<string, unknown>, note?: string) {
   const { order, session, branch, now } = target;
   if (order.mode !== 'dineIn' || session.mode !== 'dineIn' || order.table !== session.table) {
     fail(409, 'mode_unavailable');
@@ -212,7 +212,7 @@ export function planRound(target: Target, body: Record<string, unknown>, note?: 
 }
 
 /** The order with its latest round's items replaced, re-priced, and what's due online for it. */
-export function planChange(target: Target, body: Record<string, unknown>) {
+function planChange(target: Target, body: Record<string, unknown>) {
   const { order, branch } = target;
   const window = openWindow(target, body);
   const items = itemsOf(target, body);

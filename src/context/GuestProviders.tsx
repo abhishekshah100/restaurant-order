@@ -5,6 +5,7 @@ import { useBrandName, useBrandTitle } from '@/hooks/useBrandName';
 import { StartRedirect } from '@/components/start/StartRedirect';
 import { CartProvider } from './CartContext';
 import { CheckoutProvider } from './CheckoutContext';
+import { DishCardProvider } from './DishCardContext';
 import { FiltersProvider } from './FiltersContext';
 import { GuestSessionProvider } from './GuestSessionContext';
 import { QuickAddProvider } from './QuickAddContext';
@@ -24,11 +25,13 @@ export function GuestProviders({ children }: { children: ReactNode }) {
           <FiltersProvider>
             <SearchProvider>
               <ServiceRequestProvider>
-                <QuickAddProvider>
-                  {children}
-                  <StartRedirect />
-                  <BrandTitle />
-                </QuickAddProvider>
+                <DishCardProvider>
+                  <QuickAddProvider>
+                    {children}
+                    <StartRedirect />
+                    <BrandTitle />
+                  </QuickAddProvider>
+                </DishCardProvider>
               </ServiceRequestProvider>
             </SearchProvider>
           </FiltersProvider>

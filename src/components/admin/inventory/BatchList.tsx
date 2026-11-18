@@ -6,7 +6,7 @@ import { useUpdateBatch, useWriteOffBatches } from '@/api/mutations';
 import { Button, Input } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { cx } from '@/lib/cx';
-import { isDayKey } from '@/lib/dayRange';
+import { isDayKey, atNoon } from '@/lib/dayRange';
 import { newEntryId, parseQuantity } from '@/lib/inventory';
 import type { ExpiryState, StockBatch } from '@/types/inventory';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
@@ -46,7 +46,7 @@ export function useDayText() {
       day: 'numeric',
       month: 'short',
       timeZone: 'UTC',
-    }).format(new Date(`${key}T12:00:00Z`));
+    }).format(atNoon(key));
 }
 
 /** Writes off expired batches (whole), once per press: the entry id is made per press. */

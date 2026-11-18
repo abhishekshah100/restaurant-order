@@ -117,7 +117,7 @@ export function OrderHistory() {
 
   const goTo = (range: DayRange, next: OrderHistoryStatus = status) =>
     router.replace(orderHistoryPath(range, next), { scroll: false });
-  const dayLabel = (key: string) => clock.date(`${key}T12:00:00Z`);
+  const dayLabel = (key: string) => clock.day(key);
   const period =
     days.from === days.to
       ? t('adminOrders.history.period.day', { date: dayLabel(days.from) })

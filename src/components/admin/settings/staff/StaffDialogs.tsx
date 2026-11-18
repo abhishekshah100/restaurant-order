@@ -201,7 +201,7 @@ export function AddStaffDialog({
 }
 
 /** "+919876543210" as the national digits the mobile field takes ("9876543210"). */
-export const nationalPhone = (phone: string, dialCode: string) =>
+const nationalPhone = (phone: string, dialCode: string) =>
   phone.startsWith(dialCode) ? phone.slice(dialCode.length) : phone.replace(/^\+/, '');
 
 /**

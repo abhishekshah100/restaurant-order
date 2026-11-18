@@ -30,7 +30,7 @@ import { createTranslator, type Translator } from './translator';
  */
 
 /** Reads public/api/<endpoint>.json. */
-export async function readApiFile<T>(endpoint: string): Promise<T> {
+async function readApiFile<T>(endpoint: string): Promise<T> {
   const file = path.join(process.cwd(), 'public', 'api', `${endpoint}.json`);
   return JSON.parse(await readFile(file, 'utf8')) as T;
 }

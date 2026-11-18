@@ -2,6 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 import { STORAGE_KEYS, readJSON, writeJSON } from '@/lib/storage';
+import { isObject } from '@/lib/isObject';
 
 export const TEXT_SIZES = ['small', 'medium', 'large', 'xlarge'] as const;
 export type TextSize = (typeof TEXT_SIZES)[number];
@@ -37,9 +38,6 @@ const DEFAULTS: KitchenPrefs = {
   autoPrint: false,
   station: 'all',
 };
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
 
 /** What's stored, field by field: anything missing or wrong takes its default. */
 function parse(stored: Record<string, unknown> | null): KitchenPrefs {

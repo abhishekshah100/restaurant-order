@@ -31,7 +31,7 @@ export function subscribeAdminSession(listener: () => void): () => void {
 /* ---------- Session ---------- */
 
 /** A stored value shaped like the session POST /admin/sessions returns. */
-export function isAdminSession(value: unknown): value is AdminSession {
+function isAdminSession(value: unknown): value is AdminSession {
   if (typeof value !== 'object' || value === null) return false;
   const { token, admin, expiresAt } = value as Partial<AdminSession>;
   return (

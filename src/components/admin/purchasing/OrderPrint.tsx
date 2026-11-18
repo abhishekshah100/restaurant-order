@@ -73,7 +73,7 @@ export function useOrderPrint() {
           {order.expectedOn && (
             <div>
               <dt>{t('adminPurchasing.print.deliverBy')}</dt>
-              <dd>{clock.date(`${order.expectedOn}T12:00:00Z`)}</dd>
+              <dd>{clock.day(order.expectedOn)}</dd>
             </div>
           )}
           {order.createdBy && (

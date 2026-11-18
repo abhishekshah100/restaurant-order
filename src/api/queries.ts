@@ -100,7 +100,7 @@ export const branchConfigQuery = (branchId: string) =>
   });
 
 /** How long the branches' details are trusted before they're read again. */
-export const BRANCHES_REFRESH_MS = 10 * 60_000;
+const BRANCHES_REFRESH_MS = 10 * 60_000;
 
 /**
  * GET /branches/:id/status: just whether the branch is open, paused or closed, and until when.
@@ -156,7 +156,7 @@ export const cartSuggestionsQuery = (branchId: string, dishes: readonly string[]
   });
 
 /** How long a menu read is trusted before it's read again (sold out, back on, new dishes). */
-export const MENU_REFRESH_MS = 60_000;
+const MENU_REFRESH_MS = 60_000;
 
 /**
  * GET /branches/:id/promotions: one branch's promo codes and automatic offers (happy hour).
@@ -305,7 +305,7 @@ export const serviceRequestsQuery = (sessionId: string | undefined) =>
   });
 
 /** A guest's open requests are read again this often (staff on the way, dealt with). */
-export const SERVICE_REQUESTS_REFRESH_MS = 15_000;
+const SERVICE_REQUESTS_REFRESH_MS = 15_000;
 
 /** The waiter home polls the floor this often (and on returning to the tab). */
 export const BRANCH_SERVICE_REFRESH_MS = 15_000;

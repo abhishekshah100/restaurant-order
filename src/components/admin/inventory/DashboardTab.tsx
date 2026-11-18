@@ -11,6 +11,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { BarList, TrendChart } from './Charts';
 import { useInventoryText } from './useInventoryText';
 import styles from './Inventory.module.css';
+import { atNoon } from '@/lib/dayRange';
 
 const PURCHASING_PATH =
   ADMIN_NAV.find((item) => item.id === 'purchasing')?.href ?? '/admin/dashboard/';
@@ -234,7 +235,7 @@ function Charts({
   const compact = new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 });
   const day = (key: string) =>
     new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
-      new Date(`${key}T12:00:00Z`),
+      atNoon(key),
     );
   const sees = data.valueTrend !== undefined;
 

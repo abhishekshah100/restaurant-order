@@ -1,5 +1,6 @@
 import { Tag, VegMark } from '@/components/ui';
-import { useContent, useMenu, useRegion } from '@/api/hooks';
+import { useContent, useMenu } from '@/api/hooks';
+import { useDishCardShared } from '@/context/DishCardContext';
 import type { Dish } from '@/types/menu';
 import { TAG_VARIANT, firstHighlight, tagLabel, unavailableTag } from './dishTag';
 import styles from './DishRow.module.css';
@@ -12,14 +13,13 @@ export interface DishTagsProps {
 
 /** Veg mark plus the single most important label for a dish row. */
 export function DishTags({ dish, showCategory }: DishTagsProps) {
-  const menu = useMenu();
   const t = useContent('menu');
-  const { money } = useRegion();
+  const { money } = useDishCardShared();
   if (showCategory) {
     return (
       <span className={styles.metaRow}>
         <VegMark veg={dish.veg} />
-        {menu.getCategory(dish.categoryId)?.name}
+        <CategoryName categoryId={dish.categoryId} />
       </span>
     );
   }
@@ -46,4 +46,9 @@ export function DishTags({ dish, showCategory }: DishTagsProps) {
       ) : null}
     </div>
   );
+}
+
+/** A dish's category name (search results): only these read the menu. */
+function CategoryName({ categoryId }: { categoryId: string }) {
+  return useMenu().getCategory(categoryId)?.name ?? null;
 }

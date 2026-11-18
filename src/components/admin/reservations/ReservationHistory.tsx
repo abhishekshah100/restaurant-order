@@ -73,7 +73,7 @@ export function ReservationHistory() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [editor, setEditor] = useState<EditorTarget | null>(null);
   const status = useReservationStatus();
-  const dayLabel = (key: string) => clock.date(`${key}T12:00:00Z`);
+  const dayLabel = (key: string) => clock.day(key);
 
   let content;
   // Saves the bookings shown, once they're read.

@@ -1,10 +1,17 @@
-import { expect, test, adminSignIn, pickOption, scan } from './helpers';
+import { againstBackend, expect, test, adminSignIn, pickOption, scan } from './helpers';
 
 /**
  * The Menu page against the mock server, in the same browser as a guest: staff mark Dahi Kebab
  * sold out until a time (the guest's menu then says when it's back, and it can't be added),
  * put it back with the switch, and add a dish with two sizes that guests then find on the menu.
  */
+
+// These change the menu itself (a dish added, moved, removed). The mock keeps that in each
+// browser, so both layouts run; the server has one menu for both, so there they run once.
+test.skip(
+  ({ isMobile }) => againstBackend && isMobile,
+  'Changes the one shared menu: runs once against the server (desktop)',
+);
 
 test.beforeEach(async ({ page }) => {
   await scan(page, 'table=5');
@@ -61,7 +68,7 @@ test('sold out, back on, and a new dish, as guests see them', async ({ page }) =
   await page.getByRole('button', { name: /^Add dish/ }).click();
   const editor = page.getByRole('dialog', { name: 'Add a dish' });
   await editor.getByLabel('Dish name').fill('Masala Dosa');
-  await editor.getByLabel(/Short description/).fill('Crisp rice crêpe, potato masala, chutneys.');
+  await editor.getByLabel(/^Description/).fill('Crisp rice crêpe, potato masala, chutneys.');
   await pickOption(editor.getByLabel('Category'), 'Mains');
   await editor.getByRole('button', { name: 'Sizes' }).click();
   await editor.getByRole('button', { name: /^Add dish/ }).click();
@@ -89,7 +96,8 @@ test("a thali's choices, the order of dishes, and removing a dish", async ({ pag
   await page.goto('/admin/dashboard/menu/');
 
   // Veg Thali: every choice group is there; a curry costs more.
-  await page.getByRole('button', { name: 'Edit Veg Thali' }).click();
+  // The row and its Edit action both open the editor (both are named "Edit <dish>").
+  await page.getByRole('button', { name: 'Edit Veg Thali' }).first().click();
   const editor = page.getByRole('dialog', { name: 'Edit Veg Thali' });
   await editor.getByText('Choices', { exact: true }).click();
   for (const group of [
@@ -113,10 +121,14 @@ test("a thali's choices, the order of dishes, and removing a dish", async ({ pag
   await expect(page.getByText(/Dal Makhani/).first()).toBeVisible();
   await expect(page.getByText('+₹25').first()).toBeVisible();
 
-  // Reorder Starters: Dahi Kebab first.
+  // Reorder Starters (More › Reorder dishes, then the category): Dahi Kebab first.
   await page.goto('/admin/dashboard/menu/');
-  await page.getByRole('button', { name: 'Starters', exact: true }).click();
-  await page.getByRole('button', { name: /^Reorder/ }).click();
+  // The page's own More (the bottom bar on phones has another).
+  await page.getByRole('main').getByRole('button', { name: 'More', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Menu options' })
+    .getByRole('button', { name: 'Starters', exact: true })
+    .click();
   await page.getByRole('button', { name: 'Move Dahi Kebab up' }).click();
   await page.getByRole('button', { name: 'Move Dahi Kebab up' }).click();
   await page.getByRole('button', { name: /^Save order/ }).click();
@@ -126,7 +138,7 @@ test("a thali's choices, the order of dishes, and removing a dish", async ({ pag
   ).toContainText('Dahi Kebab');
 
   // Remove a dish.
-  await page.getByRole('button', { name: 'Edit Crispy Corn Chaat' }).click();
+  await page.getByRole('button', { name: 'Edit Crispy Corn Chaat' }).first().click();
   await page.getByRole('button', { name: 'Remove dish' }).click();
   await page
     .getByRole('dialog', { name: 'Remove Crispy Corn Chaat?' })

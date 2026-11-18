@@ -17,6 +17,7 @@ import { DateRangeFilter } from '../DateRangeFilter';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useAuditText } from './useAuditText';
 import styles from './AuditLog.module.css';
+import { downloadFile } from '@/lib/saveFile';
 
 const AREAS = ['all', 'orders', 'tables', 'invoices', 'cash', 'menu', 'settings', 'staff'] as const;
 type AreaFilter = (typeof AREAS)[number];
@@ -96,12 +97,10 @@ export function AuditLog() {
     setExporting(true);
     try {
       const blob = await api.auditExport(token, branch.id, query);
-      const url = URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `audit-${branch.id}-${days.from}-${days.to}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadFile(
+        new Blob([blob], { type: 'text/csv' }),
+        `audit-${branch.id}-${days.from}-${days.to}.csv`,
+      );
     } catch {
       showToast(t('adminAudit.exportFailed'), { tone: 'error' });
     } finally {

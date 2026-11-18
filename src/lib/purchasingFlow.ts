@@ -1,5 +1,5 @@
 import type { StockItem } from '@/types/inventory';
-import type { PoStatus, PurchaseOrder, SupplierItemView } from '@/types/purchasing';
+import type { PoStatus, PurchaseOrder, ReturnReason, SupplierItemView } from '@/types/purchasing';
 import { packInUnit, packsToOrder } from './inventoryPlanning';
 
 /*
@@ -7,6 +7,15 @@ import { packInUnit, packsToOrder } from './inventoryPlanning';
  * for whoever is looking, the list's views and search, and what to order of a supplier's items
  * that are low. Pure, so it's unit-tested.
  */
+
+/** Why something was refused at the door or sent back: the server's reasons, in this order. */
+export const RETURN_REASONS: readonly ReturnReason[] = [
+  'damaged',
+  'wrong_item',
+  'expired',
+  'excess',
+  'other',
+];
 
 /** The list's views: what needs doing (approve or send), what's on its way, what's over. */
 export type OrderView = 'todo' | 'waiting' | 'done' | 'all';

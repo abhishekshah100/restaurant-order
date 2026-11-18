@@ -1,6 +1,7 @@
 import type { ApiRequest, HttpMethod } from './client';
 import { toAppOrders, type BackendOrder } from './orderAdapter';
 import { matchPath } from './paths';
+import { isObject } from '@/lib/isObject';
 
 /*
  * The backend's answers that differ from the contract's shapes (restaurant-backend ›
@@ -10,8 +11,6 @@ import { matchPath } from './paths';
  */
 
 type Adapt = (data: unknown, sessionToken: string | undefined) => Promise<unknown>;
-
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 
 const orderOf: Adapt = async (data, token) => (await toAppOrders([data as BackendOrder], token))[0];
 

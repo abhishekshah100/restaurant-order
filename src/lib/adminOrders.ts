@@ -35,7 +35,7 @@ const isCancelled = (order: Order) => order.status === 'cancelled';
 /** Still to pay on an order that isn't cancelled. */
 export const dueOn = (order: Order): Price => (isCancelled(order) ? 0 : amountDue(order));
 
-export function inView(order: Order, view: OrderView): boolean {
+function inView(order: Order, view: OrderView): boolean {
   switch (view) {
     case 'active':
       return !isFinished(order);

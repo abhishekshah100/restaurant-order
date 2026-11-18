@@ -5,6 +5,7 @@ import { cx } from '@/lib/cx';
 import { addDays, overnight, spanLabel } from '@/lib/rota';
 import type { RotaShift } from '@/types/admin';
 import styles from './HomePanels.module.css';
+import { atNoon } from '@/lib/dayRange';
 
 const weekday = new Intl.DateTimeFormat('en-US', {
   weekday: 'short',
@@ -39,7 +40,7 @@ export function MyRotaList({
       ? t('adminHome.rota.today')
       : i === 1
         ? t('adminHome.rota.tomorrow')
-        : weekday.format(new Date(`${day}T12:00:00Z`));
+        : weekday.format(atNoon(day));
 
   return (
     <ul className={cx(styles.list, className)}>

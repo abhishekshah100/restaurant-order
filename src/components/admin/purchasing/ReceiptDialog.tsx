@@ -15,8 +15,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { Qty } from './Qty';
 import { docNumber, usePurchasingText } from './usePurchasingText';
 import styles from './Purchasing.module.css';
-
-const REASONS: readonly ReturnReason[] = ['damaged', 'wrong_item', 'expired', 'excess', 'other'];
+import { RETURN_REASONS } from '@/lib/purchasingFlow';
 
 /** How much of a delivered line can still go back: what came, less refused and returned. */
 const leftOf = (l: Receipt['lines'][number]) => l.quantity - l.rejected - l.returned;
@@ -118,7 +117,7 @@ function ReturnForm({ receipt, onDone }: { receipt: Receipt; onDone: () => void 
                         </span>
                       )}
                     </span>
-                    {REASONS.map((r) => (
+                    {RETURN_REASONS.map((r) => (
                       <button
                         key={r}
                         type="button"

@@ -53,7 +53,7 @@ export const INVENTORY_READERS: readonly StaffPermission[] = [
 ];
 
 /** The permissions that open purchasing (the server's READERS.purchasing). */
-export const PURCHASING_READERS: readonly StaffPermission[] = [
+const PURCHASING_READERS: readonly StaffPermission[] = [
   'purchase.view',
   'purchase.manage',
   'purchase.approve',

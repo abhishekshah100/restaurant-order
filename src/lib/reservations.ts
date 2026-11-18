@@ -11,6 +11,7 @@ import type { Branch, MobileRules } from '@/types/branch';
 import { sessionMinutes, sessionsOn, weekdayAt } from './branchHours';
 import { createClock, type Clock } from './clock';
 import { mobileError, type PhoneError } from './phone';
+import { atNoon } from '@/lib/dayRange';
 
 /*
  * Reservations, pure: the rules the server and the staff pages share (when a booking holds its
@@ -19,9 +20,9 @@ import { mobileError, type PhoneError } from './phone';
  */
 
 /** A booked table shows as reserved from this long before its time… */
-export const HOLD_BEFORE_MINUTES = 60;
+const HOLD_BEFORE_MINUTES = 60;
 /** …until this long after it (the party is late; after that the table is free to use). */
-export const HOLD_AFTER_MINUTES = 30;
+const HOLD_AFTER_MINUTES = 30;
 /** How long a booking can hold its table, in minutes. */
 export const DURATIONS = [60, 90, 120, 150, 180] as const;
 export const DEFAULT_MINUTES = 90;
@@ -29,11 +30,11 @@ export const MAX_PARTY = 20;
 export const MAX_NOTE = 200;
 export const MAX_NAME = 60;
 /** The days the Reservations page and the booking form show as tiles, today first; a calendar has the rest. */
-export const BOOKING_DAYS = 2;
+const BOOKING_DAYS = 2;
 /** The furthest ahead the server takes a booking. */
 export const MAX_DAYS_AHEAD = 60;
 /** Booking times go up in these steps. */
-export const SLOT_MINUTES = 15;
+const SLOT_MINUTES = 15;
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
@@ -231,7 +232,7 @@ export const addMonths = (month: string, months: number) => {
 
 /** A day's parts for a day chip: "Sat", "17", "Oct" (English, as dates are written elsewhere). */
 export function dayParts(key: string) {
-  const at = new Date(`${key}T12:00:00Z`);
+  const at = atNoon(key);
   const part = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat('en-US', { ...options, timeZone: 'UTC' }).format(at);
   return {

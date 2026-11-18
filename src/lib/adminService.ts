@@ -53,7 +53,7 @@ export function serviceQueue(
 }
 
 /** The table a queue item is at (none for pickup and delivery). */
-export const tableOf = (item: QueueItem): number | undefined =>
+const tableOf = (item: QueueItem): number | undefined =>
   item.kind === 'ready' ? item.order.table : item.request.table;
 
 /**

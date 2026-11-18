@@ -7,13 +7,11 @@ import { useShiftSwap, useTimeOff } from '@/api/mutations';
 import { Button, Dialog, Input, Select, Tag } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { useAdminStaffId } from '@/hooks/useAdminSession';
-import { daysLabel } from '@/lib/dayRange';
+import { daysLabel, atNoon } from '@/lib/dayRange';
 import { spanLabel } from '@/lib/rota';
 import type { MyRotaResponse, RotaShift, SwapView, TimeOffView } from '@/types/admin';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './HomePanels.module.css';
-
-const atNoon = (day: string) => new Date(`${day}T12:00:00Z`);
 
 const TAG = {
   pending: 'warn',

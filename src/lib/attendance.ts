@@ -1,4 +1,5 @@
 import type { MissedShift, ShiftListResponse, ShiftRow } from '@/types/admin';
+import { atNoon } from '@/lib/dayRange';
 
 /*
  * Team › Attendance, worked out from the shifts list: one line per shift worked, planned shift
@@ -10,7 +11,7 @@ import type { MissedShift, ShiftListResponse, ShiftRow } from '@/types/admin';
 const MINUTE_MS = 60_000;
 const HOUR_MS = 60 * MINUTE_MS;
 /** On shift longer than this: they probably forgot to shift out. */
-export const LONG_SHIFT_HOURS = 12;
+const LONG_SHIFT_HOURS = 12;
 
 /** A line on the attendance list. */
 export type AttendanceLine =
@@ -72,7 +73,7 @@ export function attendanceLines(data: ShiftListResponse): AttendanceLine[] {
 }
 
 /** Still on shift for longer than a shift should run: they likely forgot to shift out. */
-export const isLongOpen = (shift: ShiftRow, now: Date) =>
+const isLongOpen = (shift: ShiftRow, now: Date) =>
   !shift.endedAt && now.getTime() - Date.parse(shift.startedAt) > LONG_SHIFT_HOURS * HOUR_MS;
 
 /** A shift whose shift out is missing: closed by the system, or on for far too long. */
@@ -212,7 +213,7 @@ export const wallTime = (at: Date | string, timeZone: string) =>
 
 /** The day after "2026-11-12". */
 const nextDay = (day: string) => {
-  const d = new Date(`${day}T12:00:00Z`);
+  const d = atNoon(day);
   d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);
 };

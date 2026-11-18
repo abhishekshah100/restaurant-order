@@ -25,6 +25,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { InvoiceDoc } from './InvoiceDoc';
 import { usePaymentPrint } from './PaymentPrint';
 import styles from './InvoiceList.module.css';
+import { downloadFile } from '@/lib/saveFile';
 
 const KINDS = ['all', 'invoice', 'creditNote'] as const;
 type KindFilter = (typeof KINDS)[number];
@@ -87,14 +88,12 @@ export function InvoiceList() {
     setDownloading(true);
     try {
       const blob = await api.salesRegister(token, branch.id, { from: range.from, to: range.to });
-      const url = URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fiscalYear
-        ? `sales-register-${branch.id}-FY${fiscalYear}.csv`
-        : `sales-register-${branch.id}-${range.from}-${range.to}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadFile(
+        new Blob([blob], { type: 'text/csv' }),
+        fiscalYear
+          ? `sales-register-${branch.id}-FY${fiscalYear}.csv`
+          : `sales-register-${branch.id}-${range.from}-${range.to}.csv`,
+      );
     } catch {
       showToast(t('adminPayments.history.registerFailed'), { tone: 'error' });
     } finally {
@@ -236,8 +235,8 @@ export function InvoiceList() {
           <div className={styles.registerChoices}>
             <Button variant="secondary" iconStart="list" onClick={() => void register()}>
               {t('adminInvoices.registerDialog.shown', {
-                from: clock.date(`${days.from}T12:00:00Z`),
-                to: clock.date(`${days.to}T12:00:00Z`),
+                from: clock.day(days.from),
+                to: clock.day(days.to),
               })}
             </Button>
             {years.map((y) => (
@@ -249,8 +248,8 @@ export function InvoiceList() {
               >
                 {t(`adminInvoices.registerDialog.${y.key}`, {
                   label: y.label,
-                  from: clock.date(`${y.range.from}T12:00:00Z`),
-                  to: clock.date(`${y.range.to}T12:00:00Z`),
+                  from: clock.day(y.range.from),
+                  to: clock.day(y.range.to),
                 })}
               </Button>
             ))}

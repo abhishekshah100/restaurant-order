@@ -11,7 +11,7 @@ import { createClock } from './clock';
  */
 
 /** 24-hour "HH:MM", 00:00 to 23:59. */
-export const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const isTime = (v: unknown): v is string => typeof v === 'string' && TIME.test(v);
 
@@ -19,13 +19,7 @@ export const isTime = (v: unknown): v is string => typeof v === 'string' && TIME
 export const isCloseTime = (v: unknown): v is string => isTime(v) || v === '24:00';
 
 /** "18:30" → 1110; "24:00" → 1440. */
-export const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
-
-/** 1110 → "18:30" (within the day). */
-export const fromMinutes = (minutes: number) => {
-  const m = Math.max(0, Math.min(minutes, 23 * 60 + 59));
-  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-};
+const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
 
 /**
  * A session in minutes after its day's midnight: a closing time at or before the opening is the
@@ -214,7 +208,3 @@ export function branchTimes(
         : 0,
   };
 }
-
-/** Whether a week opens at all (on any day). */
-export const opensAtAll = (schedule: OpeningSchedule) =>
-  WEEKDAYS.some((d) => schedule.days[d].length > 0);

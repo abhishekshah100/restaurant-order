@@ -5,11 +5,9 @@
  */
 
 /** Who receives a notification. */
-export const NOTIFICATION_AUDIENCES = ['kitchen', 'floor', 'cashier', 'guest'] as const;
-export type NotificationAudience = (typeof NOTIFICATION_AUDIENCES)[number];
+export type NotificationAudience = 'kitchen' | 'floor' | 'cashier' | 'guest';
 
-export const NOTIFICATION_PRIORITIES = ['low', 'normal', 'high'] as const;
-export type NotificationPriority = (typeof NOTIFICATION_PRIORITIES)[number];
+export type NotificationPriority = 'low' | 'normal' | 'high';
 
 export interface NotificationTypeMaster {
   /** What it's about. */
@@ -18,7 +16,7 @@ export interface NotificationTypeMaster {
   priority: NotificationPriority;
 }
 
-export const NOTIFICATION_TYPES = {
+const NOTIFICATION_TYPES = {
   /** A new order, or a new round on a running one. */
   newOrder: { group: 'order', audiences: ['kitchen', 'floor'], priority: 'high' },
   /** An order past its due time. */

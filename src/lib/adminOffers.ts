@@ -71,7 +71,7 @@ export type OfferProblem =
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** The amount typed, or null when it isn't a positive number with at most two decimals. */
-export function offerValue(text: string): number | null {
+function offerValue(text: string): number | null {
   const clean = text.replace(/[,\s]/g, '');
   if (!/^\d+(\.\d{1,2})?$/.test(clean)) return null;
   const value = Number(clean);

@@ -161,7 +161,7 @@ function Editor<K extends BranchSettingsSection>({
 }
 
 /** Unsaved changes: what's wrong (or that they apply on saving), Discard and Save. */
-export function SaveBar({
+function SaveBar({
   problem,
   saving,
   saveLabel,

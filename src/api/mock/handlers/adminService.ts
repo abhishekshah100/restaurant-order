@@ -65,7 +65,7 @@ const roundsNow = (
   ];
 
 /** The rounds of a live order that are ready and not served yet, oldest first. */
-export function readyRounds(order: Order, branch: Branch): AdminReadyRound[] {
+function readyRounds(order: Order, branch: Branch): AdminReadyRound[] {
   return roundsNow(order)
     .filter((round) => round.status === 'ready')
     .map((round) => ({
@@ -79,7 +79,7 @@ export function readyRounds(order: Order, branch: Branch): AdminReadyRound[] {
     .sort((a, b) => a.readyAt.localeCompare(b.readyAt));
 }
 
-export function orderSummary(order: Order, branch: Branch): AdminOrderSummary {
+function orderSummary(order: Order, branch: Branch): AdminOrderSummary {
   return {
     id: order.id,
     mode: order.mode,
@@ -115,7 +115,7 @@ function tableStatus(orders: readonly AdminOrderSummary[], requests: readonly Se
 }
 
 /** The tables with activity today: an order not cancelled, or an open request. */
-export function tableStates(
+function tableStates(
   orders: readonly AdminOrderSummary[],
   requests: readonly ServiceRequest[],
 ): AdminTableState[] {
@@ -150,7 +150,7 @@ export interface FloorInput {
 }
 
 /** GET /admin/branches/:branchId/service's answer, from the branch's orders and open requests. */
-export function floorService({
+function floorService({
   orders,
   requests,
   done = [],

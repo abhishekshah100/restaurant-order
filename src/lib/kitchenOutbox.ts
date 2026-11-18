@@ -1,6 +1,7 @@
 import type { KitchenStep } from '@/api/contracts';
 import type { Order } from '@/types/order';
 import { withKitchenStep, withPlated } from './kitchenBoard';
+import { isObject } from './isObject';
 
 /**
  * The kitchen's taps waiting to reach the server (Start cooking, Mark ready, a recall, a dish
@@ -96,12 +97,9 @@ export function withOutbox(
 
 const STEPS: readonly KitchenStep[] = ['received', 'preparing', 'ready'];
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
-
 /** One stored tap, checked field by field (anything else is dropped). */
 function isEntry(value: unknown): value is OutboxEntry {
-  if (!isRecord(value)) return false;
+  if (!isObject(value)) return false;
   const base =
     typeof value.id === 'string' &&
     typeof value.at === 'number' &&

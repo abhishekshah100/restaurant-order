@@ -1,4 +1,3 @@
-import type { StockItem } from '@/types/inventory';
 import type { PriceChange, PurchaseOrder, Supplier } from '@/types/purchasing';
 
 /*
@@ -69,7 +68,3 @@ export function todayWork(
     pricesToCheck: prices.filter((p) => p.pricePending || p.flagged),
   };
 }
-
-/** How many ingredients are low or out (at or under their "warn at" level). */
-export const lowCount = (items: readonly StockItem[]) =>
-  items.filter((i) => i.reorderLevel > 0 && i.onHand <= i.reorderLevel).length;

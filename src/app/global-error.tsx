@@ -6,14 +6,15 @@ import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { fontVariables } from '@/fonts';
 import '@/styles/globals.css';
 /*
- * The one static import of content JSON in the app. global-error replaces the root layout,
- * so it renders outside AppProviders: there is no query cache to read GET /content/common
- * from, and fetching it here could fail for the same reason the layout did. The copy is
- * bundled at build time from the same dummy endpoint file instead.
+ * The one static import of content in the app. global-error replaces the root layout, so it
+ * renders outside AppProviders: there is no query cache to read GET /content/common from, and
+ * fetching it here could fail for the same reason the layout did. So its words are bundled:
+ * only common › error (a copy kept equal by a unit test), since this file is part of every
+ * page's JavaScript and the whole of common is mostly the admin screens' words.
  */
-import common from '../../public/api/content/common.json';
+import copy from './global-error-copy.json';
 
-const t = createTranslator(common);
+const t = createTranslator(copy);
 
 interface Props {
   error: Error & { digest?: string };

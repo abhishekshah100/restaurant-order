@@ -130,7 +130,7 @@ export const DEFAULT_FILTERS: MenuFilters = {
 };
 
 /** The dietary mark a dish carries. */
-export const dietaryMark = (dish: Pick<Dish, 'veg'>): DietaryMark => (dish.veg ? 'veg' : 'nonveg');
+const dietaryMark = (dish: Pick<Dish, 'veg'>): DietaryMark => (dish.veg ? 'veg' : 'nonveg');
 
 /** Whether a mark is drawn as the vegetarian one (VegMark and Chip take `veg`). */
 export const isVegMark = (mark: DietaryMark) => mark === 'veg';

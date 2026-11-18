@@ -1,0 +1,10 @@
+{
+  "error": {
+    "documentTitle": "Something went wrong · The Olive Table",
+    "title": "Something went wrong",
+    "body": "Your cart is safe. Try again, or head back to the menu.",
+    "retry": "Try again",
+    "backToMenu": "Back to menu",
+    "requestFailed": "We couldn't reach the restaurant. Check your connection and try again."
+  }
+}

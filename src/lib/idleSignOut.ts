@@ -10,12 +10,12 @@
 /** Signed out after this long with nobody using a staff screen on this device. */
 export const IDLE_LIMIT_MS = 30 * 60_000;
 /** "Still there?" shows this long before. */
-export const IDLE_WARNING_MS = 60_000;
+const IDLE_WARNING_MS = 60_000;
 /** Use is written down at most this often (a scroll fires many events). */
 export const ACTIVITY_THROTTLE_MS = 5_000;
 
 export const ACTIVE_KEY = 'olive.admin.active.v1';
-export const SIGNED_OUT_KEY = 'olive.admin.signedOut.v1';
+const SIGNED_OUT_KEY = 'olive.admin.signedOut.v1';
 
 export type IdleState =
   { kind: 'active' } | { kind: 'warning'; secondsLeft: number } | { kind: 'expired' };

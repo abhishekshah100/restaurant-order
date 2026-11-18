@@ -375,7 +375,7 @@ export function dishFormErrors(form: DishForm): DishFormError[] {
 }
 
 /** The longest line the menu shows under a dish's name. */
-export const MENU_LINE_MAX = 200;
+const MENU_LINE_MAX = 200;
 
 /**
  * A dish's description as the menu shows it under the name: all of it when it's short; else

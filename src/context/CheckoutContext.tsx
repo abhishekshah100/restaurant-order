@@ -19,6 +19,7 @@ import { isDeliveryAddress } from '@/lib/addresses';
 import { isPaymentMethodId } from '@/lib/payments';
 import { STORAGE_KEYS, readJSON, removeKey, writeJSON } from '@/lib/storage';
 import { useGuestSession } from './GuestSessionContext';
+import { isObject } from '@/lib/isObject';
 
 /** The code last sent, as the server described it (POST /otp). */
 export type OtpState = Omit<OtpChallenge, 'phone' | 'verified'>;
@@ -108,7 +109,6 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isEpoch = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
 
 const isOtpState = (v: unknown): v is OtpState =>

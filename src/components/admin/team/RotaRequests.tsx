@@ -5,15 +5,13 @@ import { useContent, useRotaRequests } from '@/api/hooks';
 import { useShiftSwap, useTimeOff } from '@/api/mutations';
 import { Button, Icon, Input, Tag } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
-import { daysLabel } from '@/lib/dayRange';
+import { daysLabel, atNoon } from '@/lib/dayRange';
 import { spanLabel } from '@/lib/rota';
 import type { SwapView, TimeOffView } from '@/types/admin';
 import { SettingsNote, SettingsSkeleton } from '../settings/shared/SettingsEditor';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import editor from '../settings/shared/SettingsEditor.module.css';
 import styles from './RotaRequests.module.css';
-
-const atNoon = (day: string) => new Date(`${day}T12:00:00Z`);
 
 const STATUS_TAG = {
   pending: 'warn',

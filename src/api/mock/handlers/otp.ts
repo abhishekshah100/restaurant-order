@@ -8,7 +8,7 @@ import { MOCK_OTP, OTP_ATTEMPTS, OTP_RESEND_SECONDS } from '../rules';
  * A new code can be requested once OTP_RESEND_SECONDS have passed since the last one, or
  * straight away after a wrong code.
  */
-export function canResendOtp(record: Pick<OtpRecord, 'sentAt' | 'attemptsLeft'>, now: number) {
+function canResendOtp(record: Pick<OtpRecord, 'sentAt' | 'attemptsLeft'>, now: number) {
   return record.attemptsLeft < OTP_ATTEMPTS || now - record.sentAt >= OTP_RESEND_SECONDS * 1000;
 }
 

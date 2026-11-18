@@ -7,7 +7,7 @@ import { adminSession, extendAdminSession } from '@/lib/adminAuth';
 import { IDLE_LIMIT_MS, localStore, readLastActive } from '@/lib/idleSignOut';
 
 /** How often a sign-in in use is renewed. */
-export const RENEW_EVERY_MS = 30 * 60_000;
+const RENEW_EVERY_MS = 30 * 60_000;
 
 /**
  * Keeps a sign-in in use from ending mid-service: every half hour, while this device's staff

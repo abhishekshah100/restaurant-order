@@ -14,7 +14,7 @@ export interface AuditText {
 }
 
 /** "kitchenIssue" → "Kitchen issue": a recorded code in words. */
-export const words = (code: string) => {
+const words = (code: string) => {
   const spaced = code.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 };

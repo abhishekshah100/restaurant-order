@@ -186,7 +186,7 @@ function tableAt(
 }
 
 /** GET /admin/branches/:branchId/tables's answer. */
-export function floorPlan(input: FloorPlanInput): AdminFloorPlan {
+function floorPlan(input: FloorPlanInput): AdminFloorPlan {
   const open = openDineIn(input);
   return {
     floors: input.layout.floors.map(({ id, name, tables }) => ({
@@ -201,7 +201,7 @@ export function floorPlan(input: FloorPlanInput): AdminFloorPlan {
 }
 
 /** GET /admin/branches/:branchId/tables/:table's answer; undefined if no area has the table. */
-export function tableDetail(input: FloorPlanInput, number: number): AdminTableDetail | undefined {
+function tableDetail(input: FloorPlanInput, number: number): AdminTableDetail | undefined {
   const floor = input.layout.floors.find((f) => f.tables.some((t) => t.number === number));
   const layout = floor?.tables.find((t) => t.number === number);
   if (!floor || !layout) return undefined;
@@ -286,7 +286,7 @@ export const freeTable: Handler = async (ctx, { params, headers }) => {
  * MOCK ONLY: the token printed on a table's QR code. A backend signs the branch and table with a
  * secret (an HMAC); the mock works one out from them so the same table always gets the same code.
  */
-export function mockQrToken(branchId: string, table: number): string {
+function mockQrToken(branchId: string, table: number): string {
   let hash = 2166136261;
   for (const char of `${branchId}:${table}`) {
     hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;

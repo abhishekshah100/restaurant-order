@@ -33,7 +33,7 @@ export interface TaxTypeMaster {
   rates: readonly TaxRatePeriod[];
 }
 
-export const TAX_TYPES = {
+const TAX_TYPES = {
   gst: {
     kind: 'tax',
     countries: ['IN'],

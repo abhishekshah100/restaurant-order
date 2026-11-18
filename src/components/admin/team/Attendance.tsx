@@ -470,9 +470,7 @@ export function Attendance() {
             </div>
             {byDay.map(({ day, items }) => (
               <div key={day} className={styles.day}>
-                {range !== 'today' && (
-                  <h3 className={styles.dayTitle}>{clock.date(`${day}T12:00:00Z`)}</h3>
-                )}
+                {range !== 'today' && <h3 className={styles.dayTitle}>{clock.day(day)}</h3>}
                 <ul className={styles.list}>{items.map((l) => row(l, data, inUse))}</ul>
               </div>
             ))}

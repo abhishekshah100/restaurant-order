@@ -18,6 +18,7 @@ import type { Order, OrderItem, OrderRound } from '@/types/order';
 import type { ServiceRequest } from '@/types/service';
 import type { GuestSession } from '@/types/session';
 import type { Payment } from '../contracts';
+import { isObject } from '@/lib/isObject';
 
 /*
  * The mock server's database: one table per resource in Web Storage, namespaced under
@@ -87,7 +88,6 @@ function table<T>(
   };
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isOptionalString = (v: unknown) => v === undefined || typeof v === 'string';
 const listOf =
   <T>(isItem: (v: unknown) => v is T) =>
@@ -366,7 +366,7 @@ export interface BranchSetup {
   removed: string[];
 }
 
-export const emptyBranchSetup = (): BranchSetup => ({ saved: {}, added: [], removed: [] });
+const emptyBranchSetup = (): BranchSetup => ({ saved: {}, added: [], removed: [] });
 
 const isSavedBranch = (v: unknown): v is Branch =>
   isObject(v) &&

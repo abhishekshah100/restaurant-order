@@ -1,5 +1,6 @@
-import { useContent, useRegion } from '@/api/hooks';
+import { useContent } from '@/api/hooks';
 import { Tag } from '@/components/ui';
+import { useDishCardShared } from '@/context/DishCardContext';
 import { useDishOffer } from '@/hooks/useOffers';
 import type { Dish, Price } from '@/types/menu';
 import styles from './OfferPrice.module.css';
@@ -16,7 +17,7 @@ interface OfferProps {
  */
 export function OfferPrice({ dish, price }: OfferProps) {
   const offer = useDishOffer(dish, price);
-  const { money } = useRegion();
+  const { money } = useDishCardShared();
   const t = useContent('menu');
   if (!offer) return money.format(price);
   const now = money.format(offer.price);

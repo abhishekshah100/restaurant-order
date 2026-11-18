@@ -158,7 +158,7 @@ export function TableHistory() {
               <section key={day} aria-labelledby={`table-history-${day}`}>
                 <h2 id={`table-history-${day}`} className={styles.day}>
                   {t.plural('adminTables.detail.history.day', ofDay.length, {
-                    date: clock.date(`${day}T12:00:00Z`),
+                    date: clock.day(day),
                   })}
                 </h2>
                 <ul className={styles.list}>

@@ -4,8 +4,8 @@ import { Button, EmptyState } from '@/components/ui';
 import styles from './ErrorScreen.module.css';
 
 export interface ErrorScreenProps {
-  /** Common copy. Passed in because global-error renders outside the query cache. */
-  t: Translator<ContentMap['common']>;
+  /** Common › error copy. Passed in because global-error renders outside the query cache. */
+  t: Translator<Pick<ContentMap['common'], 'error'>>;
   reset: () => void;
 }
 

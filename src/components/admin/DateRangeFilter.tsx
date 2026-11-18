@@ -105,7 +105,7 @@ export function DateRangeFilter({
       {problem && (
         <p className={styles.problem} role="alert">
           {problem === 'outside'
-            ? t('adminDateRange.problems.outside', { first: clock.date(`${min}T12:00:00Z`) })
+            ? t('adminDateRange.problems.outside', { first: clock.day(min) })
             : problem === 'order'
               ? t('adminDateRange.problems.order')
               : t('adminDateRange.problems.tooLong', { days: rangeDays })}

@@ -36,9 +36,3 @@ export const ELIGIBILITY_RULES = [
   'scope',
 ] as const;
 export type EligibilityRule = (typeof ELIGIBILITY_RULES)[number];
-
-/** The rules each kind of discount can use. */
-export const ELIGIBILITY_BY_KIND = {
-  promoCode: ['minOrder', 'maxDiscount', 'orderTypes', 'validity', 'perGuestLimit'],
-  autoOffer: ['schedule', 'scope'],
-} as const satisfies Record<'promoCode' | 'autoOffer', readonly EligibilityRule[]>;

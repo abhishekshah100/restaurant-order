@@ -5,9 +5,6 @@ import type { RotaShift } from '@/types/admin';
  * person's planned hours in the week, and how many are on each day.
  */
 
-/** Above this many planned hours in a week, the planner sees a warning. */
-export const WEEK_HOURS_LIMIT = 48;
-
 const DAY_MS = 86_400_000;
 
 /** "2026-11-11" moved by some days. */
@@ -19,7 +16,7 @@ export const mondayOf = (key: string) =>
   addDays(key, -((new Date(`${key}T00:00:00Z`).getUTCDay() + 6) % 7));
 
 /** "HH:MM" as minutes since midnight. */
-export const minutesOf = (clock: string) => {
+const minutesOf = (clock: string) => {
   const [h = 0, m = 0] = clock.split(':').map(Number);
   return h * 60 + m;
 };

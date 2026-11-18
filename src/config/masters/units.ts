@@ -4,8 +4,7 @@
  * base unit. Words: common › masters.units (name and short form).
  */
 
-export const UNIT_DIMENSIONS = ['count', 'volume', 'weight'] as const;
-export type UnitDimension = (typeof UNIT_DIMENSIONS)[number];
+export type UnitDimension = 'count' | 'volume' | 'weight';
 
 export interface UnitMaster {
   dimension: UnitDimension;
@@ -13,7 +12,7 @@ export interface UnitMaster {
   toBase: number;
 }
 
-export const UNITS = {
+const UNITS = {
   piece: { dimension: 'count', toBase: 1 },
   plate: { dimension: 'count', toBase: 1 },
   bowl: { dimension: 'count', toBase: 1 },

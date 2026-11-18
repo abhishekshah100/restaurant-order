@@ -5,7 +5,7 @@
  */
 
 /** How often the branch's pages poll while events come in. */
-export const LIVE_REFRESH_MS = 60_000;
+const LIVE_REFRESH_MS = 60_000;
 
 let connected = false;
 const listeners = new Set<() => void>();

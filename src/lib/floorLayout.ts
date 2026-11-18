@@ -8,7 +8,7 @@ import type { FloorLayout, FloorPlanLayout, FloorTableLayout } from '@/types/adm
  */
 
 /** Table numbers go from 1 to this (a QR link carries up to four digits). */
-export const MAX_TABLE_NUMBER = 9999;
+const MAX_TABLE_NUMBER = 9999;
 /** The most seats one table has. */
 export const MAX_SEATS = 50;
 /** The most tables added in one go. */
@@ -150,7 +150,7 @@ export const areaOf = (layout: FloorPlanLayout, number: number) =>
 /* ---------- Checks ---------- */
 
 export const isTableNumber = (n: number) => Number.isInteger(n) && n >= 1 && n <= MAX_TABLE_NUMBER;
-export const isSeatCount = (n: number) => Number.isInteger(n) && n >= 1 && n <= MAX_SEATS;
+const isSeatCount = (n: number) => Number.isInteger(n) && n >= 1 && n <= MAX_SEATS;
 
 /** A name nobody else uses (in any case), if it's a name at all. */
 export function areaNameError(

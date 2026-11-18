@@ -2,6 +2,7 @@
 
 import { useMemo, useSyncExternalStore } from 'react';
 import { useBranch, useMenu, useMenuIfNeeded, usePromotions } from '@/api/hooks';
+import { useDishCardShared } from '@/context/DishCardContext';
 import { useVisit } from '@/context/GuestSessionContext';
 import { activeOffers, applyOffers, bestOffer, offerDiscounts } from '@/lib/promotions';
 import type { CartLine } from '@/types/cart';
@@ -47,19 +48,29 @@ export function useMinute(): number | null {
   return useSyncExternalStore(subscribe, currentMinute, () => null);
 }
 
+const NO_OFFERS: readonly AutoOffer[] = [];
+
 /**
  * The active branch's automatic offers that are on now (branch time) for how the guest is
- * ordering (an offer can be dine-in only); none before hydration.
+ * ordering (an offer can be dine-in only); none before hydration. The same list (object) from
+ * minute to minute until an offer starts or ends, so what reads it isn't redrawn every minute.
  */
-export function useActiveOffers(): AutoOffer[] {
+export function useActiveOffers(): readonly AutoOffer[] {
   const { offers } = usePromotions();
   const { timezone } = useBranch();
   const { mode } = useVisit();
   const minute = useMinute();
-  return useMemo(
-    () => (minute === null ? [] : activeOffers(offers, new Date(minute), timezone, mode)),
-    [offers, timezone, mode, minute],
-  );
+  const onNow =
+    minute === null
+      ? ''
+      : activeOffers(offers, new Date(minute), timezone, mode)
+          .map((offer) => offer.id)
+          .join('\n');
+  return useMemo(() => {
+    if (!onNow) return NO_OFFERS;
+    const ids = new Set(onNow.split('\n'));
+    return offers.filter((offer) => ids.has(offer.id));
+  }, [offers, onNow]);
 }
 
 /** A price with an offer on it: what it was and what it is now. */
@@ -78,7 +89,8 @@ export function useDishOffer(
   dish: Pick<Dish, 'slug' | 'categoryId'>,
   unitPrice: Price,
 ): OfferPrice | null {
-  const offers = useActiveOffers();
+  // The page works out the offers on now once for all its dishes.
+  const { offers } = useDishCardShared();
   return useMemo(() => {
     const found = bestOffer(offers, dish, unitPrice);
     return found && { offer: found.offer, was: unitPrice, price: unitPrice - found.unitDiscount };

@@ -13,7 +13,7 @@ import localFont from 'next/font/local';
  */
 // next/font needs literal arguments, so the unicode-range strings are repeated inline.
 
-export const manrope = localFont({
+const manrope = localFont({
   src: [
     { path: './manrope-latin-400-normal.woff2', weight: '400', style: 'normal' },
     { path: './manrope-latin-500-normal.woff2', weight: '500', style: 'normal' },
@@ -33,7 +33,7 @@ export const manrope = localFont({
   adjustFontFallback: false,
 });
 
-export const manropeExt = localFont({
+const manropeExt = localFont({
   src: [
     { path: './manrope-latin-ext-400-normal.woff2', weight: '400', style: 'normal' },
     { path: './manrope-latin-ext-500-normal.woff2', weight: '500', style: 'normal' },
@@ -54,7 +54,7 @@ export const manropeExt = localFont({
   fallback: ['Segoe UI', 'system-ui', '-apple-system', 'sans-serif'],
 });
 
-export const newsreader = localFont({
+const newsreader = localFont({
   src: [{ path: './newsreader-latin-500-normal.woff2', weight: '500', style: 'normal' }],
   declarations: [
     {
@@ -68,7 +68,7 @@ export const newsreader = localFont({
   adjustFontFallback: false,
 });
 
-export const newsreaderExt = localFont({
+const newsreaderExt = localFont({
   src: [{ path: './newsreader-latin-ext-500-normal.woff2', weight: '500', style: 'normal' }],
   declarations: [
     {

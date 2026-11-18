@@ -26,6 +26,7 @@ import { RotaSettingsDialog, WhatsAppDialog } from './RotaExtras';
 import { useDuration } from './useDuration';
 import styles from './RotaPlanner.module.css';
 import tones from './shiftTones.module.css';
+import { atNoon } from '@/lib/dayRange';
 
 type Open =
   | { kind: 'shift'; person: RotaPerson; day: string; shift?: RotaShift }
@@ -39,7 +40,6 @@ type Open =
 
 const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' });
 const dayNumber = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'UTC' });
-const atNoon = (day: string) => new Date(`${day}T12:00:00Z`);
 
 /**
  * Team › Rota (`rota.plan`): a week, Monday to Sunday, person by person — tap a day to plan

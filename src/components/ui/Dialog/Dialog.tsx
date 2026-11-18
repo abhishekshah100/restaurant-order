@@ -247,7 +247,3 @@ export function Dialog({
 export function Sheet(props: Omit<DialogProps, 'presentation'>) {
   return <Dialog {...props} presentation="sheet" />;
 }
-
-export function Modal(props: Omit<DialogProps, 'presentation'>) {
-  return <Dialog {...props} presentation="modal" />;
-}

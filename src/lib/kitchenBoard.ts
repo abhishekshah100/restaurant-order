@@ -44,7 +44,7 @@ export function kitchenStage(status: OrderStatus): KitchenStage {
   }
 }
 
-export const isOnBoard = (stage: KitchenStage): stage is KitchenLane =>
+const isOnBoard = (stage: KitchenStage): stage is KitchenLane =>
   (KITCHEN_LANES as readonly string[]).includes(stage);
 
 /** The next step the kitchen can mark on a round in a lane (none once it's ready). */
@@ -52,7 +52,7 @@ export const nextKitchenStep = (stage: KitchenStage): KitchenStep | null =>
   stage === 'new' ? 'preparing' : stage === 'cooking' ? 'ready' : null;
 
 /** The status a round has once the kitchen marks a step. */
-export const statusAfter = (step: KitchenStep, mode: OrderMode): OrderStatus =>
+const statusAfter = (step: KitchenStep, mode: OrderMode): OrderStatus =>
   step === 'received' || step === 'preparing'
     ? step
     : mode === 'delivery'
@@ -63,14 +63,14 @@ export const statusAfter = (step: KitchenStep, mode: OrderMode): OrderStatus =>
  * How long the kitchen has for a dine-in round, until branches carry their own: the time the
  * mock kitchen takes (api/mock/kitchen), within the "18–22 min" guests are told.
  */
-export const DINE_IN_TARGET_MINUTES = 18;
+const DINE_IN_TARGET_MINUTES = 18;
 
 /** A ticket is "due soon" in the last part of its time: this share, and at least the minutes. */
 const SOON_SHARE = 0.25;
 const SOON_MIN_MINUTES = 3;
 
 /** Food waiting at the pass longer than this is going cold. */
-export const READY_WAIT_MINUTES = 5;
+const READY_WAIT_MINUTES = 5;
 
 const MINUTE_MS = 60_000;
 
@@ -156,7 +156,7 @@ const plusMinutes = (iso: string, minutes: number) =>
  * prep time (so the rider can leave), or its slowest dish's if longer; dine-in when its slowest
  * dish is done (the menu's prep times), DINE_IN_TARGET_MINUTES when none says.
  */
-export function ticketDueAt(
+function ticketDueAt(
   order: Pick<Order, 'mode' | 'pickup'>,
   placedAt: string,
   branch: Pick<Branch, 'modes'>,
@@ -358,8 +358,8 @@ export function laneTickets(
 }
 
 /** How long a cancelled ticket stays on the board, and a change is flagged. */
-export const CANCELLED_SHOW_MS = 5 * MINUTE_MS;
-export const CHANGED_SHOW_MS = 5 * MINUTE_MS;
+const CANCELLED_SHOW_MS = 5 * MINUTE_MS;
+const CHANGED_SHOW_MS = 5 * MINUTE_MS;
 
 /**
  * Cancelled in the last few minutes (CANCELLED_SHOW_MS) and not put away yet (Dismiss): still on

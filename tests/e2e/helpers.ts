@@ -40,7 +40,7 @@ const durationMs = (duration: string) =>
  * Nepal), inside every demo branch's opening hours, so a test that orders passes whenever it
  * runs (branches take orders only inside their sessions, until last orders).
  */
-export const LUNCHTIME = new Date('2026-10-15T07:30:00Z');
+const LUNCHTIME = new Date('2026-10-15T07:30:00Z');
 
 /**
  * Every page in the context starts with its Date moved to lunchtime and running on; timers are

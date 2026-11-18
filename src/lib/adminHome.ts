@@ -48,9 +48,9 @@ export function counterExtras(
 /* ---------- The floor ---------- */
 
 /** Seated this long with nothing ordered: someone should take the order. */
-export const NO_ORDER_MINUTES = 10;
+const NO_ORDER_MINUTES = 10;
 /** Ordered this long ago with nothing served yet: check with the kitchen. */
-export const LONG_WAIT_MINUTES = 25;
+const LONG_WAIT_MINUTES = 25;
 
 /** What a table needs a look for, beyond its state: no order yet, or a long wait for food. */
 export type TableFlag = 'noOrder' | 'longWait' | null;
@@ -114,8 +114,8 @@ export function inFloorFilter(
 /* ---------- Bookings arriving soon ---------- */
 
 /** How far ahead "Arriving soon" looks, and how late a booking can be and still be listed. */
-export const ARRIVING_WINDOW_MINUTES = 120;
-export const ARRIVING_LATE_MINUTES = 60;
+const ARRIVING_WINDOW_MINUTES = 120;
+const ARRIVING_LATE_MINUTES = 60;
 
 /** Bookings still to come in the next two hours (and those up to an hour late), soonest first. */
 export function arrivingSoon(reservations: readonly Reservation[], now: Date): Reservation[] {

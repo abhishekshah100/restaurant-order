@@ -137,7 +137,7 @@ export function TodayTab(actions: TodayActions) {
             order.expectedOn &&
               (tone === 'late'
                 ? t('adminPurchasing.today.lateSince', {
-                    date: clock.date(`${order.expectedOn}T12:00:00Z`),
+                    date: clock.day(order.expectedOn),
                   })
                 : t('adminPurchasing.today.dueToday')),
           ]

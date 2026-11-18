@@ -6,6 +6,7 @@ import { useContent } from '@/api/hooks';
 import { useToast } from '@/context/ToastContext';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { downloadFile } from '@/lib/saveFile';
 
 export type ExportKind = 'ledger' | 'usage' | 'count';
 
@@ -29,12 +30,7 @@ export function useInventoryExport() {
     setBusy(kind);
     try {
       const blob = await api.inventoryExport(token, branch.id, kind, query);
-      const url = URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${branch.id}-${name}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadFile(new Blob([blob], { type: 'text/csv' }), `${branch.id}-${name}.csv`);
     } catch {
       showToast(t('adminInventory.export.failed'), { tone: 'error' });
     } finally {

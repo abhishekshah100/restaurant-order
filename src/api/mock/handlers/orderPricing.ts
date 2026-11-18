@@ -45,7 +45,7 @@ function isOrderLine(v: unknown): v is OrderLineRequest {
 }
 
 /** The ordered lines of a body, or 400. */
-export function orderLines(body: Record<string, unknown>): OrderLineRequest[] {
+function orderLines(body: Record<string, unknown>): OrderLineRequest[] {
   const { lines } = body;
   if (!Array.isArray(lines) || !lines.every(isOrderLine)) fail(400, 'invalid_request');
   return lines;
@@ -73,7 +73,7 @@ function isAddress(v: unknown): v is DeliveryAddress {
 }
 
 /** The body's `fulfilment`, or 400. */
-export function fulfilmentBody(body: Record<string, unknown>): FulfilmentRequest {
+function fulfilmentBody(body: Record<string, unknown>): FulfilmentRequest {
   const { fulfilment: f } = body;
   if (isObject(f)) {
     if (f.mode === 'dineIn') return { mode: 'dineIn' };

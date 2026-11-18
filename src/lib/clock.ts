@@ -9,6 +9,8 @@ export interface Clock {
   time(at: Date | string): string;
   /** "12 Sep 2026" in the branch's local time. */
   date(at: Date | string): string;
+  /** A calendar day ("2026-09-12") as "12 Sep 2026": the same day wherever the branch is. */
+  day(dayKey: string): string;
   /** "12 Sep 2026, 7:42 PM": when something happened or is booked, so it never reads ambiguous. */
   dateTime(at: Date | string): string;
   /** The branch's calendar day: "2026-10-03". */
@@ -63,6 +65,8 @@ export function createClock(region: ClockRegion): Clock {
       const p = partsOf(dateParts, at);
       return `${p.day} ${p.month} ${p.year}`;
     },
+    // Midday UTC is the same calendar day in every time zone a branch can be in.
+    day: (key) => clock.date(`${key}T12:00:00Z`),
     dateTime(at) {
       return `${clock.date(at)}, ${clock.time(at)}`;
     },

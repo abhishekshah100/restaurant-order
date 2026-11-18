@@ -304,7 +304,7 @@ function paymentDetail(order: BackendOrder, words: Words): string | undefined {
  * One backend order as the screens read it. `sessionId` marks orders from the asking guest's
  * session (theirs to pay); another guest's or staff's never carry a real token.
  */
-export function toAppOrder(
+function toAppOrder(
   order: BackendOrder,
   words: Words,
   sessionToken: string | undefined,

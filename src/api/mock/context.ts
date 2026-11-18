@@ -8,6 +8,7 @@ import type { MockDb } from './db';
 import type { MockSeed } from './seed';
 import { statusFor, type BranchTimesInput } from '@/lib/branchHours';
 import type { OrderMode } from '@/types/branch';
+import { isObject } from '@/lib/isObject';
 
 /** Everything a handler works with. Tests pass their own clock, ids, tables and seed. */
 export interface MockContext {
@@ -58,8 +59,7 @@ export function assertOrdering(branch: BranchTimesInput, mode: OrderMode = 'dine
   if (statusFor(branch, mode).status !== 'open') fail(409, 'ordering_unavailable');
 }
 
-export const isObject = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null;
+export { isObject };
 
 /** The body as an object, or 400. */
 export function objectBody(body: unknown): Record<string, unknown> {
