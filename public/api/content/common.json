@@ -469,7 +469,8 @@
       "orderHistory": "Order history · Admin",
       "rota": "Rota · Shifts & attendance · Admin",
       "attendance": "Attendance · Shifts & attendance · Admin",
-      "teamRequests": "Requests · Shifts & attendance · Admin"
+      "teamRequests": "Requests · Shifts & attendance · Admin",
+      "sales": "Sales · Admin"
     },
     "loading": "Loading your workspace",
     "noAccess": {
@@ -496,7 +497,8 @@
       "settings": "Settings",
       "inventory": "Inventory",
       "purchasing": "Purchasing",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "sales": "Sales"
     },
     "badge": {
       "orders": "{count} ready to serve",
@@ -6070,5 +6072,352 @@
       }
     },
     "manageStaff": "Staff & roles"
+  },
+  "adminSales": {
+    "title": "Sales",
+    "compared": "Compared with {period} ({span})",
+    "updated": "Updated {time}",
+    "presets": {
+      "label": "Show sales for",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "week": "Last 7 days",
+      "month": "Last 30 days",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "thisFy": "This FY {label}",
+      "lastFy": "Last FY {label}",
+      "custom": "Pick dates"
+    },
+    "needsServer": {
+      "title": "Sales reports need the server",
+      "body": "Connect the app to the restaurant server to see sales."
+    },
+    "failed": {
+      "title": "We couldn't load the report",
+      "body": "Check the connection and try again.",
+      "retry": "Try again"
+    },
+    "kpi": {
+      "label": "Headline numbers",
+      "netSales": {
+        "label": "Net sales",
+        "hint": "What you sold after discounts, before VAT and service charge."
+      },
+      "orders": {
+        "label": "Orders",
+        "hint": "Orders placed, not counting cancelled ones."
+      },
+      "averageBill": {
+        "label": "Average bill",
+        "hint": "What a guest paid per order, VAT included."
+      },
+      "discounts": {
+        "label": "Discounts",
+        "hint": "Offers, promo codes and discounts staff gave."
+      },
+      "refunds": {
+        "label": "Refunds",
+        "hint": "Money staff gave back: complaints, wrong items, goodwill."
+      },
+      "up": "{percent}% up",
+      "down": "{percent}% down",
+      "same": "No change",
+      "vs": "vs {value} in {span}",
+      "nothingBefore": "Nothing in {span} to compare",
+      "trendLabel": "Net sales each day",
+      "none": "None in this period or the one before"
+    },
+    "trend": {
+      "title": {
+        "day": "Sales by day",
+        "week": "Sales by week",
+        "month": "Sales by month"
+      },
+      "hint": {
+        "day": "Net sales each day. Tap a day to see it on its own.",
+        "week": "Net sales, 7 days at a time. Tap a week to see it.",
+        "month": "Net sales each month. Tap a month to see it."
+      },
+      "average": "Average {amount}",
+      "averageHint": {
+        "day": "a day",
+        "week": "a week",
+        "month": "a month"
+      },
+      "best": "Best day",
+      "quiet": "Quietest day",
+      "range": "{from} – {to}",
+      "empty": "No sales on these days.",
+      "table": "Sales table",
+      "pick": {
+        "day": "Opens that day on its own.",
+        "week": "Opens that week on its own.",
+        "month": "Opens that month on its own."
+      }
+    },
+    "hours": {
+      "title": "Busiest hours",
+      "hint": "When orders were placed, by net sales.",
+      "peak": "Busiest {hours}",
+      "and": "{first} and {second}",
+      "empty": "No orders to show yet.",
+      "parts": {
+        "title": "Through the day",
+        "morning": "Morning",
+        "lunch": "Lunch",
+        "afternoon": "Afternoon",
+        "dinner": "Dinner",
+        "late": "Late night"
+      }
+    },
+    "modes": {
+      "title": "By order type",
+      "hint": "Net sales and orders for each way guests ordered.",
+      "dineIn": "Dine-in",
+      "takeaway": "Takeaway",
+      "delivery": "Delivery"
+    },
+    "methods": {
+      "title": "By payment method",
+      "hint": "Money received on these days, by how guests paid.",
+      "payments": {
+        "one": "{count} payment",
+        "other": "{count} payments"
+      },
+      "refunded": "{amount} refunded",
+      "empty": "No payments on these days."
+    },
+    "orders": {
+      "one": "{count} order",
+      "other": "{count} orders"
+    },
+    "share": "{percent}%",
+    "cancelled": "{orders} cancelled ({amount}), not counted in sales.",
+    "table": {
+      "when": "When",
+      "netSales": "Net sales",
+      "orders": "Orders"
+    },
+    "bsMonths": [
+      "Baisakh",
+      "Jestha",
+      "Asar",
+      "Shrawan",
+      "Bhadra",
+      "Asoj",
+      "Kartik",
+      "Mangsir",
+      "Poush",
+      "Magh",
+      "Falgun",
+      "Chaitra"
+    ],
+    "dishes": {
+      "title": "Best sellers",
+      "hint": "Your top dishes in this period, at menu prices.",
+      "by": {
+        "label": "Rank by",
+        "sales": "Sales",
+        "quantity": "Quantity"
+      },
+      "sold": {
+        "one": "{count} sold",
+        "other": "{count} sold"
+      },
+      "showAll": "Show all {count} dishes",
+      "showTop": "Show top {count}",
+      "removed": "No longer on the menu",
+      "empty": "No dishes sold in this period."
+    },
+    "slow": {
+      "title": "Sold least",
+      "hint": "Dishes on your menu that sold least. Worth a look when you plan the menu.",
+      "none": "Not sold",
+      "added": "Added {date}"
+    },
+    "categories": {
+      "title": "Categories",
+      "hint": "Sales by menu category, at menu prices.",
+      "dishes": {
+        "one": "{count} dish",
+        "other": "{count} dishes"
+      },
+      "removed": "No longer on the menu",
+      "empty": "No dishes sold in this period."
+    },
+    "money": {
+      "title": "Money summary",
+      "hint": "For your accountant: how the bills add up, and the money that came in.",
+      "bills": "From dishes to bills",
+      "itemSales": "Dishes at menu prices",
+      "offers": "Offers",
+      "promoCodes": "Promo codes",
+      "staffDiscounts": "Staff discounts",
+      "netSales": "Net sales",
+      "serviceCharge": "Service charge",
+      "deliveryFees": "Delivery fees",
+      "roundOff": "Round off",
+      "other": "Other adjustments",
+      "billed": "Total billed",
+      "moneyIn": "Money in",
+      "received": "Payments received",
+      "refundFor": "Refunds: {reason}",
+      "refundCount": {
+        "one": "{count} refund",
+        "other": "{count} refunds"
+      },
+      "netReceived": "Net received",
+      "waived": "{amount} was left off bills when they were settled (not taken).",
+      "refundsByDish": "Refunds by dish",
+      "refundLine": "{count}× {name}",
+      "noDishRefunds": "No refunds named a dish in this period.",
+      "note": "Bills count on the day the order was placed; money on the day it moved.",
+      "unlinked": "Not linked to a dish",
+      "unlinkedHint": "Goodwill, overcharged, or older refunds",
+      "register": "Sales register",
+      "registerLabel": "Download the sales register (every tax invoice and credit note on these days) as a CSV file",
+      "registerFailed": "We couldn't download the sales register. Try again."
+    },
+    "actions": {
+      "export": "Excel",
+      "exportLabel": "Download this report as an Excel file",
+      "exporting": "Preparing…",
+      "exportFailed": "We couldn't prepare the file. Try again.",
+      "print": "Print",
+      "printLabel": "Print this report",
+      "pdf": "PDF",
+      "pdfLabel": "Download this report as a PDF"
+    },
+    "view": {
+      "label": "Show",
+      "branch": "This branch",
+      "branches": "All branches"
+    },
+    "branches": {
+      "title": "Branches compared",
+      "hint": "Each branch in its own currency, against the period before. Amounts in different currencies are never added together.",
+      "here": "This branch",
+      "open": "Open report",
+      "openLabel": "Open the sales report of {branch}",
+      "total": {
+        "one": "{count} branch in {currency}",
+        "other": "{count} branches in {currency}"
+      },
+      "orders": {
+        "one": "{count} order",
+        "other": "{count} orders"
+      },
+      "averageBill": "Average bill",
+      "bestSeller": "Best seller",
+      "noSales": "No sales",
+      "empty": "No branches to compare.",
+      "failed": "We couldn't load the branches. Try again."
+    },
+    "print": {
+      "title": "Sales report",
+      "generated": "Printed {time}",
+      "page": "{branch} · {period}"
+    },
+    "export": {
+      "file": "sales-{branch}-{from}-{to}.xlsx",
+      "sheets": {
+        "report": "Report",
+        "summary": "Summary",
+        "days": "By day",
+        "hours": "By hour",
+        "modes": "Order types",
+        "methods": "Payment methods",
+        "dishes": "Dishes",
+        "categories": "Categories",
+        "money": "Money summary",
+        "branches": "Branches"
+      },
+      "columns": {
+        "item": "Item",
+        "value": "Value",
+        "figure": "Figure",
+        "now": "This period",
+        "before": "Period before",
+        "change": "Change %",
+        "day": "Day",
+        "nepaliDay": "Nepali date",
+        "hour": "Hour",
+        "orders": "Orders",
+        "netSales": "Net sales",
+        "billed": "Billed",
+        "share": "Share %",
+        "method": "Method",
+        "channel": "Paid",
+        "payments": "Payments",
+        "amount": "Amount",
+        "refunds": "Refunds",
+        "rank": "Rank",
+        "dish": "Dish",
+        "category": "Category",
+        "veg": "Veg",
+        "sold": "Sold",
+        "sales": "Sales",
+        "dishes": "Dishes",
+        "line": "Line",
+        "branch": "Branch",
+        "currency": "Currency",
+        "averageBill": "Average bill",
+        "bestSeller": "Best seller",
+        "type": "Order type"
+      },
+      "figures": {
+        "branch": "Branch",
+        "period": "Period",
+        "compared": "Compared with",
+        "generated": "Generated",
+        "cancelled": "Cancelled orders (not in sales)",
+        "netSales": "Net sales",
+        "orders": "Orders",
+        "averageBill": "Average bill",
+        "discounts": "Discounts",
+        "refunds": "Refunds given",
+        "itemSales": "Dishes at menu prices",
+        "serviceCharge": "Service charge",
+        "tax": "Tax",
+        "billed": "Total billed"
+      },
+      "channels": {
+        "online": "Online",
+        "inPerson": "In person"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "waived": "Left off bills (not taken)"
+    },
+    "pdf": {
+      "file": "sales-{branch}-{from}-{to}.pdf",
+      "page": "Page {page} of {pages}",
+      "failed": "We couldn't make the PDF. Try again."
+    },
+    "periods": {
+      "label": "Report period",
+      "showing": "Showing",
+      "compared": "Compared with",
+      "days": {
+        "one": "1 day",
+        "other": "{count} days"
+      },
+      "justBefore": {
+        "one": "the day before",
+        "other": "the {count} days just before"
+      },
+      "previous": {
+        "one": "the previous day",
+        "other": "the previous {count} days"
+      },
+      "about": {
+        "button": "What does Compared with mean?",
+        "showing": "Showing ({period}) is the days this report is about: every number on the page counts only the orders placed on them.",
+        "compared": "Compared with ({period}) is {span}. It is picked for you, only to show whether you sold more or less: the ▲ up and ▼ down on each figure compare the two.",
+        "example": "For example: net sales {now} now, against {before} then.",
+        "close": "Got it"
+      }
+    }
   }
 }

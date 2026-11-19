@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  keepPreviousData,
   queryOptions,
   skipToken,
   useInfiniteQuery,
@@ -52,6 +53,8 @@ import {
   cashSessionQuery,
   cashDayQuery,
   cashReportQuery,
+  salesReportQuery,
+  salesByBranchQuery,
   inventoryAlertsQuery,
   inventoryItemQuery,
   inventoryMovementsQuery,
@@ -575,6 +578,23 @@ export const useCashDay = (branchId: string | undefined, day: string) =>
 /** GET …/cash-register/report: closed sessions day by day, and by staff. */
 export const useCashReport = (branchId: string | undefined, range: { from: string; to: string }) =>
   useQuery(cashReportQuery(useAdminToken(), branchId, range));
+
+/** GET …/reports/sales: the manager's sales report; the last days' stay while new ones load. */
+export const useSalesReport = (branchId: string | undefined, range: { from: string; to: string }) =>
+  useQuery({
+    ...salesReportQuery(useAdminToken(), branchId, range),
+    placeholderData: keepPreviousData,
+  });
+
+/** GET …/reports/sales/branches: every branch side by side (none asked while `branchId` is unset). */
+export const useSalesByBranch = (
+  branchId: string | undefined,
+  range: { from: string; to: string },
+) =>
+  useQuery({
+    ...salesByBranchQuery(useAdminToken(), branchId, range),
+    placeholderData: keepPreviousData,
+  });
 
 /** GET …/cash-register/sessions/:id: one session in full. */
 export const useCashSession = (branchId: string | undefined, id: string) =>

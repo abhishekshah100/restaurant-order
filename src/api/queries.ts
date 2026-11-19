@@ -501,6 +501,39 @@ export const cashReportQuery = (
     queryFn: token && branchId ? () => api.cashReport(token, branchId, range) : skipToken,
   });
 
+/** GET …/reports/sales: the manager's sales report for some days. */
+export const salesReportQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  range: { from: string; to: string },
+) =>
+  queryOptions({
+    queryKey: ['admin', 'reports', 'sales', branchId, range.from, range.to, token] as const,
+    queryFn: token && branchId ? () => api.salesReport(token, branchId, range) : skipToken,
+    // Past days don't change; today does as orders come in.
+    staleTime: 60_000,
+  });
+
+/** GET …/reports/sales/branches: the restaurant's branches side by side for some days. */
+export const salesByBranchQuery = (
+  token: string | null,
+  branchId: string | undefined,
+  range: { from: string; to: string },
+) =>
+  queryOptions({
+    queryKey: [
+      'admin',
+      'reports',
+      'sales-branches',
+      branchId,
+      range.from,
+      range.to,
+      token,
+    ] as const,
+    queryFn: token && branchId ? () => api.salesByBranch(token, branchId, range) : skipToken,
+    staleTime: 60_000,
+  });
+
 /** GET …/cash-register/sessions/:id: one session in full (a closed one doesn't change). */
 export const cashSessionQuery = (token: string | null, branchId: string | undefined, id: string) =>
   queryOptions({

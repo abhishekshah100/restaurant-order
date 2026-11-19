@@ -240,6 +240,8 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['POST', 'admin/branches/:branchId/tables/:table/free'],
   ['GET', 'admin/branches/:branchId/service-requests/history'],
   ['GET', 'admin/branches/:branchId/payments/history'],
+  ['GET', 'admin/branches/:branchId/reports/sales'],
+  ['GET', 'admin/branches/:branchId/reports/sales/branches'],
   ['POST', 'admin/service-requests/:id/acknowledge'],
   ['POST', 'admin/service-requests/:id/resolve'],
   ['GET', 'admin/branches/:branchId/reservations'],

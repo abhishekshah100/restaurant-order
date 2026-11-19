@@ -1,5 +1,5 @@
 /*
- * A one-sheet Excel workbook (.xlsx), written here with no library: the header row bold and
+ * Excel workbooks (.xlsx) of one sheet or several, written here with no library: the header row bold and
  * kept in view while scrolling, each column as wide as what's in it, numbers as numbers. Unlike
  * a CSV, every spreadsheet app (Excel, LibreOffice, Google Sheets, Numbers) opens it in columns
  * without asking how it's separated.
@@ -83,17 +83,37 @@ const STYLES =
   '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
   '</styleSheet>';
 
-function workbookFiles(sheetName: string, sheet: string): Record<string, string> {
-  // Sheet names: up to 31 characters, none of : \ / ? * [ ].
-  const name = escapeXml(sheetName.replace(/[:\\/?*[\]]/g, ' ').slice(0, 31) || 'Sheet1');
-  return {
+/** A sheet name Excel takes: up to 31 characters, none of : \\ / ? * [ ], unique in the book. */
+function sheetNames(names: readonly string[]): string[] {
+  const used = new Set<string>();
+  return names.map((raw, i) => {
+    const base =
+      raw
+        .replace(/[:\\/?*[\]]/g, ' ')
+        .trim()
+        .slice(0, 31) || `Sheet${i + 1}`;
+    let name = base;
+    for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base.slice(0, 28)} ${n}`;
+    used.add(name.toLowerCase());
+    return name;
+  });
+}
+
+function workbookFiles(sheets: readonly { name: string; xml: string }[]): Record<string, string> {
+  const names = sheetNames(sheets.map((sheet) => sheet.name));
+  const files: Record<string, string> = {
     '[Content_Types].xml':
       XML_HEAD +
       '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
       '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
       '<Default Extension="xml" ContentType="application/xml"/>' +
       '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
-      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+      sheets
+        .map(
+          (_, i) =>
+            `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`,
+        )
+        .join('') +
       '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
       '</Types>',
     '_rels/.rels':
@@ -105,17 +125,30 @@ function workbookFiles(sheetName: string, sheet: string): Record<string, string>
       XML_HEAD +
       '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
       'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-      `<sheets><sheet name="${name}" sheetId="1" r:id="rId1"/></sheets>` +
+      `<sheets>${names
+        .map(
+          (name, i) => `<sheet name="${escapeXml(name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`,
+        )
+        .join('')}</sheets>` +
       '</workbook>',
     'xl/_rels/workbook.xml.rels':
       XML_HEAD +
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
-      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+      sheets
+        .map(
+          (_, i) =>
+            `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`,
+        )
+        .join('') +
+      `<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>` +
       '</Relationships>',
-    'xl/worksheets/sheet1.xml': sheet,
-    'xl/styles.xml': STYLES,
   };
+  // The sheets, then the styles: the order the parts have always had.
+  sheets.forEach((sheet, i) => {
+    files[`xl/worksheets/sheet${i + 1}.xml`] = sheet.xml;
+  });
+  files['xl/styles.xml'] = STYLES;
+  return files;
 }
 
 /* ---------- A zip, stored ---------- */
@@ -189,7 +222,21 @@ export function toXlsx<T>(
   columns: readonly string[],
   row: (item: T) => readonly Cell[],
 ): Uint8Array<ArrayBuffer> {
-  return zip(workbookFiles(sheetName, sheetXml(columns, items.map(row))));
+  return zip(workbookFiles([{ name: sheetName, xml: sheetXml(columns, items.map(row)) }]));
+}
+
+/** One sheet of a workbook: its name, the column names, then its rows. */
+export interface XlsxSheet {
+  name: string;
+  columns: readonly string[];
+  rows: readonly (readonly Cell[])[];
+}
+
+/** A workbook of several sheets (a report: its summary, then each part of it). */
+export function toXlsxBook(sheets: readonly XlsxSheet[]): Uint8Array<ArrayBuffer> {
+  return zip(
+    workbookFiles(sheets.map((s) => ({ name: s.name, xml: sheetXml(s.columns, s.rows) }))),
+  );
 }
 
 /** Saves the workbook as a file. */

@@ -21,6 +21,7 @@ type AdminPage =
   | 'paymentHistory'
   | 'cash'
   | 'refunds'
+  | 'sales'
   | 'inventory'
   | 'purchasing'
   | 'audit'

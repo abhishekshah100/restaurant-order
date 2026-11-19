@@ -159,11 +159,14 @@ export async function addDish(page: Page, category: string, dish: string) {
   await waitForSavedCart(page, dishSlug(dish));
 }
 
-/** Places the cart at the counter; returns the order number. */
-export async function orderAtCounter(page: Page): Promise<string> {
+/**
+ * Places the cart at the counter; returns the order number. Against a server that keeps its data,
+ * pass a mobile of the test's own: codes sent to one number are limited.
+ */
+export async function orderAtCounter(page: Page, mobile = '9876543210'): Promise<string> {
   await page.goto('/checkout/details/');
   await page.getByLabel('Full name').fill('Ananya Rao');
-  await page.getByLabel('Mobile number').fill('9876543210');
+  await page.getByLabel('Mobile number').fill(mobile);
   await visible(page, 'button', 'Send OTP').click();
   await page.getByLabel('Digit 1 of 6').fill('123456');
   await visible(page, 'button', 'Verify & continue').click();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toXlsx } from '@/lib/xlsx';
+import { toXlsx, toXlsxBook } from '@/lib/xlsx';
 
 /*
  * The Excel export: a zip holding the workbook's parts, the sheet with a bold frozen header,
@@ -55,5 +55,36 @@ describe('toXlsx', () => {
     expect(sheet).toContain('<t xml:space="preserve">Ravi, &quot;Table 2&quot;</t>');
     expect(sheet).toContain('<c r="B2"><v>4</v></c>');
     expect(sheet).toContain('<autoFilter ref="A1:B3"/>');
+  });
+});
+
+describe('toXlsxBook', () => {
+  const files = unzip(
+    toXlsxBook([
+      { name: 'Summary', columns: ['Figure', 'Value'], rows: [['Net sales', 641325]] },
+      { name: 'By day', columns: ['Day', 'Net sales'], rows: [['2026-11-19', 21378]] },
+      // Excel's rules: no [ ] : * ? / \, at most 31 characters, each name once.
+      { name: 'Money [summary]: a long name past 31', columns: ['Line'], rows: [] },
+      { name: 'summary', columns: ['A'], rows: [] },
+    ]),
+  );
+
+  it('holds one sheet per part, each named as Excel allows', () => {
+    expect(Object.keys(files).filter((f) => f.startsWith('xl/worksheets/'))).toEqual([
+      'xl/worksheets/sheet1.xml',
+      'xl/worksheets/sheet2.xml',
+      'xl/worksheets/sheet3.xml',
+      'xl/worksheets/sheet4.xml',
+    ]);
+    const workbook = files['xl/workbook.xml'] ?? '';
+    expect(workbook).toContain('<sheet name="Summary" sheetId="1" r:id="rId1"/>');
+    expect(workbook).toContain('<sheet name="By day" sheetId="2" r:id="rId2"/>');
+    expect(workbook).toContain('<sheet name="Money  summary   a long name pa" sheetId="3"');
+    expect(workbook).toContain('<sheet name="summary 2" sheetId="4"');
+    expect(files['xl/_rels/workbook.xml.rels']).toContain(
+      'Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"',
+    );
+    expect(files['[Content_Types].xml']).toContain('/xl/worksheets/sheet4.xml');
+    expect(files['xl/worksheets/sheet1.xml']).toContain('<v>641325</v>');
   });
 });

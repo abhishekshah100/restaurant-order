@@ -27,6 +27,7 @@ export type AdminNavId =
   | 'payments'
   | 'cash'
   | 'refunds'
+  | 'sales'
   | 'inventory'
   | 'purchasing'
   | 'audit'
@@ -141,6 +142,8 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     tab: false,
     needs: ['cash.manage', 'cash.review'],
   },
+  // The manager's sales report: owners and managers (reports.view).
+  { id: 'sales', href: section('sales'), icon: 'chart', tab: false, needs: ['reports.view'] },
   {
     id: 'inventory',
     href: section('inventory'),
@@ -286,6 +289,18 @@ export function orderHistoryPath(days?: DayRange, status: OrderHistoryStatus = '
  * The Payments page on a view (To collect is the page itself, the others ?view=), on today or
  * on the days given (?from=&to=).
  */
+/** Sales: the days picked (none: the last 7 days), this branch or every branch side by side. */
+export function salesPath(days?: DayRange, view: 'branch' | 'branches' = 'branch'): string {
+  const search = new URLSearchParams();
+  if (days) {
+    search.set('from', days.from);
+    search.set('to', days.to);
+  }
+  if (view === 'branches') search.set('view', 'branches');
+  const query = search.toString();
+  return query ? `${section('sales')}?${query}` : section('sales');
+}
+
 /** Payments › History: the days picked (none: the last 7 days). */
 export function paymentHistoryPath(
   days?: DayRange,
