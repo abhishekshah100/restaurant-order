@@ -35,19 +35,30 @@ sources stand in for the backend:
 - **Server-owned data** (sessions, OTP, orders, payments, service requests, everything under
   `/admin`) comes from the in-browser mock server in [`src/api/mock`](../src/api/mock). It
   implements the backend contract in [`src/api/contracts.ts`](../src/api/contracts.ts) and returns
-  exactly those shapes.
+  exactly those shapes, for the endpoints it knows. The areas built on the backend only (cash
+  register, invoices, audit log, reports, inventory, purchasing, staff and roles, shifts and
+  rota) have no mock: their screens check `isBackendEnabled()` and say they need the server.
 
 Components never call the transport. The layers are:
 
-| Layer         | File                                                  | Role                                    |
-| ------------- | ----------------------------------------------------- | --------------------------------------- |
-| Read hooks    | [`src/api/hooks.ts`](../src/api/hooks.ts)             | `useMenu()`, `useOrder(id)`, …          |
-| Write hooks   | [`src/api/mutations.ts`](../src/api/mutations.ts)     | `useCreateOrder()`, …; cache updates    |
-| Query options | [`src/api/queries.ts`](../src/api/queries.ts)         | Query keys, `staleTime`, polling        |
-| Endpoints     | [`src/api/endpoints.ts`](../src/api/endpoints.ts)     | One typed function per endpoint (`api`) |
-| Contract      | [`src/api/contracts.ts`](../src/api/contracts.ts)     | Request, response and error types       |
-| Transport     | [`src/api/client.ts`](../src/api/client.ts)           | Mock server or `fetch`; `ApiError`      |
-| Mock server   | [`src/api/mock/server.ts`](../src/api/mock/server.ts) | Routes and handlers                     |
+| Layer          | File                                                              | Role                                        |
+| -------------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| Read hooks     | [`src/api/hooks.ts`](../src/api/hooks.ts)                         | `useMenu()`, `useOrder(id)`, …              |
+| Write hooks    | [`src/api/mutations.ts`](../src/api/mutations.ts) › `mutations/*` | `useCreateOrder()`, …                       |
+| Refresh list   | [`src/api/refreshAfter.ts`](../src/api/refreshAfter.ts)           | What each change makes out of date          |
+| Query options  | [`src/api/queries.ts`](../src/api/queries.ts)                     | Query keys, `staleTime`, polling            |
+| Endpoints      | [`src/api/endpoints.ts`](../src/api/endpoints.ts) › `endpoints/*` | One typed function per endpoint (`api`)     |
+| Contract       | [`src/api/contracts.ts`](../src/api/contracts.ts) › `contracts/*` | Request, response and error types           |
+| Transport      | [`src/api/client.ts`](../src/api/client.ts)                       | Backend, mock server or `fetch`; `ApiError` |
+| Backend routes | [`src/api/backend.ts`](../src/api/backend.ts)                     | `BACKEND_ROUTES`: what the backend serves   |
+| Mock server    | [`src/api/mock/server.ts`](../src/api/mock/server.ts)             | Routes and handlers                         |
+
+The contract, the endpoints and the mutations are barrels: each re-exports one file per area
+(`contracts/orders.ts`, `endpoints/cash.ts`, `mutations/menu.ts`…), so imports stay
+`@/api/contracts`, `@/api/endpoints` and `@/api/mutations`. `endpoints.ts` spreads each area's
+object into one `api = { ...staffApi, ...cashApi, …, ...reportsApi }`; the helpers they share
+(`seg`, `searchOf`, `bearer`, the `inventory` and `purchasing` path prefixes) are in
+`endpoints/shared.ts`. New code goes in the area file, never in the barrel.
 
 ```mermaid
 flowchart TD
@@ -108,15 +119,16 @@ With the mock on, [`server.ts`](../src/api/mock/server.ts) `ROUTES` decides. A r
 and path match a route goes to its handler; anything else falls through to `fetch`, which with the
 default configuration reads the static file.
 
-| Endpoint                                   | Answered by | Why                                    |
-| ------------------------------------------ | ----------- | -------------------------------------- |
-| `GET /branches`                            | Mock server | Staff settings, added branches, status |
-| `GET /branches/:id/menu`                   | Mock server | Staff menu changes (sold out, edits)   |
-| `GET /branches/:id/promotions`             | Mock server | Added branches inherit their source's  |
-| Every write, every `/admin/*` endpoint     | Mock server | Server-owned data                      |
-| `GET /orders/:id`, session and table lists | Mock server | Server-owned data                      |
-| `GET /restaurant`, `/help`, `/content/*`   | Static file | Pure reference data                    |
-| `GET /branches/:id/floors`, `GET /orders`  | Static file | Read only as the mock server's seed    |
+| Endpoint                                   | Answered by | Why                                     |
+| ------------------------------------------ | ----------- | --------------------------------------- |
+| `GET /branches`                            | Mock server | Staff settings, added branches, status  |
+| `GET /branches/:id/menu`                   | Mock server | Staff menu changes (sold out, edits)    |
+| `GET /branches/:id/promotions`             | Mock server | Added branches inherit their source's   |
+| Every write, every `/admin/*` endpoint     | Mock server | Server-owned data                       |
+| `GET /orders/:id`, session and table lists | Mock server | Server-owned data                       |
+| `GET /restaurant`, `/help`, `/content/*`   | Static file | Pure reference data                     |
+| Backend-only areas (cash, reports, …)      | Backend     | No mock; hidden or explained without it |
+| `GET /branches/:id/floors`, `GET /orders`  | Static file | Read only as the mock server's seed     |
 
 The three mock-owned reference endpoints build on the static files: the mock reads the published
 JSON over HTTP with `staticGet` and layers staff changes on top. See
@@ -126,16 +138,20 @@ JSON over HTTP with `staticGet` and layers staff changes on top. See
 
 [`src/api/client.ts`](../src/api/client.ts) exposes the only functions that send requests:
 
-| Function                         | Purpose                                            |
-| -------------------------------- | -------------------------------------------------- |
-| `apiGet<T>(path, init?)`         | GET and parse the JSON body                        |
-| `apiPost<T>(path, body, init?)`  | POST a JSON body                                   |
-| `apiPatch<T>(path, body, init?)` | PATCH a JSON body                                  |
-| `apiDelete(path, init?)`         | DELETE; resolves with no body (204)                |
-| `staticGet<T>(path)`             | Mock only: GET over HTTP even while the mock is on |
+| Function                         | Purpose                                             |
+| -------------------------------- | --------------------------------------------------- |
+| `apiGet<T>(path, init?)`         | GET and parse the JSON body                         |
+| `apiPost<T>(path, body, init?)`  | POST a JSON body                                    |
+| `apiPatch<T>(path, body, init?)` | PATCH a JSON body                                   |
+| `apiDelete(path, init?)`         | DELETE; resolves with no body (204)                 |
+| `staticGet<T>(path)`             | Mock only: GET over HTTP even while the mock is on  |
+| `backendBlob(path, init?)`       | Backend only: a file's bytes (CSV, a private photo) |
 
 - `path` is relative to the API base, for example `orders/A105`. `init` carries extra headers; the
-  admin endpoints pass `Authorization: Bearer <token>` (see `bearer()` in `endpoints.ts`).
+  admin endpoints pass `Authorization: Bearer <token>` (see `bearer()` in `endpoints/shared.ts`).
+- With `NEXT_PUBLIC_BACKEND_URL` set, `send()` first asks `isBackendRequest` (`backend.ts`):
+  a route in `BACKEND_ROUTES` goes to the backend (`viaBackend`); anything else to the mock or
+  the static files.
 - With the mock on, `send()` dynamically imports `mock/server` on first use, so a backend build
   never loads it. Header names reach handlers in lower case.
 - Any non-2xx response throws `ApiError` with `status`, `url`, the parsed `body`
@@ -167,6 +183,7 @@ time), so tests can switch them.
 
 | Variable                          | Default   | Effect                                         |
 | --------------------------------- | --------- | ---------------------------------------------- |
+| `NEXT_PUBLIC_BACKEND_URL`         | unset     | restaurant-backend (`…/v1`) for its routes     |
 | `NEXT_PUBLIC_API_MOCK`            | on        | `"false"` sends every request to the backend   |
 | `NEXT_PUBLIC_API_BASE_URL`        | `/api`    | Base of every request URL                      |
 | `NEXT_PUBLIC_API_SUFFIX`          | `.json`   | Appended to every path; `""` for a backend     |
@@ -250,6 +267,21 @@ without a branch. Keys end with the token, so another sign-in reads afresh. Floo
 | `useFloorLayout(id)`    | `['admin', 'floor-layout', id, token]`    | none (60 s)   | `…/floors`            |
 | `useBranchSettings(id)` | `['admin', 'settings', id, token]`        | none (60 s)   | `…/settings`          |
 | `useTableQrCodes(id)`   | `['admin', 'qr-codes', id, token]`        | none (10 min) | `…/tables/qr-codes`   |
+| `useTableQrCode(id, t)` | `['admin', 'qr-code', id, t, token]`      | none          | `…/tables/:table/qr`  |
+
+More staff reads follow the same pattern, one hook each in `hooks.ts` (the backend-only ones are
+idle in a mock build):
+
+| Area            | Hooks                                                                                                                      | Key prefix                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| History         | `useOrderHistory`, `usePaymentHistory`, `useTodayPayments`, `useRequestHistory`, `useReservationHistory`, `useBranchOrder` | `['admin', 'service', …]`, `['admin', 'payment-history']`, `['admin', 'request-history']` |
+| Invoices, audit | `useInvoices`, `useInvoice`, `useAuditLog`                                                                                 | `['admin', 'invoices']`, `['admin', 'audit']`                                             |
+| Cash            | `useCashRegister`, `useCashDay`, `useCashReport`, `useCashSession`                                                         | `['admin', 'cash-register']`, `['admin', 'cash-session']`                                 |
+| Reports         | `useSalesReport(id, range)`, `useSalesByBranch(id, range)` (60 s fresh, previous data kept)                                | `['admin', 'reports', …]`                                                                 |
+| Inventory       | `useInventoryStock`, `useInventoryAlerts`, `useStockCounts`, `useRecipes`, `useIngredients`, …                             | `['admin', 'inventory', id, …]`                                                           |
+| Purchasing      | `useSuppliers`, `usePurchaseOrders`, `useReceipts`, `usePriceChanges`, `usePurchaseReturns`, …                             | `['admin', 'purchasing', id, …]`                                                          |
+| Team            | `useCurrentShift`, `useShifts`, `useRotaWeek`, `useMyRota`, `useRotaRequests`, `useAdminStaff`, `useAdminRoles`            | `['admin', 'shift' / 'rota' / 'staff' / 'roles']`                                         |
+| Settings        | `useFeatures`, `useAdminOffers`, `useAdminSearchSuggestions`, `useAdminCartSuggestions`                                    | `['admin', …]`                                                                            |
 
 `…` stands for `/admin/branches/:branchId`. Polled staff queries also refetch on window focus.
 `useDemoAdminAccount()` exposes the mock's demo login to the sign-in page, and is always `null` with
@@ -257,77 +289,93 @@ the mock off.
 
 ## Mutations
 
-Every write is a hook in [`mutations.ts`](../src/api/mutations.ts). Each one updates or invalidates
-the affected reads itself, so screens never manage the cache.
+Every write is a hook in [`src/api/mutations.ts`](../src/api/mutations.ts), a barrel over one file
+per area in [`src/api/mutations/`](../src/api/mutations) (`guests`, `floor-service`,
+`staff-orders`, `tables`, `shifts`, `reservations`, `menu`, `cash-register`, `purchasing`,
+`inventory`, `settings`; `shared.ts` holds `requireToken`). Add a new hook to its area file, not
+to the barrel.
+
+### After a write: `refreshAfter`
+
+Screens never refresh caches themselves. After a write, the hook names what changed and
+[`src/api/refreshAfter.ts`](../src/api/refreshAfter.ts) reads again what that change makes out
+of date ("after X, refresh Y"):
+
+- `READS` names each saved read by its query-key prefix (`floor` is `['admin', 'service']`,
+  `cashRegister` is `['admin', 'cash-register']`, `stock` is a branch's
+  `['admin', 'inventory', branchId]`, `menu` is `['branches', id, 'menu']`…).
+- `AFTER` maps each `Change` to the reads it touches. For example `paymentTaken` refreshes the
+  floor, the guest's orders and requests, Payments › History, the cash register and session, and
+  the invoices; `refundGiven` the same without the requests.
+- `refreshAfter(client, change, branchId?)` invalidates them: only reads on screen are fetched
+  again at once, the rest are marked stale.
+- Live events from other devices use the same list (`ordersEvent`, `serviceEvent`,
+  `menuEvent`, `stockEvent`, `resyncEvent`).
+
+A new screen that shows money, stock or the floor adds its key to `READS` and to the changes
+that touch it, once. Never call `invalidateQueries` or `refetch` from a page.
 
 ### Guest
 
-| Hook                        | Endpoint                       | Cache effect afterwards                          |
-| --------------------------- | ------------------------------ | ------------------------------------------------ |
-| `useStartSession()`         | `POST /sessions`               | None; retried twice                              |
-| `useUpdateSession()`        | `PATCH /sessions/:id`          | None                                             |
-| `useSendOtp()`              | `POST /otp`                    | None                                             |
-| `useVerifyOtp()`            | `POST /otp/verify`             | None                                             |
-| `useValidatePromo()`        | `POST /promos/validate`        | Stores the quote as the cart's promo quote       |
-| `useCreatePayment()`        | `POST /payments`               | On error: see below                              |
-| `useSimulatePayment()`      | `POST /payments/:id/simulate`  | Paid bill: stores orders, `['service-requests']` |
-| `useCreateOrder()`          | `POST /orders`                 | Stores the order, invalidates `['orders']`       |
-| `useAddRound()`             | `POST /orders/:id/rounds`      | Stores the order, invalidates `['orders']`       |
-| `useChangeOrder()`          | `PATCH /orders/:id`            | Stores the order, invalidates `['orders']`       |
-| `useCancelOrder()`          | `POST /orders/:id/cancel`      | Stores the order, invalidates `['orders']`       |
-| `useCreateServiceRequest()` | `POST /service-requests`       | Replaces that kind in the pending list           |
-| `useCancelServiceRequest()` | `DELETE /service-requests/:id` | Optimistic removal; refetched on error           |
+| Hook                        | Endpoint                       | Change afterwards                          |
+| --------------------------- | ------------------------------ | ------------------------------------------ |
+| `useStartSession()`         | `POST /sessions`               | None; retried twice                        |
+| `useUpdateSession()`        | `PATCH /sessions/:id`          | None                                       |
+| `useSendOtp()`              | `POST /otp`                    | None                                       |
+| `useVerifyOtp()`            | `POST /otp/verify`             | None                                       |
+| `useValidatePromo()`        | `POST /promos/validate`        | Stores the quote as the cart's promo quote |
+| `useCreatePayment()`        | `POST /payments`               | On error: see below                        |
+| `useSimulatePayment()`      | `POST /payments/:id/simulate`  | Stores paid orders; `guestPaid`            |
+| `useCreateOrder()`          | `POST /orders`                 | Stores the order; `guestOrder`             |
+| `useAddRound()`             | `POST /orders/:id/rounds`      | Stores the order; `guestOrder`             |
+| `useChangeOrder()`          | `PATCH /orders/:id`            | Stores the order; `guestOrder`             |
+| `useCancelOrder()`          | `POST /orders/:id/cancel`      | Stores the order; `guestOrder`             |
+| `useCreateServiceRequest()` | `POST /service-requests`       | Replaces that kind in the pending list     |
+| `useCancelServiceRequest()` | `DELETE /service-requests/:id` | Optimistic removal; refetched on error     |
 
 Error handling built into the hooks:
 
-- `window_closed` or `order_closed` on a round, change or cancel invalidates `['orders']`, so the
+- `window_closed` or `order_closed` on a round, change or cancel refreshes `guestOrder`, so the
   screen shows the order as it now stands.
 - A promo refusal (`PROMO_REFUSALS` in `lib/promotions`) on `POST /orders` or `POST /payments`
-  invalidates `['promo-quote']`, so the cart explains why.
-- `nothing_to_pay` on `POST /payments` invalidates `['orders']`.
+  refreshes `promoRefused`, so the cart explains why.
+- `nothing_to_pay` on `POST /payments` refreshes `guestOrder`.
 
 ### Staff
 
-Unless noted, a staff mutation invalidates `['admin', 'service']` and `['orders']` when it settles
-(`refreshFloor`).
+| Area (file)                  | Hooks                                                                                                                                 | Change                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Floor (`floor-service.ts`)   | `useAcknowledgeRequest`, `useResolveRequest`                                                                                          | `requestHandled` (optimistic)                       |
+|                              | `useMarkServed`                                                                                                                       | `served` (optimistic)                               |
+|                              | `useSetRush`, `useCancelRound`, `useMarkUnavailable`, `useSendKitchenMessage`                                                         | `orderChanged`, `itemUnavailable`, `kitchenMessage` |
+| Orders (`staff-orders.ts`)   | `useTakeTableOrder`, `useAddStaffRound`, `useEditStaffRound`, `useCancelByStaff`                                                      | `orderChanged`                                      |
+|                              | `useCollectPayment`, `useCollectTablePayment`                                                                                         | `paymentTaken`                                      |
+|                              | `useRefundOrder` / `useRefundReceived`                                                                                                | `refundGiven` / `refundReceived`                    |
+|                              | `useGiveDiscount`, `useRemoveDiscount`, `useOrderBuyer`; `useUploadPaymentProof`                                                      | `discountChanged`, `orderBuyerChanged`; none        |
+| Tables (`tables.ts`)         | `useFreeTable`, `useMoveTable`, `useAssignTables`, `useClearSections`, `useSetTableNote`                                              | `tableChanged`                                      |
+|                              | `useUpdateFloors`                                                                                                                     | `floorPlanChanged`                                  |
+| Bookings (`reservations.ts`) | `useSaveReservation`, `useSetReservationStatus`, `useMarkReminded`, `useSetReservationRules`                                          | `bookingChanged`                                    |
+|                              | `useRecordDeposit`                                                                                                                    | `depositTaken`                                      |
+| Menu (`menu.ts`)             | `useSetDishAvailability` (optimistic), `useSaveDish`, `useRemoveDish`, `useReorderDishes`, `useUpdateCategories`, `useCategoryChange` | `menuChanged`                                       |
+|                              | `useSaveSearchSuggestions`, `useSaveCartSuggestions`; `useUploadDishImage`, `useUploadBranchImage`                                    | their own; none for images                          |
+| Cash (`cash-register.ts`)    | `useOpenRegister`, `useMoveCash`, `useCloseRegister`, `useSignOffCashDay`, `useCheckCashSession`, `useSetCashLimit`                   | `cashChanged`                                       |
+| Stock (`inventory.ts`)       | `useOpeningStock`, `useAdjustStock`, `useWasteStock`, `useStartCount`, `useSendTransfer`, … ; `useSaveRecipe`                         | `stockChanged`; `recipeChanged`                     |
+| Purchasing (`purchasing.ts`) | `useSaveSupplier`, `useSavePurchaseOrder`, `usePurchaseOrderStep`, `useReceive`, `useCreatePurchaseReturn`, …                         | `purchasingChanged`                                 |
+| Team (`shifts.ts`)           | `useShiftClock`, `useFixAttendance`; `useSaveRotaShift`, `useRotaWeekAction`, `useTimeOff`, `useShiftSwap`, …                         | `shiftChanged`; `rotaChanged`                       |
+| Settings (`settings.ts`)     | `useUpdateBranchSettings`, `useCreateBranch`, `useRemoveBranch`                                                                       | `branchSetupChanged`                                |
+|                              | `useSetBranchStatus`; `useSetFeatures`                                                                                                | `branchStatusChanged`; `featuresChanged`            |
+|                              | `useSaveStaff`, `useRemoveStaff`, …; `useSaveRole`, `useRemoveRole`; `useSaveOffer`, `useRemoveOffer`                                 | `staffChanged`; `rolesChanged`; `offersChanged`     |
+|                              | `useAdminLogin`, `useChangeOwnPassword`                                                                                               | None                                                |
 
-| Hook                        | Endpoint                                       | Cache effect                           |
-| --------------------------- | ---------------------------------------------- | -------------------------------------- |
-| `useAdminLogin()`           | `POST /admin/sessions`                         | None; the page stores the session      |
-| `useAcknowledgeRequest()`   | `POST /admin/service-requests/:id/acknowledge` | Optimistic; + `['service-requests']`   |
-| `useResolveRequest()`       | `POST /admin/service-requests/:id/resolve`     | Optimistic; + `['service-requests']`   |
-| `useMarkServed()`           | `POST /admin/orders/:id/served`                | Optimistic; + `['orders']`             |
-| `useSetKitchenStatus()`     | `PATCH …/orders/:id/rounds/:round/status`      | Optimistic on orders; floor            |
-| `useTakeTableOrder()`       | `POST …/tables/:table/orders`                  | Floor                                  |
-| `useAddStaffRound()`        | `POST …/orders/:id/rounds`                     | Floor                                  |
-| `useEditStaffRound()`       | `PATCH …/orders/:id/rounds/:round`             | Floor                                  |
-| `useCollectPayment()`       | `POST …/orders/:id/payment`                    | Floor                                  |
-| `useCollectTablePayment()`  | `POST …/tables/:table/payment`                 | Floor                                  |
-| `useRefundOrder()`          | `POST …/orders/:id/refund`                     | Floor                                  |
-| `useCancelByStaff()`        | `POST …/orders/:id/cancel`                     | Floor                                  |
-| `useFreeTable()`            | `POST …/tables/:table/free`                    | Floor                                  |
-| `useSaveReservation()`      | `POST …/reservations` or `PATCH …/:id`         | Floor                                  |
-| `useSetReservationStatus()` | `PATCH …/reservations/:id/status`              | Floor                                  |
-| `useSetDishAvailability()`  | `PATCH …/menu/dishes/:slug/availability`       | Optimistic on menu; menu               |
-| `useSaveDish()`             | `POST …/menu/dishes` or `PATCH …/:slug`        | Menu                                   |
-| `useRemoveDish()`           | `DELETE …/menu/dishes/:slug`                   | Menu                                   |
-| `useReorderDishes()`        | `PATCH …/menu/categories/:id/order`            | Stores the menu; menu                  |
-| `useUpdateCategories()`     | `PATCH …/menu/categories`                      | Stores the menu; menu                  |
-| `useUploadDishImage()`      | `POST …/menu/images`                           | None                                   |
-| `useUpdateFloors()`         | `PATCH …/floors`                               | Stores layout; `['admin']`, branches   |
-| `useSetBranchStatus()`      | `PATCH …/status`                               | `['admin', 'branches']`, branches      |
-| `useUpdateBranchSettings()` | `PATCH …/settings`                             | Stores settings; `['admin']`, branches |
-| `useCreateBranch()`         | `POST /admin/branches`                         | `['admin']`, branches                  |
-| `useRemoveBranch()`         | `DELETE /admin/branches/:branchId`             | `['admin']`, branches                  |
-
-- `…` stands for `/admin/branches/:branchId`. "Floor" means `['admin', 'service']` and
-  `['orders']`; "menu" means the branch's `['branches', id, 'menu']`; "branches" means the exact
-  `['branches']` key.
+- Kitchen steps (started, ready, plated) go through the kitchen's offline tap queue
+  (`components/kitchen/useKitchenOutbox.ts`, `lib/kitchenOutbox`), which refreshes
+  `kitchenStep` once each tap reaches the server.
 - "Optimistic" mutations patch the cached data in `onMutate` and restore the previous value if the
-  server refuses (`useOptimisticService` for the waiter queue; `withKitchenStep` and
-  `withAvailability` for the kitchen board and the menu).
+  server refuses (`useOptimisticService` for the waiter queue, `useDismissTicket` on the kitchen's
+  orders, `withAvailability` for the menu).
 - A staff mutation called while signed out throws a local `ApiError(401, 'unauthorized')` without
-  sending a request.
+  sending a request (`requireToken`).
+- `branchOf(variables)` limits a refresh to the branch the write was for.
 
 ## Build-time prefetch
 
@@ -483,14 +531,16 @@ exists.
 | Tax              | `tax`                                               | `lib/pricing.ts`             |
 | Payments         | `payments` (`checkout`, `bill`, `atTable`)          | `lib/payments.ts`            |
 | Dietary marks    | `dietary.marks`                                     | Filters and sidebar          |
-| Hours and status | `schedule`, `opensAt`, `closesAt`, `status`, …      | Headers, status screens      |
+| Hours and status | `schedule`, `status`, `statusUntil`, `modeStatus`   | `lib/branchHours`, headers   |
 | Order modes      | `modes` (dine-in, takeaway, delivery zones, pickup) | Mode picker, checkout        |
 | After ordering   | `ordering` (`dineInPayment`, `cancelWindowSeconds`) | Rounds, change window        |
-| Tables           | `tables` (range, `outOfService`)                    | QR scan, sessions            |
 | Region words     | `currency.nameKey`, `tax.invoiceKey`                | `hooks/useRegionCopy`        |
 
-Components read the active branch with `useBranch()` and its formatters with `useRegion()`; pure
-lib functions take a `Branch`, `Money` or `Clock` argument. The price filter lives in the branch's
+Tables are not on the branch: they come from its floor plan (Settings › Floor plan), and a table
+out of service is `disabled` there. Components read the active branch with `useBranch()` and its
+formatters with `useRegion()`; pure lib functions take a `Branch`, `Money` or `Clock` argument.
+Dish cards read the branch's money, offers and whether guests can order from `DishCardProvider`
+(`useDishCardShared`), not from `useBranch()` in each card. The price filter lives in the branch's
 menu (`priceFilter`), and promo codes and offers in its promotions file.
 
 ## Connecting restaurant-backend, area by area
@@ -519,10 +569,12 @@ also ends the session on the server (`DELETE /admin/sessions/current`).
 
 **On the backend today: everything the app reads or changes**, the dummy reference JSON aside
 (`GET /restaurant`, `/help`, `/content/*`, the drawn order history). Staff sign-in, branches,
-settings, the floor plan, the menu, guests' sessions and codes, signed table links, pricing and
-promotions, orders (placing, rounds, changes, cancellations, the bill), online payments, waiter
-and bill requests, today's orders for staff, the kitchen, payments in person, refunds, the floor
-views and bookings. See the list in `src/api/backend.ts`.
+settings, staff and roles, the floor plan, the menu, guests' sessions and codes, signed table
+links, pricing and promotions, orders (placing, rounds, changes, cancellations, the bill), online
+payments, waiter and bill requests, the kitchen, payments in person, refunds (with the dishes
+they were for), manual discounts, table moves, tax invoices and credit notes, the audit log, the
+cash register, shifts and the rota, inventory, purchasing, history pages and the Sales report.
+`BACKEND_ROUTES` in `src/api/backend.ts` is the list; a route missing there stays on the mock.
 
 **Orders are worded here.** The backend answers orders as data: what was chosen, ISO times,
 codes (restaurant-backend › docs/decisions.md › ADR-018). One adapter turns them into the
@@ -553,8 +605,9 @@ still checks every session and code on its own clock.
 **Live updates.** The staff shells keep the branch's events open
 (`GET /admin/branches/:branchId/events`, Server-Sent Events, read with `fetch` so the token goes
 in the `Authorization` header: [`liveEvents.ts`](../src/api/liveEvents.ts)). Each event
-invalidates the queries it touches (`orders` / `service` → `['admin', 'service', …]`, `menu` →
-the branch's menu, `resync` → both), and a reconnect reads everything again. While connected,
+refreshes what it touches through `refreshAfter` (`orders` → `ordersEvent`, `service` →
+`serviceEvent`, `menu` → `menuEvent`, `inventory` → `stockEvent`, `resync` → `resyncEvent`), and a
+reconnect reads everything again. While connected,
 the branch's pages poll only every 60 s ([`liveState.ts`](../src/api/liveState.ts) ›
 `liveRefresh`) instead of 15 s; when the stream drops, polling carries on and it reconnects
 after 3 s, doubling to 30 s. See [staff-app.md › Live updates and

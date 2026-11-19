@@ -123,8 +123,9 @@ A table QR link is `/?branch=ktm-thamel&table=12&qr=<token>`.
 - `branch` is optional. Without it, or with an unknown id, the link is for the brand's
   `defaultBranchId` (`GET /restaurant`; `blr-indiranagar`, shown as "Udyog Vihar", Gurgaon).
 - `table` counts only when it is a table on the branch's floor plan.
-- `qr` is an opaque token (`[\w.~-]{1,512}`) kept with the session for a future signed-token
-  check. Nothing verifies it yet.
+- `qr` is a token (`[\w.~-]{1,512}`) sent with the session. The backend signs it per table and
+  refuses a dine-in session with a wrong one (403 `qr_invalid`); the start screen then says the
+  table link is wrong (`refusedScan`). The mock only checks its shape.
 - `mode=takeaway|delivery` is an ordering link. It is ignored when the named branch has that mode
   switched off.
 
@@ -135,6 +136,7 @@ A table QR link is `/?branch=ktm-thamel&table=12&qr=<token>`.
 | Valid `table`                  | Same branch and table | `keep` (re-scan or refresh)                   |
 | Valid `table`                  | None, or elsewhere    | `start` a dine-in session at that table       |
 | `table` that is out of service | Any                   | `choose`: start screen says the table is shut |
+| `table` refused by the server  | Any                   | `choose`: start screen says the link is wrong |
 | `mode` (same or no branch)     | At that branch        | `keep`, or `change` the session's mode        |
 | `mode` with another `branch`   | Any                   | `start` a session there in that mode          |
 | `mode`, no branch              | None                  | `choose` with the mode preselected            |
@@ -150,7 +152,9 @@ A table QR link is `/?branch=ktm-thamel&table=12&qr=<token>`.
   or delivery area is `PATCH /sessions/:id` and keeps the same session and cart.
 - A session expires when the server says (`expiresAt`). The mock sets six hours
   (`TABLE_SESSION_HOURS` in [`src/api/mock/rules.ts`](../src/api/mock/rules.ts)). An expired or
-  no-longer-valid session (branch removed, table outside the range) is ignored on load.
+  no-longer-valid session (branch removed, table no longer on the floor plan) is ignored on load.
+  When staff free the table, its sessions end; the next scan starts a new one (name and number
+  are asked again).
 - Another branch is always another session, and so another cart, even at the same table number.
 - The session is saved in localStorage `olive.session.v1`. A session still opening is kept in
   sessionStorage `olive.pending-scan.v1`, so a reload meanwhile opens the same one.
@@ -250,8 +254,10 @@ in `FiltersContext` (memory, per visit); the search query lives in `SearchContex
 
 - Diet filter chips come from the branch's `dietary.marks`; the price filter's limit is the
   menu's `priceFilter` ("Under ₹400").
-- Search suggestions before typing: Trending tonight, Popular searches and all categories. There
-  are no recent searches, by client request.
+- Search suggestions before typing: Trending tonight (dishes) and Popular searches, from
+  `GET /branches/:id/menu/suggestions` (staff's pins and words first, then what's ordered most;
+  set in Admin › Menu › Suggestions), and all categories. Until it answers, placeholders; if it
+  can't be reached, the menu's own picks. There are no recent searches, by client request.
 - Adding from a list ([`AddControl`](../src/components/menu/AddControl.tsx)): a dish with nothing
   to choose goes straight into the cart; a customisable dish opens the quick-add sheet.
   `isCustomisable` is true for more than one size, any option group, add-ons or removables.
@@ -292,6 +298,11 @@ the session id.
   re-priced against the menu; a malformed line is dropped. It is synced across tabs.
 - The cart also holds the kitchen note, the applied `promoCode` and, while an order is being
   changed, `editing: { orderId, round, stash }` (the cart from before, restored afterwards).
+- **Goes well with your order** ([`CartSuggestions`](../src/components/cart/CartSuggestions.tsx)):
+  up to three dishes for what's in the cart, from `GET /branches/:id/menu/cart-suggestions`
+  (staff's pins, then dishes ordered together with these, then what's popular, from the
+  categories staff chose). Each card says why it's there; a dish already in the cart is never
+  suggested. Nothing shows until the server answers; offline, the menu's own picks stand in.
 - Read narrowly to avoid re-renders on long menus: `useDishLines(slug)` / `useDishQuantity(slug)`
   for one dish, `useCartActions()` for stable actions, `useCart()` only where the whole cart is
   shown.
@@ -588,8 +599,19 @@ issues unique ids and knows every guest's orders.
 ## Help, waiter and bill requests
 
 `/help` ([`service/HelpView`](../src/components/service/HelpView.tsx)) shows hours, contact,
-Payment help and Allergens & FAQs dialogs and Follow us links. For dine-in it also offers table
-service; for takeaway and delivery it shows directions, tracking and the phone number instead.
+Payment help and Allergens & FAQs dialogs, the guest Wi-Fi and Follow us links. For dine-in it
+also offers table service; for takeaway and delivery it shows directions, tracking and the phone
+number instead. What it offers is set in Settings › Restaurant info › Guest info (see
+[settings.md › Help page](settings.md#help-page)); anything left empty isn't shown.
+
+- **Wi-Fi** (`WifiCard`): the network name and password, a copy button and **Show QR code**
+  (`WifiQrDialog`, another phone scans it to join; the QR library loads on first open). Only for
+  guests seated at a table, and only when the branch has one.
+- **Follow us** (`SocialFollow`): Instagram, Facebook, YouTube, TikTok, X, WhatsApp and Google
+  reviews, each opening in a new tab. A network without a link isn't shown; with none, nor is the
+  card. Without the server's links (the mock), `restaurant.json`'s stand in.
+- **Allergens & FAQs:** staff's own questions (`help.json`'s stand in without the server's), then
+  today's hours and the address from the branch's settings.
 
 - **Waiter**: a dialog with a reason (`waiter`, `water`, `cutlery`, `other`) and an optional note
   of up to 80 characters (`SERVICE_NOTE_MAX`), then `/help/waiter-requested`.
@@ -619,25 +641,24 @@ branch's `status` with `navigator.onLine` (`resolveOrdering` in
 - Preview any state with `?status=closed|paused|offline` (kept for the tab in sessionStorage
   `olive.status-preview.v1`); `?status=open` clears it. The prerendered HTML is always open.
 
-### Closed days and staff overrides
+### Hours and staff overrides
 
-The status guests see is computed in the mock seed
-([`src/api/mock/seed.ts`](../src/api/mock/seed.ts)) for each `GET /branches`:
+The status guests see comes with each branch on `GET /branches`: `status` and `statusUntil` (the
+next change) for dine-in, and `modeStatus` for takeaway and delivery when they keep their own
+hours. The mock works it out in `withStatus`
+([`src/api/mock/branchStatus.ts`](../src/api/mock/branchStatus.ts)), as the backend does:
 
-1. `withSchedule(branch, now, labels)` in [`src/lib/branchHours.ts`](../src/lib/branchHours.ts)
-   applies the weekly `Branch.schedule` (Settings › Opening hours). On an open day it fills today's
-   `hours`, `opensAt`, `closesAt`, `hoursToday`, last orders and service windows. On a closed day it
-   sets `status: 'closed'`, `reopensOn` (the next open weekday) and `reopensTomorrow` when that is
-   tomorrow, with the next opening day's times.
-2. `withStatus` in [`src/api/mock/branchStatus.ts`](../src/api/mock/branchStatus.ts) applies what
-   staff set from the admin bar: paused until a time (`pausedForMinutes`), closed for the rest of
-   today (`reopensTomorrow`), or open.
+1. What staff set from the admin bar, while it lasts: paused until a time, or closed or opened
+   for the rest of today.
+2. Otherwise the hours (Settings › Opening hours, `scheduleStatus` in
+   [`src/lib/branchHours.ts`](../src/lib/branchHours.ts)): open inside a session until its last
+   orders, closed until the next session opens. Special dates replace the week.
 
-The closed screen and banner pick their wording from `reopensTomorrow`, then `reopensOn`, then
-the plain "opens at" text.
-
-Gotcha: the schedule decides closed **days** only. Outside today's hours on an open day the status
-stays as the data or staff set it; opening hours then affect pickup slots and the hours shown.
+Screens word it on the device (`branchTimes`, `useBranchTimes` in
+[`src/hooks/useBranchTimes.ts`](../src/hooks/useBranchTimes.ts), refreshed every 30 s): "orders
+until 8:30 PM", "opens in about 1 hr 20 min", tomorrow (`reopensTomorrow`) or a weekday
+(`reopensOn`). Ordering pages poll `GET /branches/:branchId/status` every 60 s
+(`BranchStatusWatch`).
 
 ## Branches and regions
 
@@ -654,8 +675,9 @@ functions take a `Branch`, `Money` or `Clock` argument.
 | Phone    | `mobile { dialCode, length, pattern, groups, … }`        | `src/lib/phone.ts`, `PhoneInput`                |
 | Tax      | `tax`                                                    | `src/lib/pricing.ts`                            |
 | Payments | `payments { checkout, bill, atTable }`, mode lists       | `PAYMENT_METHODS` in `src/lib/payments.ts`      |
-| Ordering | `modes`, `ordering`, `tables`, `defaultTable`            | `src/lib/fulfilment.ts`, `src/lib/lifecycle.ts` |
-| Hours    | `schedule`, `status`, `phone`, `wifiName`                | `src/lib/branchHours.ts`, status screens        |
+| Ordering | `modes`, `ordering` (tables come from the floor plan)    | `src/lib/fulfilment.ts`, `src/lib/lifecycle.ts` |
+| Hours    | `schedule`, `status`, `statusUntil`, `modeStatus`        | `src/lib/branchHours.ts`, `useBranchTimes`      |
+| Help     | `phone`, `help` (Wi-Fi, social links, FAQs)              | `service/HelpView`                              |
 | Copy     | `currency.nameKey`, `tax.invoiceKey`, `payments.atTable` | `src/hooks/useRegionCopy.ts`                    |
 
 The two demo branches:
@@ -668,7 +690,7 @@ The two demo branches:
 | Tax              | GST 5% split CGST + SGST                 | Service charge 10%, VAT 13% on items + service |
 | Checkout methods | Pay online now, Pay at the counter       | eSewa, Khalti, Fonepay QR, card, counter       |
 | Bill methods     | UPI, card                                | eSewa, Khalti, Fonepay QR, card                |
-| Tables           | 1–999, default 12                        | 1–40, default 1                                |
+| Floor plan       | 18 tables in 3 areas                     | 16 tables in 3 areas                           |
 | Hours            | 11:00–21:00 daily                        | 10:00–22:00 daily                              |
 
 Gotchas:

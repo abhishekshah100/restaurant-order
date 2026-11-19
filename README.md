@@ -1,15 +1,17 @@
 # The Olive Table
 
 A QR-code ordering web app for a multi-branch restaurant brand. Guests scan the code on their
-table, order from their phone and pay online or in person; staff run the floor and the kitchen
-from the same app; Settings configure each branch.
+table, order from their phone and pay online or in person; staff run the floor, the kitchen, the
+cash register, stock and purchasing from the same app; managers read the Sales report; Settings
+configure each branch, its staff and their roles.
 
 - **Stack:** Next.js 16 (App Router, static export), React 19, TypeScript, CSS Modules, TanStack
   Query. No UI framework.
 - **Backend:** `restaurant-backend`. All data goes through a typed API layer (`src/api`) over the
-  contract in `src/api/contracts.ts`; built with `NEXT_PUBLIC_BACKEND_URL`, every server-owned
-  endpoint goes to the backend and staff screens get live updates over Server-Sent Events.
-  Without it, an in-browser mock server (`src/api/mock`) answers the same contract.
+  contract in `src/api/contracts/` (one file per area); built with `NEXT_PUBLIC_BACKEND_URL`,
+  every server-owned endpoint goes to the backend and staff screens get live updates over
+  Server-Sent Events. Without it, an in-browser mock server (`src/api/mock`) answers the guest
+  and floor screens; newer staff areas (cash, inventory, sales…) need the backend.
 - **Branches:** Udyog Vihar, Gurgaon (India, default; id `blr-indiranagar`) and Thamel, Kathmandu
   (Nepal; id `ktm-thamel`). Currency, time zone, taxes, phone rules and payment methods are per
   branch and editable in Settings.
@@ -52,7 +54,7 @@ browser's storage: clear site data to reset it.
 | Script               | What it does                                          |
 | -------------------- | ----------------------------------------------------- |
 | `npm run dev`        | Dev server with hot reload                            |
-| `npm run build`      | Static export to `out/`                               |
+| `npm run build`      | Static export to `out/`, then adds the CSP to pages   |
 | `npm start`          | Serves `out/` on http://localhost:3000                |
 | `npm run typecheck`  | TypeScript, no emit                                   |
 | `npm run lint`       | ESLint, zero warnings allowed                         |
@@ -71,25 +73,28 @@ test`. See [docs/testing.md](docs/testing.md).
 
 All variables are read at build time, like every `NEXT_PUBLIC_` variable.
 
-| Variable                          | Default   | Purpose                                                 |
-| --------------------------------- | --------- | ------------------------------------------------------- |
-| `NEXT_PUBLIC_BACKEND_URL`         | unset     | restaurant-backend (`…/v1`) for the endpoints it serves |
-| `NEXT_PUBLIC_API_MOCK`            | on        | `false` sends every request to the real backend         |
-| `NEXT_PUBLIC_API_BASE_URL`        | `/api`    | Base URL of the API                                     |
-| `NEXT_PUBLIC_API_SUFFIX`          | `.json`   | Appended to endpoint paths; set to empty for a real API |
-| `NEXT_PUBLIC_API_MOCK_LATENCY_MS` | `200-400` | Mock response time: a range or a single number          |
+| Variable                            | Default   | Purpose                                                   |
+| ----------------------------------- | --------- | --------------------------------------------------------- |
+| `NEXT_PUBLIC_BACKEND_URL`           | unset     | restaurant-backend (`…/v1`) for the endpoints it serves   |
+| `NEXT_PUBLIC_API_MOCK`              | on        | `false` sends every request to the real backend           |
+| `NEXT_PUBLIC_API_BASE_URL`          | `/api`    | Base URL of the API                                       |
+| `NEXT_PUBLIC_API_SUFFIX`            | `.json`   | Appended to endpoint paths; set to empty for a real API   |
+| `NEXT_PUBLIC_API_MOCK_LATENCY_MS`   | `200-400` | Mock response time: a range or a single number            |
+| `NEXT_PUBLIC_PAYMENT_TEST_CONTROLS` | on        | `false` hides the payment test buttons (live site only)   |
+| `NEXT_PUBLIC_ADMIN_DEMO`            | on in dev | `false` hides the mock's sample floor under `npm run dev` |
+| `CSP_EXTRA_ORIGINS`                 | unset     | More origins the build's CSP allows (space-separated)     |
 
 Connecting restaurant-backend while it's being built (copy `.env.example` to `.env.local`):
 [docs/data-and-api.md](docs/data-and-api.md#connecting-restaurant-backend-area-by-area).
 
 ## Apps and entry points
 
-| App      | Routes                                                          | Documentation                          |
-| -------- | --------------------------------------------------------------- | -------------------------------------- |
-| Guest    | `/`, `/start`, `/menu`, `/cart`, `/checkout`, `/order`, `/help` | [docs/guest-app.md](docs/guest-app.md) |
-| Staff    | `/admin/login`, `/admin/dashboard/*`                            | [docs/staff-app.md](docs/staff-app.md) |
-| Kitchen  | `/admin/kitchen-dashboard/*`                                    | [docs/staff-app.md](docs/staff-app.md) |
-| Settings | `/admin/dashboard/settings/*`                                   | [docs/settings.md](docs/settings.md)   |
+| App      | Routes                                                                                   | Documentation                          |
+| -------- | ---------------------------------------------------------------------------------------- | -------------------------------------- |
+| Guest    | `/`, `/start`, `/menu`, `/cart`, `/checkout`, `/order`, `/help`                          | [docs/guest-app.md](docs/guest-app.md) |
+| Staff    | `/admin/login`, `/admin/dashboard/*` (floor, cash, inventory, purchasing, sales, audit…) | [docs/staff-app.md](docs/staff-app.md) |
+| Kitchen  | `/admin/kitchen-dashboard/*`                                                             | [docs/staff-app.md](docs/staff-app.md) |
+| Settings | `/admin/dashboard/settings/*`                                                            | [docs/settings.md](docs/settings.md)   |
 
 ## Preview parameters
 
@@ -129,20 +134,29 @@ Details: [docs/architecture.md](docs/architecture.md).
 ## Deploying
 
 `npm run build` writes a self-contained static site to `out/`. Host it on any static host or CDN.
+Production: the web app on **Vercel**, the API on **Render**, the database on **Neon** and Redis
+on **Upstash**. Pushing `main` deploys both apps; database migrations are not run by the deploy
+and go on Neon by hand (`prisma migrate status`, then `prisma migrate deploy`, from
+`restaurant-backend`).
 
 - URLs use trailing slashes (`/menu/`); every page is an `index.html` in its own folder. Serve
   `404.html` for unknown paths.
 - Images are served as they are (`images.unoptimized`).
-- **The host must send the security headers**, because a static export cannot:
-  `Content-Security-Policy` (scripts and styles from `'self'`; Next's inline bootstrap scripts
-  need a hash or `'unsafe-inline'`), `Strict-Transport-Security`, `X-Content-Type-Options:
-nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera,
-  microphone, geolocation off) and `frame-ancestors 'none'`.
+- **Security headers.** A static export cannot send headers, so the build adds a
+  `Content-Security-Policy` `<meta>` to every page (`scripts/add-csp.mjs`: scripts from `'self'`
+  plus the hash of each inline script; requests and images only to the site and the API). The
+  rest come from the host: [`vercel.json`](vercel.json) sends `frame-ancestors 'none'`,
+  `X-Frame-Options`, `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin` and `Permissions-Policy`. Another host needs
+  the same headers, and `Strict-Transport-Security` (Vercel sends it already).
+- `vercel.json` also publishes `out/` itself (`framework: null`, `outputDirectory: out`), not
+  Next's own output.
 - Cache `/_next/static/*` as immutable; keep HTML short-lived.
 
 ## Status
 
-The UI is complete for guests, staff, the kitchen and Settings, and runs on `restaurant-backend`.
-Reports are next; the admin dashboard redesign, role-based access and the kitchen's hold and fire
-come later. See [docs/roadmap.md](docs/roadmap.md) for the production checklist and known
-issues.
+The guest app, the staff app, the kitchen and Settings are built and run on `restaurant-backend`,
+with roles and permissions, the cash register, shifts and attendance, inventory and purchasing,
+GST / VAT tax invoices, the audit log and the Sales report. Next: tax classes per dish, a live
+payment gateway and SMS OTP, then more reports. See [docs/roadmap.md](docs/roadmap.md) for what
+is next, the production checklist and known issues.

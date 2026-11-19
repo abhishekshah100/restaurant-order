@@ -25,10 +25,11 @@ It has four areas, all in one Next.js project:
 - **Guest app** (`/`, `/menu`, `/cart`, `/checkout/*`, `/order*`, `/help*`): a guest scans the
   table's QR code, orders, pays and follows the order on their phone.
 - **Staff admin** (`/admin/login`, `/admin/select-branch`, `/admin/dashboard/*`): the waiter home,
-  floor plan, orders, requests, menu, reservations and payments.
+  floor plan, orders, requests, reservations, team (rota and attendance), menu, payments and
+  invoices, refunds, the cash register, the Sales report, inventory, purchasing and the audit log.
 - **Kitchen workspace** (`/admin/kitchen-dashboard/*`): the kitchen board, stock and activity.
-- **Settings** (`/admin/dashboard/settings/*`): branch details, hours, tax, payments, services,
-  pickup, delivery, floor plan and branches.
+- **Settings** (`/admin/dashboard/settings/*`): branch details, help page, hours, tax, payments,
+  services, pickup, delivery, offers, floor plan, staff, roles, modules and branches.
 
 The site is exported as static files, and every piece of data goes through an API layer. Built
 with `NEXT_PUBLIC_BACKEND_URL`, server-owned data comes from `restaurant-backend` (the routes in
@@ -65,6 +66,8 @@ flowchart LR
 | Forms           | react-hook-form with zod (`@hookform/resolvers`)                   |
 | Styling         | CSS Modules and design tokens; no UI framework, no Tailwind        |
 | QR codes        | `qrcode`                                                           |
+| PDFs            | `html2canvas` and `jsPDF`, loaded only when a PDF is asked for     |
+| Spreadsheets    | Own writer, `lib/xlsx.ts` (no library)                             |
 | Unit tests      | Vitest, jsdom, React Testing Library                               |
 | End-to-end      | Playwright against the static export                               |
 | Lint and format | ESLint (`eslint-config-next`), Prettier                            |
@@ -81,6 +84,14 @@ Why a static export with no server:
   change.
 - Because there is no request-time server, nothing can depend on per-request rendering. Dynamic
   data (orders, sessions, live branch status) is read in the browser after hydration.
+- `npm run build` is `next build && node scripts/add-csp.mjs`. A static site can't send its own
+  headers, so the post-build step writes a Content-Security-Policy `<meta>` into every page in
+  `out/`: scripts only from the site and its own inline scripts (each allowed by its SHA-256),
+  requests and images only to the site and the API's origin (`NEXT_PUBLIC_BACKEND_URL`, plus
+  `CSP_EXTRA_ORIGINS`). [`vercel.json`](../vercel.json) adds what a meta tag can't say
+  (`frame-ancestors`, `X-Frame-Options`, `nosniff`, referrer and permissions policies) and
+  publishes `out/` (`framework: null`, `outputDirectory: out`). zod runs `jitless`, so nothing
+  needs `eval`.
 
 The API is configured with `NEXT_PUBLIC_*` variables read at build time
 ([`src/api/config.ts`](../src/api/config.ts)):
@@ -107,11 +118,15 @@ src/
     home/ start/ menu/ cart/ checkout/ order/ service/ status/
                 Guest screens, one folder per area.
     admin/      Staff pages: sign-in, branch picker, shell/ (AdminShell, Sidebar, MobileNav,
-                AdminWorkspace) and one folder per page (home, tables, orders, requests, menu,
-                reservations, payments, orderPad, settings).
+                AdminWorkspace, IdleSignOut, SessionRenewal) and one folder per page (home,
+                tables, orders, requests, reservations, team, menu, payments, refunds, cash,
+                sales, inventory, purchasing, audit, orderPad, settings).
     kitchen/    Kitchen workspace: shell/, board/, stock/, activity/.
-  api/          Data access: contract types, transport, endpoints, query options, read and
-                write hooks, adapters, build-time helpers.
+  api/          Data access: transport, query options, read hooks, the refresh list
+                (refreshAfter.ts), backend routes (backend.ts), adapters, build-time helpers.
+    contracts/  Request, response and error types, one file per area (barrel: contracts.ts).
+    endpoints/  Typed endpoint functions, one file per area (combined in endpoints.ts › api).
+    mutations/  Write hooks, one file per area (barrel: mutations.ts).
     mock/       In-browser mock server: router, handlers/ per resource, storage tables, seed
                 data and the backend's rules.
   config/       masters/ (fixed code lists: order types, statuses, payment methods, tax types,
@@ -119,7 +134,9 @@ src/
   context/      React context providers for UI and device state.
   hooks/        Reusable client hooks (useCart, useTable, useMediaQuery, useCountdown...).
   lib/          Pure logic with no React and no data imports: pricing, money, clock, phone,
-                cart reducer, menu catalog, orders, storage, admin page helpers.
+                cart reducer, menu catalog, orders, storage, admin page helpers, reports and
+                exports (salesReport, salesExport, xlsx, pdfPages, refundItems).
+                branchSettings/ is split by step behind the branchSettings.ts barrel.
   types/        Domain and API types (Branch, Restaurant, Dish, CartLine, Order...).
   styles/       tokens.css, globals.css, patterns.module.css.
   fonts/        Manrope and Newsreader .woff2 files, loaded with next/font/local.
@@ -136,6 +153,11 @@ Notes on specific folders:
 
 - **`src/api`** is the only code that knows about HTTP, query keys or the mock server. See
   [How a request becomes a screen](#how-a-request-becomes-a-screen).
+- **Barrels.** `api/contracts.ts`, `api/endpoints.ts`, `api/mutations.ts` and
+  `lib/branchSettings.ts` only gather their area files, so imports stay short
+  (`@/api/contracts`). Add new code to the area file (`contracts/cash-register.ts`,
+  `endpoints/cash.ts`, `mutations/cash-register.ts`), never to the barrel. `api/hooks.ts` and
+  `api/queries.ts` are still one file each.
 - **`src/api/mock`** stands in for the backend. Its storage keys are in `MOCK_KEYS`
   ([`src/api/mock/db.ts`](../src/api/mock/db.ts)). Nothing outside this folder keeps server data
   in storage.
@@ -156,7 +178,10 @@ These rules keep the layers independent. Code review enforces them.
    [`src/api/mutations.ts`](../src/api/mutations.ts). Server code uses
    [`src/api/server.ts`](../src/api/server.ts). Nothing imports the API JSON directly; the one
    exception is [`src/app/global-error.tsx`](../src/app/global-error.tsx), which renders outside
-   the providers.
+   the providers. It bundles only
+   [`src/app/global-error-copy.json`](../src/app/global-error-copy.json) (a copy of
+   `common › error`, kept equal by `tests/unit/globalErrorCopy.test.ts`), because it is part of
+   every page's JavaScript and the whole of `common` is large.
 3. **No text in JSX.** Every user-visible and screen-reader string comes from the content API
    (`useContent` or `getContent`). ESLint enforces this. See [conventions.md](conventions.md).
 4. **Logic lives in `src/lib` and hooks.** Components receive data and call callbacks. Price
@@ -166,7 +191,10 @@ These rules keep the layers independent. Code review enforces them.
 5. **Region rules are data.** Currency, locale, time zone, taxes, phone rules and payment methods
    come from the branch record, never from code. `lib` functions take the branch, `Money` or
    `Clock` as arguments.
-6. **`'use client'` only where needed.** Components that use state, context or browser APIs are
+6. **After a write, name the change.** Mutations and live events call
+   `refreshAfter(client, '<change>', branchId)` ([`src/api/refreshAfter.ts`](../src/api/refreshAfter.ts));
+   a new screen adds its query key there once. Pages never refetch by hand.
+7. **`'use client'` only where needed.** Components that use state, context or browser APIs are
    client components. Small presentational pieces (`DishCard`, `PriceSummary`, `Tag`) do not
    declare it themselves; they become client code when a client component imports them.
 
@@ -182,15 +210,19 @@ Every screen follows the same path from route to data. The layers, top to bottom
 3. **Read and write hooks**: `useMenu()`, `useBranch()`, `useOrder(id)`, `useContent(ns)` and
    the other reads in [`src/api/hooks.ts`](../src/api/hooks.ts); `useCreateOrder()`,
    `useAddRound()`, `useSetDishAvailability()` and the other writes in
-   [`src/api/mutations.ts`](../src/api/mutations.ts). Mutations update or invalidate the affected
-   queries themselves, so screens never refresh caches by hand.
+   [`src/api/mutations.ts`](../src/api/mutations.ts). After a write, each mutation names its
+   change to `refreshAfter`, which reads again what it makes out of date, so screens never refresh
+   caches by hand.
 4. **Query options** ([`src/api/queries.ts`](../src/api/queries.ts)): one `queryOptions` per
    resource with its key, fetcher, `staleTime` and polling interval.
 5. **Typed endpoints** ([`src/api/endpoints.ts`](../src/api/endpoints.ts)): the `api` object, one
-   typed function per server-owned endpoint, with request and response types from
+   typed function per server-owned endpoint, spread together from the area files in
+   `endpoints/*`, with request and response types from
    [`src/api/contracts.ts`](../src/api/contracts.ts). Admin calls add a bearer token.
 6. **Transport** ([`src/api/client.ts`](../src/api/client.ts)): `apiGet`, `apiPost`, `apiPatch`
-   and `apiDelete`. With the mock on, the request goes to `handleMockRequest` in
+   and `apiDelete`. With `NEXT_PUBLIC_BACKEND_URL` set, a route listed in `BACKEND_ROUTES`
+   ([`src/api/backend.ts`](../src/api/backend.ts)) goes to the backend. Otherwise, with the mock
+   on, the request goes to `handleMockRequest` in
    [`src/api/mock/server.ts`](../src/api/mock/server.ts). If the mock does not own the route, or
    the mock is off, it becomes a real `fetch` to `apiUrl(path)`. A non-2xx response throws
    `ApiError` carrying the server's error code.
@@ -259,8 +291,13 @@ Providers come in two layers, so staff pages never load the guest's session or m
   layout, for every page: Query (outermost), then Toast.
 - `GuestProviders` ([`src/context/GuestProviders.tsx`](../src/context/GuestProviders.tsx)), in
   the guest pages' layout (the `app/(guest)` route group; it adds nothing to the URLs):
-  GuestSession, Cart, Checkout, Filters, Search, ServiceRequest, QuickAdd, with `StartRedirect`
-  inside them. Staff and kitchen pages (`app/admin`) sit outside the group.
+  GuestSession, Cart, Checkout, Filters, Search, ServiceRequest, DishCard, QuickAdd, with
+  `StartRedirect` inside them. Staff and kitchen pages (`app/admin`) sit outside the group.
+- `DishCardProvider` ([`src/context/DishCardContext.tsx`](../src/context/DishCardContext.tsx))
+  works out once what every dish card shares: the branch's `money`, the `offers` on now and
+  whether guests can order (`canAdd`). Cards read it with `useDishCardShared()` instead of calling
+  `useBranch()` and the offer hooks each, so a menu of many dishes doesn't hold hundreds of
+  subscriptions or redraw every card on each status poll. New per-dish UI reads it too.
 
 A new guest page goes under `src/app/(guest)/`; a new staff page under `src/app/admin/`.
 
@@ -282,19 +319,20 @@ Anything that reads the browser (storage, the URL) or a server-owned endpoint lo
 hydration, so the prerendered HTML and the first client render match. Use `useHydrated()`
 ([`src/hooks/useHydrated.ts`](../src/hooks/useHydrated.ts)) to gate such rendering.
 
-| State                       | Owner                                    | Persistence                        |
-| --------------------------- | ---------------------------------------- | ---------------------------------- |
-| Reference data, copy        | TanStack Query (`src/api/hooks.ts`)      | Memory, prefetched at build        |
-| Orders, service requests    | TanStack Query (`useOrder`, ...)         | Memory, polled while live          |
-| Cart                        | `CartContext` (`lib/cartReducer`)        | localStorage `olive.cart.v2`       |
-| Guest session and table     | `GuestSessionContext`                    | localStorage `olive.session.v1`    |
-| Checkout (name, phone, OTP) | `CheckoutContext`                        | sessionStorage `olive.checkout.v1` |
-| Waiter and bill requests    | `ServiceRequestContext` over query hooks | Server data                        |
-| Restaurant status preview   | `useRestaurantStatus`                    | sessionStorage                     |
-| Menu filters and sort       | `FiltersContext`                         | Memory                             |
-| Search query                | `SearchContext`                          | `?q=` in the URL                   |
-| Toasts                      | `ToastContext`                           | Memory                             |
-| Staff session and branch    | `lib/adminAuth`, `AdminWorkspace`        | localStorage                       |
+| State                       | Owner                                    | Persistence                          |
+| --------------------------- | ---------------------------------------- | ------------------------------------ |
+| Reference data, copy        | TanStack Query (`src/api/hooks.ts`)      | Memory, prefetched at build          |
+| Orders, service requests    | TanStack Query (`useOrder`, ...)         | Memory, polled while live            |
+| Cart                        | `CartContext` (`lib/cartReducer`)        | localStorage `olive.cart.v2`         |
+| Guest session and table     | `GuestSessionContext`                    | localStorage `olive.session.v1`      |
+| Checkout (name, phone, OTP) | `CheckoutContext`                        | sessionStorage `olive.checkout.v1`   |
+| Waiter and bill requests    | `ServiceRequestContext` over query hooks | Server data                          |
+| Restaurant status preview   | `useRestaurantStatus`                    | sessionStorage                       |
+| Menu filters and sort       | `FiltersContext`                         | Memory                               |
+| Search query                | `SearchContext`                          | `?q=` in the URL                     |
+| Toasts                      | `ToastContext`                           | Memory                               |
+| Staff session and branch    | `lib/adminAuth`, `AdminWorkspace`        | localStorage                         |
+| Staff "last active" stamp   | `lib/idleSignOut`, `IdleSignOut`         | localStorage `olive.admin.active.v1` |
 
 ### Storage keys
 
@@ -312,9 +350,12 @@ The app's own device state is listed in `STORAGE_KEYS`
 | `olive.status-preview.v1` | session | The `?status=` preview for this tab              |
 | `olive.kitchen-theme.v1`  | local   | The kitchen screen's theme: light or dark        |
 | `olive.kitchen-prefs.v1`  | local   | The kitchen screen's own settings (sound, size…) |
+| `olive.kitchen-outbox.v1` | local   | Kitchen taps waiting to reach the server         |
+| `olive.staff-alerts.v1`   | local   | Floor staff alerts on this device: on or off     |
 
 Staff keys are in [`src/lib/adminAuth.ts`](../src/lib/adminAuth.ts): `olive.admin.session.v1`
-(the session from `POST /admin/sessions`) and `olive.admin.branch.v1` (the selected branch). The
+(the session from `POST /admin/sessions`) and `olive.admin.branch.v1` (the selected branch);
+the idle sign-out keeps its keys in [`src/lib/idleSignOut.ts`](../src/lib/idleSignOut.ts). The
 mock server's tables use their own keys, listed in `MOCK_KEYS` in
 [`src/api/mock/db.ts`](../src/api/mock/db.ts) (for example `olive.orders.v1`,
 `olive.service.v1`, `olive.mock.sessions.v1`).
@@ -327,6 +368,31 @@ A few details that matter when you change these stores:
   session.
 - Cart readers should subscribe narrowly: `useDishLines(slug)` and `useDishQuantity(slug)` for one
   dish, `useCartActions()` for stable callbacks, `useCart()` only where the whole cart is shown.
+
+### Staff sessions on shared devices
+
+- **Idle sign-out.** After 30 minutes without activity (`IDLE_LIMIT_MS` in
+  [`src/lib/idleSignOut.ts`](../src/lib/idleSignOut.ts)) staff are signed out, with a "Still
+  there?" prompt a minute before. The "last active" stamp is shared across tabs through
+  localStorage. `IdleSignOut` is mounted in `AdminShell` only: the kitchen display is never
+  signed out for being idle, and an open, visible kitchen screen writes the stamp every minute
+  (`useKitchenKeepAlive`) so an admin tab on the same device doesn't sign it out.
+- **Renewal.** A sign-in in use is renewed every 30 minutes (`SessionRenewal` in
+  `WorkspaceGate` → `POST /admin/sessions/current/renew`), up to the server's daily cap.
+
+### Printing and PDFs
+
+- **Print sheets.** A printable page (bill, KOT, QR codes, purchase order, stock count, Sales
+  report) renders its sheet into `document.body` through a React portal marked
+  `data-print-sheet`, adds a class such as `html.printing-sales` to `<html>`, and calls
+  `window.print()`. That class's print rules hide every other child of `body`
+  (`body > :not([data-print-sheet])`), and the class is removed on `afterprint`.
+- **PDFs.** Downloads such as the Sales report (`components/admin/sales/useSalesPdf.ts`) and
+  payment prints load `html2canvas` and `jsPDF` with `import()` only when asked, draw each
+  section to an image and lay them on A4 pages with `lib/pdfPages › layoutPages`. Phones get the
+  share sheet, computers a download (`lib/saveFile`).
+- **Spreadsheets.** Excel exports use `lib/xlsx` (`toXlsx` for one sheet, `toXlsxBook` for
+  several, `downloadXlsx`); CSV from the server goes through `lib/saveFile › downloadFile`.
 
 See [guest-app.md](guest-app.md) for guest sessions, the cart and checkout in detail, and
 [staff-app.md](staff-app.md) for the admin session and workspace.
@@ -377,7 +443,8 @@ flowchart LR
   SELECT --> DASH
   subgraph DASH["/admin/dashboard (AdminShell)"]
     HOME["home, tables, orders, requests"]
-    MORE["menu, reservations, payments"]
+    MORE["reservations, team, menu, payments, refunds, cash"]
+    MGR["sales, inventory, purchasing, audit"]
     SETTINGS["settings/*"]
   end
   SELECT --> KITCHEN
@@ -424,29 +491,51 @@ Every `/admin/dashboard/*` page renders inside `AdminShell`
 the access check (signed in and a branch selected) and draws the navigation from
 [`src/lib/adminNav.ts`](../src/lib/adminNav.ts). Page titles come from `adminMetadata.ts`.
 
-| Route                                           | View component                                 |
-| ----------------------------------------------- | ---------------------------------------------- |
-| `/admin/login`                                  | `admin/AdminLogin`                             |
-| `/admin/select-branch`                          | `admin/AdminSelectBranch`                      |
-| `/admin/dashboard`                              | `admin/home/AdminHome` (waiter home)           |
-| `/admin/dashboard/tables` (`?floor=`)           | `admin/tables/FloorPlan`                       |
-| `/admin/dashboard/tables/view?table=`           | `admin/tables/TableDetail`                     |
-| `/admin/dashboard/tables/qr`                    | `admin/tables/qr/TableQrCodes`                 |
-| `/admin/dashboard/requests`                     | `admin/requests/RequestsBoard`                 |
-| `/admin/dashboard/orders` (`/ready`, `/unpaid`) | `admin/orders/OrdersBoard`                     |
-| `/admin/dashboard/menu`                         | `admin/menu/MenuBoard`                         |
-| `/admin/dashboard/reservations`                 | `admin/reservations/ReservationsBoard`         |
-| `/admin/dashboard/payments`                     | `admin/payments/PaymentsBoard`                 |
-| `/admin/dashboard/settings`                     | `admin/settings/SettingsHome`                  |
-| `/admin/dashboard/settings/branch`              | `admin/settings/details/BranchDetailsEditor`   |
-| `/admin/dashboard/settings/hours`               | `admin/settings/hours/OpeningHoursEditor`      |
-| `/admin/dashboard/settings/tax`                 | `admin/settings/tax/TaxEditor`                 |
-| `/admin/dashboard/settings/payments`            | `admin/settings/payments/PaymentMethodsEditor` |
-| `/admin/dashboard/settings/services`            | `admin/settings/services/ServicesEditor`       |
-| `/admin/dashboard/settings/pickup`              | `admin/settings/pickup/PickupEditor`           |
-| `/admin/dashboard/settings/delivery`            | `admin/settings/delivery/DeliveryZonesEditor`  |
-| `/admin/dashboard/settings/floor-plan`          | `admin/settings/floorPlan/FloorPlanEditor`     |
-| `/admin/dashboard/settings/branches`            | `admin/settings/branches/BranchesManager`      |
+| Route                                           | View component                                               |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| `/admin/login`                                  | `admin/AdminLogin`                                           |
+| `/admin/select-branch`                          | `admin/AdminSelectBranch`                                    |
+| `/admin/dashboard`                              | `admin/home/AdminHome` (waiter home)                         |
+| `/admin/dashboard/tables` (`?floor=`)           | `admin/tables/FloorPlan`                                     |
+| `/admin/dashboard/tables/view?table=`           | `admin/tables/TableDetail`                                   |
+| `/admin/dashboard/tables/history?table=`        | `admin/tables/TableHistory`                                  |
+| `/admin/dashboard/tables/qr`                    | `admin/tables/qr/TableQrCodes`                               |
+| `/admin/dashboard/requests` (`/history`)        | `admin/requests/RequestsBoard`, `RequestHistory`             |
+| `/admin/dashboard/orders` (`/ready`, `/unpaid`) | `admin/orders/OrdersBoard`                                   |
+| `/admin/dashboard/orders/history`               | `admin/orders/OrderHistory`                                  |
+| `/admin/dashboard/reservations` (`/history`)    | `admin/reservations/ReservationsBoard`, `ReservationHistory` |
+| `/admin/dashboard/team`                         | `admin/team/RotaPlanner`                                     |
+| `/admin/dashboard/team/attendance`              | `admin/team/Attendance`                                      |
+| `/admin/dashboard/team/requests`                | `admin/team/RotaRequests`                                    |
+| `/admin/dashboard/menu`                         | `admin/menu/MenuBoard`                                       |
+| `/admin/dashboard/payments`                     | `admin/payments/PaymentsBoard`                               |
+| `/admin/dashboard/payments/history`             | `admin/payments/PaymentHistory`                              |
+| `/admin/dashboard/payments/invoices`            | `admin/payments/InvoiceList`                                 |
+| `/admin/dashboard/refunds`                      | `admin/refunds/RefundsPage`                                  |
+| `/admin/dashboard/cash`                         | `admin/cash/CashRegister`                                    |
+| `/admin/dashboard/sales` (`?view=branches`)     | `admin/sales/SalesReportPage`                                |
+| `/admin/dashboard/inventory`                    | `admin/inventory/Inventory`                                  |
+| `/admin/dashboard/purchasing`                   | `admin/purchasing/Purchasing`                                |
+| `/admin/dashboard/audit`                        | `admin/audit/AuditLog`                                       |
+| `/admin/dashboard/settings`                     | `admin/settings/SettingsHome`                                |
+| `/admin/dashboard/settings/branch`              | `admin/settings/details/BranchDetailsEditor`                 |
+| `/admin/dashboard/settings/hours`               | `admin/settings/hours/OpeningHoursEditor`                    |
+| `/admin/dashboard/settings/tax`                 | `admin/settings/tax/TaxEditor`                               |
+| `/admin/dashboard/settings/payments`            | `admin/settings/payments/PaymentMethodsEditor`               |
+| `/admin/dashboard/settings/services`            | `admin/settings/services/ServicesEditor`                     |
+| `/admin/dashboard/settings/pickup`              | `admin/settings/pickup/PickupEditor`                         |
+| `/admin/dashboard/settings/delivery`            | `admin/settings/delivery/DeliveryZonesEditor`                |
+| `/admin/dashboard/settings/floor-plan`          | `admin/settings/floorPlan/FloorPlanEditor`                   |
+| `/admin/dashboard/settings/branches`            | `admin/settings/branches/BranchesManager`                    |
+| `/admin/dashboard/settings/help-page`           | `admin/settings/help/HelpPageEditor`                         |
+| `/admin/dashboard/settings/offers`              | `admin/settings/offers/OffersManager`                        |
+| `/admin/dashboard/settings/staff`               | `admin/settings/staff/StaffManager`                          |
+| `/admin/dashboard/settings/roles`               | `admin/settings/roles/RolesManager`                          |
+| `/admin/dashboard/settings/modules`             | `admin/settings/ModulesSettings`                             |
+
+Old links land on their new pages through `admin/team/MovedTo`: `settings/rota` and
+`settings/shifts` (now under Team) and `team/time-sheet` (now Attendance). Each nav item shows
+only to staff whose role holds one of its permissions (`needs` in `ADMIN_NAV`).
 
 The settings pages share one layout,
 [`settings/layout.tsx`](../src/app/admin/dashboard/settings/layout.tsx), which renders

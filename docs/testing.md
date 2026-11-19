@@ -27,18 +27,21 @@ it before adding a feature or touching a flow covered by end-to-end tests.
 
 Both layers use the same data as the app: the dummy JSON in `public/api` is the fixture set, and
 every server-owned request is answered by the real mock server in `src/api/mock`. There are no
-hand-written API mocks.
+hand-written API mocks. End-to-end tests run on the mock by default, and the same specs run
+against `restaurant-backend` ([below](#end-to-end-tests-against-the-backend)). Areas that exist only
+on the backend (cash register, invoices, reports, inventory, purchasing, staff and rota) are
+tested by the backend's own tests and by specs that run against the server.
 
 ## Commands
 
-| Command              | What it does                                              |
-| -------------------- | --------------------------------------------------------- |
-| `npm test`           | Runs every unit test once (`vitest run`)                  |
-| `npm run test:watch` | Vitest in watch mode                                      |
-| `npm run build`      | Static export to `out/`; required before end-to-end tests |
-| `npm run test:e2e`   | Playwright, mobile and desktop projects                   |
-| `npm run typecheck`  | `tsc --noEmit`                                            |
-| `npm run lint`       | ESLint with `--max-warnings=0`                            |
+| Command              | What it does                                                                |
+| -------------------- | --------------------------------------------------------------------------- |
+| `npm test`           | Runs every unit test once (`vitest run`)                                    |
+| `npm run test:watch` | Vitest in watch mode                                                        |
+| `npm run build`      | Static export to `out/` plus the CSP step; required before end-to-end tests |
+| `npm run test:e2e`   | Playwright, mobile and desktop projects                                     |
+| `npm run typecheck`  | `tsc --noEmit`                                                              |
+| `npm run lint`       | ESLint with `--max-warnings=0`                                              |
 
 Useful variations:
 
@@ -72,7 +75,14 @@ Configuration is in [`vitest.config.mts`](../vitest.config.mts):
 Test files fall into three groups, by naming convention:
 
 - **`<module>.test.ts`** tests a pure `src/lib` module (`pricing.test.ts`, `money.test.ts`,
-  `kitchenBoard.test.ts`). Pass data in; read fixtures with the `test*` helpers.
+  `kitchenBoard.test.ts`, `salesReport.test.ts`, `salesExport.test.ts`, `refundItems.test.ts`,
+  `pdfPages.test.ts`, `xlsx.test.ts` (one sheet and the multi-sheet `toXlsxBook`),
+  `idleSignOut.test.ts`). Pass data in; read fixtures with the `test*` helpers. Every new `lib`
+  module gets one.
+- A few tests guard wiring rather than a module: `refreshAfter.test.ts` (every change names known
+  reads), `globalErrorCopy.test.ts` (`src/app/global-error-copy.json` equals `common › error`),
+  `backendTransport.test.ts` and `backendAnswers.test.ts` (the backend's envelope and order
+  adapter), `masters.test.ts`.
 - **`<area>Server.test.ts`** tests mock-server endpoints end to end through the router
   (`floorsServer.test.ts`, `branchSettingsServer.test.ts`, `promosServer.test.ts`).
 - **`<Name>.test.tsx`** tests a component, context or hook inside the app providers
@@ -163,10 +173,11 @@ describe('GET /admin/branches/:branchId/floors (mock)', () => {
 
 Header names are lower case (`authorization`), as the transport passes them to the mock.
 
-When you add an endpoint, add its route to `ROUTES` in
-[`src/api/mock/server.ts`](../src/api/mock/server.ts), its types to
-[`src/api/contracts.ts`](../src/api/contracts.ts), and a server test that covers success, each
-error code and the effect on related reads.
+When you add an endpoint the mock answers, add its route to `ROUTES` in
+[`src/api/mock/server.ts`](../src/api/mock/server.ts), its types to the area file under
+[`src/api/contracts/`](../src/api/contracts), and a server test that covers success, each error
+code and the effect on related reads. A backend-only endpoint has no mock route: its rules are
+tested in `restaurant-backend`, and its screen in an e2e spec that runs against the server.
 
 ## Testing hooks and components
 
@@ -215,16 +226,22 @@ assertions must wait for results rather than assume them.
 
 Shared helpers are in [`tests/e2e/helpers.ts`](../tests/e2e/helpers.ts):
 
-| Helper                          | Use                                                         |
-| ------------------------------- | ----------------------------------------------------------- |
-| `scan(page, 'table=12')`        | Opens a table QR link and waits for the guest session       |
-| `addDish(page, category, dish)` | Adds a dish from its category page and waits for the save   |
-| `waitForSavedCart(page, slug)`  | Waits until the cart with that dish is in storage           |
-| `orderAtCounter(page)`          | Checks out with OTP and pays at the counter; returns the id |
-| `callWaiter(page)`              | Sends a waiter request from Help                            |
-| `adminSignIn(page, branch?)`    | Signs in with the demo account and picks a branch           |
-| `expectBranchOpen(page, name)`  | Asserts the staff shell shows that branch                   |
-| `visible(page, role, name)`     | First visible match (both headers render on every page)     |
+| Helper                                    | Use                                                             |
+| ----------------------------------------- | --------------------------------------------------------------- |
+| `test` (fixture)                          | Every page starts at lunchtime, Thursday 15 Oct 2026, India     |
+| `againstBackend`                          | `E2E_BACKEND=true`: the build talks to the backend              |
+| `installClock`, `fastForward`, `fixClock` | Move the browser's clock and, against the backend, the server's |
+| `startAtLunchtime(context)`               | The same start time for a context a test opens itself           |
+| `scan(page, 'table=12')`                  | Opens a table QR link and waits for the guest session           |
+| `addDish(page, category, dish)`           | Adds a dish from its category page and waits for the save       |
+| `waitForSavedCart(page, slug)`            | Waits until the cart with that dish is in storage               |
+| `orderAtCounter(page, mobile?)`           | Checks out with OTP and pays at the counter; returns the id     |
+| `callWaiter(page)`                        | Sends a waiter request from Help                                |
+| `adminSignIn(page, branch?)`              | Signs in with the demo account and picks a branch               |
+| `markReadyInKitchen(page, id)`            | Marks the order ready on the kitchen board (backend runs)       |
+| `expectBranchOpen(page, name)`            | Asserts the staff shell shows that branch                       |
+| `visible(page, role, name)`               | First visible match (both headers render on every page)         |
+| `pickOption(field, option)`               | Picks an option in the app's own dropdown (`Select`)            |
 
 Guidelines:
 
@@ -241,6 +258,8 @@ Guidelines:
   change can break a test; update both together.
 - Match order numbers with `/[A-Z]+-?\d+/`: the backend numbers them with the branch's prefix
   (`UDY-001`), the mock `A001` up. Never hard-code one.
+- Against the server, pass `orderAtCounter` a mobile number of the run's own (for example
+  `` `98${String(Date.now()).slice(-8)}` ``): the server limits the codes sent to one number.
 - Fake clocks rely on the query client's microtask scheduler
   ([data-and-api.md › Transport](data-and-api.md#transport)); without it, screens stalled after a
   navigation under `installClock` / `fixClock`.
@@ -249,38 +268,56 @@ Guidelines:
 
 The same specs run against `restaurant-backend` when the export is built with
 `NEXT_PUBLIC_BACKEND_URL`. `againstBackend` (`E2E_BACKEND=true`) in
-[`tests/e2e/helpers.ts`](../tests/e2e/helpers.ts) tells a spec which build it runs against;
-checks that need the mock's drawn history or its device storage are skipped there.
+[`tests/e2e/helpers.ts`](../tests/e2e/helpers.ts) tells a spec which build it runs against.
 
-1. **Database.** Use a database of its own, `olive_table_e2e`, and Redis database 14. Never
-   point the tests at the development database `olive_table`: they create orders, bookings and
-   settings. Reseed it (and flush Redis database 14) before each spec file, running one file at
-   a time with `--workers=1`: the backend keeps data from one test to the next, while the mock
-   starts each test afresh.
-2. **API.** Start the backend on port 4001 with `TEST_CLOCK=true` (adds `/v1/test/clock`, which
-   `installClock`, `fastForward` and `fixClock` drive, so the server's clock and `Date` header
-   follow the browser's) and `QR_TOKEN_REQUIRED=false` (the helpers open unsigned `?table=`
-   links). The helpers reach it at `E2E_BACKEND_URL` (default `http://localhost:4001/v1`).
+1. **Database.** Use a database of its own, `olive_table_e2e`, and Redis database 14. **Never**
+   point the tests at the development database `olive_table`, and never delete rows there to
+   reset state: it holds manual-testing data. Only `npm run db:seed` (it upserts) is safe on
+   `olive_table`. To start `olive_table_e2e` fresh, migrate it (`npm run db:deploy`), run `npm run db:catalog` and
+   `npm run db:seed` with `DATABASE_URL` pointing at it, and flush Redis database 14.
+2. **API.** Start a second backend on port 4001 against that database with:
+   - `TEST_CLOCK=true` (adds `/v1/test/clock`, which `installClock`, `fastForward` and
+     `fixClock` drive, so the server's clock and `Date` header follow the browser's);
+   - `QR_TOKEN_REQUIRED=false` (the helpers open unsigned `?table=` links);
+   - `RATE_LIMIT_PER_MINUTE=100000` (a full run otherwise hits `429` on `PUT /test/clock`).
+
+   The helpers reach it at `E2E_BACKEND_URL` (default `http://localhost:4001/v1`). **Restart the
+   test API after resetting `olive_table_e2e`**: it keeps the old role and permission ids in
+   memory, and admin pages then say "You don't have access".
+
 3. **Build and run:**
 
    ```bash
-   NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:4001/v1 npm run build
-   E2E_BACKEND=true npx playwright test --reporter=list
+   NEXT_PUBLIC_BACKEND_URL=http://localhost:4001/v1 npm run build
+   E2E_BACKEND=true E2E_BACKEND_URL=http://localhost:4001/v1 npx playwright test --reporter=list
    ```
 
-   Pass `--reporter=list` so a failure does not wait on the HTML report server.
+   Run one spec file at a time with `--workers=1` when a spec needs a clean server: the backend
+   keeps data from one test to the next, while the mock starts each test afresh.
 
 4. **Stop the API server** when the run ends (by its PID); a server left running keeps the
    output pipe open and the run never returns.
+
+Which specs run where:
+
+- **Both builds:** most specs. Checks that need the mock's drawn history or its device storage
+  are skipped against the server (parts of `orders`, `lifecycle`, `service` and
+  `admin-settings`).
+- **Server only:** `admin-sales.spec.ts` (the Sales report), `admin-purchasing.spec.ts` and
+  `admin-offers.spec.ts` (saving offers).
+- **Desktop only against the server:** `admin-menu.spec.ts`, because it changes the one shared
+  menu.
 
 Writing specs that pass on both builds:
 
 - Read order and booking numbers as they come (`/[A-Z]+-?\d+/`, `/R\d+/`) and use a table of
   the spec's own, since earlier tests' data is still there.
+- Check that figures are there, not exact amounts, where earlier tests add to them (the Sales
+  report); the backend's own tests check the amounts.
 - Set times with the clock helpers, never `page.clock` alone, so the server agrees.
 
-Last recorded run against the backend (2026-10-28): 62 passed, 7 skipped, on both the desktop
-and mobile projects.
+The six failures seen against the server on 2026-11-18 were test drift (changed labels and
+menus) and are fixed.
 
 ## Known issues
 

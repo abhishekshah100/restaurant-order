@@ -83,6 +83,9 @@ Words:
 - Rejection reasons: `common › masters.rejectionReasons`.
 - Refund reasons: `common › adminPayments.entry.reasons`. That object also has `cancelled` and
   `changed`, which are not in the master (they label refunds the system records itself).
+  A staff refund for `complaint` or `wrongItem` must name the dishes it is for
+  (`REFUND_NEEDS_ITEMS` in [`src/lib/refundItems.ts`](../src/lib/refundItems.ts)); the others
+  may.
 
 Derived from these masters:
 
@@ -162,7 +165,8 @@ shown as `cgst` + `sgst`) and its `rates` over time in basis points (500 = 5%).
 | `vat`           | `tax`    | `NP`      | 1300 | `2024-04-01` |
 | `serviceCharge` | `charge` | any       | 1000 | `2024-04-01` |
 
-Helpers: `taxRateOn(type, day)` returns the rate in force on a `YYYY-MM-DD` day (or `null`);
+`TAX_TYPES` itself is private to the file; `TAX_TYPE_CODES` lists its codes. Helpers:
+`taxRateOn(type, day)` returns the rate in force on a `YYYY-MM-DD` day (or `null`);
 `taxTypesFor(country)` lists the taxes and charges that can apply in a country.
 
 This master is a **catalogue**. A bill never reads it: it uses the tax lines in the branch's own
@@ -185,10 +189,13 @@ Defined in [`src/config/masters/discounts.ts`](../src/config/masters/discounts.t
 | `ELIGIBILITY_RULES`         | `minOrder`, `maxDiscount`, `orderTypes`, … |
 
 `ELIGIBILITY_RULES` in full: `minOrder`, `maxDiscount`, `orderTypes`, `schedule`, `validity`,
-`perGuestLimit`, `scope`. `ELIGIBILITY_BY_KIND` says which rules each kind of discount may use:
+`perGuestLimit`, `scope`.
 
-- `promoCode`: `minOrder`, `maxDiscount`, `orderTypes`, `validity`, `perGuestLimit`;
-- `autoOffer`: `schedule`, `scope`.
+Discounts staff give by hand are not a master: their reasons (`regular`, `complaint`,
+`staffMeal`, `manager`, `other`) are typed on `DiscountRequest` in
+[`src/api/contracts/reservation-rules.ts`](../src/api/contracts/reservation-rules.ts). Reasons
+for leaving part of a bill are `WAIVE_REASONS` in
+[`src/lib/adminPayments.ts`](../src/lib/adminPayments.ts).
 
 Words: `common › masters.discountTypes` and `common › masters.eligibility`.
 
@@ -232,9 +239,9 @@ Derived:
 
 ## Units
 
-Defined in [`src/config/masters/units.ts`](../src/config/masters/units.ts). `UNITS` is keyed by
-code, each with a `dimension` (`count`, `volume`, `weight`) and `toBase` (how many of the
-dimension's base unit one of it is).
+Defined in [`src/config/masters/units.ts`](../src/config/masters/units.ts). `UNITS` (private to
+the file; `UNIT_CODES` lists its codes) is keyed by code, each with a `dimension` (`count`,
+`volume`, `weight`) and `toBase` (how many of the dimension's base unit one of it is).
 
 | Dimension | Codes                                       | Base |
 | --------- | ------------------------------------------- | ---- |
@@ -246,13 +253,18 @@ dimension's base unit one of it is).
 dimensions or between two different count units. Words: `common › masters.units` (`name` and
 `short` per code).
 
+Inventory does not use this master. Its units (`g`, `kg`, `ml`, `l`, `pc`, `dozen`) are `UNITS`
+in [`src/lib/inventory.ts`](../src/lib/inventory.ts), matching restaurant-backend's
+`inventory/units.ts`; the server keeps quantities in base units.
+
 ## Notifications
 
 Defined in [`src/config/masters/notifications.ts`](../src/config/masters/notifications.ts).
 
-- `NOTIFICATION_AUDIENCES`: `kitchen`, `floor`, `cashier`, `guest`.
-- `NOTIFICATION_PRIORITIES`: `low`, `normal`, `high`.
-- `NOTIFICATION_TYPES`, keyed by code, each with a `group` (`order`, `kitchen`, `payment`,
+- `NotificationAudience` (a type): `kitchen`, `floor`, `cashier`, `guest`.
+- `NotificationPriority` (a type): `low`, `normal`, `high`.
+- `NOTIFICATION_TYPES` (private to the file; `NOTIFICATION_TYPE_CODES` lists its codes), keyed by
+  code, each with a `group` (`order`, `kitchen`, `payment`,
   `service`), its `audiences` and a `priority`. Codes: `newOrder`, `orderDelayed`,
   `orderCancelled`, `itemReady`, `itemRejected`, `paymentReceived`, `paymentFailed`,
   `refundIssued`, `serviceRequest`.
@@ -288,7 +300,7 @@ in `common › masters.locales`; currencies in `common › masters.currencies`.
 
 Derived: `CountryCode`, `BranchStatus`, `Weekday` and `WEEKDAYS` in
 [`src/types/branch.ts`](../src/types/branch.ts). `detailsErrors` in
-[`src/lib/branchSettings.ts`](../src/lib/branchSettings.ts) validates locale and currency with
+[`src/lib/branchSettings/checking.ts`](../src/lib/branchSettings/checking.ts) validates locale and currency with
 `isMasterValue` and the time zone with `isTimeZone`. The mock database validates stored branch
 statuses against `BRANCH_STATUSES`.
 
@@ -311,7 +323,8 @@ statuses against `BRANCH_STATUSES`.
 India offers `online` and `counter` at checkout and `upi`, `card` for the bill; Nepal offers
 `esewa`, `khalti`, `fonepay`, `card` and `counter`.
 
-The presets are used in two places in [`src/lib/branchSettings.ts`](../src/lib/branchSettings.ts):
+The presets are used in two places in [`src/lib/branchSettings`](../src/lib/branchSettings)
+(imported through the `branchSettings.ts` barrel):
 
 - `withRegion(branch, { country, timezone, locale, currency })` applies the locale fallback and
   currency from the masters. When the country changes, it also replaces the branch's `mobile`,
@@ -346,11 +359,11 @@ These masters exist for upcoming features. They have words in content and are co
 masters test, but no screen or handler reads them yet:
 
 - `REJECTION_REASONS` (kitchen rejecting a dish);
-- `UNITS` and `convertUnit` (stock and portion units);
-- `NOTIFICATION_TYPES` and `notificationsFor` (a notification service);
-- `PAYMENT_INSTRUMENTS`, `ELIGIBILITY_RULES`, `ELIGIBILITY_BY_KIND` and
-  `CUSTOMER_REQUEST_TYPES` (listed in `MASTERS` only);
-- `TAX_TYPES`, `taxRateOn` and `taxTypesFor`: a catalogue only. Bills use each branch's own tax
+- `UNIT_CODES` and `convertUnit` (inventory has its own units, see [Units](#units));
+- `NOTIFICATION_TYPE_CODES` and `notificationsFor` (a notification service);
+- `PAYMENT_INSTRUMENTS`, `ELIGIBILITY_RULES` and `CUSTOMER_REQUEST_TYPES` (listed in `MASTERS`
+  only);
+- `TAX_TYPE_CODES`, `taxRateOn` and `taxTypesFor`: a catalogue only. Bills use each branch's own tax
   settings, and the effective dates are placeholders (`2024-04-01`).
 
 ## Other app constants
@@ -384,31 +397,40 @@ so changing them never touches a component.
 | `SERVICE_REQUEST_TTL_MS` | 30 min      | When a pending waiter or bill request lapses |
 
 Feature modules keep their own limits next to their logic, for example `LIMITS` and
-`SLOT_MINUTES` in [`src/lib/branchSettings.ts`](../src/lib/branchSettings.ts) and the booking
-limits in [`src/lib/reservations.ts`](../src/lib/reservations.ts).
+`SLOT_MINUTES` in [`src/lib/branchSettings`](../src/lib/branchSettings), the booking limits in
+[`src/lib/reservations.ts`](../src/lib/reservations.ts), the report's `SALES_LIMITS` (a year at a
+time, back two years) in [`src/lib/salesReport.ts`](../src/lib/salesReport.ts) and the 30-minute
+`IDLE_LIMIT_MS` in [`src/lib/idleSignOut.ts`](../src/lib/idleSignOut.ts). With the backend, the
+server's own rules apply (its `.env`: session lengths, rate limits, OTP); `rules.ts` is the mock's.
 
 Environment variables are read in [`src/api/config.ts`](../src/api/config.ts):
-`NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_API_SUFFIX`, `NEXT_PUBLIC_API_MOCK` and
-`NEXT_PUBLIC_API_MOCK_LATENCY_MS`. `NEXT_PUBLIC_ADMIN_DEMO=false` turns off the sample floor
+`NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_API_SUFFIX`,
+`NEXT_PUBLIC_API_MOCK` and `NEXT_PUBLIC_API_MOCK_LATENCY_MS`. The build's CSP step
+(`scripts/add-csp.mjs`) also reads `CSP_EXTRA_ORIGINS`. `NEXT_PUBLIC_ADMIN_DEMO=false` turns off the sample floor
 activity shown under `npm run dev` ([`src/api/mock/demoFloor.ts`](../src/api/mock/demoFloor.ts)).
 
 ## Branch reference data
 
-Branches are dummy reference data a backend would keep in its database. Each branch is an entry
+Branches are dummy reference data in a mock-only build; with the backend, they live in its
+database and `GET /branches` and `GET /branches/:id/config` serve them. Each branch is an entry
 in [`public/api/branches.json`](../public/api/branches.json) (typed `Branch` in
-[`src/types/branch.ts`](../src/types/branch.ts)) plus a folder `public/api/branches/<id>/`.
+[`src/types/branch.ts`](../src/types/branch.ts): `BranchSummary` joined with `BranchConfig`)
+plus a folder `public/api/branches/<id>/`.
 
 Per branch, `branches.json` holds:
 
-- identity and contact: `id`, `name`, `shortName`, `city`, `address`, `image`, `mapUrl`, `phone`,
-  `phoneHref`, `wifiName`, `paymentPartner`;
-- region: `country`, `locale`, `localeFallback`, `currency`, `timezone`, `mobile`;
-- hours: `schedule` (the week), plus today's derived fields (`opensAt`, `closesAt`, `hours`,
-  `hoursToday`, `lastOrders`, `serviceWindows`, …) and `status`;
-- tables: `defaultTable` and `tables` (`first`, `last`, optional `outOfService`);
+- identity and contact: `id`, `name`, `shortName`, `city`, `country`, `address`, `image`,
+  `mapUrl`, `phone`, `wifiName`;
+- region: `locale`, `currency`, `timezone`, `mobile` (`localeFallback` is added from the
+  masters);
+- hours and status: `schedule` (the week in local `HH:MM`, last orders, takeaway's and delivery's
+  own weeks, special dates), `status` and `modeStatus`; screens word the times
+  (`lib/branchHours`);
 - money: `tax` and `payments` (initially the country's region preset);
 - ordering: `modes` (dine-in, takeaway and delivery with their rules and payment lists),
-  `ordering` (dine-in payment timing, cancel window), `dietary` marks and `prepTime`.
+  `ordering` (dine-in payment timing, cancel window), `dietary` marks and `prepMinutes`.
+
+Tables are not on the branch: they are the floor plan's (`floors.json`, Settings › Floor plan).
 
 The branch folder holds `menu.json` (categories, dishes and curated lists), `promotions.json`
 (`codes` and `offers`) and `floors.json` (areas and tables). The default branch is

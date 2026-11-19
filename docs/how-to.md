@@ -10,6 +10,8 @@ existing feature in the codebase and names it, so you can open that feature next
 - [Add an admin page in the shell](#add-an-admin-page-in-the-shell)
 - [Add a Settings page](#add-a-settings-page)
 - [Add an API endpoint](#add-an-api-endpoint)
+- [Add a backend-served endpoint](#add-a-backend-served-endpoint)
+- [Add a report export](#add-a-report-export)
 - [Add or change copy](#add-or-change-copy)
 - [Add a master value](#add-a-master-value)
 - [Add a branch's reference data](#add-a-branchs-reference-data)
@@ -35,7 +37,7 @@ Requires Node.js 20.9 or later (`engines` in [`package.json`](../package.json)).
 | `npm run format:check` | Prettier check (`npm run format` rewrites)             |
 | `npm test`             | Vitest unit tests in `tests/unit/` (jsdom, no latency) |
 | `npm run test:watch`   | Vitest in watch mode                                   |
-| `npm run build`        | Static export to `out/`                                |
+| `npm run build`        | Static export to `out/`, then the CSP step             |
 | `npm start`            | Serves `out/` on port 3000                             |
 | `npm run test:e2e`     | Playwright tests in `tests/e2e/` against `out/`        |
 
@@ -43,6 +45,12 @@ End-to-end tests serve the static export, so run `npm run build` first. They use
 Google Chrome by default; set `PW_CHANNEL=chromium` to use Playwright's Chromium (see
 [`playwright.config.ts`](../playwright.config.ts)). A single unit test file runs with
 `npx vitest run tests/unit/<name>.test.ts`.
+
+To run the app against a local `restaurant-backend` instead of the mock, start the API (port
+4000 by default) and set `NEXT_PUBLIC_BACKEND_URL=http://localhost:4000/v1` (see `.env.example`).
+Pages for backend-only areas (cash register, Sales, inventory, purchasing…) need it. The browser
+tests against the backend use a separate API and database; see
+[testing.md](testing.md#end-to-end-tests-against-the-backend).
 
 Mock behaviour is configured with environment variables read in
 [`src/api/config.ts`](../src/api/config.ts), for example
@@ -120,13 +128,27 @@ page.
    [`src/components/admin/shell/AdminWorkspace.tsx`](../src/components/admin/shell/AdminWorkspace.tsx),
    data with the hooks in [`src/api/hooks.ts`](../src/api/hooks.ts) and words with
    `useContent('common')` under a new `common › admin<Area>` key.
-4. If the page belongs in the navigation, add its id to `AdminNavId` and an entry to `ADMIN_NAV`
-   in [`src/lib/adminNav.ts`](../src/lib/adminNav.ts) (`tab: true` puts it on the mobile tab bar,
-   otherwise it goes under More; `badge` adds a live count). Add the label to
-   `common › adminShell.nav.<id>`. If other pages link to it, add the path to `ADMIN_LINKS` or a
-   path helper there.
-5. Put pure logic (filters, views, totals) in `src/lib/admin<Area>.ts` with a unit test in
-   `tests/unit/`, and add an end-to-end test `tests/e2e/admin-<area>.spec.ts`.
+4. If the page belongs in the sidebar, add its id to `AdminNavId` and an entry to `ADMIN_NAV`
+   in [`src/lib/adminNav.ts`](../src/lib/adminNav.ts), following the Sales item:
+
+   ```ts
+   // The manager's sales report: owners and managers (reports.view).
+   { id: 'sales', href: section('sales'), icon: 'chart', tab: false, needs: ['reports.view'] },
+   ```
+
+   - `needs` lists the permissions that open it (any one is enough); the server must let the
+     same permissions read what the page shows, so a role opens exactly the pages it names.
+   - `tab: true` puts it on the mobile tab bar, otherwise it goes under More; `badge` adds a live
+     count from `NavCounts`.
+   - `icon` is an `IconName`; a new icon needs its mask SVG.
+   - Add the label to `common › adminShell.nav.<id>`. If other pages link to it, add the path to
+     `ADMIN_LINKS` or a path helper there.
+   - Pages that exist only on the backend check `isBackendEnabled()` from
+     [`src/api/backend.ts`](../src/api/backend.ts) and stay idle (or explain) in a mock build.
+
+5. Put pure logic (filters, views, totals) in `src/lib/` (`admin<Area>.ts`, or a name of its
+   own like `salesReport.ts`) with a unit test in `tests/unit/`, and add an end-to-end test
+   `tests/e2e/admin-<area>.spec.ts` (`test.skip(!againstBackend, …)` for a backend-only page).
 
 Kitchen pages follow the same pattern under `src/app/admin/kitchen-dashboard/`, with
 `kitchenMetadata` and the navigation in [`src/lib/kitchenNav.ts`](../src/lib/kitchenNav.ts).
@@ -148,11 +170,13 @@ smallest example; this recipe follows how it was added. Replace `services` with 
    export type ServicesSettings = Record<OrderMode, boolean>;
    ```
 
-2. In [`src/lib/branchSettings.ts`](../src/lib/branchSettings.ts):
-   - add a reader (`servicesOf(branch)`) and call it from `settingsOf`;
-   - add a checker (`servicesErrors(...)`) that returns `SettingsError[]`, adding any new error
-     codes to the `SettingsError` union;
-   - add a writer (`withServices(branch, value)`) and call it from `applySettings`.
+2. In [`src/lib/branchSettings/`](../src/lib/branchSettings) (behind the `branchSettings.ts`
+   barrel):
+   - add a reader (`servicesOf(branch)`) in `reading.ts` and call it from `settingsOf`;
+   - add a checker (`servicesErrors(...)`) in `checking.ts` that returns `SettingsError[]`, adding
+     any new error codes to the `SettingsError` union in `shared.ts`;
+   - add a writer (`withServices(branch, value)`) in `writing.ts` and call it from
+     `applySettings`.
 
 **Mock server**
 
@@ -162,8 +186,10 @@ smallest example; this recipe follows how it was added. Replace `services` with 
    - add the section id to the `known` set in `updateBranchSettings`;
    - add a block that reads the body, runs the same checker from `lib/branchSettings` (refusing
      with `bad()` on any error) and calls `apply({ services })`.
-4. Update the JSDoc of `BranchSettingsResponse` in [`src/api/contracts.ts`](../src/api/contracts.ts)
-   with the new section and checker.
+4. Update the JSDoc of `BranchSettingsResponse` in
+   [`src/api/contracts/branch-settings.ts`](../src/api/contracts/branch-settings.ts) with the new
+   section and checker. With the backend, `restaurant-backend` must accept and check the section
+   too.
 
 **Page**
 
@@ -230,16 +256,21 @@ smallest example; this recipe follows how it was added. Replace `services` with 
 ## Add an API endpoint
 
 The contract is the source of truth: the app calls the endpoint through typed functions;
-`restaurant-backend` serves it, and the mock server answers it in a mock-only build. Follow the reservations endpoints. The names
-below (`notes`, `NoteInput`) are placeholders.
+`restaurant-backend` serves it, and the mock server answers it in a mock-only build. Follow the
+reservations endpoints. The names below (`notes`, `NoteInput`) are placeholders. For an endpoint
+only the backend serves (no mock), follow
+[Add a backend-served endpoint](#add-a-backend-served-endpoint) instead.
 
-1. **Contract.** In [`src/api/contracts.ts`](../src/api/contracts.ts), add the request and
-   response types under the right section comment, with JSDoc stating the method and path, who is
+1. **Contract.** In the area's file under [`src/api/contracts/`](../src/api/contracts) (here
+   `contracts/reservations.ts`; never the `contracts.ts` barrel), add the request and
+   response types, with JSDoc stating the method and path, who is
    authorised, the success status and body, every error status and code, and any mock-only
    behaviour. Reuse domain types from `src/types/` and master types from `@/config/masters`.
-2. **Endpoint function.** Add a function to the `api` object in
-   [`src/api/endpoints.ts`](../src/api/endpoints.ts), using `apiGet`, `apiPost`, `apiPatch` or
-   `apiDelete`, `seg` for path segments and `bearer(token)` for staff endpoints:
+2. **Endpoint function.** Add a function to the area's object in
+   [`src/api/endpoints/`](../src/api/endpoints) (here `reservationsApi` in
+   `endpoints/reservations.ts`; `endpoints.ts` spreads every area into `api`), using `apiGet`,
+   `apiPost`, `apiPatch` or `apiDelete`, and `seg`, `searchOf` and `bearer(token)` from
+   `endpoints/shared.ts`:
 
    ```ts
    reservations: (token: string, branchId: string) =>
@@ -268,10 +299,13 @@ below (`notes`, `NoteInput`) are placeholders.
      useQuery(reservationsQuery(useAdminToken(), branchId));
    ```
 
-4. **Writes.** Add a mutation hook to [`src/api/mutations.ts`](../src/api/mutations.ts). Use
-   `requireToken(token)` for staff calls. Invalidate (or set) every query the change affects in
-   `onSuccess` or `onSettled`; reuse helpers such as `refreshFloor` and `refreshBranches`. A
-   simplified `useSaveReservation`:
+4. **Writes.** Add a mutation hook to the area's file under
+   [`src/api/mutations/`](../src/api/mutations) (here `mutations/reservations.ts`). Use
+   `requireToken(token)` for staff calls. After the write, name the change with
+   `refreshAfter(client, '<change>', branchOf(variables))`
+   ([`src/api/refreshAfter.ts`](../src/api/refreshAfter.ts)); add a new `Change` to `AFTER`, and a
+   new screen's key to `READS`, rather than invalidating queries in the hook. A simplified
+   `useSaveReservation`:
 
    ```ts
    export function useSaveReservation() {
@@ -280,7 +314,8 @@ below (`notes`, `NoteInput`) are placeholders.
      return useMutation({
        mutationFn: ({ branchId, body }: { branchId: string; body: ReservationInput }) =>
          api.createReservation(requireToken(token), branchId, body),
-       onSettled: () => refreshFloor(client),
+       onSettled: (_data, _error, variables) =>
+         refreshAfter(client, 'bookingChanged', branchOf(variables)),
      });
    }
    ```
@@ -318,6 +353,72 @@ below (`notes`, `NoteInput`) are placeholders.
 
 Reference data that never changes at run time (a new JSON file under `public/api/`) needs no
 handler: requests the mock server does not route fall through to the static files.
+
+Update [api-contract.md](api-contract.md) with the endpoint.
+
+## Add a backend-served endpoint
+
+Most new endpoints are served only by `restaurant-backend` (the cash register, invoices,
+reports, inventory, purchasing…). They need no mock handler. Follow the Sales report's
+`GET …/reports/sales`.
+
+1. **Backend first.** Build and test the route in `restaurant-backend` with the contract's field
+   names and error codes.
+2. **Contract.** Add the types, with JSDoc naming the method, path, permission, statuses and
+   errors, to the area file under [`src/api/contracts/`](../src/api/contracts)
+   (`contracts/reports.ts`). A new area gets a new file and an `export *` line in
+   [`src/api/contracts.ts`](../src/api/contracts.ts).
+3. **Endpoint.** Add the function to the area's object in
+   [`src/api/endpoints/`](../src/api/endpoints) (`reportsApi` in `endpoints/reports.ts`). A new
+   area's object is spread into `api` in [`src/api/endpoints.ts`](../src/api/endpoints.ts).
+
+   ```ts
+   salesReport: (token: string, branchId: string, range: { from: string; to: string }) =>
+     apiGet<SalesReport>(
+       `admin/branches/${seg(branchId)}/reports/sales${searchOf(range)}`,
+       bearer(token),
+     ),
+   ```
+
+   A file the server sends as bytes (CSV, a private photo) uses `backendBlob` instead.
+
+4. **Route.** Add `[method, path]` to `BACKEND_ROUTES` in
+   [`src/api/backend.ts`](../src/api/backend.ts), with `:params` for path segments
+   (`['GET', 'admin/branches/:branchId/reports/sales']`). Without it, the request goes to the mock
+   and fails.
+5. **Read.** Add a `queryOptions` factory to [`src/api/queries.ts`](../src/api/queries.ts)
+   (`salesReportQuery`, key `['admin', 'reports', 'sales', branchId, from, to, token]`) and a hook
+   in [`src/api/hooks.ts`](../src/api/hooks.ts) (`useSalesReport`). If writes elsewhere make it
+   stale, add its key prefix to `READS` and to those changes in `refreshAfter.ts`.
+6. **Write** (if any). A hook in the area's `mutations/` file that names its change, as above.
+7. **Screen.** Pass the branch to the hook only when `isBackendEnabled()`, so a mock build stays
+   idle.
+8. **Tests.** The backend's tests check the shapes; add an e2e spec that runs against the server
+   (`test.skip(!againstBackend, …)`) and update [api-contract.md](api-contract.md).
+
+## Add a report export
+
+Reports export to Excel in the browser, with no library: the Sales report's multi-sheet file is
+the example.
+
+1. **Sheets as data.** Write a pure function in `src/lib/` that turns the report into
+   `XlsxSheet[]` (`{ name, columns, rows }`), taking every word as an argument (a
+   `…Words` object) so it stays free of content: `salesSheets(report, about, words, branches?)`
+   in [`src/lib/salesExport.ts`](../src/lib/salesExport.ts). Test it in `tests/unit/`
+   (`salesExport.test.ts`).
+2. **Words.** Add sheet names, column names and the file name to content (for example
+   `common › adminSales.export`).
+3. **Hook.** In the page's folder, a hook builds the words with `useContent`, calls the
+   function and saves the file:
+   `downloadXlsx(toXlsxBook(sheets), fileName)` from [`src/lib/xlsx.ts`](../src/lib/xlsx.ts)
+   (see `components/admin/sales/useSalesExport.ts`). One sheet is
+   `toXlsx(sheetName, items, columns, row)`, as `components/admin/payments/paymentsExport.ts`
+   does.
+4. **CSV from the server** (the sales register, the audit log): read it with `backendBlob` and
+   save it with `downloadFile` from [`src/lib/saveFile.ts`](../src/lib/saveFile.ts).
+5. **PDF or print** (optional): a print sheet through a `data-print-sheet` portal, or a PDF with
+   `html2canvas` and `jsPDF` loaded by `import()` and laid out with `lib/pdfPages`; see
+   [architecture.md › Printing and PDFs](architecture.md#printing-and-pdfs).
 
 ## Add or change copy
 

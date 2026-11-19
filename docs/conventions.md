@@ -77,6 +77,10 @@ the module.
 - No inline styles except for truly dynamic values, such as a skeleton's size or a bar chart's
   width. Prefer setting a custom property (`style={{ '--value': '40%' }}`) and using it in the
   module.
+- Print sheets render through a portal marked `data-print-sheet` and hide the rest of the page
+  under their own `html.printing-<name>` class (see
+  [architecture.md › Printing and PDFs](architecture.md#printing-and-pdfs)). Don't print the page
+  itself.
 - Icons are `<Icon name="..." />` from `components/ui`. Names are the typed `IconName` union; a
   new icon needs a mask SVG in the same 24px, 1.8 stroke style.
 
@@ -105,6 +109,12 @@ t.plural('verify.errors.wrong', attemptsLeft); // { one, other } chosen by count
 ```
 
 `t.get(key)` returns a raw value (a list or group), for example a list of FAQ entries to map over.
+
+Staff pages keep their words in `common` under one key per area (`common › adminSales`,
+`common › adminCash`, `common › adminInventory`…); page titles are `common › adminShell.meta.<page>`
+and nav labels `common › adminShell.nav.<id>`. The one static import of content is
+`src/app/global-error-copy.json` (only `common › error`), used by `global-error.tsx`; when you
+change `common › error`, change the copy too (`tests/unit/globalErrorCopy.test.ts` checks it).
 
 Enforcement, from [`eslint.config.mjs`](../eslint.config.mjs), for `src/**/*.tsx` except the
 styleguide:
@@ -147,23 +157,28 @@ Accessibility is part of the definition of done, not a later pass.
 
 ## Naming and file organisation
 
-| Kind             | Location                    | Naming                                             |
-| ---------------- | --------------------------- | -------------------------------------------------- |
-| Route            | `src/app/<path>/page.tsx`   | Default export `XxxPage`                           |
-| View or part     | `src/components/<area>/`    | `PascalCase.tsx` plus `PascalCase.module.css`      |
-| UI primitive     | `src/components/ui/<Name>/` | One folder per primitive, exported from `index.ts` |
-| Component hook   | Next to its component       | `useTicketActions.ts`                              |
-| Shared hook      | `src/hooks/`                | `useCamelCase.ts`                                  |
-| Pure logic       | `src/lib/`                  | `camelCase.ts` by domain (`pricing.ts`)            |
-| Types            | `src/types/`                | By domain (`order.ts`, `branch.ts`)                |
-| Fixed code lists | `src/config/masters/`       | One file per area                                  |
-| Mock handler     | `src/api/mock/handlers/`    | One file per resource                              |
-| Unit test        | `tests/unit/`               | `<module>.test.ts`, `<area>Server.test.ts`         |
-| End-to-end test  | `tests/e2e/`                | `<flow>.spec.ts`                                   |
+| Kind             | Location                                         | Naming                                                 |
+| ---------------- | ------------------------------------------------ | ------------------------------------------------------ |
+| Route            | `src/app/<path>/page.tsx`                        | Default export `XxxPage`                               |
+| View or part     | `src/components/<area>/`                         | `PascalCase.tsx` plus `PascalCase.module.css`          |
+| UI primitive     | `src/components/ui/<Name>/`                      | One folder per primitive, exported from `index.ts`     |
+| Component hook   | Next to its component                            | `useTicketActions.ts`                                  |
+| Shared hook      | `src/hooks/`                                     | `useCamelCase.ts`                                      |
+| Pure logic       | `src/lib/`                                       | `camelCase.ts` by domain (`pricing.ts`)                |
+| Types            | `src/types/`                                     | By domain (`order.ts`, `branch.ts`)                    |
+| Fixed code lists | `src/config/masters/`                            | One file per area                                      |
+| API area file    | `src/api/contracts/`, `endpoints/`, `mutations/` | One file per area, behind the barrel (`contracts.ts`…) |
+| Mock handler     | `src/api/mock/handlers/`                         | One file per resource                                  |
+| Unit test        | `tests/unit/`                                    | `<module>.test.ts`, `<area>Server.test.ts`             |
+| End-to-end test  | `tests/e2e/`                                     | `<flow>.spec.ts`                                       |
 
 - Import with the `@/` alias (`@/lib/pricing`), not long relative paths. Sibling files in the same
   folder use `./`.
 - Export components by name; only route files use default exports.
+- Barrels only re-export. `src/api/contracts.ts`, `endpoints.ts`, `mutations.ts` and
+  `src/lib/branchSettings.ts` gather their area files; add new types, endpoints and hooks to the
+  matching area file (create one for a new area and add it to the barrel), never to the barrel
+  itself. Import from the barrel (`@/api/contracts`), not from the area file.
 - Props interfaces are named `<Component>Props` and documented field by field.
 - Navigation lists live in one place: [`src/lib/adminNav.ts`](../src/lib/adminNav.ts) and
   [`src/lib/kitchenNav.ts`](../src/lib/kitchenNav.ts). Build links with the helpers
@@ -193,7 +208,18 @@ const symbol = branch.id === 'ktm-thamel' ? 'रू' : '₹';
 ```
 
 - **Components stay thin.** They receive data and call callbacks; computation belongs in `lib`
-  or a hook.
+  or a hook. Each `lib` module has its unit test (`lib/salesReport.ts` and `salesReport.test.ts`,
+  `lib/salesExport.ts`, `lib/refundItems.ts`, `lib/pdfPages.ts`, `lib/xlsx.ts`…).
+- **Refresh through `refreshAfter`.** A mutation or live event names its change
+  (`refreshAfter(client, 'paymentTaken', branchId)`); a new screen adds its query key to `READS`
+  and the changes that touch it in [`src/api/refreshAfter.ts`](../src/api/refreshAfter.ts).
+  Never call `invalidateQueries` or `refetch` from a page or component.
+- **Dish cards share branch values.** Per-dish UI on guest pages reads money, offers and
+  `canAdd` from `useDishCardShared()` (`DishCardProvider`), not `useBranch()` per card.
+- **Heavy libraries load on demand.** `html2canvas` and `jsPDF` are imported with `import()` when
+  a PDF is asked for, never at the top of a module, so they stay out of page bundles.
+- **Backend-only screens** check `isBackendEnabled()` (`api/backend.ts`) and stay idle or explain
+  themselves in a mock build.
 - **Server data only through `src/api`.** Never call `fetch`, read API JSON or keep server data in
   storage from a component. Use the read hooks and the mutation hooks.
 - **Validate what you read.** Storage reads go through `readJSON` with a type guard; malformed
@@ -227,8 +253,11 @@ A change is done when all of the following pass locally with no new failures:
    [`.prettierrc.json`](../.prettierrc.json): single quotes, semicolons, trailing commas,
    100 columns.
 4. `npm test`: Vitest unit tests, including a test for new `lib` logic and new mock endpoints.
-5. `npm run build`, then `npm run test:e2e`: Playwright on mobile and desktop for any flow you
-   touched.
+   A backend-only endpoint is tested in `restaurant-backend`, and its screen in an e2e spec run
+   against the server.
+5. `npm run build` (the export plus the CSP step, `scripts/add-csp.mjs`), then
+   `npm run test:e2e`: Playwright on mobile and desktop for any flow you touched. A new external
+   host the page must reach goes in `CSP_EXTRA_ORIGINS`, or the policy blocks it.
 6. Copy is in `public/api/content`, the page works at 390px and 1280px, and keyboard and screen
    reader behaviour follow [Accessibility](#accessibility).
 7. Documentation in `docs/` is updated when you change a route, an endpoint, a storage key or a

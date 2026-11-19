@@ -1,8 +1,8 @@
 # The Olive Table: developer documentation
 
 Technical documentation for the Olive Table web app: a QR-code ordering app for guests, a staff app
-for waiters and the kitchen, and the Settings that configure each branch. Start here, then follow
-the reading path for your role.
+for waiters, managers and the kitchen, and the Settings that configure each branch. Start here,
+then follow the reading path for your role.
 
 ## What the system is
 
@@ -10,14 +10,20 @@ the reading path for your role.
   browse the branch's menu, check out with their mobile number and an OTP, pay online or in
   person, follow their order, call a waiter and pay their own bill.
 - **Staff** sign in, pick a branch and run service: tables, orders, requests, menu availability,
-  reservations, payments and QR codes. The **kitchen** works from its own ticket board.
-- **Settings** configure each branch: details and region, opening hours, taxes, payment methods,
-  services, delivery zones, pickup, the floor plan, and the branches themselves.
+  reservations, payments and tax invoices, the cash register, refunds and cancellations, and QR
+  codes. Each staff member sees only the pages their role allows.
+- **Managers** also plan shifts and check attendance, run inventory and purchasing, read the
+  **Sales report** and the **audit log**. The **kitchen** works from its own ticket board.
+- **Settings** configure each branch: details and region, the Help page, opening hours, the floor
+  plan, services, pickup, delivery zones, taxes and invoices, payment methods, offers, staff and
+  roles, the branches themselves and (super admins only) optional modules.
 
 The app is a **static Next.js export** with no server of its own. Every read and write goes through
 a typed API layer. Built with `NEXT_PUBLIC_BACKEND_URL`, it talks to **`restaurant-backend`**
 (staff screens also follow the branch's live events); without it, an **in-browser mock server**
-answers exactly as the backend contract specifies.
+answers the guest and floor screens exactly as the backend contract specifies. Newer staff areas
+(roles, cash register, shifts, inventory, purchasing, invoices, audit log, Sales report) need the
+backend.
 
 ```mermaid
 flowchart LR
@@ -28,7 +34,7 @@ flowchart LR
     Mock --> Storage[(Web Storage)]
   end
   Client -->|everything else| Static[Static JSON<br/>public/api]
-  Client -->|NEXT_PUBLIC_BACKEND_URL<br/>routes in src/api/backend.ts| API[restaurant-backend<br/>contract: src/api/contracts.ts]
+  Client -->|NEXT_PUBLIC_BACKEND_URL<br/>routes in src/api/backend.ts| API[restaurant-backend<br/>contract: src/api/contracts/]
 ```
 
 ## Reading path
@@ -54,13 +60,13 @@ Backend developers: [API contract](api-contract.md), then [Data and API](data-an
 | [conventions.md](conventions.md)               | Code style, CSS, copy rules, accessibility, definition of done |
 | [testing.md](testing.md)                       | Unit, mock-server and end-to-end tests (also against backend)  |
 | [guest-app.md](guest-app.md)                   | Guest journey, sessions, modes, pricing, checkout, tracking    |
-| [staff-app.md](staff-app.md)                   | Sign-in, admin shell and pages, kitchen workspace              |
+| [staff-app.md](staff-app.md)                   | Sign-in, admin shell and pages, reports, kitchen workspace     |
 | [settings.md](settings.md)                     | Every Settings page and its rules                              |
 | [data-and-api.md](data-and-api.md)             | Endpoints, hooks, mock server, content, real backend           |
 | [api-contract.md](api-contract.md)             | Every endpoint: request, response, errors, rules               |
 | [masters-and-config.md](masters-and-config.md) | Master values, region presets, app constants                   |
 | [how-to.md](how-to.md)                         | Step-by-step recipes for common changes                        |
-| [roadmap.md](roadmap.md)                       | Status, next work, production checklist, known issues          |
+| [roadmap.md](roadmap.md)                       | Status and history, next work, production checklist, issues    |
 
 ## Quick start
 
@@ -75,5 +81,6 @@ Staff pages: open `/admin/login/` and choose **Use demo account**. More commands
 ## Design source
 
 The screens follow the design in `../the-olive-table-ui` (`screens/*.html`, `png/*.png`): the
-mobile layout below 1024px, the web layout from 1024px. Staff pages, the kitchen and Settings
-were not in that design; they follow the same design system.
+mobile layout below 1024px, the web layout from 1024px. Staff pages, the kitchen, Settings,
+inventory, purchasing and the Sales report were not in that design; they follow the same design
+system.

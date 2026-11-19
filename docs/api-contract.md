@@ -2,9 +2,13 @@
 
 The HTTP contract for The Olive Table. `restaurant-backend` serves it (every route listed in
 [`src/api/backend.ts`](../src/api/backend.ts)); the in-browser mock server answers the same
-contract in a build without `NEXT_PUBLIC_BACKEND_URL`.
-[`src/api/contracts.ts`](../src/api/contracts.ts) is the authoritative source: its types define
-every body and its JSDoc every rule; this document organises it by endpoint. Where the backend
+contract in a build without `NEXT_PUBLIC_BACKEND_URL` (only for the older endpoints: the ones
+marked "backend only" have no mock).
+[`src/api/contracts.ts`](../src/api/contracts.ts) is the authoritative source. It is a barrel that
+re-exports one file per area in [`src/api/contracts/`](../src/api/contracts) (`orders.ts`,
+`payments.ts`, `cash-register.ts`, `reports.ts`…): their types define every body and their JSDoc
+every rule; this document organises it by endpoint. Links to `contracts.ts` below reach the type
+through the barrel. Where the backend
 answers differently from the mock (orders as data, its `{ success, data }` envelope), see
 [data-and-api.md](data-and-api.md#connecting-restaurant-backend-area-by-area).
 
@@ -26,11 +30,27 @@ answers differently from the mock (orders as data, its `{ success, data }` envel
 - [Admin menu](#admin-menu)
 - [Reservations](#reservations)
 - [Kitchen](#kitchen)
+- [Admin staff, roles and modules](#admin-staff-roles-and-modules)
+- [Admin tables: sections, notes, QR links and moves](#admin-tables-sections-notes-qr-links-and-moves)
+- [Admin orders: history, extras and bills](#admin-orders-history-extras-and-bills)
+- [Invoices and credit notes](#invoices-and-credit-notes)
+- [Audit log](#audit-log)
+- [Cash register](#cash-register)
+- [Reports](#reports)
+- [Inventory](#inventory)
+- [Purchasing](#purchasing)
+- [Shifts and rota](#shifts-and-rota)
+- [More menu, reservation and guest endpoints](#more-menu-reservation-and-guest-endpoints)
 - [Related](#related)
 
 ## Endpoint index
 
-70 endpoints. Paths are relative to the API base URL.
+The endpoints described one by one below. Paths are relative to the API base URL. The areas added
+since (staff and roles, table sections and moves, order extras, invoices, the audit log, the cash
+register, reports, inventory, purchasing, shifts and rota) are summarised in tables in their own
+sections further down. The full list the backend serves is `BACKEND_ROUTES` in
+[`src/api/backend.ts`](../src/api/backend.ts); the events stream is read separately
+([`GET …/events`](#get-adminbranchesbranchidevents)).
 
 | Method | Path                                                                                                                                              | Area                             |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -104,11 +124,17 @@ answers differently from the mock (orders as data, its `{ success, data }` envel
 | PATCH  | [`/admin/branches/:branchId/orders/:id/rush`](#patch-adminbranchesbranchidordersidrush)                                                           | Kitchen                          |
 | POST   | [`/admin/branches/:branchId/orders/:id/messages`](#post-adminbranchesbranchidordersidmessages)                                                    | Kitchen                          |
 | GET    | [`/admin/branches/:branchId/events`](#get-adminbranchesbranchidevents)                                                                            | Kitchen                          |
+| GET    | [`/admin/branches/:branchId/reports/sales`](#get-adminbranchesbranchidreportssales)                                                               | Reports                          |
+| GET    | [`/admin/branches/:branchId/reports/sales/branches`](#get-adminbranchesbranchidreportssalesbranches)                                              | Reports                          |
 
 ## Conventions
 
-- **Base URL.** Paths are relative to `NEXT_PUBLIC_API_BASE_URL` (for example
-  `https://api.example.com/orders`). The app sends no suffix when `NEXT_PUBLIC_API_SUFFIX` is `""`.
+- **Base URL.** With `NEXT_PUBLIC_BACKEND_URL` set (for example `https://api.example.com/v1`),
+  the routes in `BACKEND_ROUTES` go to `${NEXT_PUBLIC_BACKEND_URL}/<path>`. Otherwise paths are
+  relative to `NEXT_PUBLIC_API_BASE_URL`, and the app sends no suffix when
+  `NEXT_PUBLIC_API_SUFFIX` is `""`.
+- **Envelope.** The backend answers `{ success, data }`; the client unwraps it, so the shapes
+  below are the `data` (see [data-and-api.md](data-and-api.md#connecting-restaurant-backend-area-by-area)).
 - **JSON.** Request and response bodies are JSON (`Content-Type: application/json`). A `204`
   response has no body. Path segments are URL-encoded by the client.
 - **Guest identity.** Guest endpoints are unauthenticated; they carry a `sessionId` (from
@@ -118,6 +144,9 @@ answers differently from the mock (orders as data, its `{ success, data }` envel
   `Authorization: Bearer <token>` with the token from `POST /admin/sessions`. A missing, unknown or
   expired token is `401 unauthorized`; a branch (or an order or request of a branch) the admin
   does not manage is `403 forbidden`.
+- **Permissions.** Staff endpoints check the role's permissions at the branch (`orders.view`,
+  `cash.manage`, `reports.view`…); a missing one is `403 forbidden`.
+- **Files.** CSV exports and private photos are read as bytes with `backendBlob` (backend only).
 - **Errors.** Any failure is a non-2xx status with an [`ApiErrorBody`](../src/api/contracts.ts):
   `{ error, ...extras }`. See [Error codes](#error-codes).
 - **Money.** Amounts are numbers in major units of the branch currency (`Price`), for example
@@ -136,7 +165,7 @@ answers differently from the mock (orders as data, its `{ success, data }` envel
 
 ## Error codes
 
-`ApiErrorCode` in [`contracts.ts`](../src/api/contracts.ts). Extra fields appear on the error body
+`ApiErrorCode` in [`contracts/errors.ts`](../src/api/contracts/errors.ts). Extra fields appear on the error body
 where listed.
 
 ### General and auth
@@ -207,6 +236,32 @@ where listed.
 | `table_in_use`       | 409    | A table the plan drops is in use; extra `tables`       |
 | `last_branch`        | 409    | The admin's only branch cannot be removed              |
 | `branch_in_use`      | 409    | The branch has unfinished or unpaid orders today       |
+
+### Money, stock and team
+
+All are backend only. The extras each carries are in its JSDoc.
+
+| Code                                                                                    | Status | Meaning                                                       |
+| --------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------- |
+| `bill_open`                                                                             | 409    | The table still owes money (`due`)                            |
+| `register_closed`, `register_open`                                                      | 409    | No cash register is open / one already is                     |
+| `count_differs`                                                                         | 409    | The close count differs (`expected`, `difference`, `methods`) |
+| `day_open`, `day_signed_off`                                                            | 409    | A session that day is open / the day is signed off            |
+| `invoice_issued`                                                                        | 409    | The tax invoice is issued: the buyer can't change             |
+| `table_occupied`, `nothing_to_move`                                                     | 409    | The table to move to has guests / nobody to move              |
+| `bill_paid`                                                                             | 409    | Paid in full: money back is a refund, not a discount          |
+| `discount_limit`                                                                        | 403    | More off than the giver's limit (`limit`)                     |
+| `deposit_exists`                                                                        | 409    | The booking already has a deposit                             |
+| `feature_disabled`                                                                      | 403    | The restaurant doesn't have this module (`feature`)           |
+| `name_taken`, `opening_done`, `not_tracked`, `ingredient_in_use`                        | 409    | Inventory conflicts                                           |
+| `count_open`, `count_closed`, `count_needs_notes`, `transfer_closed`                    | 409    | Stock counts and transfers                                    |
+| `expiry_required`                                                                       | 400    | These items track expiry: give the date (`ingredients`)       |
+| `po_not_editable`, `po_not_approved`, `po_closed`, `return_exceeds`, `supplier_in_use`  | 409    | Purchasing                                                    |
+| `role_system`, `role_in_use`, `staff_exists`, `own_account`, `last_admin`               | 409    | Staff and roles                                               |
+| `wrong_password`                                                                        | 401    | The current password is wrong (changing one's own)            |
+| `password_change_required`                                                              | 403    | Choose your own password before going on                      |
+| `shift_type_exists`, `shift_overlap`, `time_off_overlap`, `colleague_busy`, `swap_open` | 409    | Rota and shifts                                               |
+| `offer_scope_unknown`                                                                   | 422    | An offer names categories or dishes the menu lacks            |
 
 Extras: `attemptsLeft` (number), `resendAt` (epoch ms), `shortBy` and `amountDue` (`Price`),
 `items` (dish names), `reservation` (`{ id, guestName, at }`), `tables`
@@ -961,7 +1016,8 @@ A waiter changes what is on one round.
 Staff took the payment in person (cash, card machine, QR wallet), at any point of the meal.
 
 - **Auth:** bearer token.
-- **Request:** [`CollectPaymentRequest`](../src/api/contracts.ts) `{ method, amount?, tip? }`.
+- **Request:** [`CollectPaymentRequest`](../src/api/contracts.ts)
+  `{ method?, parts?, deposit?, amount?, tip?, waive? }`.
 - **Response:** `200` `Order`.
 - **Errors:** `400 invalid_request`, `401 unauthorized`, `403 forbidden`, `404 not_found`,
   `409 order_closed`, `409 nothing_to_pay`.
@@ -970,13 +1026,18 @@ Staff took the payment in person (cash, card machine, QR wallet), at any point o
   - `amount` (more than 0, at most what is due) records a split-bill part; the rest stays due.
     Without it, the whole amount due is paid and `payment.detail` names the method.
   - `tip` is recorded with the payment and is not part of the bill.
+  - `parts` pays one bill several ways (backend only); `deposit` names a seated booking whose
+    held deposit pays first; `waive` (`{ amount, reason }`) leaves part of the bill and settles
+    the rest.
+  - Cash needs an open cash register (`409 register_closed`).
 
 ### POST /admin/branches/:branchId/tables/:table/payment
 
 Staff took the whole table's payment in person.
 
 - **Auth:** bearer token.
-- **Request:** [`CollectTableRequest`](../src/api/contracts.ts) `{ method, tip? }`.
+- **Request:** [`CollectTableRequest`](../src/api/contracts.ts)
+  `{ method?, parts?, deposit?, tip?, waive? }`.
 - **Response:** `200` [`TablePaymentResponse`](../src/api/contracts.ts) `{ orders }` (the orders it
   paid).
 - **Errors:** `400 invalid_request`, `401 unauthorized`, `403 forbidden`, `409 nothing_to_pay`.
@@ -989,7 +1050,8 @@ Staff took the whole table's payment in person.
 Staff give money back on an order that stands.
 
 - **Auth:** bearer token.
-- **Request:** [`RefundRequest`](../src/api/contracts.ts) `{ amount, reason, note? }`.
+- **Request:** [`RefundRequest`](../src/api/contracts.ts) `{ amount, reason, note?, items? }`;
+  `items` is `RefundPick[]` (`{ round, position, quantity }`: a line of a round, 0 first).
 - **Response:** `200` `Order`.
 - **Errors:** `400 invalid_request` (amount or reason), `401 unauthorized`, `403 forbidden`,
   `404 not_found`, `409 nothing_to_refund`.
@@ -997,6 +1059,13 @@ Staff give money back on an order that stands.
   - `amount` is at most what has been paid and not yet refunded.
   - Refund the way it was paid: online through the partner (status `started`), in person in cash
     (`done`). The order stays paid; record `payment.refundAmount` and a refund transaction.
+  - `items` names the dishes the refund is for. Required for `complaint` and `wrongItem`
+    (`400`, field `items`), optional for the others (`lib/refundItems ›
+REFUND_NEEDS_ITEMS`). The amount can't be more than they came to on the bill.
+  - The refund transaction then carries `items` (`RefundedItem[]`: round, position, name,
+    variant, quantity, amount); older refunds have none. Credit notes, Payments › History and the
+    Sales report's `refundsByDish` read them.
+  - A cash refund needs an open cash register.
 
 ### POST /admin/branches/:branchId/orders/:id/cancel
 
@@ -1131,8 +1200,9 @@ Renames and reorders the categories.
 - **Response:** `200` `MenuData`.
 - **Errors:** `400 invalid_request`, `401 unauthorized`, `403 forbidden`.
 - **Rules:**
-  - Exactly the menu's existing categories, in the new order. Adding or removing a category needs
-    the static guest pages rebuilt, so it is out of scope.
+  - Exactly the menu's existing categories, in the new order. To add or remove one, use
+    `POST …/menu/categories` and `DELETE …/menu/categories/:id`
+    ([below](#more-menu-reservation-and-guest-endpoints); backend only).
 
 ### POST /admin/branches/:branchId/menu/images
 
@@ -1278,15 +1348,315 @@ Server-Sent Events: what changes at the branch, for as long as a staff screen ke
 
 - **Auth:** bearer token (`orders.view`), sent in the `Authorization` header.
 - **Request:** none; `Accept: text/event-stream`.
-- **Response:** `200` stream. Each event has `event:` `orders`, `service`, `menu` or `resync`
+- **Response:** `200` stream. Each event has `event:` `orders`, `service`, `menu`, `inventory` or
+  `resync`
   and `data:` a [`BranchEvent`](../src/api/contracts.ts) `{ kind, orderId?, at }`.
 - **Errors:** `401 unauthorized`, `403 forbidden`, `429 rate_limited` (past six streams for one
   sign-in).
 - **Rules:**
-  - A notice, not data: the screen reads again through the usual endpoints.
+  - A notice, not data: the screen reads again through the usual endpoints (what each kind
+    refreshes is `AFTER` in [`src/api/refreshAfter.ts`](../src/api/refreshAfter.ts)).
   - A heartbeat comment every 25 s; the stream closes when the session ends.
   - Not in `backend.ts`: [`src/api/liveEvents.ts`](../src/api/liveEvents.ts) reads it with
     `fetch` directly, only when the backend is configured. The mock has no events.
+
+## Admin staff, roles and modules
+
+Settings › Staff, Settings › Roles & permissions and Settings › Modules. Backend only. Each
+page needs its own permission (`staff.manage`; turning modules on or off is for platform admins).
+Types in [`contracts/staff.ts`](../src/api/contracts/staff.ts).
+
+| Method | Path                                                | What it does                                  |
+| ------ | --------------------------------------------------- | --------------------------------------------- |
+| POST   | `/admin/sessions/current/renew`                     | A sign-in in use lasts on (`{ expiresAt }`)   |
+| PATCH  | `/admin/sessions/current/password`                  | Staff change their own password               |
+| GET    | `/admin/branches/:branchId/staff`                   | The branch's staff (`StaffResponse`)          |
+| POST   | `/admin/branches/:branchId/staff`                   | Add a staff member (`AddStaffRequest`)        |
+| PATCH  | `/admin/branches/:branchId/staff/:staffId`          | Change roles, name or contact                 |
+| POST   | `/admin/branches/:branchId/staff/:staffId/password` | Set a new password for them                   |
+| POST   | `/admin/branches/:branchId/staff/:staffId/remove`   | Remove them from the branch                   |
+| POST   | `/admin/branches/:branchId/staff/:staffId/restore`  | Bring a removed member back                   |
+| GET    | `/admin/branches/:branchId/roles`                   | Roles and their permissions                   |
+| POST   | `/admin/branches/:branchId/roles`                   | A new role (`RoleInput`)                      |
+| PATCH  | `/admin/branches/:branchId/roles/:roleId`           | Change a role                                 |
+| DELETE | `/admin/branches/:branchId/roles/:roleId`           | Remove a role                                 |
+| GET    | `/admin/branches/:branchId/features`                | The restaurant's optional modules (inventory) |
+| PATCH  | `/admin/branches/:branchId/features`                | Switch a module on or off (`{ inventory }`)   |
+| GET    | `/admin/branches/:branchId/offers`                  | Settings › Offers: the automatic offers       |
+| POST   | `/admin/branches/:branchId/offers`                  | A new offer (`OfferRequest`)                  |
+| PATCH  | `/admin/branches/:branchId/offers/:offerId`         | Change an offer                               |
+| DELETE | `/admin/branches/:branchId/offers/:offerId`         | Remove an offer                               |
+| POST   | `/admin/branches/:branchId/settings/image`          | Upload the branch's photo                     |
+
+- **Renew:** the new end is the session length from now, never past `ADMIN_SESSION_MAX_HOURS`
+  (24) after sign-in. The app calls it every 30 minutes while a sign-in is in use
+  (`SessionRenewal`). `401` once the session has ended.
+- **Errors:** `role_system` and `role_in_use` (`staff`), `staff_exists` (`field`),
+  `own_account`, `last_admin`, `wrong_password`,
+  `offer_scope_unknown`; a switched-off module answers `403 feature_disabled` (`feature`).
+
+## Admin tables: sections, notes, QR links and moves
+
+Backend only. Types in [`contracts/floor-service.ts`](../src/api/contracts/floor-service.ts).
+
+| Method | Path                                           | What it does                                    |
+| ------ | ---------------------------------------------- | ----------------------------------------------- |
+| GET    | `/admin/branches/:branchId/tables/waiters`     | Who can cover tables, with what each covers now |
+| PATCH  | `/admin/branches/:branchId/tables/sections`    | These tables to a waiter, or to nobody          |
+| DELETE | `/admin/branches/:branchId/tables/sections`    | Clear every section                             |
+| PATCH  | `/admin/branches/:branchId/tables/:table/note` | The guests' note at a table for the visit       |
+| GET    | `/admin/branches/:branchId/tables/:table/qr`   | One table's QR link                             |
+| POST   | `/admin/branches/:branchId/tables/:table/move` | Move the guests to another table (`{ to }`)     |
+
+- **`…/tables/:table/qr`** answers `TableQrCodeResponse` (one entry of the QR codes list), for
+  staff who may show it (`tables.qr`: a torn sticker, a guest who can't scan) or manage tables.
+  Each one shown is in the audit log. `404` for no such table, or one not in use. Route it before
+  `…/tables/:table`.
+- **Move** answers the new table (`AdminTableDetail`). `409 table_occupied` (`status`) when the other table has guests,
+  `409 nothing_to_move` when nobody is at the table. Recorded in the audit log.
+- `table_taken` here means another waiter covers the table.
+
+## Admin orders: history, extras and bills
+
+Backend only, unless noted. `…` stands for `/admin/branches/:branchId`.
+
+| Method | Path                                                     | What it does                                    |
+| ------ | -------------------------------------------------------- | ----------------------------------------------- |
+| GET    | `…/orders/history`                                       | Orders › History: past orders, a page at a time |
+| GET    | `…/orders/:id`                                           | One order as staff see it                       |
+| POST   | `…/orders/:id/rounds/:round/cancel`                      | Take back a round the kitchen hasn't started    |
+| POST   | `…/orders/:id/rounds/:round/items/:position/unavailable` | The kitchen ran out of an item                  |
+| POST   | `…/orders/:id/unavailable`                               | The kitchen can't make the order at all         |
+| POST   | `…/orders/:id/rounds/:round/dismiss`                     | A finished ticket off the kitchen board         |
+| PATCH  | `…/orders/:id/buyer`                                     | A business buyer's details for the tax invoice  |
+| DELETE | `…/orders/:id/buyer`                                     | Remove the buyer                                |
+| POST   | `…/orders/:id/discounts`                                 | Money off the bill or one item, by hand         |
+| DELETE | `…/orders/:id/discounts/:discountId`                     | Take a manual discount back off                 |
+| POST   | `…/orders/:id/refunds/:seq/received`                     | An online refund reached the guest              |
+| POST   | `…/payment-proofs`                                       | A photo of a payment (a UPI screen)             |
+| GET    | `…/payments/history`                                     | Payments › History                              |
+| GET    | `…/service-requests/history`                             | Requests › History                              |
+
+- **Round cancel, unavailable:** answer `OrderChangeResponse` `{ order, refunded }`. The bill is
+  priced again and anything paid beyond it refunded the way it came; a round left empty is
+  cancelled, an order left empty cancelled as out of stock. JSDoc in
+  [`contracts/staff-orders.ts`](../src/api/contracts/staff-orders.ts).
+- **Buyer:** `{ name, taxId?, address? }`. `409 invoice_issued` once the order's tax invoice is
+  issued.
+- **Discounts:** [`DiscountRequest`](../src/api/contracts/reservation-rules.ts)
+  `{ scope: 'bill' | 'item', round?, position?, percent? | amount?, reason, note? }`; reasons
+  `regular`, `complaint`, `staffMeal`, `manager`, `other`. Answers the `Order`. `409 bill_paid`
+  (money back is a refund then), `403 discount_limit` (`limit`, the giver's highest percentage).
+  Recorded in the audit log.
+- **Payments › History:** `?from&to&kind&channel&method&q&cursor&limit` (`payments.collect` or
+  `reports.view`). [`PaymentHistoryResponse`](../src/api/contracts/history.ts): the days' sums
+  worked out on the server and a page of `HistoryTransaction`s, newest first, with `next` for
+  more. A staff refund's transaction carries `items` (`RefundedItem[]`: round, position, name,
+  variant, quantity, amount), the dishes it was for. Up to a year at a time, back two years.
+- **Payment proofs:** the photo is private; `GET …/payment-proofs/:key` returns its bytes to
+  staff (`backendBlob`).
+
+## Invoices and credit notes
+
+Payments › Invoices. Backend only. Types in [`contracts/invoices.ts`](../src/api/contracts/invoices.ts).
+
+| Method | Path                                                      | What it does                                   |
+| ------ | --------------------------------------------------------- | ---------------------------------------------- |
+| GET    | `/admin/branches/:branchId/invoices?from&to&kind`         | Invoices and credit notes issued on these days |
+| GET    | `/admin/branches/:branchId/invoices/register.csv?from&to` | The sales register as CSV                      |
+| GET    | `/admin/branches/:branchId/invoices/:invoiceId`           | One in full, as issued, with its prints        |
+| POST   | `/admin/branches/:branchId/invoices/:invoiceId/prints`    | Printed or downloaded now (`{ channel }`)      |
+
+- `kind` is `invoice` or `creditNote`. The list answers `InvoicesResponse` `{ from, to, invoices }`
+  (`InvoiceRow`: number, fiscal year, date in AD and, in Nepal, BS, buyer, taxable, tax, total,
+  links between an invoice and its credit notes, `prints`).
+- One invoice answers `InvoiceDetail`: the row, the `document` as issued (seller, buyer, lines,
+  charges, round-off; a credit note names its invoice and reason) and `printLog`.
+- `…/prints` answers `{ copy }`: 0 is the original, later ones are marked as copies.
+- `register.csv` is read as bytes (`backendBlob`) and saved with `lib/saveFile › downloadFile`.
+- A credit note lists the refunded dishes when the latest refunds add up exactly to its amount.
+
+## Audit log
+
+Backend only (`audit.view`). Types in [`contracts/audit-log.ts`](../src/api/contracts/audit-log.ts).
+
+| Method | Path                                                              | What it does                      |
+| ------ | ----------------------------------------------------------------- | --------------------------------- |
+| GET    | `/admin/branches/:branchId/audit?from&to&area&staffId&before`     | Entries, newest first, 100 a page |
+| GET    | `/admin/branches/:branchId/audit/export.csv?from&to&area&staffId` | Every entry on these days as CSV  |
+
+- `AuditLogResponse` `{ from, to, events, next?, staff }`. Pass `next` as `before` for the
+  older page. `staff` lists everyone with an entry on these days.
+- Each `AuditEvent` has who (with their roles then; `null` for the system), the `action`
+  (`AuditAction`: refunds, discounts, voids, prints, cash, menu prices, settings, staff…),
+  the `target`, a `reason` and `details`. `area` is one of `orders`, `tables`, `invoices`,
+  `cash`, `menu`, `settings`, `staff`.
+
+## Cash register
+
+One drawer per branch. Backend only. Types in
+[`contracts/cash-register.ts`](../src/api/contracts/cash-register.ts). `…` stands for
+`/admin/branches/:branchId/cash-register`.
+
+| Method | Path                   | What it does                                                           |
+| ------ | ---------------------- | ---------------------------------------------------------------------- |
+| GET    | `…`                    | The open session (or none), recent sessions, the limit                 |
+| GET    | `…/sessions/:id`       | One session in full                                                    |
+| POST   | `…/open`               | Open the drawer with a float (`{ float, count? }`)                     |
+| POST   | `…/movements`          | Cash in or out (`{ kind, amount, reason, note? }`)                     |
+| POST   | `…/close`              | Blind close: what was counted (`{ counted, count?, methods?, note? }`) |
+| GET    | `…/days/:day`          | The day at the register: cash, card and UPI, the sign-off              |
+| POST   | `…/days/:day/sign-off` | A manager signs the day off (`{ note? }`)                              |
+| POST   | `…/sessions/:id/check` | A drawer that needed review, checked (`{ note? }`)                     |
+| GET    | `…/report?from&to`     | Closed sessions day by day, and each closer's record                   |
+| PATCH  | `…/limit`              | How big a difference can be before review                              |
+
+- Open, movements and close need `cash.manage`; sign-off, check and the limit need
+  `cash.review`. A `count` (notes and coins) must add up to its amount (`400 count`).
+- Errors: `409 register_open`, `409 register_closed` (cash payments and refunds are refused too
+  while the drawer is closed), `409 count_differs` (`expected`, `difference`, `methods`) until
+  a differing count comes with a `note`, `409 day_open`, `409 day_signed_off`.
+- The report covers the last 30 days by default, at most 92.
+
+## Reports
+
+The manager's Sales report. Backend only (`reports.view`). Types in
+[`contracts/reports.ts`](../src/api/contracts/reports.ts).
+
+### GET /admin/branches/:branchId/reports/sales
+
+One branch's sales on some days, beside the span just before.
+
+- **Auth:** bearer token (`reports.view`).
+- **Request:** query `?from=YYYY-MM-DD&to=YYYY-MM-DD`, branch calendar days; the last 7 days
+  without them. Up to a year at a time, back two years (`SALES_LIMITS` in `lib/salesReport`).
+- **Response:** `200` `SalesReport`:
+  `{ from, to, previous, totals, before, cancelled, days, hours, byMode, byMethod, dishes,
+slowDishes, categories, money, generatedAt }`.
+  - `totals` and `before` are `SalesFigures`: `orders`, `itemSales`, `discounts`, `netSales`
+    (item sales less discounts, before service charge and tax), `serviceCharge`, `tax`,
+    `billed`, `averageBill`, `refunds`.
+  - `cancelled` `{ orders, billed }`: cancelled orders, left out of every other figure.
+  - `days` (every day, quiet ones too; `bs` in Nepal) and `hours` (0–23, the branch's clock):
+    `orders` and `netSales`.
+  - `byMode`: `mode`, `orders`, `netSales`, `billed`. `byMethod`: `method`, `channel`, `count`,
+    `amount`, `refunds`.
+  - `dishes` (every dish sold, most sales first), `slowDishes` (up to 8 on the menu that sold
+    least; `addedOn` when the dish was added during the span) and `categories`.
+  - `money` (`MoneySummary`): item sales, offers, promo codes, staff discounts, net sales,
+    service charge, each tax (`taxes`), delivery fees, round-off, `other` (zero when the bills
+    add up), billed; then `received`, `refundsByReason`, `waived`, `netReceived` and
+    `refundsByDish`.
+- **Errors:** `400 invalid_request` (a span that doesn't work), `401 unauthorized`,
+  `403 forbidden`, `404 not_found`.
+- **Rules:**
+  - A sale counts on the day the order was placed (branch time). Money (payments, refunds)
+    counts on the day it moved.
+  - "Refunds" in `totals` are staff refunds only; `refundsByReason` also has cancellations and
+    changed bills.
+
+### GET /admin/branches/:branchId/reports/sales/branches
+
+The restaurant's branches side by side.
+
+- **Auth:** bearer token (`reports.view` at `:branchId`).
+- **Request:** query `?from=YYYY-MM-DD&to=YYYY-MM-DD`.
+- **Response:** `200` `BranchSalesReport` `{ from, to, previous, branches, generatedAt }`. Each
+  `BranchSales` has `id`, `name`, `shortName`, `country`, `money` (its own currency: `locale`,
+  `localeFallback`, `code`, `symbol`, `minorUnit`), `totals`, `before` and `topDish`
+  (`{ name, quantity, sales }` or `null`), by name.
+- **Errors:** as the branch report.
+- **Rules:**
+  - Only branches where the staff member has `reports.view`. Each in its own calendar and
+    currency; never added to another's. The page shows "All branches" only when there are two or
+    more.
+
+## Inventory
+
+Backend only, while the inventory module is on (`403 feature_disabled` otherwise). Types in
+[`src/types/inventory.ts`](../src/types/inventory.ts), re-exported by
+[`contracts/inventory.ts`](../src/api/contracts/inventory.ts). `…` stands for
+`/admin/branches/:branchId/inventory`. Stock is used at cooking; quantities are kept in base
+units and answered in each ingredient's own unit.
+
+| Area        | Endpoints                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------- |
+| Stock       | `GET …/stock`, `GET` and `PATCH …/stock/:ingredientId`, `GET …/movements`, `GET …/alerts`            |
+| Stock moves | `POST …/opening`, `POST …/adjustments`, `POST …/wastage`, `POST …/production`                        |
+| Ingredients | `GET` and `POST …/ingredients`, `PATCH` and `DELETE …/ingredients/:id`                               |
+| Categories  | `POST …/categories`, `PATCH` and `DELETE …/categories/:id`                                           |
+| Batches     | `GET …/batches`, `POST …/batches/write-off`, `PATCH …/batches/:id`                                   |
+| Counts      | `GET` and `POST …/counts`, `GET …/counts/:id`, `PATCH …/counts/:id/lines`, `POST …/counts/:id/:step` |
+| Transfers   | `GET` and `POST …/transfers`, `POST …/transfers/:id/:step`                                           |
+| Recipes     | `GET …/recipes`, `GET` and `PATCH …/recipes/:slug`                                                   |
+| Reading     | `GET …/dashboard`, `GET …/usage`, `GET …/exports/:kind`                                              |
+| Settings    | `PATCH …/settings`                                                                                   |
+
+Errors: `name_taken` (`field`), `opening_done` and `not_tracked` (`ingredients`),
+`ingredient_in_use` (`branches` or `field`), `count_open` (`count`), `count_closed`,
+`count_needs_notes`, `transfer_closed` (`status`), `400 expiry_required` (`ingredients`).
+Stock changes reach other screens through the `inventory` event.
+
+## Purchasing
+
+Backend only. Types in [`src/types/purchasing.ts`](../src/types/purchasing.ts), re-exported by
+[`contracts/inventory.ts`](../src/api/contracts/inventory.ts). `…` stands for
+`/admin/branches/:branchId/purchasing`.
+
+| Area            | Endpoints                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------- |
+| Suppliers       | `GET` and `POST …/suppliers`, `PATCH` and `DELETE …/suppliers/:id`, `PATCH …/suppliers/:id/items` |
+| Purchase orders | `GET` and `POST …/orders`, `GET` and `PATCH …/orders/:id`, `POST …/orders/:id/:step`              |
+| Deliveries      | `GET` and `POST …/receipts`, `GET …/receipts/:id`, `POST …/receipts/:id/prices`                   |
+| Prices          | `GET …/price-changes`                                                                             |
+| Returns         | `GET` and `POST …/returns`                                                                        |
+| Invoice photos  | `POST …/proofs`, `GET …/proofs/:key` (bytes)                                                      |
+| Settings        | `PATCH …/settings`                                                                                |
+
+Errors: `po_not_editable` and `po_closed` (`status`), `po_not_approved`, `return_exceeds`
+(`lines`), `supplier_in_use` (`orders`). A delivery puts stock in at once (weighted average cost).
+
+## Shifts and rota
+
+Team › Rota, Attendance and Requests, and staff's own shifts. Backend only. `…` stands for
+`/admin/branches/:branchId`.
+
+| Area        | Endpoints                                                                                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| My shift    | `GET …/shifts/current`, `POST …/shifts/start`, `POST …/shifts/end`                                                                                                                                     |
+| Attendance  | `GET …/shifts?from&to`, `POST …/shifts`, `PATCH …/shifts/:id`                                                                                                                                          |
+| Rota        | `GET …/rota?week`, `GET …/rota/mine`, `POST …/rota/shifts`, `DELETE …/rota/shifts/:id`, `POST …/rota/copy`, `POST …/rota/clear`, `POST …/rota/publish`, `PATCH …/rota/settings`                        |
+| Shift types | `GET` and `POST …/rota/types`, `PATCH` and `DELETE …/rota/types/:id`                                                                                                                                   |
+| Requests    | `GET …/rota/requests`, `GET …/rota/colleagues`, `POST …/rota/time-off`, `POST …/rota/time-off/:id/cancel` and `/decide`, `POST …/rota/swaps`, `POST …/rota/swaps/:id/respond`, `/cancel` and `/decide` |
+
+Errors: `shift_type_exists`, `shift_overlap`, `time_off_overlap`, `colleague_busy`,
+`swap_open`. Ending a shift releases the staff member's tables.
+
+## More menu, reservation and guest endpoints
+
+Backend only.
+
+| Method | Path                                                       | What it does                                          |
+| ------ | ---------------------------------------------------------- | ----------------------------------------------------- |
+| POST   | `/admin/branches/:branchId/menu/categories`                | A new category, last on the menu                      |
+| DELETE | `/admin/branches/:branchId/menu/categories/:id?moveTo=`    | A category off the menu, its dishes moved to `moveTo` |
+| GET    | `/branches/:branchId/menu/suggestions`                     | Search suggestions guests see                         |
+| GET    | `/admin/branches/:branchId/menu/suggestions`               | The same, for editing                                 |
+| PATCH  | `/admin/branches/:branchId/menu/suggestions`               | Save the search suggestions                           |
+| GET    | `/branches/:branchId/menu/cart-suggestions?dishes=`        | What to suggest beside the cart's dishes              |
+| GET    | `/admin/branches/:branchId/menu/cart-suggestions?preview=` | The cart suggestions, for editing                     |
+| PATCH  | `/admin/branches/:branchId/menu/cart-suggestions`          | Save the cart suggestions                             |
+| POST   | `/admin/branches/:branchId/reservations/:id/deposit`       | A booking's deposit taken (`DepositRequest`)          |
+| POST   | `/admin/branches/:branchId/reservations/:id/reminded`      | The guest was reminded (WhatsApp or SMS)              |
+| GET    | `/admin/branches/:branchId/reservations/guests/:phone`     | How a guest's bookings ended (last six months)        |
+| PATCH  | `/admin/branches/:branchId/reservations/rules`             | The booking rules (no-show grace, deposits)           |
+| GET    | `/sessions/:id`                                            | The guest's session while it's live                   |
+| GET    | `/sessions/:id/wifi`                                       | The branch's Wi-Fi for a seated guest                 |
+
+- `GET /admin/branches/:branchId/reservations` also takes `?from&to` for Reservations › History.
+- `409 deposit_exists`: a booking has one deposit at most. A cash deposit goes into the open
+  drawer (`409 register_closed` otherwise).
+- `GET /sessions/:id` is `404 session_not_found` once the session has ended.
 
 ## Related
 
