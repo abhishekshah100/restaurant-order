@@ -213,6 +213,8 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  /* Its figure shrinks to the tile's width (cqi) rather than wrapping. */
+  container-type: inline-size;
   padding: 16px 18px;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -246,13 +248,19 @@
 .kpiValue {
   margin: 0;
   font: var(--font-price-lg);
+  /* An amount stays on one line ("रू 126.50", never "रू 126.5 / 0"): a long one in a narrow tile
+     is made smaller to fit (by its length, --chars); a short one keeps its size. */
+  font-size: min(30px, calc(165cqi / var(--chars, 8)));
+  line-height: 1.2;
+  white-space: nowrap;
   color: var(--ink);
   font-variant-numeric: lining-nums tabular-nums;
-  overflow-wrap: anywhere;
 }
 
 .kpiLead .kpiValue {
   font: var(--font-display);
+  font-size: min(36px, calc(165cqi / var(--chars, 8)));
+  line-height: 1.2;
 }
 
 .kpiChange {
@@ -1362,10 +1370,14 @@
 
   .kpiValue {
     font: var(--font-h2);
+    font-size: min(22px, calc(165cqi / var(--chars, 8)));
+    line-height: 1.2;
   }
 
   .kpiLead .kpiValue {
     font: var(--font-price-lg);
+    font-size: min(30px, calc(165cqi / var(--chars, 8)));
+    line-height: 1.2;
   }
 
   .card {

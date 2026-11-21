@@ -87,6 +87,47 @@
   transition: opacity var(--dur-base) ease;
 }
 
+/* "More below ↓": shows while there's more under the fold and the dialog hasn't been scrolled. */
+.moreBelow {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--sh-2);
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity var(--dur-base) ease,
+    transform var(--dur-base) ease;
+}
+.dialog[data-more='true']:not([data-scrolled='true']) .moreBelow {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[data-more='true']:not([data-scrolled='true']) .moreBelow {
+    animation: more-nudge 1.6s ease-in-out 0.6s 2;
+  }
+}
+@keyframes more-nudge {
+  50% {
+    transform: translate(-50%, 4px);
+  }
+}
+
 .foot {
   flex: none;
   position: relative;

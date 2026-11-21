@@ -17,7 +17,9 @@ import { isFinished } from '@/lib/orders';
 import type { CancelReason } from '@/types/admin';
 import type { Order, OrderRound } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { CollectFields, useCollectChoice } from '../payments/CollectFields';
+import { useCollectChoice } from '../payments/CollectFields';
+import { CollectScreen } from '../payments/CollectScreen';
+import screen from '../payments/CollectScreen.module.css';
 import { CancelOrderView } from './OrderActionViews';
 import { OrderSummary } from './OrderSummary';
 import styles from './OrderDetailDialog.module.css';
@@ -128,7 +130,7 @@ function OrderDialog({
   if (view === 'collect') {
     title = t('adminOrder.collect.title');
     description = t('adminOrder.collect.subtitle', { order: order.id, amount: money.format(due) });
-    body = <CollectFields orders={[order]} choice={choice} />;
+    body = <CollectScreen orders={[order]} choice={choice} />;
     footer = (
       <Button
         block
@@ -335,6 +337,7 @@ function OrderDialog({
       open
       onClose={onClose}
       presentation="adaptive"
+      className={view === 'collect' ? screen.dialog : undefined}
       title={title}
       description={description}
       footer={

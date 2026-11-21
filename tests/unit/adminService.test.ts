@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeNavId, ADMIN_NAV } from '@/lib/adminNav';
+import { activeNavId, ADMIN_NAV, navGroups, splitTabs } from '@/lib/adminNav';
 import {
   dayPeriod,
   minutesSince,
@@ -160,12 +160,20 @@ describe('activeNavId', () => {
     expect(activeNavId('/admin/dashboard/ordersx/')).toBeUndefined();
   });
 
-  it('puts the waiter pages on the mobile tab bar and the rest in More', () => {
-    expect(ADMIN_NAV.filter((item) => item.tab).map((item) => item.id)).toEqual([
-      'home',
-      'tables',
-      'orders',
-      'requests',
+  it("puts a role's first four pages on the mobile tab bar and the rest in More", () => {
+    const ids = (items: readonly { id: string }[]) => items.map((item) => item.id);
+    const all = splitTabs(ADMIN_NAV);
+    expect(ids(all.tabs)).toEqual(['home', 'tables', 'orders', 'requests']);
+    expect(all.more.at(-1)?.id).toBe('settings');
+    // A cashier's own pages, never Settings, even with fewer than four.
+    const cashier = ADMIN_NAV.filter((i) => ['payments', 'cash', 'settings'].includes(i.id));
+    expect(ids(splitTabs(cashier).tabs)).toEqual(['payments', 'cash']);
+    expect(ids(splitTabs(cashier).more)).toEqual(['settings']);
+    expect(navGroups(ADMIN_NAV).map((g) => g.group)).toEqual([
+      'service',
+      'money',
+      'manage',
+      'reports',
     ]);
     const counts = {
       service: { waiterCalls: 2, billRequests: 1, readyToServe: 4, unpaid: 3 },

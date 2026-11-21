@@ -14,8 +14,9 @@ test('printing and downloading table QR codes', async ({ page }) => {
   await page.getByRole('link', { name: 'QR codes' }).click();
   await expect(page).toHaveURL(/\/admin\/dashboard\/tables\/qr\/$/);
   await expect(page.getByRole('img', { name: 'QR code for Table 18' })).toBeVisible();
-  // On screen, the full link under each code.
-  await expect(page.getByLabel('Link for Table 5')).toHaveText(
+  // On screen, Copy link under each code, the full link in its tooltip.
+  await expect(page.getByRole('button', { name: 'Copy the link for Table 5' })).toHaveAttribute(
+    'title',
     /^http:\/\/localhost:\d+\/\?.*table=5/,
   );
 
@@ -60,5 +61,5 @@ test('printing and downloading table QR codes', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'QR code for Table 5' });
   await expect(dialog.getByRole('img', { name: 'QR code for Table 5' })).toBeVisible();
   await expect(dialog).toContainText('Scan to order & pay');
-  await expect(dialog.getByLabel('Link for Table 5')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Copy the link for Table 5' })).toBeVisible();
 });

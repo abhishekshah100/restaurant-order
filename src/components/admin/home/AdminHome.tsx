@@ -10,6 +10,7 @@ import { ArrivingSoon } from './ArrivingSoon';
 import { FloorGlance } from './FloorGlance';
 import { MyRota } from './MyRota';
 import { MyShift } from './MyShift';
+import { OffersToday } from './OffersToday';
 import { HomeHeader } from './HomeHeader';
 import { ServiceCounters } from './ServiceCounters';
 import { ServiceQueue } from './ServiceQueue';
@@ -24,10 +25,11 @@ const AGE_REFRESH_MS = 20_000;
  * /admin/dashboard/: the waiter home. Everything a waiter checks during service, by urgency: the
  * header (until when orders are taken, and quick actions: new order, new booking, sold out);
  * the counts; one queue (oldest first) with the action for each and what was handled lately;
- * the floor at a glance (busy, free, tables that need a look); then the bookings arriving soon
- * and what can't be sold tonight; and my shift so far. Each part shows only to staff allowed to
+ * the floor at a glance (busy, free, tables that need a look); then the bookings arriving soon,
+ * today's offers (happy hour: on now and later today) and what can't be sold tonight; and my shift so far. Each part shows only to staff allowed to
  * use it. Read from
- * GET …/service, …/tables, …/reservations and the menu, all polled or refreshed on change.
+ * GET …/service, …/tables, …/reservations, the menu and the offers, all polled or refreshed on
+ * change.
  */
 export function AdminHome() {
   const t = useContent('common');
@@ -51,6 +53,7 @@ export function AdminHome() {
           </div>
           <div className={styles.side}>
             {can('reservations.manage') && <ArrivingSoon now={now} />}
+            <OffersToday now={now} />
             <SoldOutTonight />
             <MyRota now={now} />
             {(can('orders.take') || can('payments.collect')) && <MyShift />}

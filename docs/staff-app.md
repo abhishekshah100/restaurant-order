@@ -29,7 +29,7 @@ Settings (`/admin/dashboard/settings/*`) are covered separately in [settings.md]
 - [Sales report](#sales-report)
 - [Inventory](#inventory)
 - [Purchasing](#purchasing)
-- [Audit log](#audit-log)
+- [Activity log](#activity-log)
 - [QR codes](#qr-codes)
 - [Kitchen workspace](#kitchen-workspace)
 - [Endpoint index](#endpoint-index)
@@ -196,28 +196,40 @@ across page changes.
 
 ### Navigation
 
-One list, `ADMIN_NAV` in [`src/lib/adminNav.ts`](../src/lib/adminNav.ts), drives both layouts.
-`activeNavId` maps a pathname to its item (sub-pages such as `orders/history/` count as Orders).
-Labels are `common › adminShell.nav.<id>`.
+One list, `ADMIN_NAV` in [`src/lib/adminNav.ts`](../src/lib/adminNav.ts), drives both layouts,
+in the order staff see it: grouped by the work it's for and, in each group, the most used first.
+Each person sees only the pages their role opens (`navFor`).
 
-| Item                    | Mobile tab bar | Shown with (any of)                                                          | Badge                                        |
-| ----------------------- | -------------- | ---------------------------------------------------------------------------- | -------------------------------------------- |
-| Home                    | Yes            | `orders.view`                                                                |                                              |
-| Tables                  | Yes            | `orders.view`                                                                |                                              |
-| Orders                  | Yes            | `orders.view`                                                                | ready to serve                               |
-| Requests                | Yes            | `orders.view`                                                                | waiter calls + bill requests + kitchen notes |
-| Reservations            | More           | `reservations.manage`                                                        |                                              |
-| Shifts & attendance     | More           | `rota.plan`, `reports.view`, `attendance.fix`                                | time off and swaps waiting                   |
-| Kitchen                 | More           | `kitchen.update` (links to the kitchen workspace)                            |                                              |
-| Menu                    | More           | `menu.manage`, `menu.availability.update`                                    |                                              |
-| Payments                | More           | `payments.collect`, `reports.view`                                           |                                              |
-| Refunds & cancellations | More           | `refunds.give`, `orders.cancel`, `reports.view`                              |                                              |
-| Cash register           | More           | `cash.manage`, `cash.review`                                                 |                                              |
-| Sales                   | More           | `reports.view`                                                               |                                              |
-| Inventory               | More           | `inventory.view`, `.manage`, `.adjust`, `.wastage`, `.count`                 | low + out + expiring + expired               |
-| Purchasing              | More           | `purchase.view`, `.manage`, `.approve`, `.receive`                           |                                              |
-| Audit log               | More           | `audit.view`                                                                 |                                              |
-| Settings                | More           | `branch.settings.manage`, `tables.manage`, `branches.manage`, `staff.manage` |                                              |
+- **Sidebar** (1024px and up): Home, then each group under a small heading (**Service**,
+  **Money**, **Manage**, **Reports**; `navGroups`, empty groups left out), and Settings at the
+  foot above the signed-in admin.
+- **Phone** (below 1024px): the bottom bar holds the role's first four pages in that order
+  (`splitTabs`: a waiter's Home, Tables, Orders, Requests; a cashier's Payments, Cash
+  register…), never Settings, then More. **More** is a sheet: the admin's name and branch (status,
+  Switch branch) at the top, the other pages as icon tiles under the same group headings with
+  their badges, Settings, then Sign out.
+
+`activeNavId` maps a pathname to its item (sub-pages such as `orders/history/` count as Orders).
+Labels are `common › adminShell.nav.<id>` (plain words: Stock, Purchases, Activity log — also each page's title); group headings `adminShell.nav.groups.<group>`.
+
+| Group   | Item                    | Shown with (any of)                                                          | Badge                                        |
+| ------- | ----------------------- | ---------------------------------------------------------------------------- | -------------------------------------------- |
+|         | Home                    | `orders.view`                                                                |                                              |
+| Service | Tables                  | `orders.view`                                                                |                                              |
+| Service | Orders                  | `orders.view`                                                                | ready to serve                               |
+| Service | Requests                | `orders.view`                                                                | waiter calls + bill requests + kitchen notes |
+| Service | Reservations            | `reservations.manage`                                                        |                                              |
+| Service | Kitchen                 | `kitchen.update` (links to the kitchen workspace)                            |                                              |
+| Money   | Payments                | `payments.collect`, `reports.view`                                           |                                              |
+| Money   | Cash register           | `cash.manage`, `cash.review`                                                 |                                              |
+| Money   | Refunds & cancellations | `refunds.give`, `orders.cancel`, `reports.view`                              |                                              |
+| Manage  | Menu                    | `menu.manage`, `menu.availability.update`                                    |                                              |
+| Manage  | Stock                   | `inventory.view`, `.manage`, `.adjust`, `.wastage`, `.count`                 | low + out + expiring + expired               |
+| Manage  | Purchases               | `purchase.view`, `.manage`, `.approve`, `.receive`                           |                                              |
+| Manage  | Shifts & attendance     | `rota.plan`, `reports.view`, `attendance.fix`                                | time off and swaps waiting                   |
+| Reports | Sales                   | `reports.view`                                                               |                                              |
+| Reports | Activity log            | `audit.view`                                                                 |                                              |
+|         | Settings                | `branch.settings.manage`, `tables.manage`, `branches.manage`, `staff.manage` |                                              |
 
 Floor badge counts come from `GET /admin/branches/:branchId/service`; the stock badge from the
 inventory alerts.
@@ -322,6 +334,9 @@ Behaviour:
   in its state's colour with time seated and amount owed, tagged when it needs a look (seated
   with no order yet, a long wait for food). All · Needs a look · Free narrow it.
 - **Arriving soon:** bookings in the next two hours (and up to an hour late), with Seat.
+- **Offers today:** the offers on now and those starting later today (branch time), so waiters
+  can tell guests: Now or the start time, the name, what it takes off what, the ways of ordering
+  it's for, until when. For everyone; hidden when none today (`offersToday` in lib/promotions).
 - **Not available tonight:** dishes sold out or off today; those who may change it tap one to
   bring it back.
 - **My shift:** orders the staff member took, what they collected and their tips today; shift in
@@ -380,7 +395,10 @@ allows it):
 
 - **Take order / New order** opens the order pad (a new order is a separate bill). Its review step
   shows the bill as the guest will see it (`calculateBill` and `billRows`); the send button
-  carries that total. Offers such as happy hour are applied by the server on the bill.
+  carries that total. Dine-in offers on now (happy hour, read from `GET /branches/:id/promotions`)
+  show as the server will apply them: a banner above the search ("Happy hour · 20% off Beverages
+  till 7:00 PM", with a button to show that category), the offer price with the menu price struck
+  through on each dish and line, and the discount on the bill.
 - **Add round**, **Change** and **Collect** on each order card (see
   [Waiter ordering](#waiter-ordering-at-the-table)). Add round (a running tab: same bill, a new
   ticket for the kitchen) shows only while the order still has something to pay. Once it's paid
@@ -680,16 +698,22 @@ Staff shift in and out from Home (My shift) or the kitchen bar's shift button.
 
 ### Collecting
 
-One collect form everywhere (`CollectFields`): the Payments page (`CollectDialog`), the order
-dialog (Orders, Unpaid) and the table page (`TableCollectDialog`). The bill lists every charge,
-then paid so far and due now.
+One collect screen everywhere (`CollectScreen`): the Payments page (`CollectDialog`), the order
+dialog (Orders, Unpaid) and the table page (`TableCollectDialog`). Laid out like a till: from
+860px wide, the bill on the left (`BillBreakdown`: each item, every charge, the total, then paid
+so far and due now) with **Bill options** under it, and the payment on the right
+(`CollectFields`: what to collect, how they paid, cash and change); on a phone one column, the
+payment first (the bill behind View bill), then the bill options. The bill options are icon
+tiles — Discount, Leave unpaid, Business invoice — each opening its form under them, one at a
+time. Print bill is the receipt icon beside Collect. Every dialog shows a "More below" pill
+while there's more under the fold and it hasn't been scrolled (tap: scrolls down).
 
 - **How it was paid:** the branch's ways to pay staff, cash first. For cash, staff type what the
   guest handed over (or tap Exact) and see the change; the change can be kept as a tip ("Keep ₹20
   as tip"). UPI and card take optional proof photos (`ProofPicker`).
 - **Split payment** (`PaymentPartsFields`): part cash, part UPI or card; the last row takes the
   remaining balance so they always add up.
-- **Leave part of the bill** (waive): an amount, or a round amount to take, with why (`noChange`,
+- **Leave part of the bill** (waive, `LeaveCard`): an amount, or a round amount to take, with why (`noChange`,
   `regular`, `complaint`, `other`; `WAIVE_REASONS`). It shows as "Left off bills".
 - **Give a discount** (`discounts.give`, `DiscountPanel`): off the whole bill or one item, a
   percentage or an amount, with a reason (regular guest, sorry for the trouble, staff meal,
@@ -917,20 +941,32 @@ Tabs:
   default; every order, or those above an amount) and how far above the expected price a
   delivered one is flagged.
 
-## Audit log
+## Activity log
 
 - **Route:** `/admin/dashboard/audit/` (`audit.view`: admins; managers only when an owner adds it
   to their role). Backend only.
 - **Component:** [`src/components/admin/audit/`](../src/components/admin/audit/): `AuditLog`,
-  `useAuditText`.
+  `useAuditText`, `settingsChanges` (a settings change field by field), `AuditBill` (View bill).
 - **Endpoints:** `GET /admin/branches/:branchId/audit` and `…/audit/export.csv`.
 
 Who did what at the branch, newest first: cancellations, refunds, discounts, write-offs, prices,
 settings, staff and roles, sign-ins, invoices. Filter by days (today without any; up to 92, back
 seven years), area (Orders & bills, Tables, Invoices, Cash drawer, Menu prices, Settings, Staff &
-roles) and person. Each entry is a sentence with why and the particulars (settings as before →
-after), linking to its table. 100 at a time; the filtered days download as CSV. Entries can't be
-changed.
+roles) and person. Each entry is a sentence with why and the particulars, linking to its table.
+100 at a time; the filtered days download as CSV. Entries can't be changed.
+
+- **View bill:** an entry about an order (refunds, discounts, cancellations, left-off amounts,
+  invoices) has View bill. The order is read only then (`GET …/orders/:id`, `useBranchOrder`) and
+  opens in the Payments page's order pop-up (`PaymentOrderDialog`, without Collect and Refund):
+  items, bill, every payment and refund, Print. The pop-up's code downloads the first time.
+- **Settings changes:** each field that changed, in plain words, before → after ("Tax & bill ›
+  Service charge: 5% → 10%", "Opening hours › Dine-in › Monday: 11:00–23:00 → Closed", "Delivery
+  zones › Sector 18: Added"); five at a time, then Show all. The server records every changed
+  section in full (the Wi-Fi password only as changed). Older entries recorded only some
+  sections, so they may list fewer details.
+- **Table moves:** the Move screen asks why (Guest asked, More people came, Too hot, cold or
+  noisy, Table needed for a booking, Other) and takes a note; the entry shows both and the
+  orders that moved. Moves made before this have no reason.
 
 ## QR codes
 

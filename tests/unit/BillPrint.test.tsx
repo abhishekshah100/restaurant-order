@@ -73,13 +73,13 @@ describe('useBillDownload', () => {
     await act(async () => {
       fireEvent.click(await findByRole('button', { name: 'Get invoice' }));
     });
-    await waitFor(() => expect(drawn.saved).toBe(`Bill ${order.id}.pdf`));
+    await waitFor(() => expect(drawn.saved).toBe(`The Olive Table - Bill ${order.id}.pdf`));
     expect(drawn.text).toContain(branch.shortName);
     expect(drawn.text).toContain(order.id);
     for (const item of order.items) expect(drawn.text).toContain(item.name);
     expect(drawn.text).toContain('CGST');
     expect(drawn.text).toContain(createMoney(branch).format(order.total));
-    expect(drawn.saved).toBe(`Bill ${order.id}.pdf`);
+    expect(drawn.saved).toBe(`The Olive Table - Bill ${order.id}.pdf`);
     // Taken away once saved.
     expect(document.body.textContent).not.toContain('CGST');
   });

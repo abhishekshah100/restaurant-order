@@ -12,6 +12,7 @@ import {
   isOfferActive,
   localWeekTime,
   offerDiscounts,
+  offersToday,
   offerUnitDiscount,
   promoDiscount,
   promoProblem,
@@ -132,6 +133,47 @@ describe('happy-hour window in the branch time zone', () => {
     const weekdays = { ...happyHour, days: ['mon' as const] };
     // Thursday 8 Oct, 5 PM: not a Monday.
     expect(isOfferActive(weekdays, at('2026-10-08T17:00:00+05:30'), KOLKATA)).toBe(false);
+  });
+});
+
+describe('offers today (staff home)', () => {
+  // Thursday 8 Oct 2026, Kathmandu time; happy hour runs 16:00–19:00 every day.
+  const ktm = (time: string) => at(`2026-10-08T${time}:00+05:45`);
+  const pizzaNight: AutoOffer = { ...happyHour, id: 'pizza-night', from: '20:00', to: '23:00' };
+  const lateWednesday: AutoOffer = {
+    ...happyHour,
+    id: 'late',
+    days: ['wed'],
+    from: '22:00',
+    to: '02:00',
+  };
+  const ids = (list: ReturnType<typeof offersToday>) => list.map((o) => [o.offer.id, o.on]);
+
+  it('lists what is on now first, then what starts later today, by start time', () => {
+    const offers = [pizzaNight, happyHour];
+    expect(ids(offersToday(offers, ktm('12:00'), KATHMANDU))).toEqual([
+      ['happy-hour', false],
+      ['pizza-night', false],
+    ]);
+    expect(ids(offersToday(offers, ktm('17:00'), KATHMANDU))).toEqual([
+      ['happy-hour', true],
+      ['pizza-night', false],
+    ]);
+  });
+
+  it('drops finished, paused, other-day and out-of-dates offers', () => {
+    expect(ids(offersToday([happyHour], ktm('19:00'), KATHMANDU))).toEqual([]);
+    expect(offersToday([{ ...happyHour, active: false }], ktm('12:00'), KATHMANDU)).toEqual([]);
+    expect(offersToday([{ ...happyHour, days: ['mon'] }], ktm('12:00'), KATHMANDU)).toEqual([]);
+    expect(offersToday([{ ...happyHour, endsOn: '2026-10-07' }], ktm('12:00'), KATHMANDU)).toEqual(
+      [],
+    );
+  });
+
+  it("keeps last night's offer while it runs past midnight", () => {
+    // Wednesday 22:00 to Thursday 02:00: on at 1 AM Thursday, gone at 2 AM.
+    expect(ids(offersToday([lateWednesday], ktm('01:00'), KATHMANDU))).toEqual([['late', true]]);
+    expect(offersToday([lateWednesday], ktm('02:00'), KATHMANDU)).toEqual([]);
   });
 });
 

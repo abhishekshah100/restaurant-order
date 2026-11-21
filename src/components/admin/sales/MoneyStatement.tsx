@@ -44,7 +44,7 @@ export function MoneyStatement({
   range: { from: string; to: string };
 }) {
   const t = useContent('common');
-  const { money: format, branch } = useAdminWorkspace();
+  const { money: format, branch, filePrefix } = useAdminWorkspace();
   const token = useAdminToken();
   const { showToast } = useToast();
   const [registerBusy, setRegisterBusy] = useState(false);
@@ -58,7 +58,7 @@ export function MoneyStatement({
       const text = await api.salesRegister(token, branch.id, range);
       downloadFile(
         new Blob([text], { type: 'text/csv' }),
-        `sales-register-${branch.id}-${range.from}-${range.to}.csv`,
+        `${filePrefix} - Sales register ${range.from} to ${range.to}.csv`,
       );
     } catch {
       showToast(t('adminSales.money.registerFailed'), { tone: 'error' });

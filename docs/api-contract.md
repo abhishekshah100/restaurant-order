@@ -1399,14 +1399,14 @@ Types in [`contracts/staff.ts`](../src/api/contracts/staff.ts).
 
 Backend only. Types in [`contracts/floor-service.ts`](../src/api/contracts/floor-service.ts).
 
-| Method | Path                                           | What it does                                    |
-| ------ | ---------------------------------------------- | ----------------------------------------------- |
-| GET    | `/admin/branches/:branchId/tables/waiters`     | Who can cover tables, with what each covers now |
-| PATCH  | `/admin/branches/:branchId/tables/sections`    | These tables to a waiter, or to nobody          |
-| DELETE | `/admin/branches/:branchId/tables/sections`    | Clear every section                             |
-| PATCH  | `/admin/branches/:branchId/tables/:table/note` | The guests' note at a table for the visit       |
-| GET    | `/admin/branches/:branchId/tables/:table/qr`   | One table's QR link                             |
-| POST   | `/admin/branches/:branchId/tables/:table/move` | Move the guests to another table (`{ to }`)     |
+| Method | Path                                           | What it does                                                                                                                      |
+| ------ | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/admin/branches/:branchId/tables/waiters`     | Who can cover tables, with what each covers now                                                                                   |
+| PATCH  | `/admin/branches/:branchId/tables/sections`    | These tables to a waiter, or to nobody                                                                                            |
+| DELETE | `/admin/branches/:branchId/tables/sections`    | Clear every section                                                                                                               |
+| PATCH  | `/admin/branches/:branchId/tables/:table/note` | The guests' note at a table for the visit                                                                                         |
+| GET    | `/admin/branches/:branchId/tables/:table/qr`   | One table's QR link                                                                                                               |
+| POST   | `/admin/branches/:branchId/tables/:table/move` | Move the guests to another table (`{ to, reason?, note? }`; reason: `guestAsked`, `moreGuests`, `comfort`, `forBooking`, `other`) |
 
 - **`…/tables/:table/qr`** answers `TableQrCodeResponse` (one entry of the QR codes list), for
   staff who may show it (`tables.qr`: a torn sticker, a guest who can't scan) or manage tables.

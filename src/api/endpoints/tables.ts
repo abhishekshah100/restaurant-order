@@ -12,6 +12,10 @@ import type {
 } from '../contracts';
 import { bearer, seg } from './shared';
 
+/** Why guests change tables (the server's MOVE_REASONS). */
+export const MOVE_REASONS = ['guestAsked', 'moreGuests', 'comfort', 'forBooking', 'other'] as const;
+export type MoveReason = (typeof MOVE_REASONS)[number];
+
 /** The floor: tables, sections, notes, QR codes, moves. */
 export const tablesApi = {
   branchService: (token: string, branchId: string) =>
@@ -60,11 +64,20 @@ export const tablesApi = {
       `admin/branches/${seg(branchId)}/tables/${table}/qr`,
       bearer(token),
     ),
-  /** POST …/tables/:table/move {to}: the guests to a free table (backend only); answers it. */
-  moveTable: (token: string, branchId: string, table: number, to: number) =>
+  /**
+   * POST …/tables/:table/move {to, reason?, note?}: the guests to a free table, and why (the
+   * activity log says it); backend only. Answers the new table.
+   */
+  moveTable: (
+    token: string,
+    branchId: string,
+    table: number,
+    to: number,
+    why: { reason?: MoveReason; note?: string } = {},
+  ) =>
     apiPost<AdminTableDetail>(
       `admin/branches/${seg(branchId)}/tables/${table}/move`,
-      { to },
+      { to, ...why },
       bearer(token),
     ),
   freeTable: (token: string, branchId: string, table: number) =>

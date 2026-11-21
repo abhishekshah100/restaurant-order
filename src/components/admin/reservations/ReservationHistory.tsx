@@ -57,7 +57,7 @@ const STATE_REFRESH_MS = 30_000;
 export function ReservationHistory() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, clock, money } = useAdminWorkspace();
+  const { branch, clock, money, filePrefix } = useAdminWorkspace();
   const text = useReservationText();
   const tick = useNow(STATE_REFRESH_MS);
   const today = clock.dayKey(tick ?? new Date());
@@ -124,7 +124,7 @@ export function ReservationHistory() {
       downloadXlsx(
         workbook,
         t('adminReservations.history.exportFile', {
-          branch: branch.id,
+          branch: filePrefix,
           dates: days.from === days.to ? days.from : `${days.from}_${days.to}`,
         }),
       );

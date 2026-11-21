@@ -1,19 +1,24 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useBranchMenu } from '@/api/adminDashboard';
 import { useContent } from '@/api/hooks';
 import { useAddStaffRound, useEditStaffRound, useTakeTableOrder } from '@/api/mutations';
+import { branchPromotionsQuery } from '@/api/queries';
 import { Button, Dialog, IconButton } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { cartLineLabels } from '@/hooks/useCartLineLabels';
+import { useMinute } from '@/hooks/useOffers';
 import { defaultConfig } from '@/lib/cartLine';
 import { reorderLines } from '@/lib/lifecycle';
 import { addLine, padRequest, padTotals, setQuantity } from '@/lib/orderPad';
 import { calculateBill } from '@/lib/pricing';
+import { activeOffers, applyOffers, offerDiscounts } from '@/lib/promotions';
 import type { CartLine, LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
 import type { Order, OrderRound } from '@/types/order';
+import type { AppliedOffer } from '@/types/promotion';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { PadChoose } from './PadChoose';
 import { PadMenu } from './PadMenu';
@@ -61,6 +66,24 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
   const { branch, region, money } = useAdminWorkspace();
   const { showToast } = useToast();
   const { menu } = useBranchMenu(region);
+  // Happy hour: the server takes the dine-in offers on now off a waiter's order, so the pad
+  // shows them too (offer price, menu price struck through, the discount on the bill).
+  const promotions = useQuery(branchPromotionsQuery(region.id)).data;
+  const minute = useMinute();
+  const offers = useMemo(
+    () =>
+      promotions && minute !== null
+        ? activeOffers(promotions.offers, new Date(minute), region.timezone, 'dineIn')
+        : [],
+    [promotions, minute, region.timezone],
+  );
+  const price = (some: CartLine[]) => {
+    const offered: (CartLine & { offer?: AppliedOffer })[] = menu
+      ? applyOffers(some, menu, offers)
+      : some;
+    const discounts = offerDiscounts(offered, region.currency.minorUnit);
+    return { offered, bill: calculateBill(some, region, undefined, discounts) };
+  };
   const labels = useMemo(() => cartLineLabels(cart, money), [cart, money]);
   const take = useTakeTableOrder();
   const addRound = useAddStaffRound();
@@ -85,8 +108,9 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
     target.kind === 'edit' ? (target.round.kitchenNote ?? '') : '',
   );
   const totals = padTotals(lines);
-  // What the guest pays for these lines: taxes, service charge and round off included.
-  const billTotal = calculateBill(lines, region).total;
+  // What the guest pays for these lines: offers off; taxes, service charge and round off in.
+  const priced = price(lines);
+  const billTotal = priced.bill.total;
 
   let title = t('adminOrderPad.titleNew', { table: target.table });
   if (target.kind === 'add') title = t('adminOrderPad.titleAdd', { order: target.order.id });
@@ -107,6 +131,11 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
     });
   }
   if (choosing) subtitle = title;
+  // The dish being set up, at its offer price when one is on (before taxes, like the menu).
+  const chosenTotal = ({ dish, config, quantity }: Choosing) => {
+    const { bill } = price(addLine([], dish, config, quantity));
+    return bill.itemTotal - bill.discountMinor / region.currency.minorUnit;
+  };
   const back = choosing
     ? () => setChoosing(null)
     : step === 'review'
@@ -188,9 +217,7 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
       <Button
         block
         iconStart="plus"
-        meta={money.format(
-          padTotals(addLine([], choosing.dish, choosing.config, choosing.quantity)).total,
-        )}
+        meta={money.format(chosenTotal(choosing))}
         onClick={() => {
           setLines(addLine(lines, choosing.dish, choosing.config, choosing.quantity));
           setChoosing(null);
@@ -205,7 +232,8 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
         target={target}
         menu={menu}
         labels={labels}
-        lines={lines}
+        lines={priced.offered}
+        bill={priced.bill}
         onQuantity={(key, quantity) => setLines(setQuantity(lines, key, quantity))}
         removed={start.skipped}
         onAddMore={() => setStep('menu')}
@@ -231,6 +259,7 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
     body = menu && (
       <PadMenu
         menu={menu}
+        offers={offers}
         lines={lines}
         onAdd={(dish) => setLines(addLine(lines, dish, defaultConfig(dish)))}
         onChoose={(dish) => setChoosing({ dish, config: defaultConfig(dish), quantity: 1 })}

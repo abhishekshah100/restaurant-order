@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useBrandTitle } from '@/hooks/useBrandName';
 import { brandName } from '@/lib/branchParts';
+import { fileOwner } from '@/lib/fileName';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMoney, type Money } from '@/lib/money';
 import type { AdminBranch, StaffPermission } from '@/types/admin';
@@ -43,6 +44,8 @@ export interface AdminWorkspace {
   branch: WorkspaceBranch;
   /** The name it goes by (brandName): the bars, QR cards, bills and the tab's title. */
   brand: string;
+  /** Downloaded files start with it: the company and the branch, as named now (fileOwner). */
+  filePrefix: string;
   /** Its region rules (GET /branches): currency, taxes, tables. */
   region: Branch;
   /** How the branch writes money and times. */
@@ -61,13 +64,16 @@ export function AdminWorkspaceProvider({
   region,
   canSwitch,
   children,
-}: Omit<AdminWorkspace, 'brand' | 'money' | 'clock' | 'can'> & { children: ReactNode }) {
+}: Omit<AdminWorkspace, 'brand' | 'filePrefix' | 'money' | 'clock' | 'can'> & {
+  children: ReactNode;
+}) {
   const brand = brandName(branch.name);
   useBrandTitle(brand);
   const value = useMemo(
     () => ({
       branch,
       brand,
+      filePrefix: fileOwner(brand, branch.shortName),
       region,
       canSwitch,
       money: createMoney(region),

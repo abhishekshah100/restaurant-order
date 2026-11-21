@@ -74,7 +74,10 @@ function SelectBranchScreen() {
 
   const choose = (branchId: string) => {
     selectAdminBranch(branchId);
-    router.push(ADMIN_PATHS.dashboard);
+    // A full page load, not an in-app one: the dashboard's sidebar links mounting while the
+    // in-app change was still pending (another branch's rules loading) could leave React
+    // re-rendering them forever, freezing the tab.
+    window.location.assign(ADMIN_PATHS.dashboard);
   };
   const leave = () => {
     signOut();

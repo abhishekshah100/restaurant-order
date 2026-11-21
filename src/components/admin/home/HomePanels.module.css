@@ -178,6 +178,18 @@ button.dishChip:focus-visible {
   font: var(--font-meta-strong);
 }
 
+/* ---------- Offers today ---------- */
+
+.offerCount {
+  background: var(--success-tint);
+  color: var(--success);
+}
+
+/* "Now" in place of the start time while an offer is on. */
+.offerOn {
+  color: var(--success);
+}
+
 /* ---------- My shift ---------- */
 
 .headIcon {

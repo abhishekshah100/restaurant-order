@@ -146,6 +146,31 @@
 
 .nav {
   flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* A group of pages under its small heading (Service, Money, Manage, Reports). */
+.group {
+  display: grid;
+  gap: 4px;
+}
+
+.groupTitle {
+  margin: 0;
+  padding: 0 12px;
+  color: color-mix(in srgb, var(--on-dark) 48%, transparent);
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Settings: at the foot of the list, apart from the day's pages. */
+.foot {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--on-dark) 12%, transparent);
 }
 
 .nav ul {

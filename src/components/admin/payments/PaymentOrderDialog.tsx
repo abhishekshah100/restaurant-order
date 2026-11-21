@@ -16,7 +16,8 @@ import { refundedDishes } from '@/lib/refundItems';
 /**
  * One order from the Payments page: everything on it (items, bill, status), every payment and
  * refund on it with when, how and who, and what can be done — Collect what's due, Refund what
- * was paid, Print the receipt, or open its table.
+ * was paid, Print the receipt, or open its table. Without `onCollect` and `onRefund` it only
+ * shows (the activity log's "View bill").
  */
 export function PaymentOrderDialog({
   order,
@@ -27,8 +28,8 @@ export function PaymentOrderDialog({
 }: {
   order: Order | undefined;
   onClose: () => void;
-  onCollect: (order: Order) => void;
-  onRefund: (order: Order) => void;
+  onCollect?: (order: Order) => void;
+  onRefund?: (order: Order) => void;
   onPrint: (order: Order) => void;
 }) {
   const t = useContent('common');
@@ -56,7 +57,7 @@ export function PaymentOrderDialog({
       className={styles.dialog}
       footer={
         <div className={styles.orderActions}>
-          {due > 0 && can('payments.collect') && (
+          {onCollect && due > 0 && can('payments.collect') && (
             <Button block iconStart="cash" meta={amount(due)} onClick={() => onCollect(order)}>
               {t('adminPayments.order.collect')}
             </Button>
@@ -65,7 +66,7 @@ export function PaymentOrderDialog({
             <Button variant="secondary" iconStart="receipt" onClick={() => onPrint(order)}>
               {t('adminPayments.order.print')}
             </Button>
-            {canRefund && can('refunds.give') && (
+            {onRefund && canRefund && can('refunds.give') && (
               <Button variant="secondary" iconStart="refresh" onClick={() => onRefund(order)}>
                 {t('adminPayments.order.refund')}
               </Button>

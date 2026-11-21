@@ -1,19 +1,8 @@
 /*
- * Collect payment's extras, under how it's paid: discounts (those given, one tidy line each)
- * and a business customer's details for the invoice. Each folds into a link, and opens as the
- * dialog's dashed card with compact, evenly spaced fields.
+ * Collect payment's bill options (CollectScreen): discounts (those given, one tidy line each)
+ * and a business customer's details for the invoice. Each opens as the dialog's dashed card
+ * with compact, evenly spaced fields.
  */
-
-/* The extras together, under how it's paid: apart from it and from each other. */
-.stack {
-  margin-top: 16px;
-  display: grid;
-  gap: 12px;
-}
-
-.stack:empty {
-  display: none;
-}
 
 .panel {
   display: grid;

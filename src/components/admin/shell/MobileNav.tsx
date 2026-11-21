@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Icon } from '@/components/ui';
-import { navFor, type AdminNavId, type NavCounts } from '@/lib/adminNav';
+import { navFor, splitTabs, type AdminNavId, type NavCounts } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from './AdminWorkspace';
 import { NavBadge } from './NavBadge';
@@ -28,8 +28,9 @@ export interface MobileNavProps {
 }
 
 /**
- * The phone and tablet navigation (below 1024px): a bottom tab bar with the pages waiters use
- * most, and More (a sheet) with the rest, Switch branch and Sign out.
+ * The phone and tablet navigation (below 1024px): a bottom tab bar with a role's first four pages
+ * (a waiter's Home, Tables, Orders, Requests; a cashier's Payments, Cash register…), and More (a
+ * sheet) with the rest as grouped tiles, Switch branch and Sign out.
  */
 export function MobileNav({
   active,
@@ -41,33 +42,31 @@ export function MobileNav({
   onSignOut,
 }: MobileNavProps) {
   const t = useContent('common');
-  const nav = navFor(useAdminWorkspace().can);
-  const inMore = nav.some((item) => !item.tab && item.id === active);
+  const { tabs, more } = splitTabs(navFor(useAdminWorkspace().can));
+  const inMore = more.some((item) => item.id === active);
   const close = () => onMoreOpenChange(false);
 
   return (
     <>
       <nav className={styles.tabs} aria-label={t('adminShell.nav.label')}>
         <ul>
-          {nav
-            .filter((item) => item.tab)
-            .map((item) => (
-              <li key={item.id}>
-                <Link
-                  href={item.href}
-                  className={cx(styles.tab, active === item.id && styles.active)}
-                  aria-current={active === item.id ? 'page' : undefined}
-                >
-                  <span className={styles.iconWrap}>
-                    <Icon name={item.icon} size="sm" />
-                    {item.badge && (
-                      <NavBadge id={item.id} count={item.badge(counts)} className={styles.badge} />
-                    )}
-                  </span>
-                  <span className={styles.label}>{t(`adminShell.nav.${item.id}`)}</span>
-                </Link>
-              </li>
-            ))}
+          {tabs.map((item) => (
+            <li key={item.id}>
+              <Link
+                href={item.href}
+                className={cx(styles.tab, active === item.id && styles.active)}
+                aria-current={active === item.id ? 'page' : undefined}
+              >
+                <span className={styles.iconWrap}>
+                  <Icon name={item.icon} size="sm" />
+                  {item.badge && (
+                    <NavBadge id={item.id} count={item.badge(counts)} className={styles.badge} />
+                  )}
+                </span>
+                <span className={styles.label}>{t(`adminShell.nav.${item.id}`)}</span>
+              </Link>
+            </li>
+          ))}
           <li>
             <button
               type="button"
@@ -88,6 +87,7 @@ export function MobileNav({
       {moreOpen && (
         <MobileNavMore
           active={active}
+          counts={counts}
           adminName={adminName}
           onClose={close}
           onSwitchBranch={onSwitchBranch}

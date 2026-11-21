@@ -8,7 +8,7 @@ import { expect, test, adminSignIn, againstBackend } from './helpers';
  * supplier of its own.
  */
 
-test.skip(!againstBackend, 'Purchasing needs the server.');
+test.skip(!againstBackend, 'Purchases needs the server.');
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/admin/login/');
@@ -22,7 +22,7 @@ test('a supplier, an order, a delivery and a return', async ({ page }, info) => 
   const name = `Fresh Farm ${info.project.name} ${Date.now() % 100000}`;
   await adminSignIn(page);
   await page.goto('/admin/dashboard/purchasing/');
-  await expect(page.getByRole('heading', { name: 'Purchasing', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Purchases', level: 1 })).toBeVisible();
 
   // A supplier: details, then straight on to what they sell.
   await page.getByRole('tab', { name: 'Suppliers' }).click();

@@ -167,6 +167,98 @@
   color: var(--brand-600);
 }
 
+/* Each setting changed: where, then before → after. */
+.changes {
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  list-style: none;
+}
+
+.change {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--bg) 60%, var(--surface));
+  font: var(--font-small);
+}
+
+.changeLabel {
+  color: var(--ink-2);
+  font: var(--font-meta-strong);
+}
+
+.changeValues {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  overflow-wrap: anywhere;
+}
+
+.changeBefore {
+  color: var(--ink-3);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--ink-3) 60%, transparent);
+}
+
+.changeArrow {
+  flex: none;
+  color: var(--ink-3);
+}
+
+.changeAfter {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.changesToggle {
+  width: fit-content;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--brand-700);
+  font: var(--font-meta-strong);
+  cursor: pointer;
+}
+
+/* View bill and the table: side by side under the entry. */
+.links {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+
+.billButton {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--brand-700);
+  font: var(--font-meta-strong);
+  cursor: pointer;
+}
+
+.billButton:focus-visible,
+.changesToggle:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .billButton:hover {
+    border-color: var(--brand-600);
+    background: var(--brand-tint-2);
+  }
+}
+
 .more {
   justify-self: center;
 }

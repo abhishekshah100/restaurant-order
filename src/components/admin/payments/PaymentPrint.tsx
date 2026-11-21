@@ -11,6 +11,7 @@ import { dueOn } from '@/lib/adminOrders';
 import type { InvoiceDetail, PaymentHistoryResponse } from '@/api/contracts';
 import { ledgerOf, type DueGroup, type LedgerLine } from '@/lib/adminPayments';
 import { brandName } from '@/lib/branchParts';
+import { safeFileName } from '@/lib/fileName';
 import { paidAmount } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
 import { canShareFile, downloadFile, needsTap, shareFile } from '@/lib/saveFile';
@@ -143,9 +144,12 @@ export function useBillDownload(place: PrintPlace) {
         hotfixes: ['px_scaling'],
       });
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, width, height);
-      const name = t('adminPayments.receipt.fileName', {
-        orders: next.map((o) => o.id).join(', '),
-      });
+      const name = safeFileName(
+        t('adminPayments.receipt.fileName', {
+          company: brandName(place.region.name),
+          orders: next.map((o) => o.id).join(', '),
+        }),
+      );
       const file = new File([pdf.output('blob')], `${name}.pdf`, { type: 'application/pdf' });
       // Not pdf.save(): on an iPhone it replaces the page with the PDF.
       await handOver(file);
@@ -226,10 +230,16 @@ function usePrintDoc(place: PrintPlace, onPrinted?: (doc: Printable) => void) {
     const pageTitle = document.title;
     document.title =
       next.kind === 'bill'
-        ? t('adminPayments.receipt.fileName', { orders: next.orders.map((o) => o.id).join(', ') })
+        ? t('adminPayments.receipt.fileName', {
+            company: brandName(place.region.name),
+            orders: next.orders.map((o) => o.id).join(', '),
+          })
         : next.kind === 'invoice'
-          ? next.detail.number
-          : t('adminPayments.report.fileName', { period: next.period });
+          ? `${brandName(place.region.name)} - ${next.detail.number}`
+          : t('adminPayments.report.fileName', {
+              company: brandName(place.region.name),
+              period: next.period,
+            });
     window.addEventListener('afterprint', () => (document.title = pageTitle), { once: true });
     window.print();
     onPrinted?.(next);

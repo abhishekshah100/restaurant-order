@@ -91,6 +91,36 @@ export const activeOffers = (
     (o) => isOfferActive(o, at, timeZone) && (!mode || !o.modes || o.modes.includes(mode)),
   );
 
+/** An offer on the staff home: on now, or starting later today. */
+export interface OfferToday {
+  offer: AutoOffer;
+  on: boolean;
+}
+
+/**
+ * The offers still to come today (branch time): those on now (one that began last night and
+ * runs past midnight too), then those starting later today, by start time. Paused and finished
+ * ones aren't listed.
+ */
+export function offersToday(
+  offers: readonly AutoOffer[],
+  at: Date,
+  timeZone: string,
+): OfferToday[] {
+  const { day, minutes, date } = localWeekTime(at, timeZone);
+  return offers
+    .flatMap((offer): OfferToday[] => {
+      if (offer.active === false) return [];
+      if (isOfferActive(offer, at, timeZone)) return [{ offer, on: true }];
+      const later =
+        offer.days.includes(day) && withinDates(offer, date) && toMinutes(offer.from) > minutes;
+      return later ? [{ offer, on: false }] : [];
+    })
+    .sort(
+      (a, b) => Number(b.on) - Number(a.on) || toMinutes(a.offer.from) - toMinutes(b.offer.from),
+    );
+}
+
 /** Whether an offer covers a dish (its category, or the dish itself). */
 const offerCovers = (
   { scope }: Pick<AutoOffer, 'scope'>,

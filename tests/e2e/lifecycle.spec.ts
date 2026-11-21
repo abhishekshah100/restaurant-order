@@ -6,6 +6,7 @@ import {
   dishSlug,
   fastForward,
   installClock,
+  allowGuestChanges,
   scan,
   waitForSavedCart,
 } from './helpers';
@@ -62,6 +63,8 @@ test.beforeEach(async ({ page }) => {
     localStorage.clear();
     sessionStorage.clear();
   });
+  // These are the guest's own changes: the branch has to allow them.
+  await allowGuestChanges(page);
 });
 
 test('dine-in: a second round goes on the order without checkout, and the bill shows both', async ({
@@ -85,6 +88,7 @@ test('dine-in: a second round goes on the order without checkout, and the bill s
   await visible(page, 'button', 'Add to my order').click();
 
   await expect(page).toHaveURL(/\/order\/track\/\?id=[A-Z]+-?\d+$/);
+  const orderId = new URL(page.url()).searchParams.get('id') ?? '';
   await expect(
     page.getByRole('status').filter({ hasText: 'Round 2 is on its way to the kitchen' }),
   ).toBeVisible();
@@ -111,8 +115,9 @@ test('dine-in: a second round goes on the order without checkout, and the bill s
     page.getByText('Balance due', { exact: true }).filter({ visible: true }).first().locator('..'),
   ).toContainText('₹575');
 
+  // My orders: this order (the table's drawn demo orders are listed too).
   await page.goto('/orders/');
-  await expect(visible(page, 'link', /#[A-Z]+-?\d+/)).toContainText('2 rounds');
+  await expect(visible(page, 'link', new RegExp(`#${orderId}`))).toContainText('2 rounds');
 });
 
 test('cancel within the window', async ({ page }) => {

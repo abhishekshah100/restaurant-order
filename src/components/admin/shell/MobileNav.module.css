@@ -19,7 +19,9 @@
   max-width: 560px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* A role's tabs and More, sharing the width however many there are. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   list-style: none;
 }
 
@@ -82,79 +84,35 @@
 
 .sheet {
   display: grid;
-  gap: 16px;
+  gap: 20px;
   padding-bottom: 8px;
 }
 
-.list,
-.group {
-  display: grid;
-  list-style: none;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  overflow: hidden;
-}
-
-.row {
-  width: 100%;
-  min-height: 56px;
+/* Who's signed in and where: a card at the top. */
+.who {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding: 0 14px;
-  border: 0;
-  background: none;
-  color: var(--ink);
-  font: var(--font-label);
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--brand-tint), var(--brand-tint-2));
 }
 
-.row:focus-visible {
-  box-shadow: var(--focus-inset);
-}
-
-/* After .row, whose own border is reset. */
-.list > li + li,
-.group > * + * {
-  border-top: 1px solid var(--line);
-}
-
-.rowActive {
-  color: var(--brand-700);
-}
-
-.rowIcon {
-  width: 36px;
-  height: 36px;
+.avatar {
+  width: 44px;
+  height: 44px;
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: var(--r-md);
-  background: var(--brand-tint-2);
-  color: var(--brand-600);
+  border-radius: var(--r-round);
+  background: var(--brand-600);
+  color: var(--on-brand);
+  font: var(--font-h3);
 }
 
-.rowLabel {
-  flex: 1;
-  min-width: 0;
-}
-
-.chev {
-  color: var(--ink-3);
-}
-
-.branch {
-  min-height: 64px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-}
-
-.branchText {
+.whoText {
+  flex: 1 1 180px;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -162,11 +120,20 @@
   gap: 4px;
 }
 
-.branchName {
+.whoName {
   max-width: 100%;
   overflow: hidden;
   color: var(--ink);
-  font: var(--font-small-strong);
+  font: var(--font-label);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.branchName {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink-2);
+  font: var(--font-small);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -176,26 +143,145 @@
   padding: 0 8px;
 }
 
-.account {
+.switch {
+  flex: none;
+  margin-left: auto;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--brand-700);
+  font: var(--font-small-strong);
+  cursor: pointer;
+}
+
+.switch:focus-visible {
+  box-shadow: var(--focus);
+}
+
+/* A group of pages: its small heading, then its pages as tiles, three to a row. */
+.tileGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.groupTitle {
+  margin: 0;
+  padding: 0 2px;
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tiles {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+}
+
+.tile {
+  height: 100%;
+  min-height: 88px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 12px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  text-align: center;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+
+.tile:focus-visible {
+  box-shadow: var(--focus);
+}
+
+.tile:active {
+  background: var(--brand-tint-2);
+}
+
+.tileActive {
+  border-color: var(--brand-600);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+}
+
+.tileIcon {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--brand-tint-2);
+  color: var(--brand-600);
+}
+
+.tileActive .tileIcon {
+  background: var(--brand-600);
+  color: var(--on-brand);
+}
+
+.tileIcon .badge {
+  top: -6px;
+  left: auto;
+  right: -8px;
+}
+
+.tileLabel {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+/* Sign out: a plain row at the bottom. */
+.row {
+  width: 100%;
   min-height: 56px;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 0 14px;
-  color: var(--ink-2);
-  font: var(--font-small);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-label);
+  text-align: left;
+  cursor: pointer;
 }
 
-.avatar {
+.row:focus-visible {
+  box-shadow: var(--focus-inset);
+}
+
+.rowIcon {
   width: 36px;
   height: 36px;
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: var(--r-round);
-  background: var(--brand-600);
-  color: var(--on-brand);
-  font: var(--font-label);
+  border-radius: var(--r-md);
+}
+
+.rowLabel {
+  flex: 1;
+  min-width: 0;
 }
 
 .signOut {
@@ -207,12 +293,20 @@
   color: var(--error);
 }
 
+@media (min-width: 560px) {
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 @media (hover: hover) {
   .tab:hover {
     color: var(--ink);
   }
 
-  .row:hover {
+  .row:hover,
+  .tile:hover {
+    border-color: var(--line-strong);
     background: var(--brand-tint-2);
   }
 }

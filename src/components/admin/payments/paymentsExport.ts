@@ -12,7 +12,7 @@ import { usePaymentText } from './usePaymentText';
  */
 export function useLedgerExport() {
   const t = useContent('common');
-  const { branch, clock } = useAdminWorkspace();
+  const { clock, filePrefix } = useAdminWorkspace();
   const text = usePaymentText();
   return (entries: readonly LedgerLine[], days: string) => {
     const c = (key: Parameters<typeof t>[0]) => t(key);
@@ -63,7 +63,7 @@ export function useLedgerExport() {
     downloadXlsx(
       workbook,
       t('adminPayments.actions.exportFile', {
-        branch: branch.id,
+        branch: filePrefix,
         date: days,
       }),
     );

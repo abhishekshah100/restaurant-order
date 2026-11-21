@@ -8,8 +8,9 @@ import type { DayRange } from './dayRange';
 import { ADMIN_PATHS } from './adminBranches';
 
 /*
- * The admin navigation, one list for every layout: the desktop sidebar shows every item; the
- * mobile tab bar shows the `tab` items and puts the rest in its More sheet. Labels are content
+ * The admin navigation, one list for every layout: the desktop sidebar shows every item under
+ * its group's heading (Service, Money, Manage, Reports; Home first, Settings at the foot); the
+ * mobile tab bar shows a role's first four pages and puts the rest, grouped, in its More sheet. Labels are content
  * keys (common › adminShell.nav.<id>). Each page shows for its own permissions (`needs`) and the
  * server lets those read what the page shows (access-catalog › READERS), so a role opens exactly
  * the pages its permissions name.
@@ -61,12 +62,23 @@ const PURCHASING_READERS: readonly StaffPermission[] = [
   'purchase.receive',
 ];
 
+/**
+ * Where a page sits in the nav, by the work it's for: the floor during service, money, running
+ * the place, reports; Home above them and Settings at the foot.
+ */
+export type AdminNavGroup = 'home' | 'service' | 'money' | 'manage' | 'reports' | 'settings';
+
+/** The groups with a heading, in order (Home and Settings stand alone). */
+export const NAV_GROUPS = ['service', 'money', 'manage', 'reports'] as const;
+
+/** How many pages the phone's bottom bar holds before More. */
+const TABS = 4;
+
 export interface AdminNavItem {
   id: AdminNavId;
   href: string;
   icon: IconName;
-  /** On the mobile tab bar (else in More). */
-  tab: boolean;
+  group: AdminNavGroup;
   /** The live count shown beside it, if any (0 while what it counts isn't known). */
   badge?: (counts: NavCounts) => number;
   /** Shown to staff holding any of these at the branch (everyone, without). */
@@ -75,15 +87,24 @@ export interface AdminNavItem {
 
 const section = (id: string) => `${ADMIN_PATHS.dashboard}${id}/`;
 
+/** Every page, grouped and, in each group, the most used first: the order staff see them in. */
 export const ADMIN_NAV: readonly AdminNavItem[] = [
   // The floor's home: the queue of what's waiting on the floor.
-  { id: 'home', href: ADMIN_PATHS.dashboard, icon: 'home', tab: true, needs: ['orders.view'] },
-  { id: 'tables', href: section('tables'), icon: 'table', tab: true, needs: ['orders.view'] },
+  { id: 'home', href: ADMIN_PATHS.dashboard, icon: 'home', group: 'home', needs: ['orders.view'] },
+
+  /* Service: the floor and the kitchen, all day. */
+  {
+    id: 'tables',
+    href: section('tables'),
+    icon: 'table',
+    group: 'service',
+    needs: ['orders.view'],
+  },
   {
     id: 'orders',
     href: section('orders'),
     icon: 'receipt',
-    tab: true,
+    group: 'service',
     badge: ({ service }) => service?.readyToServe ?? 0,
     needs: ['orders.view'],
   },
@@ -91,7 +112,7 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     id: 'requests',
     href: section('requests'),
     icon: 'bell',
-    tab: true,
+    group: 'service',
     badge: ({ service }) =>
       service ? service.waiterCalls + service.billRequests + (service.kitchenMessages ?? 0) : 0,
     needs: ['orders.view'],
@@ -100,55 +121,54 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     id: 'reservations',
     href: section('reservations'),
     icon: 'calendar',
-    tab: false,
+    group: 'service',
     needs: ['reservations.manage'],
   },
-  // Who works when (the rota), who came (attendance) and staff's requests.
-  {
-    id: 'team',
-    href: section('team'),
-    icon: 'clock',
-    tab: false,
-    badge: ({ rotaRequests }) => rotaRequests ?? 0,
-    needs: ['rota.plan', 'reports.view', 'attendance.fix'],
-  },
   // The kitchen has its own workspace (lib/kitchenNav), outside this shell.
-  { id: 'kitchen', href: ADMIN_PATHS.kitchen, icon: 'chef', tab: false, needs: ['kitchen.update'] },
   {
-    id: 'menu',
-    href: section('menu'),
-    icon: 'menu',
-    tab: false,
-    needs: ['menu.manage', 'menu.availability.update'],
+    id: 'kitchen',
+    href: ADMIN_PATHS.kitchen,
+    icon: 'chef',
+    group: 'service',
+    needs: ['kitchen.update'],
   },
+
+  /* Money: taking it, the drawer, giving it back. */
   {
     id: 'payments',
     href: section('payments'),
     icon: 'card',
-    tab: false,
+    group: 'money',
     needs: ['payments.collect', 'reports.view'],
-  },
-  {
-    id: 'refunds',
-    href: section('refunds'),
-    icon: 'refresh',
-    tab: false,
-    needs: ['refunds.give', 'orders.cancel', 'reports.view'],
   },
   {
     id: 'cash',
     href: section('cash'),
     icon: 'cash',
-    tab: false,
+    group: 'money',
     needs: ['cash.manage', 'cash.review'],
   },
-  // The manager's sales report: owners and managers (reports.view).
-  { id: 'sales', href: section('sales'), icon: 'chart', tab: false, needs: ['reports.view'] },
+  {
+    id: 'refunds',
+    href: section('refunds'),
+    icon: 'refresh',
+    group: 'money',
+    needs: ['refunds.give', 'orders.cancel', 'reports.view'],
+  },
+
+  /* Manage: the menu, stock, buying and the team. */
+  {
+    id: 'menu',
+    href: section('menu'),
+    icon: 'menu',
+    group: 'manage',
+    needs: ['menu.manage', 'menu.availability.update'],
+  },
   {
     id: 'inventory',
     href: section('inventory'),
     icon: 'bag',
-    tab: false,
+    group: 'manage',
     badge: ({ stock }) => (stock ? stock.low + stock.out + stock.expiring + stock.expired : 0),
     needs: INVENTORY_READERS,
   },
@@ -156,19 +176,47 @@ export const ADMIN_NAV: readonly AdminNavItem[] = [
     id: 'purchasing',
     href: section('purchasing'),
     icon: 'tag',
-    tab: false,
+    group: 'manage',
     needs: PURCHASING_READERS,
   },
-  // Who did what (refunds, write-offs, discounts, prices, staff…): owners, and whom they let.
-  { id: 'audit', href: section('audit'), icon: 'shield', tab: false, needs: ['audit.view'] },
+  // Who works when (the rota), who came (attendance) and staff's requests.
+  {
+    id: 'team',
+    href: section('team'),
+    icon: 'clock',
+    group: 'manage',
+    badge: ({ rotaRequests }) => rotaRequests ?? 0,
+    needs: ['rota.plan', 'reports.view', 'attendance.fix'],
+  },
+
+  /* Reports: the manager's sales report; who did what (owners, and whom they let). */
+  { id: 'sales', href: section('sales'), icon: 'chart', group: 'reports', needs: ['reports.view'] },
+  { id: 'audit', href: section('audit'), icon: 'shield', group: 'reports', needs: ['audit.view'] },
+
   {
     id: 'settings',
     href: section('settings'),
     icon: 'sliders',
-    tab: false,
+    group: 'settings',
     needs: ['branch.settings.manage', 'tables.manage', 'branches.manage', 'staff.manage'],
   },
 ];
+
+/** Nav items under their group headings, groups with none left out. */
+export const navGroups = (items: readonly AdminNavItem[]) =>
+  NAV_GROUPS.map((group) => ({ group, items: items.filter((i) => i.group === group) })).filter(
+    (g) => g.items.length > 0,
+  );
+
+/**
+ * The phone's bottom bar and its More sheet: a role's first pages in nav order (a waiter's
+ * Home, Tables, Orders, Requests; a cashier's Payments, Cash register…), the rest in More.
+ * Settings is always in More.
+ */
+export function splitTabs(items: readonly AdminNavItem[]) {
+  const tabs = items.filter((i) => i.group !== 'settings').slice(0, TABS);
+  return { tabs, more: items.filter((i) => !tabs.includes(i)) };
+}
 
 /** The nav items a staff member may open (`can` from useAdminWorkspace). */
 export const navFor = (can: (...permissions: StaffPermission[]) => boolean) =>

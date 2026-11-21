@@ -111,7 +111,9 @@ export function LedgerTab({ today, wastage = false }: { today: string; wastage?:
             variant="secondary"
             iconStart="list"
             loading={busy === 'ledger'}
-            onClick={() => void download('ledger', range, `ledger-${range.from}-${range.to}`)}
+            onClick={() =>
+              void download('ledger', range, `Stock changes ${range.from} to ${range.to}`)
+            }
           >
             {t('adminInventory.export.csv')}
           </Button>

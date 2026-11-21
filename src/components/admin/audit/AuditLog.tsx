@@ -1,11 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { AuditArea, AuditEvent } from '@/api/contracts';
 import { api } from '@/api/endpoints';
 import { useAuditLog, useContent } from '@/api/hooks';
+import { LoadingSignal } from '@/components/layout/GlobalLoader';
 import { Button, Chip, EmptyState, Icon, Skeleton } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { useAdminToken } from '@/hooks/useAdminSession';
@@ -18,6 +20,15 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useAuditText } from './useAuditText';
 import styles from './AuditLog.module.css';
 import { downloadFile } from '@/lib/saveFile';
+
+// The bill pop-up and the Payments page's printing: downloaded the first time a bill opens.
+const AuditBill = dynamic(() => import('./AuditBill').then((m) => m.AuditBill), {
+  ssr: false,
+  loading: () => <LoadingSignal />,
+});
+
+/** Setting changes shown before "Show all". */
+const CHANGES_SHOWN = 5;
 
 const AREAS = ['all', 'orders', 'tables', 'invoices', 'cash', 'menu', 'settings', 'staff'] as const;
 type AreaFilter = (typeof AREAS)[number];
@@ -53,13 +64,14 @@ const areaOf = (action: AuditEvent['action']): AuditArea => {
 /**
  * /admin/dashboard/audit/ (`audit.view`): who did what at the branch, newest first. Pick the
  * days (today without any; up to 92, back seven years), what (an area) and who; each entry says
- * what happened in a sentence, with why and the particulars, and links to its table. 100 at a
- * time ("Load more"); the days as filtered download as CSV. The filters stay in the address.
+ * what happened in a sentence, with why and the particulars (a settings change field by field,
+ * before → after), and links to its table or opens its bill (View bill: the Payments page's
+ * order pop-up, read when opened). 100 at a time ("Load more"); the days as filtered download as CSV. The filters stay in the address.
  * Read from GET …/audit; nothing here changes an entry (they can't be).
  */
 export function AuditLog() {
   const t = useContent('common');
-  const { branch, clock } = useAdminWorkspace();
+  const { branch, clock, filePrefix } = useAdminWorkspace();
   const token = useAdminToken();
   const { showToast } = useToast();
   const router = useRouter();
@@ -70,6 +82,7 @@ export function AuditLog() {
   const area: AreaFilter = isArea(areaParam) ? areaParam : 'all';
   const staffId = useQueryParam('staff') ?? undefined;
   const [exporting, setExporting] = useState(false);
+  const [bill, setBill] = useState<string | null>(null);
   const query = {
     from: days.from,
     to: days.to,
@@ -99,7 +112,7 @@ export function AuditLog() {
       const blob = await api.auditExport(token, branch.id, query);
       downloadFile(
         new Blob([blob], { type: 'text/csv' }),
-        `audit-${branch.id}-${days.from}-${days.to}.csv`,
+        `${filePrefix} - Activity log ${days.from} to ${days.to}.csv`,
       );
     } catch {
       showToast(t('adminAudit.exportFailed'), { tone: 'error' });
@@ -124,7 +137,7 @@ export function AuditLog() {
         <>
           <ol className={styles.list}>
             {events.map((event) => (
-              <AuditRow key={event.id} event={event} />
+              <AuditRow key={event.id} event={event} onBill={setBill} />
             ))}
           </ol>
           {log.hasNextPage && (
@@ -218,15 +231,22 @@ export function AuditLog() {
         )}
       </div>
       {content}
+      {bill && <AuditBill orderId={bill} onClose={() => setBill(null)} />}
     </div>
   );
 }
 
-/** One entry: when, who, what happened (a sentence), why, the particulars, its table. */
-function AuditRow({ event }: { event: AuditEvent }) {
+/**
+ * One entry: when, who, what happened (a sentence), why, the particulars (or each setting
+ * changed), its table, and View bill when it's about an order.
+ */
+function AuditRow({ event, onBill }: { event: AuditEvent; onBill: (order: string) => void }) {
   const t = useContent('common');
   const { clock } = useAdminWorkspace();
   const text = useAuditText()(event);
+  const [allChanges, setAllChanges] = useState(false);
+  const changes = text.changes ?? [];
+  const shownChanges = allChanges ? changes : changes.slice(0, CHANGES_SHOWN);
   const area = areaOf(event.action);
   const table =
     event.target?.type === 'table'
@@ -247,10 +267,51 @@ function AuditRow({ event }: { event: AuditEvent }) {
             {t('adminAudit.reason', { reason: text.reason ?? event.reason })}
           </span>
         )}
-        {table !== undefined && Number.isFinite(table) && (
-          <Link href={tablePath(table)} className={styles.tableLink}>
-            {t('adminRequests.history.table', { table })}
-          </Link>
+        {changes.length > 0 && (
+          <ul className={styles.changes}>
+            {shownChanges.map((change, index) => (
+              <li key={index} className={styles.change}>
+                <span className={styles.changeLabel}>{change.label}</span>
+                <span className={styles.changeValues}>
+                  <span className={styles.changeBefore}>{change.before}</span>
+                  <Icon name="arrow" size="xs" className={styles.changeArrow} />
+                  <span className={styles.changeAfter}>{change.after}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {changes.length > CHANGES_SHOWN && (
+          <button
+            type="button"
+            className={styles.changesToggle}
+            aria-expanded={allChanges}
+            onClick={() => setAllChanges((all) => !all)}
+          >
+            {allChanges
+              ? t('adminAudit.changes.showFewer')
+              : t('adminAudit.changes.showAll', { count: changes.length })}
+          </button>
+        )}
+        {(text.order || (table !== undefined && Number.isFinite(table))) && (
+          <span className={styles.links}>
+            {text.order && (
+              <button
+                type="button"
+                className={styles.billButton}
+                aria-label={t('adminAudit.bill.viewLabel', { order: text.order })}
+                onClick={() => onBill(text.order as string)}
+              >
+                <Icon name="receipt" size="xs" />
+                {t('adminAudit.bill.view')}
+              </button>
+            )}
+            {table !== undefined && Number.isFinite(table) && (
+              <Link href={tablePath(table)} className={styles.tableLink}>
+                {t('adminRequests.history.table', { table })}
+              </Link>
+            )}
+          </span>
         )}
       </span>
       <span className={styles.when}>

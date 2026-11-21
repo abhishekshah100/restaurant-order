@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import { useContent } from '@/api/hooks';
 import { DESKTOP_QUERY } from '@/hooks/useMediaQuery';
 import { cx } from '@/lib/cx';
+import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { useOverlay } from './useOverlay';
 import styles from './Dialog.module.css';
@@ -98,6 +99,12 @@ export function Dialog({
     el.dataset.scrolled = String(body.scrollTop > 2);
     el.dataset.more = String(body.scrollTop + body.clientHeight < body.scrollHeight - 2);
   }, []);
+
+  /** "More below": on down most of a screen, for staff who don't think to scroll. */
+  const scrollDown = () => {
+    const body = bodyRef.current;
+    body?.scrollBy({ top: body.clientHeight * 0.7, behavior: 'smooth' });
+  };
 
   useLayoutEffect(() => {
     if (!visible) return;
@@ -236,6 +243,17 @@ export function Dialog({
             </div>
           </div>
           <span className={styles.fade} aria-hidden="true" />
+          {/* Until the first scroll: a plain sign that the dialog goes on below. */}
+          <button
+            type="button"
+            className={styles.moreBelow}
+            tabIndex={-1}
+            aria-hidden="true"
+            onClick={scrollDown}
+          >
+            {t('dialog.moreBelow')}
+            <Icon name="chevd" size="xs" />
+          </button>
         </div>
         {footer && <div className={styles.foot}>{footer}</div>}
       </div>

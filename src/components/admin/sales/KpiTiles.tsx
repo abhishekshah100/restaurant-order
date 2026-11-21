@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import type { SalesFigures } from '@/api/contracts';
 import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
@@ -46,10 +48,17 @@ export function KpiTiles({
       {FIGURES.map(({ key, upIsGood }) => {
         const change = changeOf(totals[key], before[key], upIsGood);
         const none = totals[key] === 0 && before[key] === 0;
+        const figure = text(key, totals[key]);
         return (
           <article key={key} className={cx(styles.kpi, key === 'netSales' && styles.kpiLead)}>
             <h2 className={styles.kpiLabel}>{t(`adminSales.kpi.${key}.label`)}</h2>
-            <p className={styles.kpiValue}>{text(key, totals[key])}</p>
+            {/* Its length sizes it to fit the tile on one line (Sales.module.css › .kpiValue). */}
+            <p
+              className={styles.kpiValue}
+              style={{ '--chars': Math.max(figure.length, 6) } as CSSProperties}
+            >
+              {figure}
+            </p>
             <p className={styles.kpiChange}>
               {none ? (
                 <span className={styles.kpiBefore}>{t('adminSales.kpi.none')}</span>

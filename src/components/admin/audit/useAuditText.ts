@@ -2,7 +2,9 @@
 
 import type { AuditEvent } from '@/api/contracts';
 import { useContent } from '@/api/hooks';
+import { usePaymentText } from '../payments/usePaymentText';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { settingsChanges, type SettingChange } from './settingsChanges';
 
 export interface AuditText {
   /** What happened, in a sentence ("Refunded ₹100 on #BLR-001"). */
@@ -11,6 +13,10 @@ export interface AuditText {
   detail?: string;
   /** The reason in words ("Kitchen issue"), when one was given. */
   reason?: string;
+  /** Settings: each field changed, before → after. */
+  changes?: SettingChange[];
+  /** The order whose bill the entry is about (View bill), when there's one. */
+  order?: string;
 }
 
 /** "kitchenIssue" → "Kitchen issue": a recorded code in words. */
@@ -27,7 +33,42 @@ const words = (code: string) => {
 export function useAuditText() {
   const t = useContent('common');
   const { money } = useAdminWorkspace();
+  const { methodName } = usePaymentText();
+  const settingsWords = {
+    section: (key: string) => known('adminAudit.settings.sections', key),
+    field: (key: string) => known('adminAudit.settings.fields', key),
+    day: (key: string) => known('adminSettings.hours.days', key),
+    method: methodName,
+    money: (n: number) => money.format(n),
+    minutes: (count: number) => t('adminAudit.settings.minutes', { count }),
+    km: (count: number) => t('adminAudit.settings.km', { count }),
+    on: t('adminAudit.settings.on'),
+    off: t('adminAudit.settings.off'),
+    empty: t('adminAudit.settings.empty'),
+    closed: t('adminAudit.settings.closed'),
+    added: t('adminAudit.settings.added'),
+    removed: t('adminAudit.settings.removed'),
+    changed: t('adminAudit.settings.changed'),
+    oldPhoto: t('adminAudit.settings.oldPhoto'),
+    newPhoto: t('adminAudit.settings.newPhoto'),
+  };
+  /** A word from a content group by key, or undefined when the group has none for it. */
+  function known(group: string, key: string): string | undefined {
+    const said: unknown = t.get(`${group}.${key}` as Parameters<typeof t.get>[0]);
+    return typeof said === 'string' ? said : undefined;
+  }
   return (event: AuditEvent): AuditText => {
+    const text = describe(event);
+    const orderId =
+      event.target?.type === 'order'
+        ? event.target.id
+        : typeof event.details?.order === 'string'
+          ? event.details.order
+          : undefined;
+    return orderId ? { ...text, order: orderId } : text;
+  };
+
+  function describe(event: AuditEvent): AuditText {
     const d = event.details ?? {};
     const num = (key: string) => (typeof d[key] === 'number' ? (d[key] as number) : undefined);
     const str = (key: string) => (typeof d[key] === 'string' ? (d[key] as string) : '');
@@ -116,13 +157,21 @@ export function useAuditText() {
         return { title: say('table_freed', { table: target }) };
       case 'table.qrShown':
         return { title: say('table_qrShown', { table: target }) };
-      case 'table.moved':
+      case 'table.moved': {
+        const why = event.reason && known('adminTables.detail.move.reasons', event.reason);
         return {
           title: say('table_moved', { table: target, to: num('to') ?? '' }),
           detail: join(
-            Array.isArray(d.orders) && (d.orders as string[]).map((o) => `#${o}`).join(', '),
+            str('note') && t('adminAudit.details.moveNote', { note: str('note') }),
+            Array.isArray(d.orders) &&
+              (d.orders as string[]).length > 0 &&
+              t('adminAudit.details.movedOrders', {
+                orders: (d.orders as string[]).map((o) => `#${o}`).join(', '),
+              }),
           ),
+          reason: why || reason,
         };
+      }
       case 'invoice.issued':
         return {
           title: say('invoice_issued', { number: target, order: str('order') }),
@@ -218,35 +267,18 @@ export function useAuditText() {
       case 'menu.dishRemoved':
         return { title: say('menu_dishRemoved', { dish: str('dish') }) };
       case 'settings.changed': {
-        // Each field that changed, before → after (what every bill prints or charges).
-        const before = (d.before ?? {}) as Record<string, Record<string, unknown>>;
-        const after = (d.after ?? {}) as Record<string, Record<string, unknown>>;
-        const shown = (v: unknown) =>
-          v === '' || v === null || v === undefined
-            ? t('adminAudit.details.empty')
-            : typeof v === 'object'
-              ? '…'
-              : String(v);
-        const changes = Object.keys(after).flatMap((section) => {
-          const was = before[section] ?? {};
-          const is = after[section] ?? {};
-          return Object.keys(is)
-            .filter((field) => JSON.stringify(was[field]) !== JSON.stringify(is[field]))
-            .map((field) =>
-              t('adminAudit.details.change', {
-                field: words(field),
-                before: shown(was[field]),
-                after: shown(is[field]),
-              }),
-            );
-        });
+        // Each field that changed, before → after, in words (what every bill prints or charges).
+        const sections = Array.isArray(d.sections) ? (d.sections as string[]) : [];
+        const changes = settingsChanges(
+          (d.before ?? {}) as Record<string, unknown>,
+          (d.after ?? {}) as Record<string, unknown>,
+          settingsWords,
+        );
         return {
           title: say('settings_changed', {
-            sections: Array.isArray(d.sections)
-              ? (d.sections as string[]).map(words).join(', ')
-              : '',
+            sections: sections.map((s) => settingsWords.section(s) ?? words(s)).join(', '),
           }),
-          detail: join(...changes),
+          ...(changes.length > 0 ? { changes } : {}),
         };
       }
       case 'staff.added':
@@ -293,5 +325,5 @@ export function useAuditText() {
       default:
         return { title: words(String(event.action)), reason };
     }
-  };
+  }
 }

@@ -7,7 +7,9 @@ import { Button, Dialog } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { dueOn } from '@/lib/adminOrders';
 import type { AdminTableDetail } from '@/types/admin';
-import { CollectFields, useCollectChoice } from '../payments/CollectFields';
+import { useCollectChoice } from '../payments/CollectFields';
+import { CollectScreen } from '../payments/CollectScreen';
+import screen from '../payments/CollectScreen.module.css';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 
 /**
@@ -34,6 +36,7 @@ export function TableCollectDialog({
       open
       onClose={onClose}
       presentation="adaptive"
+      className={screen.dialog}
       title={t('adminTableCollect.title', { table: detail.table })}
       description={t.plural('adminTableCollect.orders', owing.length)}
       footer={
@@ -67,7 +70,7 @@ export function TableCollectDialog({
         </Button>
       }
     >
-      <CollectFields orders={owing} choice={choice} />
+      <CollectScreen orders={owing} choice={choice} />
     </Dialog>
   );
 }

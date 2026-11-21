@@ -31,28 +31,28 @@ requests) goes through `src/api`; in this build the in-browser mock server in
 [`src/api/mock`](../src/api/mock) answers as the contract in
 [`src/api/contracts.ts`](../src/api/contracts.ts) describes.
 
-| Route                    | Screen                                                    | Component                 |
-| ------------------------ | --------------------------------------------------------- | ------------------------- |
-| `/`                      | Welcome; status screen when not open; start screen        | `home/Home`               |
-| `/start`                 | Choose outlet and mode; `?next=` returns afterwards       | `start/StartView`         |
-| `/menu`                  | Menu home: chef's picks, then every category in full      | `menu/MenuHome`           |
-| `/menu/[category]`       | Category list (one page per category id on any menu)      | `menu/CategoryView`       |
-| `/dish/?slug=…`          | Food detail; `&edit=<lineKey>` edits a cart line          | `menu/DishDetail`         |
-| `/search`                | Search and suggestions; `?q=`                             | `menu/SearchView`         |
-| `/cart`                  | Cart, also "Adding to order" and "Editing order"          | `cart/CartView`           |
-| `/checkout/details`      | Name, mobile, pickup time or delivery address             | `checkout/DetailsStep`    |
-| `/checkout/verify`       | OTP                                                       | `checkout/VerifyStep`     |
-| `/checkout/payment`      | Payment method                                            | `checkout/PaymentStep`    |
-| `/checkout/processing`   | Payment in progress; `?state=payment-failed`/`-cancelled` | `checkout/ProcessingStep` |
-| `/order/confirmed?id=`   | Order confirmation                                        | `order/OrderConfirmed`    |
-| `/order/track?id=`       | Live tracking; cancelled screen when cancelled            | `order/OrderTracking`     |
-| `/order?id=`             | Order details (receipt)                                   | `order/OrderDetails`      |
-| `/orders`                | My orders                                                 | `order/MyOrders`          |
-| `/help`                  | Help, Payment help and FAQ dialogs, Follow us             | `service/HelpView`        |
-| `/help/bill`             | Request the bill                                          | `service/BillRequestView` |
-| `/help/bill/pay`         | Pay my bill                                               | `service/PayBillView`     |
-| `/help/waiter-requested` | Waiter requested                                          | `service/WaiterRequested` |
-| `/help/bill-requested`   | Bill requested                                            | `service/BillRequested`   |
+| Route                    | Screen                                                                                              | Component                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------- |
+| `/`                      | QR scan: straight to the menu; takeaway/delivery welcome; status screen when not open; start screen | `home/Home`               |
+| `/start`                 | Choose outlet and mode; `?next=` returns afterwards                                                 | `start/StartView`         |
+| `/menu`                  | Menu home: chef's picks, then every category in full                                                | `menu/MenuHome`           |
+| `/menu/[category]`       | Category list (one page per category id on any menu)                                                | `menu/CategoryView`       |
+| `/dish/?slug=…`          | Food detail; `&edit=<lineKey>` edits a cart line                                                    | `menu/DishDetail`         |
+| `/search`                | Search and suggestions; `?q=`                                                                       | `menu/SearchView`         |
+| `/cart`                  | Cart, also "Adding to order" and "Editing order"                                                    | `cart/CartView`           |
+| `/checkout/details`      | Name, mobile, pickup time or delivery address                                                       | `checkout/DetailsStep`    |
+| `/checkout/verify`       | OTP                                                                                                 | `checkout/VerifyStep`     |
+| `/checkout/payment`      | Payment method                                                                                      | `checkout/PaymentStep`    |
+| `/checkout/processing`   | Payment in progress; `?state=payment-failed`/`-cancelled`                                           | `checkout/ProcessingStep` |
+| `/order/confirmed?id=`   | Order confirmation                                                                                  | `order/OrderConfirmed`    |
+| `/order/track?id=`       | Live tracking; cancelled screen when cancelled                                                      | `order/OrderTracking`     |
+| `/order?id=`             | Order details (receipt)                                                                             | `order/OrderDetails`      |
+| `/orders`                | My orders                                                                                           | `order/MyOrders`          |
+| `/help`                  | Help, Payment help and FAQ dialogs, Follow us                                                       | `service/HelpView`        |
+| `/help/bill`             | Request the bill                                                                                    | `service/BillRequestView` |
+| `/help/bill/pay`         | Pay my bill                                                                                         | `service/PayBillView`     |
+| `/help/waiter-requested` | Waiter requested                                                                                    | `service/WaiterRequested` |
+| `/help/bill-requested`   | Bill requested                                                                                      | `service/BillRequested`   |
 
 Components are under [`src/components`](../src/components). Two screens are dialogs, not routes:
 the quick-add sheet (`QuickAddContext`) and the request-waiter sheet
@@ -73,10 +73,11 @@ Gotchas:
 
 ```mermaid
 flowchart TD
-    QR["Scan table QR<br/>/?branch=…&table=12"] --> Welcome["Welcome /"]
+    QR["Scan table QR<br/>/?branch=…&table=12"] -->|"table confirmed"| Menu["Menu /menu"]
+    ModeLink["Takeaway / delivery link<br/>/?mode=…"] --> Welcome["Welcome /"]
     Link["Open the site without a QR code"] --> Start["Start screen /start<br/>outlet + mode"]
     Start --> Menu
-    Welcome --> Menu["Menu /menu"]
+    Welcome --> Menu
     Menu --> Category["Category /menu/[category]"]
     Menu --> Search["Search /search"]
     Category --> Dish["Food detail /dish/?slug="]

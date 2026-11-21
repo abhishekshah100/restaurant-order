@@ -55,13 +55,21 @@ test('a waiter call and a ready order, from the guest to Done and Mark served', 
   await expect(counter(page, 0, 'Ready to serve')).toBeVisible();
 
   const queue = page.getByRole('region', { name: 'Needs you now' });
-  const call = queue.getByRole('listitem').filter({ hasText: 'Needs water' });
+  // What's still waiting has its action; once handled it moves to "Handled in the last 30 min".
+  const waiting = (text: string, action: RegExp) =>
+    queue
+      .getByRole('listitem')
+      .filter({ hasText: text, has: page.getByRole('button', { name: action }) });
+  const call = waiting('Needs water', /^Done/);
   await expect(call).toContainText('12');
   await expect(call).toContainText('“No ice, please”');
   await call.getByRole('button', { name: /^Done/ }).click();
   await expect(call).toHaveCount(0);
   await expect(counter(page, 0, 'Waiter calls')).toBeVisible();
   await expect(queue).toContainText('All caught up');
+  await expect(queue.getByRole('listitem').filter({ hasText: 'Needs water' })).toContainText(
+    'Abhishek Saha',
+  );
 
   // The kitchen has it ready 18 minutes after it was ordered; the home polls every 15 s.
   await fastForward(page, '18:30');
@@ -70,7 +78,7 @@ test('a waiter call and a ready order, from the guest to Done and Mark served', 
     await markReadyInKitchen(page, orderId);
     await page.goto('/admin/dashboard/');
   }
-  const ready = queue.getByRole('listitem').filter({ hasText: `Order ${orderId} is ready` });
+  const ready = waiting(`Order ${orderId} is ready`, /^Mark served/);
   await expect(ready).toBeVisible();
   await expect(ready).toContainText('Ananya Rao');
   await expect(counter(page, 1, 'Ready to serve')).toBeVisible();

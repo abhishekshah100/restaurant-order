@@ -125,7 +125,9 @@ test('more help topics open in a dialog', async ({ page }) => {
   await page.getByRole('button', { name: /Allergens & FAQs/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Allergens & FAQs' });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByText('Wi-Fi')).toBeVisible();
+  // Wi-Fi has its own card on the page; the dialog answers the usual questions.
+  await expect(dialog.getByText('Allergens and ingredients')).toBeVisible();
+  await expect(dialog.getByText('Opening hours')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
 });

@@ -3,16 +3,15 @@
 import { useContent } from '@/api/hooks';
 import { isApiError } from '@/api/client';
 import { useCollectPayment, useCollectTablePayment } from '@/api/mutations';
-import { Button, Dialog } from '@/components/ui';
+import { Button, Dialog, IconButton } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import type { Order } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { BusinessBuyer } from './BusinessBuyer';
-import { DiscountPanel } from './DiscountPanel';
-import { CollectFields, useCollectChoice } from './CollectFields';
+import { useCollectChoice } from './CollectFields';
+import { CollectScreen } from './CollectScreen';
 import { usePaymentText } from './usePaymentText';
 import styles from './PaymentDialogs.module.css';
-import extras from './CollectExtras.module.css';
+import screen from './CollectScreen.module.css';
 
 /** What's being paid: one order, or everything due at a table. */
 export type CollectTarget =
@@ -118,28 +117,22 @@ function CollectForm({
       presentation="adaptive"
       title={title}
       description={description}
-      className={styles.dialog}
+      className={screen.dialog}
       footer={
         <div className={styles.footer}>
-          <Button
-            variant="secondary"
-            iconStart="receipt"
+          <IconButton
+            icon="receipt"
+            variant="soft"
+            label={t('adminPayments.due.printBill')}
             onClick={() => onPrint(target)}
-            className={styles.footerSecondary}
-          >
-            {t('adminPayments.due.printBill')}
-          </Button>
+          />
           <Button block iconStart="check" loading={busy} disabled={!choice.ready} onClick={submit}>
             {t('adminPayments.collect.confirm', { amount: format(toCollect) })}
           </Button>
         </div>
       }
     >
-      <CollectFields orders={orders} choice={choice} />
-      <div className={extras.stack}>
-        <DiscountPanel orders={orders} />
-        <BusinessBuyer orders={orders} />
-      </div>
+      <CollectScreen orders={orders} choice={choice} />
     </Dialog>
   );
 }

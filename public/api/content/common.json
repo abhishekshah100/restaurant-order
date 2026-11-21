@@ -108,7 +108,8 @@
   },
   "prepTime": "{min}–{max} min",
   "dialog": {
-    "close": "Close"
+    "close": "Close",
+    "moreBelow": "More below"
   },
   "toast": {
     "dismiss": "Dismiss"
@@ -270,7 +271,7 @@
     }
   },
   "adminAudit": {
-    "title": "Audit log",
+    "title": "Activity log",
     "subtitle": "Who did what: refunds, write-offs, discounts, cancellations, the cash drawer, prices, settings and staff. Entries can't be changed or deleted.",
     "areas": {
       "label": "What",
@@ -357,7 +358,102 @@
         "unavailable-today": "Off today"
       },
       "sizesOff": "sizes off: {sizes}",
-      "none": "none"
+      "none": "none",
+      "moveNote": "Note: {note}",
+      "movedOrders": "Orders {orders}"
+    },
+    "bill": {
+      "view": "View bill",
+      "viewLabel": "View the bill for order #{order}",
+      "failed": "Couldn't open the bill for order #{order}. Try again."
+    },
+    "changes": {
+      "showAll": "Show all {count} changes",
+      "showFewer": "Show fewer"
+    },
+    "settings": {
+      "sections": {
+        "details": "Branch details",
+        "help": "Help page",
+        "services": "Ways to order",
+        "hours": "Opening hours",
+        "tax": "Tax & bill",
+        "payments": "Payment methods",
+        "delivery": "Delivery",
+        "pickup": "Takeaway"
+      },
+      "fields": {
+        "name": "Name",
+        "shortName": "Short name",
+        "city": "City",
+        "address": "Address",
+        "phone": "Phone",
+        "wifiName": "Wi-Fi name",
+        "wifiPassword": "Wi-Fi password",
+        "country": "Country",
+        "timezone": "Time zone",
+        "locale": "Language",
+        "currency": "Currency",
+        "orderPrefix": "Order number starts with",
+        "orderStart": "First order number",
+        "image": "Photo",
+        "social": "Social links",
+        "faqs": "Questions & answers",
+        "question": "Question",
+        "answer": "Answer",
+        "dineIn": "Dine-in",
+        "takeaway": "Takeaway",
+        "delivery": "Delivery",
+        "guestChanges": "Guests can change their order",
+        "days": "Dine-in",
+        "lastOrdersMinutes": "Last orders before closing",
+        "specialDays": "Special days",
+        "sessions": "Hours",
+        "label": "Name",
+        "from": "From",
+        "to": "To",
+        "opens": "Opens",
+        "closes": "Closes",
+        "enabled": "Turned on",
+        "taxId": "Tax number",
+        "legalName": "Registered business name",
+        "sacCode": "SAC code",
+        "fssai": "FSSAI number",
+        "invoicePrefix": "Invoice number starts with",
+        "serviceChargeBp": "Service charge",
+        "lines": "Taxes",
+        "rateBp": "Rate",
+        "base": "Charged on",
+        "discountBeforeTax": "Take discounts off before tax",
+        "roundTotal": "Round off the total",
+        "checkout": "Paying when ordering",
+        "bill": "Paying the bill",
+        "atTable": "Paid at the table",
+        "methods": "Ways to pay",
+        "recommended": "Suggested way",
+        "prepMinutes": "Time to get ready",
+        "zones": "Delivery zones",
+        "maxDistanceKm": "Furthest distance",
+        "feeTaxable": "Tax on the delivery fee",
+        "fee": "Delivery fee",
+        "freeAbove": "Free delivery above",
+        "minOrder": "Smallest order",
+        "etaMinutes": "Delivery time",
+        "areas": "Areas",
+        "asap": "As soon as possible",
+        "slotMinutes": "Pick-up time slot"
+      },
+      "on": "On",
+      "off": "Off",
+      "empty": "Not set",
+      "closed": "Closed",
+      "added": "Added",
+      "removed": "Removed",
+      "changed": "Changed",
+      "minutes": "{count} min",
+      "km": "{count} km",
+      "oldPhoto": "Old photo",
+      "newPhoto": "New photo"
     }
   },
   "adminInvoices": {
@@ -462,9 +558,9 @@
       "tableHistory": "Table order history · Admin",
       "roles": "Roles & permissions · Settings · Admin",
       "staff": "Staff · Settings · Admin",
-      "inventory": "Inventory · Admin",
-      "purchasing": "Purchasing · Admin",
-      "audit": "Audit log · Admin",
+      "inventory": "Stock · Admin",
+      "purchasing": "Purchases · Admin",
+      "audit": "Activity log · Admin",
       "invoices": "Invoices · Payments · Admin",
       "orderHistory": "Order history · Admin",
       "rota": "Rota · Shifts & attendance · Admin",
@@ -495,10 +591,17 @@
       "refunds": "Refunds & cancellations",
       "more": "More",
       "settings": "Settings",
-      "inventory": "Inventory",
-      "purchasing": "Purchasing",
-      "audit": "Audit log",
-      "sales": "Sales"
+      "inventory": "Stock",
+      "purchasing": "Purchases",
+      "audit": "Activity log",
+      "sales": "Sales",
+      "groups": {
+        "service": "Service",
+        "money": "Money",
+        "manage": "Manage",
+        "reports": "Reports",
+        "settings": "Settings"
+      }
     },
     "badge": {
       "orders": "{count} ready to serve",
@@ -749,6 +852,18 @@
       "now": "Due now",
       "seat": "Seat",
       "seatLabel": "Seat {name} at table {tables}"
+    },
+    "offers": {
+      "title": "Offers today",
+      "subtitle": "Tell guests what's on",
+      "manage": "Offers",
+      "now": "Now",
+      "off": "{amount} off {what}",
+      "priceOverride": "{what} at {price}",
+      "selected": "selected dishes",
+      "more": "{names} +{count} more",
+      "till": "Till {time}",
+      "window": "{from} – {to}"
     },
     "soldOut": {
       "title": "Not available tonight",
@@ -1029,7 +1144,18 @@
         "occupied": "Table {table} isn't free any more. Pick another.",
         "disabled": "Table {table} is out of service. Pick another.",
         "nothing": "Nobody is at this table to move.",
-        "failed": "Couldn't move the table. Try again."
+        "failed": "Couldn't move the table. Try again.",
+        "pickWhy": "Choose why they are moving",
+        "why": "Why are they moving?",
+        "reasons": {
+          "guestAsked": "Guest asked",
+          "moreGuests": "More people came",
+          "comfort": "Too hot, cold or noisy",
+          "forBooking": "Table needed for a booking",
+          "other": "Other"
+        },
+        "note": "Note",
+        "notePlaceholder": "For example: near the window, away from the AC"
       },
       "reserve": "Reserve",
       "outOfService": {
@@ -1426,7 +1552,7 @@
       "more": "Show more",
       "export": "Export to Excel",
       "exporting": "Preparing the file…",
-      "exportFile": "orders-{branch}-{date}.xlsx",
+      "exportFile": "{branch} - Orders {date}.xlsx",
       "exportFailed": "Couldn't prepare the file. Try again.",
       "columns": {
         "time": "Placed at",
@@ -1797,17 +1923,17 @@
     }
   },
   "adminInventory": {
-    "title": "Inventory",
+    "title": "Stock",
     "subtitle": "What the branch has in stock, what it's worth, and every change to it.",
-    "backendOnly": "Inventory needs the server. It isn't available in the demo.",
+    "backendOnly": "Stock needs the server. It isn't available in the demo.",
     "loading": "Loading stock",
     "failed": "Couldn't load the stock.",
     "retry": "Try again",
     "tabs": {
-      "label": "Inventory",
+      "label": "Stock",
       "today": "Today",
       "getStarted": "Get started",
-      "stock": "Stock",
+      "stock": "Stock list",
       "recipes": "Recipes",
       "reports": "Reports",
       "more": "More",
@@ -1915,7 +2041,7 @@
       "filter": "Show",
       "noMatch": "Nothing matches.",
       "reorderAt": "Reorder at {quantity}",
-      "switchedOn": "Inventory was switched on {time}. Stock didn't move while it was off: count or adjust it before relying on it.",
+      "switchedOn": "Stock tracking was switched on {time}. Stock didn't move while it was off: count or adjust it before relying on it.",
       "line": {
         "out": "Out of stock",
         "low": "Running low · warn at {quantity}",
@@ -2463,7 +2589,7 @@
       "title": "Set up inventory",
       "intro": "Know what is in your kitchen, get a warning before something runs out, and see what gets wasted. Four short steps. You can stop any time and carry on later.",
       "progress": "{done} of 4 done",
-      "notAllowed": "Inventory is not set up yet. Ask a manager to set it up here.",
+      "notAllowed": "Stock is not set up yet. Ask a manager to set it up here.",
       "skip": "Skip for now",
       "skipped": "Skipped",
       "done": "Done",
@@ -2554,7 +2680,7 @@
         }
       },
       "recipes": {
-        "body": "Tell Inventory what one plate of a dish uses, for example Paneer Tikka uses 150 g paneer. Then stock goes down by itself every time the kitchen cooks it. Start with the 5 dishes you sell most.",
+        "body": "Tell us what one plate of a dish uses, for example Paneer Tikka uses 150 g paneer. Then stock goes down by itself every time the kitchen cooks it. Start with the 5 dishes you sell most.",
         "optional": "You can skip this. Counting stock and recording wastage work without recipes.",
         "go": "Add recipes",
         "linked": "{count} of {total} dishes linked"
@@ -2564,7 +2690,7 @@
         "body": "{done} of 4 steps done. The last steps make warnings and stock more accurate.",
         "go": "Continue"
       },
-      "doneTitle": "Inventory is ready",
+      "doneTitle": "Stock is ready",
       "doneBody": "From now on, Today shows what needs you. Record deliveries, wastage and counts as they happen.",
       "goToday": "Go to Today"
     },
@@ -2596,7 +2722,7 @@
       },
       "noSupplier": {
         "title": "Add your supplier first",
-        "body": "\"Stock arrived\" records a delivery from a supplier. Add who you buy from in Purchasing, then record deliveries here.",
+        "body": "\"Stock arrived\" records a delivery from a supplier. Add who you buy from in Purchases, then record deliveries here.",
         "go": "Go to suppliers"
       },
       "numbers": {
@@ -2680,11 +2806,11 @@
     },
     "ready": {
       "title": "Ready orders",
-      "body": "What is low, as draft orders for each supplier, in whole packs. Nothing is sent: you check and send each order in Purchasing.",
+      "body": "What is low, as draft orders for each supplier, in whole packs. Nothing is sent: you check and send each order in Purchases.",
       "has": "have {quantity}",
       "packs": "{count} × {pack} ({size})",
       "nothing": "Nothing needs ordering right now.",
-      "noSupplier": "No supplier sells {names} here yet. Add them to a supplier in Purchasing › Suppliers.",
+      "noSupplier": "No supplier sells {names} here yet. Add them to a supplier in Purchases › Suppliers.",
       "noLevel": "{names}: no \"Warn me at\" level, so no amount can be suggested. Set one on the item.",
       "create": {
         "one": "Create {count} draft order",
@@ -2694,9 +2820,9 @@
         "one": "{count} draft order created",
         "other": "{count} draft orders created"
       },
-      "createdHint": "Open Purchasing to check each order and send it to the supplier.",
-      "openPurchasing": "Open Purchasing",
-      "failed": "Could not create every order. Check Purchasing for what was made, then try again."
+      "createdHint": "Open Purchases to check each order and send it to the supplier.",
+      "openPurchasing": "Open Purchases",
+      "failed": "Could not create every order. Check Purchases for what was made, then try again."
     },
     "quick": {
       "view": "How to count",
@@ -2761,7 +2887,7 @@
       "unit": "Unit",
       "counted": "Counted",
       "note": "Note",
-      "after": "Write what is on the shelf. Then enter it in Inventory › Count stock (one at a time is quickest)."
+      "after": "Write what is on the shelf. Then enter it in Stock › Count stock (one at a time is quickest)."
     },
     "tips": {
       "label": "What does this mean?",
@@ -2770,7 +2896,7 @@
       "daysLeft": "How long what you have will last, at the rate it was used over the last 2 weeks.",
       "runningOut": "Not low yet, but at the rate you use it, it will run out within 3 days.",
       "expected": "What the stock should be by the app, when the count started. A difference means something was not recorded.",
-      "priceUp": "Compared with the first delivery in the last 30 days. Change the alert level in Purchasing › Orders."
+      "priceUp": "Compared with the first delivery in the last 30 days. Change the alert level in Purchases › Orders."
     },
     "prices": {
       "title": "Price went up",
@@ -2791,11 +2917,11 @@
     }
   },
   "adminPurchasing": {
-    "title": "Purchasing",
+    "title": "Purchases",
     "subtitle": "Buy from your suppliers, check deliveries, and keep the kitchen stocked.",
-    "backendOnly": "Purchasing needs the server. It isn't available in the demo.",
+    "backendOnly": "Purchases needs the server. It isn't available in the demo.",
     "tabs": {
-      "label": "Purchasing views",
+      "label": "Purchases pages",
       "today": "Today",
       "orders": "Orders",
       "receipts": "Deliveries",
@@ -2813,7 +2939,7 @@
     },
     "settings": {
       "open": "Settings",
-      "title": "Purchasing settings",
+      "title": "Purchase settings",
       "intro": "How orders are checked before they go out, and when a delivered price should catch your eye.",
       "approval": "Do orders need approval before they're sent?",
       "approvalChoices": {
@@ -3086,7 +3212,7 @@
       "addFromIngredients": "Add from my ingredients",
       "pickTitle": "Tick what you buy from them",
       "searchIngredients": "Search ingredients",
-      "nothingToAdd": "All your ingredients are on their list already. Add new ones in Inventory.",
+      "nothingToAdd": "All your ingredients are on their list already. Add new ones in Stock.",
       "addPicked": {
         "one": "Add 1 item",
         "other": "Add {count} items"
@@ -3119,8 +3245,8 @@
         "progress": "{done} of {total} done",
         "ingredients": {
           "title": "Add the ingredients you buy",
-          "hint": "Done in Inventory: onions, milk, rice…",
-          "action": "Open Inventory"
+          "hint": "Done in Stock: onions, milk, rice…",
+          "action": "Open Stock"
         },
         "supplier": {
           "title": "Add a supplier",
@@ -3197,9 +3323,9 @@
     },
     "tips": {
       "approval": "Approval means an owner or manager checks an order before it goes to the supplier. Most restaurants don't need it; turn it on if many people place orders.",
-      "low": "An item is low when its stock is at or below its \"Warn me at\" level in Inventory. The amount suggested fills it back up to \"Order up to\", in whole packs.",
+      "low": "An item is low when its stock is at or below its \"Warn me at\" level in Stock. The amount suggested fills it back up to \"Order up to\", in whole packs.",
       "prices": "A delivered price shows here when someone counted the delivery without the bill (it needs confirming), or when it's higher than expected by more than your price warning in Settings.",
-      "suggested": "\"Low\" items and the amounts after \"order\" come from each item's levels in Inventory. Tap \"Fill the low items\" to use them, then change any number.",
+      "suggested": "\"Low\" items and the amounts after \"order\" come from each item's levels in Stock. Tap \"Fill the low items\" to use them, then change any number.",
       "refused": "Refused at the door means you didn't accept it, so it never goes into stock. If you notice a problem later, use \"Send items back\" on the delivery instead.",
       "bill": "A photo of the supplier's bill is kept with the delivery, so you can check the prices and amounts later or show them to your accountant.",
       "returns": "Items sent back after a delivery was accepted. They come out of stock, and the supplier owes you the amount shown as credit."
@@ -3919,7 +4045,7 @@
       },
       "loading": "Loading the history",
       "export": "Download Excel",
-      "exportFile": "reservations-{branch}-{dates}.xlsx",
+      "exportFile": "{branch} - Reservations {dates}.xlsx",
       "columns": {
         "date": "Date",
         "time": "Time",
@@ -4034,7 +4160,7 @@
     "actions": {
       "report": "Day report",
       "export": "Export to Excel",
-      "exportFile": "payments-{branch}-{date}.xlsx"
+      "exportFile": "{branch} - Payments {date}.xlsx"
     },
     "views": {
       "label": "Payments",
@@ -4215,7 +4341,14 @@
       "leaveAll": "Nothing to take: the whole bill is left",
       "confirm": "Collect {amount}",
       "doneOrder": "{amount} collected for order #{order}",
-      "doneTable": "Table {table} settled: {amount} collected"
+      "doneTable": "Table {table} settled: {amount} collected",
+      "billTitle": "Bill",
+      "options": "Bill options",
+      "option": {
+        "discount": "Discount",
+        "leave": "Leave unpaid",
+        "business": "Business invoice"
+      }
     },
     "register": {
       "closed": "The cash register is closed",
@@ -4304,7 +4437,7 @@
       "creditNote": "{number}: {amount}",
       "taxId": "{label}: {id}",
       "phone": "Tel. {phone}",
-      "fileName": "Bill {orders}",
+      "fileName": "{company} - Bill {orders}",
       "billNo": "Bill no.",
       "date": "Date",
       "when": "{date}, {time}",
@@ -4336,7 +4469,7 @@
     },
     "report": {
       "title": "Day report",
-      "fileName": "Day report {period}",
+      "fileName": "{company} - Day report {period}",
       "branch": "{branch} · {date}",
       "printed": "Printed {time} by {name}",
       "summary": "Summary",
@@ -5289,8 +5422,8 @@
         "menu": "Menu & tables",
         "branch": "Branch",
         "staff": "Staff",
-        "inventory": "Inventory",
-        "purchasing": "Purchasing"
+        "inventory": "Stock",
+        "purchasing": "Purchases"
       },
       "permissions": {
         "orders_view": {
@@ -5571,14 +5704,14 @@
       "title": "Features",
       "subtitle": "Optional parts of the app this restaurant uses. Each one is on or off for all its branches.",
       "loading": "Loading modules",
-      "inventory": "Inventory and purchasing",
+      "inventory": "Stock and purchases",
       "inventoryLabel": "Use inventory and purchasing",
       "inventoryOn": "On for every branch: stock, recipes, suppliers, deliveries.",
       "inventoryOff": "Off: the restaurant works without stock, as before. Its data is kept.",
       "who": "Only the platform team can change this.",
       "changedAt": "Last changed {time}",
-      "turnedOn": "Inventory is on",
-      "turnedOff": "Inventory is off. Dishes stock had taken off are back on the menu.",
+      "turnedOn": "Stock tracking is on",
+      "turnedOff": "Stock tracking is off. Dishes stock had taken off are back on the menu.",
       "failed": "Couldn't change it. Try again."
     },
     "shifts": {
@@ -5956,7 +6089,7 @@
       },
       "add": "Add a shift",
       "export": "Excel",
-      "exportFile": "attendance-{branch}-{date}.xlsx",
+      "exportFile": "{branch} - Attendance {date}.xlsx",
       "kpi": {
         "label": "At a glance",
         "working": "Working now",
@@ -6320,7 +6453,7 @@
       "page": "{branch} · {period}"
     },
     "export": {
-      "file": "sales-{branch}-{from}-{to}.xlsx",
+      "file": "{branch} - Sales {from} to {to}.xlsx",
       "sheets": {
         "report": "Report",
         "summary": "Summary",
@@ -6391,7 +6524,7 @@
       "waived": "Left off bills (not taken)"
     },
     "pdf": {
-      "file": "sales-{branch}-{from}-{to}.pdf",
+      "file": "{branch} - Sales {from} to {to}.pdf",
       "page": "Page {page} of {pages}",
       "failed": "We couldn't make the PDF. Try again."
     },

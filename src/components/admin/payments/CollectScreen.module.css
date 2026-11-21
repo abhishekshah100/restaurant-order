@@ -1,0 +1,146 @@
+/*
+ * Collect payment, laid out like a till: the bill and its options on the left, the payment on
+ * the right (one column on a phone: the payment, then the bill's options).
+ */
+
+/* The dialog, wide enough for both columns on a desktop. */
+@media (min-width: 1024px) {
+  .dialog {
+    width: min(960px, calc(100vw - 48px));
+  }
+}
+
+.screen {
+  display: grid;
+  gap: 20px;
+}
+
+.pay,
+.billPane {
+  min-width: 0;
+}
+
+.billPane {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+/* The bill as a receipt: beside the payment on a wide screen only (in it on a phone). */
+.receipt {
+  display: none;
+}
+
+.receiptTitle {
+  margin: 0 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font: var(--font-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---------- The bill's options ---------- */
+
+.options {
+  display: grid;
+  gap: 10px;
+}
+
+.optionsTitle {
+  margin: 0;
+  color: var(--ink-3);
+  font: var(--font-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.optionRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+
+.option {
+  min-height: 64px;
+  padding: 10px 8px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--font-small-strong);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-base) ease,
+    background var(--dur-base) ease;
+}
+
+.option:focus-visible {
+  box-shadow: var(--focus);
+}
+
+@media (hover: hover) {
+  .option:hover {
+    border-color: var(--ink-2);
+  }
+}
+
+.option[aria-pressed='true'] {
+  border-color: var(--brand-600);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+}
+
+.optionIcon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--brand-tint-2);
+  color: var(--brand-700);
+}
+
+.option[aria-pressed='true'] .optionIcon {
+  background: var(--brand-600);
+  color: var(--surface);
+}
+
+.optionLabel {
+  line-height: 1.2;
+}
+
+/* ---------- Two columns: the bill left, the payment right ---------- */
+
+@media (min-width: 860px) {
+  .screen {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-areas: 'bill pay';
+    align-items: start;
+    gap: 28px;
+  }
+
+  .pay {
+    grid-area: pay;
+  }
+
+  .billPane {
+    grid-area: bill;
+  }
+
+  .receipt {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    background: color-mix(in srgb, var(--bg) 55%, var(--surface));
+  }
+}

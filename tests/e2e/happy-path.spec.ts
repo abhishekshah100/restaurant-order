@@ -19,11 +19,10 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('order a dish and pay online', async ({ page }) => {
-  // Welcome reads the table from the QR link.
+  // A table's QR code goes straight to the menu, the table in its header.
   await scan(page, 'table=7');
-  await expect(page.getByText('Table 7').filter({ visible: true }).first()).toBeVisible();
-  await page.getByRole('link', { name: 'View menu' }).filter({ visible: true }).click();
   await expect(page).toHaveURL(/\/menu\/$/);
+  await expect(page.getByText('Table 7').filter({ visible: true }).first()).toBeVisible();
 
   // A simple dish adds straight away: the cart bar says so (a short toast on desktop).
   await page.getByRole('button', { name: 'Add Dahi Kebab' }).click();

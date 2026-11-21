@@ -217,7 +217,7 @@ export function CountDialog({ id, onClose }: { id: string; onClose: () => void }
           variant="secondary"
           iconStart="list"
           loading={busy === 'count'}
-          onClick={() => void download('count', { id: count.id }, `count-${count.number}`)}
+          onClick={() => void download('count', { id: count.id }, `Stock count ${count.number}`)}
         >
           {t('adminInventory.export.csv')}
         </Button>

@@ -43,7 +43,7 @@ export function UsageTab({ today }: { today: string }) {
             variant="secondary"
             iconStart="list"
             loading={busy === 'usage'}
-            onClick={() => void download('usage', range, `usage-${range.from}-${range.to}`)}
+            onClick={() => void download('usage', range, `Stock used ${range.from} to ${range.to}`)}
           >
             {t('adminInventory.export.csv')}
           </Button>

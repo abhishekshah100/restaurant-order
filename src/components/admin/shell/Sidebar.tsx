@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { useContent } from '@/api/hooks';
 import { Icon } from '@/components/ui';
 import { ADMIN_PATHS } from '@/lib/adminBranches';
-import { navFor, type AdminNavId, type NavCounts } from '@/lib/adminNav';
+import {
+  navFor,
+  navGroups,
+  type AdminNavId,
+  type AdminNavItem,
+  type NavCounts,
+} from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from './AdminWorkspace';
 import { BranchStatusControl } from './BranchStatusControl';
@@ -21,7 +27,11 @@ export interface SidebarProps {
   onSignOut: () => void;
 }
 
-/** The desktop navigation (1024px and up): brand, current branch, pages, the signed-in admin. */
+/**
+ * The desktop navigation (1024px and up): brand, current branch, then the pages — Home, the
+ * groups under small headings (Service, Money, Manage, Reports), Settings at the foot — and the
+ * signed-in admin.
+ */
 export function Sidebar({
   active,
   counts,
@@ -32,6 +42,24 @@ export function Sidebar({
 }: SidebarProps) {
   const t = useContent('common');
   const { branch, brand, canSwitch, can } = useAdminWorkspace();
+  const pages = navFor(can);
+  const home = pages.filter((item) => item.group === 'home');
+  const settings = pages.filter((item) => item.group === 'settings');
+  const link = (item: AdminNavItem) => (
+    <li key={item.id}>
+      <Link
+        href={item.href}
+        className={cx(styles.link, active === item.id && styles.active)}
+        aria-current={active === item.id ? 'page' : undefined}
+      >
+        <Icon name={item.icon} size="sm" />
+        <span className={styles.label}>{t(`adminShell.nav.${item.id}`)}</span>
+        {item.badge && (
+          <NavBadge id={item.id} count={item.badge(counts)} className={styles.badge} />
+        )}
+      </Link>
+    </li>
+  );
 
   return (
     <aside className={styles.sidebar}>
@@ -69,23 +97,17 @@ export function Sidebar({
       </section>
 
       <nav className={styles.nav} aria-label={t('adminShell.nav.label')}>
-        <ul>
-          {navFor(can).map((item) => (
-            <li key={item.id}>
-              <Link
-                href={item.href}
-                className={cx(styles.link, active === item.id && styles.active)}
-                aria-current={active === item.id ? 'page' : undefined}
-              >
-                <Icon name={item.icon} size="sm" />
-                <span className={styles.label}>{t(`adminShell.nav.${item.id}`)}</span>
-                {item.badge && (
-                  <NavBadge id={item.id} count={item.badge(counts)} className={styles.badge} />
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {home.length > 0 && <ul>{home.map(link)}</ul>}
+        {navGroups(pages).map(({ group, items }) => (
+          <section key={group} className={styles.group} aria-labelledby={`nav-${group}`}>
+            {/* A label, not a heading: the page's own headings stay the page's. */}
+            <p id={`nav-${group}`} className={styles.groupTitle}>
+              {t(`adminShell.nav.groups.${group}`)}
+            </p>
+            <ul>{items.map(link)}</ul>
+          </section>
+        ))}
+        {settings.length > 0 && <ul className={styles.foot}>{settings.map(link)}</ul>}
       </nav>
 
       {adminName && (

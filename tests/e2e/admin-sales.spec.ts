@@ -106,14 +106,14 @@ test.describe('against the server', () => {
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download this report as an Excel file' }).click();
     expect((await download).suggestedFilename()).toMatch(
-      /^sales-blr-indiranagar-\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}\.xlsx$/,
+      /^The Olive Table - Udyog Vihar - Sales \d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}\.xlsx$/,
     );
 
     // PDF: the report on A4 pages, one tap.
     const pdf = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download this report as a PDF' }).click();
     expect((await pdf).suggestedFilename()).toMatch(
-      /^sales-blr-indiranagar-\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}\.pdf$/,
+      /^The Olive Table - Udyog Vihar - Sales \d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}\.pdf$/,
     );
 
     // The sales register for the same days, from the money summary.
@@ -123,7 +123,7 @@ test.describe('against the server', () => {
       .getByRole('button', { name: /^Download the sales register/ })
       .click();
     expect((await register).suggestedFilename()).toMatch(
-      /^sales-register-blr-indiranagar-\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}\.csv$/,
+      /^The Olive Table - Udyog Vihar - Sales register \d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}\.csv$/,
     );
 
     // Print: the report on its own sheet, titled.

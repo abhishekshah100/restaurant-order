@@ -59,7 +59,7 @@ const PRESETS = [
 export function PaymentHistory() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, clock, can } = useAdminWorkspace();
+  const { branch, clock, can, filePrefix } = useAdminWorkspace();
   const token = useAdminToken();
   const [registerBusy, setRegisterBusy] = useState(false);
   const { showToast } = useToast();
@@ -133,7 +133,7 @@ export function PaymentHistory() {
       const blob = await api.salesRegister(token, branch.id, { from: days.from, to: days.to });
       downloadFile(
         new Blob([blob], { type: 'text/csv' }),
-        `sales-register-${branch.id}-${days.from}-${days.to}.csv`,
+        `${filePrefix} - Sales register ${days.from} to ${days.to}.csv`,
       );
     } catch {
       showToast(t('adminPayments.history.registerFailed'), { tone: 'error' });

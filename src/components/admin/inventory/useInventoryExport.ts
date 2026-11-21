@@ -17,7 +17,7 @@ export type ExportKind = 'ledger' | 'usage' | 'count';
 export function useInventoryExport() {
   const t = useContent('common');
   const token = useAdminToken();
-  const { branch } = useAdminWorkspace();
+  const { branch, filePrefix } = useAdminWorkspace();
   const { showToast } = useToast();
   const [busy, setBusy] = useState<ExportKind | null>(null);
 
@@ -30,7 +30,7 @@ export function useInventoryExport() {
     setBusy(kind);
     try {
       const blob = await api.inventoryExport(token, branch.id, kind, query);
-      downloadFile(new Blob([blob], { type: 'text/csv' }), `${branch.id}-${name}.csv`);
+      downloadFile(new Blob([blob], { type: 'text/csv' }), `${filePrefix} - ${name}.csv`);
     } catch {
       showToast(t('adminInventory.export.failed'), { tone: 'error' });
     } finally {

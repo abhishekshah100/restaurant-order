@@ -40,7 +40,8 @@ async function expectPaid(row: ReturnType<typeof billRow>) {
   await expect(row).not.toContainText('Unpaid');
 }
 
-const payNow = (page: Page) => page.getByRole('link', { name: /^Pay ₹[\d,]+ now$/ });
+// "Pay ₹272 now" on a computer; "Pay ₹272" in the phone's bottom row.
+const payNow = (page: Page) => page.getByRole('link', { name: /^Pay ₹[\d,]+( now)?$/ });
 
 async function orderAndCheckout(page: Page, dish: string, name: string, pay: 'online' | 'counter') {
   await page.goto('/menu/starters/');

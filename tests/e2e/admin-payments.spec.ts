@@ -57,8 +57,9 @@ test('collect a bill in cash with change, find it, refund part of it, report and
   await five.getByRole('button', { name: 'Collect' }).click();
   const collect = page.getByRole('dialog', { name: 'Collect payment' });
   await expect(collect).toContainText(`#${atFive} · Ananya Rao`);
-  // The bill's lines fold away under View bill.
-  await collect.getByRole('button', { name: /View bill/ }).click();
+  // The bill beside the payment on a wide screen; folded under View bill on a phone.
+  const viewBill = collect.getByRole('button', { name: /View bill/ });
+  if (await viewBill.isVisible()) await viewBill.click();
   await expect(collect).toContainText('CGST (2.5%)');
   await expect(collect).toContainText('SGST (2.5%)');
   await collect.getByRole('radio', { name: 'Cash' }).check();
@@ -134,5 +135,7 @@ test('collect a bill in cash with change, find it, refund part of it, report and
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export to Excel' }).click();
   const file = await download;
-  expect(file.suggestedFilename()).toMatch(/^payments-blr-indiranagar-\d{4}-\d{2}-\d{2}\.xlsx$/);
+  expect(file.suggestedFilename()).toMatch(
+    /^The Olive Table - Udyog Vihar - Payments \d{4}-\d{2}-\d{2}\.xlsx$/,
+  );
 });

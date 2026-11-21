@@ -67,7 +67,7 @@ function daysOf(range: Exclude<RangeId, 'custom'>, today: string): DayRange {
 export function Attendance() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, clock, can } = useAdminWorkspace();
+  const { branch, clock, can, filePrefix } = useAdminWorkspace();
   const canFix = can('attendance.fix');
   const now = useNow(60_000);
   const today = clock.dayKey(now ?? new Date());
@@ -197,7 +197,7 @@ export function Attendance() {
     downloadXlsx(
       workbook,
       t('adminTeam.attendance.exportFile', {
-        branch: branch.id,
+        branch: filePrefix,
         date: days.from === days.to ? days.from : `${days.from}_${days.to}`,
       }),
     );

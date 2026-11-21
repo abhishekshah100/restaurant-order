@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import type { UpdateFloorsRequest } from '../contracts';
 import { api } from '../endpoints';
+import type { MoveReason } from '../endpoints/tables';
 import { branchOf, refreshAfter } from '../refreshAfter';
 import { floorLayoutQuery } from '../queries';
 import { requireToken } from './shared';
@@ -37,8 +38,19 @@ export function useMoveTable() {
   const client = useQueryClient();
   const token = useAdminToken();
   return useMutation({
-    mutationFn: ({ branchId, table, to }: { branchId: string; table: number; to: number }) =>
-      api.moveTable(requireToken(token), branchId, table, to),
+    mutationFn: ({
+      branchId,
+      table,
+      to,
+      reason,
+      note,
+    }: {
+      branchId: string;
+      table: number;
+      to: number;
+      reason?: MoveReason;
+      note?: string;
+    }) => api.moveTable(requireToken(token), branchId, table, to, { reason, note }),
     onSettled: (_data, _error, variables) =>
       refreshAfter(client, 'tableChanged', branchOf(variables)),
   });

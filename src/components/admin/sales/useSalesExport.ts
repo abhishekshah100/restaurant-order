@@ -15,7 +15,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 export function useSalesExport() {
   const t = useContent('common');
   const cart = useContent('cart');
-  const { branch, clock, region } = useAdminWorkspace();
+  const { branch, clock, region, filePrefix } = useAdminWorkspace();
   const { methodName } = usePaymentText();
 
   const words: SalesExportWords = {
@@ -57,7 +57,7 @@ export function useSalesExport() {
     );
     downloadXlsx(
       toXlsxBook(sheets),
-      t('adminSales.export.file', { branch: branch.id, from: report.from, to: report.to }),
+      t('adminSales.export.file', { branch: filePrefix, from: report.from, to: report.to }),
     );
   };
 }

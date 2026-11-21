@@ -48,8 +48,8 @@ describe('navFor', () => {
       'orders',
       'requests',
       'reservations',
-      'menu',
       'payments',
+      'menu',
     ]);
   });
 

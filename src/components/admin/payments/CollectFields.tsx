@@ -283,15 +283,12 @@ export function CollectFields({
   choice: CollectChoice;
 }) {
   const t = useContent('common');
-  const cart = useContent('cart');
-  const { region, money, can } = useAdminWorkspace();
+  const { region, can } = useAdminWorkspace();
   const { amount: format, methodName } = usePaymentText();
   const [showBill, setShowBill] = useState(false);
-  const { methods, method, setMethod, received, setReceived, receivedAmount, due, toCollect } =
-    choice;
+  const { methods, method, setMethod, received, setReceived, receivedAmount, toCollect } = choice;
   const paidSoFar = orders.reduce((sum, o) => sum + paidAmount(o), 0);
   const billTotal = orders.reduce((sum, o) => sum + o.total, 0);
-  const several = orders.length > 1;
 
   // Cash handed over: the exact amount, then round notes above it.
   const exact = Math.ceil(toCollect);
@@ -301,12 +298,6 @@ export function CollectFields({
       .map((note) => Math.ceil(toCollect / note) * note)
       .filter((v, i, all) => v > exact && all.indexOf(v) === i),
   ].slice(0, 4);
-
-  // Round amounts to take instead (₹471 → ₹470, ₹450, ₹400), each leaving the rest.
-  const roundTakes = [10, 50, 100]
-    .map((unit) => Math.floor(due / unit) * unit)
-    .filter((take, i, all) => take > 0 && take < due && all.indexOf(take) === i)
-    .slice(0, 3);
 
   const summary = [
     t('adminPayments.collect.summary.bill', { amount: format(billTotal) }),
@@ -323,7 +314,7 @@ export function CollectFields({
           </p>
           <button
             type="button"
-            className={styles.billToggle}
+            className={cx(styles.billToggle, styles.narrowOnly)}
             aria-expanded={showBill}
             aria-controls="collect-bill"
             onClick={() => setShowBill((open) => !open)}
@@ -354,62 +345,8 @@ export function CollectFields({
         )}
 
         {showBill && (
-          <div id="collect-bill" className={styles.bill}>
-            {orders.map((order) => (
-              <Fragment key={order.id}>
-                {several && (
-                  <p className={styles.billOrder}>
-                    {t('adminPayments.collect.orderLine', {
-                      order: order.id,
-                      name: order.customerName,
-                    })}
-                  </p>
-                )}
-                <SumRows
-                  rows={[
-                    ...billRows(orderBill(order, region), { t: cart, money, tax: region.tax }).map(
-                      ([label, value]) => ({ label, value }),
-                    ),
-                    {
-                      label: several
-                        ? t('adminPayments.receipt.orderTotal')
-                        : t('adminPayments.receipt.total'),
-                      value: format(order.total),
-                      tone: 'total' as const,
-                    },
-                  ]}
-                />
-              </Fragment>
-            ))}
-            {(paidSoFar > 0 || choice.left > 0) && (
-              <SumRows
-                rows={[
-                  ...(paidSoFar > 0
-                    ? [
-                        {
-                          label: t('adminPayments.collect.paidSoFar'),
-                          value: format(-paidSoFar),
-                          tone: 'ok' as const,
-                        },
-                      ]
-                    : []),
-                  ...(choice.left > 0
-                    ? [
-                        {
-                          label: t('adminPayments.collect.leftRow'),
-                          value: format(-choice.left),
-                          tone: 'muted' as const,
-                        },
-                      ]
-                    : []),
-                  {
-                    label: t('adminPayments.collect.toCollect'),
-                    value: format(toCollect),
-                    tone: 'total' as const,
-                  },
-                ]}
-              />
-            )}
+          <div id="collect-bill" className={cx(styles.bill, styles.narrowOnly)}>
+            <BillBreakdown orders={orders} choice={choice} />
           </div>
         )}
       </section>
@@ -557,86 +494,183 @@ export function CollectFields({
           {t('adminPayments.register.closedBody')}
         </Banner>
       )}
-
-      {choice.leaving ? (
-        <section className={styles.leaveCard} aria-labelledby="collect-leave-title">
-          <div className={styles.leaveHead}>
-            <h3 id="collect-leave-title" className={styles.leaveTitle}>
-              {t('adminPayments.collect.leave')}
-            </h3>
-            <button type="button" className={styles.leaveCancel} onClick={choice.stopLeaving}>
-              {t('adminPayments.collect.leaveCancel')}
-            </button>
-          </div>
-          {roundTakes.length > 0 && (
-            <div
-              className={styles.takes}
-              role="group"
-              aria-label={t('adminPayments.collect.takeInstead')}
-            >
-              {roundTakes.map((take) => (
-                <button
-                  key={take}
-                  type="button"
-                  className={styles.take}
-                  aria-pressed={choice.leaveAmount === due - take}
-                  onClick={() => choice.leaveOf(due - take, 'noChange')}
-                >
-                  <strong>{t('adminPayments.collect.take', { amount: format(take) })}</strong>
-                  <span>
-                    {t('adminPayments.collect.summary.left', { amount: format(due - take) })}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-          <AmountInput
-            id="collect-leave"
-            label={t('adminPayments.collect.leaveAmount')}
-            symbol={region.currency.symbol}
-            value={choice.leave}
-            onChange={choice.setLeave}
-            compact
-            error={
-              choice.leaveTooMuch
-                ? t('adminPayments.collect.leaveTooMuch', { amount: format(due) })
-                : undefined
-            }
-            hint={
-              toCollect === 0 && choice.left > 0 ? t('adminPayments.collect.leaveAll') : undefined
-            }
-          />
-          <div className={styles.reasons} role="radiogroup" aria-labelledby="collect-leave-why">
-            <p id="collect-leave-why" className={styles.reasonsLabel}>
-              {t('adminPayments.collect.leaveReason')}
-              {choice.leaveAmount !== null && choice.leaveReason === null && (
-                <span className={styles.reasonsHint}>
-                  {t('adminPayments.collect.leaveReasonHint')}
-                </span>
-              )}
-            </p>
-            <div className={styles.quick}>
-              {WAIVE_REASONS.map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  role="radio"
-                  aria-checked={choice.leaveReason === r}
-                  className={styles.quickButton}
-                  onClick={() => choice.setLeaveReason(r)}
-                >
-                  {t(`adminPayments.entry.waiveReasons.${r}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : (
-        <button type="button" className={styles.leaveOpen} onClick={choice.startLeaving}>
-          <Icon name="minus" size="xs" />
-          {t('adminPayments.collect.leave')}
-        </button>
-      )}
     </div>
+  );
+}
+
+/**
+ * The bill being paid, as the receipt lists it: each order's items (what's charged), every
+ * charge on it and its total, then what's been paid, what's left and what's to collect. Beside
+ * the form on a wide screen; behind "View bill" on a phone.
+ */
+export function BillBreakdown({
+  orders,
+  choice,
+}: {
+  orders: readonly Order[];
+  choice: CollectChoice;
+}) {
+  const t = useContent('common');
+  const cart = useContent('cart');
+  const { region, money } = useAdminWorkspace();
+  const { amount: format } = usePaymentText();
+  const paidSoFar = orders.reduce((sum, o) => sum + paidAmount(o), 0);
+  const several = orders.length > 1;
+  return (
+    <>
+      {orders.map((order) => (
+        <Fragment key={order.id}>
+          {several && (
+            <p className={styles.billOrder}>
+              {t('adminPayments.collect.orderLine', { order: order.id, name: order.customerName })}
+            </p>
+          )}
+          <ul className={styles.billItems}>
+            {/* Only what's charged: what the kitchen couldn't make is off the bill. */}
+            {order.items
+              .filter((item) => item.quantity > 0)
+              .map((item, index) => (
+                <li key={`${item.dishSlug}-${index}`} className={styles.billItem}>
+                  <span className={styles.billItemName}>
+                    {item.name}
+                    {item.variant && <span className={styles.billItemVariant}>{item.variant}</span>}
+                  </span>
+                  <span className={styles.billItemQty}>×{item.quantity}</span>
+                  <span className={styles.billItemAmount}>
+                    {format(item.unitPrice * item.quantity)}
+                  </span>
+                </li>
+              ))}
+          </ul>
+          <SumRows
+            rows={[
+              ...billRows(orderBill(order, region), { t: cart, money, tax: region.tax }).map(
+                ([label, value]) => ({ label, value }),
+              ),
+              {
+                label: several
+                  ? t('adminPayments.receipt.orderTotal')
+                  : t('adminPayments.receipt.total'),
+                value: format(order.total),
+                tone: 'total' as const,
+              },
+            ]}
+          />
+        </Fragment>
+      ))}
+      {(paidSoFar > 0 || choice.left > 0) && (
+        <SumRows
+          rows={[
+            ...(paidSoFar > 0
+              ? [
+                  {
+                    label: t('adminPayments.collect.paidSoFar'),
+                    value: format(-paidSoFar),
+                    tone: 'ok' as const,
+                  },
+                ]
+              : []),
+            ...(choice.left > 0
+              ? [
+                  {
+                    label: t('adminPayments.collect.leftRow'),
+                    value: format(-choice.left),
+                    tone: 'muted' as const,
+                  },
+                ]
+              : []),
+            {
+              label: t('adminPayments.collect.toCollect'),
+              value: format(choice.toCollect),
+              tone: 'total' as const,
+            },
+          ]}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * Leave part of the bill unpaid, with why: a round amount to take instead (₹471 → ₹470, ₹450,
+ * ₹400) or an amount to leave. Opened from the bill's options; Cancel takes it back.
+ */
+export function LeaveCard({ choice }: { choice: CollectChoice }) {
+  const t = useContent('common');
+  const { region } = useAdminWorkspace();
+  const { amount: format } = usePaymentText();
+  const { due, toCollect } = choice;
+  // Round amounts to take instead (₹471 → ₹470, ₹450, ₹400), each leaving the rest.
+  const roundTakes = [10, 50, 100]
+    .map((unit) => Math.floor(due / unit) * unit)
+    .filter((take, i, all) => take > 0 && take < due && all.indexOf(take) === i)
+    .slice(0, 3);
+  return (
+    <section className={styles.leaveCard} aria-labelledby="collect-leave-title">
+      <div className={styles.leaveHead}>
+        <h3 id="collect-leave-title" className={styles.leaveTitle}>
+          {t('adminPayments.collect.leave')}
+        </h3>
+        <button type="button" className={styles.leaveCancel} onClick={choice.stopLeaving}>
+          {t('adminPayments.collect.leaveCancel')}
+        </button>
+      </div>
+      {roundTakes.length > 0 && (
+        <div
+          className={styles.takes}
+          role="group"
+          aria-label={t('adminPayments.collect.takeInstead')}
+        >
+          {roundTakes.map((take) => (
+            <button
+              key={take}
+              type="button"
+              className={styles.take}
+              aria-pressed={choice.leaveAmount === due - take}
+              onClick={() => choice.leaveOf(due - take, 'noChange')}
+            >
+              <strong>{t('adminPayments.collect.take', { amount: format(take) })}</strong>
+              <span>{t('adminPayments.collect.summary.left', { amount: format(due - take) })}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <AmountInput
+        id="collect-leave"
+        label={t('adminPayments.collect.leaveAmount')}
+        symbol={region.currency.symbol}
+        value={choice.leave}
+        onChange={choice.setLeave}
+        compact
+        error={
+          choice.leaveTooMuch
+            ? t('adminPayments.collect.leaveTooMuch', { amount: format(due) })
+            : undefined
+        }
+        hint={toCollect === 0 && choice.left > 0 ? t('adminPayments.collect.leaveAll') : undefined}
+      />
+      <div className={styles.reasons} role="radiogroup" aria-labelledby="collect-leave-why">
+        <p id="collect-leave-why" className={styles.reasonsLabel}>
+          {t('adminPayments.collect.leaveReason')}
+          {choice.leaveAmount !== null && choice.leaveReason === null && (
+            <span className={styles.reasonsHint}>{t('adminPayments.collect.leaveReasonHint')}</span>
+          )}
+        </p>
+        <div className={styles.quick}>
+          {WAIVE_REASONS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              role="radio"
+              aria-checked={choice.leaveReason === r}
+              className={styles.quickButton}
+              onClick={() => choice.setLeaveReason(r)}
+            >
+              {t(`adminPayments.entry.waiveReasons.${r}`)}
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

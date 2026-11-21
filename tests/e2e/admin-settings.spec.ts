@@ -134,7 +134,8 @@ test('services switch on and off; the region is editable on Branch details', asy
   await page.getByRole('switch', { name: 'Delivery' }).check();
   await saveChanges(page, 'Services saved');
   await page.goto('/admin/dashboard/settings/');
-  await expect(page.getByRole('link', { name: /^Services/ }).last()).toContainText(
+  // Services sits on the "How guests order" card.
+  await expect(page.getByRole('link', { name: /^How guests order/ }).last()).toContainText(
     'Takeaway · Delivery',
   );
 

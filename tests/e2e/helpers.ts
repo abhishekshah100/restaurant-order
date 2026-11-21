@@ -139,6 +139,29 @@ export async function scan(page: Page, query: string) {
     .toContain(`"table":${table}`);
 }
 
+/**
+ * Lets guests change or cancel their own order for the branch's window (Settings › Services ›
+ * "Guests can change their order"; off in the demo branches). On the mock, both demo branches
+ * are saved with it on, as the settings page would; call it after clearing storage. Against the
+ * backend the branch's own setting stands.
+ */
+export async function allowGuestChanges(page: Page) {
+  if (againstBackend) return;
+  await page.evaluate(async () => {
+    const branches = (await (await fetch('/api/branches.json')).json()) as {
+      id: string;
+      ordering: Record<string, unknown>;
+    }[];
+    const saved = Object.fromEntries(
+      branches.map((b) => [b.id, { ...b, ordering: { ...b.ordering, guestChanges: true } }]),
+    );
+    localStorage.setItem(
+      'olive.mock.branches.v1',
+      JSON.stringify({ saved, added: [], removed: [] }),
+    );
+  });
+}
+
 /** The first visible element with this role and name (mobile and desktop render both). */
 export const visible = (
   page: Page,
@@ -193,8 +216,24 @@ export async function adminSignIn(page: Page, branch = 'Udyog Vihar') {
   await page.getByRole('button', { name: 'Use demo account' }).click();
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/select-branch\/$/);
-  await page.getByRole('button', { name: branch, exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/dashboard\/$/);
+  await chooseBranch(page, branch);
+  // The address changes before the page has drawn: going elsewhere now could cut it off.
+  await expect(
+    page.getByRole('navigation', { name: 'Main' }).filter({ visible: true }),
+  ).toBeVisible();
+}
+
+/**
+ * Picks a branch on the branch picker and waits for its dashboard. On a busy machine the first
+ * tap can land before the page has hydrated (and do nothing): tap again until it goes.
+ */
+export async function chooseBranch(page: Page, branch: string) {
+  await expect(async () => {
+    if (/\/admin\/select-branch\/$/.test(page.url())) {
+      await page.getByRole('button', { name: branch, exact: true }).click({ timeout: 2000 });
+    }
+    await expect(page).toHaveURL(/\/admin\/dashboard\/$/, { timeout: 3000 });
+  }).toPass({ timeout: 20_000 });
 }
 
 /**

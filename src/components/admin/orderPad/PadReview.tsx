@@ -4,24 +4,28 @@ import { useContent } from '@/api/hooks';
 import { Icon, Input, QuantityStepper, Textarea, VegMark } from '@/components/ui';
 import { describeInstructions, describeOptionsShort, type CartLineLabels } from '@/lib/cartLine';
 import type { MenuCatalog } from '@/lib/menu';
-import type { PadLines } from '@/lib/orderPad';
-import { calculateBill } from '@/lib/pricing';
+import type { Bill } from '@/lib/pricing';
+import type { CartLine } from '@/types/cart';
+import type { AppliedOffer } from '@/types/promotion';
 import { BillSummary, billRows } from '../../cart/PriceSummary';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { PadTarget } from './OrderPad';
+import { PadPrice } from './PadMenu';
 import styles from './OrderPad.module.css';
 
 /**
  * The pad before it's sent: who it's for (a new order), each line with its choices and a
  * stepper (down to 0 takes it off), a note for the kitchen and the bill: the item total, service
  * charge, taxes (CGST and SGST, or VAT) and round off, as the guest's cart lists them, and the
- * total.
+ * total. An offer on (happy hour) shows on each line it covers (its price, the menu price struck
+ * through) and on the bill as a discount, as the server will take it off.
  */
 export function PadReview({
   target,
   menu,
   labels,
   lines,
+  bill,
   onQuantity,
   removed,
   onAddMore,
@@ -33,7 +37,9 @@ export function PadReview({
   target: PadTarget;
   menu: MenuCatalog;
   labels: CartLineLabels;
-  lines: PadLines;
+  /** The lines, each with the offer on it now (happy hour), and their bill. */
+  lines: readonly (CartLine & { offer?: AppliedOffer })[];
+  bill: Bill;
   onQuantity: (key: string, quantity: number) => void;
   /** Dishes on the round that can't be ordered now, so they come off. */
   removed: readonly string[];
@@ -47,7 +53,6 @@ export function PadReview({
   const t = useContent('common');
   const cart = useContent('cart');
   const { region, money } = useAdminWorkspace();
-  const bill = calculateBill(lines, region);
 
   return (
     <div className={styles.review}>
@@ -93,7 +98,10 @@ export function PadReview({
                     onChange={(next) => onQuantity(line.key, next)}
                   />
                   <span className={styles.linePrice}>
-                    {money.format(line.unitPrice * line.quantity)}
+                    <PadPrice
+                      price={line.unitPrice * line.quantity - (line.offer?.discount ?? 0)}
+                      was={line.unitPrice * line.quantity}
+                    />
                   </span>
                 </span>
               </li>

@@ -20,18 +20,45 @@ import styles from './CollectExtras.module.css';
  * into a link; saved, one line with Edit and Remove; open, the dialog's dashed card with a
  * Cancel. The server's only (the mock issues no invoices).
  */
-export function BusinessBuyer({ orders }: { orders: Order[] }) {
-  if (!isBackendEnabled() || orders.length === 0 || orders.some((o) => o.invoice)) return null;
-  return <BuyerForm key={orders.map((o) => o.id).join()} orders={orders} />;
+/** Whether a business customer's details can still go on these orders (no invoice yet). */
+export const canAddBuyer = (orders: readonly Order[]) =>
+  isBackendEnabled() && orders.length > 0 && !orders.some((o) => o.invoice);
+
+export function BusinessBuyer({
+  orders,
+  open,
+  onOpenChange,
+}: {
+  orders: Order[];
+  /** The form is open (opened from the bill's options, or Edit). */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!canAddBuyer(orders)) return null;
+  return (
+    <BuyerForm
+      key={orders.map((o) => o.id).join()}
+      orders={orders}
+      open={open}
+      setOpen={onOpenChange}
+    />
+  );
 }
 
-function BuyerForm({ orders }: { orders: Order[] }) {
+function BuyerForm({
+  orders,
+  open,
+  setOpen,
+}: {
+  orders: Order[];
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) {
   const t = useContent('common');
   const { branch, region } = useAdminWorkspace();
   const { showToast } = useToast();
   const save = useOrderBuyer();
   const current = orders[0]?.buyer;
-  const [open, setOpen] = useState(false);
   const [name, setName] = useState(current?.name ?? '');
   const [taxId, setTaxId] = useState(current?.taxId ?? '');
   const [address, setAddress] = useState(current?.address ?? '');
@@ -80,14 +107,7 @@ function BuyerForm({ orders }: { orders: Order[] }) {
   };
 
   if (!open) {
-    if (!current) {
-      return (
-        <button type="button" className={dialog.leaveOpen} onClick={() => setOpen(true)}>
-          <Icon name="receipt" size="xs" />
-          {t('adminPayments.business.add')}
-        </button>
-      );
-    }
+    if (!current) return null;
     return (
       <div className={styles.givenRow}>
         <Icon name="receipt" size="xs" className={styles.givenIcon} />

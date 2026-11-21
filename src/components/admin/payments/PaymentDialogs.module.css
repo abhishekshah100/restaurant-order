@@ -107,6 +107,52 @@
   font: var(--font-small-strong);
 }
 
+/* The bill's items: name (and size), how many, the amount. */
+.billItems {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.billItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 10px;
+  font: var(--font-small);
+}
+
+.billItemName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.billItemVariant {
+  margin-left: 6px;
+  color: var(--ink-3);
+  font: var(--font-meta);
+}
+
+.billItemQty {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.billItemAmount {
+  min-width: 64px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* On a phone only: the bill shows beside the form on a wide screen (CollectScreen). */
+@media (min-width: 860px) {
+  .narrowOnly {
+    display: none;
+  }
+}
+
 /* Cash handed over falls short: say by how much, and offer to leave it. */
 .shortPanel {
   padding: 8px 8px 8px 12px;
@@ -417,10 +463,6 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
-}
-
-.footerSecondary {
-  white-space: nowrap;
 }
 
 .danger {

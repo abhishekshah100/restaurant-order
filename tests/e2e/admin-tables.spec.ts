@@ -130,7 +130,7 @@ test('a waiter takes an order at a free table, then adds to it', async ({ page }
   await expect(details).toContainText('Kitchen note: Not too spicy');
 });
 
-test('paying first, changing the order, adding more and paying the rest', async ({ page }) => {
+test('changing the order, paying first, adding more and paying the rest', async ({ page }) => {
   test.slow();
   // Its own table: the backend keeps the previous test's orders at table 6.
   await adminSignIn(page);
@@ -143,24 +143,23 @@ test('paying first, changing the order, adding more and paying the rest', async 
   await pad.getByRole('button', { name: /^Send to kitchen/ }).click();
   await expect(pad).toHaveCount(0);
 
-  // The guest pays before the food arrives.
+  // A minute later, before the kitchen starts: one kebab fewer.
   const card = page.getByRole('article').filter({ hasText: 'Table 7 guest' });
+  await card.getByRole('button', { name: /^Change items on order/ }).click();
+  await expect(pad).toContainText('Round 1');
+  await pad.getByRole('button', { name: 'Remove one Dahi Kebab' }).click();
+  await pad.getByRole('button', { name: /^Save changes/ }).click();
+  await expect(pad).toHaveCount(0);
+  await expect(card).toContainText('1 × Dahi Kebab');
+
+  // The guest pays before the food arrives; a paid order's items can't be changed any more.
   await card.getByRole('button', { name: /^Collect payment for order/ }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('radio', { name: 'UPI' }).click();
   await dialog.getByRole('button', { name: /^Collect ₹/ }).click();
   await expect(card).toContainText('paid');
   await expect(page.getByRole('button', { name: /^Collect ₹/ })).toHaveCount(0);
-
-  // Ten minutes later: one kebab fewer.
-  await card.getByRole('button', { name: /^Change items on order/ }).click();
-  await expect(pad).toContainText('Round 1');
-  await pad.getByRole('button', { name: 'Remove one Dahi Kebab' }).click();
-  await pad.getByRole('button', { name: /^Save changes/ }).click();
-  await expect(
-    page.getByRole('status').filter({ hasText: /to give back to the guest/ }),
-  ).toBeVisible();
-  await expect(card).toContainText('1 × Dahi Kebab');
+  await expect(card.getByRole('button', { name: /^Change items on order/ })).toHaveCount(0);
 
   // Then more for the same guest: paid in full, so it's a new order (a new bill) in their name,
   // the only thing still to pay, collected for the whole table.

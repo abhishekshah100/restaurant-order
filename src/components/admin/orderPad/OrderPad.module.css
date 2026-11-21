@@ -293,3 +293,9 @@
 .total strong {
   font: var(--font-price);
 }
+
+/* The offer banner's "See Beverages": a text button, like the guest menu's link. */
+.offerShow {
+  border: 0;
+  background: none;
+}

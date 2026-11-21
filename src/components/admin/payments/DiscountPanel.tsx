@@ -42,10 +42,23 @@ const QUICK_PERCENTS = [5, 10, 15, 20] as const;
  * usual percentages), and why. The server holds staff to their limit and prices the bill again
  * (the server's only: the mock has none).
  */
-export function DiscountPanel({ orders }: { orders: Order[] }) {
+/** Whether staff can give a discount here (their role, and the server: the mock has none). */
+export const canGiveDiscount = (orders: readonly Order[], can: (p: 'discounts.give') => boolean) =>
+  isBackendEnabled() && orders.length > 0 && can('discounts.give');
+
+export function DiscountPanel({
+  orders,
+  open,
+  onOpenChange,
+}: {
+  orders: Order[];
+  /** The form is open (opened from the bill's options). */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const { can } = useAdminWorkspace();
   const [chosen, setChosen] = useState<string | null>(null);
-  if (!isBackendEnabled() || orders.length === 0 || !can('discounts.give')) return null;
+  if (!canGiveDiscount(orders, can)) return null;
   // A table's bill: one order at a time (a discount belongs to an order's bill).
   const order = orders.find((o) => o.id === chosen) ?? orders[0];
   return (
@@ -54,6 +67,8 @@ export function DiscountPanel({ orders }: { orders: Order[] }) {
       order={order}
       orders={orders}
       onPick={orders.length > 1 ? setChosen : undefined}
+      open={open}
+      setOpen={onOpenChange}
     />
   );
 }
@@ -62,11 +77,15 @@ function Panel({
   order,
   orders,
   onPick,
+  open,
+  setOpen,
 }: {
   order: Order;
   orders: Order[];
   /** Several orders at the table: which one the discount is for. */
   onPick?: (id: string) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }) {
   const t = useContent('common');
   const cart = useContent('cart');
@@ -75,7 +94,6 @@ function Panel({
   const { showToast } = useToast();
   const give = useGiveDiscount();
   const remove = useRemoveDiscount();
-  const [open, setOpen] = useState(false);
   const [onItem, setOnItem] = useState(false);
   const [itemKey, setItemKey] = useState('');
   const [kind, setKind] = useState<'percent' | 'amount'>('percent');
@@ -189,12 +207,7 @@ function Panel({
         </ul>
       )}
 
-      {!open ? (
-        <button type="button" className={dialog.leaveOpen} onClick={() => setOpen(true)}>
-          <Icon name="tag" size="xs" />
-          {t('adminPayments.discount.give')}
-        </button>
-      ) : (
+      {open && (
         <section className={dialog.leaveCard} aria-labelledby="discount-title">
           <div className={dialog.leaveHead}>
             <h3 id="discount-title" className={dialog.leaveTitle}>

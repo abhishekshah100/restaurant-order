@@ -67,7 +67,13 @@ export function AdminLogin() {
   useEffect(() => {
     if (!signedInNow || choosingPassword || !branches.data) return;
     const landing = adminLanding(branches.data);
-    if (landing.select) selectAdminBranch(landing.select);
+    if (landing.select) {
+      // Straight into the dashboard: a full page load, as from the branch picker (in-app, its
+      // sidebar links mounting while the change is pending could freeze the tab).
+      selectAdminBranch(landing.select);
+      window.location.replace(landing.to);
+      return;
+    }
     router.replace(landing.to);
   }, [branches.data, signedInNow, choosingPassword, router]);
 

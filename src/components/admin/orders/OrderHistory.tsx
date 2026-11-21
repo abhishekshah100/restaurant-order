@@ -62,7 +62,7 @@ const PRESETS = [
 export function OrderHistory() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, clock } = useAdminWorkspace();
+  const { branch, clock, filePrefix } = useAdminWorkspace();
   const token = useAdminToken();
   const { showToast } = useToast();
   const text = usePaymentText();
@@ -186,7 +186,7 @@ export function OrderHistory() {
       downloadXlsx(
         workbook,
         t('adminOrders.history.exportFile', {
-          branch: branch.id,
+          branch: filePrefix,
           date: days.from === days.to ? days.from : `${days.from}_${days.to}`,
         }),
       );

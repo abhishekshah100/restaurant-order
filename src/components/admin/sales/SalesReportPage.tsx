@@ -62,7 +62,7 @@ const DEFAULT_DAYS = 7;
 export function SalesReportPage() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, clock, brand } = useAdminWorkspace();
+  const { branch, clock, brand, filePrefix } = useAdminWorkspace();
   const { amount } = usePaymentText();
   const exportReport = useSalesExport();
   const pdf = useSalesPdf();
@@ -270,7 +270,7 @@ export function SalesReportPage() {
                     flushSync(() => setPdfSheet(true));
                     return pdfRef.current;
                   },
-                  t('adminSales.pdf.file', { branch: branch.id, from: range.from, to: range.to }),
+                  t('adminSales.pdf.file', { branch: filePrefix, from: range.from, to: range.to }),
                 )
                 .finally(() => setPdfSheet(false))
             }

@@ -48,7 +48,7 @@ export const INVOICES_PATH = '/admin/dashboard/payments/invoices/';
  */
 export function InvoiceList() {
   const t = useContent('common');
-  const { branch, clock, money, can } = useAdminWorkspace();
+  const { branch, clock, money, can, filePrefix } = useAdminWorkspace();
   const token = useAdminToken();
   const { showToast } = useToast();
   const router = useRouter();
@@ -91,8 +91,8 @@ export function InvoiceList() {
       downloadFile(
         new Blob([blob], { type: 'text/csv' }),
         fiscalYear
-          ? `sales-register-${branch.id}-FY${fiscalYear}.csv`
-          : `sales-register-${branch.id}-${range.from}-${range.to}.csv`,
+          ? `${filePrefix} - Sales register FY${fiscalYear}.csv`
+          : `${filePrefix} - Sales register ${range.from} to ${range.to}.csv`,
       );
     } catch {
       showToast(t('adminPayments.history.registerFailed'), { tone: 'error' });
