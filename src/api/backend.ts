@@ -248,6 +248,13 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['POST', 'admin/branches/:branchId/reservations'],
   ['PATCH', 'admin/branches/:branchId/reservations/:id'],
   ['PATCH', 'admin/branches/:branchId/reservations/:id/status'],
+  // The developer setup page (only where the backend has DEV_SETUP_KEY).
+  ['POST', 'dev/setup/check'],
+  ['POST', 'dev/setup/import'],
+  ['GET', 'dev/setup/templates'],
+  ['GET', 'dev/setup/restaurants'],
+  ['POST', 'dev/setup/restaurants/:id/reset'],
+  ['DELETE', 'dev/setup/restaurants/:id'],
 ];
 
 /** Whether the backend is configured (NEXT_PUBLIC_BACKEND_URL). */

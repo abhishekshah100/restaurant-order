@@ -1,5 +1,6 @@
 import type { Reservation } from '@/types/admin';
 import type { Price } from '@/types/menu';
+import type { SetupIssue } from './dev-setup';
 
 /*
  * The backend contract: every write and every server-owned read, with its request and
@@ -16,6 +17,8 @@ import type { Price } from '@/types/menu';
 export type ApiErrorCode =
   /** 400: the body is malformed. */
   | 'invalid_request'
+  /** 409: the request conflicts with the current state (`reason` says how). */
+  | 'conflict'
   /** 409: another waiter covers the table (table sections: taking one for oneself). */
   | 'table_taken'
   /** 404: no such order, payment, session or request. */
@@ -175,6 +178,12 @@ export type ApiErrorCode =
 /** Body of every non-2xx response. */
 export interface ApiErrorBody {
   error: ApiErrorCode;
+  /** conflict: why (`restaurant_exists`: the developer setup made it before). */
+  reason?: string;
+  /** invalid_request from the developer setup: where its JSON is wrong. */
+  issues?: SetupIssue[];
+  /** invalid_request from the developer setup: what will look odd. */
+  warnings?: string[];
   /** otp_wrong_code / otp_locked: tries left on the current code. */
   attemptsLeft?: number;
   /** otp_resend_too_soon: epoch ms when a new code can be sent. */

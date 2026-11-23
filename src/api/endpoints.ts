@@ -18,6 +18,7 @@ import { staffOrdersApi } from './endpoints/staff-orders';
 import { auditApi } from './endpoints/audit';
 import { guestsApi } from './endpoints/guests';
 import { reportsApi } from './endpoints/reports';
+import { devSetupApi } from './endpoints/dev-setup';
 
 /** Every request the app makes, by area (./endpoints): `api.placeOrder(…)`. */
 export const api = {
@@ -35,4 +36,5 @@ export const api = {
   ...auditApi,
   ...guestsApi,
   ...reportsApi,
+  ...devSetupApi,
 };

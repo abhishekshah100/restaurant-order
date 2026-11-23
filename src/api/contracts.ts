@@ -28,4 +28,5 @@ export * from './contracts/inventory';
 export * from './contracts/reservation-rules';
 export * from './contracts/audit-log';
 export * from './contracts/invoices';
+export * from './contracts/dev-setup';
 export * from './contracts/reports';

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { fitsBranches, parseScan, refusedScan, resolveBranch, resolveScan } from '@/lib/scan';
+import {
+  fitsBranches,
+  namesUnknownBranch,
+  parseScan,
+  refusedScan,
+  resolveBranch,
+  resolveScan,
+} from '@/lib/scan';
 import { isLiveSession } from '@/lib/session';
 import type { GuestSession } from '@/types/session';
 import { testBranches, testRestaurant } from '../apiState';
@@ -114,6 +121,21 @@ describe('resolveScan', () => {
     expect(resolve(null, '?branch=ktm-thamel&mode=takeaway')).toEqual({
       start: { branchId: 'ktm-thamel', mode: 'takeaway' },
     });
+  });
+});
+
+describe('namesUnknownBranch', () => {
+  const known = branches[0]!.id;
+
+  it("is true for a link or saved visit at a branch the list doesn't have yet", () => {
+    expect(namesUnknownBranch('?branch=kathmandu&table=1&qr=v1.x', null, branches)).toBe(true);
+    expect(namesUnknownBranch('', 'kathmandu', branches)).toBe(true);
+  });
+
+  it('is false for known branches, or a link naming none', () => {
+    expect(namesUnknownBranch(`?branch=${known}&table=1`, known, branches)).toBe(false);
+    expect(namesUnknownBranch('?mode=takeaway', null, branches)).toBe(false);
+    expect(namesUnknownBranch('', null, branches)).toBe(false);
   });
 });
 

@@ -65,6 +65,21 @@ export function parseScan(
   };
 }
 
+/**
+ * Whether the link, or the visit saved on the device, is at a branch these branches don't have:
+ * one opened since the page was built is missing from the list built into it until the server's
+ * list is read (deciding earlier would send the guest to the default branch).
+ */
+export function namesUnknownBranch(
+  search: string,
+  savedBranchId: string | null,
+  branches: readonly BranchSummary[],
+): boolean {
+  const known = (id: string) => branches.some((b) => b.id === id);
+  const named = new URLSearchParams(search).get('branch');
+  return (!!named && !known(named)) || (savedBranchId !== null && !known(savedBranchId));
+}
+
 /** Whether a saved session still fits the branches: its branch is still there. */
 export function fitsBranches(session: GuestSession, branches: readonly BranchSummary[]): boolean {
   return branches.some((b) => b.id === session.branchId);

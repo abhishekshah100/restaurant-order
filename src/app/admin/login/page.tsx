@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getContent } from '@/api/server';
 import { AdminLogin } from '@/components/admin/AdminLogin';
+import { LoginBranch } from '@/components/admin/LoginBranch';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getContent('common');
@@ -11,5 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function AdminLoginPage() {
-  return <AdminLogin />;
+  return (
+    <LoginBranch>
+      <AdminLogin />
+    </LoginBranch>
+  );
 }

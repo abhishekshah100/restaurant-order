@@ -39,6 +39,8 @@ import {
   BRANCH_SERVICE_REFRESH_MS,
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
+  devSetupRestaurantsQuery,
+  devSetupTemplatesQuery,
   adminOffersQuery,
   adminSearchSuggestionsQuery,
   adminCartSuggestionsQuery,
@@ -129,6 +131,15 @@ export function useRestaurant(): Restaurant {
 /** Every branch, in brief (GET /branches). */
 export function useBranches(): BranchSummary[] {
   return useSuspenseQuery(branchesQuery()).data;
+}
+
+/**
+ * Every branch, and whether the list has been read from the server (or tried): until then it's
+ * the one built into the page, without the branches opened since.
+ */
+export function useBranchList(): { branches: BranchSummary[]; live: boolean } {
+  const { data, dataUpdatedAt, errorUpdatedAt } = useSuspenseQuery(branchesQuery());
+  return { branches: data, live: dataUpdatedAt > 0 || errorUpdatedAt > 0 };
 }
 
 /**
@@ -808,4 +819,14 @@ export function useDemoAdminAccount(): AdminSignInRequest | null {
     };
   }, []);
   return account;
+}
+
+/** The restaurants the developer setup page made (GET /dev/setup/restaurants, with its key). */
+export function useSetupRestaurants(key: string | null) {
+  return useQuery(devSetupRestaurantsQuery(key));
+}
+
+/** The sample JSON and the prompt for Claude the developer setup page downloads. */
+export function useSetupTemplates(key: string | null) {
+  return useQuery(devSetupTemplatesQuery(key));
 }

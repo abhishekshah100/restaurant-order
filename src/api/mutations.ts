@@ -19,3 +19,4 @@ export * from './mutations/cash-register';
 export * from './mutations/purchasing';
 export * from './mutations/inventory';
 export * from './mutations/settings';
+export * from './mutations/dev-setup';

@@ -13,7 +13,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { ActiveBranchContext } from '@/api/activeBranch';
 import type { UpdateSessionRequest } from '@/api/contracts';
-import { useBranchDataLoaded, useBranches, useRestaurant } from '@/api/hooks';
+import { useBranchDataLoaded, useBranchList, useRestaurant } from '@/api/hooks';
 import { useStartSession, useUpdateSession } from '@/api/mutations';
 import { isOrderMode } from '@/lib/fulfilment';
 import { isBackendEnabled } from '@/api/backend';
@@ -21,6 +21,7 @@ import { ApiError, isApiError } from '@/api/client';
 import { api } from '@/api/endpoints';
 import {
   fitsBranches,
+  namesUnknownBranch,
   parseScan,
   refusedScan,
   resolveBranch,
@@ -178,7 +179,7 @@ interface GuestSessionValue {
 const GuestSessionContext = createContext<GuestSessionValue | null>(null);
 
 export function GuestSessionProvider({ children }: { children: ReactNode }) {
-  const branches = useBranches();
+  const { branches, live } = useBranchList();
   const { defaultBranchId } = useRestaurant();
   const { mutateAsync: startSession } = useStartSession();
   const { mutateAsync: patchSession } = useUpdateSession();
@@ -260,6 +261,10 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => onGuestSessionEnded(recheck), [recheck]);
 
   useEffect(() => {
+    // A branch opened since this page was built: the visit waits for the server's list.
+    const stored = readJSON(STORAGE_KEYS.session, isSavedSession);
+    const storedBranch = stored ? fromSaved(stored, defaultBranchId).branchId : null;
+    if (!live && namesUnknownBranch(window.location.search, storedBranch, branches)) return;
     const saved = liveSavedSession(Date.now(), branches, defaultBranchId);
     const outcome = loadOutcome(window.location.search, saved, branches, defaultBranchId);
     if ('start' in outcome) {
@@ -283,7 +288,7 @@ export function GuestSessionProvider({ children }: { children: ReactNode }) {
     const kept =
       'change' in outcome ? outcome.change.session : 'keep' in outcome ? outcome.keep : null;
     if (kept) recheck();
-  }, [branches, defaultBranchId, open, recheck, update]);
+  }, [branches, live, defaultBranchId, open, recheck, update]);
 
   // Another tab opened or changed a session: this device now has that guest session.
   useEffect(() => {

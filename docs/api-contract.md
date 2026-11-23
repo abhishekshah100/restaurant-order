@@ -41,6 +41,7 @@ answers differently from the mock (orders as data, its `{ success, data }` envel
 - [Purchasing](#purchasing)
 - [Shifts and rota](#shifts-and-rota)
 - [More menu, reservation and guest endpoints](#more-menu-reservation-and-guest-endpoints)
+- [Developer setup](#developer-setup)
 - [Related](#related)
 
 ## Endpoint index
@@ -1657,6 +1658,42 @@ Backend only.
 - `409 deposit_exists`: a booking has one deposit at most. A cash deposit goes into the open
   drawer (`409 register_closed` otherwise).
 - `GET /sessions/:id` is `404 session_not_found` once the session has ended.
+
+## Developer setup
+
+The hidden `/dev-setup/` page (linked from nowhere): a client's restaurant, branch, tables, staff
+and menu loaded from one JSON before a demo (restaurant-backend › ADR-047). Backend only, and only
+where it has `DEV_SETUP_KEY`. Every request sends the key as `X-Dev-Key`, never a staff token: a
+super admin without it gets `401 unauthorized` (`429 rate_limited` after 10 wrong keys in 10
+minutes). Types: `src/api/contracts/dev-setup.ts`.
+
+| Method | Path                               | What                                                                     |
+| ------ | ---------------------------------- | ------------------------------------------------------------------------ |
+| POST   | `/dev/setup/check`                 | `{ data }` checked, nothing written (`SetupCheckResponse`)               |
+| POST   | `/dev/setup/import`                | `{ data, replace }` (`SetupImportRequest`) → `201 SetupImportResponse`   |
+| GET    | `/dev/setup/templates`             | `{ sample, prompt }` (`SetupTemplates`): the downloads                   |
+| GET    | `/dev/setup/restaurants`           | The restaurants made there (`SetupRestaurant[]`)                         |
+| POST   | `/dev/setup/restaurants/:id/reset` | `204`: the rehearsal's orders, payments, bookings, cash and shifts gone  |
+| DELETE | `/dev/setup/restaurants/:id`       | `204`: the restaurant and everything it has, its staff accounts included |
+
+- `data` is the client's JSON as pasted (its shape: restaurant-backend ›
+  `src/modules/dev-setup/dev-setup.schema.ts`; Nepal unless `branch.country` is `IN`).
+- `400 invalid_request` from import carries `issues` (`{ path, message }`, e.g.
+  `menu.dishes[4].categoryId`) and `warnings`; check answers them in its body instead.
+- `409 conflict` with `reason: "restaurant_exists"`: made there before under that name and
+  `replace` wasn't set. With `replace`, it's deleted and made again; its branch keeps its id, so
+  its printed QR codes still work.
+- Import answers each table's `qrToken` (the guest link is `/?branch=<id>&table=<n>&qr=<token>`)
+  and every staff member's password, shown once.
+- Reset and delete answer `404` for any restaurant the page didn't make.
+- The page's staff link is `/admin/login/?branch=<id>`: the sign-in shows that branch's name
+  (not the default branch's) before anyone signs in.
+- `branch.taxId` (Nepal's PAN/VAT number, India's GSTIN) and `branch.legalName` are optional and
+  checked as Settings › Tax checks them; they're printed on bills and tax invoices.
+- The page's "Start here" downloads `claude-menu-prompt.txt` (paste it into Claude with the menu
+  photos and the restaurant's details) and `client-setup-sample.json`, or pastes the sample into
+  the box. Both come from the backend (`dev-setup.templates.ts`), whose tests import the sample
+  as it is, so they always match the format.
 
 ## Related
 

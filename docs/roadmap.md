@@ -123,6 +123,16 @@ Delivery history, by phase:
   register button; all branches compared, each in its own currency; Excel (several sheets),
   one-click PDF and print.
 
+- **Developer setup D1–D3 (2026-11-23):** the hidden `/dev-setup/` page loads a client's
+  restaurant, branch, tables, staff and menu from one JSON (Claude writes it from menu photos) for
+  demos on their own data: developer key (never a role), paste, Check, Import in one go, "Delete
+  this restaurant's old data first", the guest and staff links and sign-ins it made, and the
+  restaurants made there with Reset activity and Delete; "Start here" downloads the prompt for
+  Claude and a sample JSON; the tax number and legal name come with the JSON; the staff link
+  signs in under the client's name. ADR-047 in the backend.
+- **New branches' QR links (2026-11-23):** a link or saved visit at a branch opened since the
+  site was built waits for the live branch list, instead of trying the default branch first.
+
 ## Next up
 
 The Sales report is done. In order, still to come:

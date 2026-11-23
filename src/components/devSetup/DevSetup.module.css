@@ -1,0 +1,285 @@
+/*
+ * The developer setup page: one column of plain panels (a working tool, not a guest screen),
+ * up to 880px wide; 16px side gutters on phones.
+ */
+
+.page {
+  min-height: 100svh;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  font: 500 26px/32px var(--f-display);
+}
+
+.subtitle,
+.muted {
+  font: var(--font-small);
+  color: var(--ink-3);
+}
+
+.keyForm,
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--surface);
+}
+
+.keyForm {
+  max-width: 480px;
+}
+
+.sectionTitle {
+  font: var(--font-h2);
+}
+
+.templates {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--r-card);
+  background: var(--brand-tint-2);
+}
+
+.templates .subTitle {
+  margin-top: 0;
+}
+
+.subTitle {
+  font: var(--font-body);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.json textarea {
+  min-height: 320px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex: none;
+  accent-color: var(--brand-600);
+}
+
+.check > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.checkLabel {
+  font: var(--font-body);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.issues,
+.warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 20px;
+  font: var(--font-small);
+  list-style: disc;
+}
+
+.issues {
+  color: var(--error);
+}
+
+.issues code,
+.copyable code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  font: var(--font-small);
+}
+
+.summary dt {
+  color: var(--ink-3);
+}
+
+.summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.summary a {
+  color: var(--brand-600);
+}
+
+.details summary {
+  cursor: pointer;
+  font: var(--font-small);
+  font-weight: 600;
+}
+
+.tableLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.tableLinks li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableNumber {
+  min-width: 2ch;
+  font-weight: 600;
+  text-align: right;
+}
+
+.copyable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--font-small);
+}
+
+.table th,
+.table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.cardName {
+  font: var(--font-body);
+  font-weight: 600;
+}
+
+.cardActions,
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dialogActions {
+  justify-content: flex-end;
+}
+
+.dialogBody {
+  font: var(--font-body);
+  margin-bottom: 12px;
+}
+
+/* Sign-ins keep their columns (the table scrolls sideways on a phone); passwords never wrap. */
+.table {
+  min-width: 600px;
+}
+
+.table code {
+  white-space: nowrap;
+}
+
+@media (max-width: 559px) {
+  .summary {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .summary dd {
+    margin-bottom: 8px;
+  }
+}

@@ -285,6 +285,23 @@ const adminBranchList = (data: AdminBranchesResponse) => data.branches;
  * GET /admin/branches: the branches the signed-in admin manages, keyed by their session token
  * (another sign-in reads them afresh); idle while signed out.
  */
+/** GET /dev/setup/restaurants: the restaurants the developer setup page made (with its key). */
+export const devSetupRestaurantsQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['dev-setup', 'restaurants', key] as const,
+    queryFn: key ? () => api.setupRestaurants(key) : skipToken,
+    retry: false,
+  });
+
+/** GET /dev/setup/templates: the sample JSON and the prompt for Claude (they change with deploys). */
+export const devSetupTemplatesQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['dev-setup', 'templates', key] as const,
+    queryFn: key ? () => api.setupTemplates(key) : skipToken,
+    staleTime: Infinity,
+    retry: false,
+  });
+
 export const adminBranchesQuery = (token: string | null) =>
   queryOptions({
     queryKey: ['admin', 'branches', token] as const,

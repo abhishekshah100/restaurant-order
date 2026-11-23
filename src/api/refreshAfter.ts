@@ -54,6 +54,8 @@ export const READS = {
   staff: under('admin', 'staff'),
   roles: under('admin', 'roles'),
   adminBranches: under('admin', 'branches'),
+  /** The developer setup page's list of the restaurants made there. */
+  devSetup: under('dev-setup'),
   /** Everything staff read. */
   allAdmin: under('admin'),
   menu: ofBranch(['branches'], ['menu']),
@@ -154,6 +156,8 @@ export const AFTER = {
   branchStatusChanged: ['adminBranches', 'branchList', 'branchStatus'],
   /** Settings saved, a branch added or removed. */
   branchSetupChanged: ['allAdmin', 'branchList', 'branchConfigs'],
+  /** A restaurant made, reset or deleted on the developer setup page. */
+  devSetupChanged: ['devSetup', 'allAdmin', 'branchList', 'branchConfigs'],
 
   /* Live events from other devices (api/liveEvents) */
   /** Orders or payments changed on another device. */

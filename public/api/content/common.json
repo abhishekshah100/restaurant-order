@@ -6552,5 +6552,108 @@
         "close": "Got it"
       }
     }
+  },
+  "devSetup": {
+    "meta": {
+      "title": "Client setup"
+    },
+    "title": "Client setup",
+    "subtitle": "Load a client's restaurant, menu and staff from one JSON before a demo. Developer only.",
+    "noBackend": "This page needs the real backend: set NEXT_PUBLIC_BACKEND_URL and rebuild.",
+    "key": {
+      "label": "Developer key",
+      "hint": "The DEV_SETUP_KEY set on the server. Kept in this tab only.",
+      "unlock": "Unlock",
+      "lock": "Lock",
+      "wrong": "That key isn't right, or the server has no DEV_SETUP_KEY.",
+      "tooMany": "Too many wrong keys. Wait 10 minutes and try again.",
+      "failed": "The server didn't answer. Check the backend is running."
+    },
+    "json": {
+      "label": "Client JSON",
+      "hint": "Paste the JSON Claude wrote from the menu photos. Nepal unless branch.country says IN.",
+      "invalid": "This isn't valid JSON: {message}",
+      "replace": "Delete this restaurant's old data first",
+      "replaceHint": "Only a restaurant made on this page under the same name: it and everything it has (orders, staff accounts) are deleted, then made again. Its table QR codes keep working.",
+      "confirmLabel": "Type the restaurant's name to confirm",
+      "confirmHint": "{name}",
+      "check": "Check",
+      "import": "Import",
+      "importing": "Importing…",
+      "checkFirst": "Check the JSON first; Import is on once it passes.",
+      "changed": "The JSON changed since it was checked: check it again."
+    },
+    "check": {
+      "valid": "Ready to import.",
+      "invalid": "Fix these, then check again:",
+      "warnings": "Worth a look before the demo:",
+      "existing": "{name} was made here on {date}. Tick “Delete this restaurant's old data first” to replace it.",
+      "summary": {
+        "restaurant": "Restaurant",
+        "branch": "Branch",
+        "region": "Region",
+        "tables": "Tables",
+        "staff": "Staff",
+        "menu": "Menu"
+      },
+      "tables": {
+        "one": "{tables} tables on 1 floor",
+        "other": "{tables} tables on {count} floors"
+      },
+      "menu": "{dishes} dishes in {categories} categories"
+    },
+    "import": {
+      "done": "{name} is ready.",
+      "replaced": "{name} was replaced.",
+      "failed": "The import failed: nothing was saved. Try again.",
+      "exists": "This restaurant was made here before. Tick “Delete this restaurant's old data first” to replace it.",
+      "links": "Links",
+      "guestLink": "Guest menu at table 1",
+      "staffLink": "Staff sign-in",
+      "allTables": "Every table's link",
+      "staff": "Staff sign-ins (passwords are shown only now)",
+      "columns": {
+        "name": "Name",
+        "role": "Role",
+        "signIn": "Mobile / email",
+        "password": "Password"
+      },
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "roles": {
+      "admin": "Owner",
+      "manager": "Manager",
+      "waiter": "Waiter",
+      "kitchen": "Kitchen"
+    },
+    "list": {
+      "title": "Made on this page",
+      "empty": "No restaurants yet.",
+      "created": "Made {date}",
+      "counts": "{dishes} dishes · {orders} orders · {tables} tables",
+      "reset": "Reset activity",
+      "delete": "Delete",
+      "resetTitle": "Reset {name}?",
+      "resetBody": "Orders, payments, invoices, bookings, requests, cash and shifts are deleted; order numbers start again and sold-out dishes come back on. The menu, tables, staff and stock stay.",
+      "resetConfirm": "Reset activity",
+      "deleteTitle": "Delete {name}?",
+      "deleteBody": "The restaurant and everything it has are deleted for good, its staff accounts included.",
+      "deleteConfirm": "Delete for good",
+      "cancel": "Cancel",
+      "resetDone": "{name}: activity reset.",
+      "deleteDone": "{name} deleted.",
+      "failed": "That didn't work. Try again."
+    },
+    "templates": {
+      "title": "Start here",
+      "steps": "1. Download the prompt and paste it into Claude with the menu photos and the restaurant's details. 2. Paste Claude's JSON below. 3. Check, then Import.",
+      "prompt": "Download prompt for Claude",
+      "sample": "Download sample JSON",
+      "useSample": "Paste the sample",
+      "failed": "The downloads couldn't be loaded. Reload the page to try again.",
+      "promptFile": "claude-menu-prompt.txt",
+      "sampleFile": "client-setup-sample.json"
+    }
   }
 }
