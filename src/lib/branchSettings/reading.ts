@@ -110,6 +110,11 @@ function helpOf(branch: Branch): HelpSettings {
 export function settingsOf(branch: Branch): BranchSettings {
   return {
     details: detailsOf(branch),
+    // Deleted after 90 days unless the owner keeps them (as every restaurant starts).
+    photos: {
+      deleteProofsAfterDays:
+        branch.deleteProofsAfterDays === undefined ? 90 : branch.deleteProofsAfterDays,
+    },
     help: helpOf(branch),
     services: servicesOf(branch),
     hours: structuredClone(branch.schedule),

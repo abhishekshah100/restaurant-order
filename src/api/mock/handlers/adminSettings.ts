@@ -281,6 +281,7 @@ export const updateBranchSettings: Handler = async (ctx, { params, body, headers
     'payments',
     'delivery',
     'pickup',
+    'photos',
   ]);
   if (keys.length === 0 || keys.some((k) => !known.has(k))) bad();
 
@@ -325,6 +326,14 @@ export const updateBranchSettings: Handler = async (ctx, { params, body, headers
     const pickup = pickupBody(raw.pickup);
     if (pickupErrors(pickup).length > 0) bad();
     apply({ pickup });
+  }
+  if (raw.photos !== undefined) {
+    // 30 days to 10 years, or kept (null), as the server takes it.
+    const days = objectBody(raw.photos).deleteProofsAfterDays;
+    const ok =
+      days === null || (Number.isInteger(days) && Number(days) >= 30 && Number(days) <= 3650);
+    if (!ok) bad();
+    apply({ photos: { deleteProofsAfterDays: days as number | null } });
   }
   if (raw.services !== undefined) {
     apply({ services: servicesBody(raw.services) });

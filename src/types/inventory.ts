@@ -142,6 +142,8 @@ export interface StockMovement {
   value?: number;
   /** Items that track expiry: the batches it took from or put into. */
   batches?: { quantity: number; expiresOn?: string; lot?: string }[];
+  /** Wastage: its entry's photos (keys; "deleted after 90 days" once gone). */
+  proofs?: string[];
 }
 
 export interface StockItemResponse {

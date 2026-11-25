@@ -148,8 +148,18 @@ export interface HelpSettings {
   faqs: HelpFaq[];
 }
 
+/**
+ * Settings › Proof photos: payment, deposit and supplier-invoice photos deleted for good this many
+ * days after they were taken (the app offers 90), or kept (null). The restaurant's, shared by its
+ * branches; only the owner (`branches.manage`) changes it.
+ */
+export interface PhotoSettings {
+  deleteProofsAfterDays: number | null;
+}
+
 export interface BranchSettings {
   details: BranchDetails;
+  photos: PhotoSettings;
   help: HelpSettings;
   services: ServicesSettings;
   hours: OpeningSchedule;

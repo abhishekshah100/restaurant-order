@@ -454,6 +454,10 @@
       "km": "{count} km",
       "oldPhoto": "Old photo",
       "newPhoto": "New photo"
+    },
+    "proofsDeleted": {
+      "one": "Deleted {count} proof photo older than {days} days (Settings › Proof photos)",
+      "other": "Deleted {count} proof photos older than {days} days (Settings › Proof photos)"
     }
   },
   "adminInvoices": {
@@ -566,7 +570,8 @@
       "rota": "Rota · Shifts & attendance · Admin",
       "attendance": "Attendance · Shifts & attendance · Admin",
       "teamRequests": "Requests · Shifts & attendance · Admin",
-      "sales": "Sales · Admin"
+      "sales": "Sales · Admin",
+      "photos": "Proof photos"
     },
     "loading": "Loading your workspace",
     "noAccess": {
@@ -2851,7 +2856,8 @@
       "save": {
         "one": "Record wastage ({count} item)",
         "other": "Record wastage ({count} items)"
-      }
+      },
+      "photos": "Photos of what's thrown away (optional)"
     },
     "week": {
       "title": "Your week (last 7 days)",
@@ -3472,11 +3478,10 @@
         "none": "None"
       },
       "picture": "Picture",
-      "pictureHint": "JPEG, PNG or WebP. It's resized to fit.",
+      "pictureHint": "JPEG, PNG or WebP, up to 5 MB. It's resized and compressed to fit.",
       "upload": "Add picture",
       "replace": "Replace",
       "removePicture": "Remove picture",
-      "uploadFailed": "Couldn't use that picture. Try another one.",
       "pictureAlt": "Picture of {dish}",
       "onlyWith": "Offered with",
       "allSizes": "All sizes",
@@ -4378,9 +4383,10 @@
       "remove": "Remove photo {n}",
       "uploading": "Uploading",
       "failed": "Couldn't upload",
-      "failedHint": "A photo couldn't be uploaded. Remove it, then add it again.",
+      "failedHint": "Remove it, then add another.",
       "view": "View proof photos ({count})",
-      "loadFailed": "Couldn't load this photo."
+      "loadFailed": "Couldn't load this photo.",
+      "removed": "Photo deleted after 90 days (proof photos aren't kept longer)."
     },
     "refund": {
       "title": "Refund order #{order}",
@@ -4578,7 +4584,8 @@
       "staff": "Staff",
       "roles": "Roles & permissions",
       "branches": "Branches",
-      "modules": "Modules"
+      "modules": "Modules",
+      "photos": "Proof photos"
     },
     "sections": {
       "details": {
@@ -4668,6 +4675,10 @@
       "shifts": {
         "title": "Time sheet",
         "description": "When each person shifted in and out, and what they did on their shift."
+      },
+      "photos": {
+        "title": "Proof photos",
+        "description": "How long payment, deposit and supplier-invoice photos are kept. The owner decides, for every branch."
       }
     },
     "open": "Manage",
@@ -4961,7 +4972,6 @@
       "photoRemove": "Remove",
       "photoFileHint": "JPEG, PNG or WebP. A square photo looks best; it's resized before uploading.",
       "photoAlt": "Photo of {name}",
-      "photoFailed": "We couldn't upload that image. Try another one.",
       "phone": "Phone",
       "phoneHint": "With the country code: {dialCode}…",
       "guests": "For guests at the table",
@@ -5895,6 +5905,24 @@
         "intro": "Your shifts at {branch} for {from} – {to}:",
         "outro": "Ask your manager if anything needs to change. Thank you!"
       }
+    },
+    "photos": {
+      "loading": "Loading the proof photo setting…",
+      "subtitle": "Photos staff take as proof (a UPI screen, a card slip, a deposit, a supplier's invoice). Bills, invoices and payment records are always kept; only the photos are deleted.",
+      "card": "Keeping proof photos",
+      "cardHint": "The same for every branch of the restaurant.",
+      "label": "Delete proof photos after 90 days",
+      "on": "On: each photo is deleted for good 90 days after the payment, deposit or delivery it's for.",
+      "off": "Off: photos are kept until you turn this on.",
+      "note": "Deleted photos can't be brought back. Photos never attached to a payment are deleted after 7 days either way.",
+      "turnedOn": "Proof photos will be deleted after 90 days.",
+      "turnedOff": "Proof photos will be kept.",
+      "failed": "Couldn't change the setting. Try again.",
+      "ownerOnly": "Only the owner can change this.",
+      "confirmTitle": "Delete proof photos after 90 days?",
+      "confirmBody": "Photos already older than 90 days are deleted for good in the next hour, and newer ones as they reach 90 days. They can't be brought back.",
+      "confirm": "Turn on",
+      "cancel": "Cancel"
     }
   },
   "masters": {
@@ -6655,5 +6683,14 @@
       "promptFile": "claude-menu-prompt.txt",
       "sampleFile": "client-setup-sample.json"
     }
+  },
+  "imageUpload": {
+    "type": "That isn't a photo we can use. Choose a JPEG, PNG or WebP picture.",
+    "heic": "This iPhone photo (HEIC) can't be opened in this browser. Choose a JPEG or PNG, or set the iPhone's Camera › Formats to Most Compatible.",
+    "fileTooLarge": "That photo is over 5 MB. Choose a smaller one, or take a screenshot of it.",
+    "tooManyPixels": "That photo is too large to process. Choose a smaller one, or a screenshot of it.",
+    "unreadable": "That photo couldn't be opened. It may be damaged: try another one.",
+    "tooLarge": "That photo couldn't be made small enough to upload. Try another one.",
+    "uploadFailed": "Couldn't upload the photo. Check the connection and try again."
   }
 }

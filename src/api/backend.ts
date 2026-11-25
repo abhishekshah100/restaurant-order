@@ -141,6 +141,8 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['GET', 'admin/branches/:branchId/purchasing/returns'],
   ['POST', 'admin/branches/:branchId/purchasing/returns'],
   ['POST', 'admin/branches/:branchId/purchasing/proofs'],
+  ['POST', 'admin/branches/:branchId/inventory/proofs'],
+  ['GET', 'admin/branches/:branchId/inventory/proofs/:key'],
   ['GET', 'admin/branches/:branchId/purchasing/proofs/:key'],
   // Pricing: promotions, and the quotes the cart and checkout ask for.
   ['GET', 'branches/:branchId/promotions'],

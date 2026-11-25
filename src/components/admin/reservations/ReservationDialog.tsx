@@ -16,6 +16,7 @@ import {
 } from '@/lib/reservations';
 import { cx } from '@/lib/cx';
 import type { Reservation, ReservationRules } from '@/types/admin';
+import { ProofThumbs } from '../payments/ProofThumbs';
 import { usePaymentText } from '../payments/usePaymentText';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { RemindActions } from './RemindActions';
@@ -296,6 +297,10 @@ function ReservationFacts({
                     time: clock.dateTime(deposit.at),
                   })}
                 </span>
+              )}
+              {/* The photos taken with it (a UPI screen); "deleted after 90 days" once gone. */}
+              {deposit.proofs && deposit.proofs.length > 0 && (
+                <ProofThumbs proofs={deposit.proofs} />
               )}
             </dd>
           </div>

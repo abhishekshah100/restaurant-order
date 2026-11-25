@@ -333,6 +333,8 @@ export interface BranchConfig {
   help?: BranchHelp;
   /** MOCK ONLY: where the mock keeps the Wi-Fi password (the server never sends it here). */
   wifiPassword?: string;
+  /** MOCK ONLY: how long proof photos are kept (Settings › Proof photos); absent: 90 days. */
+  deleteProofsAfterDays?: number | null;
 }
 
 export const SOCIAL_NETWORKS = [

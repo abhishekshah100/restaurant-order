@@ -18,6 +18,8 @@ import { cx } from '@/lib/cx';
 import { shiftDay } from '@/lib/dayRange';
 import { newEntryId, parseQuantity, WASTAGE_REASONS } from '@/lib/inventory';
 import type { InventoryUnit, WastageReason } from '@/types/inventory';
+import { ProofPicker } from '../payments/ProofPicker';
+import { useProofPhotos } from '../payments/useProofPhotos';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useInventoryText } from './useInventoryText';
 import styles from './QuickWaste.module.css';
@@ -48,6 +50,9 @@ interface Line {
  * first, or search), set how much with − and +, tap why. What it's worth shows before saving
  * (for those who see costs). Several items at once; each comes off the stock.
  */
+/** The one set of photos a wastage form has. */
+const PHOTO_ROW = 'wastage';
+
 export function QuickWasteDialog({
   ingredientIds = [],
   onClose,
@@ -77,6 +82,9 @@ export function QuickWasteDialog({
   );
   const [search, setSearch] = useState('');
   const [tried, setTried] = useState(false);
+  // Photos of what's thrown away (optional), uploaded as they're picked.
+  const photos = useProofPhotos(branch.id, 'inventory');
+  const photosBusy = photos.unsettled([PHOTO_ROW]);
 
   const tracked = (ingredients?.ingredients ?? []).filter((i) => i.tracked);
   const byId = new Map(tracked.map((i) => [i.id, i]));
@@ -126,12 +134,14 @@ export function QuickWasteDialog({
 
   const save = () => {
     setTried(true);
-    if (lines.length === 0 || lines.some((l) => problem(l) !== null)) return;
+    if (lines.length === 0 || lines.some((l) => problem(l) !== null) || photosBusy) return;
+    const shots = photos.keysOf(PHOTO_ROW);
     waste.mutate(
       {
         branchId: branch.id,
         body: {
           entryId,
+          ...(shots.length > 0 ? { proofs: shots } : {}),
           lines: lines.map((l) => ({
             ingredientId: l.ingredientId,
             quantity: quantityOf(l) ?? 0,
@@ -170,7 +180,7 @@ export function QuickWasteDialog({
             block
             iconStart="trash"
             loading={waste.isPending}
-            disabled={lines.length === 0}
+            disabled={lines.length === 0 || photosBusy}
             onClick={save}
           >
             {t.plural('adminInventory.waste.save', Math.max(lines.length, 1))}
@@ -320,6 +330,15 @@ export function QuickWasteDialog({
               );
             })}
           </ul>
+        )}
+        {lines.length > 0 && (
+          <ProofPicker
+            id="waste-photos"
+            label={t('adminInventory.waste.photos')}
+            photos={photos.photosOf(PHOTO_ROW)}
+            onAdd={(files) => photos.add(PHOTO_ROW, files)}
+            onRemove={(photo) => photos.remove(PHOTO_ROW, photo)}
+          />
         )}
       </div>
     </Dialog>

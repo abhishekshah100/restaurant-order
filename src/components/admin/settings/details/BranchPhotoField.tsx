@@ -6,7 +6,7 @@ import { useContent } from '@/api/hooks';
 import { useUploadBranchImage } from '@/api/mutations';
 import { Button, Icon } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
-import { resizeImage } from '@/lib/imageResize';
+import { IMAGE_ACCEPT, imageProblemOf, prepareImage } from '@/lib/imageUpload';
 import type { BranchImage } from '@/types/branch';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import styles from './BranchPhotoField.module.css';
@@ -36,11 +36,11 @@ export function BranchPhotoField({
   const choose = async (file: File | undefined) => {
     if (!file) return;
     try {
-      const resized = await resizeImage(file);
+      const resized = await prepareImage(file, 'branch');
       const result = await upload.mutateAsync({ branchId: branch.id, body: resized });
       onChange(result.image);
-    } catch {
-      showToast(t('adminSettings.details.photoFailed'), { tone: 'error' });
+    } catch (error) {
+      showToast(t(`imageUpload.${imageProblemOf(error)}`), { tone: 'error' });
     }
   };
 
@@ -93,7 +93,7 @@ export function BranchPhotoField({
       <input
         ref={input}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept={IMAGE_ACCEPT}
         hidden
         onChange={(event) => {
           void choose(event.target.files?.[0]);

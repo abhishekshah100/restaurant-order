@@ -485,6 +485,7 @@ it('reads every section off a branch, and the branch data carries only its week'
   const settings = settingsOf(india);
   expect(Object.keys(settings)).toEqual([
     'details',
+    'photos',
     'help',
     'services',
     'hours',
@@ -494,6 +495,8 @@ it('reads every section off a branch, and the branch data carries only its week'
     'pickup',
   ]);
   expect(hoursErrors(settings.hours)).toEqual([]);
+  // Proof photos are deleted after 90 days until the owner keeps them.
+  expect(settings.photos).toEqual({ deleteProofsAfterDays: 90 });
   // The published data has the week only: every time a screen shows is worked out from it.
   for (const branch of [india, nepal] as Branch[]) {
     expect(hoursErrors(branch.schedule)).toEqual([]);

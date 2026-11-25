@@ -7,7 +7,7 @@ import { useUploadDishImage } from '@/api/mutations';
 import { Button, Chip, Input, Select, Textarea } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import type { DishForm } from '@/lib/adminMenu';
-import { resizeWithThumb } from '@/lib/imageResize';
+import { IMAGE_ACCEPT, imageProblemOf, prepareImage } from '@/lib/imageUpload';
 import type { MenuCatalog } from '@/lib/menu';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
 import { EditorSection } from './EditorSection';
@@ -94,15 +94,16 @@ function PictureField({ form, set }: { form: DishForm; set: (fields: Partial<Dis
   const choose = async (file: File | undefined) => {
     if (!file) return;
     try {
-      // The picture and a small copy for rows, the cart and orders.
-      const { thumb: small, ...picture } = await resizeWithThumb(file);
+      // Checked, fitted and compressed, with a small copy for rows, the cart and orders.
+      const { thumb: small, ...picture } = await prepareImage(file, 'dish');
       const { image, thumb } = await upload.mutateAsync({
         branchId: branch.id,
         body: { ...picture, thumb: small },
       });
       set({ image, thumb: thumb ?? null });
-    } catch {
-      showToast(t('adminMenu.editor.uploadFailed'), { tone: 'error' });
+    } catch (error) {
+      // What was wrong with it, in words: the type, the size, or the upload.
+      showToast(t(`imageUpload.${imageProblemOf(error)}`), { tone: 'error' });
     }
   };
 
@@ -148,7 +149,7 @@ function PictureField({ form, set }: { form: DishForm; set: (fields: Partial<Dis
       <input
         ref={input}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept={IMAGE_ACCEPT}
         hidden
         onChange={(event) => {
           void choose(event.target.files?.[0]);

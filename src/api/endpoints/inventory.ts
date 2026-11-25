@@ -32,6 +32,7 @@ import type {
   WastageLine,
 } from '@/types/inventory';
 import { apiDelete, apiGet, apiPatch, apiPost, backendBlob } from '../client';
+import type { PaymentProofRequest, PaymentProofResponse } from '../contracts';
 import { bearer, inventory, searchOf, seg } from './shared';
 
 /** Inventory: stock, ingredients, counts, transfers, recipes. */
@@ -81,8 +82,17 @@ export const inventoryApi = {
     apiPost<StockEntryResponse>(`${inventory(branchId)}/opening`, body, bearer(token)),
   adjustStock: (token: string, branchId: string, body: StockEntryRequest<AdjustmentLine>) =>
     apiPost<StockEntryResponse>(`${inventory(branchId)}/adjustments`, body, bearer(token)),
-  wasteStock: (token: string, branchId: string, body: StockEntryRequest<WastageLine>) =>
-    apiPost<StockEntryResponse>(`${inventory(branchId)}/wastage`, body, bearer(token)),
+  wasteStock: (
+    token: string,
+    branchId: string,
+    body: StockEntryRequest<WastageLine> & { proofs?: string[] },
+  ) => apiPost<StockEntryResponse>(`${inventory(branchId)}/wastage`, body, bearer(token)),
+  /** POST …/inventory/proofs: a wastage photo (as a payment's proof), its key back. */
+  uploadInventoryProof: (token: string, branchId: string, body: PaymentProofRequest) =>
+    apiPost<PaymentProofResponse>(`${inventory(branchId)}/proofs`, body, bearer(token)),
+  /** A wastage photo's bytes (private). Backend only. */
+  inventoryProof: (token: string, branchId: string, key: string) =>
+    backendBlob(`${inventory(branchId)}/proofs/${seg(key)}`, bearer(token)),
   stockBatches: (
     token: string,
     branchId: string,

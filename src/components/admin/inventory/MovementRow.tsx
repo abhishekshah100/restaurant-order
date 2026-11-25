@@ -3,14 +3,15 @@
 import { useContent } from '@/api/hooks';
 import { cx } from '@/lib/cx';
 import type { StockMovement } from '@/types/inventory';
+import { ProofThumbs } from '../payments/ProofThumbs';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useDayText } from './BatchList';
 import { useInventoryText } from './useInventoryText';
 import styles from './Inventory.module.css';
 
 /**
- * One ledger row: what happened (the kind and its reason), when, by whom and any note; the
- * change, what it left, and its value for staff who see costs.
+ * One ledger row: what happened (the kind and its reason), when, by whom and any note (and a
+ * wastage entry's photos); the change, what it left, and its value for staff who see costs.
  */
 export function MovementRow({
   movement: m,
@@ -53,6 +54,8 @@ export function MovementRow({
             .filter(Boolean)
             .join(' · ')}
         </span>
+        {/* Wastage: the photos of what was thrown away ("deleted after 90 days" once gone). */}
+        {m.proofs && m.proofs.length > 0 && <ProofThumbs proofs={m.proofs} source="inventory" />}
       </span>
       <span className={styles.rowSide}>
         {m.kind !== 'revaluation' && (

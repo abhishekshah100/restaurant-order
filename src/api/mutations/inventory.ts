@@ -16,6 +16,7 @@ import type {
   UpdateStockRequest,
   WastageLine,
 } from '@/types/inventory';
+import type { PaymentProofRequest } from '../contracts';
 import { api } from '../endpoints';
 import { branchOf, refreshAfter } from '../refreshAfter';
 import { requireToken } from './shared';
@@ -49,8 +50,11 @@ export const useAdjustStock = () =>
 
 /** POST …/inventory/wastage: stock thrown away, and why. */
 export const useWasteStock = () =>
-  useInventoryMutation((token, v: { branchId: string; body: StockEntryRequest<WastageLine> }) =>
-    api.wasteStock(token, v.branchId, v.body),
+  useInventoryMutation(
+    (
+      token,
+      v: { branchId: string; body: StockEntryRequest<WastageLine> & { proofs?: string[] } },
+    ) => api.wasteStock(token, v.branchId, v.body),
   );
 
 /** PATCH …/inventory/batches/:id: a batch dated, coded or split. */
@@ -183,3 +187,12 @@ export const useDeleteIngredientCategory = () =>
   useInventoryMutation((token, v: { branchId: string; id: string }) =>
     api.deleteIngredientCategory(token, v.branchId, v.id),
   );
+
+/** POST …/inventory/proofs: a wastage photo, uploaded as soon as it's picked. */
+export function useUploadInventoryProof() {
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: PaymentProofRequest }) =>
+      api.uploadInventoryProof(requireToken(token), branchId, body),
+  });
+}

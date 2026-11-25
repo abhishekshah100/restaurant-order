@@ -846,6 +846,33 @@ Replaces the sections sent, each whole; the others stay.
   - `tax.enabled` switches the branch's taxes on or off (the rates are kept); off, new bills
     have no tax lines and are called "Bill of supply" (India) or "Bill" (elsewhere).
     `tax.taxId` (GSTIN in India, PAN in Nepal, `taxIdOf`) is printed on bills; empty for none.
+  - `photos.deleteProofsAfterDays` (30–3650, or `null` to keep them; the app sends 90 or null):
+    the restaurant's, so only staff with `branches.manage` (the owner) may send it (`403`).
+    Proof photos past it answer `410 proof_removed` from `GET …/payment-proofs/:key` and
+    `GET …/purchasing/proofs/:key`; the payments keep their records. `…/payment-proofs/:key`
+    reads a booking deposit's photos too. Wastage photos: `POST, GET …/inventory/proofs[/:key]`
+    (`inventory.wastage` to take; `inventory.view` or `.wastage` to see), sent as `proofs` (up to
+    five keys) with `POST …/inventory/wastage` and listed on the ledger's wastage rows. Each day's
+    deletions are one `proofs.deleted` entry (`{ count, days }`, by the system) in the audit log.
+
+### Uploading pictures
+
+Every picture goes through [`prepareImage`](../src/lib/imageUpload.ts) first: a photo type
+(JPEG, PNG, WebP; HEIC where the browser reads it), at most 5 MB and 40 megapixels (read from its
+header before it's opened), fitted (never enlarged) and compressed to its use's size, upright,
+transparency on white, camera details left out. The server checks each kind again
+(restaurant-backend › `media/data-url-image.ts`):
+
+| Picture                           | Sent at                    | Server limit    |
+| --------------------------------- | -------------------------- | --------------- |
+| Dish                              | 1080 px, ≤ 450 kB          | 500 kB, 2048 px |
+| Dish thumbnail                    | 192 px short side, ≤ 90 kB | 100 kB, 1024 px |
+| Branch photo                      | 640 px, ≤ 280 kB           | 300 kB, 2048 px |
+| Proof (payment, deposit, invoice) | 1600 px, ≤ 950 kB          | 1 MB, 4096 px   |
+
+A refusal is `400 invalid_request` with `field: "dataUrl"` and `reason`: `tooLarge`,
+`notAnImage` (not that type, or no size in its header), `tooManyPixels`. The width and height
+answered are the file's own.
 
 ## Admin floor, tables and QR codes
 

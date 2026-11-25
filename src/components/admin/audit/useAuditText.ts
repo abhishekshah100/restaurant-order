@@ -281,6 +281,13 @@ export function useAuditText() {
           ...(changes.length > 0 ? { changes } : {}),
         };
       }
+      case 'proofs.deleted':
+        // The day's photos past the time they're kept (Settings › Proof photos), by the system.
+        return {
+          title: t.plural('adminAudit.proofsDeleted', Number(d.count ?? 0), {
+            days: Number(d.days ?? 90),
+          }),
+        };
       case 'staff.added':
       case 'staff.removed':
       case 'staff.restored':

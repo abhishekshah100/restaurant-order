@@ -291,6 +291,7 @@ export function applySettings(
   if (patch.payments) next = withPayments(next, patch.payments, choices.payments);
   if (patch.delivery) next = withDelivery(next, patch.delivery);
   if (patch.pickup) next = withPickup(next, patch.pickup);
+  if (patch.photos) next = { ...next, deleteProofsAfterDays: patch.photos.deleteProofsAfterDays };
   return next;
 }
 

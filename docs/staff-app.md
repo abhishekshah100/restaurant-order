@@ -579,7 +579,8 @@ Behaviour:
 `DishEditor` adds or edits a dish in folding sections; a section with a problem opens itself on
 save.
 
-- Basics and picture (resized in the browser to 640 px, then uploaded via `POST .../images`).
+- Basics and picture (checked, fitted to 1080 px and compressed by `prepareImage`, with a 192 px
+  thumbnail, then uploaded via `POST .../images`; a refusal says why).
 - Price, or two or more sizes with names, prices and on/off.
 - Choice groups (a meal's slots, a spice level): two or more choices, the first is the default,
   optionally limited to some sizes.
@@ -638,7 +639,7 @@ Behaviour:
   asked (party size, past no-shows), how much a head, and how long before the booking a
   cancellation is still refunded.
 - **Deposits** (`DepositDialog`): staff record the guest's advance (cash, UPI or card, proof
-  photos for UPI and card); cash goes into the open cash register. It comes off the bill when the
+  photos for UPI and card, shown on the booking afterwards; "deleted after 90 days" once gone); cash goes into the open cash register. It comes off the bill when the
   party is seated; a late cancel or no-show keeps it.
 - **Reminders** (`RemindersPanel`): parties booked in the next 24 hours with a number, each
   reminded on WhatsApp or by SMS in a tap; reminded ones say so.
@@ -897,7 +898,9 @@ Tabs:
   or add your own, starting amounts, "Warn me at" levels, recipes.
 - **Today:** what needs someone now (out, past its date, running low, running out soon,
   ingredients that cost more than before), four daily jobs (Stock arrived, Record wastage, Count
-  stock, Correct a number) and this week in three numbers, with a WhatsApp share.
+  stock, Correct a number) and this week in three numbers, with a WhatsApp share. Record wastage
+  takes up to five photos of what's thrown away (optional), shown on the ledger's wastage rows
+  and kept like proof photos (Settings › Proof photos).
 - **Stock:** every item by category with level bars, filters with counts and days left; an item
   opens its amount, worth, recent changes, expiry batches and settings.
 - **Recipes:** what each dish uses (per size, add-on and choice), food cost against a goal,

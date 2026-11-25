@@ -29,6 +29,8 @@ import { isDayKey, shiftDay } from '@/lib/dayRange';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useInventoryText } from './useInventoryText';
 import styles from './Inventory.module.css';
+import { ProofPicker } from '../payments/ProofPicker';
+import { useProofPhotos } from '../payments/useProofPhotos';
 
 export type StockEntryKind = 'opening' | 'adjustment' | 'wastage';
 type AdjustMode = 'add' | 'remove' | 'count';
@@ -85,6 +87,9 @@ function problemOf(draft: Draft, kind: StockEntryKind, expires?: string): string
  * quantity (in the ingredient's unit, another of its measure, or packs) and, by kind, its cost,
  * how it changes and why. Sent with an entry id, so a retry never records it twice.
  */
+/** The one set of photos a wastage entry has. */
+const PHOTO_ROW = 'wastage';
+
 export function StockEntryDialog({
   kind,
   ingredientIds = [],
@@ -105,6 +110,9 @@ export function StockEntryDialog({
   const adjust = useAdjustStock();
   const waste = useWasteStock();
   const pending = opening.isPending || adjust.isPending || waste.isPending;
+  // Wastage: photos of what's thrown away (optional), uploaded as they're picked.
+  const photos = useProofPhotos(branch.id, 'inventory');
+  const photosBusy = kind === 'wastage' && photos.unsettled([PHOTO_ROW]);
   const [entryId] = useState(newEntryId);
   const [lines, setLines] = useState<Draft[]>(() =>
     ingredientIds.length > 0 ? ingredientIds.map((id) => blank(id)) : [blank()],
@@ -157,7 +165,7 @@ export function StockEntryDialog({
 
   const submit = () => {
     setTried(true);
-    if (!ready) return;
+    if (!ready || photosBusy) return;
     const measured = lines.map((l) => {
       const ingredient = byId.get(l.ingredientId) as Ingredient;
       return { line: l, base: { ingredientId: l.ingredientId, ...measureOf(l, ingredient) } };
@@ -195,7 +203,14 @@ export function StockEntryDialog({
         reason: line.reason as WastageReason,
         ...note(line),
       }));
-      waste.mutate({ branchId: branch.id, body: { entryId, lines: body } }, options);
+      const shots = photos.keysOf(PHOTO_ROW);
+      waste.mutate(
+        {
+          branchId: branch.id,
+          body: { entryId, lines: body, ...(shots.length > 0 ? { proofs: shots } : {}) },
+        },
+        options,
+      );
     }
   };
 
@@ -209,7 +224,7 @@ export function StockEntryDialog({
       title={t(`adminInventory.entry.title.${kind}`)}
       description={t(`adminInventory.entry.body.${kind}`)}
       footer={
-        <Button block iconStart="check" loading={pending} onClick={submit}>
+        <Button block iconStart="check" loading={pending} disabled={photosBusy} onClick={submit}>
           {t.plural(`adminInventory.entry.confirm.${kind}`, lines.length)}
         </Button>
       }
@@ -399,6 +414,15 @@ export function StockEntryDialog({
           >
             {t('adminInventory.entry.addLine')}
           </Button>
+        )}
+        {kind === 'wastage' && ingredients && choices.length > 0 && (
+          <ProofPicker
+            id="entry-waste-photos"
+            label={t('adminInventory.waste.photos')}
+            photos={photos.photosOf(PHOTO_ROW)}
+            onAdd={(files) => photos.add(PHOTO_ROW, files)}
+            onRemove={(photo) => photos.remove(PHOTO_ROW, photo)}
+          />
         )}
       </div>
     </Dialog>

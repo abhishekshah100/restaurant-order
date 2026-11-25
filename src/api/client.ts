@@ -33,6 +33,13 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * A proof photo deleted after the restaurant's time for keeping them (410 proof_removed): the
+ * photo files come back as bytes, so only the status says it.
+ */
+export const isRemovedProof = (error: unknown): boolean =>
+  error instanceof ApiError && error.status === 410;
+
 /** True for an ApiError with this error code. */
 export const isApiError = (error: unknown, code: ApiErrorCode): error is ApiError =>
   error instanceof ApiError && error.code === code;

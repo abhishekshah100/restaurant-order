@@ -185,6 +185,19 @@ describe('GET and PATCH /admin/branches/:branchId/settings (mock)', () => {
   });
 });
 
+describe('proof photos (mock)', () => {
+  it('deletes them after 90 days until the owner keeps them, and takes 30 days to 10 years', async () => {
+    expect((await settings()).settings.photos).toEqual({ deleteProofsAfterDays: 90 });
+    expect((await save({ photos: { deleteProofsAfterDays: null } })).status).toBe(200);
+    expect((await settings()).settings.photos).toEqual({ deleteProofsAfterDays: null });
+    expect((await save({ photos: { deleteProofsAfterDays: 90 } })).status).toBe(200);
+    expect((await settings()).settings.photos).toEqual({ deleteProofsAfterDays: 90 });
+    for (const days of [7, 5000, '90']) {
+      expect((await save({ photos: { deleteProofsAfterDays: days } })).status).toBe(400);
+    }
+  });
+});
+
 describe('region and services on the mock server', () => {
   it('moves a branch to Nepal: guests get its rules, the choices follow, prices keep numbers', async () => {
     const { settings: s } = await settings();

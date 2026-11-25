@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { api } from '@/api/endpoints';
-import { isApiError } from '@/api/client';
+import { isApiError, isRemovedProof } from '@/api/client';
 import { useContent, useReceipt } from '@/api/hooks';
 import { useConfirmPrices, useCreatePurchaseReturn } from '@/api/mutations';
 import { Button, Dialog, Icon, Input, Textarea } from '@/components/ui';
@@ -259,6 +259,7 @@ export function ReceiptDialog({ id, onClose }: { id: string; onClose: () => void
   const t = useContent('common');
   const { branch, can, clock } = useAdminWorkspace();
   const token = useAdminToken();
+  const { showToast } = useToast();
   const text = usePurchasingText();
   const receipt = useReceipt(branch.id, id).data;
   const manage = can('purchase.manage');
@@ -270,8 +271,20 @@ export function ReceiptDialog({ id, onClose }: { id: string; onClose: () => void
 
   const viewPhoto = async (key: string) => {
     if (!token) return;
-    const blob = await api.purchaseProof(token, branch.id, key);
-    window.open(URL.createObjectURL(blob), '_blank', 'noopener');
+    try {
+      const blob = await api.purchaseProof(token, branch.id, key);
+      window.open(URL.createObjectURL(blob), '_blank', 'noopener');
+    } catch (error) {
+      // Deleted after the restaurant's time for keeping proof photos, or not loaded.
+      showToast(
+        t(
+          isRemovedProof(error)
+            ? 'adminPayments.proofs.removed'
+            : 'adminPayments.proofs.loadFailed',
+        ),
+        { tone: 'error' },
+      );
+    }
   };
 
   return (

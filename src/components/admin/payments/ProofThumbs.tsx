@@ -6,11 +6,28 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './ProofPicker.module.css';
 
 /** One proof photo, read with the admin's token; a tap opens it full size in a new tab. */
-function ProofThumb({ proofKey, n }: { proofKey: string; n: number }) {
+function ProofThumb({
+  proofKey,
+  n,
+  source,
+}: {
+  proofKey: string;
+  n: number;
+  source: 'payments' | 'inventory';
+}) {
   const t = useContent('common');
   const { branch } = useAdminWorkspace();
-  const { url, failed } = usePaymentProof(branch.id, proofKey);
+  const { url, failed, removed } = usePaymentProof(branch.id, proofKey, source);
   const label = t('adminPayments.proofs.photo', { n });
+  if (removed) {
+    return (
+      <span className={styles.thumb} title={t('adminPayments.proofs.removed')}>
+        <span className={styles.state}>
+          <Icon name="history" size="xs" label={t('adminPayments.proofs.removed')} />
+        </span>
+      </span>
+    );
+  }
   if (failed) {
     return (
       <span className={styles.thumb} title={t('adminPayments.proofs.loadFailed')}>
@@ -38,8 +55,17 @@ function ProofThumb({ proofKey, n }: { proofKey: string; n: number }) {
   );
 }
 
-/** The proof photos staff took with a payment (a UPI screen, a card slip). */
-export function ProofThumbs({ proofs }: { proofs: readonly string[] }) {
+/**
+ * The proof photos staff took with a payment (a UPI screen, a card slip), or with wastage
+ * (`source: 'inventory'`).
+ */
+export function ProofThumbs({
+  proofs,
+  source = 'payments',
+}: {
+  proofs: readonly string[];
+  source?: 'payments' | 'inventory';
+}) {
   const t = useContent('common');
   return (
     <ul
@@ -48,7 +74,7 @@ export function ProofThumbs({ proofs }: { proofs: readonly string[] }) {
     >
       {proofs.map((key, index) => (
         <li key={key}>
-          <ProofThumb proofKey={key} n={index + 1} />
+          <ProofThumb proofKey={key} n={index + 1} source={source} />
         </li>
       ))}
     </ul>

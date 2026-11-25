@@ -33,6 +33,8 @@ export function ProofPicker({
   const camera = useRef<HTMLInputElement>(null);
   const gallery = useRef<HTMLInputElement>(null);
   const full = photos.length >= max;
+  /** Why the first photo that failed did (said once, under the photos). */
+  const failed = photos.find((p) => p.failed)?.failed;
   const picked = (input: HTMLInputElement) => {
     onAdd(Array.from(input.files ?? []));
     // The same photo can be picked again after it's removed.
@@ -81,9 +83,9 @@ export function ProofPicker({
           ))}
         </ul>
       )}
-      {photos.some((p) => p.failed) && (
+      {failed && (
         <p className={styles.error} role="alert">
-          {t('adminPayments.proofs.failedHint')}
+          {t(`imageUpload.${failed}`)} {t('adminPayments.proofs.failedHint')}
         </p>
       )}
       {!full && (

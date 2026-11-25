@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MAX_PROOFS } from '@/api/contracts';
-import { useUploadPaymentProof, useUploadPurchaseProof } from '@/api/mutations';
-import { resizeImage } from '@/lib/imageResize';
-
-/** The longer side a proof photo is shrunk to before upload: a UPI screen stays readable. */
-const PROOF_MAX_PX = 1600;
+import {
+  useUploadInventoryProof,
+  useUploadPaymentProof,
+  useUploadPurchaseProof,
+} from '@/api/mutations';
+import { imageProblemOf, prepareImage, type ImageProblem } from '@/lib/imageUpload';
 
 /** A proof photo staff picked: shown at once, uploaded meanwhile (its key once kept). */
 export interface ProofPhoto {
@@ -14,7 +15,8 @@ export interface ProofPhoto {
   /** An object URL of the picked file, for the thumbnail. */
   preview: string;
   key?: string;
-  failed?: true;
+  /** Why it couldn't be uploaded (the picker says it). */
+  failed?: ImageProblem;
 }
 
 let nextId = 0;
@@ -24,10 +26,15 @@ let nextId = 0;
  * and uploaded as soon as it's picked (POST …/payment-proofs), so collecting doesn't wait. Up
  * to MAX_PROOFS a row. Thumbnails' object URLs are let go when a photo is removed and on close.
  */
-export function useProofPhotos(branchId: string, kept: 'payments' | 'purchasing' = 'payments') {
+export function useProofPhotos(
+  branchId: string,
+  kept: 'payments' | 'purchasing' | 'inventory' = 'payments',
+) {
   const payments = useUploadPaymentProof();
   const purchasing = useUploadPurchaseProof();
-  const upload = (kept === 'purchasing' ? purchasing : payments).mutateAsync;
+  const inventory = useUploadInventoryProof();
+  const upload = (kept === 'purchasing' ? purchasing : kept === 'inventory' ? inventory : payments)
+    .mutateAsync;
   const [byRow, setByRow] = useState<Readonly<Record<string, readonly ProofPhoto[]>>>({});
   const current = useRef(byRow);
   current.current = byRow;
@@ -53,7 +60,8 @@ export function useProofPhotos(branchId: string, kept: 'payments' | 'purchasing'
   const add = useCallback(
     (rowId: string, files: readonly File[]) => {
       const room = MAX_PROOFS - (current.current[rowId]?.length ?? 0);
-      const picked = files.filter((f) => f.type.startsWith('image/')).slice(0, Math.max(0, room));
+      // Every file picked is tried: one that isn't a photo says so, rather than vanishing.
+      const picked = files.slice(0, Math.max(0, room));
       const added = picked.map((file) => ({
         file,
         photo: { id: `proof-${String((nextId += 1))}`, preview: URL.createObjectURL(file) },
@@ -64,11 +72,12 @@ export function useProofPhotos(branchId: string, kept: 'payments' | 'purchasing'
         [rowId]: [...(all[rowId] ?? []), ...added.map((a) => a.photo)],
       }));
       for (const { file, photo } of added) {
-        resizeImage(file, PROOF_MAX_PX)
+        // Checked, fitted to 1600 px (a UPI screen stays readable) and compressed.
+        prepareImage(file, 'proof')
           .then(({ dataUrl }) => upload({ branchId, body: { dataUrl } }))
           .then(
             ({ key }) => change(rowId, photo.id, { key }),
-            () => change(rowId, photo.id, { failed: true }),
+            (error: unknown) => change(rowId, photo.id, { failed: imageProblemOf(error) }),
           );
       }
     },

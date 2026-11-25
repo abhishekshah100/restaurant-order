@@ -133,6 +133,16 @@ Delivery history, by phase:
 - **New branches' QR links (2026-11-23):** a link or saved visit at a branch opened since the
   site was built waits for the live branch list, instead of trying the default branch first.
 
+- **Photos in Cloudflare R2 + proof retention + image uploads (2026-11-25):** dish and branch
+  photos in a public R2 bucket, proofs in a private one (`MEDIA_STORE=r2`, ADR-048); proof photos
+  deleted for good after 90 days unless the owner keeps them (Settings › Proof photos);
+  every upload checked, fitted and compressed by one `prepareImage` (dish photos now 1080 px),
+  and checked again by type, weight and pixel size on the server, with clear messages (5 MB at
+  most); dish and branch photos nothing uses deleted after a week; `npm run photos:check` finds
+  photos lost from Render's disk; a booking's deposit photos show on the booking; wastage forms
+  take photos (shown in the ledger, kept like proofs); each day's proof deletions are one
+  system entry in the audit log.
+
 ## Next up
 
 The Sales report is done. In order, still to come:

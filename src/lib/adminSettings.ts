@@ -31,7 +31,8 @@ export type SettingsSectionId =
   | 'branches'
   | 'roles'
   | 'staff'
-  | 'modules';
+  | 'modules'
+  | 'photos';
 
 export interface SettingsSection {
   id: SettingsSectionId;
@@ -98,6 +99,8 @@ const SETTINGS_GROUPS: readonly SettingsGroup[] = [
         pages: [
           { id: 'tax', href: settingsPath('tax'), needs: MANAGE },
           { id: 'payments', href: settingsPath('payments'), needs: MANAGE },
+          // How long proof photos are kept: the restaurant's, so the owner's.
+          { id: 'photos', href: settingsPath('photos'), needs: 'branches.manage' },
         ],
       },
       {

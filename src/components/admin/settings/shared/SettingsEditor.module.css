@@ -282,3 +282,11 @@
   border-radius: var(--r-xs);
   box-shadow: var(--focus);
 }
+
+/* A dialog's two buttons, side by side (as Settings › Branches' dialogs). */
+.footer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}

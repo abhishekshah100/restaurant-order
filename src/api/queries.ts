@@ -8,7 +8,7 @@ import type { MenuData } from '@/types/menu';
 import type { OrdersResponse } from '@/types/order';
 import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
-import { apiGet } from './client';
+import { apiGet, isRemovedProof } from './client';
 import type {
   AdminBranchesResponse,
   AdminOrdersFilter,
@@ -744,12 +744,21 @@ export const paymentProofQuery = (
   token: string | null,
   branchId: string | undefined,
   key: string,
+  /** Where it's kept: a payment's or deposit's, or a wastage entry's. */
+  source: 'payments' | 'inventory' = 'payments',
 ) =>
   queryOptions({
-    queryKey: ['admin', 'payment-proof', branchId, key, token] as const,
-    queryFn: token && branchId ? () => api.paymentProof(token, branchId, key) : skipToken,
+    queryKey: ['admin', 'payment-proof', source, branchId, key, token] as const,
+    queryFn:
+      token && branchId
+        ? () =>
+            source === 'inventory'
+              ? api.inventoryProof(token, branchId, key)
+              : api.paymentProof(token, branchId, key)
+        : skipToken,
     staleTime: Infinity,
-    retry: 1,
+    // Once more after a hiccup; never for a photo deleted after the time they're kept.
+    retry: (failures, error) => failures < 1 && !isRemovedProof(error),
   });
 
 /** GET /admin/branches/:branchId/floors: the floor plan to edit; it changes rarely. */

@@ -25,6 +25,7 @@ import type { BranchPromotions } from '@/types/promotion';
 import type { Restaurant } from '@/types/restaurant';
 import { useActiveBranchId } from './activeBranch';
 import { isMockApi } from './config';
+import { isRemovedProof } from './client';
 import type {
   AdminOrdersFilter,
   AdminSignInRequest,
@@ -718,11 +719,15 @@ export const useIngredients = (branchId: string | undefined, enabled = true) =>
   useQuery({ ...ingredientsQuery(useAdminToken(), branchId), enabled });
 
 /**
- * A proof photo, as an object URL for an <img> (let go when it's no longer shown), and whether
- * it couldn't be read.
+ * A proof photo, as an object URL for an <img> (let go when it's no longer shown), whether it
+ * couldn't be read, and whether it was deleted after the restaurant's time for keeping them.
  */
-export function usePaymentProof(branchId: string | undefined, key: string) {
-  const photo = useQuery(paymentProofQuery(useAdminToken(), branchId, key));
+export function usePaymentProof(
+  branchId: string | undefined,
+  key: string,
+  source: 'payments' | 'inventory' = 'payments',
+) {
+  const photo = useQuery(paymentProofQuery(useAdminToken(), branchId, key, source));
   const url = useMemo(
     () => (photo.data ? URL.createObjectURL(photo.data) : undefined),
     [photo.data],
@@ -733,7 +738,8 @@ export function usePaymentProof(branchId: string | undefined, key: string) {
     },
     [url],
   );
-  return { url, failed: photo.isError };
+  const removed = isRemovedProof(photo.error);
+  return { url, failed: photo.isError && !removed, removed };
 }
 
 /** GET /admin/branches/:branchId/roles: the roles staff can be given, and every permission. */

@@ -51,6 +51,7 @@ of sections; a section with several pages shows them as tabs.
 | Orders & money    | How guests order | Delivery             | `delivery/`   | `delivery/DeliveryZonesEditor`  | `branch.settings.manage` | `delivery`           |
 | Orders & money    | Bills & payments | Tax & service charge | `tax/`        | `tax/TaxEditor`                 | `branch.settings.manage` | `tax`                |
 | Orders & money    | Bills & payments | Payment methods      | `payments/`   | `payments/PaymentMethodsEditor` | `branch.settings.manage` | `payments`           |
+| Orders & money    | Bills & payments | Proof photos         | `photos/`     | `PhotosSettings`                | `branches.manage`        | `photos`             |
 | Orders & money    | Offers           | Offers               | `offers/`     | `offers/OffersManager`          | `branch.settings.manage` | `.../offers`         |
 | People & branches | Staff & roles    | Staff                | `staff/`      | `staff/StaffManager`            | `staff.manage`           | `.../staff`          |
 | People & branches | Staff & roles    | Roles & permissions  | `roles/`      | `roles/RolesManager`            | `staff.manage`           | `.../roles`          |
@@ -576,6 +577,23 @@ Rules:
   `purchase.*` permission, so those pages, buttons and role groups disappear. Its data is kept,
   and dishes stock had taken off the menu come back.
 - Switched on again, the Stock tab asks staff to count stock first.
+
+## Proof photos
+
+Purpose: decide how long payment, deposit and supplier-invoice photos are kept.
+
+- **Route:** `/admin/dashboard/settings/photos/` (the owner: `branches.manage`).
+- **Component:** [`PhotosSettings`](../src/components/admin/settings/PhotosSettings.tsx).
+- **Saves via:** the `photos` section, `{ deleteProofsAfterDays: 90 | null }`.
+
+Rules:
+
+- The restaurant's, for every branch. On by default (existing restaurants too): each photo is
+  deleted for good 90 days after the payment, deposit or delivery it's for. Off keeps them.
+- Turning it on asks first: photos already past 90 days go within the hour. Off applies at once.
+- Only photos are deleted; bills, invoices and payment records stay. A deleted photo shows "Photo
+  deleted after 90 days" where it was (payment history, an order, a delivery).
+- Photos never attached to anything (a payment given up on) are deleted after 7 days either way.
 
 ## Settings kept elsewhere
 

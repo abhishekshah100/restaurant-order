@@ -31,6 +31,7 @@ type AdminPage =
   | 'branchDetails'
   | 'helpPage'
   | 'modules'
+  | 'photos'
   | 'openingHours'
   | 'tax'
   | 'paymentMethods'

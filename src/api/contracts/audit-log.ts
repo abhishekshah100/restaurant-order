@@ -29,6 +29,8 @@ export type AuditAction =
   | 'menu.availabilityChanged'
   | 'menu.dishRemoved'
   | 'settings.changed'
+  /** The system deleted proof photos past the restaurant's time for keeping them (`count`, `days`). */
+  | 'proofs.deleted'
   | 'staff.added'
   | 'staff.changed'
   | 'staff.removed'
