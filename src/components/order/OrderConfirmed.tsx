@@ -7,6 +7,7 @@ import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { useFinishPlacedOrder } from '@/hooks/usePlaceOrder';
 import { cx } from '@/lib/cx';
 import { TRACK_STEPS, orderPath, stepKey, unpaidLabel } from '@/lib/orders';
+import { hideTrackStatus } from '@/config/featureFlags';
 import type { Order } from '@/types/order';
 import { ChangeWindow } from './ChangeWindow';
 import { UnavailableNotice } from './UnavailableNotice';
@@ -156,10 +157,12 @@ function Confirmed({ order }: { order: Order }) {
               <PaymentTag order={order} />
             </dd>
           </div>
-          <div className={styles.well}>
-            <dt className="t-caption c3">{wells.last[0]}</dt>
-            <dd>{wells.last[1]}</dd>
-          </div>
+          {!hideTrackStatus && (
+            <div className={styles.well}>
+              <dt className="t-caption c3">{wells.last[0]}</dt>
+              <dd>{wells.last[1]}</dd>
+            </div>
+          )}
         </dl>
 
         <OrderSavings order={order} className={styles.saved} />
@@ -167,30 +170,34 @@ function Confirmed({ order }: { order: Order }) {
         <UnavailableNotice order={order} className={styles.change} />
         <ChangeWindow order={order} className={styles.change} />
 
-        <div className={styles.progress}>
-          <div className={styles.seg} aria-hidden="true">
-            <i className={styles.cur} />
-            <i />
-            <i />
-            <i />
+        {!hideTrackStatus && (
+          <div className={styles.progress}>
+            <div className={styles.seg} aria-hidden="true">
+              <i className={styles.cur} />
+              <i />
+              <i />
+              <i />
+            </div>
+            <ol className={styles.segLabels} aria-label={t('shared.orderProgress')}>
+              {steps.map((step, i) => (
+                <li
+                  key={step}
+                  className={i === 0 ? styles.on : undefined}
+                  aria-current={i === 0 ? 'step' : undefined}
+                >
+                  {t(`steps.${stepKey(order.mode, step)}`)}
+                </li>
+              ))}
+            </ol>
           </div>
-          <ol className={styles.segLabels} aria-label={t('shared.orderProgress')}>
-            {steps.map((step, i) => (
-              <li
-                key={step}
-                className={i === 0 ? styles.on : undefined}
-                aria-current={i === 0 ? 'step' : undefined}
-              >
-                {t(`steps.${stepKey(order.mode, step)}`)}
-              </li>
-            ))}
-          </ol>
-        </div>
+        )}
 
         <div className={styles.desktopActions}>
-          <Button href={trackHref} iconEnd="arrow">
-            {t('confirmed.trackOrder')}
-          </Button>
+          {!hideTrackStatus && (
+            <Button href={trackHref} iconEnd="arrow">
+              {t('confirmed.trackOrder')}
+            </Button>
+          )}
           <Button href="/menu/" variant="secondary">
             {t('confirmed.orderMore')}
           </Button>
@@ -204,9 +211,11 @@ function Confirmed({ order }: { order: Order }) {
         </p>
       </main>
       <div className={styles.foot}>
-        <Button href={trackHref} block iconEnd="arrow">
-          {t('confirmed.trackOrder')}
-        </Button>
+        {!hideTrackStatus && (
+          <Button href={trackHref} block iconEnd="arrow">
+            {t('confirmed.trackOrder')}
+          </Button>
+        )}
         <Button href="/menu/" block variant="secondary">
           {t('confirmed.orderMore')}
         </Button>

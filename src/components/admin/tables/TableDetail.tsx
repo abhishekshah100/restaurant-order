@@ -146,7 +146,7 @@ function TableDetailFor({ table }: { table: number | null | undefined }) {
 
 function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | null }) {
   const t = useContent('common');
-  const { money, clock, can } = useAdminWorkspace();
+  const { money, clock, can, isOff } = useAdminWorkspace();
   const seatedLabel = useSeatedLabel();
   const [open, setOpen] = useState<{ id: string; view: OrderDialogView } | null>(null);
   const [pad, setPad] = useState<PadTarget | null>(null);
@@ -204,7 +204,7 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               <span className={styles.dot} aria-hidden="true" />
               {t(`adminTables.status.${detail.status}`)}
             </span>
-            {!detail.disabled && can('reservations.manage') && (
+            {!detail.disabled && !isOff('reservations') && can('reservations.manage') && (
               <button
                 type="button"
                 className={styles.free}

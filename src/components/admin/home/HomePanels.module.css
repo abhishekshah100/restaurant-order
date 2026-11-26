@@ -228,11 +228,9 @@ button.dishChip:focus-visible {
 
 .stat dd {
   margin: 0;
-  overflow: hidden;
   font: var(--font-h3);
   font-variant-numeric: tabular-nums;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .stat dd.statHint {

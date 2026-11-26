@@ -38,7 +38,7 @@ const SKELETON_TILES = 8;
 export function FloorPlan() {
   const t = useContent('common');
   const router = useRouter();
-  const { branch, can } = useAdminWorkspace();
+  const { branch, can, isOff } = useAdminWorkspace();
   const plan = useFloorPlan(branch.id);
   const floorId = useQueryParam('floor');
   const now = useNow(SEATED_REFRESH_MS);
@@ -67,9 +67,11 @@ export function FloorPlan() {
                 {t('adminTables.sections.open')}
               </Button>
             )}
-            <Button href={reservationsPath()} variant="secondary" iconStart="calendar">
-              {t('adminTables.openReservations')}
-            </Button>
+            {!isOff('reservations') && (
+              <Button href={reservationsPath()} variant="secondary" iconStart="calendar">
+                {t('adminTables.openReservations')}
+              </Button>
+            )}
             {can('tables.manage') && (
               <>
                 <Button href={qrCodesPath()} variant="secondary" iconStart="qr">

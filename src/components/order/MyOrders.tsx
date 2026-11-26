@@ -8,6 +8,7 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { Page } from '@/components/layout/Shells';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
+import { hideTrackStatus } from '@/config/featureFlags';
 import { cx } from '@/lib/cx';
 import { useVisitWords } from '@/hooks/useVisitLabel';
 import {
@@ -69,7 +70,7 @@ function OrderRow({ order, today, eager }: { order: Order; today: boolean; eager
           <span className={styles.top}>
             <span className={styles.id}>{t('shared.orderRef', { id: order.id })}</span>
             {order.mode !== 'dineIn' && <ModeBadge mode={order.mode} className={styles.mode} />}
-            <OrderStatus order={order} className="hide-desktop" />
+            {!hideTrackStatus && <OrderStatus order={order} className="hide-desktop" />}
           </span>
           <span className={cx(styles.sub, 'hide-desktop')}>
             {count} · {money.format(order.total)} · {payment}
@@ -86,7 +87,9 @@ function OrderRow({ order, today, eager }: { order: Order; today: boolean; eager
           <b>{money.format(order.total)}</b>
           <span className={styles.when}>{payment}</span>
         </span>
-        <OrderStatus order={order} className={cx(styles.status, 'hide-mobile')} />
+        {!hideTrackStatus && (
+          <OrderStatus order={order} className={cx(styles.status, 'hide-mobile')} />
+        )}
         <Icon name="chev" size="sm" className={cx(styles.chev, 'hide-mobile')} />
       </Link>
       {finished && <OrderAgainButton order={order} size="sm" className={styles.again} />}

@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
+import { hideTrackStatus } from '@/config/featureFlags';
 import type { ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
 import { Icon, StatusPill, type IconName } from '@/components/ui';
@@ -247,25 +248,27 @@ function TrackingView({
           ]}
         />
 
-        <section className={cx(styles.card, styles.hero)} aria-label={t('shared.orderStatus')}>
-          <StatusPill status={order.status} className={styles.heroPill} />
-          {!finished && <Freshness live={live} now={now} />}
-          <div className={styles.eta}>
-            {order.token !== undefined && (
-              <span className={styles.token}>{t('shared.token', { token: order.token })}</span>
-            )}
-            {round && (
-              <span className={cx('t-caption c3', styles.round)}>
-                {t('rounds.latest', { number: round.number, count: rounds.length })}
-              </span>
-            )}
-            <span className="t-small c2">{hero.label}</span>
-            <span className={styles.etaValue}>{hero.value}</span>
-            <span className={cx('t-body c2', styles.etaBody)}>{hero.body}</span>
-          </div>
-        </section>
+        {!hideTrackStatus && (
+          <section className={cx(styles.card, styles.hero)} aria-label={t('shared.orderStatus')}>
+            <StatusPill status={order.status} className={styles.heroPill} />
+            {!finished && <Freshness live={live} now={now} />}
+            <div className={styles.eta}>
+              {order.token !== undefined && (
+                <span className={styles.token}>{t('shared.token', { token: order.token })}</span>
+              )}
+              {round && (
+                <span className={cx('t-caption c3', styles.round)}>
+                  {t('rounds.latest', { number: round.number, count: rounds.length })}
+                </span>
+              )}
+              <span className="t-small c2">{hero.label}</span>
+              <span className={styles.etaValue}>{hero.value}</span>
+              <span className={cx('t-body c2', styles.etaBody)}>{hero.body}</span>
+            </div>
+          </section>
+        )}
 
-        <TrackStepper entries={progress} note={currentNote} />
+        {!hideTrackStatus && <TrackStepper entries={progress} note={currentNote} />}
 
         <UnavailableNotice order={order} />
         <ChangeWindow order={order} />

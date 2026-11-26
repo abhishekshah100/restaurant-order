@@ -8,6 +8,7 @@ import { useBillDownload } from '@/components/admin/payments/PaymentPrint';
 import { useBranch, useContent, useRegion } from '@/api/hooks';
 import type { ContentMap } from '@/api/queries';
 import type { Translator } from '@/api/translator';
+import { hideTrackStatus } from '@/config/featureFlags';
 import { cx } from '@/lib/cx';
 import { useVisitWords } from '@/hooks/useVisitLabel';
 import { useToast } from '@/context/ToastContext';
@@ -155,8 +156,7 @@ function DetailsView({ order }: { order: Order }) {
               })}
             </p>
           </div>
-          {/* Done with: served (or collected, delivered) and paid. Nothing left to follow. */}
-          {!(isFinished(order) && order.payment.status !== 'unpaid') && (
+          {!hideTrackStatus && !(isFinished(order) && order.payment.status !== 'unpaid') && (
             <Button
               href={orderPath(order.id, 'track')}
               variant="secondary"
