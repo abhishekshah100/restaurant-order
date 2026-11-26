@@ -51,6 +51,7 @@ of sections; a section with several pages shows them as tabs.
 | Orders & money    | How guests order | Delivery             | `delivery/`   | `delivery/DeliveryZonesEditor`  | `branch.settings.manage` | `delivery`           |
 | Orders & money    | Bills & payments | Tax & service charge | `tax/`        | `tax/TaxEditor`                 | `branch.settings.manage` | `tax`                |
 | Orders & money    | Bills & payments | Payment methods      | `payments/`   | `payments/PaymentMethodsEditor` | `branch.settings.manage` | `payments`           |
+| Orders & money    | Bills & payments | Payment QR codes     | `payment-qr/` | `payments/PaymentQrEditor`      | `branch.settings.manage` | `paymentQrs`         |
 | Orders & money    | Bills & payments | Proof photos         | `photos/`     | `PhotosSettings`                | `branches.manage`        | `photos`             |
 | Orders & money    | Offers           | Offers               | `offers/`     | `offers/OffersManager`          | `branch.settings.manage` | `.../offers`         |
 | People & branches | Staff & roles    | Staff                | `staff/`      | `staff/StaffManager`            | `staff.manage`           | `.../staff`          |
@@ -578,6 +579,30 @@ Rules:
   and dishes stock had taken off the menu come back.
 - Switched on again, the Stock tab asks staff to count stock first.
 
+## Payment QR codes
+
+Purpose: the branch's QR for each way guests pay staff by scanning, shown while collecting.
+
+- **Route:** `/admin/dashboard/settings/payment-qr/` (`branch.settings.manage`).
+- **Component:** [`PaymentQrEditor`](../src/components/admin/settings/payments/PaymentQrEditor.tsx).
+- **Saves via:** the `paymentQrs` section, `[{ method, image, note }]`; each image uploaded first
+  (`POST …/settings/image` with `purpose: 'qr'`).
+
+Rules:
+
+- One card for each way the branch takes at the table that is paid by scanning: eSewa, Khalti
+  and Fonepay in Nepal, UPI in India. None turned on under Payment methods: a note says so.
+- The QR is prepared with `prepareImage(file, 'qr')`: 1024 px, lossless PNG on white so it scans
+  (a photographed QR too heavy as PNG is compressed like a photo). A screenshot from the merchant
+  app works best.
+- An optional line under it says who it pays (80 characters at most).
+- eSewa and Khalti without their own QR show the Fonepay QR, which they scan too (`qrFor`).
+- While collecting (an order, a table, each part of a split bill, a booking's deposit), choosing
+  a way with a QR shows **Show … QR**: the QR full screen on white with the amount, for staff to
+  turn to the guest ([`ShowQrButton`](../src/components/admin/payments/PaymentQrView.tsx)). The
+  proof photo is still taken as before.
+- Changes are in the activity log (`settings.changed`, section `paymentQrs`), named by method.
+
 ## Proof photos
 
 Purpose: decide how long payment, deposit and supplier-invoice photos are kept.
@@ -630,7 +655,7 @@ does not manage. Shapes are in [api-contract.md](api-contract.md) and
 | `POST /admin/branches/:branchId/offers`                         | Add an offer                         | 400, 422 `offer_scope_unknown`     |
 | `PATCH …/offers/:offerId`                                       | Replace an offer                     | 400, 404, 422                      |
 | `DELETE …/offers/:offerId`                                      | Remove an offer                      | 404                                |
-| `POST /admin/branches/:branchId/settings/image`                 | Upload the restaurant image          | 400                                |
+| `POST /admin/branches/:branchId/settings/image`                 | Upload the restaurant image or a QR  | 400                                |
 | `GET`, `POST /admin/branches/:branchId/staff`                   | Staff list, add staff                | 400, 403                           |
 | `PATCH …/staff/:id`; `POST …/password`, `…/remove`, `…/restore` | Change a staff member                | 400, 403, 409                      |
 | `GET`, `POST /admin/branches/:branchId/roles`                   | Roles, add a role                    | 400, 403                           |

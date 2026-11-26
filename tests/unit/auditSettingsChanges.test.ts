@@ -15,6 +15,8 @@ const NAMES: Record<string, string> = {
   prepMinutes: 'Time to get ready',
   wifiPassword: 'Wi-Fi password',
   image: 'Photo',
+  paymentQrs: 'Payment QR codes',
+  note: 'Line under the QR',
 };
 const words: SettingsWords = {
   section: (k) => NAMES[k],
@@ -83,6 +85,21 @@ describe('settingsChanges', () => {
       'Delivery › Delivery zones › Sector 18 › Delivery fee: ₹40 → ₹50',
       'Delivery › Delivery zones › Sector 62: Sector 62 → Removed',
       'Delivery › Delivery zones › Noida City: Not set → Added',
+    ]);
+  });
+
+  it('names payment QR codes by their method: added, replaced, removed', () => {
+    const qr = (method: string, src: string, note = '') => ({ method, image: { src }, note });
+    expect(
+      lines(
+        { paymentQrs: [qr('esewa', 'a.png'), qr('fonepay', 'b.png')] },
+        { paymentQrs: [qr('esewa', 'c.png', 'Olive Table'), qr('khalti', 'd.png')] },
+      ),
+    ).toEqual([
+      'Payment QR codes › ESEWA › Photo: Old photo → New photo',
+      'Payment QR codes › ESEWA › Line under the QR: Not set → Olive Table',
+      'Payment QR codes › FONEPAY: FONEPAY → Removed',
+      'Payment QR codes › KHALTI: Not set → Added',
     ]);
   });
 

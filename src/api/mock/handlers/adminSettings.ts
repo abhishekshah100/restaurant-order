@@ -8,6 +8,7 @@ import {
   servicesErrors,
   servicesOf,
   paymentErrors,
+  paymentQrErrors,
   pickupErrors,
   settingsOf,
   cleanTaxId,
@@ -35,6 +36,7 @@ import type {
   BranchSettingsChoices,
   DeliverySettings,
   PaymentChannelSettings,
+  PaymentQr,
   PaymentSettings,
   PickupSettings,
   ServicesSettings,
@@ -82,6 +84,17 @@ function detailsBody(v: unknown): BranchDetails {
 function imageBody(v: unknown): BranchImage {
   const i = obj(v);
   return { src: str(i.src), width: num(i.width), height: num(i.height) };
+}
+
+function paymentQrsBody(v: unknown): PaymentQr[] {
+  return arr(v, 10).map((x) => {
+    const q = obj(x);
+    return {
+      method: str(q.method) as PaymentQr['method'],
+      image: imageBody(q.image),
+      note: str(q.note).trim(),
+    };
+  });
 }
 
 function helpBody(v: unknown): HelpSettings {
@@ -282,6 +295,7 @@ export const updateBranchSettings: Handler = async (ctx, { params, body, headers
     'delivery',
     'pickup',
     'photos',
+    'paymentQrs',
   ]);
   if (keys.length === 0 || keys.some((k) => !known.has(k))) bad();
 
@@ -316,6 +330,11 @@ export const updateBranchSettings: Handler = async (ctx, { params, body, headers
     const payments = paymentsBody(raw.payments);
     if (paymentErrors(payments, choicesOf(next).payments).length > 0) bad();
     apply({ payments });
+  }
+  if (raw.paymentQrs !== undefined) {
+    const paymentQrs = paymentQrsBody(raw.paymentQrs);
+    if (paymentQrErrors(paymentQrs, choicesOf(next).payments.qr).length > 0) bad();
+    apply({ paymentQrs });
   }
   if (raw.delivery !== undefined) {
     const delivery = deliveryBody(raw.delivery);

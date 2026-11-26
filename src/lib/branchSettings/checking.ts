@@ -1,10 +1,17 @@
-import type { DeliveryZone, OpeningSchedule, Session, TaxIdKey } from '@/types/branch';
+import type {
+  AtTableMethodKey,
+  DeliveryZone,
+  OpeningSchedule,
+  Session,
+  TaxIdKey,
+} from '@/types/branch';
 import { WEEKDAYS } from '@/types/branch';
 import type {
   BranchDetails,
   DeliverySettings,
   ServicesSettings,
   PaymentChoices,
+  PaymentQr,
   PaymentSettings,
   PickupSettings,
   TaxSettings,
@@ -225,6 +232,24 @@ export function paymentErrors(p: PaymentSettings, choices: PaymentChoices): Sett
   if (p.atTable.length === 0) errors.add('noAtTable');
   if (p.atTable.some((m) => !atTable.has(m)) || new Set(p.atTable).size !== p.atTable.length) {
     errors.add('unknownMethod');
+  }
+  return [...errors];
+}
+
+/**
+ * Payment QR codes: each for a way to pay staff that takes one, once, with a short line under it
+ * (the picture is the server's to check).
+ */
+export function paymentQrErrors(
+  qrs: readonly PaymentQr[],
+  methods: readonly AtTableMethodKey[],
+): SettingsError[] {
+  const errors = new Set<SettingsError>();
+  const seen = new Set<string>();
+  for (const qr of qrs) {
+    if (!methods.includes(qr.method) || seen.has(qr.method)) errors.add('qrMethod');
+    seen.add(qr.method);
+    if (qr.note.trim().length > LIMITS.qrNote) errors.add('qrNote');
   }
   return [...errors];
 }

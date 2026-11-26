@@ -157,6 +157,16 @@ export interface PhotoSettings {
   deleteProofsAfterDays: number | null;
 }
 
+/**
+ * Settings › Payment QR codes: the branch's QR for a way to pay staff by scanning, one a method,
+ * with a line under it (who it pays; empty: none).
+ */
+export interface PaymentQr {
+  method: AtTableMethodKey;
+  image: BranchImage;
+  note: string;
+}
+
 export interface BranchSettings {
   details: BranchDetails;
   photos: PhotoSettings;
@@ -165,6 +175,7 @@ export interface BranchSettings {
   hours: OpeningSchedule;
   tax: TaxSettings;
   payments: PaymentSettings;
+  paymentQrs: PaymentQr[];
   delivery: DeliverySettings;
   pickup: PickupSettings;
 }
@@ -178,6 +189,8 @@ export interface PaymentChoices {
   takeaway: PaymentOption<CheckoutMethodKey>[];
   delivery: PaymentOption<CheckoutMethodKey>[];
   atTable: AtTableMethodKey[];
+  /** The ways to pay staff that can have a QR (Settings › Payment QR codes). */
+  qr: AtTableMethodKey[];
 }
 
 /** What the settings pages may choose from. */

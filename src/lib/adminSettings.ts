@@ -24,6 +24,7 @@ export type SettingsSectionId =
   | 'floorPlan'
   | 'tax'
   | 'payments'
+  | 'paymentQrs'
   | 'offers'
   | 'services'
   | 'delivery'
@@ -99,6 +100,7 @@ const SETTINGS_GROUPS: readonly SettingsGroup[] = [
         pages: [
           { id: 'tax', href: settingsPath('tax'), needs: MANAGE },
           { id: 'payments', href: settingsPath('payments'), needs: MANAGE },
+          { id: 'paymentQrs', href: settingsPath('payment-qr'), needs: MANAGE },
           // How long proof photos are kept: the restaurant's, so the owner's.
           { id: 'photos', href: settingsPath('photos'), needs: 'branches.manage' },
         ],

@@ -13,6 +13,7 @@ import type {
 } from '@/types/branchSettings';
 import { isMasterValue } from '@/config/masters';
 import { REGION_PRESETS } from '@/config/regions';
+import { QR_METHODS } from '@/lib/payments';
 
 /* ---------- Reading ---------- */
 
@@ -120,6 +121,11 @@ export function settingsOf(branch: Branch): BranchSettings {
     hours: structuredClone(branch.schedule),
     tax: taxOf(branch),
     payments: paymentsOf(branch),
+    paymentQrs: (branch.payments.qrCodes ?? []).map((q) => ({
+      method: q.method,
+      image: { ...q.image },
+      note: q.note ?? '',
+    })),
     delivery: deliveryOf(branch),
     pickup: pickupOf(branch),
   };
@@ -139,5 +145,6 @@ export function paymentChoicesFor(country: Branch['country']): PaymentChoices {
     takeaway: plain(payments.takeaway),
     delivery: plain(payments.delivery),
     atTable: [...payments.atTable],
+    qr: payments.atTable.filter((m) => QR_METHODS.includes(m)),
   };
 }

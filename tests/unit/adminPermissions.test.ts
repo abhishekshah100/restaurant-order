@@ -80,7 +80,7 @@ describe('settingsFor', () => {
     ]);
   });
 
-  it('groups 15 pages into 8 sections, each opening on its first page staff may open', () => {
+  it('groups 16 pages into 8 sections, each opening on its first page staff may open', () => {
     const all = settingsFor(() => true, true).flatMap((g) => g.topics);
     expect(all.map((tp) => tp.id)).toEqual([
       'info',
@@ -92,11 +92,12 @@ describe('settingsFor', () => {
       'team',
       'branches',
     ]);
-    expect(all.flatMap((tp) => tp.pages)).toHaveLength(15);
+    expect(all.flatMap((tp) => tp.pages)).toHaveLength(16);
     // Proof photos: billing's, for the owner only (how long they're kept is the restaurant's).
     expect(all.find((tp) => tp.id === 'billing')?.pages.map((p) => [p.id, p.needs])).toEqual([
       ['tax', 'branch.settings.manage'],
       ['payments', 'branch.settings.manage'],
+      ['paymentQrs', 'branch.settings.manage'],
       ['photos', 'branches.manage'],
     ]);
     expect(all.find((tp) => tp.id === 'ordering')?.href).toBe(settingsPath('services'));

@@ -8,6 +8,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { CollectChoice } from './CollectFields';
 import { AmountInput } from './PaymentFields';
 import { ProofPicker } from './ProofPicker';
+import { ShowQrButton } from './PaymentQrView';
 import { methodIcon, usePaymentText } from './usePaymentText';
 import styles from './PaymentDialogs.module.css';
 
@@ -93,6 +94,10 @@ export function PaymentPartsFields({ choice }: { choice: CollectChoice }) {
                   compact
                 />
               )}
+              <ShowQrButton
+                method={row.method}
+                amount={isRest ? Math.max(choice.rest, 0) : (rowAmount(row.amount) ?? 0)}
+              />
               {takesProof(row.method) && (
                 <ProofPicker
                   id={`${id}-proofs`}

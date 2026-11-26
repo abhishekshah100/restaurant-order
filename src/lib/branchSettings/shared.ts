@@ -25,6 +25,8 @@ export const LIMITS = {
   etaMinutes: 240,
   prepMinutes: 180,
   distanceKm: 100,
+  /** The line under a payment QR (who it pays). */
+  qrNote: 80,
 } as const;
 
 /** Minutes between pickup slots staff can choose. */
@@ -47,6 +49,9 @@ export type SettingsError =
   | 'orderPrefix'
   | 'orderStart'
   | 'image'
+  | 'qrMethod'
+  | 'qrImage'
+  | 'qrNote'
   | 'wifiPasswordLong'
   | 'instagramUrl'
   | 'facebookUrl'

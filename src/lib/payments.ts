@@ -1,6 +1,6 @@
 import { PAYMENT_METHOD_CODES, PAYMENT_METHOD_MASTER } from '@/config/masters';
 import type { IconName } from '@/components/ui';
-import type { PaymentMethodId } from '@/types/branch';
+import type { AtTableMethodKey, PaymentMethodId, PaymentQrCode } from '@/types/branch';
 import type { PaymentMethod } from '@/types/order';
 
 /**
@@ -78,4 +78,26 @@ export function onlineMethod<T extends { id: PaymentMethodId }>(
   const online = options.filter((o) => PAYMENT_METHODS[o.id].settlement === 'online');
   const method = pickMethod(online, chosen);
   return { kind: approvalKind(method), method };
+}
+
+/**
+ * The ways to pay staff by scanning a QR the branch uploads (Settings › Payment QR codes; the
+ * backend's QR_METHODS).
+ */
+export const QR_METHODS: readonly AtTableMethodKey[] = ['upi', 'esewa', 'khalti', 'fonepay'];
+
+/** Wallets a Fonepay QR also takes (it's Nepal's shared QR: eSewa, Khalti and bank apps scan it). */
+const FONEPAY_TAKES: readonly AtTableMethodKey[] = ['esewa', 'khalti'];
+
+/**
+ * The QR to show for a way to pay: the branch's own for it, else (eSewa, Khalti) its Fonepay QR,
+ * which those wallets scan too. Undefined: none to show.
+ */
+export function qrFor(
+  method: AtTableMethodKey,
+  qrCodes: readonly PaymentQrCode[] | undefined,
+): PaymentQrCode | undefined {
+  const own = qrCodes?.find((q) => q.method === method);
+  if (own || !FONEPAY_TAKES.includes(method)) return own;
+  return qrCodes?.find((q) => q.method === 'fonepay');
 }

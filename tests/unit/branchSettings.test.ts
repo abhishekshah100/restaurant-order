@@ -11,6 +11,7 @@ import {
   withRegion,
   withServices,
   paymentErrors,
+  paymentQrErrors,
   paymentsOf,
   pickupErrors,
   settingsOf,
@@ -25,6 +26,7 @@ import {
   isSocialUrl,
   withHttps,
 } from '@/lib/branchSettings';
+import { qrFor } from '@/lib/payments';
 import { calculateBill } from '@/lib/pricing';
 import type { Branch, OpeningSchedule, Session } from '@/types/branch';
 import { WEEKDAYS } from '@/types/branch';
@@ -481,6 +483,49 @@ describe('delivery zones and pickup', () => {
   });
 });
 
+describe('payment QR codes', () => {
+  const image = { src: 'https://media.example/qr.png', width: 1024, height: 1024 };
+
+  it('offers a QR for the ways to pay staff that are scanned, and none before one is uploaded', () => {
+    expect(paymentChoicesFor('IN').qr).toEqual(['upi']);
+    expect(paymentChoicesFor('NP').qr).toEqual(['esewa', 'khalti', 'fonepay']);
+    expect(settingsOf(nepal).paymentQrs).toEqual([]);
+  });
+
+  it('takes one QR a method, for a method the branch can take, with a short line under it', () => {
+    const qr = (method: 'esewa' | 'fonepay' | 'upi' | 'card', note = '') => ({
+      method,
+      image,
+      note,
+    });
+    const methods = paymentChoicesFor('NP').qr;
+    expect(paymentQrErrors([qr('esewa'), qr('fonepay', 'Olive Table')], methods)).toEqual([]);
+    expect(paymentQrErrors([qr('esewa'), qr('esewa')], methods)).toEqual(['qrMethod']);
+    expect(paymentQrErrors([qr('upi'), qr('card')], methods)).toEqual(['qrMethod']);
+    expect(paymentQrErrors([qr('fonepay', 'x'.repeat(81))], methods)).toEqual(['qrNote']);
+  });
+
+  it("shows a wallet's own QR, else the Fonepay QR (which eSewa and Khalti scan), never for cash", () => {
+    const fonepay = { method: 'fonepay' as const, image };
+    const esewa = { method: 'esewa' as const, image, note: 'Olive Table' };
+    expect(qrFor('esewa', [fonepay, esewa])).toBe(esewa);
+    expect(qrFor('khalti', [fonepay, esewa])).toBe(fonepay);
+    expect(qrFor('fonepay', [esewa])).toBeUndefined();
+    expect(qrFor('upi', [fonepay])).toBeUndefined();
+    expect(qrFor('cash', [fonepay])).toBeUndefined();
+    expect(qrFor('esewa', undefined)).toBeUndefined();
+  });
+
+  it('keeps the QR codes when the payment methods are saved', () => {
+    const withQr = {
+      ...nepal,
+      payments: { ...nepal.payments, qrCodes: [{ method: 'esewa' as const, image }] },
+    };
+    const saved = withPayments(withQr, paymentsOf(withQr), paymentChoicesFor('NP'));
+    expect(saved.payments.qrCodes).toEqual([{ method: 'esewa', image }]);
+  });
+});
+
 it('reads every section off a branch, and the branch data carries only its week', () => {
   const settings = settingsOf(india);
   expect(Object.keys(settings)).toEqual([
@@ -491,6 +536,7 @@ it('reads every section off a branch, and the branch data carries only its week'
     'hours',
     'tax',
     'payments',
+    'paymentQrs',
     'delivery',
     'pickup',
   ]);

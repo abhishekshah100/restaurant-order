@@ -222,6 +222,7 @@ export function withPayments(branch: Branch, p: PaymentSettings, choices: Paymen
   return {
     ...branch,
     payments: {
+      ...branch.payments,
       checkout: optionsFor(p.checkout, choices.checkout),
       bill: optionsFor(p.bill, choices.bill),
       atTable: [...p.atTable],
@@ -289,6 +290,19 @@ export function applySettings(
   if (patch.hours) next = withHours(next, patch.hours);
   if (patch.tax) next = withTax(next, patch.tax);
   if (patch.payments) next = withPayments(next, patch.payments, choices.payments);
+  if (patch.paymentQrs) {
+    next = {
+      ...next,
+      payments: {
+        ...next.payments,
+        qrCodes: patch.paymentQrs.map(({ method, image, note }) => ({
+          method,
+          image: { ...image },
+          ...(note ? { note } : {}),
+        })),
+      },
+    };
+  }
   if (patch.delivery) next = withDelivery(next, patch.delivery);
   if (patch.pickup) next = withPickup(next, patch.pickup);
   if (patch.photos) next = { ...next, deleteProofsAfterDays: patch.photos.deleteProofsAfterDays };

@@ -380,7 +380,8 @@
         "tax": "Tax & bill",
         "payments": "Payment methods",
         "delivery": "Delivery",
-        "pickup": "Takeaway"
+        "pickup": "Takeaway",
+        "paymentQrs": "Payment QR codes"
       },
       "fields": {
         "name": "Name",
@@ -441,7 +442,9 @@
         "etaMinutes": "Delivery time",
         "areas": "Areas",
         "asap": "As soon as possible",
-        "slotMinutes": "Pick-up time slot"
+        "slotMinutes": "Pick-up time slot",
+        "note": "Line under the QR",
+        "method": "Way to pay"
       },
       "on": "On",
       "off": "Off",
@@ -553,6 +556,7 @@
       "openingHours": "Opening hours · Settings · Admin",
       "tax": "Tax & service charge · Settings · Admin",
       "paymentMethods": "Payment methods · Settings · Admin",
+      "paymentQrs": "Payment QR codes · Settings · Admin",
       "deliveryZones": "Delivery zones · Settings · Admin",
       "pickup": "Pickup · Settings · Admin",
       "branches": "Branches · Settings · Admin",
@@ -4388,6 +4392,15 @@
       "loadFailed": "Couldn't load this photo.",
       "removed": "Photo deleted after 90 days (proof photos aren't kept longer)."
     },
+    "qr": {
+      "show": "Show QR",
+      "showFor": "Show {method} QR",
+      "title": "Scan to pay with {method}",
+      "amount": "Amount to pay",
+      "fonepay": "Scan with eSewa, Khalti or any bank app.",
+      "close": "Done",
+      "alt": "{method} QR code"
+    },
     "refund": {
       "title": "Refund order #{order}",
       "subtitle": "{name} · paid {paid}",
@@ -4581,6 +4594,7 @@
       "delivery": "Delivery",
       "tax": "Tax & service charge",
       "payments": "Payment methods",
+      "paymentQrs": "Payment QR codes",
       "staff": "Staff",
       "roles": "Roles & permissions",
       "branches": "Branches",
@@ -4632,6 +4646,10 @@
         "title": "Payment methods",
         "description": "How guests pay at checkout, on their bill, for takeaway and delivery.",
         "summary": "{count} at checkout · {bill} on the bill"
+      },
+      "paymentQrs": {
+        "title": "Payment QR codes",
+        "description": "The QR codes guests scan to pay by eSewa, Fonepay, UPI and more, shown while staff collect."
       },
       "offers": {
         "title": "Offers",
@@ -4909,7 +4927,10 @@
       "specialDates": "Give each special date a real start and end date: the end on or after the start, up to 62 days.",
       "specialOverlap": "Special dates can't overlap.",
       "tooManySpecialDays": "Keep it to 50 special dates.",
-      "specialLabel": "Keep each special date's name to 40 characters."
+      "specialLabel": "Keep each special date's name to 40 characters.",
+      "qrMethod": "Each QR must be for a way to pay this branch takes at the table, one each.",
+      "qrImage": "This QR image can't be used. Upload it again.",
+      "qrNote": "Keep the line under the QR to 80 characters."
     },
     "help": {
       "subtitle": "What guests see on the Help page. Anything left empty isn't shown to them.",
@@ -5139,6 +5160,20 @@
       "fastestFor": "Mark {method} as fastest",
       "up": "Move {method} up",
       "down": "Move {method} down"
+    },
+    "paymentQrs": {
+      "subtitle": "Upload this branch's QR code for each way guests pay by scanning. Staff show it, with the amount, while they collect.",
+      "hint": "A screenshot of the QR from the merchant app works best. It's kept sharp so it scans.",
+      "none": "No QR yet",
+      "usesFonepay": "No QR of its own: staff show the Fonepay QR, which {method} also scans.",
+      "upload": "Upload QR",
+      "replace": "Replace",
+      "remove": "Remove",
+      "note": "Line under the QR",
+      "notePlaceholder": "e.g. Olive Table Pvt Ltd · 98XXXXXXXX",
+      "alt": "{method} QR code",
+      "noMethods": "This branch takes no QR payments at the table. Turn on eSewa, Khalti, Fonepay or UPI under Payment methods first.",
+      "fonepayTip": "Tip: one Fonepay QR also takes eSewa, Khalti and bank apps. Upload just that one if it's all you use."
     },
     "delivery": {
       "subtitle": "Where this branch delivers and what it costs. Guests pick their area at checkout.",

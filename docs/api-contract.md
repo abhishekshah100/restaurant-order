@@ -854,6 +854,14 @@ Replaces the sections sent, each whole; the others stay.
     (`inventory.wastage` to take; `inventory.view` or `.wastage` to see), sent as `proofs` (up to
     five keys) with `POST …/inventory/wastage` and listed on the ledger's wastage rows. Each day's
     deletions are one `proofs.deleted` entry (`{ count, days }`, by the system) in the audit log.
+  - `paymentQrs` (Settings › Payment QR codes): `[{ method, image: { src, width, height }, note }]`,
+    one for each way to pay staff by scanning that the branch's country offers
+    (`choices.payments.qr`: `upi` in India; `esewa`, `khalti`, `fonepay` in Nepal), at most one a
+    method; `image` uploaded first with `POST …/settings/image` and `purpose: 'qr'` (kept as a
+    sharp PNG, 1024 px, server limit 500 kB); `note` (who it pays) up to 80 characters, trimmed.
+    Errors name `qrMethod`, `qrImage` or `qrNote`. Moving the branch to another country drops the
+    QR codes it doesn't take. Guests' and staff screens read them as `payments.qrCodes` in
+    `GET /branches/:id/config` (only `atTable` methods; `note` left out when empty).
 
 ### Uploading pictures
 

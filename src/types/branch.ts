@@ -250,6 +250,14 @@ export interface BranchImage {
   height: number;
 }
 
+/** A branch's QR for a way to pay staff by scanning (eSewa, Fonepay, UPI…). */
+export interface PaymentQrCode {
+  method: AtTableMethodKey;
+  image: BranchImage;
+  /** Who it pays ("Olive Table Pvt Ltd · 98…"); absent: nothing under it. */
+  note?: string;
+}
+
 /** Which ways a branch takes orders (GET /branches); their rules are in its config. */
 export type BranchModeFlags = Record<OrderMode, { enabled: boolean }>;
 
@@ -317,6 +325,11 @@ export interface BranchConfig {
     bill: PaymentOption<BillMethodKey>[];
     /** How the printed bill can be paid at the table, in the order they're named. */
     atTable: AtTableMethodKey[];
+    /**
+     * The branch's QR for ways to pay staff by scanning (Settings › Payment QR codes), shown to
+     * the guest while staff collect; only `atTable` methods. Absent or empty: none uploaded.
+     */
+    qrCodes?: PaymentQrCode[];
   };
   dietary: { marks: DietaryMark[] };
   /** Dine-in, takeaway and delivery: which are offered and their rules. */

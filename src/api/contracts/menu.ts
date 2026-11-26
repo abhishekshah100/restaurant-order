@@ -131,6 +131,11 @@ export interface ImageUploadRequest {
   height: number;
   /** A dish picture's small copy (short side 192 px), kept as its thumbnail. */
   thumb?: { dataUrl: string; width: number; height: number };
+  /**
+   * POST …/settings/image only: what the picture is for, the branch photo (the default) or a
+   * payment QR (Settings › Payment QR codes; kept sharp so it scans).
+   */
+  purpose?: 'branch' | 'qr';
 }
 
 export interface ImageUploadResponse {

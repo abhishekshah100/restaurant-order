@@ -27,6 +27,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { AmountInput, RadioTiles, SumRows, parseAmount } from './PaymentFields';
 import { methodIcon, usePaymentText } from './usePaymentText';
 import { PaymentPartsFields } from './PaymentPartsFields';
+import { ShowQrButton } from './PaymentQrView';
 import { ProofPicker } from './ProofPicker';
 import { useProofPhotos } from './useProofPhotos';
 import styles from './PaymentDialogs.module.css';
@@ -364,6 +365,7 @@ export function CollectFields({
             columns={methods.length >= 4 ? 4 : (Math.max(2, methods.length) as 2 | 3)}
             choices={methods.map((m) => ({ id: m, label: methodName(m), icon: methodIcon(m) }))}
           />
+          <ShowQrButton method={method} amount={toCollect} />
 
           {method === 'cash' && toCollect > 0 && (
             <section className={styles.block}>

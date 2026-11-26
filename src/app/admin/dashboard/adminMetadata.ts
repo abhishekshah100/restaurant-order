@@ -35,6 +35,7 @@ type AdminPage =
   | 'openingHours'
   | 'tax'
   | 'paymentMethods'
+  | 'paymentQrs'
   | 'offers'
   | 'roles'
   | 'staff'

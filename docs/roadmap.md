@@ -142,6 +142,10 @@ Delivery history, by phase:
   photos lost from Render's disk; a booking's deposit photos show on the booking; wastage forms
   take photos (shown in the ledger, kept like proofs); each day's proof deletions are one
   system entry in the audit log.
+- **Payment QR codes (2026-11-26):** each branch uploads its QR for eSewa, Khalti, Fonepay (or
+  UPI in India) under Settings › Payment QR codes, with a line saying who it pays; staff tap
+  "Show … QR" while collecting (orders, tables, split parts, deposits) to show it full screen with
+  the amount. A Fonepay QR stands in for eSewa and Khalti without their own.
 
 ## Next up
 

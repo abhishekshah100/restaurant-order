@@ -11,6 +11,7 @@ import type { Reservation, ReservationRules } from '@/types/admin';
 import type { AtTableMethodKey } from '@/types/branch';
 import { AmountInput, parseAmount } from '../payments/PaymentFields';
 import { ProofPicker } from '../payments/ProofPicker';
+import { ShowQrButton } from '../payments/PaymentQrView';
 import { useProofPhotos } from '../payments/useProofPhotos';
 import { usePaymentText } from '../payments/usePaymentText';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
@@ -134,6 +135,7 @@ export function DepositDialog({
             ))}
           </div>
         </div>
+        <ShowQrButton method={method} amount={amount ?? 0} />
         {method !== 'cash' && (
           <ProofPicker
             id="deposit-proofs"

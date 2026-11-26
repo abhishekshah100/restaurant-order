@@ -10,7 +10,31 @@ import type {
   SetBranchStatusRequest,
   UpdateBranchSettingsRequest,
 } from '../contracts';
+import { QR_METHODS } from '@/lib/payments';
 import { bearer, seg } from './shared';
+
+/**
+ * Settings as an API from before payment QR codes sends them (no `paymentQrs`, no QR choices):
+ * none saved, and the ways to pay staff that are scanned offered.
+ */
+function withPaymentQrs(res: BranchSettingsResponse): BranchSettingsResponse {
+  const { settings, choices } = res as {
+    settings: Partial<BranchSettingsResponse['settings']>;
+    choices: { payments: Partial<BranchSettingsResponse['choices']['payments']> };
+  };
+  const atTable = choices.payments.atTable ?? [];
+  return {
+    ...res,
+    settings: { ...res.settings, paymentQrs: settings.paymentQrs ?? [] },
+    choices: {
+      ...res.choices,
+      payments: {
+        ...res.choices.payments,
+        qr: choices.payments.qr ?? atTable.filter((m) => QR_METHODS.includes(m)),
+      },
+    },
+  };
+}
 
 /** Branches, their status and settings, modules and offers. */
 export const branchesApi = {
@@ -22,13 +46,15 @@ export const branchesApi = {
   removeBranch: (token: string, branchId: string) =>
     apiDelete(`admin/branches/${seg(branchId)}`, bearer(token)),
   branchSettings: (token: string, branchId: string) =>
-    apiGet<BranchSettingsResponse>(`admin/branches/${seg(branchId)}/settings`, bearer(token)),
+    apiGet<BranchSettingsResponse>(`admin/branches/${seg(branchId)}/settings`, bearer(token)).then(
+      withPaymentQrs,
+    ),
   updateBranchSettings: (token: string, branchId: string, body: UpdateBranchSettingsRequest) =>
     apiPatch<BranchSettingsResponse>(
       `admin/branches/${seg(branchId)}/settings`,
       body,
       bearer(token),
-    ),
+    ).then(withPaymentQrs),
   features: (token: string, branchId: string) =>
     apiGet<FeaturesResponse>(`admin/branches/${seg(branchId)}/features`, bearer(token)),
   setFeatures: (token: string, branchId: string, body: { inventory: boolean }) =>

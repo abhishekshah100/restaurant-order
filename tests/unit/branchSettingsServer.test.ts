@@ -198,6 +198,25 @@ describe('proof photos (mock)', () => {
   });
 });
 
+describe('payment QR codes (mock)', () => {
+  const image = { src: 'data:image/png;base64,iVBORw0KGgo=', width: 1024, height: 1024 };
+
+  it('saves one for UPI, staff screens get it, and refuses a method the branch has no QR for', async () => {
+    expect((await settings()).choices.payments.qr).toEqual(['upi']);
+    const res = await save({ paymentQrs: [{ method: 'upi', image, note: ' Olive Table ' }] });
+    expect(res.status).toBe(200);
+    expect((res.body as BranchSettingsResponse).settings.paymentQrs).toEqual([
+      { method: 'upi', image, note: 'Olive Table' },
+    ]);
+    expect((await guestBranch()).payments.qrCodes).toEqual([
+      { method: 'upi', image, note: 'Olive Table' },
+    ]);
+    expect((await save({ paymentQrs: [{ method: 'esewa', image, note: '' }] })).status).toBe(400);
+    expect((await save({ paymentQrs: [] })).status).toBe(200);
+    expect((await guestBranch()).payments.qrCodes).toEqual([]);
+  });
+});
+
 describe('region and services on the mock server', () => {
   it('moves a branch to Nepal: guests get its rules, the choices follow, prices keep numbers', async () => {
     const { settings: s } = await settings();

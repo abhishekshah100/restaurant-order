@@ -1,0 +1,65 @@
+.show {
+  justify-self: start;
+}
+
+/* Full screen, above the collect dialog, on white so the code scans. */
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-lightbox);
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  background: var(--white);
+  color: var(--ink);
+  animation: fade var(--dur-base) ease-out;
+}
+
+.panel {
+  width: min(440px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font: 600 22px/28px var(--f-display);
+}
+
+.code {
+  display: block;
+  width: min(420px, 80vw, calc(100dvh - 300px));
+  height: auto;
+  min-width: 200px;
+  object-fit: contain;
+}
+
+.note {
+  margin: 0;
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+
+.amount {
+  margin: 4px 0 8px;
+  display: grid;
+  gap: 2px;
+}
+
+.amount span {
+  font: var(--font-small);
+  color: var(--ink-2);
+}
+
+.amount strong {
+  font: 700 34px/40px var(--f-display);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

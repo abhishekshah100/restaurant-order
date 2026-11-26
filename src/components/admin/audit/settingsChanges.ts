@@ -49,21 +49,22 @@ const spaced = (code: string) => {
 };
 
 const MONEY = new Set(['fee', 'freeAbove', 'minOrder']);
-const METHODS = new Set(['methods', 'atTable', 'recommended']);
+const METHODS = new Set(['methods', 'atTable', 'recommended', 'method']);
 
 /** A session list as hours: "11:00–15:00, 18:00–23:00", or Closed. */
 const isSessions = (v: unknown): v is { opens: string; closes: string; label?: string }[] =>
   Array.isArray(v) && v.every((s) => isPlain(s) && typeof s.opens === 'string');
 
-/** What names an item of a list (a zone, a tax, a special day, a question). */
+/** What names an item of a list (a zone, a tax, a special day, a question, a payment QR). */
 function itemKey(item: unknown, index: number): string {
   if (!isPlain(item)) return String(index);
-  const key = item.id ?? item.name ?? item.question ?? item.from;
+  const key = item.id ?? item.name ?? item.question ?? item.from ?? item.method;
   return typeof key === 'string' ? key : String(index);
 }
 
-function itemName(item: unknown, index: number): string {
+function itemName(item: unknown, index: number, method: (id: string) => string): string {
   if (!isPlain(item)) return String(index + 1);
+  if (typeof item.method === 'string') return method(item.method);
   if (typeof item.name === 'string' && item.name) return item.name;
   if (typeof item.label === 'string' && item.label) return item.label;
   if (typeof item.question === 'string' && item.question) return item.question;
@@ -139,7 +140,7 @@ export function settingsChanges(
       for (const k of keys) {
         const i = was.findIndex((x, n) => itemKey(x, n) === k);
         const j = is.findIndex((x, n) => itemKey(x, n) === k);
-        const name = j >= 0 ? itemName(is[j], j) : itemName(was[i], i);
+        const name = j >= 0 ? itemName(is[j], j, words.method) : itemName(was[i], i, words.method);
         if (i < 0)
           out.push({ label: label([...path, name]), before: words.empty, after: words.added });
         else if (j < 0) {

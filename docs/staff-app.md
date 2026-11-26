@@ -712,6 +712,10 @@ while there's more under the fold and it hasn't been scrolled (tap: scrolls down
 - **How it was paid:** the branch's ways to pay staff, cash first. For cash, staff type what the
   guest handed over (or tap Exact) and see the change; the change can be kept as a tip ("Keep ₹20
   as tip"). UPI and card take optional proof photos (`ProofPicker`).
+- **Show QR** (`ShowQrButton`): a way paid by scanning (eSewa, Khalti, Fonepay, UPI) with a QR in
+  Settings › Payment QR codes shows "Show eSewa QR"; it opens the QR full screen on white with the
+  amount, for the guest to scan. eSewa and Khalti without their own show the Fonepay QR. Also on
+  each split row (its amount) and a booking's deposit.
 - **Split payment** (`PaymentPartsFields`): part cash, part UPI or card; the last row takes the
   remaining balance so they always add up.
 - **Leave part of the bill** (waive, `LeaveCard`): an amount, or a round amount to take, with why (`noChange`,

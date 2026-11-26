@@ -2,7 +2,7 @@ import { ApiError } from '@/api/client';
 
 /*
  * Every picture uploaded goes through prepareImage: dish photos (and their thumbnails), the branch
- * photo, payment, deposit and supplier-invoice photos. In the browser, as the app is a static
+ * photo, payment QR codes, payment, deposit and supplier-invoice photos. In the browser, as the app is a static
  * site and nothing resizes pictures later:
  *
  * 1. checked before it's opened: a photo type (JPEG, PNG, WebP; HEIC where the browser reads it),
@@ -29,7 +29,7 @@ export const MAX_PIXELS = 40_000_000;
 /** What the file pickers offer. */
 export const IMAGE_ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
 
-export type ImagePurpose = 'dish' | 'branch' | 'proof';
+export type ImagePurpose = 'dish' | 'branch' | 'qr' | 'proof';
 
 interface Preset {
   /** The longer side, at most. */
@@ -44,6 +44,11 @@ export const IMAGE_PRESETS: Record<ImagePurpose, Preset> = {
   dish: { maxSide: 1080, maxBytes: 450 * KB },
   /** The branch picker and outlet cards (server: 300 kB). */
   branch: { maxSide: 640, maxBytes: 280 * KB },
+  /**
+   * A payment QR (server: 500 kB): PNG, lossless, so its squares stay sharp and it scans; a
+   * photographed one too heavy as PNG is compressed like a photo.
+   */
+  qr: { maxSide: 1024, maxBytes: 450 * KB },
   /** Proof of payment or a supplier's invoice: the small print must read (server: 1 MB). */
   proof: { maxSide: 1600, maxBytes: 950 * KB },
 };
@@ -215,8 +220,16 @@ export const dataUrlBytes = (dataUrl: string): number => {
   return Math.floor((base64.length * 3) / 4) - padding;
 };
 
-/** The bitmap scaled by `scale` (never enlarged) and encoded at `quality`. */
-function draw(bitmap: ImageBitmap, scale: number, quality: number): PreparedImage {
+/**
+ * The bitmap scaled by `scale` (never enlarged) and encoded at `quality` (WebP, or JPEG where the
+ * browser can't write it), or as `type`.
+ */
+function draw(
+  bitmap: ImageBitmap,
+  scale: number,
+  quality: number,
+  type = writesWebp() ? 'image/webp' : 'image/jpeg',
+): PreparedImage {
   const s = Math.min(1, scale);
   const width = Math.max(1, Math.round(bitmap.width * s));
   const height = Math.max(1, Math.round(bitmap.height * s));
@@ -225,9 +238,9 @@ function draw(bitmap: ImageBitmap, scale: number, quality: number): PreparedImag
   canvas.height = height;
   const context = canvas.getContext('2d');
   if (!context) throw new ImageError('unreadable');
-  const type = writesWebp() ? 'image/webp' : 'image/jpeg';
-  // JPEG has no transparency: what was transparent is white, not black.
-  if (type === 'image/jpeg') {
+  // JPEG has no transparency, and a QR on a see-through background won't scan on a dark screen:
+  // what was transparent is white.
+  if (type !== 'image/webp') {
     context.fillStyle = '#fff';
     context.fillRect(0, 0, width, height);
   }
@@ -288,8 +301,13 @@ export async function prepareImage(
   try {
     if (bitmap.width * bitmap.height > MAX_PIXELS) throw new ImageError('tooManyPixels');
     const { maxSide, maxBytes } = IMAGE_PRESETS[purpose];
+    const fit = maxSide / Math.max(bitmap.width, bitmap.height);
+    if (purpose === 'qr') {
+      const png = draw(bitmap, fit, 1, 'image/png');
+      if (dataUrlBytes(png.dataUrl) <= maxBytes) return png;
+    }
     const encode = (scale: number, quality: number) => draw(bitmap, scale, quality);
-    const image = fitWithin(encode, maxSide / Math.max(bitmap.width, bitmap.height), maxBytes);
+    const image = fitWithin(encode, fit, maxBytes);
     if (purpose !== 'dish') return image;
     const thumb = fitWithin(
       encode,
