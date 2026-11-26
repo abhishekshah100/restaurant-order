@@ -315,6 +315,13 @@ export interface BranchSummary {
  */
 export interface BranchConfig {
   id: string;
+  /**
+   * Guests read the menu but don't order from it: the restaurant's package is the QR menu only
+   * (restaurant-backend › ADR-051). Absent: they order as usual.
+   */
+  menuOnly?: boolean;
+  /** Suspended by the platform (with `menuOnly`): no ordering for now. */
+  suspended?: boolean;
   currency: CurrencyConfig;
   mobile: MobileRules;
   tax: TaxConfig;

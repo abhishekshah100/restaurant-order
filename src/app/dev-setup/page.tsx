@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { getContent } from '@/api/server';
-import { DevSetup } from '@/components/devSetup/DevSetup';
+import { PlatformConsole } from '@/components/platform/PlatformConsole';
 
 /*
- * /dev-setup/: the developer setup page. Linked from nowhere and kept out of search; what guards
- * it is the developer key the server checks on every request (restaurant-backend › ADR-047).
+ * /dev-setup/: the platform console opened on its Dev setup tab (old links keep working). Linked
+ * from nowhere and kept out of search; what guards it is the platform owner's key the server
+ * checks on every request (restaurant-backend › ADR-047, ADR-051).
  */
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,5 +17,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function DevSetupPage() {
-  return <DevSetup />;
+  return <PlatformConsole initialTab="devSetup" />;
 }

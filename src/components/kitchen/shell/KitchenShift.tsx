@@ -15,6 +15,7 @@ import { cx } from '@/lib/cx';
 import { spanLabel } from '@/lib/rota';
 import barStyles from './KitchenBar.module.css';
 import styles from './KitchenShift.module.css';
+import { hasFeature } from '@/lib/adminPlan';
 
 /**
  * The kitchen bar's shift button: "On shift" (green) once shifted in, else today's planned shift
@@ -25,7 +26,7 @@ export function KitchenShift() {
   const t = useContent('kitchen');
   const { branch, clock, can } = useAdminWorkspace();
   const { showToast } = useToast();
-  const works = isBackendEnabled() && can('kitchen.update');
+  const works = isBackendEnabled() && hasFeature(branch, 'shifts') && can('kitchen.update');
   const shift = useCurrentShift(branch.id, works);
   const rota = useMyRota(branch.id, works);
   const change = useShiftClock();

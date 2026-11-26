@@ -5,6 +5,7 @@ import { useBranch, useContent } from '@/api/hooks';
 import { Chip, Input, OptionGroup } from '@/components/ui';
 import { DeliveryAreaSelect } from '@/components/start/DeliveryAreaSelect';
 import { ADDRESS_FIELD_MAX, ADDRESS_LABELS, addressText, type AddressError } from '@/lib/addresses';
+import type { Branch } from '@/types/branch';
 import type { AddressLabel, DeliveryAddress } from '@/types/order';
 import styles from './FulfilmentFields.module.css';
 
@@ -27,15 +28,25 @@ const NEW = 'new';
  * (from the branch's zones, which sets the fee), a landmark, instructions for the rider and a
  * label (Home, Work, Other).
  */
-export function AddressForm({
+export function AddressForm(props: AddressFormProps) {
+  return <AddressFields {...props} branch={useBranch()} />;
+}
+
+/** The address form for a branch given (staff taking a phone order use the admin's branch). */
+export function AddressFields({
+  branch,
   value,
   onChange,
   saved,
   savedIndex,
   onPickSaved,
   errors,
-}: AddressFormProps) {
-  const branch = useBranch();
+  remembers = true,
+}: AddressFormProps & {
+  branch: Branch;
+  /** The address is kept on this device after the order (a guest's own; not staff's). */
+  remembers?: boolean;
+}) {
   const t = useContent('checkout');
   const set = (patch: Partial<DeliveryAddress>) => onChange({ ...value, ...patch });
 
@@ -138,7 +149,7 @@ export function AddressForm({
                 </Chip>
               ))}
             </div>
-            <p className={styles.note}>{t('details.address.remember')}</p>
+            {remembers && <p className={styles.note}>{t('details.address.remember')}</p>}
           </div>
         </div>
       )}

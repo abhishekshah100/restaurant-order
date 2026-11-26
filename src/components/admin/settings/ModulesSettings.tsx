@@ -5,7 +5,7 @@ import { useContent, useFeatures } from '@/api/hooks';
 import { useSetFeatures } from '@/api/mutations';
 import { useToast } from '@/context/ToastContext';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
-import { SettingsCard, SettingsSkeleton, ToggleRow } from './shared/SettingsEditor';
+import { SettingsCard, SettingsNote, SettingsSkeleton, ToggleRow } from './shared/SettingsEditor';
 import editor from './shared/SettingsEditor.module.css';
 
 /**
@@ -62,6 +62,7 @@ export function ModulesSettings() {
             {t('adminSettings.features.changedAt', { time: clock.dateTime(data.changedAt) })}
           </p>
         )}
+        <SettingsNote>{t('adminSettings.features.followsPlan')}</SettingsNote>
       </SettingsCard>
     </div>
   );

@@ -12,6 +12,22 @@
   flex: none;
   isolation: isolate;
 }
+
+/* No photo of the outlet's own: the brand's colours instead. */
+.heroPlain {
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      color-mix(in srgb, var(--brand) 45%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 90% 80%,
+      color-mix(in srgb, var(--brand-600) 35%, transparent),
+      transparent 55%
+    ),
+    var(--ink);
+}
 .heroImg {
   position: absolute;
   inset: 0;

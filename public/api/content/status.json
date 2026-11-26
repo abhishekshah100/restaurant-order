@@ -15,7 +15,9 @@
     "closingSoon": "Last orders in {minutes} min — place your order soon.",
     "modeClosed": "{mode} opens again at {time} — you can still browse the menu.",
     "modeClosedTomorrow": "{mode} opens again at {time} tomorrow — you can still browse the menu.",
-    "modeClosedOn": "{mode} opens again on {day} at {time} — you can still browse the menu."
+    "modeClosedOn": "{mode} opens again on {day} at {time} — you can still browse the menu.",
+    "menuOnly": "This is our menu to browse. To order, please ask our staff. Menu by Restova.",
+    "suspended": "Online ordering isn't available right now. You can still browse the menu."
   },
   "closed": {
     "title": "We're closed right now",

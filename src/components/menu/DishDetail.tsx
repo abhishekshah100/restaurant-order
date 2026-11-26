@@ -55,7 +55,8 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
   const hero = dish.image;
   const unavailable = unavailableLabel(t, dish);
   // Closed: the menu is read-only, but existing cart lines can still be edited.
-  const closed = !useOrderingAvailability().canAdd && !editing;
+  const ordering = useOrderingAvailability();
+  const closed = !ordering.canAdd && !editing;
   const openPhoto = () => setPhotoOpen(true);
 
   const back = () => {
@@ -127,7 +128,13 @@ function DishDetailForm({ dish, editing }: { dish: Dish; editing?: CartLine }) {
               {unavailable
                 ? t('detail.unavailable')
                 : closed
-                  ? t('detail.closedNow')
+                  ? t(
+                      ordering.suspended
+                        ? 'detail.notNow'
+                        : ordering.menuOnly
+                          ? 'detail.askStaff'
+                          : 'detail.closedNow',
+                    )
                   : editing
                     ? t('detail.updateItem')
                     : t('detail.addToCart')}

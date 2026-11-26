@@ -26,6 +26,7 @@ import {
 import { cx } from '@/lib/cx';
 import type { FloorLayout, FloorPlanLayout } from '@/types/admin';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
+import { PlanLimitNote, usePlanRefusal, usePlanRoom } from '../../shell/PlanLimit';
 import { useLeaveGuard } from '../shared/useLeaveGuard';
 import type { AreaDialogTarget } from './AreaDialog';
 import type { TableDialogTarget } from './TableDialog';
@@ -102,6 +103,10 @@ function Editor({ saved }: { saved: FloorPlanLayout }) {
   const dirty = draft !== null && !sameLayout(draft, saved);
   const errors = layoutErrors(layout);
   const totals = layoutTotals(layout);
+  // The package's areas and tables per branch (adminPlan): adding waits at the limit.
+  const areaRoom = usePlanRoom('floors', totals.areas);
+  const tableRoom = usePlanRoom('tables', totals.tables);
+  const refusal = usePlanRefusal();
   const savedTables = new Map(
     saved.floors.flatMap((f) =>
       f.tables.map((tb) => [
@@ -130,7 +135,9 @@ function Editor({ saved }: { saved: FloorPlanLayout }) {
           if (error instanceof ApiError && error.code === 'table_in_use') {
             setInUse(error.body?.tables ?? []);
           } else {
-            showToast(t('adminSettings.floorPlan.save.failed'), { tone: 'error' });
+            showToast(refusal(error) ?? t('adminSettings.floorPlan.save.failed'), {
+              tone: 'error',
+            });
           }
         },
       },
@@ -172,6 +179,7 @@ function Editor({ saved }: { saved: FloorPlanLayout }) {
           <Button
             variant="secondary"
             iconStart="plus"
+            disabled={!areaRoom}
             onClick={() => setAreaDialog({ mode: 'add' })}
           >
             {t('adminSettings.floorPlan.addArea')}
@@ -179,6 +187,7 @@ function Editor({ saved }: { saved: FloorPlanLayout }) {
           {layout.floors.length > 0 && (
             <Button
               iconStart="table"
+              disabled={!tableRoom}
               onClick={() => setTableDialog({ mode: 'add', areaId: layout.floors[0].id })}
             >
               {t('adminSettings.floorPlan.addTables')}
@@ -186,6 +195,8 @@ function Editor({ saved }: { saved: FloorPlanLayout }) {
           )}
         </div>
       </header>
+      <PlanLimitNote limit="floors" used={totals.areas} />
+      <PlanLimitNote limit="tables" used={totals.tables} />
 
       {layout.floors.length === 1 && (
         <p className={styles.note}>

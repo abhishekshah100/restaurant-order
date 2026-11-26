@@ -41,8 +41,8 @@ export function Sidebar({
   onSignOut,
 }: SidebarProps) {
   const t = useContent('common');
-  const { branch, brand, canSwitch, can } = useAdminWorkspace();
-  const pages = navFor(can);
+  const { branch, brand, canSwitch, can, isOff } = useAdminWorkspace();
+  const pages = navFor(can, isOff);
   const home = pages.filter((item) => item.group === 'home');
   const settings = pages.filter((item) => item.group === 'settings');
   const link = (item: AdminNavItem) => (

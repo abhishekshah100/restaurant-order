@@ -26,6 +26,7 @@ import {
 import { cx } from '@/lib/cx';
 import type { Order } from '@/types/order';
 import type { PadTarget } from '../orderPad/OrderPad';
+import { PhoneOrderButton } from '../orderPad/PhoneOrderButton';
 import { HistoryButton } from '../HistoryButton';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import type { OrderDialogView } from './OrderDetailDialog';
@@ -128,7 +129,10 @@ export function OrdersBoard({ routeView }: { routeView?: OrderView }) {
               </Chip>
             ))}
           </div>
-          {history}
+          <div className={styles.rowActions}>
+            <PhoneOrderButton />
+            {history}
+          </div>
         </div>
 
         <section className={styles.panel} aria-label={t(`adminOrders.views.${view}`)}>

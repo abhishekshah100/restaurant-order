@@ -6,6 +6,8 @@ import { brandName } from '@/lib/branchParts';
 import { fileOwner } from '@/lib/fileName';
 import { createClock, type Clock } from '@/lib/clock';
 import { createMoney, type Money } from '@/lib/money';
+import { offFeature } from '@/lib/adminPlan';
+import type { AdminNavId } from '@/lib/adminNav';
 import type { AdminBranch, StaffPermission } from '@/types/admin';
 import type { Branch } from '@/types/branch';
 
@@ -22,6 +24,7 @@ export type WorkspaceBranch = Pick<
   | 'locale'
   | 'permissions'
   | 'features'
+  | 'plan'
   | 'fiscalYears'
 >;
 
@@ -55,6 +58,8 @@ export interface AdminWorkspace {
   canSwitch: boolean;
   /** They may do any of these at the branch (screens and buttons they can't use are hidden). */
   can: Can;
+  /** A page the package leaves out: hidden from the nav. */
+  isOff: (id: AdminNavId) => boolean;
 }
 
 const AdminWorkspaceContext = createContext<AdminWorkspace | null>(null);
@@ -64,13 +69,14 @@ export function AdminWorkspaceProvider({
   region,
   canSwitch,
   children,
-}: Omit<AdminWorkspace, 'brand' | 'filePrefix' | 'money' | 'clock' | 'can'> & {
+}: Omit<AdminWorkspace, 'brand' | 'filePrefix' | 'money' | 'clock' | 'can' | 'isOff'> & {
   children: ReactNode;
 }) {
   const brand = brandName(branch.name);
   useBrandTitle(brand);
-  const value = useMemo(
-    () => ({
+  const value = useMemo(() => {
+    const can = canAt(branch);
+    return {
       branch,
       brand,
       filePrefix: fileOwner(brand, branch.shortName),
@@ -78,10 +84,10 @@ export function AdminWorkspaceProvider({
       canSwitch,
       money: createMoney(region),
       clock: createClock(region),
-      can: canAt(branch),
-    }),
-    [branch, brand, region, canSwitch],
-  );
+      can,
+      isOff: (id: AdminNavId) => offFeature(branch, id) !== undefined,
+    };
+  }, [branch, brand, region, canSwitch]);
   return <AdminWorkspaceContext.Provider value={value}>{children}</AdminWorkspaceContext.Provider>;
 }
 

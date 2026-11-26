@@ -14,6 +14,7 @@ import { menuCounts, menuSections, moveItem, type MenuStatusFilter } from '@/lib
 import type { CategoryId, Dish } from '@/types/menu';
 import { OptionsList } from '../OptionsList';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { PlanLimitNote, usePlanRoom } from '../shell/PlanLimit';
 import { MenuDishRow } from './MenuDishRow';
 import styles from './MenuBoard.module.css';
 
@@ -80,6 +81,8 @@ export function MenuBoard() {
   const [category, setCategory] = useState<CategoryId | 'all'>('all');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState<Open>(null);
+  // The package's dishes per branch (adminPlan): Add dish waits at the limit.
+  const dishRoom = usePlanRoom('dishes');
   /** While reordering a category: its dishes' slugs in the new order. */
   const [order, setOrder] = useState<string[] | null>(null);
   const { showToast } = useToast();
@@ -201,13 +204,20 @@ export function MenuBoard() {
                 >
                   {t('adminMenu.more')}
                 </Button>
-                <Button size="sm" iconStart="plus" onClick={() => setOpen({ kind: 'edit' })}>
+                <Button
+                  size="sm"
+                  iconStart="plus"
+                  disabled={!dishRoom}
+                  onClick={() => setOpen({ kind: 'edit' })}
+                >
                   {t('adminMenu.addDish')}
                 </Button>
               </>
             )}
           </div>
         </div>
+
+        {can('menu.manage') && <PlanLimitNote limit="dishes" />}
 
         {order && (
           <p className={styles.reordering} role="status">

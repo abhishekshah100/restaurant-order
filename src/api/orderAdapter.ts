@@ -86,6 +86,8 @@ export interface BackendOrder {
   pickup?: Order['pickup'];
   delivery?: Omit<NonNullable<Order['delivery']>, 'rider'>;
   customerName: string;
+  /** Staff only: the customer's mobile (national digits) on a takeaway or delivery order. */
+  customerPhone?: string;
   placedBy: 'you' | 'other';
   fromThisSession: boolean;
   source: 'guest' | 'staff';
@@ -330,6 +332,9 @@ function toAppOrder(
     ...(order.pickup ? { pickup: order.pickup } : {}),
     ...(order.delivery ? { delivery: order.delivery } : {}),
     customerName: order.customerName,
+    ...(order.customerPhone ? { customerPhone: order.customerPhone } : {}),
+    // Staff took a takeaway or delivery: the customer phoned it in.
+    ...(order.source === 'staff' && order.mode !== 'dineIn' ? { byPhone: true as const } : {}),
     placedBy: order.placedBy,
     ...(sessionId ? { sessionId } : {}),
     placedAt: order.placedAt,

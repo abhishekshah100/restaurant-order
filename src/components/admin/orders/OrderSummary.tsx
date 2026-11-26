@@ -3,6 +3,7 @@ import { useContent } from '@/api/hooks';
 import { StatusPill, Tag, VegMark } from '@/components/ui';
 import { amountDue } from '@/lib/lifecycle';
 import { orderBill } from '@/lib/orders';
+import { formatMobile } from '@/lib/phone';
 import type { Order, OrderRound } from '@/types/order';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { BillSummary, billRows } from '../../cart/PriceSummary';
@@ -192,7 +193,15 @@ export function OrderSummary({
 /** Where a takeaway or delivery goes: the pickup time, or the address and rider. */
 function Fulfilment({ order }: { order: Order }) {
   const t = useContent('common');
-  const { clock } = useAdminWorkspace();
+  const { clock, region } = useAdminWorkspace();
+  // The customer's number (staff only), to call them or give the rider.
+  const call = order.customerPhone && (
+    <a className={styles.whereNote} href={`tel:${region.mobile.dialCode}${order.customerPhone}`}>
+      {t('adminOrder.customerPhone', {
+        phone: formatMobile(order.customerPhone, region.mobile),
+      })}
+    </a>
+  );
   if (order.mode === 'takeaway' && order.pickup) {
     const time = clock.dateTime(order.pickup.at);
     return (
@@ -203,6 +212,7 @@ function Fulfilment({ order }: { order: Order }) {
             ? t('adminOrder.pickupAsap', { time })
             : t('adminOrder.pickupAt', { time })}
         </span>
+        {call}
       </section>
     );
   }
@@ -212,6 +222,7 @@ function Fulfilment({ order }: { order: Order }) {
       <section className={styles.where} aria-label={t('adminOrder.deliveryTitle')}>
         <span className={styles.whereTitle}>{t('adminOrder.deliveryTitle')}</span>
         <span>{[address.line, address.area].join(', ')}</span>
+        {call}
         {address.landmark && (
           <span className={styles.whereNote}>
             {t('adminOrder.landmark', { landmark: address.landmark })}

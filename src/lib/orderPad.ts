@@ -1,5 +1,9 @@
-import type { OrderLineRequest } from '@/api/contracts';
+import type { OrderLineRequest, PhoneOrderRequest } from '@/api/contracts';
+import type { MobileRules } from '@/types/branch';
 import type { CartLine, LineConfig } from '@/types/cart';
+import type { DeliveryAddress } from '@/types/order';
+import { cleanAddress, validateAddress, type AddressError } from './addresses';
+import { mobileError, type PhoneError } from './phone';
 import type { Dish, Price } from '@/types/menu';
 import { defaultConfig, lineKey, orderLine, unitPrice } from './cartLine';
 import { groupsFor } from './options';
@@ -49,3 +53,93 @@ export function padTotals(lines: PadLines): { items: number; total: Price } {
 
 /** The lines as the server takes them. */
 export const padRequest = (lines: PadLines): OrderLineRequest[] => lines.map(orderLine);
+
+/* ---------- Phone orders ---------- */
+
+/** How a phone order reaches the customer. */
+export type PhoneMode = 'takeaway' | 'delivery';
+
+/** A phone order's details as staff fill them in. */
+export interface PhoneDraft {
+  name: string;
+  /** The mobile number's digits, without the country code. */
+  phone: string;
+  /** The pickup slot chosen (ISO), or null for as soon as possible. */
+  pickupAt: string | null;
+  address: DeliveryAddress;
+  /** Paid now (the payment opens next), or at pickup / cash to the rider. */
+  paidNow: boolean;
+}
+
+export const emptyPhoneDraft = (): PhoneDraft => ({
+  name: '',
+  phone: '',
+  pickupAt: null,
+  address: { line: '', area: '', label: 'home' },
+  paidNow: false,
+});
+
+/** What's missing or wrong before a phone order can be sent (the words live in content). */
+export interface PhoneDraftErrors {
+  name?: 'nameRequired';
+  phone?: PhoneError;
+  line?: AddressError;
+  area?: AddressError;
+  /** Takeaway with no pickup time left today. */
+  pickup?: 'noPickup';
+}
+
+/**
+ * The draft's problems: a name, a mobile number of the branch's country, and for delivery an
+ * address in an area the branch serves; for takeaway, a pickup time (`pickupAt` as it will be
+ * sent: undefined when none is left today).
+ */
+export function phoneDraftErrors(
+  draft: PhoneDraft,
+  mode: PhoneMode,
+  rules: MobileRules,
+  areas: readonly string[],
+  pickupAt: string | null | undefined,
+): PhoneDraftErrors {
+  const phone = mobileError(draft.phone, rules);
+  return {
+    ...(draft.name.trim() === '' ? { name: 'nameRequired' as const } : {}),
+    ...(phone ? { phone } : {}),
+    ...(mode === 'delivery' ? validateAddress(draft.address, areas) : {}),
+    ...(mode === 'takeaway' && pickupAt === undefined ? { pickup: 'noPickup' as const } : {}),
+  };
+}
+
+export const hasErrors = (errors: PhoneDraftErrors) => Object.keys(errors).length > 0;
+
+/**
+ * The pickup time to send: the slot chosen, or as soon as possible when it's on offer, else
+ * the first slot left (undefined: none left today).
+ */
+export function pickupToSend(
+  chosen: string | null,
+  options: { asap: Date | null; slots: readonly Date[] },
+): string | null | undefined {
+  if (chosen !== null && options.slots.some((s) => s.toISOString() === chosen)) return chosen;
+  if (options.asap) return null;
+  return options.slots[0]?.toISOString();
+}
+
+/** POST …/orders/phone's body from the pad. */
+export function phoneRequest(
+  draft: PhoneDraft,
+  mode: PhoneMode,
+  lines: PadLines,
+  extra: { kitchenNote?: string; idempotencyKey: string; pickupAt: string | null },
+): PhoneOrderRequest {
+  return {
+    customer: { name: draft.name.trim(), phone: draft.phone },
+    fulfilment:
+      mode === 'delivery'
+        ? { mode, address: cleanAddress(draft.address) }
+        : { mode, pickupAt: extra.pickupAt },
+    ...(extra.kitchenNote ? { kitchenNote: extra.kitchenNote } : {}),
+    lines: padRequest(lines),
+    idempotencyKey: extra.idempotencyKey,
+  };
+}

@@ -77,6 +77,7 @@ export function OrderListItem({
               <span className={styles.token}>{t('adminOrder.token', { token: order.token })}</span>
             )}
             {order.rush && <span className={styles.rush}>{t('adminOrder.rushBadge')}</span>}
+            {order.byPhone && <span className={styles.token}>{t('adminOrderPad.phone.tag')}</span>}
           </span>
           <span className={styles.guest}>{order.customerName}</span>
         </button>

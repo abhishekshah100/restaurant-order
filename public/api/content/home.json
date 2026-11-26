@@ -12,10 +12,7 @@
     "tableNumber": "Table {table}",
     "viewMenu": "View menu",
     "images": {
-      "hero": "Truffle mushroom pasta at {restaurant}",
-      "pasta": "Truffle Mushroom Pasta",
-      "prawns": "Chilli Garlic Prawns",
-      "pizza": "Wood-fired Margherita"
+      "hero": "A photo of {restaurant}"
     },
     "modeCard": {
       "label": "Your order",

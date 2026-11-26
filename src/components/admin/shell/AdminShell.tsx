@@ -16,11 +16,13 @@ import { useAdminName, useSelectedAdminBranchId } from '@/hooks/useAdminSession'
 import { useNow } from '@/hooks/useNow';
 import { branchConfigQuery } from '@/api/queries';
 import { INVENTORY_READERS, activeNavId, landingFor, pageNeeds } from '@/lib/adminNav';
+import { offFeature, planNotice } from '@/lib/adminPlan';
 import { joinBranch } from '@/lib/branchParts';
 import { AdminAccess } from '../AdminAccess';
 import { AdminWorkspaceProvider, useAdminWorkspace } from './AdminWorkspace';
 import { MobileNav } from './MobileNav';
 import { NoAccess } from './NoAccess';
+import { PlanBanner, PlanEnded } from './PlanScreens';
 import { ShellHeader } from './ShellHeader';
 import { Sidebar } from './Sidebar';
 import { useShellActions } from './useShellActions';
@@ -61,9 +63,15 @@ function ShellFrame({ children }: { children: ReactNode }) {
   // A page opened by its link that their role here doesn't include.
   const needs = pageNeeds(pathname);
   const allowed = !needs || can(...needs);
-  // Home that isn't theirs (the kitchen, say): on to where they start, when there's somewhere.
+  // A page of a feature the package leaves out (hidden from the nav, opened by its link).
+  const off = offFeature(branch, active) !== undefined;
+  // Home that isn't theirs (the kitchen, say), or a page the package leaves out: on to where
+  // they start, when there's somewhere.
   const router = useRouter();
-  const landing = active === 'home' && !allowed ? landingFor(can) : undefined;
+  const landing = (active === 'home' && !allowed) || off ? landingFor(can) : undefined;
+  // Not theirs because the plan ended or the account is paused.
+  const notice = planNotice(branch.plan);
+  const ended = notice?.kind === 'expired' || notice?.kind === 'suspended';
   useEffect(() => {
     if (landing) router.replace(landing);
   }, [landing, router]);
@@ -89,7 +97,8 @@ function ShellFrame({ children }: { children: ReactNode }) {
           alerts={{ on: alertsOn, needsTap: alertsNeedTap, onToggle: () => setAlertsOn(!alertsOn) }}
         />
         <main id="main" className={styles.main}>
-          {allowed ? children : landing ? null : <NoAccess />}
+          <PlanBanner />
+          {off ? null : allowed ? children : landing ? null : ended ? <PlanEnded /> : <NoAccess />}
         </main>
       </div>
       <MobileNav

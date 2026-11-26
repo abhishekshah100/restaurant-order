@@ -11,6 +11,7 @@ import { settingsHref } from '@/lib/adminSettings';
 import type { AdminBranch } from '@/types/admin';
 import type { BranchStatus } from '@/types/branch';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
+import { PlanLimitNote, usePlanRoom } from '../../shell/PlanLimit';
 import { SettingsNote, SettingsSkeleton } from '../shared/SettingsEditor';
 import editor from '../shared/SettingsEditor.module.css';
 import styles from './BranchesManager.module.css';
@@ -38,6 +39,8 @@ export function BranchesManager() {
   const { showToast } = useToast();
   const query = useAdminBranches();
   const [adding, setAdding] = useState(false);
+  // The package's branches (adminPlan): Add branch waits at the limit.
+  const branchRoom = usePlanRoom('branches');
   const [removing, setRemoving] = useState<AdminBranch | null>(null);
   const branches = query.data;
 
@@ -52,11 +55,13 @@ export function BranchesManager() {
             <h1 className={editor.title}>{t('adminSettings.sections.branches.title')}</h1>
             <p className={editor.subtitle}>{t('adminSettings.branches.subtitle')}</p>
           </div>
-          <Button iconStart="plus" onClick={() => setAdding(true)}>
+          <Button iconStart="plus" disabled={!branchRoom} onClick={() => setAdding(true)}>
             {t('adminSettings.branches.add')}
           </Button>
         </div>
       </header>
+
+      <PlanLimitNote limit="branches" />
 
       {only && <SettingsNote>{t('adminSettings.branches.onlyOne')}</SettingsNote>}
 

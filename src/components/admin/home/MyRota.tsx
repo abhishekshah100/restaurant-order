@@ -9,6 +9,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { MyRotaList } from './MyRotaList';
 import { MyRotaRequests, swappingOf, useRotaAsks } from './MyRotaRequests';
 import styles from './HomePanels.module.css';
+import { hasFeature } from '@/lib/adminPlan';
 
 /**
  * My rota: the signed-in person's shifts from the published rota, today and the 6 days after
@@ -19,7 +20,7 @@ export function MyRota({ now }: { now: Date | null }) {
   const t = useContent('common');
   const { branch, clock } = useAdminWorkspace();
   const me = useAdminStaffId();
-  const rota = useMyRota(branch.id, isBackendEnabled());
+  const rota = useMyRota(branch.id, isBackendEnabled() && hasFeature(branch, 'shifts'));
   const asks = useRotaAsks();
   if (!now || !rota.data) return null;
   const today = clock.dayKey(now);

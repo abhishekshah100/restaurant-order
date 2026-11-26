@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { SearchLink, Tabs } from '@/components/ui';
+import { EmptyState, SearchLink, Tabs } from '@/components/ui';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { CartBar } from '@/components/layout/CartBar';
 import { MobileHeader } from '@/components/layout/MobileHeader';
@@ -20,7 +20,7 @@ import styles from './MenuViews.module.css';
  * Menu home (02 · w02): chef's picks, then every category with all its dishes, so guests scroll
  * the whole menu without opening each category; the tabs and sidebar jump to a section. A link
  * to a section (`/menu/#soups`) lands on it once the menu is drawn. A simple menu (one category)
- * reads as one list: no category tab or heading.
+ * reads as one list: no category tab or heading. No menu yet (a new branch): a note instead.
  */
 export function MenuHome() {
   const { categories } = useMenu();
@@ -69,11 +69,20 @@ export function MenuHome() {
         cart={<CartPanel />}
       >
         <h1 className="visually-hidden">{t('nav.menu')}</h1>
-        <PicksSection />
-        <CategorySection category={first} hideTitle={simple} />
-        {rest.map((category) => (
-          <CategorySection key={category.id} category={category} divider />
-        ))}
+        {first ? (
+          <>
+            <PicksSection />
+            <CategorySection category={first} hideTitle={simple} />
+            {rest.map((category) => (
+              <CategorySection key={category.id} category={category} divider />
+            ))}
+          </>
+        ) : (
+          // A new branch before its menu is in (no categories yet): say so, don't break.
+          <EmptyState icon="menu" title={t('emptyMenu.title')}>
+            {t('emptyMenu.body')}
+          </EmptyState>
+        )}
       </MenuShell>
       <CartBar />
       <BottomNav />

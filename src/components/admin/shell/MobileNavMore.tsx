@@ -31,8 +31,8 @@ export function MobileNavMore({
   onSignOut: () => void;
 }) {
   const t = useContent('common');
-  const { branch, canSwitch, can } = useAdminWorkspace();
-  const { more } = splitTabs(navFor(can));
+  const { branch, canSwitch, can, isOff } = useAdminWorkspace();
+  const { more } = splitTabs(navFor(can, isOff));
   const groups = [
     ...navGroups(more),
     ...(more.some((item) => item.group === 'settings')

@@ -38,6 +38,7 @@ import {
 import { DateRangeFilter } from '../DateRangeFilter';
 import { usePaymentText } from '../payments/usePaymentText';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { usePlanRefusal } from '../shell/PlanLimit';
 import { BranchComparison } from './BranchComparison';
 import { AverageKey, ColumnChart } from './ColumnChart';
 import { DishRanking } from './DishRanking';
@@ -96,6 +97,7 @@ export function SalesReportPage() {
   );
   const canCompare = reportBranches.length > 1;
   const view = canCompare && viewParam === 'branches' ? 'branches' : 'branch';
+  const refusal = usePlanRefusal();
   const report = useSalesReport(isBackendEnabled() ? branch.id : undefined, range);
   const compare = useSalesByBranch(
     isBackendEnabled() && view === 'branches' ? branch.id : undefined,
@@ -342,7 +344,11 @@ export function SalesReportPage() {
             />
           </div>
         ) : compare.isError ? (
-          <EmptyState icon="alert" tone="err" title={t('adminSales.branches.failed')} />
+          <EmptyState
+            icon="alert"
+            tone="err"
+            title={refusal(compare.error) ?? t('adminSales.branches.failed')}
+          />
         ) : (
           <ReportSkeleton />
         )
@@ -350,6 +356,9 @@ export function SalesReportPage() {
         <div className={cx(styles.body, report.isPlaceholderData && styles.refreshing)}>
           <Report data={data} onPick={goTo} amount={amount} />
         </div>
+      ) : report.isError && refusal(report.error) ? (
+        // Further back than the package's report history: say so, not "try again".
+        <EmptyState icon="lock" tone="brand" title={refusal(report.error)} />
       ) : report.isError ? (
         <EmptyState
           icon="alert"

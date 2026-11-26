@@ -142,6 +142,13 @@ export type ApiErrorCode =
   /** 409: nothing the supplier sells is low. */
   /** 403: the restaurant doesn't have this feature (`feature`): the platform switches it on. */
   | 'feature_disabled'
+  /**
+   * 403: the client's package allows no more of these (`limit`: staff, branches, floors,
+   * tables, dishes or reportDays; `max`; `used`).
+   */
+  | 'plan_limit'
+  /** 403: the client's plan ended (past grace) or is suspended (`status`). */
+  | 'plan_locked'
   /** 409: some items are in another open count (`count`: its number). */
   | 'count_open'
   /** 409: the count can't change that way now (`status`). */
@@ -223,6 +230,10 @@ export interface ApiErrorBody {
   count?: number;
   /** return_exceeds: how much each line can still take back. */
   lines?: { receiptLineId: string; available: number }[];
+  /** plan_limit: which of the package's limits, what it allows, and how many there are now. */
+  limit?: 'staff' | 'branches' | 'floors' | 'tables' | 'dishes' | 'reportDays';
+  max?: number;
+  used?: number;
 }
 
 /** A table the floor plan can't leave out yet: its open orders or bill, or its bookings to come. */

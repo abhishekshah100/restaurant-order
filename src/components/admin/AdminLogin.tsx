@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,10 +16,6 @@ import { adminLoginSchema, type AdminLoginValues } from '@/lib/adminLogin';
 import { IDLE_LIMIT_MS, localStore, signedOutIdle } from '@/lib/idleSignOut';
 import { NewPasswordStep } from './NewPasswordStep';
 import styles from './AdminLogin.module.css';
-
-const PHOTO = '/images/pasta-hero.jpg';
-const PHOTO_WIDTH = 780;
-const PHOTO_HEIGHT = 540;
 
 /** The sign-out note only changes on another page. */
 const noChange = () => () => undefined;
@@ -88,7 +83,6 @@ export function AdminLogin() {
   return (
     <main className={styles.page}>
       <section className={styles.panel}>
-        <Image className={styles.bandPhoto} src={PHOTO} alt="" fill loading="eager" sizes="100vw" />
         <div className={styles.brand}>
           <Icon name="olive" size="lg" className={styles.brandMark} />
           <span className={styles.brandText}>
@@ -100,15 +94,6 @@ export function AdminLogin() {
           <p className={styles.headline}>{t('adminLogin.panel.headline')}</p>
           <span className={styles.rule} aria-hidden="true" />
           <p className={styles.supporting}>{t('adminLogin.panel.body')}</p>
-          <Image
-            className={styles.photo}
-            src={PHOTO}
-            alt=""
-            width={PHOTO_WIDTH}
-            height={PHOTO_HEIGHT}
-            loading="eager"
-            sizes="320px"
-          />
         </div>
       </section>
 

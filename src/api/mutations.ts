@@ -20,3 +20,4 @@ export * from './mutations/purchasing';
 export * from './mutations/inventory';
 export * from './mutations/settings';
 export * from './mutations/dev-setup';
+export * from './mutations/platform';

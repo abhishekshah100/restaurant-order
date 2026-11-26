@@ -80,6 +80,52 @@ describe('developer setup requests', () => {
   });
 });
 
+describe('loading a menu into a branch', () => {
+  it('goes to the backend with the key and the name, never a staff token', async () => {
+    for (const [method, path] of [
+      ['GET', 'dev/setup/clients'],
+      ['POST', 'dev/setup/menu/check'],
+      ['POST', 'dev/setup/menu/import'],
+    ] as const) {
+      expect(isBackendRequest({ method, path })).toBe(true);
+    }
+    await api.setupClients('the-key');
+    await api.checkMenu('the-key', 'kathmandu-thamel', { menu: { dishes: [] } });
+    await api.loadMenu('the-key', {
+      branchId: 'kathmandu-thamel',
+      data: { menu: { dishes: [] } },
+      replace: false,
+      by: 'Asha',
+    });
+    const [clients, checked, loaded] = fetchMock.mock.calls;
+    expect(clients?.[0]).toBe(`${BACKEND}/dev/setup/clients`);
+    expect(new Headers(checked?.[1]?.headers).get('X-Dev-Key')).toBe('the-key');
+    expect(new Headers(loaded?.[1]?.headers).get('Authorization')).toBeNull();
+    expect(JSON.parse(String(checked?.[1]?.body))).toEqual({
+      branchId: 'kathmandu-thamel',
+      data: { menu: { dishes: [] } },
+    });
+    expect(JSON.parse(String(loaded?.[1]?.body))).toMatchObject({ replace: false, by: 'Asha' });
+  });
+
+  it('reads why a load was refused from the error', async () => {
+    fetchMock.mockResolvedValueOnce(
+      json(
+        {
+          success: false,
+          error: { code: 'conflict', message: '…', details: { reason: 'hasOrders', orders: 4 } },
+        },
+        409,
+      ),
+    );
+    const error = await api
+      .loadMenu('k', { branchId: 'b', data: {}, replace: true, by: 'A' })
+      .catch((e: unknown) => e);
+    expect((error as ApiError).code).toBe('conflict');
+    expect((error as ApiError).body?.reason).toBe('hasOrders');
+  });
+});
+
 describe('developer setup templates', () => {
   it('are read with the key, and the sample pastes back as the same JSON', async () => {
     const sample = { restaurant: { name: 'Sample Momo House' } };

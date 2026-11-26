@@ -67,17 +67,19 @@ export function Welcome() {
 
   return (
     <div className={styles.page}>
-      <div className={cx(styles.hero, 'hide-desktop')}>
-        <Image
-          className={styles.heroImg}
-          src="/images/pasta-hero.jpg"
-          alt={t('welcome.images.hero', { restaurant: brand })}
-          width={780}
-          height={540}
-          sizes="100vw"
-          loading="eager"
-          fetchPriority="high"
-        />
+      <div className={cx(styles.hero, !branch.image && styles.heroPlain, 'hide-desktop')}>
+        {branch.image && (
+          <Image
+            className={styles.heroImg}
+            src={branch.image.src}
+            alt={t('welcome.images.hero', { restaurant: brand })}
+            width={branch.image.width}
+            height={branch.image.height}
+            sizes="100vw"
+            loading="eager"
+            fetchPriority="high"
+          />
+        )}
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.heroBrand}>
           <Icon name="olive" />
@@ -85,7 +87,7 @@ export function Welcome() {
         </div>
       </div>
 
-      <BrandPanel caption={branch.name} />
+      <BrandPanel caption={branch.name} photo={branch.image ?? null} />
 
       <main id="main" className={styles.main}>
         <div className={styles.intro}>

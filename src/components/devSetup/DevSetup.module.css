@@ -1,38 +1,13 @@
 /*
- * The developer setup page: one column of plain panels (a working tool, not a guest screen),
- * up to 880px wide; 16px side gutters on phones.
+ * The developer setup, on the platform console's Dev setup tab: plain panels (a working tool, not
+ * a guest screen).
  */
 
-.page {
-  min-height: 100svh;
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 32px 16px 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  background: var(--bg);
-  color: var(--ink);
-}
-
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.title {
-  font: 500 26px/32px var(--f-display);
-}
-
-.subtitle,
 .muted {
   font: var(--font-small);
   color: var(--ink-3);
 }
 
-.keyForm,
 .section {
   display: flex;
   flex-direction: column;
@@ -41,10 +16,6 @@
   border: 1px solid var(--line);
   border-radius: var(--r-panel);
   background: var(--surface);
-}
-
-.keyForm {
-  max-width: 480px;
 }
 
 .sectionTitle {
@@ -108,6 +79,12 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  gap: 12px;
+}
+
+.pickers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 

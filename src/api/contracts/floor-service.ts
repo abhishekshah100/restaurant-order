@@ -6,6 +6,7 @@ import type {
   TableQrCode,
 } from '@/types/admin';
 import type { OrderLineRequest } from './orders';
+import type { DeliveryAddress } from '@/types/order';
 
 /* ---------- Admin: floor service ---------- */
 
@@ -83,5 +84,32 @@ export interface TakeTableOrderRequest {
   kitchenNote?: string;
   lines: OrderLineRequest[];
   /** The pad's key for this order (8–64 of A–Z a–z 0–9 _ -): sent again, it's placed once. */
+  idempotencyKey?: string;
+}
+
+/**
+ * POST /admin/branches/:branchId/orders/phone: staff take a takeaway or delivery order for a
+ * customer who called (`orders.take`), by the rules a guest's order follows (the mode on and
+ * open, a pickup time on offer, an area served, the minimum). Unpaid: at pickup or cash to the
+ * rider; a payment made now is collected as usual. 201 → `Order` with the day's token and
+ * `customerPhone`. Errors: 400 invalid_request (`customer.phone`), 401, 403, 409
+ * mode_unavailable / ordering_unavailable, 422 pickup_unavailable / area_not_served /
+ * below_minimum / empty_order / item_unavailable.
+ */
+export interface PhoneOrderRequest {
+  customer: {
+    name: string;
+    /** The mobile number's digits, without the country code. */
+    phone: string;
+  };
+  fulfilment:
+    | {
+        mode: 'takeaway';
+        /** A pickup slot (ISO), or null for as soon as possible. */ pickupAt: string | null;
+      }
+    | { mode: 'delivery'; address: DeliveryAddress };
+  kitchenNote?: string;
+  lines: OrderLineRequest[];
+  /** The pad's key for this order: sent again, it's taken once. */
   idempotencyKey?: string;
 }

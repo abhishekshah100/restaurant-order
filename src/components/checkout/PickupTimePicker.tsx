@@ -4,6 +4,8 @@ import { useBranch, useContent, useRegion } from '@/api/hooks';
 import { Icon, OptionGroup, Select } from '@/components/ui';
 import { useNow } from '@/hooks/useNow';
 import { pickupOptions } from '@/lib/fulfilment';
+import type { Clock } from '@/lib/clock';
+import type { Branch } from '@/types/branch';
 import styles from './FulfilmentFields.module.css';
 
 export interface PickupTimePickerProps {
@@ -19,9 +21,17 @@ const ASAP = 'asap';
  * Takeaway: collect as soon as possible (ready in the branch's prep time) or at a slot later
  * today, in the branch's time zone. Slots run every `slotMinutes` until closing.
  */
-export function PickupTimePicker({ value, onChange }: PickupTimePickerProps) {
-  const branch = useBranch();
-  const { clock } = useRegion();
+export function PickupTimePicker(props: PickupTimePickerProps) {
+  return <PickupTimeFields {...props} branch={useBranch()} clock={useRegion().clock} />;
+}
+
+/** The pickup choice for a branch given (staff taking a phone order use the admin's branch). */
+export function PickupTimeFields({
+  branch,
+  clock,
+  value,
+  onChange,
+}: PickupTimePickerProps & { branch: Branch; clock: Clock }) {
   const t = useContent('checkout');
   const now = useNow(60_000);
   if (!now) return null;

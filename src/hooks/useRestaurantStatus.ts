@@ -53,6 +53,10 @@ function useStatusPreview(): StatusPreview | null {
 }
 
 export interface OrderingAvailabilityResult extends OrderingAvailability {
+  /** The restaurant's package is the QR menu only: guests browse, staff take the order. */
+  menuOnly: boolean;
+  /** Paused by the platform (with menuOnly): no ordering for now, from guests or staff. */
+  suspended: boolean;
   /** "Try again" on the offline screen: re-checks the connection (and ends an offline preview). */
   retry: () => void;
 }
@@ -64,7 +68,10 @@ export interface OrderingAvailabilityResult extends OrderingAvailability {
  */
 export function useOrderingAvailability(): OrderingAvailabilityResult {
   // The guest's way of ordering: takeaway and delivery can keep hours of their own.
-  const { status } = statusFor(useBranch(), useVisit().mode);
+  const branch = useBranch();
+  const { status } = statusFor(branch, useVisit().mode);
+  const menuOnly = branch.menuOnly === true;
+  const suspended = branch.suspended === true;
   const preview = useStatusPreview();
   const online = useOnlineStatus();
 
@@ -80,10 +87,13 @@ export function useOrderingAvailability(): OrderingAvailabilityResult {
     recheckOnline();
   }, [preview]);
 
-  return useMemo(
-    () => ({ ...applyPreview(preview, { status, online }), retry }),
-    [preview, status, online, retry],
-  );
+  return useMemo(() => {
+    const live = applyPreview(preview, { status, online });
+    // The QR menu only: nothing goes into a cart (the menu still shows everything).
+    return menuOnly
+      ? { ...live, canAdd: false, canCheckout: false, menuOnly, suspended, retry }
+      : { ...live, menuOnly, suspended, retry };
+  }, [preview, status, online, retry, menuOnly, suspended]);
 }
 
 /** The header subline ("Open now", "Closed now", "Ordering paused") and its colour. */

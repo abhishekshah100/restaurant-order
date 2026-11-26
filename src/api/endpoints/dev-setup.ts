@@ -1,6 +1,10 @@
 import { apiDelete, apiGet, apiPost } from '../client';
 import type {
+  MenuCheckResponse,
+  MenuLoadRequest,
+  MenuLoadResponse,
   SetupCheckResponse,
+  SetupClient,
   SetupImportRequest,
   SetupImportResponse,
   SetupRestaurant,
@@ -45,6 +49,18 @@ export const devSetupApi = {
   deleteSetupRestaurant: (key: string, restaurantId: string) =>
     apiDelete(
       `dev/setup/restaurants/${seg(restaurantId)}`,
+      devKey(key, { signal: AbortSignal.timeout(IMPORT_TIMEOUT_MS) }),
+    ),
+  /** GET /dev/setup/clients: every client and its branches (for Load a menu into a branch). */
+  setupClients: (key: string) => apiGet<SetupClient[]>('dev/setup/clients', devKey(key)),
+  /** POST /dev/setup/menu/check: a menu checked against the branch, nothing written. */
+  checkMenu: (key: string, branchId: string, data: unknown) =>
+    apiPost<MenuCheckResponse>('dev/setup/menu/check', { branchId, data }, devKey(key)),
+  /** POST /dev/setup/menu/import: the branch's menu loaded in one go. */
+  loadMenu: (key: string, body: MenuLoadRequest) =>
+    apiPost<MenuLoadResponse>(
+      'dev/setup/menu/import',
+      body,
       devKey(key, { signal: AbortSignal.timeout(IMPORT_TIMEOUT_MS) }),
     ),
 };

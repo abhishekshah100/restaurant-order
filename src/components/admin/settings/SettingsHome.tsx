@@ -8,6 +8,7 @@ import { layoutTotals } from '@/lib/floorLayout';
 import { ORDER_MODES } from '@/lib/fulfilment';
 import { formatRate } from '@/lib/pricing';
 import { WEEKDAYS } from '@/types/branch';
+import { hasFeature } from '@/lib/adminPlan';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { usePlatformAdmin } from './usePlatformAdmin';
 import styles from './SettingsHome.module.css';
@@ -31,7 +32,7 @@ export function SettingsHome() {
           {t('adminSettings.subtitle', { branch: branch.shortName })}
         </p>
       </header>
-      {settingsFor(can, platform).map((group) => (
+      {settingsFor(can, platform, (f) => hasFeature(branch, f)).map((group) => (
         <section key={group.id} className={styles.group} aria-labelledby={`settings-${group.id}`}>
           <h2 id={`settings-${group.id}`} className={styles.groupTitle}>
             {t(`adminSettings.groups.${group.id}`)}

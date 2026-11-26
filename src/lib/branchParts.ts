@@ -35,6 +35,8 @@ export function toBranchSummary(b: Branch): BranchSummary {
 
 export const toBranchConfig = (b: Branch): BranchConfig => ({
   id: b.id,
+  ...(b.menuOnly ? { menuOnly: true } : {}),
+  ...(b.suspended ? { suspended: true } : {}),
   currency: b.currency,
   mobile: b.mobile,
   tax: b.tax,

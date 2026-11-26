@@ -28,6 +28,7 @@ import type {
   StaffRoundRequest,
   TablePaymentResponse,
   TakeTableOrderRequest,
+  PhoneOrderRequest,
 } from '../contracts';
 import { bearer, searchOf, seg } from './shared';
 
@@ -39,6 +40,8 @@ export const staffOrdersApi = {
       body,
       bearer(token),
     ),
+  takePhoneOrder: (token: string, branchId: string, body: PhoneOrderRequest) =>
+    apiPost<OrderResponse>(`admin/branches/${seg(branchId)}/orders/phone`, body, bearer(token)),
   branchOrders: (token: string, branchId: string, filter: AdminOrdersFilter = {}) =>
     apiGet<AdminOrdersResponse>(
       `admin/branches/${seg(branchId)}/orders${searchOf(filter)}`,

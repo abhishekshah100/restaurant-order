@@ -68,6 +68,10 @@ export interface SetupTemplates {
   sample: unknown;
   /** The prompt to paste into Claude with the menu photos; the sample is its example. */
   prompt: string;
+  /** The menu on its own (`{ menu }`), for Load a menu into a branch. */
+  menuSample: unknown;
+  /** The prompt for a menu only; the menu sample is its example. */
+  menuPrompt: string;
 }
 
 /** GET /dev/setup/restaurants: those made there, newest first. */
@@ -81,4 +85,87 @@ export interface SetupRestaurant {
   staff: { name: string; role: string; email: string; phoneNational: string }[];
   dishes: number;
   orders: number;
+}
+
+/* ---------- Load a menu into a branch (any client's, demo or live) ---------- */
+
+/** GET /dev/setup/clients: every client (demos first) and its live branches. */
+export interface SetupClient {
+  id: string;
+  name: string;
+  /** Still a Dev setup demo (not gone live). */
+  demo: boolean;
+  /** Its package's name; null: no plan. */
+  plan: string | null;
+  /** Dishes per branch its package allows; null: no limit. */
+  dishLimit: number | null;
+  branches: SetupClientBranch[];
+}
+
+export interface SetupClientBranch {
+  id: string;
+  name: string;
+  shortName: string;
+  city: string;
+  country: string;
+  currency: string;
+  categories: number;
+  dishes: number;
+  orders: number;
+}
+
+/** The branch now: what it has, and what a replace would take with its menu. */
+export interface MenuBranchState {
+  id: string;
+  name: string;
+  restaurant: string;
+  categories: number;
+  dishes: number;
+  orders: number;
+  /** Dishes with a recipe (they go with them). */
+  recipes: number;
+  /** Offers naming its dishes or categories (those links go). */
+  offers: number;
+}
+
+export interface MenuSummary {
+  categories: number;
+  dishes: number;
+  chefsPicks: number;
+}
+
+/** POST /dev/setup/menu/check `{ branchId, data }`: what Load would do, nothing written. */
+export interface MenuCheckResponse {
+  valid: boolean;
+  issues: SetupIssue[];
+  warnings: string[];
+  summary: MenuSummary | null;
+  branch: MenuBranchState;
+  /** It has a menu: Load needs `replace`. */
+  replaces: boolean;
+  /** It has taken orders: nothing can be loaded (the owner edits it in Admin). */
+  blocked: boolean;
+}
+
+/** POST /dev/setup/menu/import. */
+export interface MenuLoadRequest {
+  branchId: string;
+  /** The menu (`{ menu }` or a whole setup JSON), as pasted. */
+  data: unknown;
+  /** Replace the menu it has (only before its first order). */
+  replace: boolean;
+  /** The console's name, kept in the client's history. */
+  by: string;
+}
+
+/**
+ * POST /dev/setup/menu/import → 201. 409 conflict `hasMenu` (no `replace`) or `hasOrders`;
+ * 403 plan_limit past the package's dishes; 400 `issues`.
+ */
+export interface MenuLoadResponse {
+  branch: { id: string; name: string };
+  summary: MenuSummary;
+  warnings: string[];
+  /** The dishes it had before (0: it was empty). */
+  replaced: number;
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useContent } from '@/api/hooks';
 import { Icon, Input, QuantityStepper, Textarea, VegMark } from '@/components/ui';
 import { describeInstructions, describeOptionsShort, type CartLineLabels } from '@/lib/cartLine';
@@ -33,6 +34,8 @@ export function PadReview({
   onGuest,
   kitchenNote,
   onKitchenNote,
+  details,
+  shortBy,
 }: {
   target: PadTarget;
   menu: MenuCatalog;
@@ -49,6 +52,10 @@ export function PadReview({
   onGuest: (name: string) => void;
   kitchenNote: string;
   onKitchenNote: (note: string) => void;
+  /** A phone order's customer, pickup or address and payment, above the items. */
+  details?: ReactNode;
+  /** How far the items are from the minimum order (a phone order), in words. */
+  shortBy?: string | undefined;
 }) {
   const t = useContent('common');
   const cart = useContent('cart');
@@ -56,6 +63,7 @@ export function PadReview({
 
   return (
     <div className={styles.review}>
+      {details}
       {target.kind === 'new' && (
         <Input
           id="pad-guest"
@@ -126,6 +134,12 @@ export function PadReview({
         value={kitchenNote}
         onChange={(event) => onKitchenNote(event.target.value)}
       />
+
+      {shortBy && (
+        <p className={styles.removed} role="status">
+          {shortBy}
+        </p>
+      )}
 
       <BillSummary
         rows={billRows(bill, { t: cart, money, tax: region.tax })}

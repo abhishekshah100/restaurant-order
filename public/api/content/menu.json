@@ -100,7 +100,9 @@
     "closed": "Closed",
     "soldOutNow": "Sold out right now.",
     "soldOutBackAt": "Sold out right now — back {time}.",
-    "unavailableTodayNote": "Unavailable today. Your server can suggest something similar."
+    "unavailableTodayNote": "Unavailable today. Your server can suggest something similar.",
+    "askStaff": "Ask staff",
+    "notNow": "Not available"
   },
   "detail": {
     "viewPhoto": "View photo",
@@ -126,7 +128,9 @@
     "servesSize": {
       "one": "Serves {count}",
       "other": "Serves {count}"
-    }
+    },
+    "askStaff": "Ask staff to order",
+    "notNow": "Ordering not available now"
   },
   "allergens": {
     "dairy": "dairy",
@@ -188,5 +192,9 @@
     "bannerPrice": "<b>{name}</b> · {what} at {price} till {time}",
     "selected": "selected dishes",
     "link": "See {category}"
+  },
+  "emptyMenu": {
+    "title": "The menu is being set up",
+    "body": "Please ask our staff what's available today."
   }
 }

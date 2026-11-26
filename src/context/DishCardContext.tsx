@@ -19,6 +19,10 @@ export interface DishCardShared {
   offers: readonly AutoOffer[];
   /** False while the restaurant (or the guest's way of ordering) is closed or paused. */
   canAdd: boolean;
+  /** The QR menu only (the restaurant's package): guests order with staff. */
+  menuOnly: boolean;
+  /** Paused by the platform: no ordering for now. */
+  suspended: boolean;
 }
 
 const DishCardContext = createContext<DishCardShared | null>(null);
@@ -30,8 +34,11 @@ export function DishCardProvider({ children }: { children: ReactNode }) {
     [locale, localeFallback, currency],
   );
   const offers = useActiveOffers();
-  const { canAdd } = useOrderingAvailability();
-  const value = useMemo(() => ({ money, offers, canAdd }), [money, offers, canAdd]);
+  const { canAdd, menuOnly, suspended } = useOrderingAvailability();
+  const value = useMemo(
+    () => ({ money, offers, canAdd, menuOnly, suspended }),
+    [money, offers, canAdd, menuOnly, suspended],
+  );
   return <DishCardContext.Provider value={value}>{children}</DishCardContext.Provider>;
 }
 

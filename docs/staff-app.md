@@ -234,6 +234,29 @@ Labels are `common › adminShell.nav.<id>` (plain words: Stock, Purchases, Acti
 Floor badge counts come from `GET /admin/branches/:branchId/service`; the stock badge from the
 inventory alerts.
 
+### The restaurant's package
+
+What the branch's restaurant has (`AdminBranch.features`, `.plan`; restaurant-backend › ADR-051)
+shapes the shell, from [`src/lib/adminPlan.ts`](../src/lib/adminPlan.ts):
+
+- **Hidden pages:** a page whose feature the package leaves out (`NAV_FEATURES`: Orders and
+  Payments → ordering; Reservations; Stock and Purchases → inventory; Shifts & attendance →
+  shifts; Sales → reports; Activity log) is hidden from the nav and the phone bar for everyone
+  (`offFeature`, `navFor(can, isOff)`); opened by its link, it goes back to where they start.
+  Settings pages with a `feature` (Offers, Pickup, Delivery) are hidden from Settings the same
+  way, and My plan lists only the features included.
+- **Banner** (`PlanBanner`, above every page): the trial or plan ending within 15 days, in grace
+  (the date management locks), ended, or paused.
+- **Ended or paused:** pages the plan no longer allows show `PlanEnded` (the server answers
+  `403 plan_locked`); taking orders, the kitchen, bills and the cash register keep working while
+  ended.
+- **Limits:** `PlanLimitNote` ("Staff logins: 4 of 5 on your Basic package") on Staff, Floor plan
+  (areas and tables, counted on the draft) and Menu; Add waits at the limit (`usePlanRoom`), and
+  a `403 plan_limit` toast says what the package allows (`usePlanRefusal`), also on the Sales
+  report further back than the package's history.
+- **Shifts:** the clock-in widgets don't call the shifts API without the feature.
+- **Settings › My plan** (owners): the package, its end, limits and use, and what's included.
+
 ### AdminWorkspace context
 
 [`AdminWorkspace.tsx`](../src/components/admin/shell/AdminWorkspace.tsx) exposes
@@ -452,15 +475,19 @@ A table is taken out of service in Settings › Floor plan (`disabled: true` in 
 For guests who do not order on their phone.
 
 - **Component:** [`src/components/admin/orderPad/`](../src/components/admin/orderPad/):
-  `OrderPad` (menu → choose → review), `PadMenu`, `PadChoose`, `PadReview`. Logic in
+  `OrderPad` (menu → choose → review), `PadMenu`, `PadChoose`, `PadReview`, `PhoneDetails`,
+  `PhoneOrderButton`. Logic in
   [`src/lib/orderPad.ts`](../src/lib/orderPad.ts).
-- **Opened from:** the table page, the home's New order and the order dialog on the Orders page.
+- **Opened from:** the table page, the home's New order and the order dialog on the Orders page;
+  **Phone order** on the home and the Orders page (staff with `orders.take`, at a branch with
+  takeaway or delivery on).
 
-| Pad target | Endpoint                                                   | Result                              |
-| ---------- | ---------------------------------------------------------- | ----------------------------------- |
-| New order  | `POST /admin/branches/:branchId/tables/:table/orders`      | New dine-in order, own bill         |
-| Add items  | `POST /admin/branches/:branchId/orders/:id/rounds`         | New round on that order's bill      |
-| Change     | `PATCH /admin/branches/:branchId/orders/:id/rounds/:round` | Round items replaced, tab re-priced |
+| Pad target  | Endpoint                                                   | Result                                |
+| ----------- | ---------------------------------------------------------- | ------------------------------------- |
+| New order   | `POST /admin/branches/:branchId/tables/:table/orders`      | New dine-in order, own bill           |
+| Add items   | `POST /admin/branches/:branchId/orders/:id/rounds`         | New round on that order's bill        |
+| Change      | `PATCH /admin/branches/:branchId/orders/:id/rounds/:round` | Round items replaced, tab re-priced   |
+| Phone order | `POST /admin/branches/:branchId/orders/phone`              | Takeaway or delivery order, own token |
 
 Rules:
 
@@ -472,6 +499,14 @@ Rules:
 - A round can be changed only while the kitchen has not finished it (received or preparing;
   `editableRound` in [`src/lib/adminOrders.ts`](../src/lib/adminOrders.ts)). Anything paid beyond
   the new total is refunded. To remove everything, cancel the order instead.
+- **Phone order:** Takeaway or Delivery (asked when the branch has both), then the pad. The
+  review asks the customer's name and mobile (the branch's mobile rules), the pickup time (as
+  soon as possible or a slot) or the address in an area the branch delivers to (its fee on the
+  bill, the minimum order shown), and the payment: at pickup / cash on delivery, or **Paid now**,
+  which opens Collect payment for the order straight after. The same rules as a guest's order;
+  the server's refusals (pickup time gone, area not served, below minimum, closed) are worded in
+  a toast. The order shows a **Phone** tag in the Orders list, and its pickup or delivery section
+  has **Call <number>** (`customerPhone`, staff only).
 - Sold-out dishes are refused (422 `item_unavailable`); a disabled dine-in mode gives 409
   `mode_unavailable`; an out-of-service table gives 409 `table_disabled`.
 
@@ -1180,6 +1215,7 @@ calls are in [`src/api/endpoints/`](../src/api/endpoints/); backend-only routes 
 | `GET /admin/branches/:id/tables/qr-codes`                        | QR codes                  | `adminTables`       |
 | `GET /admin/branches/:id/tables/:table/qr`                       | Table page                | backend only        |
 | `POST /admin/branches/:id/tables/:table/orders`                  | Order pad                 | `adminOrders`       |
+| `POST /admin/branches/:id/orders/phone`                          | Phone order               | `adminOrders`       |
 | `POST /admin/branches/:id/tables/:table/payment`                 | Table page, Payments      | `adminOrders`       |
 | `GET /admin/branches/:id/orders`                                 | Orders, Payments, kitchen | `adminOrders`       |
 | `POST /admin/branches/:id/orders/:id/rounds`                     | Order pad                 | `adminOrders`       |

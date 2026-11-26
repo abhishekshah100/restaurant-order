@@ -85,7 +85,16 @@ function ClosingSoonBanner({ className }: { className?: string }) {
  * unavailable. `inline` drops the row padding, for use inside a page's own column.
  */
 export function OrderingBanner({ inline, className }: { inline?: boolean; className?: string }) {
-  const { state } = useOrderingAvailability();
+  const t = useContent('status');
+  const { state, menuOnly, suspended } = useOrderingAvailability();
+  if (menuOnly && state !== 'offline') {
+    const banner = (
+      <Banner tone="info" icon="menu" className={inline ? className : undefined}>
+        {t(suspended ? 'banner.suspended' : 'banner.menuOnly')}
+      </Banner>
+    );
+    return inline ? banner : <div className={cx(styles.row, className)}>{banner}</div>;
+  }
   if (state === 'open') {
     if (inline) return <ClosingSoonBanner className={className} />;
     return <ClosingSoonRow className={className} />;

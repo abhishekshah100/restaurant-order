@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, type ReactNode } from 'react';
 import { useContent } from '@/api/hooks';
 import { Icon, Tabs } from '@/components/ui';
 import { ADMIN_LINKS } from '@/lib/adminNav';
 import { activeSettingsSection, canOpenPage, settingsFor, settingsPage } from '@/lib/adminSettings';
+import type { PlanFeature } from '@/api/contracts/platform';
+import { hasFeature } from '@/lib/adminPlan';
 import { cx } from '@/lib/cx';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { NoAccess } from '../shell/NoAccess';
@@ -21,11 +23,19 @@ import styles from './SettingsFrame.module.css';
 export function SettingsFrame({ children }: { children: ReactNode }) {
   const t = useContent('common');
   const active = activeSettingsSection(usePathname());
-  const { can } = useAdminWorkspace();
+  const { can, branch } = useAdminWorkspace();
   const platform = usePlatformAdmin();
-  const groups = settingsFor(can, platform);
+  const has = (feature: PlanFeature) => hasFeature(branch, feature);
+  const groups = settingsFor(can, platform, has);
   const page = active ? settingsPage(active) : undefined;
   const allowed = !page || canOpenPage(page, can, platform);
+  // A page of a feature the package leaves out (hidden from the menu, opened by its link): back
+  // to the Settings overview.
+  const off = page?.feature !== undefined && !has(page.feature);
+  const router = useRouter();
+  useEffect(() => {
+    if (off) router.replace(ADMIN_LINKS.settings);
+  }, [off, router]);
   // The section this page is in, with the pages (tabs) this staff member may open.
   const topic = active
     ? groups.flatMap((g) => g.topics).find((tp) => tp.pages.some((p) => p.id === active))
@@ -83,7 +93,7 @@ export function SettingsFrame({ children }: { children: ReactNode }) {
             }))}
           />
         )}
-        {allowed ? children : <NoAccess />}
+        {off ? null : !allowed ? <NoAccess /> : children}
       </div>
     </div>
   );

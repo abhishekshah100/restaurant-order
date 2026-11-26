@@ -10,6 +10,7 @@ import { spanLabel } from '@/lib/rota';
 import { useToast } from '@/context/ToastContext';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './HomeHeader.module.css';
+import { hasFeature } from '@/lib/adminPlan';
 
 /**
  * Shift in / Shift out, in the home's header (optional: nothing needs a shift). Before shifting
@@ -21,8 +22,10 @@ export function ShiftControl() {
   const t = useContent('common');
   const { branch, clock, can } = useAdminWorkspace();
   const { showToast } = useToast();
+  // Shifts are in the package (adminPlan), and their work is on the floor or at the pass.
   const works =
     isBackendEnabled() &&
+    hasFeature(branch, 'shifts') &&
     (can('orders.take') ||
       can('payments.collect') ||
       can('service.respond') ||

@@ -130,6 +130,64 @@ Delivery history, by phase:
   restaurants made there with Reset activity and Delete; "Start here" downloads the prompt for
   Claude and a sample JSON; the tax number and legal name come with the JSON; the staff link
   signs in under the client's name. ADR-047 in the backend.
+- **Package plans PL1–PL2 (2026-11-26):** the hidden `/platform/` console (the developer setup's key, your
+  name for the history): every client with search and status filters (trial, active, ending in
+  15 days, grace, expired, suspended) and usage against its limits; a client's page with the
+  package cards on top (Free, Basic, Premium, Platinum, Enterprise; yearly or 6 months), limits
+  filled from the package with − / + and Unlimited, features with Add-on / Removed tags, trial
+  (+7/+15/+30 days), paid term, grace days, Suspend / Resume, the client's own price, contact and
+  notes, the history, a save bar and a downgrade warning; Packages and Settings tabs. ADR-051 in
+  the backend.
+- **Package plans PL3 (2026-11-26):** the server enforces each client's package: features off
+  take their screens and routes away (guests too: no takeaway, delivery or offers without them;
+  the Free package is the QR menu only); limits refuse only adding (`403 plan_limit`: staff,
+  floors, tables, dishes, branches, report and order history); after the plan ends (past
+  grace) only serving guests works, and a suspended client is locked out and closed to guests
+  (`403 plan_locked`).
+- **Package plans PL4 (2026-11-26):** what the restaurant sees: pages outside its package stay in
+  the nav with a lock (owners and managers) and open "isn't in your package" with WhatsApp / Call
+  Restova; a banner as the trial or plan ends, in grace, ended or paused; "Your plan has ended" in
+  place of locked pages; "Staff logins: 4 of 5" on Staff, Floor plan and Menu with Add off at the
+  limit; Settings › My plan; guests on the Free package read the menu with "Ask staff".
+- **Plan features hidden, not locked (2026-11-26):** pages and settings of features the package
+  leaves out are hidden from the nav, the phone bar and Settings for everyone (no lock or
+  Upgrade screen); opened by their link they go back to the start page; My plan lists only
+  what's included.
+- **Package plans PL5 (2026-11-26):** the console's Home: clients by status, "Needs attention"
+  (ending within 15 days, grace, ended) with Send reminder (WhatsApp with the renewal written for
+  the contact, noted with its date) and money received this month and over 12 months; a client's
+  Payments: Record payment (amount, eSewa / Khalti / Fonepay / bank / cash, the day, a note, a
+  receipt photo, extending the paid term by one cycle), the receipt opened in a tab, Remove for a
+  mistake (with why), each in the history.
+- **One key for the platform owner (2026-11-26):** `/platform/` and the developer setup share
+  `DEV_SETUP_KEY` (no `PLATFORM_KEY`): enter it once, then Home, Clients, Packages, Settings and
+  Dev setup; `/dev-setup/` opens the same page on its Dev setup tab.
+- **Package plans PL6 (2026-11-26):** Clients › New client (restaurant, branch, owner's sign-in
+  shown once to copy, tables, package, trial; live from the start); Dev setup demos marked
+  "Demo" with Go live (Dev setup can no longer reset or delete them); Print receipt on every
+  payment (numbered, from the business set in Settings › On receipts); Branches shows "2 of 3"
+  with Add branch off at the limit; the kitchen screen shows the plan's banner and "Your plan has
+  ended" / paused; guests of a paused client see "Online ordering isn't available right now".
+- **Package plans PL7 (2026-11-26):** Packages tab › Packages / Features / Add-ons: new packages
+  copied from another, moved, retired (not offered) or deleted while unused; the feature catalog
+  (built-in features renamed and regrouped; the platform's own, such as on-site training, under
+  Services, shown on My plan); add-ons priced per term (+10 tables, +1 staff, Inventory…) added to
+  a client from its page (its limit and features go up, its price shows "package + add-ons") and
+  removed again. Names are unique.
+- **Phone orders (2026-11-26):** Phone order on the admin home and the Orders page: Takeaway or
+  Delivery, the order pad, then the customer's name and mobile, the pickup time or the address
+  (its area's fee and minimum), and paid at pickup / cash on delivery or Paid now (Collect
+  payment opens next). Same rules, token and kitchen queue as an online order; a Phone tag on
+  the order and a Call link with the customer's number (`POST …/orders/phone`, ADR-053).
+- **New branches start empty + Load a menu into a branch (2026-11-26):** Settings › Branches ›
+  Add makes an empty branch (no dishes, offers, stock or photo; one floor of 10 tables), and
+  New client starts with an empty menu. The console's Dev setup tab › Load a menu into a branch:
+  pick any client (demo or live) and branch, paste the menu JSON (or a whole client JSON; the
+  menu-only prompt for Claude downloads there), Check, then Load. A branch with a menu is
+  replaced only when ticked; one that has taken orders can't be changed there; the package's
+  dishes per branch applies; each load is "Menu loaded: <branch>" in the client's history.
+  Guest and sign-in screens show the branch's own photo or a plain branded background, and an
+  empty menu reads "The menu is being set up".
 - **New branches' QR links (2026-11-23):** a link or saved visit at a branch opened since the
   site was built waits for the live branch list, instead of trying the default branch first.
 

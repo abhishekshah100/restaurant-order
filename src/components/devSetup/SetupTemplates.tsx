@@ -10,22 +10,30 @@ export const sampleText = (sample: unknown) => `${JSON.stringify(sample, null, 2
 
 /**
  * Where a setup starts: the prompt to give Claude with the menu photos, the sample JSON it
- * follows, and the sample pasted straight into the box (to rehearse the page itself).
+ * follows, and the sample pasted straight into the box (to rehearse the page itself). `menu`:
+ * the menu on its own, for loading into a branch.
  */
 export function SetupTemplates({
   devKey,
+  kind = 'restaurant',
   onUseSample,
 }: {
   devKey: string;
+  kind?: 'restaurant' | 'menu';
   onUseSample: (text: string) => void;
 }) {
   const t = useContent('common');
   const templates = useSetupTemplates(devKey);
-  const data = templates.data;
+  const data = templates.data
+    ? kind === 'menu'
+      ? { prompt: templates.data.menuPrompt, sample: templates.data.menuSample }
+      : templates.data
+    : undefined;
+  const words = kind === 'menu' ? 'devSetup.menu.templates' : 'devSetup.templates';
   return (
     <div className={styles.templates}>
-      <h3 className={styles.subTitle}>{t('devSetup.templates.title')}</h3>
-      <p className={styles.muted}>{t('devSetup.templates.steps')}</p>
+      <h3 className={styles.subTitle}>{t(`${words}.title`)}</h3>
+      <p className={styles.muted}>{t(`${words}.steps`)}</p>
       {templates.isError ? (
         <Banner tone="err" icon="alert">
           {t('devSetup.templates.failed')}
@@ -41,11 +49,11 @@ export function SetupTemplates({
               if (!data) return;
               downloadFile(
                 new Blob([data.prompt], { type: 'text/plain;charset=utf-8' }),
-                t('devSetup.templates.promptFile'),
+                t(`${words}.promptFile`),
               );
             }}
           >
-            {t('devSetup.templates.prompt')}
+            {t(`${words}.prompt`)}
           </Button>
           <Button
             variant="secondary"
@@ -56,11 +64,11 @@ export function SetupTemplates({
               if (!data) return;
               downloadFile(
                 new Blob([sampleText(data.sample)], { type: 'application/json' }),
-                t('devSetup.templates.sampleFile'),
+                t(`${words}.sampleFile`),
               );
             }}
           >
-            {t('devSetup.templates.sample')}
+            {t(`${words}.sample`)}
           </Button>
           <Button
             variant="ghost"

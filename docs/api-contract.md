@@ -42,6 +42,7 @@ answers differently from the mock (orders as data, its `{ success, data }` envel
 - [Shifts and rota](#shifts-and-rota)
 - [More menu, reservation and guest endpoints](#more-menu-reservation-and-guest-endpoints)
 - [Developer setup](#developer-setup)
+- [Platform console](#platform-console)
 - [Related](#related)
 
 ## Endpoint index
@@ -100,6 +101,7 @@ sections further down. The full list the backend serves is `BACKEND_ROUTES` in
 | PATCH  | [`/admin/branches/:branchId/floors`](#patch-adminbranchesbranchidfloors)                                                                          | Admin floor, tables and QR codes |
 | GET    | [`/admin/branches/:branchId/orders`](#get-adminbranchesbranchidorders)                                                                            | Admin orders and payments        |
 | POST   | [`/admin/branches/:branchId/tables/:table/orders`](#post-adminbranchesbranchidtablestableorders)                                                  | Admin orders and payments        |
+| POST   | [`/admin/branches/:branchId/orders/phone`](#post-adminbranchesbranchidordersphone)                                                                | Admin orders and payments        |
 | POST   | [`/admin/branches/:branchId/orders/:id/rounds`](#post-adminbranchesbranchidordersidrounds)                                                        | Admin orders and payments        |
 | PATCH  | [`/admin/branches/:branchId/orders/:id/rounds/:round`](#patch-adminbranchesbranchidordersidroundsround)                                           | Admin orders and payments        |
 | POST   | [`/admin/branches/:branchId/orders/:id/payment`](#post-adminbranchesbranchidordersidpayment)                                                      | Admin orders and payments        |
@@ -254,6 +256,8 @@ All are backend only. The extras each carries are in its JSDoc.
 | `discount_limit`                                                                        | 403    | More off than the giver's limit (`limit`)                     |
 | `deposit_exists`                                                                        | 409    | The booking already has a deposit                             |
 | `feature_disabled`                                                                      | 403    | The restaurant doesn't have this module (`feature`)           |
+| `plan_limit`                                                                            | 403    | The package allows no more (`limit`, `max`, `used`)           |
+| `plan_locked`                                                                           | 403    | The plan ended (past grace) or is suspended (`status`)        |
 | `name_taken`, `opening_done`, `not_tracked`, `ingredient_in_use`                        | 409    | Inventory conflicts                                           |
 | `count_open`, `count_closed`, `count_needs_notes`, `transfer_closed`                    | 409    | Stock counts and transfers                                    |
 | `expiry_required`                                                                       | 400    | These items track expiry: give the date (`ingredients`)       |
@@ -760,7 +764,9 @@ The branches the signed-in admin manages.
 - **Auth:** bearer token.
 - **Request:** none.
 - **Response:** `200` [`AdminBranchesResponse`](../src/api/contracts.ts) `{ branches }`
-  (`AdminBranch[]`).
+  (`AdminBranch[]`). Each has `features` (what its restaurant's package includes) and `plan`
+  (`BranchPlan`: `code`, `name`, `status`, `endsAt`, `lockAt`, `daysLeft`, `limits`, `usage`,
+  `support`; `null` without a package).
 - **Errors:** `401 unauthorized`.
 - **Rules:**
   - Only the account's branches, in the account's order. One branch: the app opens it directly.
@@ -775,9 +781,11 @@ Opens a new branch (Settings › Branches).
 - **Errors:** `400 invalid_request` (details, or unknown `copyFrom`), `401 unauthorized`,
   `403 forbidden` (`copyFrom` is not the admin's).
 - **Rules:**
-  - Hours, delivery zones, pickup, menu, promotions and floor plan start as a copy of `copyFrom`.
-  - The region (country, time zone, locale, currency) comes from `details`. Taxes and payment
-    methods are the copy's, or the new country's presets (`config/regions`) when it differs.
+  - It joins `copyFrom`'s restaurant and starts empty: no menu, promotions or stock; one "Main
+    floor" with tables 1–10; open 10:00–22:00 every day, dine-in only; no delivery zones or help
+    questions; no photo.
+  - The region (country, time zone, locale, currency) comes from `details`; taxes and payment
+    methods are that country's presets.
   - The phone must start with the country code of `details.country`.
   - The creator manages it at once; guests can choose it; it starts open. Never reuse an id.
 
@@ -1020,6 +1028,31 @@ A waiter takes an order at the table for a guest not using their phone.
   - Priced like a guest's order (menu, offers on now, branch taxes); dine-in, paid at the counter,
     no guest session.
   - Allowed while the branch is paused or closed. The timeline records who took it.
+
+### POST /admin/branches/:branchId/orders/phone
+
+Staff take a takeaway or delivery order for a customer who called.
+
+- **Auth:** bearer token (`orders.take`).
+- **Request:** `PhoneOrderRequest`
+  `{ customer: { name, phone }, fulfilment, kitchenNote?, lines, idempotencyKey? }`, where
+  `fulfilment` is `{ mode: 'takeaway', pickupAt: string | null }` (null: as soon as possible) or
+  `{ mode: 'delivery', address }`, and `phone` is the mobile number without the country code.
+- **Response:** `201` `Order` (`source: 'staff'`, the day's `token`, `customerPhone`).
+- **Errors:** `400 invalid_request` (`customer.phone` not a mobile number of the branch's
+  country; dine-in), `401 unauthorized`, `403 forbidden`, `403 plan_locked`,
+  `403 feature_disabled`, `409 mode_unavailable`, `409 ordering_unavailable`,
+  `422 pickup_unavailable`, `422 area_not_served`, `422 below_minimum`, `422 empty_order`,
+  `422 item_unavailable`.
+- **Rules:**
+  - The same rules as a guest's takeaway or delivery order: the mode switched on and open now,
+    a pickup time on offer, a delivery area served with its fee, the minimum order; priced the
+    same (no promo code; staff discounts after).
+  - Paid at pickup (`pickup`) or to the rider (`cod`), unpaid; a payment made now is recorded
+    with `POST …/orders/:id/payment`. The round records who took it.
+  - The customer's number lets them follow it in the app once they verify it there. Staff see
+    it as `customerPhone` on takeaway and delivery orders; guests never do.
+  - Sent again with the same `idempotencyKey`, it's taken once.
 
 ### POST /admin/branches/:branchId/orders/:id/rounds
 
@@ -1702,14 +1735,17 @@ where it has `DEV_SETUP_KEY`. Every request sends the key as `X-Dev-Key`, never 
 super admin without it gets `401 unauthorized` (`429 rate_limited` after 10 wrong keys in 10
 minutes). Types: `src/api/contracts/dev-setup.ts`.
 
-| Method | Path                               | What                                                                     |
-| ------ | ---------------------------------- | ------------------------------------------------------------------------ |
-| POST   | `/dev/setup/check`                 | `{ data }` checked, nothing written (`SetupCheckResponse`)               |
-| POST   | `/dev/setup/import`                | `{ data, replace }` (`SetupImportRequest`) → `201 SetupImportResponse`   |
-| GET    | `/dev/setup/templates`             | `{ sample, prompt }` (`SetupTemplates`): the downloads                   |
-| GET    | `/dev/setup/restaurants`           | The restaurants made there (`SetupRestaurant[]`)                         |
-| POST   | `/dev/setup/restaurants/:id/reset` | `204`: the rehearsal's orders, payments, bookings, cash and shifts gone  |
-| DELETE | `/dev/setup/restaurants/:id`       | `204`: the restaurant and everything it has, its staff accounts included |
+| Method | Path                               | What                                                                                                      |
+| ------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| POST   | `/dev/setup/check`                 | `{ data }` checked, nothing written (`SetupCheckResponse`)                                                |
+| POST   | `/dev/setup/import`                | `{ data, replace }` (`SetupImportRequest`) → `201 SetupImportResponse`                                    |
+| GET    | `/dev/setup/templates`             | `{ sample, prompt, menuSample, menuPrompt }` (`SetupTemplates`): the downloads                            |
+| GET    | `/dev/setup/restaurants`           | The restaurants made there (`SetupRestaurant[]`)                                                          |
+| POST   | `/dev/setup/restaurants/:id/reset` | `204`: the rehearsal's orders, payments, bookings, cash and shifts gone                                   |
+| DELETE | `/dev/setup/restaurants/:id`       | `204`: the restaurant and everything it has, its staff accounts included                                  |
+| GET    | `/dev/setup/clients`               | Every client and its branches with their categories, dishes and orders (`SetupClient[]`)                  |
+| POST   | `/dev/setup/menu/check`            | `{ branchId, data }`: the menu checked against the branch, nothing written (`MenuCheckResponse`)          |
+| POST   | `/dev/setup/menu/import`           | `{ branchId, data, replace, by }` → `201 MenuLoadResponse`; 409 `hasMenu` / `hasOrders`; 403 `plan_limit` |
 
 - `data` is the client's JSON as pasted (its shape: restaurant-backend ›
   `src/modules/dev-setup/dev-setup.schema.ts`; Nepal unless `branch.country` is `IN`).
@@ -1723,6 +1759,63 @@ minutes). Types: `src/api/contracts/dev-setup.ts`.
 - Reset and delete answer `404` for any restaurant the page didn't make.
 - The page's staff link is `/admin/login/?branch=<id>`: the sign-in shows that branch's name
   (not the default branch's) before anyone signs in.
+
+## Platform console
+
+The hidden `/platform/` page (linked from nowhere): the application owner's remote control for
+every client's package (restaurant-backend › ADR-051), with the developer setup on its Dev setup
+tab (`/dev-setup/` opens the same page on that tab). Backend only, and only where it has
+`DEV_SETUP_KEY`: the platform owner's one key for both. Every request sends it as `X-Dev-Key`,
+never a staff token (`401 unauthorized`; `429 rate_limited` after 10 wrong keys in 10 minutes; a form
+sent with a mistake doesn't count). Every change carries `by`, the name the console was given,
+kept in the client's history. Types: `src/api/contracts/platform.ts`.
+
+| Method   | Path                                                | What                                                                                  |
+| -------- | --------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| GET      | `/platform/plans`                                   | The packages (`PackagePlan[]`): prices, limits, features                              |
+| PATCH    | `/platform/plans/:code`                             | A package's defaults (`UpdatePackageRequest`); clients on it keep theirs              |
+| GET      | `/platform/clients`                                 | Every restaurant (`ClientSummary[]`): package, status, days left, usage               |
+| GET      | `/platform/clients/:id`                             | One in full with its history (`ClientDetail`)                                         |
+| PATCH    | `/platform/clients/:id`                             | Only what changes (`UpdateClientRequest`) → `ClientDetail`                            |
+| POST     | `/platform/clients/:id/suspend`                     | `{ by, reason }` → `ClientDetail`: everything stops until resumed                     |
+| POST     | `/platform/clients/:id/resume`                      | `{ by }` → `ClientDetail`                                                             |
+| GET      | `/platform/settings`                                | `PlatformSettings`: new clients' trial (days, package), support contact               |
+| PATCH    | `/platform/settings`                                | `UpdatePlatformSettingsRequest` → `PlatformSettings`                                  |
+| POST     | `/platform/clients/:id/payments`                    | `RecordPaymentRequest` → `201 ClientDetail` (`extend`: one more term)                 |
+| POST     | `…/payments/:paymentId/remove`                      | `{ by, reason }` → `ClientDetail` (the term stays as it is)                           |
+| GET      | `…/payments/:paymentId/receipt`                     | The receipt photo (bytes; 404 without one)                                            |
+| POST     | `/platform/clients/:id/reminded`                    | `{ by, daysLeft }` → `ClientDetail` (`remindedAt` set)                                |
+| GET      | `/platform/payments`                                | `PaymentsOverview`: this month, last 12 months, the latest payments                   |
+| POST     | `/platform/clients`                                 | `NewClientRequest` → `201 NewClientResult` (owner's password once)                    |
+| POST     | `/platform/clients/:id/go-live`                     | `{ by }` → `ClientDetail`: a Dev setup demo made a live client                        |
+| POST     | `/platform/plans`, `…/order`, `…/:code/remove`      | A new package (copy of `copyFrom`), the order, delete while unused (`409 conflict`)   |
+| GET/POST | `/platform/features`, `PATCH …/:key`                | `FeatureInfo[]`: the catalog (built-in and the platform's own); `…/remove`, `…/order` |
+| GET/POST | `/platform/addons`, `PATCH …/:code`                 | `AddonInfo[]`: priced per term, raise a limit or switch a feature on; `…/order`       |
+| POST     | `/platform/clients/:id/addons`, `…/:addonId/remove` | `{ by, addon, quantity }` → `ClientDetail` (limits, features and price follow)        |
+
+- Limits are whole numbers or `null` (unlimited); floors, tables and dishes count per branch,
+  `usage` gives the fullest branch's. Prices are whole rupees; `null` is "on request".
+- A new `plan` brings its limits and features unless they're sent too. A lower limit removes
+  nothing: the client just can't add more (`403 plan_limit` where staff, floors, tables, dishes
+  or branches are added, and for reports, order history and payment history further back than
+  `reportDays`).
+- Features off take their permissions away (`ordering`: orders, kitchen, payments, cash;
+  `reports`, `reservations`, `inventory`, `shifts` (rota, attendance), `activityLog` (audit));
+  offers and shifts routes answer `403 feature_disabled`; guests get no offers or codes, no
+  takeaway or delivery without them, and `menuOnly: true` in `GET /branches/:id/config` without
+  ordering (placing answers `403 feature_disabled`; the guest app shows the menu with "Ask staff"
+  and a "menu to browse" banner).
+- Expired (past grace): only serving guests works (orders, kitchen, payments, cash register,
+  tables, bookings, sold out, pause); everything else answers `403 plan_locked`. Suspended: staff
+  get `403 plan_locked` everywhere and guests find the branch closed. The platform's super admins
+  are never locked out.
+- `status` is worked out from the dates: `active` while paid (or with no end and no trial),
+  `trial`, then `grace` for `graceDays` after whichever ended last, then `expired`;
+  `suspended` overrides. `lockAt` is the end plus grace.
+- `400 invalid_request` with `{ field: 'plan', reason: 'unknown' }` or
+  `{ field: 'endsAt', reason: 'beforeStart' }`; `404` for an unknown client or package.
+- Restaurants from before plans are on Platinum with no end; dev setup starts new ones on the
+  trial the settings give (30 days of Premium).
 - `branch.taxId` (Nepal's PAN/VAT number, India's GSTIN) and `branch.legalName` are optional and
   checked as Settings › Tax checks them; they're printed on bills and tax invoices.
 - The page's "Start here" downloads `claude-menu-prompt.txt` (paste it into Claude with the menu

@@ -55,6 +55,9 @@ describe('which requests go to the backend', () => {
     expect(isBackendRequest({ method: 'GET', path: 'orders/A105?sessionId=x' })).toBe(true);
     expect(isBackendRequest({ method: 'POST', path: 'payments' })).toBe(true);
     expect(isBackendRequest({ method: 'GET', path: 'admin/branches/blr/tables/12' })).toBe(true);
+    expect(isBackendRequest({ method: 'POST', path: 'admin/branches/blr/orders/phone' })).toBe(
+      true,
+    );
     expect(
       isBackendRequest({ method: 'PATCH', path: 'admin/branches/blr/reservations/R1001/status' }),
     ).toBe(true);

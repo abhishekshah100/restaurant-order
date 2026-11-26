@@ -1,0 +1,100 @@
+/* On screen the receipt isn't there; printing, it's all there is (A4, white paper). */
+.sheet {
+  display: none;
+}
+
+@media print {
+  :global(html.printing-receipt) body > :not([data-print-sheet]) {
+    display: none !important;
+  }
+
+  :global(html.printing-receipt) body {
+    background: #fff;
+  }
+
+  .sheet {
+    display: grid;
+    gap: 10mm;
+    padding: 6mm 4mm;
+    color: #111;
+    font: 11pt/1.45 var(--f-ui);
+  }
+
+  .head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10mm;
+    padding-bottom: 5mm;
+    border-bottom: 1px solid #bbb;
+  }
+
+  .business {
+    font: 600 18pt/1.2 var(--f-display);
+    margin-bottom: 2mm;
+  }
+
+  .meta {
+    text-align: right;
+  }
+
+  .meta h2 {
+    font: 600 14pt/1.2 var(--f-ui);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2mm;
+  }
+
+  .to h3 {
+    font: 600 9pt/1.2 var(--f-ui);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #555;
+    margin-bottom: 1.5mm;
+  }
+
+  .strong {
+    font-weight: 600;
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .table th,
+  .table td {
+    padding: 3mm 2mm;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .table th {
+    font: 600 9pt/1.2 var(--f-ui);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #555;
+  }
+
+  .table tfoot td {
+    font-weight: 700;
+    border-bottom: 0;
+  }
+
+  .amount {
+    text-align: right !important;
+    white-space: nowrap;
+  }
+
+  .note {
+    display: block;
+    color: #555;
+    font-size: 9.5pt;
+  }
+
+  .foot {
+    display: grid;
+    gap: 2mm;
+    color: #333;
+  }
+}

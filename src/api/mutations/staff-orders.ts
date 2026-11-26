@@ -11,6 +11,7 @@ import type {
   RefundRequest,
   StaffRoundRequest,
   TakeTableOrderRequest,
+  PhoneOrderRequest,
   DiscountRequest,
 } from '../contracts';
 import { api } from '../endpoints';
@@ -33,6 +34,18 @@ export function useTakeTableOrder() {
       table: number;
       body: TakeTableOrderRequest;
     }) => api.takeTableOrder(requireToken(token), branchId, table, body),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'orderChanged', branchOf(variables)),
+  });
+}
+
+/** POST /admin/branches/:branchId/orders/phone: staff take a takeaway or delivery by phone. */
+export function useTakePhoneOrder() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, body }: { branchId: string; body: PhoneOrderRequest }) =>
+      api.takePhoneOrder(requireToken(token), branchId, body),
     onSettled: (_data, _error, variables) =>
       refreshAfter(client, 'orderChanged', branchOf(variables)),
   });

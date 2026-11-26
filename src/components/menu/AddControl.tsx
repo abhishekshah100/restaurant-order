@@ -32,10 +32,20 @@ export function AddControl({ dish, size = 'md', customisableHint, className }: A
   const { openQuickAdd } = useQuickAdd();
   const lines = useDishLines(dish.slug);
   const count = lines.reduce((n, l) => n + l.quantity, 0);
-  const { canAdd } = useDishCardShared();
+  const { canAdd, menuOnly, suspended } = useDishCardShared();
   const t = useContent('menu');
-  // While the restaurant is closed the menu is read-only.
-  const unavailable = unavailableLabel(t, dish) ?? (canAdd ? undefined : t('availability.closed'));
+  // While the restaurant is closed the menu is read-only; the QR menu only, staff take the order.
+  const unavailable =
+    unavailableLabel(t, dish) ??
+    (canAdd
+      ? undefined
+      : t(
+          suspended
+            ? 'availability.notNow'
+            : menuOnly
+              ? 'availability.askStaff'
+              : 'availability.closed',
+        ));
   const customisable = isCustomisable(dish);
   const inCart = count > 0;
 

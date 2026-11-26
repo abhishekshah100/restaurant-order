@@ -1,10 +1,16 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ApiError } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
 import { useBranchMenu } from '@/api/adminDashboard';
 import { useContent } from '@/api/hooks';
-import { useAddStaffRound, useEditStaffRound, useTakeTableOrder } from '@/api/mutations';
+import {
+  useAddStaffRound,
+  useEditStaffRound,
+  useTakePhoneOrder,
+  useTakeTableOrder,
+} from '@/api/mutations';
 import { branchPromotionsQuery } from '@/api/queries';
 import { Button, Dialog, IconButton } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
@@ -12,8 +18,27 @@ import { cartLineLabels } from '@/hooks/useCartLineLabels';
 import { useMinute } from '@/hooks/useOffers';
 import { defaultConfig } from '@/lib/cartLine';
 import { reorderLines } from '@/lib/lifecycle';
-import { addLine, padRequest, padTotals, setQuantity } from '@/lib/orderPad';
-import { calculateBill } from '@/lib/pricing';
+import {
+  deliveryAreas,
+  findZone,
+  minimumOrder,
+  pickupOptions,
+  quoteDelivery,
+} from '@/lib/fulfilment';
+import {
+  addLine,
+  emptyPhoneDraft,
+  hasErrors,
+  padRequest,
+  padTotals,
+  phoneDraftErrors,
+  phoneRequest,
+  pickupToSend,
+  setQuantity,
+  type PhoneDraft,
+  type PhoneMode,
+} from '@/lib/orderPad';
+import { calculateBill, itemTotal } from '@/lib/pricing';
 import { activeOffers, applyOffers, offerDiscounts } from '@/lib/promotions';
 import type { CartLine, LineConfig } from '@/types/cart';
 import type { Dish } from '@/types/menu';
@@ -23,6 +48,7 @@ import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { PadChoose } from './PadChoose';
 import { PadMenu } from './PadMenu';
 import { PadReview } from './PadReview';
+import { PhoneDetails } from './PhoneDetails';
 import styles from './OrderPad.module.css';
 
 /**
@@ -38,7 +64,18 @@ export type PadTarget =
       table: number;
       order: Pick<Order, 'id' | 'customerName'>;
       round: Pick<OrderRound, 'number' | 'items' | 'kitchenNote'>;
-    };
+    }
+  /** A customer called: takeaway or delivery, no table. */
+  | { kind: 'phone'; mode: PhoneMode };
+
+/** The server's refusals a phone order words itself (the rest: "Couldn't send the order"). */
+const PHONE_REFUSALS = [
+  'pickup_unavailable',
+  'area_not_served',
+  'below_minimum',
+  'ordering_unavailable',
+  'mode_unavailable',
+] as const;
 
 /** The dish being set up before it's added: its choices and how many. */
 interface Choosing {
@@ -53,17 +90,36 @@ interface Choosing {
  * choices where a dish has them, then review — guest name, quantities, a note for the kitchen
  * — and send. A new order goes on its own bill (POST …/tables/:table/orders); added items go on
  * the order's bill as a new round (POST …/orders/:id/rounds); a change replaces a round's items
- * (PATCH …/orders/:id/rounds/:round) and opens on the review with them. Fresh each time.
+ * (PATCH …/orders/:id/rounds/:round) and opens on the review with them. A phone order
+ * (POST …/orders/phone) reviews the customer, the pickup time or address and how they pay;
+ * `onPhoneTaken` hears of it (to take a payment made now). Fresh each time.
  */
-export function OrderPad({ target, onClose }: { target: PadTarget | null; onClose: () => void }) {
+export function OrderPad({
+  target,
+  onClose,
+  onPhoneTaken,
+}: {
+  target: PadTarget | null;
+  onClose: () => void;
+  onPhoneTaken?: (order: Order, paidNow: boolean) => void;
+}) {
   if (!target) return null;
-  return <Pad target={target} onClose={onClose} />;
+  return <Pad target={target} onClose={onClose} onPhoneTaken={onPhoneTaken} />;
 }
 
-function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
+function Pad({
+  target,
+  onClose,
+  onPhoneTaken,
+}: {
+  target: PadTarget;
+  onClose: () => void;
+  onPhoneTaken?: ((order: Order, paidNow: boolean) => void) | undefined;
+}) {
   const t = useContent('common');
   const cart = useContent('cart');
-  const { branch, region, money } = useAdminWorkspace();
+  const { branch, region, money, can } = useAdminWorkspace();
+  const mode = target.kind === 'phone' ? target.mode : 'dineIn';
   const { showToast } = useToast();
   const { menu } = useBranchMenu(region);
   // Happy hour: the server takes the dine-in offers on now off a waiter's order, so the pad
@@ -73,22 +129,35 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
   const offers = useMemo(
     () =>
       promotions && minute !== null
-        ? activeOffers(promotions.offers, new Date(minute), region.timezone, 'dineIn')
+        ? activeOffers(promotions.offers, new Date(minute), region.timezone, mode)
         : [],
-    [promotions, minute, region.timezone],
+    [promotions, minute, region.timezone, mode],
   );
+  // A phone order's details; the delivery area sets the fee and the minimum.
+  const [draft, setDraft] = useState<PhoneDraft>(emptyPhoneDraft);
+  const [tried, setTried] = useState(false);
+  const zone =
+    mode === 'delivery' ? findZone(region.modes.delivery.zones, draft.address.area) : undefined;
+  const quoteFor = (some: CartLine[]) =>
+    zone ? quoteDelivery(zone, draft.address.area, itemTotal(some)) : undefined;
   const price = (some: CartLine[]) => {
     const offered: (CartLine & { offer?: AppliedOffer })[] = menu
       ? applyOffers(some, menu, offers)
       : some;
     const discounts = offerDiscounts(offered, region.currency.minorUnit);
-    return { offered, bill: calculateBill(some, region, undefined, discounts) };
+    const quote = quoteFor(some);
+    const delivery = quote
+      ? { fee: quote.fee, taxable: region.modes.delivery.feeTaxable }
+      : undefined;
+    return { offered, bill: calculateBill(some, region, delivery, discounts) };
   };
   const labels = useMemo(() => cartLineLabels(cart, money), [cart, money]);
   const take = useTakeTableOrder();
+  const takePhone = useTakePhoneOrder();
   const addRound = useAddStaffRound();
   const editRound = useEditStaffRound();
-  const sending = take.isPending || addRound.isPending || editRound.isPending;
+  const sending =
+    take.isPending || takePhone.isPending || addRound.isPending || editRound.isPending;
   // One order per pad: sent again after a lost answer, the server returns the one it took.
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
@@ -111,8 +180,30 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
   // What the guest pays for these lines: offers off; taxes, service charge and round off in.
   const priced = price(lines);
   const billTotal = priced.bill.total;
+  // A phone order: the pickup time it will go with, what's missing, and the minimum order.
+  const pickupAt =
+    target.kind === 'phone' && target.mode === 'takeaway' && minute !== null
+      ? pickupToSend(draft.pickupAt, pickupOptions(region, new Date(minute)))
+      : null;
+  const phoneErrors =
+    target.kind === 'phone'
+      ? phoneDraftErrors(
+          draft,
+          target.mode,
+          region.mobile,
+          deliveryAreas(region.modes.delivery.zones),
+          pickupAt,
+        )
+      : {};
+  const short =
+    target.kind === 'phone'
+      ? minimumOrder(region, target.mode, itemTotal(lines), quoteFor(lines))
+      : null;
 
-  let title = t('adminOrderPad.titleNew', { table: target.table });
+  let title =
+    target.kind === 'phone'
+      ? t(`adminOrderPad.phone.title.${target.mode}`)
+      : t('adminOrderPad.titleNew', { table: target.table });
   if (target.kind === 'add') title = t('adminOrderPad.titleAdd', { order: target.order.id });
   if (target.kind === 'edit') title = t('adminOrderPad.titleEdit', { order: target.order.id });
   // Setting up a dish: which order it's for. Otherwise: whose order, or the step.
@@ -154,7 +245,42 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
     };
     const failed = () => showToast(t('adminOrderPad.failed'), { tone: 'error' });
     const note = kitchenNote.trim() || undefined;
-    if (target.kind === 'edit') {
+    if (target.kind === 'phone') {
+      setTried(true);
+      if (hasErrors(phoneErrors) || pickupAt === undefined || (short && short.shortBy > 0)) return;
+      takePhone.mutate(
+        {
+          branchId: branch.id,
+          body: phoneRequest(draft, target.mode, lines, {
+            ...(note ? { kitchenNote: note } : {}),
+            idempotencyKey,
+            pickupAt,
+          }),
+        },
+        {
+          onSuccess: (order) => {
+            showToast(
+              t('adminOrderPad.phone.sent', { token: order.token ?? '–', order: order.id }),
+              {
+                tone: 'success',
+              },
+            );
+            onPhoneTaken?.(order, draft.paidNow);
+            onClose();
+          },
+          onError: (error) => {
+            const code = error instanceof ApiError ? error.code : undefined;
+            const known = PHONE_REFUSALS.find((c) => c === code);
+            showToast(
+              known ? t(`adminOrderPad.phone.refused.${known}`) : t('adminOrderPad.failed'),
+              {
+                tone: 'error',
+              },
+            );
+          },
+        },
+      );
+    } else if (target.kind === 'edit') {
       editRound.mutate(
         {
           branchId: branch.id,
@@ -239,6 +365,25 @@ function Pad({ target, onClose }: { target: PadTarget; onClose: () => void }) {
         onAddMore={() => setStep('menu')}
         guest={guest}
         onGuest={setGuest}
+        details={
+          target.kind === 'phone' ? (
+            <PhoneDetails
+              mode={target.mode}
+              value={draft}
+              onChange={setDraft}
+              errors={tried ? phoneErrors : {}}
+              canCollect={can('payments.collect')}
+            />
+          ) : undefined
+        }
+        shortBy={
+          short && short.shortBy > 0
+            ? t('adminOrderPad.phone.shortBy', {
+                amount: money.format(short.shortBy),
+                minimum: money.format(short.minimum),
+              })
+            : undefined
+        }
         kitchenNote={kitchenNote}
         onKitchenNote={setKitchenNote}
       />

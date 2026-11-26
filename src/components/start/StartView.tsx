@@ -83,6 +83,8 @@ export function StartView() {
     session?.branchId ??
     (branches.length === 1 ? branches[0].id : null);
   const branch = branches.find((b) => b.id === branchId) ?? null;
+  // The chosen outlet's own photo; none: the brand alone (never another restaurant's food).
+  const photo = branch?.image ?? null;
   const sameBranch = session !== null && session.branchId === branchId;
   const scannedTable = sameBranch ? (session.table ?? null) : null;
   const mode = pickedMode ?? visit.choice.mode ?? (sameBranch ? session.mode : null);
@@ -140,18 +142,20 @@ export function StartView() {
 
   return (
     <div className={styles.page}>
-      <BrandPanel caption={brand} />
-      <div className={cx(styles.hero, 'hide-desktop')}>
-        <Image
-          className={styles.heroImg}
-          src="/images/pasta-hero.jpg"
-          alt=""
-          width={780}
-          height={540}
-          sizes="100vw"
-          loading="eager"
-          fetchPriority="high"
-        />
+      <BrandPanel caption={brand} photo={photo} />
+      <div className={cx(styles.hero, !photo && styles.heroPlain, 'hide-desktop')}>
+        {photo && (
+          <Image
+            className={styles.heroImg}
+            src={photo.src}
+            alt=""
+            width={photo.width}
+            height={photo.height}
+            sizes="100vw"
+            loading="eager"
+            fetchPriority="high"
+          />
+        )}
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.heroBrand}>
           <Icon name="olive" />

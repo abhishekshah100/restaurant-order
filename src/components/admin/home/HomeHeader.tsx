@@ -11,6 +11,7 @@ import { ADMIN_LINKS } from '@/lib/adminNav';
 import { cx } from '@/lib/cx';
 import { firstName } from '@/lib/service';
 import type { PadTarget } from '../orderPad/OrderPad';
+import { PhoneOrderButton } from '../orderPad/PhoneOrderButton';
 import type { EditorTarget } from '../reservations/ReservationEditor';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { ShiftControl } from './ShiftControl';
@@ -37,7 +38,8 @@ const SOON_MINUTES = 30;
 /**
  * The top of the waiter home: today's date, "Good evening, Abhishek", until when the kitchen
  * takes orders, and the quick actions this person may use: New order (pick a table, then the
- * order pad), New booking, and Mark sold out (the menu's switches).
+ * order pad), Phone order (takeaway or delivery for a customer who called), New booking, and
+ * Mark sold out (the menu's switches).
  */
 export function HomeHeader({ now, adminName }: { now: Date | null; adminName?: string }) {
   const t = useContent('common');
@@ -90,6 +92,7 @@ export function HomeHeader({ now, adminName }: { now: Date | null; adminName?: s
               {t('adminHome.header.newOrder')}
             </Button>
           )}
+          <PhoneOrderButton />
           {canBook && (
             <Button
               size="sm"

@@ -7,6 +7,7 @@ import { useAdminName } from '@/hooks/useAdminSession';
 import { myShift } from '@/lib/adminHome';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import styles from './HomePanels.module.css';
+import { hasFeature } from '@/lib/adminPlan';
 
 /**
  * My shift: the signed-in staff member's day so far, from today's orders: orders they took at
@@ -17,7 +18,8 @@ export function MyShift() {
   const t = useContent('common');
   const { branch, money, clock } = useAdminWorkspace();
   // On shift: counted from clock-in.
-  const since = useCurrentShift(branch.id, isBackendEnabled()).data?.startedAt;
+  const since = useCurrentShift(branch.id, isBackendEnabled() && hasFeature(branch, 'shifts')).data
+    ?.startedAt;
   const name = useAdminName() ?? '';
   const orders = useBranchOrders(branch.id, undefined, false);
   if (!orders.data || !name) return null;

@@ -1,0 +1,25 @@
+.banner {
+  margin-bottom: 20px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.body {
+  display: grid;
+  gap: 6px;
+}
+
+.limitNote {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.limitNote .actions {
+  justify-content: flex-start;
+}

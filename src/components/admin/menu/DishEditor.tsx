@@ -15,6 +15,7 @@ import {
 import type { MenuCatalog } from '@/lib/menu';
 import type { CategoryId, Dish } from '@/types/menu';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
+import { usePlanRefusal } from '../shell/PlanLimit';
 import { AddOnsSection } from './editor/AddOnsSection';
 import { BasicsSection } from './editor/BasicsSection';
 import { ChoicesSection } from './editor/ChoicesSection';
@@ -47,6 +48,7 @@ export function DishEditor({
   const { branch } = useAdminWorkspace();
   const { showToast } = useToast();
   const saveDish = useSaveDish();
+  const refusal = usePlanRefusal();
   const [form, setForm] = useState<DishForm>(() => dishForm(dish, category));
   const [tried, setTried] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -73,7 +75,7 @@ export function DishEditor({
           );
           onClose();
         },
-        onError: () => showToast(t('adminMenu.failed'), { tone: 'error' }),
+        onError: (error) => showToast(refusal(error) ?? t('adminMenu.failed'), { tone: 'error' }),
       },
     );
   };

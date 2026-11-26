@@ -36,6 +36,7 @@ type AdminPage =
   | 'tax'
   | 'paymentMethods'
   | 'paymentQrs'
+  | 'plan'
   | 'offers'
   | 'roles'
   | 'staff'

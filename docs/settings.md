@@ -58,6 +58,7 @@ of sections; a section with several pages shows them as tabs.
 | People & branches | Staff & roles    | Roles & permissions  | `roles/`      | `roles/RolesManager`            | `staff.manage`           | `.../roles`          |
 | People & branches | Branches         | Branches             | `branches/`   | `branches/BranchesManager`      | `branches.manage`        | POST / DELETE        |
 | People & branches | Branches         | Modules              | `modules/`    | `ModulesSettings`               | super admins only        | `PATCH .../features` |
+| People & branches | My plan          | My plan              | `plan/`       | `PlanSettings`                  | `branches.manage`        | read only            |
 
 "Saves via" names the section of `PATCH /admin/branches/:branchId/settings` unless an endpoint is
 given. The old `rota/` and `shifts/` addresses point to Shifts & attendance (see
@@ -552,9 +553,11 @@ Rules:
 
 - The list marks the branch currently selected. **Switch** selects another branch
   (`selectAdminBranch`).
-- **Add** creates a copy of an existing branch with its own details. The copy takes the source's
-  region, taxes, payment methods, hours, delivery and pickup, plus its menu, promotions and floor
-  plan (including changes staff already made at the source). Details are validated with
+- **Add** opens a new, empty branch of the chosen branch's restaurant with its own details: no
+  dishes, offers or stock, one floor of 10 tables, 10:00–22:00 dine-in, its country's taxes and
+  payment methods, no photo (the menu comes from the owner, or the platform's Dev setup › Load a menu into a
+  branch). Details
+  are validated with
   `detailsErrors`, including a unique short name. The creator manages the new branch. Ids are
   derived from city and short name and never reused, even after removal.
 - **Remove** asks first. It is refused with 409 `last_branch` when it is the admin's only branch,
@@ -578,6 +581,22 @@ Rules:
   `purchase.*` permission, so those pages, buttons and role groups disappear. Its data is kept,
   and dishes stock had taken off the menu come back.
 - Switched on again, the Stock tab asks staff to count stock first.
+- Since package plans (restaurant-backend › ADR-051) the switch follows each client's package,
+  set on the platform console (`/platform/`); switching here changes the package too.
+
+## My plan
+
+Purpose: the owner sees the restaurant's Restova package. Read only: the platform changes it.
+
+- **Route:** `/admin/dashboard/settings/plan/` (`branches.manage`).
+- **Component:** [`PlanSettings`](../src/components/admin/settings/PlanSettings.tsx), from
+  `AdminBranch.plan` (`GET /admin/branches`).
+- Shows the package and its status (trial, active, grace, expired, paused), when it ends, each
+  limit with what's used (staff and branches across the restaurant; floors, tables and dishes at
+  this branch; report history), the features included (those left out aren't listed), and
+  WhatsApp / Call Restova. No package set: "Everything included".
+- Offers, Pickup and Delivery carry a `feature`: without it in the package, the page is hidden
+  from Settings (`settingsFor(…, has)`), and its link goes back to the Settings overview.
 
 ## Payment QR codes
 

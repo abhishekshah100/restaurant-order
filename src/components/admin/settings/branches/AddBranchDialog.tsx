@@ -9,6 +9,7 @@ import { LIMITS, detailsErrors, dialCodeOf, type SettingsError } from '@/lib/bra
 import type { BranchSummary } from '@/types/branch';
 import type { AdminBranch } from '@/types/admin';
 import type { BranchDetails } from '@/types/branchSettings';
+import { usePlanRefusal } from '../../shell/PlanLimit';
 import styles from './BranchesManager.module.css';
 
 type Field = 'name' | 'shortName' | 'city' | 'address' | 'phone';
@@ -60,6 +61,7 @@ export function AddBranchDialog({
   const t = useContent('common');
   const all = useBranches();
   const create = useCreateBranch();
+  const refusal = usePlanRefusal();
   const [copyFrom, setCopyFrom] = useState(initialSource);
   const source = all.find((b) => b.id === copyFrom);
   const [details, setDetails] = useState<BranchDetails>(() => ({
@@ -189,7 +191,7 @@ export function AddBranchDialog({
         />
         {create.isError && (
           <p className={styles.refused} role="alert">
-            {t('adminSettings.addBranch.failed')}
+            {refusal(create.error) ?? t('adminSettings.addBranch.failed')}
           </p>
         )}
       </div>

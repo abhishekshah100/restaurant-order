@@ -1,3 +1,4 @@
+import type { PlanLimits, PlanStatus } from '@/api/contracts/platform';
 import type { CancellationReason, ReservationStatusCode } from '@/config/masters';
 import type { BranchImage, BranchStatus, CountryCode, OpeningSchedule, OrderMode } from './branch';
 import type { Price } from './menu';
@@ -70,8 +71,34 @@ export interface AdminBranch {
   fiscalYears?: { current: FiscalYear; previous: FiscalYear };
   /** What the signed-in staff member may do here (their roles' permissions at this branch). */
   permissions?: StaffPermission[];
-  /** Optional modules the branch's restaurant has ("inventory"); none from the mock. */
+  /** What the branch's restaurant's package includes ("inventory"…); none from the mock. */
   features?: string[];
+  /**
+   * The restaurant's package as its staff see it (restaurant-backend › ADR-051); null or absent:
+   * none set (no limits, nothing to show).
+   */
+  plan?: BranchPlan | null;
+}
+
+/** GET /admin/branches › plan: the package, its status and end, limits, usage, whom to ask. */
+export interface BranchPlan {
+  code: string;
+  name: string;
+  status: PlanStatus;
+  /** When the trial or paid term ends (null: no end). */
+  endsAt: string | null;
+  /** When management locks: the end plus grace. */
+  lockAt: string | null;
+  daysLeft: number | null;
+  limits: PlanLimits;
+  /** Staff and branches across the restaurant; floors, tables and dishes at this branch. */
+  usage: { staff: number; branches: number; floors: number; tables: number; dishes: number };
+  /** The platform's contact for upgrading or renewing ('' where none is set). */
+  support: { phone: string; whatsapp: string; email: string };
+  /** The platform's whole feature catalog, in order, each with whether this client has it. */
+  features?: { key: string; name: string; description: string; group: string; included: boolean }[];
+  /** What it has on top of its package. */
+  addons?: { name: string; quantity: number }[];
 }
 
 /** GET …/features: what the restaurant has switched on, and whether this person may switch it. */

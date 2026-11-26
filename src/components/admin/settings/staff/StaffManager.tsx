@@ -14,6 +14,7 @@ import { useToast } from '@/context/ToastContext';
 import { settingsHref } from '@/lib/adminSettings';
 import type { AdminStaffMember, RemovedStaffMember } from '@/types/admin';
 import { useAdminWorkspace } from '../../shell/AdminWorkspace';
+import { PlanLimitNote, usePlanRefusal, usePlanRoom } from '../../shell/PlanLimit';
 import { SettingsNote, SettingsSkeleton } from '../shared/SettingsEditor';
 import editor from '../shared/SettingsEditor.module.css';
 import {
@@ -63,6 +64,9 @@ export function StaffManager() {
   const restore = useRestoreStaff();
   const [open, setOpen] = useState<Open>(null);
   const [filter, setFilter] = useState<Filter>('active');
+  // The package's staff logins (adminPlan): Add waits at the limit.
+  const room = usePlanRoom('staff');
+  const refusal = usePlanRefusal();
 
   if (query.isError) {
     return (
@@ -80,21 +84,22 @@ export function StaffManager() {
 
   const failed = (error: unknown) =>
     showToast(
-      isApiError(error, 'staff_exists')
-        ? error.body?.field === 'phone'
-          ? t('adminSettings.staff.errors.phoneTaken')
-          : open?.kind === 'edit'
-            ? t('adminSettings.staff.errors.emailTaken')
-            : t('adminSettings.staff.errors.emailExists')
-        : isApiError(error, 'own_account')
-          ? t('adminSettings.staff.errors.ownAccount')
-          : isApiError(error, 'last_admin')
-            ? t('adminSettings.staff.errors.lastAdmin')
-            : isApiError(error, 'forbidden')
-              ? t('adminSettings.staff.errors.forbidden')
-              : isApiError(error, 'invalid_request') && error.body?.field === 'phone'
-                ? t('adminSettings.staff.errors.phone')
-                : t('adminSettings.staff.errors.failed'),
+      refusal(error) ??
+        (isApiError(error, 'staff_exists')
+          ? error.body?.field === 'phone'
+            ? t('adminSettings.staff.errors.phoneTaken')
+            : open?.kind === 'edit'
+              ? t('adminSettings.staff.errors.emailTaken')
+              : t('adminSettings.staff.errors.emailExists')
+          : isApiError(error, 'own_account')
+            ? t('adminSettings.staff.errors.ownAccount')
+            : isApiError(error, 'last_admin')
+              ? t('adminSettings.staff.errors.lastAdmin')
+              : isApiError(error, 'forbidden')
+                ? t('adminSettings.staff.errors.forbidden')
+                : isApiError(error, 'invalid_request') && error.body?.field === 'phone'
+                  ? t('adminSettings.staff.errors.phone')
+                  : t('adminSettings.staff.errors.failed')),
       { tone: 'error' },
     );
   type ToastKey = 'added' | 'saved' | 'reset' | 'off' | 'on' | 'removed' | 'restored' | 'signedOut';
@@ -129,12 +134,14 @@ export function StaffManager() {
             <Button variant="ghost" iconStart="shield" href={settingsHref('roles')}>
               {t('adminSettings.staff.rolesLink')}
             </Button>
-            <Button iconStart="plus" onClick={() => setOpen({ kind: 'add' })}>
+            <Button iconStart="plus" disabled={!room} onClick={() => setOpen({ kind: 'add' })}>
               {t('adminSettings.staff.add')}
             </Button>
           </div>
         </div>
       </header>
+
+      <PlanLimitNote limit="staff" />
 
       <div
         className={styles.filters}

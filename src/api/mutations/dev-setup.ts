@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { SetupImportRequest } from '../contracts';
+import type { MenuLoadRequest, SetupImportRequest } from '../contracts';
 import { api } from '../endpoints';
 import { refreshAfter } from '../refreshAfter';
 
@@ -35,6 +35,23 @@ export function useDeleteSetupRestaurant(key: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (restaurantId: string) => api.deleteSetupRestaurant(key, restaurantId),
+    onSettled: () => refreshAfter(client, 'devSetupChanged'),
+  });
+}
+
+/** POST /dev/setup/menu/check: what Load would do to the branch; nothing written. */
+export function useCheckMenu(key: string) {
+  return useMutation({
+    mutationFn: ({ branchId, data }: { branchId: string; data: unknown }) =>
+      api.checkMenu(key, branchId, data),
+  });
+}
+
+/** POST /dev/setup/menu/import: the branch's menu loaded; clients, menus and history read again. */
+export function useLoadMenu(key: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: MenuLoadRequest) => api.loadMenu(key, body),
     onSettled: () => refreshAfter(client, 'devSetupChanged'),
   });
 }

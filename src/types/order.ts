@@ -302,6 +302,10 @@ export interface Order {
   /** Delivery only. */
   delivery?: DeliveryDetails;
   customerName: string;
+  /** Staff only: the customer's mobile (national digits) on a takeaway or delivery order. */
+  customerPhone?: string;
+  /** A phone order: staff took this takeaway or delivery for a customer who called. */
+  byPhone?: true;
   /** Drawn history only: "you" marks this device's past visits on My orders. Ownership on bills uses `sessionId` (lib/orders › isOwnOrder). */
   placedBy: 'you' | 'other';
   /** The guest session that placed it; missing on orders from before sessions. */

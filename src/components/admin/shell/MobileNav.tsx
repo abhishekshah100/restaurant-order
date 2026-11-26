@@ -42,7 +42,8 @@ export function MobileNav({
   onSignOut,
 }: MobileNavProps) {
   const t = useContent('common');
-  const { tabs, more } = splitTabs(navFor(useAdminWorkspace().can));
+  const { can, isOff } = useAdminWorkspace();
+  const { tabs, more } = splitTabs(navFor(can, isOff));
   const inMore = more.some((item) => item.id === active);
   const close = () => onMoreOpenChange(false);
 

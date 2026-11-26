@@ -575,7 +575,8 @@
       "attendance": "Attendance · Shifts & attendance · Admin",
       "teamRequests": "Requests · Shifts & attendance · Admin",
       "sales": "Sales · Admin",
-      "photos": "Proof photos"
+      "photos": "Proof photos",
+      "plan": "My plan · Settings · Admin"
     },
     "loading": "Loading your workspace",
     "noAccess": {
@@ -676,6 +677,28 @@
       "bill": "Table {table} wants the bill",
       "kitchen": "Message from the kitchen about order {order}",
       "many": "{first} · and {count} more"
+    },
+    "plan": {
+      "askRenew": "Hello Restova, {restaurant} would like to renew our Restova plan.",
+      "whatsapp": "WhatsApp Restova",
+      "call": "Call Restova",
+      "trialEnding": "Your free trial of {plan} ends in {days} days. Choose a package to keep using Restova.",
+      "trialLastDay": "Your free trial of {plan} ends today. Choose a package to keep using Restova.",
+      "ending": "Your {plan} plan ends in {days} days. Renew to keep everything running.",
+      "lastDay": "Your {plan} plan ends today. Renew to keep everything running.",
+      "grace": "Your {plan} plan has ended. Settings, menu, staff and reports lock on {date}: renew before then.",
+      "expired": "Your {plan} plan has ended. Orders, the kitchen and bills keep working; settings, menu changes, staff and reports are locked until you renew.",
+      "suspended": "Your Restova account is paused. Contact Restova to turn it back on.",
+      "endedTitle": "Your plan has ended",
+      "endedBody": "This page opens again once you renew. Taking orders, the kitchen and bills keep working meanwhile.",
+      "suspendedTitle": "Your account is paused",
+      "suspendedBody": "Restova has paused this restaurant's account. Nothing is lost: everything comes back as it was when it's turned back on.",
+      "limitUsed": "{name}: {used} of {max} on your {plan} package.",
+      "limitFull": "{name}: {used} of {max} — your {plan} package allows no more. Ask Restova to raise it.",
+      "askMore": "Hello Restova, {restaurant} needs more {name}. What are the options?",
+      "limitReached": "Your package allows {max} {name}. Ask Restova to raise the limit.",
+      "historyLimit": "Your package shows the last {days} days. Ask Restova to see further back.",
+      "lockedAction": "Your plan has ended or is paused: renew with Restova to do this."
     }
   },
   "adminHome": {
@@ -1310,7 +1333,8 @@
       "body": "These come off the bill. The kitchen hasn't started on them.",
       "confirm": "Cancel round {round}",
       "done": "Round {round} of #{order} cancelled"
-    }
+    },
+    "customerPhone": "Call {phone}"
   },
   "adminOrderPad": {
     "titleNew": "New order · Table {table}",
@@ -1369,7 +1393,51 @@
     "removed": "No longer available, so it comes off: {items}",
     "save": "Save changes",
     "saved": "Order {order} updated",
-    "refund": "{amount} to give back to the guest"
+    "refund": "{amount} to give back to the guest",
+    "phone": {
+      "button": "Phone order",
+      "chooseTitle": "Phone order",
+      "chooseBody": "How will the customer get their order?",
+      "modes": {
+        "takeaway": "Takeaway",
+        "delivery": "Delivery"
+      },
+      "modesSub": {
+        "takeaway": "They collect it from the branch",
+        "delivery": "We deliver it to their address"
+      },
+      "title": {
+        "takeaway": "Phone order · Takeaway",
+        "delivery": "Phone order · Delivery"
+      },
+      "name": "Customer's name",
+      "number": "Mobile number",
+      "payment": "Payment",
+      "later": {
+        "takeaway": "Pay at pickup",
+        "delivery": "Cash on delivery"
+      },
+      "laterSub": {
+        "takeaway": "They pay when they collect it.",
+        "delivery": "The rider collects the payment."
+      },
+      "now": "Paid now",
+      "nowSub": "Take the payment next: cash, QR or card.",
+      "shortBy": "Add {amount} more: the minimum order is {minimum}.",
+      "errors": {
+        "nameRequired": "Enter the customer's name.",
+        "noPickup": "No pickup times are left today."
+      },
+      "sent": "Token {token} · order {order} sent to the kitchen",
+      "refused": {
+        "pickup_unavailable": "That pickup time isn't available any more. Choose another.",
+        "area_not_served": "The branch doesn't deliver to that area.",
+        "below_minimum": "The order is below the minimum. Add more dishes.",
+        "ordering_unavailable": "Takeaway and delivery aren't open right now.",
+        "mode_unavailable": "The branch isn't taking these orders right now."
+      },
+      "tag": "Phone"
+    }
   },
   "adminRequests": {
     "title": "Requests",
@@ -4583,6 +4651,10 @@
       "branches": {
         "title": "Branches",
         "description": "Add or remove branches of your restaurant."
+      },
+      "plan": {
+        "title": "My plan",
+        "description": "Your Restova package: what it includes, its limits and when it ends."
       }
     },
     "tabs": {
@@ -4697,6 +4769,10 @@
       "photos": {
         "title": "Proof photos",
         "description": "How long payment, deposit and supplier-invoice photos are kept. The owner decides, for every branch."
+      },
+      "plan": {
+        "title": "My plan",
+        "description": "Your Restova package: what it includes, its limits and when it ends."
       }
     },
     "open": "Manage",
@@ -5266,9 +5342,9 @@
     },
     "addBranch": {
       "title": "Add a branch",
-      "description": "It starts as a copy of a branch you have: region, taxes, payments, hours, delivery, pickup, menu and floor plan. Change any of them in Settings.",
-      "copyFrom": "Copy setup from",
-      "copyFromHint": "Its country, currency and time zone carry over.",
+      "description": "It starts empty: no dishes, offers or stock, one floor of 10 tables, open 10:00–22:00, with its country's taxes and payment methods. Set it up in Settings and Menu.",
+      "copyFrom": "Next to",
+      "copyFromHint": "It joins this branch's restaurant; its country, currency and time zone start the same. Nothing else is copied.",
       "copyOption": "{branch} · {city}",
       "namePlaceholder": "e.g. The Olive Table — Sector 29",
       "add": "Add branch",
@@ -5757,7 +5833,8 @@
       "changedAt": "Last changed {time}",
       "turnedOn": "Stock tracking is on",
       "turnedOff": "Stock tracking is off. Dishes stock had taken off are back on the menu.",
-      "failed": "Couldn't change it. Try again."
+      "failed": "Couldn't change it. Try again.",
+      "followsPlan": "Each client's package is set on the platform page (/platform/). Switching inventory here changes their package too."
     },
     "shifts": {
       "columns": {
@@ -5958,6 +6035,22 @@
       "confirmBody": "Photos already older than 90 days are deleted for good in the next hour, and newer ones as they reach 90 days. They can't be brought back.",
       "confirm": "Turn on",
       "cancel": "Cancel"
+    },
+    "plan": {
+      "subtitle": "Your Restova package. To upgrade, add more or renew, contact Restova.",
+      "noneTitle": "Everything included",
+      "none": "No package is set for your restaurant: every feature is on and nothing is limited.",
+      "trialEnds": "Free trial until {date}",
+      "ends": "Paid until {date}",
+      "noEnd": "No end date",
+      "limitsTitle": "Limits",
+      "limitsHint": "Staff and branches count across the restaurant; floors, tables and dishes at this branch.",
+      "used": "{used} of {max}",
+      "usedUnlimited": "{used} · unlimited",
+      "days": "{days} days",
+      "featuresTitle": "What's included",
+      "included": "Included",
+      "addonsTitle": "Add-ons"
     }
   },
   "masters": {
@@ -6717,6 +6810,58 @@
       "failed": "The downloads couldn't be loaded. Reload the page to try again.",
       "promptFile": "claude-menu-prompt.txt",
       "sampleFile": "client-setup-sample.json"
+    },
+    "menu": {
+      "title": "Load a menu into a branch",
+      "intro": "For a client's branch: a new branch starts with an empty menu. Load it here from the JSON Claude writes from the menu photos. A branch that has taken orders can't be changed here: its owner edits the menu in Admin.",
+      "client": "Client",
+      "chooseClient": "Choose a client",
+      "demoClient": "{name} (demo)",
+      "clientsFailed": "The clients couldn't be loaded. Reload the page to try again.",
+      "branch": "Branch",
+      "chooseBranch": "Choose a branch",
+      "branchOption": "{branch} · {city}",
+      "branchEmpty": "Empty menu: ready to load.",
+      "branchMenu": "Has {dishes} dishes, no orders yet: it can be replaced.",
+      "branchOrders": {
+        "one": "Has {dishes} dishes and 1 order: edit its menu in Admin.",
+        "other": "Has {dishes} dishes and {count} orders: edit its menu in Admin."
+      },
+      "json": "Menu JSON",
+      "jsonHint": "Paste the menu JSON Claude wrote. A whole client JSON works too: only its menu is used.",
+      "pickFirst": "Choose the client and branch first.",
+      "checkFirst": "Check the JSON first; Load is on once it passes.",
+      "checkFailed": "The check failed: the server didn't answer. Try again.",
+      "valid": "Ready to load.",
+      "blocked": {
+        "one": "{branch} has taken 1 order, so its menu can't be changed here. Its owner edits it in Admin.",
+        "other": "{branch} has taken {count} orders, so its menu can't be changed here. Its owner edits it in Admin."
+      },
+      "now": "Menu now",
+      "after": "After loading",
+      "empty": "Empty",
+      "replace": "Replace its {dishes} dishes",
+      "replaceHint": "Its dishes and categories are deleted, then the new menu is loaded. Recipes and offers that use them need setting up again.",
+      "load": "Load menu",
+      "loading": "Loading…",
+      "done": "{branch}: {dishes} dishes in {categories} categories loaded.",
+      "replaced": "{branch}: menu replaced with {dishes} dishes in {categories} categories.",
+      "openGuest": "Open the guest menu",
+      "refused": {
+        "hasMenu": "This branch already has a menu. Check again and tick “Replace”.",
+        "hasOrders": "This branch has taken orders since the check: its menu can't be changed here.",
+        "planLimit": "Too many dishes: the client's package allows {limit} per branch. Raise it on the Clients tab first.",
+        "invalid": "Fix these, then check again:",
+        "failed": "Loading failed: nothing was saved. Try again."
+      },
+      "templates": {
+        "title": "Start here",
+        "steps": "1. Download the menu prompt and paste it into Claude with the menu photos. 2. Paste Claude's JSON below. 3. Check, then Load.",
+        "prompt": "Download menu prompt for Claude",
+        "sample": "Download sample menu JSON",
+        "promptFile": "claude-menu-only-prompt.txt",
+        "sampleFile": "menu-sample.json"
+      }
     }
   },
   "imageUpload": {
@@ -6727,5 +6872,468 @@
     "unreadable": "That photo couldn't be opened. It may be damaged: try another one.",
     "tooLarge": "That photo couldn't be made small enough to upload. Try another one.",
     "uploadFailed": "Couldn't upload the photo. Check the connection and try again."
+  },
+  "platform": {
+    "meta": {
+      "title": "Restova platform"
+    },
+    "title": "Platform",
+    "subtitle": "Your clients, their packages, limits and features. Only the platform key opens this page.",
+    "noBackend": "The platform console needs the backend (NEXT_PUBLIC_BACKEND_URL).",
+    "key": {
+      "label": "Platform key",
+      "hint": "The DEV_SETUP_KEY set on the server: one key for this whole page.",
+      "unlock": "Unlock",
+      "lock": "Lock",
+      "wrong": "That isn't the platform key.",
+      "tooMany": "Too many wrong keys. Try again in 10 minutes.",
+      "failed": "Couldn't reach the server. Try again."
+    },
+    "name": {
+      "title": "Who's making changes?",
+      "label": "Your name",
+      "hint": "Saved with every change in each client's history.",
+      "save": "Continue",
+      "change": "Not {name}?"
+    },
+    "tabs": {
+      "label": "Platform",
+      "clients": "Clients",
+      "packages": "Packages",
+      "settings": "Settings",
+      "overview": "Home",
+      "devSetup": "Dev setup"
+    },
+    "status": {
+      "trial": "Trial",
+      "active": "Active",
+      "grace": "Grace",
+      "expired": "Expired",
+      "suspended": "Suspended"
+    },
+    "filters": {
+      "label": "Show",
+      "all": "All",
+      "trial": "Trial",
+      "active": "Active",
+      "endingSoon": "Ending in 15 days",
+      "grace": "Grace",
+      "expired": "Expired",
+      "suspended": "Suspended"
+    },
+    "list": {
+      "search": "Search clients",
+      "none": "No clients yet. Restaurants made on the developer setup page appear here.",
+      "empty": "No clients match.",
+      "daysLeft": "{days} days left",
+      "lastDay": "Last day",
+      "ended": "Ended {days} days ago",
+      "noEnd": "No end date",
+      "staff": "Staff {used}/{max}",
+      "tables": "Tables {used}/{max}",
+      "dishes": "Dishes {used}/{max}",
+      "branches": "Branches {count}",
+      "perYear": "{price} / year",
+      "perHalfYear": "{price} / 6 months",
+      "onRequest": "Price on request",
+      "failed": "Couldn't load the clients. Try again."
+    },
+    "client": {
+      "back": "All clients",
+      "failed": "Couldn't load this client. Try again.",
+      "since": "Client since {date}"
+    },
+    "package": {
+      "title": "Package",
+      "hint": "Pick one: its limits and features fill in below. Change anything after that.",
+      "current": "Current",
+      "yearly": "{price} / year",
+      "halfYearly": "{price} / 6 months",
+      "onRequest": "On request",
+      "free": "Free",
+      "limits": "{staff} staff · {tables} tables · {dishes} dishes"
+    },
+    "limits": {
+      "title": "Limits",
+      "hint": "Raise or lower anything for this client. Lowering removes nothing: they just can't add more.",
+      "names": {
+        "staff": "Staff logins",
+        "branches": "Branches",
+        "floors": "Floors per branch",
+        "tables": "Tables per branch",
+        "dishes": "Dishes per branch",
+        "reportDays": "Report history (days)"
+      },
+      "package": "Package {value}",
+      "using": "using {used}",
+      "unlimited": "Unlimited",
+      "over": "Over the limit · {hint}",
+      "lower": "Lower {name}",
+      "raise": "Raise {name}",
+      "infinity": "∞"
+    },
+    "features": {
+      "title": "Features",
+      "hint": "Switch on extras for this client (add-ons) or switch off what they don't get.",
+      "groups": {
+        "essentials": "Essentials",
+        "advanced": "Advanced",
+        "services": "Services"
+      },
+      "names": {
+        "ordering": "Ordering and billing",
+        "takeaway": "Takeaway",
+        "reports": "Sales reports",
+        "delivery": "Delivery",
+        "reservations": "Reservations",
+        "offers": "Offers and promo codes",
+        "inventory": "Inventory and purchasing",
+        "shifts": "Shifts and attendance",
+        "activityLog": "Activity log"
+      },
+      "hints": {
+        "ordering": "QR ordering, waiter app, kitchen board, bills, payments, cash register",
+        "takeaway": "Takeaway orders and pickup times",
+        "reports": "Sales report (as far back as the report history limit)",
+        "delivery": "Delivery zones and fees",
+        "reservations": "Bookings, deposits and reminders",
+        "offers": "Happy hours, automatic offers and promo codes",
+        "inventory": "Stock, recipes, wastage, suppliers and purchase orders",
+        "shifts": "Clock-in, rota and time off",
+        "activityLog": "Who did what: refunds, discounts, voids, settings"
+      },
+      "addOn": "Add-on",
+      "removed": "Removed"
+    },
+    "term": {
+      "title": "Trial and term",
+      "hint": "Dates run to the end of the day. After the end and the grace days, their admin locks; guests keep ordering.",
+      "statusLine": "Admin locks on {date}",
+      "noEnd": "No end date: runs until you set one.",
+      "trialEnds": "Trial ends",
+      "add": "+{days} days",
+      "startsAt": "Paid from",
+      "endsAt": "Paid until",
+      "fillTerm": "End after one term",
+      "cycle": "Billing",
+      "cycles": {
+        "yearly": "Yearly",
+        "halfYearly": "Every 6 months"
+      },
+      "grace": "Grace days",
+      "graceHint": "Days after the end before their admin locks.",
+      "suspend": "Suspend",
+      "resume": "Resume",
+      "suspendedOn": "Suspended on {date}: {reason}"
+    },
+    "price": {
+      "title": "Price",
+      "hint": "What this client pays per term. Leave the price empty to charge the package's.",
+      "list": "Package price: {price}",
+      "listOnRequest": "Package price: on request",
+      "custom": "This client's price (Rs)",
+      "customHint": "Whole rupees. Empty: the package's price.",
+      "note": "Why this price",
+      "noteHint": "Only you see it, e.g. \"Launch offer 40%, locked 2 years\".",
+      "invalid": "Whole rupees only.",
+      "pays": "Pays {price} per term",
+      "listWithAddons": "Package {package} + add-ons {addons} = {price}"
+    },
+    "contact": {
+      "title": "Contact and notes",
+      "name": "Owner or contact person",
+      "phone": "Phone",
+      "email": "Email",
+      "taxNumber": "PAN / VAT number",
+      "notes": "Notes",
+      "notesHint": "What was promised, how they pay, anything to remember."
+    },
+    "history": {
+      "title": "History",
+      "empty": "No changes yet.",
+      "actions": {
+        "changed": "Changed",
+        "suspended": "Suspended",
+        "resumed": "Resumed",
+        "paymentRecorded": "Payment recorded",
+        "paymentRemoved": "Payment removed",
+        "reminded": "Reminder sent",
+        "wentLive": "Went live",
+        "clientCreated": "Client created",
+        "addonAdded": "Add-on added",
+        "addonRemoved": "Add-on removed",
+        "menuLoaded": "Menu loaded"
+      },
+      "meta": "{by} · {when}",
+      "fields": {
+        "plan": "Package",
+        "billingCycle": "Billing",
+        "limitsStaff": "Staff logins",
+        "limitsBranches": "Branches",
+        "limitsFloors": "Floors per branch",
+        "limitsTables": "Tables per branch",
+        "limitsDishes": "Dishes per branch",
+        "limitsReportDays": "Report history",
+        "features": "Features",
+        "featuresInventory": "Inventory",
+        "trialEndsAt": "Trial ends",
+        "startsAt": "Paid from",
+        "endsAt": "Paid until",
+        "graceDays": "Grace days",
+        "price": "Price",
+        "priceNote": "Price note",
+        "contactName": "Contact",
+        "contactPhone": "Phone",
+        "contactEmail": "Email",
+        "contactTaxNumber": "PAN / VAT",
+        "notes": "Notes"
+      },
+      "change": "{field}: {from} → {to}",
+      "edited": "{field} edited",
+      "on": "on",
+      "off": "off",
+      "none": "none",
+      "unlimited": "unlimited",
+      "added": "{field}: + {list}",
+      "removedList": "{field}: − {list}"
+    },
+    "save": {
+      "pending": "Unsaved changes",
+      "summary": "{count} changes",
+      "save": "Save",
+      "discard": "Discard",
+      "saved": "Saved for {name}",
+      "failed": "Couldn't save. Check the fields and try again.",
+      "endsBeforeStart": "\"Paid until\" must be after \"Paid from\"."
+    },
+    "downgrade": {
+      "title": "Lower {name}'s package?",
+      "over": "{limit}: they have {used}, the new limit is {max}.",
+      "overNote": "Nothing is deleted or switched off: they just can't add more until they're under the limit.",
+      "featuresOff": "Switching off: {features}",
+      "confirm": "Save anyway",
+      "cancel": "Go back"
+    },
+    "suspend": {
+      "title": "Suspend {name}?",
+      "body": "Their staff and guests can't use Restova until you resume. Everything is kept.",
+      "reason": "Reason (kept in the history)",
+      "confirm": "Suspend",
+      "cancel": "Cancel",
+      "done": "{name} suspended",
+      "resumed": "{name} resumed",
+      "failed": "Couldn't do that. Try again."
+    },
+    "packages": {
+      "hint": "Defaults for new picks. Clients already on a package keep their own numbers.",
+      "name": "Name",
+      "yearly": "Yearly price (Rs)",
+      "halfYearly": "6-month price (Rs)",
+      "extraBranch": "Each extra branch (Rs)",
+      "priceHint": "Empty: on request.",
+      "save": "Save {name}",
+      "saved": "{name} saved",
+      "failed": "Couldn't save the package. Check the fields and try again.",
+      "newName": "New package's name",
+      "copyFrom": "Start as a copy of",
+      "create": "Add package",
+      "created": "{name} added: set its prices, limits and features",
+      "retire": "Retire",
+      "restore": "Offer again",
+      "retired": "{name} retired: not offered any more",
+      "restored": "{name} offered again",
+      "retiredTag": "Retired",
+      "retiredHint": "Not offered for new clients or picks; clients on it keep it.",
+      "delete": "Delete",
+      "deleted": "{name} deleted",
+      "inUse": "Clients are on this package: retire it instead.",
+      "isTrial": "New clients start their trial on this package (Settings): pick another first."
+    },
+    "settings": {
+      "title": "New clients and support",
+      "hint": "New clients made on the developer setup page start on this trial. The contact is shown to clients asking to upgrade or renew.",
+      "trialDays": "Trial days",
+      "trialPlan": "Trial package",
+      "supportPhone": "Support phone",
+      "supportWhatsapp": "Support WhatsApp",
+      "supportEmail": "Support email",
+      "save": "Save settings",
+      "saved": "Settings saved",
+      "failed": "Couldn't save the settings. Try again.",
+      "business": "On receipts",
+      "businessHint": "Who receipts come from: your business, its address and PAN / VAT number, and a line at the foot.",
+      "businessName": "Business name",
+      "businessAddress": "Business address",
+      "businessTaxId": "PAN / VAT number",
+      "receiptNote": "Line at the foot of receipts"
+    },
+    "payments": {
+      "title": "Payments",
+      "hint": "What this client paid you. Recording a payment can extend their paid term by one billing cycle.",
+      "record": "Record payment",
+      "none": "No payments recorded yet.",
+      "line": "{amount} · {method}",
+      "paidOn": "Paid {date} · recorded by {by}",
+      "period": "for {from} – {to}",
+      "receipt": "Receipt",
+      "receiptFailed": "Couldn't open the receipt. Try again.",
+      "remove": "Remove",
+      "methods": {
+        "esewa": "eSewa",
+        "khalti": "Khalti",
+        "fonepay": "Fonepay",
+        "bank": "Bank transfer",
+        "cash": "Cash",
+        "other": "Other"
+      },
+      "recordTitle": "Record a payment from {name}",
+      "amount": "Amount (Rs)",
+      "date": "Paid on",
+      "method": "Paid by",
+      "extend": "Extend by one term ({cycle}): paid until {date}",
+      "extendShort": "Extend their paid term by one billing cycle",
+      "note": "Note",
+      "noteHint": "A transaction ID, or what it was for (\"+10 tables add-on\").",
+      "receiptAdd": "Add receipt photo",
+      "receiptChange": "Change photo",
+      "receiptRemove": "Remove photo",
+      "save": "Save payment",
+      "recorded": "Payment recorded for {name}",
+      "failed": "Couldn't save the payment. Try again.",
+      "removeTitle": "Remove the {amount} payment?",
+      "removeBody": "Only for a payment recorded by mistake. The paid-until date stays as it is: change it in Trial and term if needed.",
+      "removeReason": "Why (kept in the history)",
+      "removed": "Payment removed",
+      "print": "Print receipt"
+    },
+    "remind": {
+      "button": "Send reminder",
+      "noPhone": "Add the contact's phone (Contact and notes) to send reminders.",
+      "never": "No reminder sent yet.",
+      "done": "Reminder noted for {name}",
+      "trial": "Namaste {name}, your free trial of Restova {plan} for {restaurant} ends on {date}. To keep using it, the {plan} package is {price}. Pay by eSewa, Khalti, Fonepay or bank transfer and send us the receipt. Thank you!",
+      "ending": "Namaste {name}, your Restova {plan} plan for {restaurant} ends on {date}. Renewal is {price}. Pay by eSewa, Khalti, Fonepay or bank transfer and send us the receipt. Thank you!",
+      "ended": "Namaste {name}, your Restova {plan} plan for {restaurant} ended on {date}. Settings, menu changes, staff and reports lock soon (orders and bills keep working). Renewal is {price}: pay by eSewa, Khalti, Fonepay or bank transfer and send us the receipt. Thank you!"
+    },
+    "overview": {
+      "attention": "Needs attention",
+      "attentionHint": "Plans ending within 15 days, in grace or ended: remind them to renew.",
+      "allGood": "Nothing ending in the next 15 days.",
+      "reminded": "reminded {date}",
+      "open": "Open",
+      "money": "Money received",
+      "thisMonth": "This month",
+      "last12Months": "Last 12 months"
+    },
+    "receipt": {
+      "title": "Payment receipt",
+      "taxId": "PAN / VAT: {id}",
+      "from": "Received from",
+      "for": "For",
+      "method": "Paid by",
+      "amount": "Amount",
+      "total": "Total received",
+      "package": "Restova {plan} package",
+      "period": "{from} to {to}",
+      "received": "Received {amount} with thanks. Recorded by {by}."
+    },
+    "demo": {
+      "tag": "Demo",
+      "goLive": "Go live",
+      "warning": "This client was made on the Dev setup tab: from there it can still be reset (orders wiped) or deleted. Go live when they become a real client.",
+      "title": "Make {name} a live client?",
+      "body": "Dev setup will no longer be able to reset or delete it, and it leaves the Dev setup list. Its package, data and sign-ins stay as they are. This can't be undone.",
+      "confirm": "Go live",
+      "done": "{name} is live",
+      "failed": "Couldn't do that. Try again."
+    },
+    "newClient": {
+      "button": "New client",
+      "hint": "A new client is live from the start: Dev setup can't reset or delete it.",
+      "title": "New client",
+      "name": "Restaurant name",
+      "country": "Country",
+      "countries": {
+        "NP": "Nepal",
+        "IN": "India"
+      },
+      "city": "City",
+      "address": "Address",
+      "owner": "Owner's name",
+      "phone": "Owner's mobile number",
+      "phoneHint": "Digits only, without the country code. They sign in with it.",
+      "email": "Owner's email",
+      "optional": "Optional.",
+      "passwordLabel": "Owner's password",
+      "passwordHint": "8 or more characters. Leave empty and one is made up.",
+      "tables": "Tables",
+      "trial": "Start on the free trial (the trial days in Settings)",
+      "menuNote": "The menu starts empty: load it on the Dev setup tab (Load a menu into a branch), or the owner adds dishes in Admin.",
+      "create": "Create client",
+      "exists": "A demo with this name is on the Dev setup tab: delete it there, or go live with it instead.",
+      "invalid": "Check the details: a phone number in digits, a valid email, a password of 8 or more characters.",
+      "failed": "Couldn't create the client. Try again.",
+      "madeTitle": "{name} is ready",
+      "once": "Copy the password now: it isn't shown again (the owner changes it at first sign-in).",
+      "link": "Staff sign-in",
+      "signIn": "Sign in with",
+      "mobile": "Mobile",
+      "password": "Password",
+      "copy": "Copy sign-in details",
+      "copyText": "Namaste {name}, your Restova is ready.\nSign in: {link}\nUser: {login}\nPassword: {password}\nYou'll choose your own password when you first sign in.",
+      "next": "Next: their menu (Menu in their admin, or the Dev setup tab), their tables' QR codes, and their contact on this client's page.",
+      "done": "Done",
+      "open": "Open client"
+    },
+    "catalog": {
+      "label": "Packages, features and add-ons",
+      "parts": {
+        "packages": "Packages",
+        "features": "Features",
+        "addons": "Add-ons"
+      },
+      "up": "Move {name} up",
+      "down": "Move {name} down",
+      "featuresHint": "What packages can include. Built-in features run the app (rename them, never remove them); add your own promises such as on-site training or priority support. Packages and each client's My plan page list them in this order.",
+      "featuresTitle": "Features",
+      "featureName": "Name",
+      "description": "Description",
+      "group": "Group",
+      "addFeature": "Add feature",
+      "featureAdded": "{name} added: switch it on in the packages that include it",
+      "builtInTag": "Built in",
+      "ownTag": "Your own",
+      "used": "used by {count}",
+      "saved": "{name} saved",
+      "removed": "{name} removed",
+      "inUse": "Packages, clients or add-ons still have it: switch it off there first.",
+      "builtIn": "Built-in features can't be removed.",
+      "failed": "Couldn't save. Try again.",
+      "addonsHint": "What a client can buy on top of their package, priced per term. Adding one to a client raises their limit or switches the feature on, and adds to their price.",
+      "newAddon": "New add-on",
+      "addonName": "Name",
+      "raises": "Raises",
+      "byHowMuch": "By how much each",
+      "switchesOn": "Switches on",
+      "nothing": "Nothing",
+      "addAddon": "Add add-on",
+      "addonAdded": "{name} added",
+      "nameTaken": "There is already one with that name: pick another."
+    },
+    "addons": {
+      "title": "Add-ons",
+      "hint": "Extras on top of the package: each raises a limit or switches a feature on, and adds to the price. Removing one gives it back.",
+      "none": "No add-ons.",
+      "times": "{name} × {count}",
+      "price": "{price} per term",
+      "addedBy": "added by {by}, {date}",
+      "pick": "Add-on",
+      "choose": "Choose…",
+      "quantity": "How many",
+      "add": "Add",
+      "added": "{name} added",
+      "removed": "{name} removed",
+      "failed": "Couldn't do that. Try again."
+    }
   }
 }

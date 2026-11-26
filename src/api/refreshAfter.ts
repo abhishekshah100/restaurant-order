@@ -56,6 +56,8 @@ export const READS = {
   adminBranches: under('admin', 'branches'),
   /** The developer setup page's list of the restaurants made there. */
   devSetup: under('dev-setup'),
+  /** The platform console: clients, packages, settings. */
+  platform: under('platform'),
   /** Everything staff read. */
   allAdmin: under('admin'),
   menu: ofBranch(['branches'], ['menu']),
@@ -132,11 +134,13 @@ export const AFTER = {
   /* Team */
   shiftChanged: ['shifts', 'rota', 'floor'],
   rotaChanged: ['rota'],
-  staffChanged: ['staff', 'roles'],
+  /** Staff added, changed or removed: the package's count of logins too (adminBranches). */
+  staffChanged: ['staff', 'roles', 'adminBranches'],
   rolesChanged: ['roles'],
 
   /* Menu */
-  menuChanged: ['menu'],
+  /** A dish or category changed: the package's count of dishes too (adminBranches). */
+  menuChanged: ['menu', 'adminBranches'],
   searchSuggestionsChanged: ['searchSuggestions', 'menu'],
   cartSuggestionsChanged: ['cartSuggestions', 'menu'],
   offersChanged: ['offers', 'promotions'],
@@ -157,7 +161,9 @@ export const AFTER = {
   /** Settings saved, a branch added or removed. */
   branchSetupChanged: ['allAdmin', 'branchList', 'branchConfigs'],
   /** A restaurant made, reset or deleted on the developer setup page. */
-  devSetupChanged: ['devSetup', 'allAdmin', 'branchList', 'branchConfigs'],
+  devSetupChanged: ['devSetup', 'allAdmin', 'branchList', 'branchConfigs', 'platform'],
+  /** A client's package, a package or the platform's settings changed (the platform console). */
+  platformChanged: ['platform', 'allAdmin'],
 
   /* Live events from other devices (api/liveEvents) */
   /** Orders or payments changed on another device. */

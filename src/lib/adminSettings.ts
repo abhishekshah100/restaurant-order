@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/ui/Icon/iconNames';
+import type { PlanFeature } from '@/api/contracts/platform';
 import type { StaffPermission } from '@/types/admin';
 import { settingsPath } from './adminNav';
 
@@ -14,7 +15,7 @@ export type SettingsGroupId = 'branch' | 'money' | 'restaurant';
 
 /** A section of the menu. */
 export type SettingsTopicId =
-  'info' | 'hours' | 'tables' | 'ordering' | 'billing' | 'offers' | 'team' | 'branches';
+  'info' | 'hours' | 'tables' | 'ordering' | 'billing' | 'offers' | 'team' | 'branches' | 'plan';
 
 /** A page (a tab of its section). */
 export type SettingsSectionId =
@@ -25,6 +26,7 @@ export type SettingsSectionId =
   | 'tax'
   | 'payments'
   | 'paymentQrs'
+  | 'plan'
   | 'offers'
   | 'services'
   | 'delivery'
@@ -42,6 +44,8 @@ export interface SettingsSection {
   needs: StaffPermission;
   /** Only for the platform (super admins): the restaurant's optional modules. */
   platformOnly?: true;
+  /** Part of a feature the package can leave out: without it, the page is hidden (adminPlan). */
+  feature?: PlanFeature;
 }
 
 export interface SettingsTopic {
@@ -90,8 +94,8 @@ const SETTINGS_GROUPS: readonly SettingsGroup[] = [
         icon: 'cutlery',
         pages: [
           { id: 'services', href: settingsPath('services'), needs: MANAGE },
-          { id: 'pickup', href: settingsPath('pickup'), needs: MANAGE },
-          { id: 'delivery', href: settingsPath('delivery'), needs: MANAGE },
+          { id: 'pickup', href: settingsPath('pickup'), needs: MANAGE, feature: 'takeaway' },
+          { id: 'delivery', href: settingsPath('delivery'), needs: MANAGE, feature: 'delivery' },
         ],
       },
       {
@@ -108,7 +112,7 @@ const SETTINGS_GROUPS: readonly SettingsGroup[] = [
       {
         id: 'offers',
         icon: 'tag',
-        pages: [{ id: 'offers', href: settingsPath('offers'), needs: MANAGE }],
+        pages: [{ id: 'offers', href: settingsPath('offers'), needs: MANAGE, feature: 'offers' }],
       },
     ],
   },
@@ -136,6 +140,12 @@ const SETTINGS_GROUPS: readonly SettingsGroup[] = [
           },
         ],
       },
+      // The restaurant's Restova package: the owner's, to read (the platform changes it).
+      {
+        id: 'plan',
+        icon: 'star',
+        pages: [{ id: 'plan', href: settingsPath('plan'), needs: 'branches.manage' }],
+      },
     ],
   },
 ];
@@ -143,12 +153,17 @@ const SETTINGS_GROUPS: readonly SettingsGroup[] = [
 const ALL_TOPICS = SETTINGS_GROUPS.flatMap((g) => g.topics);
 const ALL_PAGES = ALL_TOPICS.flatMap((t) => t.pages);
 
-/** Whether a staff member may open a page (`platform`: a super admin). */
+/**
+ * Whether a staff member may open a page (`platform`: a super admin; `has`: the package has a
+ * feature, so its pages are there).
+ */
 export const canOpenPage = (
   page: SettingsSection,
   can: (...permissions: StaffPermission[]) => boolean,
   platform = false,
-): boolean => can(page.needs) && (!page.platformOnly || platform);
+  has: (feature: PlanFeature) => boolean = () => true,
+): boolean =>
+  can(page.needs) && (!page.platformOnly || platform) && (!page.feature || has(page.feature));
 
 /**
  * The groups and sections a staff member may open (`can` from useAdminWorkspace; `platform`: a
@@ -158,12 +173,13 @@ export const canOpenPage = (
 export const settingsFor = (
   can: (...permissions: StaffPermission[]) => boolean,
   platform = false,
+  has: (feature: PlanFeature) => boolean = () => true,
 ) =>
   SETTINGS_GROUPS.map((group) => ({
     ...group,
     topics: group.topics
       .map((topic) => {
-        const pages = topic.pages.filter((p) => canOpenPage(p, can, platform));
+        const pages = topic.pages.filter((p) => canOpenPage(p, can, platform, has));
         return { ...topic, pages, href: pages[0]?.href ?? '' };
       })
       .filter((topic) => topic.pages.length > 0),

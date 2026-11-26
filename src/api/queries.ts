@@ -293,12 +293,76 @@ export const devSetupRestaurantsQuery = (key: string | null) =>
     retry: false,
   });
 
+/** GET /dev/setup/clients: every client and its branches, for loading a menu (with the key). */
+export const devSetupClientsQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['dev-setup', 'clients', key] as const,
+    queryFn: key ? () => api.setupClients(key) : skipToken,
+    retry: false,
+  });
+
 /** GET /dev/setup/templates: the sample JSON and the prompt for Claude (they change with deploys). */
 export const devSetupTemplatesQuery = (key: string | null) =>
   queryOptions({
     queryKey: ['dev-setup', 'templates', key] as const,
     queryFn: key ? () => api.setupTemplates(key) : skipToken,
     staleTime: Infinity,
+    retry: false,
+  });
+
+/** GET /platform/clients: every client with its package (with the platform key). */
+export const platformClientsQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['platform', 'clients', key] as const,
+    queryFn: key ? () => api.platformClients(key) : skipToken,
+    retry: false,
+  });
+
+/** GET /platform/clients/:id: one client in full, with its history. */
+export const platformClientQuery = (key: string | null, id: string | null) =>
+  queryOptions({
+    queryKey: ['platform', 'client', id, key] as const,
+    queryFn: key && id ? () => api.platformClient(key, id) : skipToken,
+    retry: false,
+  });
+
+/** GET /platform/plans: the packages. */
+export const platformPackagesQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['platform', 'plans', key] as const,
+    queryFn: key ? () => api.platformPackages(key) : skipToken,
+    retry: false,
+  });
+
+/** GET /platform/payments: money received and the latest payments. */
+export const platformPaymentsQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['platform', 'payments', key] as const,
+    queryFn: key ? () => api.platformPayments(key) : skipToken,
+    retry: false,
+  });
+
+/** GET /platform/features: the feature catalog. */
+export const platformFeaturesQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['platform', 'features', key] as const,
+    queryFn: key ? () => api.platformFeatures(key) : skipToken,
+    retry: false,
+  });
+
+/** GET /platform/addons: the add-on catalog. */
+export const platformAddonsQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['platform', 'addons', key] as const,
+    queryFn: key ? () => api.platformAddons(key) : skipToken,
+    retry: false,
+  });
+
+/** GET /platform/settings */
+export const platformSettingsQuery = (key: string | null) =>
+  queryOptions({
+    queryKey: ['platform', 'settings', key] as const,
+    queryFn: key ? () => api.platformSettings(key) : skipToken,
     retry: false,
   });
 

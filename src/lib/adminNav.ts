@@ -218,9 +218,15 @@ export function splitTabs(items: readonly AdminNavItem[]) {
   return { tabs, more: items.filter((i) => !tabs.includes(i)) };
 }
 
-/** The nav items a staff member may open (`can` from useAdminWorkspace). */
-export const navFor = (can: (...permissions: StaffPermission[]) => boolean) =>
-  ADMIN_NAV.filter((item) => !item.needs || can(...item.needs));
+/**
+ * The nav items a staff member may open (`can` from useAdminWorkspace), without those `isOff`
+ * hides (a feature the package doesn't have: adminPlan › offFeature).
+ */
+export const navFor = (
+  can: (...permissions: StaffPermission[]) => boolean,
+  isOff: (id: AdminNavId) => boolean = () => false,
+): AdminNavItem[] =>
+  ADMIN_NAV.filter((item) => !isOff(item.id) && (!item.needs || can(...item.needs)));
 
 /**
  * Where a staff member starts at a branch, from what they may do there: the floor's home, else the

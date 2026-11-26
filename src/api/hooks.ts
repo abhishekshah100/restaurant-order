@@ -41,7 +41,15 @@ import {
   BRANCH_STATUS_REFRESH_MS,
   adminBranchesQuery,
   devSetupRestaurantsQuery,
+  platformClientQuery,
+  platformClientsQuery,
+  platformPackagesQuery,
+  platformPaymentsQuery,
+  platformFeaturesQuery,
+  platformAddonsQuery,
+  platformSettingsQuery,
   devSetupTemplatesQuery,
+  devSetupClientsQuery,
   adminOffersQuery,
   adminSearchSuggestionsQuery,
   adminCartSuggestionsQuery,
@@ -830,6 +838,46 @@ export function useDemoAdminAccount(): AdminSignInRequest | null {
 /** The restaurants the developer setup page made (GET /dev/setup/restaurants, with its key). */
 export function useSetupRestaurants(key: string | null) {
   return useQuery(devSetupRestaurantsQuery(key));
+}
+
+/** Every client and its branches, for loading a menu (GET /dev/setup/clients, with the key). */
+export function useSetupClients(key: string | null) {
+  return useQuery(devSetupClientsQuery(key));
+}
+
+/** Every client with its package (GET /platform/clients, with the platform key). */
+export function usePlatformClients(key: string | null) {
+  return useQuery(platformClientsQuery(key));
+}
+
+/** One client in full (GET /platform/clients/:id). */
+export function usePlatformClient(key: string | null, id: string | null) {
+  return useQuery(platformClientQuery(key, id));
+}
+
+/** The packages (GET /platform/plans). */
+export function usePlatformPackages(key: string | null) {
+  return useQuery(platformPackagesQuery(key));
+}
+
+/** Money received and the latest payments (GET /platform/payments). */
+export function usePlatformPayments(key: string | null) {
+  return useQuery(platformPaymentsQuery(key));
+}
+
+/** The feature catalog (GET /platform/features). */
+export function usePlatformFeatures(key: string | null) {
+  return useQuery(platformFeaturesQuery(key));
+}
+
+/** The add-on catalog (GET /platform/addons). */
+export function usePlatformAddons(key: string | null) {
+  return useQuery(platformAddonsQuery(key));
+}
+
+/** The platform's settings (GET /platform/settings). */
+export function usePlatformSettings(key: string | null) {
+  return useQuery(platformSettingsQuery(key));
 }
 
 /** The sample JSON and the prompt for Claude the developer setup page downloads. */
