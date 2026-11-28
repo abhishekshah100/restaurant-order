@@ -486,6 +486,7 @@ export function OrderHistory() {
       </div>
       <DateRangeFilter
         id="order-history-days"
+        planHistory
         range={days}
         today={today}
         limits={ORDER_HISTORY_LIMITS}

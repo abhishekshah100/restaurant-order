@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useContent } from '@/api/hooks';
-import { Icon } from '@/components/ui';
+import { Chip, Icon } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import styles from './Platform.module.css';
 
@@ -10,8 +10,9 @@ import styles from './Platform.module.css';
 const MAX = 100_000;
 
 /**
- * One limit: − / + by `step`, the number typed straight in, or Unlimited. Says what the package
- * gives and what the client has now, in red when it's over.
+ * One limit: − / + by `step`, the number typed straight in, a quick choice (`presets`: History
+ * days' 7 / 30 / 90 / 365), or Unlimited. Says what the package gives and what the client has
+ * now, in red when it's over.
  */
 export function LimitField({
   id,
@@ -20,6 +21,8 @@ export function LimitField({
   step,
   packageValue,
   used,
+  presets,
+  about,
   onChange,
 }: {
   id: string;
@@ -30,6 +33,10 @@ export function LimitField({
   packageValue?: number | null;
   /** What the client has now (null or undefined: not counted). */
   used?: number | null;
+  /** Quick numbers, as chips under it (in days). */
+  presets?: readonly number[];
+  /** What the limit covers, under its name. */
+  about?: string;
   onChange: (value: number | null) => void;
 }) {
   const t = useContent('common');
@@ -61,6 +68,7 @@ export function LimitField({
         <label className={styles.limitName} htmlFor={id}>
           {name}
         </label>
+        {about && <span className={styles.limitHint}>{about}</span>}
         {hint && (
           <span className={cx(styles.limitHint, over && styles.over)} id={`${id}-hint`}>
             {over ? t('platform.limits.over', { hint }) : hint}
@@ -112,6 +120,18 @@ export function LimitField({
         />
         {t('platform.limits.unlimited')}
       </label>
+      {presets && (
+        <div className={styles.presets} role="group" aria-label={t('platform.limits.presets')}>
+          {presets.map((days) => (
+            <Chip key={days} pressed={value === days} onClick={() => onChange(days)}>
+              {t('platform.limits.days', { count: days })}
+            </Chip>
+          ))}
+          <Chip pressed={unlimited} onClick={() => onChange(null)}>
+            {t('platform.limits.unlimited')}
+          </Chip>
+        </div>
+      )}
     </div>
   );
 }

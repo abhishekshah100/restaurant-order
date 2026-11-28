@@ -12,7 +12,7 @@ import {
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { useContent, useServiceRequests } from '@/api/hooks';
+import { useBranch, useContent, useServiceRequests } from '@/api/hooks';
 import { serviceRequestsQuery } from '@/api/queries';
 import { useCancelServiceRequest, useCreateServiceRequest } from '@/api/mutations';
 import { LoadingSignal } from '@/components/layout/GlobalLoader';
@@ -33,6 +33,8 @@ import type {
 export type { ServiceKind, ServiceRequest } from '@/types/service';
 
 interface ServiceRequestContextValue {
+  /** The package has waiter requests: Call a waiter and Ask for the bill are offered. */
+  available: boolean;
   /** Opens the waiter dialog, or the bill page; shows the pending request instead if one exists. */
   openRequest: (kind: ServiceKind) => Promise<void>;
   /** The most recent pending request, if any. */
@@ -69,6 +71,7 @@ export function ServiceRequestProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const table = useTableLabel();
   const sessionId = useGuestSession()?.id;
+  const available = useBranch().waiterRequests !== false;
   const { showToast } = useToast();
   const requestFailed = useRequestFailed();
   const t = useContent('service');
@@ -146,6 +149,7 @@ export function ServiceRequestProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<ServiceRequestContextValue>(
     () => ({
+      available,
       openRequest,
       active: latestRequest(requests),
       requests: {
@@ -157,7 +161,7 @@ export function ServiceRequestProvider({ children }: { children: ReactNode }) {
       sendBillRequest,
       hydrated: data !== undefined,
     }),
-    [openRequest, requests, cancelRequest, sendWaiterRequest, sendBillRequest, data],
+    [available, openRequest, requests, cancelRequest, sendWaiterRequest, sendBillRequest, data],
   );
 
   return (

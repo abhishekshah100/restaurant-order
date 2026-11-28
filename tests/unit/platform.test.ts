@@ -1,17 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isBackendRequest } from '@/api/backend';
 import { api } from '@/api/endpoints';
-import type { ClientDetail, PackagePlan } from '@/api/contracts';
+import type { ClientDetail, FeatureInfo, PackagePlan } from '@/api/contracts';
 import {
   addDays,
+  byCatalog,
   changesOf,
   dateField,
   downgradeOf,
   draftOf,
   endOfDay,
+  FEATURE_PARENT,
   listPriceOf,
+  localInputOf,
   matchesFilter,
   nextTermEnd,
+  offered,
   priceOf,
   termEnd,
   withPackage,
@@ -90,6 +94,9 @@ const client: ClientDetail = {
   status: 'active',
   endsAt: null,
   lockAt: null,
+  suspension: null,
+  planChange: null,
+  locked: { branches: 0, staff: 0, tables: 0, dishes: 0 },
   daysLeft: null,
   limits: { ...platinum.limits },
   usage: { staff: 12, branches: 1, floors: 2, tables: 18, dishes: 240 },
@@ -230,5 +237,48 @@ describe('the list', () => {
     expect(matchesFilter({ ...client, status: 'active', daysLeft: 40 }, 'endingSoon')).toBe(false);
     expect(matchesFilter({ ...client, status: 'grace', daysLeft: -2 }, 'endingSoon')).toBe(false);
     expect(matchesFilter(client, 'all')).toBe(true);
+  });
+});
+
+describe('the feature catalog', () => {
+  const feature = (key: string, hidden = false): FeatureInfo => ({
+    key,
+    name: key,
+    description: '',
+    group: 'advanced',
+    builtIn: true,
+    used: 0,
+    hidden,
+  });
+  const catalog = [feature('ordering'), feature('assignWaiter', true), feature('refunds')];
+
+  it('offers no hidden feature, on a package, a client or a list', () => {
+    expect(offered(catalog).map((f) => f.key)).toEqual(['ordering', 'refunds']);
+    expect(byCatalog(['refunds', 'assignWaiter', 'ordering'], catalog).map((f) => f.key)).toEqual([
+      'ordering',
+      'refunds',
+    ]);
+  });
+
+  it("knows the parts of ordering and of the report (the backend's FEATURE_PARENT)", () => {
+    expect(FEATURE_PARENT).toEqual({
+      waiterRequests: 'ordering',
+      refunds: 'ordering',
+      assignWaiter: 'ordering',
+      splitPayment: 'ordering',
+      billOptions: 'ordering',
+      discounts: 'ordering',
+      kitchenStock: 'ordering',
+      kitchenActivity: 'ordering',
+      salesAdvanced: 'reports',
+    });
+  });
+});
+
+describe('a planned suspension', () => {
+  it("fills the date field on this device's clock, and reads back the same moment", () => {
+    const iso = new Date(2026, 11, 5, 21, 0).toISOString();
+    expect(localInputOf(iso)).toBe('2026-12-05T21:00');
+    expect(new Date(localInputOf(iso)).toISOString()).toBe(iso);
   });
 });

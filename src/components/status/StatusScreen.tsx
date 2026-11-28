@@ -151,7 +151,7 @@ function ClosedCard() {
 
 function PausedCard() {
   const times = useBranchTimes(useBranch(), useVisit().mode);
-  const { openRequest } = useServiceRequest();
+  const { openRequest, available } = useServiceRequest();
   const t = useContent('status');
   return (
     <StatusCard
@@ -172,9 +172,11 @@ function PausedCard() {
       }
       actions={
         <>
-          <Button iconStart="bell" onClick={() => openRequest('waiter')}>
-            {t('paused.callWaiter')}
-          </Button>
+          {available && (
+            <Button iconStart="bell" onClick={() => openRequest('waiter')}>
+              {t('paused.callWaiter')}
+            </Button>
+          )}
           <Button href="/menu/" variant="secondary">
             {t('paused.keepBrowsing')}
           </Button>

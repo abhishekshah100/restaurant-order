@@ -91,6 +91,16 @@ export const isDayKey = (value: string): boolean =>
   DAY_KEY.test(value) && shiftDay(value, 0) === value;
 
 /** The earliest day staff can look at. */
+/**
+ * A history's limits within the package's History days (null: no limit): `days` days back,
+ * today counted, as the server allows (restaurant-backend › plan-access › firstReportDay).
+ */
+export function withPlanHistory(limits: DayLimits | undefined, days: number | null): DayLimits {
+  const page = limits ?? DEFAULT_LIMITS;
+  if (days === null) return page;
+  return { ...page, historyDays: Math.min(page.historyDays, Math.max(days - 1, 0)) };
+}
+
 export const firstDay = (today: string, limits: DayLimits = DEFAULT_LIMITS): string =>
   shiftDay(today, -limits.historyDays);
 

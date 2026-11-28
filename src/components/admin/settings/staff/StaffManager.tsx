@@ -237,6 +237,11 @@ export function StaffManager() {
                       {t('adminSettings.staff.off')}
                     </Tag>
                   )}
+                  {member.planLocked && (
+                    <Tag variant="err" icon={null}>
+                      {t('adminSettings.staff.overPlan')}
+                    </Tag>
+                  )}
                   {member.active && member.mustChangePassword && (
                     <Tag variant="warn" icon={null}>
                       {t('adminSettings.staff.pending')}

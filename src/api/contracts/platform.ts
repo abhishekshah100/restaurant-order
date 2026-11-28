@@ -11,8 +11,17 @@
  */
 export type PlanFeature =
   | 'ordering'
+  | 'waiterRequests'
+  | 'refunds'
   | 'takeaway'
   | 'reports'
+  | 'assignWaiter'
+  | 'splitPayment'
+  | 'billOptions'
+  | 'discounts'
+  | 'kitchenStock'
+  | 'kitchenActivity'
+  | 'salesAdvanced'
   | 'delivery'
   | 'reservations'
   | 'offers'
@@ -52,6 +61,20 @@ export interface FeatureInfo {
   builtIn: boolean;
   /** Packages, clients and add-ons that have it. */
   used: number;
+  /**
+   * Hidden by the platform owner: offered to nobody and off for every client, their ticks kept
+   * (shown again, each has it back). Ordering can't be hidden.
+   */
+  hidden: boolean;
+}
+
+/** PATCH /platform/features/:key: what changes. */
+export interface UpdateFeatureRequest {
+  by: string;
+  name?: string;
+  description?: string;
+  group?: FeatureGroup;
+  hidden?: boolean;
 }
 
 /** GET /platform/addons: what a client can have on top of its package, priced per term. */
@@ -119,6 +142,46 @@ export interface ClientBranch {
 }
 
 /** GET /platform/clients: one client in the list. */
+/** What's locked (never deleted) while a client is over its package's limits. */
+export interface LockedCounts {
+  branches: number;
+  staff: number;
+  tables: number;
+  dishes: number;
+}
+
+/** What a client's staff are told about a suspension (restaurant-backend › ADR-055). */
+export type SuspendNotice = 'paymentOverdue' | 'requested' | 'review' | 'other';
+
+/** A suspension planned or in place. */
+export interface ClientSuspension {
+  /** ISO: when it starts. */
+  startsAt: string;
+  /** Not started yet: staff are warned. */
+  planned: boolean;
+  /** Started, and staff may still finish open orders until `finishUntil`. */
+  finishing: boolean;
+  finishHours: number;
+  /** ISO: the end of the finish-up window (null: locked from the start). */
+  finishUntil: string | null;
+  notice: SuspendNotice | null;
+  message: string;
+}
+
+/**
+ * POST /platform/clients/:id/suspend: now, at the client's closing time today, or planned (an
+ * ISO time up to 90 days on); finish-up hours for the open orders; what the restaurant is told
+ * (`message` for `other`); `reason` the owner's private note.
+ */
+export interface SuspendRequest {
+  by: string;
+  reason: string;
+  at: 'now' | 'closing' | string;
+  finishHours: number;
+  notice: SuspendNotice;
+  message?: string;
+}
+
 export interface ClientSummary {
   id: string;
   name: string;
@@ -132,6 +195,12 @@ export interface ClientSummary {
   endsAt: string | null;
   /** When management locks: the end plus grace. */
   lockAt: string | null;
+  /** A suspension planned or in place (`status` is suspended once it starts); null: none. */
+  suspension: ClientSuspension | null;
+  /** A package change planned for the paid term's end (a downgrade); null: none. */
+  planChange: { code: string; name: string; at: string } | null;
+  /** What's locked for being over the package's limits (restaurant-backend › ADR-056). */
+  locked: LockedCounts;
   daysLeft: number | null;
   limits: PlanLimits;
   usage: ClientUsage;
@@ -225,6 +294,11 @@ export interface ClientDetail extends ClientSummary {
 export interface UpdateClientRequest {
   by: string;
   plan?: string;
+  /**
+   * When `plan` takes over: now (default), or at the paid term's end (a downgrade; then no
+   * limits or features come with it).
+   */
+  planFrom?: 'now' | 'termEnd';
   billingCycle?: BillingCycle;
   limits?: Partial<PlanLimits>;
   features?: string[];

@@ -1,16 +1,16 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, type ReactNode } from 'react';
 import { useContent } from '@/api/hooks';
 import { WorkspaceGate } from '@/components/admin/shell/AdminShell';
 import { useAdminWorkspace } from '@/components/admin/shell/AdminWorkspace';
 import { NoAccess } from '@/components/admin/shell/NoAccess';
 import { PlanBanner, PlanEnded } from '@/components/admin/shell/PlanScreens';
-import { planNotice } from '@/lib/adminPlan';
+import { hasFeature, planNotice } from '@/lib/adminPlan';
 import { KitchenBar } from './KitchenBar';
 import { cx } from '@/lib/cx';
-import { KITCHEN_NAV, activeKitchenNavId } from '@/lib/kitchenNav';
+import { KITCHEN_NAV, KITCHEN_PATHS, activeKitchenNavId } from '@/lib/kitchenNav';
 import { useKitchenOutboxSender } from '../useKitchenOutbox';
 import { useKitchenPrefs } from './useKitchenPrefs';
 import { useKitchenKeepAlive } from './useKitchenKeepAlive';
@@ -40,11 +40,23 @@ function KitchenPage({ children }: { children: ReactNode }) {
   // sign it out for being idle).
   useKitchenKeepAlive();
   const active = activeKitchenNavId(usePathname());
-  const needs = KITCHEN_NAV.find((item) => item.id === active)?.needs ?? ['kitchen.update'];
+  const page = KITCHEN_NAV.find((item) => item.id === active);
+  const needs = page?.needs ?? ['kitchen.update'];
   const notice = planNotice(branch.plan);
+  // A tab the package leaves out (Stock, Activity), opened by its link: back to the board.
+  const off = page?.feature !== undefined && !hasFeature(branch, page.feature);
+  const router = useRouter();
+  useEffect(() => {
+    if (off) router.replace(KITCHEN_PATHS.board);
+  }, [off, router]);
+  if (off) return null;
   if (!can(...needs)) {
     // Locked by the plan (paused, or ended for pages that aren't the board): say why.
-    return notice?.kind === 'suspended' || notice?.kind === 'expired' ? (
+    // (Finishing up after a suspension: the board stays; the rest says why it's closed.)
+    return notice?.kind === 'suspended' ||
+      notice?.kind === 'finishing' ||
+      notice?.kind === 'branchLocked' ||
+      notice?.kind === 'expired' ? (
       <PlanEnded />
     ) : (
       <NoAccess />

@@ -5,6 +5,7 @@ import { useContent } from '@/api/hooks';
 import { Icon, Tag, type TagVariant } from '@/components/ui';
 import { cx } from '@/lib/cx';
 import { hasFeature } from '@/lib/adminPlan';
+import { PlanKeep } from './PlanKeep';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { PlanContact } from '../shell/PlanContact';
 import { SettingsCard, SettingsNote } from './shared/SettingsEditor';
@@ -16,8 +17,17 @@ const GROUPS = ['essentials', 'advanced', 'services'] as const;
 /** The built-in features, for a server that doesn't send its catalog yet. */
 const BUILT_IN: PlanFeature[] = [
   'ordering',
+  'waiterRequests',
+  'refunds',
   'takeaway',
   'reports',
+  'assignWaiter',
+  'splitPayment',
+  'billOptions',
+  'discounts',
+  'kitchenStock',
+  'kitchenActivity',
+  'salesAdvanced',
   'delivery',
   'reservations',
   'offers',
@@ -25,6 +35,8 @@ const BUILT_IN: PlanFeature[] = [
   'shifts',
   'activityLog',
 ];
+
+const ESSENTIALS: PlanFeature[] = ['ordering', 'waiterRequests', 'refunds', 'takeaway', 'reports'];
 
 const LIMITS: Exclude<PlanLimit, 'reportDays'>[] = [
   'staff',
@@ -59,7 +71,7 @@ export function PlanSettings() {
       key,
       name: t(`platform.features.names.${key}`),
       description: t(`platform.features.hints.${key}`),
-      group: ['ordering', 'takeaway', 'reports'].includes(key) ? 'essentials' : 'advanced',
+      group: ESSENTIALS.includes(key) ? 'essentials' : 'advanced',
       included: hasFeature(branch, key),
     }))
   ).filter((f) => f.included);
@@ -101,6 +113,8 @@ export function PlanSettings() {
               <PlanContact message={t('adminShell.plan.askRenew', { restaurant: branch.name })} />
             </div>
           </SettingsCard>
+
+          <PlanKeep plan={plan} />
 
           <SettingsCard
             title={t('adminSettings.plan.limitsTitle')}

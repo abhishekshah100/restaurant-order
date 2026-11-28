@@ -248,6 +248,7 @@ export function TableHistory() {
       </header>
       <DateRangeFilter
         id="table-history-days"
+        planHistory
         range={days}
         today={today}
         onChange={(range) => router.replace(tableHistoryPath(table, range), { scroll: false })}

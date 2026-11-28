@@ -8,9 +8,24 @@ import {
   usePlatformFeatures,
   usePlatformPackages,
 } from '@/api/hooks';
-import { useGoLive, useSuspendPlatformClient, useUpdatePlatformClient } from '@/api/mutations';
+import {
+  useCancelPlanChange,
+  useGoLive,
+  useResumePlatformClient,
+  useUpdatePlatformClient,
+} from '@/api/mutations';
 import { SettingsCard } from '@/components/admin/settings/shared/SettingsEditor';
-import { Banner, Button, Chip, Dialog, Input, Skeleton, Tag, Textarea } from '@/components/ui';
+import {
+  Banner,
+  Button,
+  Chip,
+  Dialog,
+  Input,
+  OptionGroup,
+  Skeleton,
+  Tag,
+  Textarea,
+} from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import {
   addDays,
@@ -18,6 +33,7 @@ import {
   downgradeOf,
   draftOf,
   byCatalog,
+  HISTORY_PRESETS,
   LIMITS,
   listPriceOf,
   priceOf,
@@ -36,6 +52,7 @@ import { RemindButton } from './RemindButton';
 import { FeatureToggles } from './FeatureToggles';
 import { LimitField } from './LimitField';
 import { PackagePicker } from './PackagePicker';
+import { SuspendDialog } from './SuspendDialog';
 import { StatusTag } from './StatusTag';
 import styles from './Platform.module.css';
 
@@ -106,13 +123,15 @@ function ClientForm({
   const t = useContent('common');
   const { showToast } = useToast();
   const update = useUpdatePlatformClient(platformKey);
-  const suspend = useSuspendPlatformClient(platformKey);
+  const resume = useResumePlatformClient(platformKey);
+  const cancelChange = useCancelPlanChange(platformKey);
   const goLive = useGoLive(platformKey);
   const [goingLive, setGoingLive] = useState(false);
   const [draft, setDraft] = useState<ClientDraft>(() => draftOf(client));
   const [downgrade, setDowngrade] = useState<Downgrade | null>(null);
+  // A lower package: now, or from the paid term's end (while one runs).
+  const [downgradeAt, setDowngradeAt] = useState<'now' | 'termEnd'>('termEnd');
   const [suspending, setSuspending] = useState(false);
-  const [reason, setReason] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
 
   const pkg = packages.find((p) => p.code === draft.plan);
@@ -135,13 +154,45 @@ function ClientForm({
   const save = async () => {
     if (!body) return;
     setProblem(null);
+    // Planned for the term's end: the package alone (its limits and features come with it on
+    // the day); anything else changed applies now.
+    const planned = downgrade !== null && canWait && downgradeAt === 'termEnd';
+    const { limits: _, features: __, ...rest } = body;
     try {
-      await update.mutateAsync({ id: client.id, body });
-      showToast(t('platform.save.saved', { name: client.name }));
+      const saved = await update.mutateAsync({
+        id: client.id,
+        body: planned ? { ...rest, planFrom: 'termEnd' } : body,
+      });
+      showToast(
+        planned && saved.planChange
+          ? t('platform.downgrade.planned', {
+              name: client.name,
+              plan: saved.planChange.name,
+              date: date(saved.planChange.at),
+            })
+          : t('platform.save.saved', { name: client.name }),
+      );
     } catch {
       setProblem(t('platform.save.failed'));
     } finally {
       setDowngrade(null);
+    }
+  };
+
+  // A package change to plan for the paid term's end: one is running.
+  const canWait =
+    draft.plan !== client.plan.code &&
+    client.paidUntil !== null &&
+    Date.parse(client.paidUntil) > today.getTime();
+  const lockedParts = (['branches', 'staff', 'tables', 'dishes'] as const)
+    .filter((k) => client.locked[k] > 0)
+    .map((k) => t.plural(`platform.downgrade.locked.${k}`, client.locked[k]));
+  const cancelPlanChange = async () => {
+    try {
+      await cancelChange.mutateAsync({ id: client.id, by });
+      showToast(t('platform.downgrade.cancelled', { name: client.name }));
+    } catch {
+      showToast(t('platform.save.failed'), { tone: 'error' });
     }
   };
 
@@ -155,14 +206,16 @@ function ClientForm({
     else void save();
   };
 
-  const toggleSuspend = async () => {
-    const resuming = client.suspendedAt !== null;
+  // A suspension planned (not started), or in place.
+  const planned = client.suspension?.planned ? client.suspension : null;
+  /** Resumed, or a planned suspension called off. */
+  const unsuspend = async () => {
     try {
-      await suspend.mutateAsync({ id: client.id, by, reason: resuming ? null : reason.trim() });
-      setSuspending(false);
-      setReason('');
+      await resume.mutateAsync({ id: client.id, by });
       showToast(
-        t(resuming ? 'platform.suspend.resumed' : 'platform.suspend.done', { name: client.name }),
+        t(planned ? 'platform.suspend.cancelled' : 'platform.suspend.resumed', {
+          name: client.name,
+        }),
       );
     } catch {
       showToast(t('platform.suspend.failed'), { tone: 'error' });
@@ -172,6 +225,11 @@ function ClientForm({
   const changed = body ? Object.keys(body).filter((k) => k !== 'by') : [];
   const date = (iso: string) =>
     new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  const dateTime = (iso: string) =>
+    new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  /** What the client's staff are told. */
+  const noticeOf = (s: NonNullable<ClientDetail['suspension']>) =>
+    s.notice === 'other' ? s.message : s.notice ? t(`platform.suspend.notices.${s.notice}`) : '';
 
   return (
     <>
@@ -185,7 +243,11 @@ function ClientForm({
         </div>
         <div className={styles.row}>
           {client.demo && <Tag variant="warn">{t('platform.demo.tag')}</Tag>}
-          <StatusTag status={client.status} />
+          <StatusTag
+            status={client.status}
+            suspension={client.suspension}
+            planChange={client.planChange}
+          />
           {client.demo && (
             <Button size="sm" iconStart="check" onClick={() => setGoingLive(true)}>
               {t('platform.demo.goLive')}
@@ -214,6 +276,25 @@ function ClientForm({
             </Chip>
           ))}
         </div>
+        {client.planChange && (
+          <div className={styles.status}>
+            <span>
+              {t('platform.downgrade.changeLine', {
+                plan: client.planChange.name,
+                date: date(client.planChange.at),
+                current: client.plan.name,
+              })}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              loading={cancelChange.isPending}
+              onClick={() => void cancelPlanChange()}
+            >
+              {t('platform.downgrade.cancelPlanned')}
+            </Button>
+          </div>
+        )}
         <PackagePicker
           packages={packages.filter((p) => !p.hidden || p.code === client.plan.code)}
           value={draft.plan}
@@ -224,6 +305,11 @@ function ClientForm({
       </SettingsCard>
 
       <SettingsCard title={t('platform.limits.title')} hint={t('platform.limits.hint')}>
+        {lockedParts.length > 0 && (
+          <p className={styles.over}>
+            {t('platform.downgrade.lockedLine', { list: lockedParts.join(' · ') })}
+          </p>
+        )}
         <div className={styles.limits}>
           {LIMITS.map(({ id, step }) => (
             <LimitField
@@ -232,6 +318,9 @@ function ClientForm({
               name={t(`platform.limits.names.${id}`)}
               value={draft.limits[id]}
               step={step}
+              {...(id === 'reportDays'
+                ? { presets: HISTORY_PRESETS, about: t('platform.limits.historyHint') }
+                : {})}
               packageValue={pkg?.limits[id] ?? null}
               used={usageOf(client.usage, id)}
               onChange={(value) => set({ limits: { ...draft.limits, [id]: value } })}
@@ -254,33 +343,58 @@ function ClientForm({
         title={t('platform.term.title')}
         hint={t('platform.term.hint')}
         action={
-          client.suspendedAt ? (
+          client.suspension && !planned ? (
             <Button
               variant="primary"
               size="sm"
-              loading={suspend.isPending}
-              onClick={() => void toggleSuspend()}
+              loading={resume.isPending}
+              onClick={() => void unsuspend()}
             >
               {t('platform.term.resume')}
             </Button>
           ) : (
-            <Button variant="secondary" size="sm" onClick={() => setSuspending(true)}>
-              {t('platform.term.suspend')}
-            </Button>
+            <span className={styles.row}>
+              {planned && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  loading={resume.isPending}
+                  onClick={() => void unsuspend()}
+                >
+                  {t('platform.suspend.cancelPlanned')}
+                </Button>
+              )}
+              <Button variant="secondary" size="sm" onClick={() => setSuspending(true)}>
+                {t('platform.term.suspend')}
+              </Button>
+            </span>
           )
         }
       >
         <div className={styles.status}>
-          <StatusTag status={client.status} />
+          <StatusTag
+            status={client.status}
+            suspension={client.suspension}
+            planChange={client.planChange}
+          />
           <span>
-            {client.suspendedAt
-              ? t('platform.term.suspendedOn', {
-                  date: date(client.suspendedAt),
-                  reason: client.suspendReason ?? '',
+            {planned
+              ? t('platform.suspend.plannedLine', {
+                  date: dateTime(planned.startsAt),
+                  notice: noticeOf(planned),
                 })
-              : client.lockAt
-                ? t('platform.term.statusLine', { date: date(client.lockAt) })
-                : t('platform.term.noEnd')}
+              : client.suspension?.finishing && client.suspension.finishUntil
+                ? t('platform.suspend.finishingLine', {
+                    time: dateTime(client.suspension.finishUntil),
+                  })
+                : client.suspendedAt
+                  ? t('platform.term.suspendedOn', {
+                      date: date(client.suspendedAt),
+                      reason: client.suspendReason ?? '',
+                    })
+                  : client.lockAt
+                    ? t('platform.term.statusLine', { date: date(client.lockAt) })
+                    : t('platform.term.noEnd')}
           </span>
         </div>
         <div className={styles.row}>
@@ -476,13 +590,38 @@ function ClientForm({
               {t('platform.downgrade.cancel')}
             </Button>
             <Button loading={update.isPending} onClick={() => void save()}>
-              {t('platform.downgrade.confirm')}
+              {canWait && downgradeAt === 'termEnd' && client.paidUntil
+                ? t('platform.downgrade.confirmPlan', { date: date(client.paidUntil) })
+                : t('platform.downgrade.confirmNow')}
             </Button>
           </div>
         }
       >
         {downgrade && (
           <div className={styles.dialogBody}>
+            {canWait && client.paidUntil && (
+              <OptionGroup
+                id="downgrade-when"
+                type="radio"
+                title={t('platform.downgrade.when')}
+                headingAs="h3"
+                titleClassName={styles.groupTitle}
+                value={downgradeAt}
+                onChange={(id) => setDowngradeAt(id as 'now' | 'termEnd')}
+                choices={[
+                  {
+                    id: 'termEnd',
+                    label: t('platform.downgrade.whenTermEnd', { date: date(client.paidUntil) }),
+                    sub: t('platform.downgrade.whenTermEndSub', { plan: client.plan.name }),
+                  },
+                  {
+                    id: 'now',
+                    label: t('platform.downgrade.whenNow'),
+                    sub: t('platform.downgrade.whenNowSub'),
+                  },
+                ]}
+              />
+            )}
             {downgrade.over.length > 0 && (
               <>
                 <ul>
@@ -501,54 +640,32 @@ function ClientForm({
             )}
             {downgrade.featuresOff.length > 0 && (
               <p>
-                {t('platform.downgrade.featuresOff', {
-                  features: byCatalog(downgrade.featuresOff, catalog)
-                    .map((f) => f.name)
-                    .join(', '),
-                })}
+                {canWait && downgradeAt === 'termEnd' && client.paidUntil
+                  ? t('platform.downgrade.featuresOffOn', {
+                      date: date(client.paidUntil),
+                      features: byCatalog(downgrade.featuresOff, catalog)
+                        .map((f) => f.name)
+                        .join(', '),
+                    })
+                  : t('platform.downgrade.featuresOff', {
+                      features: byCatalog(downgrade.featuresOff, catalog)
+                        .map((f) => f.name)
+                        .join(', '),
+                    })}
               </p>
             )}
           </div>
         )}
       </Dialog>
 
-      <Dialog
-        open={suspending}
-        onClose={() => !suspend.isPending && setSuspending(false)}
-        presentation="modal"
-        title={t('platform.suspend.title', { name: client.name })}
-        footer={
-          <div className={styles.dialogActions}>
-            <Button
-              variant="secondary"
-              disabled={suspend.isPending}
-              onClick={() => setSuspending(false)}
-            >
-              {t('platform.suspend.cancel')}
-            </Button>
-            <Button
-              variant="dark"
-              loading={suspend.isPending}
-              disabled={!reason.trim()}
-              onClick={() => void toggleSuspend()}
-            >
-              {t('platform.suspend.confirm')}
-            </Button>
-          </div>
-        }
-      >
-        <div className={styles.dialogBody}>
-          <p>{t('platform.suspend.body')}</p>
-          <Textarea
-            id="suspend-reason"
-            label={t('platform.suspend.reason')}
-            maxLength={200}
-            rows={2}
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-          />
-        </div>
-      </Dialog>
+      {suspending && (
+        <SuspendDialog
+          platformKey={platformKey}
+          by={by}
+          client={client}
+          onClose={() => setSuspending(false)}
+        />
+      )}
       <Dialog
         open={goingLive}
         onClose={() => !goLive.isPending && setGoingLive(false)}

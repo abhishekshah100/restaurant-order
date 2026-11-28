@@ -82,7 +82,10 @@ export function TableCard({ table, now }: { table: AdminFloorTable; now: Date | 
             )}
           </>
         ) : table.status === 'outOfService' ? (
-          <span>{t('adminTables.outOfService')}</span>
+          <span>
+            {/* Over the package's tables (ADR-056), or turned off by staff. */}
+            {table.planLocked ? t('adminTables.overPlan') : t('adminTables.outOfService')}
+          </span>
         ) : table.status === 'available' ? (
           booking ? (
             <span className={cx(styles.line, styles.booking)}>

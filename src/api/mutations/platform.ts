@@ -6,7 +6,9 @@ import type {
   FeatureGroup,
   NewClientRequest,
   RecordPaymentRequest,
+  SuspendRequest,
   UpdateClientRequest,
+  UpdateFeatureRequest,
   UpdatePackageRequest,
   UpdatePlatformSettingsRequest,
 } from '../contracts';
@@ -25,14 +27,31 @@ export function useUpdatePlatformClient(key: string) {
   });
 }
 
-/** POST /platform/clients/:id/suspend or /resume. */
+/** POST /platform/clients/:id/suspend: now, at closing time or planned. */
 export function useSuspendPlatformClient(key: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, by, reason }: { id: string; by: string; reason: string | null }) =>
-      reason === null
-        ? api.resumePlatformClient(key, id, { by })
-        : api.suspendPlatformClient(key, id, { by, reason }),
+    mutationFn: ({ id, body }: { id: string; body: SuspendRequest }) =>
+      api.suspendPlatformClient(key, id, body),
+    onSettled: () => refreshAfter(client, 'platformChanged'),
+  });
+}
+
+/** POST /platform/clients/:id/plan-change/cancel: a planned downgrade called off. */
+export function useCancelPlanChange(key: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, by }: { id: string; by: string }) => api.cancelPlanChange(key, id, { by }),
+    onSettled: () => refreshAfter(client, 'platformChanged'),
+  });
+}
+
+/** POST /platform/clients/:id/resume: back on, or a planned suspension called off. */
+export function useResumePlatformClient(key: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, by }: { id: string; by: string }) =>
+      api.resumePlatformClient(key, id, { by }),
     onSettled: () => refreshAfter(client, 'platformChanged'),
   });
 }
@@ -127,15 +146,8 @@ export const useCreatePlatformFeature = (key: string) =>
       api.createPlatformFeature(key, body),
   );
 export const useUpdatePlatformFeature = (key: string) =>
-  useCatalogMutation(
-    key,
-    ({
-      feature,
-      body,
-    }: {
-      feature: string;
-      body: { by: string; name?: string; description?: string; group?: FeatureGroup };
-    }) => api.updatePlatformFeature(key, feature, body),
+  useCatalogMutation(key, ({ feature, body }: { feature: string; body: UpdateFeatureRequest }) =>
+    api.updatePlatformFeature(key, feature, body),
   );
 export const useRemovePlatformFeature = (key: string) =>
   useCatalogMutation(key, ({ feature, by }: { feature: string; by: string }) =>

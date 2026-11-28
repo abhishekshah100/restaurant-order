@@ -237,6 +237,14 @@
   }
 }
 
+/* History days' quick choices, under the row. */
+.presets {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .limitText {
   display: flex;
   flex-direction: column;

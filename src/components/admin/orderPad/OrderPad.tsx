@@ -121,7 +121,8 @@ function Pad({
   const { branch, region, money, can } = useAdminWorkspace();
   const mode = target.kind === 'phone' ? target.mode : 'dineIn';
   const { showToast } = useToast();
-  const { menu } = useBranchMenu(region);
+  // Dishes over the package's (ADR-056) can't be sold: the pad leaves them out.
+  const { sellable: menu } = useBranchMenu(region);
   // Happy hour: the server takes the dine-in offers on now off a waiter's order, so the pad
   // shows them too (offer price, menu price struck through, the discount on the bill).
   const promotions = useQuery(branchPromotionsQuery(region.id)).data;

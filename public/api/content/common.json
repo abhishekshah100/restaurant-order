@@ -176,7 +176,8 @@
     "errors": {
       "invalidCredentials": "That email, mobile number or password isn't right. Check them and try again.",
       "tooManyAttempts": "Too many attempts. Wait a few minutes, then try again.",
-      "requestFailed": "We couldn't reach the server. Check your connection and try again."
+      "requestFailed": "We couldn't reach the server. Check your connection and try again.",
+      "planLocked": "Your login is switched off: the restaurant's Restova plan allows fewer staff logins. Ask the owner to keep yours, or to choose a bigger plan."
     },
     "validation": {
       "identityRequired": "Enter your email or mobile number.",
@@ -698,7 +699,44 @@
       "askMore": "Hello Restova, {restaurant} needs more {name}. What are the options?",
       "limitReached": "Your package allows {max} {name}. Ask Restova to raise the limit.",
       "historyLimit": "Your package shows the last {days} days. Ask Restova to see further back.",
-      "lockedAction": "Your plan has ended or is paused: renew with Restova to do this."
+      "lockedAction": "Your plan has ended or is paused: renew with Restova to do this.",
+      "suspending": "Your Restova account will be paused on {date}: {reason}. Contact Restova to keep it running.",
+      "finishing": "Your Restova account is paused: {reason}. Finish your open bills by {time}; no new orders can be taken.",
+      "suspendedWhy": "Your Restova account is paused: {reason}. Contact Restova to turn it back on.",
+      "suspendedBodyWhy": "Restova has paused this restaurant's account: {reason}. Nothing is lost: everything comes back as it was when it's turned back on.",
+      "viewingAsRestova": "Suspended client: you're viewing as Restova. Everything still works for you; their own staff can't use it.",
+      "askResume": "Hello Restova, {restaurant} would like our account turned back on.",
+      "notices": {
+        "paymentOverdue": "payment overdue",
+        "requested": "at your request",
+        "review": "account under review"
+      },
+      "branchLocked": "This branch is locked: your Restova plan allows fewer branches. Guests can still read its menu.",
+      "branchLockedTitle": "This branch is locked",
+      "branchLockedBody": "Your Restova plan allows fewer branches, so this one is locked: guests can still read its menu, but ordering and staff screens are off. Nothing is lost. The owner can keep this branch instead of another in Settings › My plan, or ask Restova for a bigger plan.",
+      "changing": "On {date} your plan becomes {plan}.",
+      "changingOver": "On {date} your plan becomes {plan}, which allows fewer of what you have: choose what to keep before then, or it's picked for you.",
+      "locked": "Locked because your plan allows fewer: {list}. Nothing is lost: choose what to keep, or ask Restova for a bigger plan.",
+      "lockedParts": {
+        "branches": {
+          "one": "1 branch",
+          "other": "{count} branches"
+        },
+        "staff": {
+          "one": "1 staff login",
+          "other": "{count} staff logins"
+        },
+        "tables": {
+          "one": "1 table",
+          "other": "{count} tables"
+        },
+        "dishes": {
+          "one": "1 dish",
+          "other": "{count} dishes"
+        }
+      },
+      "chooseKeep": "Choose what to keep",
+      "askBigger": "Hello Restova, {restaurant} would like a bigger plan."
     }
   },
   "adminHome": {
@@ -1254,7 +1292,8 @@
         "highChair": "High chair"
       }
     },
-    "editFloor": "Edit floor plan"
+    "editFloor": "Edit floor plan",
+    "overPlan": "Over your plan"
   },
   "adminOrder": {
     "title": "Order {order}",
@@ -3436,7 +3475,8 @@
       "available": "Available",
       "soldOut": "Sold out",
       "backAt": "Sold out · back {time}",
-      "offToday": "Off today"
+      "offToday": "Off today",
+      "overPlan": "Over your plan: hidden from guests"
     },
     "sizesOff": {
       "one": "{count} size off",
@@ -4153,7 +4193,8 @@
     "fiscalYear": {
       "current": "This FY ({label})",
       "previous": "Last FY ({label})"
-    }
+    },
+    "planNote": "Your plan shows the last {days} days."
   },
   "adminPayments": {
     "title": "Payments",
@@ -5819,7 +5860,8 @@
           "mistake": "Added by mistake",
           "transferred": "Moved to another branch"
         }
-      }
+      },
+      "overPlan": "Switched off: over your plan"
     },
     "features": {
       "title": "Features",
@@ -6050,7 +6092,23 @@
       "days": "{days} days",
       "featuresTitle": "What's included",
       "included": "Included",
-      "addonsTitle": "Add-ons"
+      "addonsTitle": "Add-ons",
+      "keep": {
+        "title": "Choose what to keep",
+        "hintChange": "On {date} your plan becomes {plan}, which allows fewer of what you have. Pick what stays in use; the rest is locked (nothing deleted) until you have room again.",
+        "hintNow": "Your plan allows fewer of what you have. Pick what stays in use; the rest is locked (nothing deleted) until you have room again.",
+        "branches": "Branches: keep {max}",
+        "staff": "Staff logins: keep {max}",
+        "tables": "Tables at this branch: keep {max}",
+        "dishes": "Dishes at this branch: keep {max}",
+        "picked": "{count} of {max} picked",
+        "ownersStay": "Owners always keep their login, whatever is picked.",
+        "lockedNow": "Locked now",
+        "table": "Table {number}",
+        "save": "Save",
+        "saved": "Saved: what you picked stays in use",
+        "failed": "Couldn't save. Try again."
+      }
     }
   },
   "masters": {
@@ -6955,14 +7013,14 @@
     },
     "limits": {
       "title": "Limits",
-      "hint": "Raise or lower anything for this client. Lowering removes nothing: they just can't add more.",
+      "hint": "Raise or lower anything for this client. Lowering locks what's over the limit (never deletes it) until it fits again.",
       "names": {
         "staff": "Staff logins",
         "branches": "Branches",
         "floors": "Floors per branch",
         "tables": "Tables per branch",
         "dishes": "Dishes per branch",
-        "reportDays": "Report history (days)"
+        "reportDays": "History days"
       },
       "package": "Package {value}",
       "using": "using {used}",
@@ -6970,7 +7028,10 @@
       "over": "Over the limit · {hint}",
       "lower": "Lower {name}",
       "raise": "Raise {name}",
-      "infinity": "∞"
+      "infinity": "∞",
+      "presets": "Quick choice",
+      "days": "{count} days",
+      "historyHint": "How far back every history goes: orders, payments, bookings, requests, cash register, activity log, sales report. Tax invoices are always kept."
     },
     "features": {
       "title": "Features",
@@ -6982,8 +7043,17 @@
       },
       "names": {
         "ordering": "Ordering and billing",
+        "waiterRequests": "Waiter requests",
+        "refunds": "Refunds",
         "takeaway": "Takeaway",
         "reports": "Sales reports",
+        "assignWaiter": "Assign waiters",
+        "splitPayment": "Split payment",
+        "billOptions": "Bill options",
+        "discounts": "Manual discounts",
+        "kitchenStock": "Kitchen stock",
+        "kitchenActivity": "Kitchen activity",
+        "salesAdvanced": "Advanced sales report",
         "delivery": "Delivery",
         "reservations": "Reservations",
         "offers": "Offers and promo codes",
@@ -6993,8 +7063,17 @@
       },
       "hints": {
         "ordering": "QR ordering, waiter app, kitchen board, bills, payments, cash register",
+        "waiterRequests": "Guests call a waiter or ask for the bill from the QR menu",
+        "refunds": "Money back on an order, and cancelling a paid order",
         "takeaway": "Takeaway orders and pickup times",
-        "reports": "Sales report (as far back as the report history limit)",
+        "reports": "Sales report: totals, money statement and top dishes (within History days)",
+        "assignWaiter": "Waiters' sections: who covers which tables",
+        "splitPayment": "One bill paid in shares, by items or in several ways (cash and UPI)",
+        "billOptions": "Leave part of a bill unpaid; business (tax) invoice",
+        "discounts": "Money off a bill or an item by hand, with a reason",
+        "kitchenStock": "The kitchen's Stock tab: dishes on and off, ingredients to use first",
+        "kitchenActivity": "The kitchen's Activity tab: today's tickets, times and top dishes",
+        "salesAdvanced": "Charts by day and hour, branch comparison, Excel and PDF export, print",
         "delivery": "Delivery zones and fees",
         "reservations": "Bookings, deposits and reminders",
         "offers": "Happy hours, automatic offers and promo codes",
@@ -7003,7 +7082,8 @@
         "activityLog": "Who did what: refunds, discounts, voids, settings"
       },
       "addOn": "Add-on",
-      "removed": "Removed"
+      "removed": "Removed",
+      "needs": "Works only with {name}"
     },
     "term": {
       "title": "Trial and term",
@@ -7062,7 +7142,13 @@
         "clientCreated": "Client created",
         "addonAdded": "Add-on added",
         "addonRemoved": "Add-on removed",
-        "menuLoaded": "Menu loaded"
+        "menuLoaded": "Menu loaded",
+        "suspensionPlanned": "Suspension planned",
+        "suspensionCancelled": "Planned suspension called off",
+        "changePlanned": "Package change planned",
+        "changeCancelled": "Planned package change called off",
+        "changeApplied": "Package changed as planned",
+        "keepChosen": "Owner chose what to keep"
       },
       "meta": "{by} · {when}",
       "fields": {
@@ -7073,7 +7159,7 @@
         "limitsFloors": "Floors per branch",
         "limitsTables": "Tables per branch",
         "limitsDishes": "Dishes per branch",
-        "limitsReportDays": "Report history",
+        "limitsReportDays": "History days",
         "features": "Features",
         "featuresInventory": "Inventory",
         "trialEndsAt": "Trial ends",
@@ -7086,7 +7172,12 @@
         "contactPhone": "Phone",
         "contactEmail": "Email",
         "contactTaxNumber": "PAN / VAT",
-        "notes": "Notes"
+        "notes": "Notes",
+        "suspensionStartsAt": "Starts",
+        "suspensionFinishHours": "Finish-up hours",
+        "suspensionNotice": "Told them",
+        "nextPlan": "Next package",
+        "nextPlanAt": "From"
       },
       "change": "{field}: {from} → {to}",
       "edited": "{field} edited",
@@ -7108,21 +7199,87 @@
     },
     "downgrade": {
       "title": "Lower {name}'s package?",
-      "over": "{limit}: they have {used}, the new limit is {max}.",
-      "overNote": "Nothing is deleted or switched off: they just can't add more until they're under the limit.",
+      "over": "{limit}: they have {used}, the new package allows {max}.",
+      "overNote": "Nothing is deleted. The extra ones are locked: their owner chooses which stay, otherwise the oldest branches, the owners and longest-serving staff, the lowest table numbers and the best-selling dishes stay. A bigger package brings everything back.",
       "featuresOff": "Switching off: {features}",
       "confirm": "Save anyway",
-      "cancel": "Go back"
+      "cancel": "Go back",
+      "when": "When",
+      "whenNow": "Now",
+      "whenNowSub": "The extra ones are locked as you save.",
+      "whenTermEnd": "At the end of their paid term ({date})",
+      "whenTermEndSub": "They keep {plan} until then; their staff are told and can choose what to keep.",
+      "confirmNow": "Downgrade now",
+      "confirmPlan": "Plan for {date}",
+      "planned": "{name} moves to {plan} on {date}",
+      "changeLine": "Moves to {plan} on {date}. Until then they keep {current}.",
+      "cancelPlanned": "Cancel planned change",
+      "cancelled": "{name}: planned package change called off",
+      "lockedLine": "Locked now (nothing deleted): {list}",
+      "locked": {
+        "branches": {
+          "one": "1 branch",
+          "other": "{count} branches"
+        },
+        "staff": {
+          "one": "1 staff login",
+          "other": "{count} staff logins"
+        },
+        "tables": {
+          "one": "1 table",
+          "other": "{count} tables"
+        },
+        "dishes": {
+          "one": "1 dish",
+          "other": "{count} dishes"
+        }
+      },
+      "tagFrom": "{plan} from {date}",
+      "featuresOffOn": "On {date}, switching off: {features}"
     },
     "suspend": {
       "title": "Suspend {name}?",
-      "body": "Their staff and guests can't use Restova until you resume. Everything is kept.",
-      "reason": "Reason (kept in the history)",
+      "body": "Once it starts, their staff and guests can't use Restova until you resume. Everything is kept.",
+      "reason": "Private note (only you see it, in the history)",
       "confirm": "Suspend",
       "cancel": "Cancel",
       "done": "{name} suspended",
       "resumed": "{name} resumed",
-      "failed": "Couldn't do that. Try again."
+      "failed": "Couldn't do that. Try again.",
+      "when": "When",
+      "whenNow": "Now",
+      "whenNowSub": "Starts as soon as you confirm",
+      "whenClosing": "At closing time today",
+      "whenClosingSub": "When their last branch closes tonight",
+      "whenDate": "On a date",
+      "whenDateSub": "Their staff are warned from 3 days before",
+      "startsAt": "Starts at",
+      "finish": "Let them finish open bills",
+      "finishHint": "Staff can only finish orders already placed: kitchen, serving, payments and the cash drawer. No new orders.",
+      "finishNone": "Lock at once",
+      "finishHours": {
+        "one": "1 hour",
+        "other": "{count} hours"
+      },
+      "notice": "What their staff are told",
+      "notices": {
+        "paymentOverdue": "Payment overdue",
+        "requested": "At your request",
+        "review": "Account under review",
+        "other": "Something else"
+      },
+      "message": "What to tell them",
+      "confirmNow": "Suspend now",
+      "confirmPlan": "Plan suspension",
+      "past": "Pick a time from now on.",
+      "tooFar": "Pick a time within the next 90 days.",
+      "planned": "{name} will be suspended on {date}",
+      "cancelPlanned": "Cancel planned suspension",
+      "cancelled": "{name}: planned suspension called off",
+      "plannedLine": "Suspension planned for {date}: {notice}",
+      "finishingLine": "Suspended: finishing open bills until {time}",
+      "tagPlanned": "Suspends {date}",
+      "tagFinishing": "Finishing up"
     },
     "packages": {
       "hint": "Defaults for new picks. Clients already on a package keep their own numbers.",
@@ -7318,7 +7475,17 @@
       "nothing": "Nothing",
       "addAddon": "Add add-on",
       "addonAdded": "{name} added",
-      "nameTaken": "There is already one with that name: pick another."
+      "nameTaken": "There is already one with that name: pick another.",
+      "hiddenTag": "Hidden",
+      "hide": "Hide from everyone",
+      "show": "Offer again",
+      "hideTitle": "Hide {name}?",
+      "hideBody": "It goes off for every client now and isn't offered in any package. Packages and clients keep their tick, so \"Offer again\" brings it back as each had it.",
+      "hideUsed": "Used by {count} packages, clients or add-ons now.",
+      "hideConfirm": "Hide it",
+      "hiddenDone": "{name} hidden from everyone",
+      "shownDone": "{name} offered again",
+      "hiddenHint": "Hidden: off for every client and not offered."
     },
     "addons": {
       "title": "Add-ons",

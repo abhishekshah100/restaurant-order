@@ -1,4 +1,4 @@
-import type { PlanLimits, PlanStatus } from '@/api/contracts/platform';
+import type { PlanLimits, PlanStatus, SuspendNotice } from '@/api/contracts/platform';
 import type { CancellationReason, ReservationStatusCode } from '@/config/masters';
 import type { BranchImage, BranchStatus, CountryCode, OpeningSchedule, OrderMode } from './branch';
 import type { Price } from './menu';
@@ -90,7 +90,35 @@ export interface BranchPlan {
   /** When management locks: the end plus grace. */
   lockAt: string | null;
   daysLeft: number | null;
+  /**
+   * A suspension planned (staff are warned) or in place (finishing up, then locked), with what
+   * they're told (restaurant-backend › ADR-055); null or missing: none.
+   */
+  suspension?: {
+    startsAt: string;
+    planned: boolean;
+    finishing: boolean;
+    finishUntil: string | null;
+    notice: SuspendNotice | null;
+    message: string;
+  } | null;
   limits: PlanLimits;
+  /**
+   * A package change planned for the paid term's end (a downgrade), with the limits it brings
+   * (restaurant-backend › ADR-056); null or missing: none.
+   */
+  change?: { code: string; name: string; at: string; limits: PlanLimits } | null;
+  /** What's locked (never deleted) for being over the package's limits, restaurant-wide. */
+  locked?: { branches: number; staff: number; tables: number; dishes: number };
+  /** This branch is locked (over the package's branches): no staff, guests read the menu. */
+  branchLocked?: boolean;
+  /** What the owner chose to keep in use while over a limit. */
+  keep?: {
+    branches?: string[];
+    staff?: string[];
+    tables?: Record<string, number[]>;
+    dishes?: Record<string, string[]>;
+  };
   /** Staff and branches across the restaurant; floors, tables and dishes at this branch. */
   usage: { staff: number; branches: number; floors: number; tables: number; dishes: number };
   /** The platform's contact for upgrading or renewing ('' where none is set). */
@@ -109,6 +137,9 @@ export interface FeaturesResponse {
   /** A super admin: the platform switches features. */
   canChange: boolean;
 }
+
+/** What the owner keeps in use while over the package's limits (PATCH …/plan/keep). */
+export type PlanKeep = NonNullable<BranchPlan['keep']>;
 
 /* ---------- Floor service (GET /admin/branches/:branchId/service) ---------- */
 
@@ -497,6 +528,8 @@ export interface AdminFloorTable {
   freed: boolean;
   /** Out of service (see FloorTableLayout › disabled). */
   disabled: boolean;
+  /** Out of service because the branch is over its package's tables (ADR-056), not by staff. */
+  planLocked?: true;
   /** The waiter covering it (table sections); none when nobody is. */
   waiter?: TableWaiter;
   /** The guests' note for this visit (cleared when the table is freed). */
@@ -738,6 +771,8 @@ export interface AdminStaffMember {
   scope: StaffScope;
   /** Off: they can't sign in. */
   active: boolean;
+  /** Can't sign in: the restaurant is over its package's staff logins (ADR-056). */
+  planLocked?: true;
   /** ISO; absent until their first sign-in. */
   lastSignInAt?: string;
   /** Sign-in off: why, when (ISO) and by whom. */

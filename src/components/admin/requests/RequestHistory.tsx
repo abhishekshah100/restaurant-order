@@ -139,6 +139,7 @@ export function RequestHistory() {
       </div>
       <DateRangeFilter
         id="request-history-days"
+        planHistory
         range={days}
         today={today}
         onChange={(range) => goTo(range)}

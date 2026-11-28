@@ -173,6 +173,13 @@ export const AFTER = {
   menuEvent: ['menu', 'stock'],
   stockEvent: ['stock'],
   /** The stream came back after a gap: anything may have changed. */
+  /**
+   * A planned suspension starting, or its finish-up window ending (by the clock): the branch's
+   * plan and permissions read again.
+   */
+  planClock: ['adminBranches'],
+  /** What stays in use chosen: branches, logins, tables and dishes may lock or unlock. */
+  keepChosen: ['allAdmin', 'menu', 'branchConfigs'],
   resyncEvent: [
     'floor',
     'requestHistory',

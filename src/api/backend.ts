@@ -120,6 +120,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'admin/branches/:branchId/inventory/settings'],
   // The restaurant's optional modules (super admins switch them).
   ['GET', 'admin/branches/:branchId/features'],
+  ['PATCH', 'admin/branches/:branchId/plan/keep'],
   ['PATCH', 'admin/branches/:branchId/features'],
   // Purchasing: suppliers, purchase orders, deliveries, returns, invoice photos.
   ['GET', 'admin/branches/:branchId/purchasing/suppliers'],
@@ -269,6 +270,7 @@ const BACKEND_ROUTES: readonly (readonly [HttpMethod, string])[] = [
   ['PATCH', 'platform/clients/:id'],
   ['POST', 'platform/clients/:id/suspend'],
   ['POST', 'platform/clients/:id/resume'],
+  ['POST', 'platform/clients/:id/plan-change/cancel'],
   ['GET', 'platform/settings'],
   ['PATCH', 'platform/settings'],
   ['POST', 'platform/clients/:id/payments'],

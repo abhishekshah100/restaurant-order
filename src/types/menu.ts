@@ -150,6 +150,8 @@ export interface Dish {
   serves?: number;
   allergens: Allergen[];
   availability: DishAvailability;
+  /** Over the package's dishes (restaurant-backend › ADR-056): not sold; guests don't see it. */
+  planLocked?: true;
   /** Feature image (16:10-ish) for chef's picks and the detail hero. */
   image?: DishImage;
   /** Square thumbnail for list rows and cart lines. */

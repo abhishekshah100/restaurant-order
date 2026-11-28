@@ -87,10 +87,14 @@ function ClosingSoonBanner({ className }: { className?: string }) {
 export function OrderingBanner({ inline, className }: { inline?: boolean; className?: string }) {
   const t = useContent('status');
   const { state, menuOnly, suspended } = useOrderingAvailability();
+  // Locked for being over the restaurant's package's branches (ADR-056).
+  const branchLocked = useBranch().branchLocked === true;
   if (menuOnly && state !== 'offline') {
     const banner = (
       <Banner tone="info" icon="menu" className={inline ? className : undefined}>
-        {t(suspended ? 'banner.suspended' : 'banner.menuOnly')}
+        {t(
+          suspended ? 'banner.suspended' : branchLocked ? 'banner.branchLocked' : 'banner.menuOnly',
+        )}
       </Banner>
     );
     return inline ? banner : <div className={cx(styles.row, className)}>{banner}</div>;

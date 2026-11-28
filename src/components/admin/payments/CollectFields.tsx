@@ -20,6 +20,7 @@ import {
   takesProof,
   type PartRow,
 } from '@/lib/paymentParts';
+import { hasFeature } from '@/lib/adminPlan';
 import type { AtTableMethodKey } from '@/types/branch';
 import type { Order, WaiveReason } from '@/types/order';
 import { billRows } from '../../cart/PriceSummary';
@@ -71,8 +72,11 @@ export function useCollectChoice(orders: readonly Order[]) {
       (r.tables ?? [r.table]).some((n) => tables.has(n)),
   );
   const [useDeposit, setUseDeposit] = useState(true);
-  // Several ways and photos are kept by the backend (the mock takes one way, no photos).
-  const withParts = isBackendEnabled();
+  // Several ways and photos are kept by the backend (the mock takes one way, no photos); several
+  // ways are the package's split payment.
+  const withParts = isBackendEnabled() && hasFeature(branch, 'splitPayment');
+  // Leaving part of the bill unpaid is one of the package's bill options.
+  const canLeave = hasFeature(branch, 'billOptions');
   // Paid in several ways: the rows, the last taking the rest. Null: one way.
   const [rows, setRows] = useState<PartRow[] | null>(null);
   const setMethod = (next: AtTableMethodKey) => {
@@ -223,6 +227,8 @@ export function useCollectChoice(orders: readonly Order[]) {
       if (receivedAmount !== null) leaveOf(due - receivedAmount, 'noChange');
     },
     withParts,
+    /** Part of the bill may be left unpaid (the package's bill options). */
+    canLeave,
     /** Paid in several ways: the rows (the last showing the rest), or undefined for one way. */
     rows: shownRows,
     /** What the rows before the last leave for it (0 or less: they already cover the bill). */
@@ -411,13 +417,15 @@ export function CollectFields({
                         {t('adminPayments.parts.payRest', { amount: format(choice.shortBy) })}
                       </button>
                     )}
-                    <button
-                      type="button"
-                      className={cx(styles.shortLeave, choice.withParts && styles.shortAlt)}
-                      onClick={choice.leaveShort}
-                    >
-                      {t('adminPayments.collect.leaveShort', { amount: format(choice.shortBy) })}
-                    </button>
+                    {choice.canLeave && (
+                      <button
+                        type="button"
+                        className={cx(styles.shortLeave, choice.withParts && styles.shortAlt)}
+                        onClick={choice.leaveShort}
+                      >
+                        {t('adminPayments.collect.leaveShort', { amount: format(choice.shortBy) })}
+                      </button>
+                    )}
                   </span>
                 </div>
               )}

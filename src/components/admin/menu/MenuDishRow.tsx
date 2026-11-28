@@ -54,6 +54,8 @@ export function MenuDishRow({
       : t('adminMenu.status.soldOut');
   }
   if (availability.status === 'unavailable-today') statusLabel = t('adminMenu.status.offToday');
+  // Over the package's dishes: hidden from guests until it fits (ADR-056).
+  if (dish.planLocked) statusLabel = t('adminMenu.status.overPlan');
   // What the dish has, so staff see it at a glance: "2 sizes · 5 choices · 3 add-ons".
   const parts = [
     ...((dish.variants?.length ?? 0) > 1
@@ -85,7 +87,7 @@ export function MenuDishRow({
   );
 
   return (
-    <li className={cx(styles.row, !on && styles.off)}>
+    <li className={cx(styles.row, (!on || dish.planLocked) && styles.off)}>
       <span className={styles.thumb} aria-hidden="true">
         {thumb ? (
           <Image

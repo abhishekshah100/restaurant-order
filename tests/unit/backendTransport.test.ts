@@ -61,6 +61,9 @@ describe('which requests go to the backend', () => {
     expect(
       isBackendRequest({ method: 'PATCH', path: 'admin/branches/blr/reservations/R1001/status' }),
     ).toBe(true);
+    expect(
+      isBackendRequest({ method: 'POST', path: 'platform/clients/c1/plan-change/cancel' }),
+    ).toBe(true);
     // The drawn order history stays the dummy JSON.
     expect(isBackendRequest({ method: 'GET', path: 'orders' })).toBe(false);
     vi.stubEnv('NEXT_PUBLIC_BACKEND_URL', '');

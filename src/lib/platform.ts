@@ -5,8 +5,10 @@ import type {
   PackagePlan,
   FeatureGroup,
   FeatureInfo,
+  PlanFeature,
   PlanLimit,
   PlanLimits,
+  SuspendNotice,
   UpdateClientRequest,
 } from '@/api/contracts';
 
@@ -43,6 +45,41 @@ export const savePlatformName = (name: string | null) =>
 /** How the console groups the feature catalog (FeatureInfo › group), in this order. */
 export const FEATURE_GROUP_IDS: FeatureGroup[] = ['essentials', 'advanced', 'services'];
 
+/**
+ * Features that are part of another: they work only while it's on too (restaurant-backend ›
+ * ADR-054), so the console says so beside one whose whole is off.
+ */
+export const FEATURE_PARENT: Partial<Record<string, PlanFeature>> = {
+  waiterRequests: 'ordering',
+  refunds: 'ordering',
+  assignWaiter: 'ordering',
+  splitPayment: 'ordering',
+  billOptions: 'ordering',
+  discounts: 'ordering',
+  kitchenStock: 'ordering',
+  kitchenActivity: 'ordering',
+  salesAdvanced: 'reports',
+};
+
+/** The features the console offers for packages and clients: hidden ones left out. */
+export const offered = (catalog: readonly FeatureInfo[]) => catalog.filter((f) => !f.hidden);
+
+/** What a client's staff can be told about a suspension, in the dialog's order. */
+export const SUSPEND_NOTICES: SuspendNotice[] = ['paymentOverdue', 'requested', 'review', 'other'];
+
+/** The finish-up windows offered when suspending (0: locked at once). */
+export const FINISH_HOURS = [0, 1, 3, 6] as const;
+
+/** An ISO time as a datetime-local field's value ("2026-12-05T21:00"), on this device's clock. */
+export function localInputOf(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${String(d.getFullYear())}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Quick History days, beside the number (and Unlimited). */
+export const HISTORY_PRESETS = [7, 30, 90, 365] as const;
+
 /** The limits, in the console's order, and how far − / + move each. */
 export const LIMITS: { id: PlanLimit; step: number }[] = [
   { id: 'staff', step: 1 },
@@ -60,9 +97,9 @@ export const usageOf = (usage: ClientSummary['usage'], limit: PlanLimit): number
 /** Features each once (keys of the catalog; shown in its order by `byCatalog`). */
 export const inOrder = (features: readonly string[]) => [...new Set(features)];
 
-/** Features in the catalog's order (those it doesn't have left out). */
+/** Features in the catalog's order (those it doesn't have, and hidden ones, left out). */
 export const byCatalog = (features: readonly string[], catalog: readonly FeatureInfo[]) =>
-  catalog.filter((f) => features.includes(f.key));
+  offered(catalog).filter((f) => features.includes(f.key));
 
 /**
  * A package's price for a client (as the server works it out): the cycle's price, plus each

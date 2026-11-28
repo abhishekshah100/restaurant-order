@@ -126,7 +126,10 @@ export function AdminLogin() {
                     ? t('adminLogin.errors.invalidCredentials')
                     : isApiError(login.error, 'rate_limited')
                       ? t('adminLogin.errors.tooManyAttempts')
-                      : t('adminLogin.errors.requestFailed')}
+                      : // Switched off for being over the package's staff logins (ADR-056).
+                        isApiError(login.error, 'plan_locked')
+                        ? t('adminLogin.errors.planLocked')
+                        : t('adminLogin.errors.requestFailed')}
                 </Banner>
               )}
 

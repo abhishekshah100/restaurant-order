@@ -11,7 +11,7 @@ import {
   useUpdatePlatformFeature,
 } from '@/api/mutations';
 import { SettingsCard } from '@/components/admin/settings/shared/SettingsEditor';
-import { Button, IconButton, Input, Select, Tag } from '@/components/ui';
+import { Button, Dialog, IconButton, Input, Select, Tag } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
 import { FEATURE_GROUP_IDS } from '@/lib/platform';
 import { nameTaken } from './catalogErrors';
@@ -20,7 +20,8 @@ import styles from './Platform.module.css';
 /**
  * The feature catalog: the built-in ones (the app enforces them: renamed, described, regrouped,
  * reordered, never removed) and the platform's own promises (on-site training, priority
- * support…), shown on packages and on each client's My plan page.
+ * support…), shown on packages and on each client's My plan page. Any but ordering can be hidden
+ * from everyone (off for every client, their ticks kept) and offered again.
  */
 export function FeaturesEditor({
   platformKey,
@@ -181,6 +182,22 @@ function FeatureRow({
   const [name, setName] = useState(feature.name);
   const [description, setDescription] = useState(feature.description);
   const [group, setGroup] = useState(feature.group);
+  const [confirming, setConfirming] = useState(false);
+  const setHidden = (hidden: boolean) =>
+    update.mutate(
+      { feature: feature.key, body: { by, hidden } },
+      {
+        onSuccess: () => {
+          setConfirming(false);
+          showToast(
+            t(hidden ? 'platform.catalog.hiddenDone' : 'platform.catalog.shownDone', {
+              name: feature.name,
+            }),
+          );
+        },
+        onError: () => showToast(t('platform.catalog.failed'), { tone: 'error' }),
+      },
+    );
   const dirty =
     name.trim() !== feature.name ||
     description.trim() !== feature.description ||
@@ -196,6 +213,7 @@ function FeatureRow({
           ) : (
             <Tag variant="new">{t('platform.catalog.ownTag')}</Tag>
           )}
+          {feature.hidden && <Tag variant="warn">{t('platform.catalog.hiddenTag')}</Tag>}
           <span className={styles.muted}>
             {t('platform.catalog.used', { count: feature.used })}
           </span>
@@ -216,6 +234,7 @@ function FeatureRow({
           />
         </span>
       </div>
+      {feature.hidden && <p className={styles.muted}>{t('platform.catalog.hiddenHint')}</p>}
       <div className={styles.fields}>
         <Input
           id={`feature-${feature.key}-name`}
@@ -250,6 +269,28 @@ function FeatureRow({
         >
           {t('platform.save.save')}
         </Button>
+        {feature.hidden ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            iconStart="eye"
+            loading={update.isPending}
+            onClick={() => setHidden(false)}
+          >
+            {t('platform.catalog.show')}
+          </Button>
+        ) : (
+          feature.key !== 'ordering' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              iconStart="eyeoff"
+              onClick={() => setConfirming(true)}
+            >
+              {t('platform.catalog.hide')}
+            </Button>
+          )
+        )}
         {!feature.builtIn && (
           <Button
             variant="ghost"
@@ -273,6 +314,35 @@ function FeatureRow({
           </Button>
         )}
       </div>
+      <Dialog
+        open={confirming}
+        onClose={() => !update.isPending && setConfirming(false)}
+        presentation="modal"
+        title={t('platform.catalog.hideTitle', { name: feature.name })}
+        footer={
+          <div className={styles.dialogActions}>
+            <Button
+              variant="secondary"
+              disabled={update.isPending}
+              onClick={() => setConfirming(false)}
+            >
+              {t('platform.suspend.cancel')}
+            </Button>
+            <Button variant="dark" loading={update.isPending} onClick={() => setHidden(true)}>
+              {t('platform.catalog.hideConfirm')}
+            </Button>
+          </div>
+        }
+      >
+        <div className={styles.dialogBody}>
+          <p>{t('platform.catalog.hideBody')}</p>
+          {feature.used > 0 && (
+            <p className={styles.muted}>
+              {t('platform.catalog.hideUsed', { count: feature.used })}
+            </p>
+          )}
+        </div>
+      </Dialog>
     </div>
   );
 }

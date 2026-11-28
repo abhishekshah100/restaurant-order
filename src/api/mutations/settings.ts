@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAdminToken } from '@/hooks/useAdminSession';
+import type { PlanKeep } from '@/types/admin';
 import type {
   AddStaffRequest,
   ChangePasswordRequest,
@@ -23,6 +24,18 @@ import { requireToken } from './shared';
  * PATCH …/features (super admins): a module switched on or off for the restaurant. Everything
  * it changes is read again: permissions (the branches), the menu (dishes stock had taken off).
  */
+/** PATCH …/plan/keep: what the owner keeps in use; the rest stays locked (ADR-056). */
+export function useChoosePlanKeep() {
+  const client = useQueryClient();
+  const token = useAdminToken();
+  return useMutation({
+    mutationFn: ({ branchId, keep }: { branchId: string; keep: PlanKeep }) =>
+      api.choosePlanKeep(requireToken(token), branchId, keep),
+    onSettled: (_data, _error, variables) =>
+      refreshAfter(client, 'keepChosen', branchOf(variables)),
+  });
+}
+
 export function useSetFeatures() {
   const client = useQueryClient();
   const token = useAdminToken();

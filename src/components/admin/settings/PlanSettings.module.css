@@ -59,3 +59,29 @@
   font: var(--font-small);
   color: var(--ink-3);
 }
+
+/* Choose what to keep: one list per limit gone over, with its count and Save. */
+.keep {
+  display: grid;
+  gap: 10px;
+  padding-block: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.keep:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.keepActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.keepCount {
+  color: var(--ink-3);
+  font: var(--font-small);
+}

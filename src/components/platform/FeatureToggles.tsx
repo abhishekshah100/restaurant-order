@@ -4,12 +4,13 @@ import type { FeatureInfo } from '@/api/contracts';
 import { useContent } from '@/api/hooks';
 import { ToggleRow } from '@/components/admin/settings/shared/SettingsEditor';
 import { Tag } from '@/components/ui';
-import { FEATURE_GROUP_IDS, inOrder } from '@/lib/platform';
+import { FEATURE_GROUP_IDS, FEATURE_PARENT, inOrder, offered } from '@/lib/platform';
 import styles from './Platform.module.css';
 
 /**
- * Every feature of the catalog, by group, each on or off. Against a package: on but not in it is
- * an add-on, off but in it is removed.
+ * Every feature the catalog offers (hidden ones left out, their ticks kept), by group, each on or
+ * off. Against a package: on but not in it is an add-on, off but in it is removed. A part on
+ * while its whole is off (refunds without ordering) says it works only with that.
  */
 export function FeatureToggles({
   idPrefix,
@@ -32,7 +33,7 @@ export function FeatureToggles({
   return (
     <div className={styles.stack}>
       {FEATURE_GROUP_IDS.map((group) => {
-        const features = catalog.filter((f) => f.group === group);
+        const features = offered(catalog).filter((f) => f.group === group);
         if (!features.length) return null;
         return (
           <div key={group} className={styles.stack}>
@@ -40,6 +41,8 @@ export function FeatureToggles({
             {features.map((feature) => {
               const on = value.includes(feature.key);
               const included = inPackage?.includes(feature.key);
+              const parent = FEATURE_PARENT[feature.key];
+              const parentOff = on && parent !== undefined && !value.includes(parent);
               return (
                 <div key={feature.key} className={styles.feature}>
                   <ToggleRow
@@ -54,6 +57,13 @@ export function FeatureToggles({
                   )}
                   {inPackage && !on && included && (
                     <Tag variant="warn">{t('platform.features.removed')}</Tag>
+                  )}
+                  {parentOff && (
+                    <Tag variant="warn">
+                      {t('platform.features.needs', {
+                        name: catalog.find((f) => f.key === parent)?.name ?? parent,
+                      })}
+                    </Tag>
                   )}
                 </div>
               );

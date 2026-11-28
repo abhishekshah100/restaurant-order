@@ -16,6 +16,36 @@ export interface MenuCatalog extends MenuData {
 }
 
 const catalogs = new WeakMap<MenuData, MenuCatalog>();
+const guestMenus = new WeakMap<MenuData, MenuData>();
+
+/**
+ * The menu as guests see it: without the dishes over the restaurant's package (restaurant-
+ * backend › ADR-056; staff still see them, labelled). The same object when none are.
+ */
+export function forGuests(data: MenuData): MenuData {
+  if (!data.dishes.some((d) => d.planLocked)) return data;
+  const cached = guestMenus.get(data);
+  if (cached) return cached;
+  const dishes = data.dishes.filter((d) => !d.planLocked);
+  const slugs = new Set(dishes.map((d) => d.slug));
+  // A category whose dishes are all over the plan isn't shown empty.
+  const emptied = new Set(
+    data.categories
+      .filter((c) => {
+        const inIt = data.dishes.filter((d) => d.categoryId === c.id);
+        return inIt.length > 0 && inIt.every((d) => d.planLocked);
+      })
+      .map((c) => c.id),
+  );
+  const view = {
+    ...data,
+    dishes,
+    categories: data.categories.filter((c) => !emptied.has(c.id)),
+    chefsPicks: data.chefsPicks.filter((s) => slugs.has(s)),
+  };
+  guestMenus.set(data, view);
+  return view;
+}
 
 /** The catalog for a menu response. Built once per response object, so lookups stay cheap. */
 export function createMenuCatalog(data: MenuData): MenuCatalog {

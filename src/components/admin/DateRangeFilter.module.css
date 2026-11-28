@@ -25,6 +25,13 @@
   flex: none;
 }
 
+/* The package's History days. */
+.note {
+  margin: 0;
+  color: var(--ink-3);
+  font: var(--font-small);
+}
+
 .problem {
   display: flex;
   align-items: flex-start;

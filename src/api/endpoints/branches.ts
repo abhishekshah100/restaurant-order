@@ -1,5 +1,5 @@
 import type { AdminBranch } from '@/types/admin';
-import type { FeaturesResponse } from '@/types/admin';
+import type { FeaturesResponse, PlanKeep } from '@/types/admin';
 import type { AutoOffer } from '@/types/promotion';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../client';
 import type {
@@ -57,6 +57,9 @@ export const branchesApi = {
     ).then(withPaymentQrs),
   features: (token: string, branchId: string) =>
     apiGet<FeaturesResponse>(`admin/branches/${seg(branchId)}/features`, bearer(token)),
+  /** PATCH …/plan/keep: what stays in use while over the package's limits (ADR-056). */
+  choosePlanKeep: (token: string, branchId: string, body: PlanKeep) =>
+    apiPatch<PlanKeep>(`admin/branches/${seg(branchId)}/plan/keep`, body, bearer(token)),
   setFeatures: (token: string, branchId: string, body: { inventory: boolean }) =>
     apiPatch<FeaturesResponse>(`admin/branches/${seg(branchId)}/features`, body, bearer(token)),
   offers: (token: string, branchId: string) =>

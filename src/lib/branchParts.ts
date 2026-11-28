@@ -37,6 +37,8 @@ export const toBranchConfig = (b: Branch): BranchConfig => ({
   id: b.id,
   ...(b.menuOnly ? { menuOnly: true } : {}),
   ...(b.suspended ? { suspended: true } : {}),
+  ...(b.waiterRequests === false ? { waiterRequests: false } : {}),
+  ...(b.branchLocked ? { branchLocked: true } : {}),
   currency: b.currency,
   mobile: b.mobile,
   tax: b.tax,

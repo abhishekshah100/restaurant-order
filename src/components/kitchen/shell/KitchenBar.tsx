@@ -14,6 +14,7 @@ import { Icon } from '@/components/ui';
 import { useAdminName } from '@/hooks/useAdminSession';
 import { useNow } from '@/hooks/useNow';
 import { adminHomeFor } from '@/lib/adminNav';
+import { hasFeature } from '@/lib/adminPlan';
 import { cx } from '@/lib/cx';
 import { KITCHEN_PATHS, activeKitchenNavId, kitchenNavFor } from '@/lib/kitchenNav';
 import { useFullscreen } from './useFullscreen';
@@ -84,7 +85,7 @@ export function KitchenBar() {
 
       <nav className={styles.nav} aria-label={t('nav.label')}>
         <ul>
-          {kitchenNavFor(can).map((item) => (
+          {kitchenNavFor(can, (feature) => hasFeature(branch, feature)).map((item) => (
             <li key={item.id}>
               <Link
                 href={item.href}

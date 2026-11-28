@@ -101,7 +101,7 @@ export function HelpView() {
   const { table, latest, orders, sessionId, hydrated } = useTableVisit();
   // Nothing left to pay at the table (or nothing ordered yet): no bill to ask for.
   const billDue = hydrated && billFor(orders, 'table', sessionId).balance > 0;
-  const { openRequest, requests } = useServiceRequest();
+  const { openRequest, requests, available } = useServiceRequest();
   const topics = useHelpTopics();
   const faqTopic = useFaqTopic(topics.faqs);
   const [topicId, setTopicId] = useState<HelpTopic['id']>('payment');
@@ -130,7 +130,7 @@ export function HelpView() {
 
         {mode !== 'dineIn' ? (
           <ModeActions mode={mode} />
-        ) : (
+        ) : !available ? null : (
           <div className={styles.actions}>
             <button
               type="button"

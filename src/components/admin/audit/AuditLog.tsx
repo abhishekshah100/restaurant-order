@@ -195,6 +195,7 @@ export function AuditLog() {
       </div>
       <DateRangeFilter
         id="audit-days"
+        planHistory
         range={days}
         today={today}
         limits={AUDIT_LIMITS}

@@ -22,6 +22,7 @@ import type { OrderDialogView } from '../orders/OrderDetailDialog';
 import type { EditorTarget } from '../reservations/ReservationEditor';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { TableBookings } from './TableBookings';
+import { hasFeature } from '@/lib/adminPlan';
 import { TableOrderCard } from './TableOrderCard';
 import { TableRequests } from './TableRequests';
 import { TableNoteCard } from './TableNoteCard';
@@ -146,7 +147,7 @@ function TableDetailFor({ table }: { table: number | null | undefined }) {
 
 function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | null }) {
   const t = useContent('common');
-  const { money, clock, can, isOff } = useAdminWorkspace();
+  const { branch, money, clock, can, isOff } = useAdminWorkspace();
   const seatedLabel = useSeatedLabel();
   const [open, setOpen] = useState<{ id: string; view: OrderDialogView } | null>(null);
   const [pad, setPad] = useState<PadTarget | null>(null);
@@ -198,7 +199,8 @@ function TableContent({ detail, now }: { detail: AdminTableDetail; now: Date | n
               seats: t.plural('adminTables.seats', detail.seats),
             })}
           </p>
-          <TableWaiterLine detail={detail} />
+          {/* Waiters' sections: the package's Assign waiters. */}
+          {hasFeature(branch, 'assignWaiter') && <TableWaiterLine detail={detail} />}
           <span className={styles.statusRow}>
             <span className={styles.status}>
               <span className={styles.dot} aria-hidden="true" />

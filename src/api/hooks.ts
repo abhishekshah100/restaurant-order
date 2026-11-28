@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAdminToken } from '@/hooks/useAdminSession';
 import { api } from './endpoints';
 import { createClock, type Clock } from '@/lib/clock';
-import { createMenuCatalog, type MenuCatalog } from '@/lib/menu';
+import { createMenuCatalog, forGuests, type MenuCatalog } from '@/lib/menu';
 import { createMoney, type Money } from '@/lib/money';
 import { withLiveStatus } from '@/lib/restaurantStatus';
 import { joinBranch } from '@/lib/branchParts';
@@ -235,7 +235,7 @@ export function useBranchStatusPolling(): void {
 /** The active branch's menu with its lookups (getDish, dishesIn, searchDishes…). The same object until the menu changes. */
 export function useMenu(): MenuCatalog {
   const { data } = useSuspenseQuery(branchMenuQuery(useBranchSummary().id));
-  return useMemo(() => createMenuCatalog(data), [data]);
+  return useMemo(() => createMenuCatalog(forGuests(data)), [data]);
 }
 
 /**
@@ -245,7 +245,7 @@ export function useMenu(): MenuCatalog {
  */
 export function useMenuIfNeeded(needed: boolean): MenuCatalog | null {
   const { data } = useQuery({ ...branchMenuQuery(useBranchSummary().id), enabled: needed });
-  return useMemo(() => (data ? createMenuCatalog(data) : null), [data]);
+  return useMemo(() => (data ? createMenuCatalog(forGuests(data)) : null), [data]);
 }
 
 /**
@@ -304,9 +304,12 @@ export const useOrder = (id: string | undefined) => useQuery(orderQuery(id));
 export function usePaymentHistory(
   branchId: string | undefined,
   query: Omit<PaymentHistoryQuery, 'cursor'>,
+  /** False: not read (days past the package's History days). */
+  enabled = true,
 ) {
   const token = useAdminToken();
   return useInfiniteQuery({
+    enabled,
     queryKey: ['admin', 'payment-history', branchId, token, query] as const,
     queryFn:
       token && branchId

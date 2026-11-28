@@ -71,7 +71,13 @@ function ShellFrame({ children }: { children: ReactNode }) {
   const landing = (active === 'home' && !allowed) || off ? landingFor(can) : undefined;
   // Not theirs because the plan ended or the account is paused.
   const notice = planNotice(branch.plan);
-  const ended = notice?.kind === 'expired' || notice?.kind === 'suspended';
+  // Finishing up after a suspension too: the pages that closed say why.
+  // …and a branch locked for being over the package's branches.
+  const ended =
+    notice?.kind === 'expired' ||
+    notice?.kind === 'suspended' ||
+    notice?.kind === 'finishing' ||
+    notice?.kind === 'branchLocked';
   useEffect(() => {
     if (landing) router.replace(landing);
   }, [landing, router]);

@@ -463,6 +463,7 @@ export function PaymentHistory() {
       <section className={own.days} aria-label={t('adminPayments.history.days')}>
         <DateRangeFilter
           id="payment-history-days"
+          planHistory
           range={days}
           today={today}
           limits={PAYMENT_HISTORY_LIMITS}

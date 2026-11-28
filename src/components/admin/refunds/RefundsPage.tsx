@@ -20,9 +20,11 @@ import { cx } from '@/lib/cx';
 import {
   dayCount,
   daysBefore,
+  firstDay,
   groupByDay,
   ordersFilter,
   shiftDay,
+  withPlanHistory,
   type DayRange,
 } from '@/lib/dayRange';
 import {
@@ -95,6 +97,11 @@ export function RefundsPage() {
   const [range, setRange] = useState<RangeId>('week');
   const [custom, setCustom] = useState<DayRange>({ from: shiftDay(today, -6), to: today });
   const days = range === 'custom' ? custom : daysOf(range, today);
+  // The package's History days: the first day the server reads (null: no limit).
+  const planDays = branch.plan?.limits.reportDays ?? null;
+  const first = planDays === null ? null : firstDay(today, withPlanHistory(undefined, planDays));
+  const within = (day: string) => first === null || day >= first;
+  const waitingFrom = shiftDay(today, -(WAITING_DAYS - 1));
   const [filters, setFilters] = useState<RefundsFilters>({
     kind: 'all',
     reason: 'all',
@@ -112,19 +119,19 @@ export function RefundsPage() {
   const orders = useBranchOrders(branch.id, ordersFilter(days, today), days.to === today);
   // Every online refund still on its way (not only the days shown): a late one isn't missed.
   const waiting = usePaymentHistory(branch.id, {
-    from: shiftDay(today, -(WAITING_DAYS - 1)),
+    from: within(waitingFrom) ? waitingFrom : (first ?? waitingFrom),
     to: today,
     kind: 'refunds',
     limit: REFUNDS_PAGE,
   });
   // The same number of days just before, to compare (only its total is read).
   const before = daysBefore(days);
-  const earlier = usePaymentHistory(branch.id, {
-    from: before.from,
-    to: before.to,
-    kind: 'refunds',
-    limit: 1,
-  });
+  // Not past the History days: no comparison then.
+  const earlier = usePaymentHistory(
+    branch.id,
+    { from: before.from, to: before.to, kind: 'refunds', limit: 1 },
+    within(before.from),
+  );
   const received = useRefundReceived();
   // Try again after a failed read. (After a refund, a cancellation or a refund received, what
   // changed is read again by the central list, api/refreshAfter.)
@@ -690,14 +697,20 @@ export function RefundsPage() {
       )}
 
       <div className={styles.rangeRow} role="group" aria-label={t('adminRefunds.ranges.label')}>
-        {RANGES.map((r) => (
+        {RANGES.filter((r) => r === 'custom' || within(daysOf(r, today).from)).map((r) => (
           <Chip key={r} pressed={range === r} onClick={() => setRange(r)}>
             {t(`adminRefunds.ranges.${r}`)}
           </Chip>
         ))}
       </div>
       {range === 'custom' && (
-        <DateRangeFilter id="refunds-days" range={custom} today={today} onChange={setCustom} />
+        <DateRangeFilter
+          id="refunds-days"
+          planHistory
+          range={custom}
+          today={today}
+          onChange={setCustom}
+        />
       )}
       <p className={styles.countNote}>
         <Icon name="info" size="xs" />

@@ -16,6 +16,7 @@ import { paidAmount } from '@/lib/lifecycle';
 import { isFinished } from '@/lib/orders';
 import type { CancelReason } from '@/types/admin';
 import type { Order, OrderRound } from '@/types/order';
+import { hasFeature } from '@/lib/adminPlan';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { useCollectChoice } from '../payments/CollectFields';
 import { CollectScreen } from '../payments/CollectScreen';
@@ -234,7 +235,9 @@ function OrderDialog({
       take && !past && !multiRound && onChangeItems && editableRound(order) !== null;
     const live = !past && !finished;
     const canRush = live && take;
-    const canCancel = live && can('orders.cancel');
+    // Cancelling gives back what's paid: without the package's refunds, only an unpaid order.
+    const paidSome = order.payment.status === 'paid' || (order.payment.paid ?? 0) > 0;
+    const canCancel = live && can('orders.cancel') && (!paidSome || hasFeature(branch, 'refunds'));
     footer = (
       <div className={styles.actions}>
         {ready && can('service.respond') && (

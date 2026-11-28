@@ -149,13 +149,72 @@ Delivery history, by phase:
   Restova; a banner as the trial or plan ends, in grace, ended or paused; "Your plan has ended" in
   place of locked pages; "Staff logins: 4 of 5" on Staff, Floor plan and Menu with Add off at the
   limit; Settings › My plan; guests on the Free package read the menu with "Ask staff".
+- **Downgrades D3, restaurant app (2026-11-28):** a banner from 15 days before a smaller plan
+  ("…allows fewer of what you have: choose what to keep before then") and while anything is
+  locked ("Locked because your plan allows fewer: 1 staff login, 2 tables, 4 dishes"), with
+  "Choose what to keep" for the owner; Settings › My plan › Choose what to keep: a list per limit
+  gone over (branches, staff logins, this branch's tables and dishes), the locked ones marked,
+  up to the limit, saved at once; a locked branch shows "This branch is locked" to its staff
+  (admin and kitchen) and "Ordering is unavailable at this branch" to guests; a switched-off
+  login is told why at sign-in; locked dishes are hidden from guests (an emptied category too)
+  and from the order pad, labelled "Over your plan" in the menu; locked tables read "Over your
+  plan" on the floor; Staff & roles tags "Switched off: over your plan".
+- **Downgrades D2, platform console (2026-11-28):** the "Lower … package?" dialog asks when
+  (at the end of the paid term, the default while one runs, or now), says what each limit goes
+  over and that the extras are locked, not deleted, and which features switch off (and when);
+  a planned change shows "Moves to Basic on 28 Nov 2027…" with "Cancel planned change" and a
+  "Basic from 28 Nov" tag (client list, home, client page); the Limits card says what's locked
+  now ("Locked now (nothing deleted): 2 tables"); the history words planned, called-off and
+  applied changes and the owner's choices.
+- **Downgrades D1, backend (2026-11-28):** what's over the package's limits is locked, never
+  deleted: extra branches (menu only, no staff), staff logins (signed out), tables (out of
+  service), dishes (not sold); the owner chooses what stays (`PATCH …/plan/keep`), else the
+  oldest / owners / lowest numbers / best sellers; unlocked when it fits again (upgrade, add-on,
+  something removed). A downgrade can wait for the paid term's end and applies itself (checked
+  every minute), or be called off. Migration 20261205090000.
+- **Suspension S3, restaurant app and kitchen (2026-11-28):** from 3 days before a planned
+  suspension an amber banner says when and why, with WhatsApp / Call Restova; while finishing up
+  a red banner says why and until when, the nav keeps only what finishes open bills (no menu,
+  reports, settings, new orders) and a closed page shows "Your account is paused" with the
+  reason; once locked, every page and the kitchen show that screen. Restova's super admins see
+  "Suspended client: you're viewing as Restova" and keep everything. The banner moves on by the
+  clock and the branch's plan is read again at each step (refreshAfter › planClock).
+- **Suspension S2, platform console (2026-11-28):** the Suspend dialog asks when (now, at
+  closing time today, or a date and time), how long staff may finish open bills (lock at once,
+  1, 3 or 6 hours), what their staff are told (payment overdue, at your request, under review,
+  or your own words) and your private note; a planned one shows "Suspends 5 Dec" beside the
+  status (client list, home, client page) with "Cancel planned suspension", one finishing up
+  "Finishing up" and until when; the history words each planned, cancelled and started one.
+- **Suspension S1, backend (2026-11-28):** suspend now, at closing time today or on a date (up
+  to 90 days, staff warned through `plan.suspension`); a finish-up window (default 3 hours) for
+  open orders and the drawer, then the full lock; what the restaurant is told kept apart from
+  the owner's private note; a planned one moved or called off; super admins keep everything.
+  Migration 20261204090000.
+- **Finer plan features F3, restaurant app and kitchen (2026-11-28):** without waiter requests
+  the Requests page and the guests' Call a waiter / Ask for the bill go (kitchen messages stay on
+  Home); without refunds the Refunds page goes and Cancel shows only on unpaid orders; without
+  assign waiters no sections anywhere (the server stops sending ones set before); the kitchen's
+  Stock and Activity tabs follow their features (a link to one goes to the board); Collect
+  payment drops several ways, Leave unpaid and Business invoice (and the Options row when
+  empty); the basic Sales report keeps totals, payment methods, best sellers and the money
+  statement, no charts, branch comparison, export, PDF or print. The history date pickers stop at
+  History days and say "Your plan shows the last 30 days"; quick ranges past it are left out.
+- **Finer plan features F2, platform console (2026-11-28):** the nine new features show on
+  packages and clients (a part whose whole is off says "Works only with Ordering"); Features
+  has "Hide from everyone" (with a confirm saying how many use it) and "Offer again", hidden
+  ones left off packages, clients and add-ons; History days (was Report history) says what it
+  covers and has quick 7 / 30 / 90 / 365 days and Unlimited beside the number.
+- **Finer plan features F1, backend (2026-11-28):** nine more features a package can give or
+  keep back: waiter requests and refunds (Essentials); assign waiters, split payment, bill
+  options (leave unpaid, business invoice), manual discounts, kitchen Stock and Activity tabs,
+  and the advanced sales report (Advanced). A part goes off with ordering or the report. The
+  platform owner can hide a feature from everyone (ticks kept). Report history becomes History
+  days on every history (not tax invoices). Existing clients keep everything (migration
+  20261203090000).
 - **Client branches on the platform (2026-11-27):** a client's page has a Branches card (each
   branch by its own name, with its city, when it was added, tables, dishes, its own staff and
   orders; an empty menu flagged with Load menu, to the Dev setup tab), and the client list names
   each branch with its city.
-- **Client branches on the platform (2026-11-27):** a client's page lists its branches (own name,
-  city, when added, tables, dishes, staff, orders; an empty menu flagged with Load menu → Dev
-  setup), and the client list names them with their cities.
 - **Plan features hidden, not locked (2026-11-26):** pages and settings of features the package
   leaves out are hidden from the nav, the phone bar and Settings for everyone (no lock or
   Upgrade screen); opened by their link they go back to the start page; My plan lists only

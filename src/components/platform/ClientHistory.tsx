@@ -7,7 +7,7 @@ import type {
   PlanHistoryEntry,
 } from '@/api/contracts';
 import { useContent } from '@/api/hooks';
-import { rupees } from '@/lib/platform';
+import { rupees, SUSPEND_NOTICES } from '@/lib/platform';
 import styles from './Platform.module.css';
 
 type T = ReturnType<typeof useContent<'common'>>;
@@ -35,12 +35,23 @@ const FIELDS = {
   'contact.email': 'contactEmail',
   'contact.taxNumber': 'contactTaxNumber',
   notes: 'notes',
+  'suspension.startsAt': 'suspensionStartsAt',
+  'suspension.finishHours': 'suspensionFinishHours',
+  'suspension.notice': 'suspensionNotice',
+  nextPlan: 'nextPlan',
+  nextPlanAt: 'nextPlanAt',
 } as const;
 
 const ACTIONS = {
   'plan.changed': 'changed',
   'plan.suspended': 'suspended',
   'plan.resumed': 'resumed',
+  'plan.suspensionPlanned': 'suspensionPlanned',
+  'plan.suspensionCancelled': 'suspensionCancelled',
+  'plan.changePlanned': 'changePlanned',
+  'plan.changeCancelled': 'changeCancelled',
+  'plan.changeApplied': 'changeApplied',
+  'plan.keepChosen': 'keepChosen',
   'plan.paymentRecorded': 'paymentRecorded',
   'plan.paymentRemoved': 'paymentRemoved',
   'plan.reminded': 'reminded',
@@ -53,7 +64,7 @@ const ACTIONS = {
 
 const METHODS: readonly string[] = ['esewa', 'khalti', 'fonepay', 'bank', 'cash', 'other'];
 
-const DATE_FIELDS = new Set(['trialEndsAt', 'startsAt', 'endsAt']);
+const DATE_FIELDS = new Set(['trialEndsAt', 'startsAt', 'endsAt', 'nextPlanAt']);
 
 /** A history value in words: dates as dates, lists as names, null as "none" / "unlimited". */
 function valueOf(t: T, field: string, value: unknown, packages: PackagePlan[]): string {
@@ -67,7 +78,14 @@ function valueOf(t: T, field: string, value: unknown, packages: PackagePlan[]): 
   if (DATE_FIELDS.has(field) && typeof value === 'string') {
     return new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' });
   }
-  if (field === 'plan' && typeof value === 'string') {
+  if (field === 'suspension.startsAt' && typeof value === 'string') {
+    return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  }
+  if (field === 'suspension.notice' && typeof value === 'string') {
+    const notice = SUSPEND_NOTICES.find((n) => n === value);
+    return notice ? t(`platform.suspend.notices.${notice}`) : value;
+  }
+  if ((field === 'plan' || field === 'nextPlan') && typeof value === 'string') {
     return packages.find((p) => p.code === value)?.name ?? value;
   }
   if (field === 'billingCycle' && (value === 'yearly' || value === 'halfYearly')) {

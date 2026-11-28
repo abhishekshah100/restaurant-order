@@ -212,11 +212,14 @@ function AddonFields({
         onChange={(e) => set({ feature: e.target.value })}
       >
         <option value="">{t('platform.catalog.nothing')}</option>
-        {catalog.map((f) => (
-          <option key={f.key} value={f.key}>
-            {f.name}
-          </option>
-        ))}
+        {/* Hidden features aren't offered (one an add-on already has stays listed). */}
+        {catalog
+          .filter((f) => !f.hidden || f.key === draft.feature)
+          .map((f) => (
+            <option key={f.key} value={f.key}>
+              {f.name}
+            </option>
+          ))}
       </Select>
     </div>
   );

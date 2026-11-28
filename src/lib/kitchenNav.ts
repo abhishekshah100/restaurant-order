@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/ui/Icon/iconNames';
+import type { PlanFeature } from '@/api/contracts/platform';
 import type { StaffPermission } from '@/types/admin';
 import { ADMIN_PATHS } from './adminBranches';
 
@@ -15,6 +16,8 @@ export interface KitchenNavItem {
   icon: IconName;
   /** Shown to staff holding any of these at the branch. */
   needs: readonly StaffPermission[];
+  /** The package's feature it is (hidden without it). */
+  feature?: PlanFeature;
 }
 
 export const KITCHEN_PATHS = {
@@ -25,13 +28,30 @@ export const KITCHEN_PATHS = {
 
 export const KITCHEN_NAV: readonly KitchenNavItem[] = [
   { id: 'board', href: KITCHEN_PATHS.board, icon: 'chef', needs: ['kitchen.update'] },
-  { id: 'stock', href: KITCHEN_PATHS.stock, icon: 'list', needs: ['menu.availability.update'] },
-  { id: 'activity', href: KITCHEN_PATHS.activity, icon: 'history', needs: ['kitchen.update'] },
+  {
+    id: 'stock',
+    href: KITCHEN_PATHS.stock,
+    icon: 'list',
+    needs: ['menu.availability.update'],
+    feature: 'kitchenStock',
+  },
+  {
+    id: 'activity',
+    href: KITCHEN_PATHS.activity,
+    icon: 'history',
+    needs: ['kitchen.update'],
+    feature: 'kitchenActivity',
+  },
 ];
 
-/** The kitchen pages a staff member may open (`can` from useAdminWorkspace). */
-export const kitchenNavFor = (can: (...permissions: StaffPermission[]) => boolean) =>
-  KITCHEN_NAV.filter((item) => can(...item.needs));
+/**
+ * The kitchen pages a staff member may open (`can` from useAdminWorkspace) that the package has
+ * (`has`: adminPlan › hasFeature).
+ */
+export const kitchenNavFor = (
+  can: (...permissions: StaffPermission[]) => boolean,
+  has: (feature: PlanFeature) => boolean = () => true,
+) => KITCHEN_NAV.filter((item) => can(...item.needs) && (!item.feature || has(item.feature)));
 
 /** The kitchen page a pathname is on (with or without its trailing slash); the board by default. */
 export function activeKitchenNavId(pathname: string): KitchenNavId {

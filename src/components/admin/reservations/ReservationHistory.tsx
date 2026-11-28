@@ -297,6 +297,7 @@ export function ReservationHistory() {
       </header>
       <DateRangeFilter
         id="reservation-history-days"
+        planHistory
         range={days}
         today={today}
         onChange={(range) => router.replace(reservationHistoryPath(range), { scroll: false })}

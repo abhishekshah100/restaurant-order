@@ -13,7 +13,7 @@ import {
 import { SettingsCard } from '@/components/admin/settings/shared/SettingsEditor';
 import { Banner, Button, IconButton, Input, Select, Tag } from '@/components/ui';
 import { useToast } from '@/context/ToastContext';
-import { LIMITS, priceOf } from '@/lib/platform';
+import { HISTORY_PRESETS, LIMITS, priceOf } from '@/lib/platform';
 import { FeatureToggles } from './FeatureToggles';
 import { LimitField } from './LimitField';
 import { nameTaken } from './catalogErrors';
@@ -260,6 +260,9 @@ function PackageForm({
             name={t(`platform.limits.names.${id}`)}
             value={limits[id]}
             step={step}
+            {...(id === 'reportDays'
+              ? { presets: HISTORY_PRESETS, about: t('platform.limits.historyHint') }
+              : {})}
             onChange={(value) => setLimits((l) => ({ ...l, [id]: value }))}
           />
         ))}

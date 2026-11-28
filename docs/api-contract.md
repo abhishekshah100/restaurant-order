@@ -1777,7 +1777,7 @@ kept in the client's history. Types: `src/api/contracts/platform.ts`.
 | GET      | `/platform/clients`                                 | Every restaurant (`ClientSummary[]`): package, status, days left, usage, its branches (`ClientBranch`: name, city, added, tables, dishes, staff, orders), and each branch (`ClientBranch`: name, city, added, tables, dishes, staff, orders) |
 | GET      | `/platform/clients/:id`                             | One in full with its history (`ClientDetail`)                                                                                                                                                                                                |
 | PATCH    | `/platform/clients/:id`                             | Only what changes (`UpdateClientRequest`) → `ClientDetail`                                                                                                                                                                                   |
-| POST     | `/platform/clients/:id/suspend`                     | `{ by, reason }` → `ClientDetail`: everything stops until resumed                                                                                                                                                                            |
+| POST     | `/platform/clients/:id/suspend`                     | `{ by, reason, at?, finishHours?, notice?, message? }` → `ClientDetail`: now, at closing time or planned (below)                                                                                                                             |
 | POST     | `/platform/clients/:id/resume`                      | `{ by }` → `ClientDetail`                                                                                                                                                                                                                    |
 | GET      | `/platform/settings`                                | `PlatformSettings`: new clients' trial (days, package), support contact                                                                                                                                                                      |
 | PATCH    | `/platform/settings`                                | `UpdatePlatformSettingsRequest` → `PlatformSettings`                                                                                                                                                                                         |
@@ -1797,18 +1797,60 @@ kept in the client's history. Types: `src/api/contracts/platform.ts`.
   `usage` gives the fullest branch's. Prices are whole rupees; `null` is "on request".
 - A new `plan` brings its limits and features unless they're sent too. A lower limit removes
   nothing: the client just can't add more (`403 plan_limit` where staff, floors, tables, dishes
-  or branches are added, and for reports, order history and payment history further back than
-  `reportDays`).
+  or branches are added, and for histories further back than `reportDays`, below).
 - Features off take their permissions away (`ordering`: orders, kitchen, payments, cash;
-  `reports`, `reservations`, `inventory`, `shifts` (rota, attendance), `activityLog` (audit));
-  offers and shifts routes answer `403 feature_disabled`; guests get no offers or codes, no
-  takeaway or delivery without them, and `menuOnly: true` in `GET /branches/:id/config` without
-  ordering (placing answers `403 feature_disabled`; the guest app shows the menu with "Ask staff"
-  and a "menu to browse" banner).
+  `refunds`, `discounts`, `assignWaiter` (`tables.assign`), `reports`, `reservations`,
+  `inventory`, `shifts` (rota, attendance), `activityLog` (audit)); offers and shifts routes
+  answer `403 feature_disabled`; guests get no offers or codes, no takeaway or delivery without
+  them, and `menuOnly: true` in `GET /branches/:id/config` without ordering (placing answers
+  `403 feature_disabled`; the guest app shows the menu with "Ask staff" and a "menu to browse"
+  banner).
+- Parts of ordering, off with it (2026-11-28): `waiterRequests` (`waiterRequests: false` in
+  `GET /branches/:id/config`; `POST /service-requests` answers `403 feature_disabled`),
+  `refunds` (also cancelling a paid order), `assignWaiter` (`GET …/tables/waiters`,
+  `PATCH|DELETE …/tables/sections`; the floor plan, service board and table detail then show
+  nobody covering a table, sections set before kept), `splitPayment` (collecting in several `parts` or an
+  `amount` short of the bill), `billOptions` (`waive`, `PATCH …/orders/:id/buyer`),
+  `discounts`, `kitchenStock` and `kitchenActivity` (the kitchen app's own tabs). Part of the
+  report: `salesAdvanced` (without it `GET …/reports/sales` has empty `days`, `hours`,
+  `byMode`, `slowDishes` and `categories`, and `…/reports/sales/branches` answers `403
+  feature_disabled`). Each refusal is `403 feature_disabled` with `{ feature }`.
+- `reportDays` is the client's **History days**: orders (and Table history, Refunds), payments,
+  bookings already past, requests, the cash register's days and report (its default 30 days
+  shortened to fit), the activity log and the sales report answer `403 plan_limit`
+  (`limit: 'reportDays'`) further back. Tax invoices are never limited.
+- `PATCH /platform/features/:key` with `{ by, hidden }` hides a feature (`FeatureInfo.hidden`):
+  offered to nobody and off for every client at once, their ticks kept, so showing it again
+  brings back what each had. `ordering` can't be hidden (`400`). A branch's `plan.features`
+  leaves hidden ones out and says `included` only for a feature that works (its parent on).
 - Expired (past grace): only serving guests works (orders, kitchen, payments, cash register,
   tables, bookings, sold out, pause); everything else answers `403 plan_locked`. Suspended: staff
-  get `403 plan_locked` everywhere and guests find the branch closed. The platform's super admins
-  are never locked out.
+  get `403 plan_locked` everywhere and guests read the menu only. The platform's super admins
+  are never locked out (phone orders too).
+- Suspending (ADR-055): `at` is `'now'` (default), `'closing'` (when the client's last branch
+  closes today) or an ISO time up to 90 days on (`400 { field: 'at', reason: 'past' | 'tooFar' }`);
+  planned again, it moves. `finishHours` (0–24, default 3): once it starts, staff may only finish
+  open orders (`orders.view`, `orders.cancel`, `refunds.give`, `payments.collect`, `cash.manage`,
+  `service.respond`, `kitchen.update`; nothing new can be taken), then nothing. `notice`
+  (`paymentOverdue` default, `requested`, `review`, `other` with `message`) is what the
+  restaurant is told; `reason` stays the owner's. `ClientSummary.suspension` and the staff's
+  `plan.suspension` are `{ startsAt, planned, finishing, finishUntil, notice, message }` (the
+  console's also `finishHours`), null without one; the staff's never carries `reason`.
+  `POST …/resume` calls off a planned one (`plan.suspensionCancelled`); planning writes
+  `plan.suspensionPlanned`.
+- Downgrades (ADR-056): what's over the package's limits is locked, never deleted. A branch:
+  `branchLocked: true` (and `menuOnly`) in `GET /branches/:id/config`, staff get `403
+  plan_locked { status: 'branch' }`. A login: `403 plan_locked { status: 'login' }` at sign-in,
+  `planLocked: true` in the staff list. A table: out of service (`planLocked: true` on the floor
+  plan). A dish: `planLocked: true` in the menu (guests leave it out; ordering it answers `422
+  item_unavailable`). The owner chooses what stays with `PATCH /admin/branches/:id/plan/keep`
+  `{ branches?, staff?, tables?: { [branchId]: number[] }, dishes?: { [branchId]: slug[] } }`
+  (`branches.manage`). `PATCH /platform/clients/:id` `{ by, plan, planFrom: 'termEnd' }` plans
+  the package for the paid term's end (`400 { field: 'planFrom', reason: 'noTerm' |
+  'withLimits' }`); `POST …/plan-change/cancel` `{ by }` calls it off. `ClientSummary` gains
+  `planChange: { code, name, at } | null` and `locked: { branches, staff, tables, dishes }`; a
+  branch's `plan` gains `change` (with the new package's `limits`), `locked`, `branchLocked` and
+  `keep`.
 - `status` is worked out from the dates: `active` while paid (or with no end and no trial),
   `trial`, then `grace` for `graceDays` after whichever ended last, then `expired`;
   `suspended` overrides. `lockAt` is the end plus grace.

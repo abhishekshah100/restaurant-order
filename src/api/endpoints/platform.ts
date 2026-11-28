@@ -5,6 +5,8 @@ import type {
   ClientDetail,
   FeatureGroup,
   FeatureInfo,
+  SuspendRequest,
+  UpdateFeatureRequest,
   NewClientRequest,
   NewClientResult,
   PaymentsOverview,
@@ -43,9 +45,12 @@ export const platformApi = {
   updatePlatformClient: (key: string, id: string, body: UpdateClientRequest) =>
     apiPatch<ClientDetail>(`platform/clients/${seg(id)}`, body, platformKey(key)),
   /** POST /platform/clients/:id/suspend */
-  suspendPlatformClient: (key: string, id: string, body: { by: string; reason: string }) =>
+  suspendPlatformClient: (key: string, id: string, body: SuspendRequest) =>
     apiPost<ClientDetail>(`platform/clients/${seg(id)}/suspend`, body, platformKey(key)),
-  /** POST /platform/clients/:id/resume */
+  /** POST /platform/clients/:id/plan-change/cancel: a planned package change called off */
+  cancelPlanChange: (key: string, id: string, body: { by: string }) =>
+    apiPost<ClientDetail>(`platform/clients/${seg(id)}/plan-change/cancel`, body, platformKey(key)),
+  /** POST /platform/clients/:id/resume (also calls off a planned suspension) */
   resumePlatformClient: (key: string, id: string, body: { by: string }) =>
     apiPost<ClientDetail>(`platform/clients/${seg(id)}/resume`, body, platformKey(key)),
   /** POST /platform/clients/:id/payments: a payment (and its receipt) recorded. */
@@ -78,11 +83,8 @@ export const platformApi = {
     key: string,
     body: { by: string; name: string; description: string; group: FeatureGroup },
   ) => apiPost<FeatureInfo>('platform/features', body, platformKey(key)),
-  updatePlatformFeature: (
-    key: string,
-    feature: string,
-    body: { by: string; name?: string; description?: string; group?: FeatureGroup },
-  ) => apiPatch<FeatureInfo>(`platform/features/${seg(feature)}`, body, platformKey(key)),
+  updatePlatformFeature: (key: string, feature: string, body: UpdateFeatureRequest) =>
+    apiPatch<FeatureInfo>(`platform/features/${seg(feature)}`, body, platformKey(key)),
   removePlatformFeature: (key: string, feature: string, by: string) =>
     apiPost<void>(`platform/features/${seg(feature)}/remove`, { by }, platformKey(key)),
   orderPlatformFeatures: (key: string, body: { by: string; keys: string[] }) =>

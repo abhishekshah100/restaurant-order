@@ -17,7 +17,8 @@
     "modeClosedTomorrow": "{mode} opens again at {time} tomorrow — you can still browse the menu.",
     "modeClosedOn": "{mode} opens again on {day} at {time} — you can still browse the menu.",
     "menuOnly": "This is our menu to browse. To order, please ask our staff. Menu by Restova.",
-    "suspended": "Online ordering isn't available right now. You can still browse the menu."
+    "suspended": "Online ordering isn't available right now. You can still browse the menu.",
+    "branchLocked": "Ordering is unavailable at this branch. You can still browse the menu."
   },
   "closed": {
     "title": "We're closed right now",

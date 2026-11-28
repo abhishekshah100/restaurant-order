@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useContent } from '@/api/hooks';
 import { Icon, type IconName } from '@/components/ui';
 import type { Order } from '@/types/order';
+import { hasFeature } from '@/lib/adminPlan';
 import { useAdminWorkspace } from '../shell/AdminWorkspace';
 import { BusinessBuyer, canAddBuyer } from './BusinessBuyer';
 import { BillBreakdown, CollectFields, LeaveCard, type CollectChoice } from './CollectFields';
@@ -23,10 +24,11 @@ type Tool = 'discount' | 'business';
  */
 export function CollectScreen({ orders, choice }: { orders: Order[]; choice: CollectChoice }) {
   const t = useContent('common');
-  const { can } = useAdminWorkspace();
+  const { can, branch } = useAdminWorkspace();
   const [tool, setTool] = useState<Tool | null>(null);
   const discount = canGiveDiscount(orders, can);
-  const business = canAddBuyer(orders);
+  // Leaving part unpaid and the business invoice: the package's bill options.
+  const business = canAddBuyer(orders) && hasFeature(branch, 'billOptions');
   const buyer = orders[0]?.buyer;
 
   const open = (next: Tool | 'leave') => {
@@ -55,36 +57,42 @@ export function CollectScreen({ orders, choice }: { orders: Order[]; choice: Col
         </div>
 
         <div className={styles.options}>
-          <p className={styles.optionsTitle}>{t('adminPayments.collect.options')}</p>
-          <div
-            className={styles.optionRow}
-            role="group"
-            aria-label={t('adminPayments.collect.options')}
-          >
-            {discount && (
-              <Option
-                icon="tag"
-                label={t('adminPayments.collect.option.discount')}
-                pressed={tool === 'discount'}
-                onClick={() => open('discount')}
-              />
-            )}
-            <Option
-              icon="minus"
-              label={t('adminPayments.collect.option.leave')}
-              pressed={choice.leaving}
-              onClick={() => open('leave')}
-            />
-            {business && (
-              <Option
-                icon="receipt"
-                label={t('adminPayments.collect.option.business')}
-                pressed={tool === 'business'}
-                done={Boolean(buyer)}
-                onClick={() => open('business')}
-              />
-            )}
-          </div>
+          {(discount || choice.canLeave || business) && (
+            <>
+              <p className={styles.optionsTitle}>{t('adminPayments.collect.options')}</p>
+              <div
+                className={styles.optionRow}
+                role="group"
+                aria-label={t('adminPayments.collect.options')}
+              >
+                {discount && (
+                  <Option
+                    icon="tag"
+                    label={t('adminPayments.collect.option.discount')}
+                    pressed={tool === 'discount'}
+                    onClick={() => open('discount')}
+                  />
+                )}
+                {choice.canLeave && (
+                  <Option
+                    icon="minus"
+                    label={t('adminPayments.collect.option.leave')}
+                    pressed={choice.leaving}
+                    onClick={() => open('leave')}
+                  />
+                )}
+                {business && (
+                  <Option
+                    icon="receipt"
+                    label={t('adminPayments.collect.option.business')}
+                    pressed={tool === 'business'}
+                    done={Boolean(buyer)}
+                    onClick={() => open('business')}
+                  />
+                )}
+              </div>
+            </>
+          )}
 
           {choice.leaving && <LeaveCard choice={choice} />}
           <DiscountPanel

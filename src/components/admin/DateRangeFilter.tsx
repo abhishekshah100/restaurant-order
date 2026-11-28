@@ -9,6 +9,7 @@ import {
   isTodayOnly,
   rangeProblem,
   shiftDay,
+  withPlanHistory,
   type DayLimits,
   type DayRange,
 } from '@/lib/dayRange';
@@ -19,16 +20,18 @@ import styles from './DateRangeFilter.module.css';
  * From and To days to look back over (the branch's calendar), with Today to come back to the
  * live day. Each day stays as staff set it: a pick that doesn't work with the other (From after
  * To, more than RANGE_DAYS apart, outside the year) says why and waits, and the days shown
- * change only once both work together. The other day is never moved for them.
+ * change only once both work together. The other day is never moved for them. A history
+ * (`planHistory`) goes back only as far as the package's History days, and says so.
  */
 export function DateRangeFilter({
   id,
   range,
   today,
   onChange,
-  limits,
+  limits: pageLimits,
   presets,
   fiscalYears = false,
+  planHistory = false,
 }: {
   /** Prefix for the fields' ids (two filters can share a page). */
   id: string;
@@ -42,9 +45,13 @@ export function DateRangeFilter({
   presets?: readonly { days: number; label: string }[];
   /** Offer "This FY" and "Last FY" too (the branch's financial years, where the limits allow). */
   fiscalYears?: boolean;
+  /** A history the package's History days limit (orders, payments, bookings, requests…). */
+  planHistory?: boolean;
 }) {
   const t = useContent('common');
   const { clock, branch } = useAdminWorkspace();
+  const planDays = planHistory ? (branch.plan?.limits.reportDays ?? null) : null;
+  const limits = planDays === null ? pageLimits : withPlanHistory(pageLimits, planDays);
   const years =
     fiscalYears && branch.fiscalYears ? fiscalYearRanges(branch.fiscalYears, today, limits) : [];
   const min = firstDay(today, limits);
@@ -111,20 +118,25 @@ export function DateRangeFilter({
               : t('adminDateRange.problems.tooLong', { days: rangeDays })}
         </p>
       )}
+      {planDays !== null && (
+        <p className={styles.note}>{t('adminDateRange.planNote', { days: planDays })}</p>
+      )}
       {((presets && presets.length > 0) || years.length > 0) && (
         <div className={styles.presets} role="group" aria-label={t('adminDateRange.presets')}>
-          {(presets ?? []).map((p) => {
-            const range = { from: shiftDay(today, -(p.days - 1)), to: today };
-            return (
-              <Chip
-                key={p.days}
-                pressed={draft.from === range.from && draft.to === range.to}
-                onClick={() => pick(range)}
-              >
-                {p.label}
-              </Chip>
-            );
-          })}
+          {(presets ?? [])
+            .filter((p) => planDays === null || p.days <= planDays)
+            .map((p) => {
+              const range = { from: shiftDay(today, -(p.days - 1)), to: today };
+              return (
+                <Chip
+                  key={p.days}
+                  pressed={draft.from === range.from && draft.to === range.to}
+                  onClick={() => pick(range)}
+                >
+                  {p.label}
+                </Chip>
+              );
+            })}
           {years.map((y) => (
             <Chip
               key={y.key}

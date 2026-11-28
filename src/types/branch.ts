@@ -322,6 +322,16 @@ export interface BranchConfig {
   menuOnly?: boolean;
   /** Suspended by the platform (with `menuOnly`): no ordering for now. */
   suspended?: boolean;
+  /**
+   * False: the package has no waiter requests, so seated guests see no Call a waiter or Ask
+   * for the bill (restaurant-backend › ADR-054). Absent: they do.
+   */
+  waiterRequests?: boolean;
+  /**
+   * The restaurant is over its package's branches and this one is locked (ADR-056): guests read
+   * the menu only (with `menuOnly`). Absent: not locked.
+   */
+  branchLocked?: boolean;
   currency: CurrencyConfig;
   mobile: MobileRules;
   tax: TaxConfig;

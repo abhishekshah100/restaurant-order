@@ -90,7 +90,11 @@ export function PlatformOverview({
                 <div className={styles.tight}>
                   <span className={styles.row}>
                     <strong>{c.name}</strong>
-                    <StatusTag status={c.status} />
+                    <StatusTag
+                      status={c.status}
+                      suspension={c.suspension}
+                      planChange={c.planChange}
+                    />
                   </span>
                   <span className={styles.muted}>
                     {c.plan.name} · {when(c)}

@@ -95,7 +95,11 @@ export function ClientList({
                 <span className={styles.tight}>
                   <span className={styles.row}>
                     <strong>{c.plan.name}</strong>
-                    <StatusTag status={c.status} />
+                    <StatusTag
+                      status={c.status}
+                      suspension={c.suspension}
+                      planChange={c.planChange}
+                    />
                     {c.demo && <Tag variant="warn">{t('platform.demo.tag')}</Tag>}
                     <span className={styles.muted}>{ends(c)}</span>
                   </span>

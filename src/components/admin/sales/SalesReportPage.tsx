@@ -11,8 +11,16 @@ import { useNow } from '@/hooks/useNow';
 import { useQueryParam } from '@/hooks/useQueryParam';
 import { salesPath } from '@/lib/adminNav';
 import { selectAdminBranch } from '@/lib/adminAuth';
+import { hasFeature } from '@/lib/adminPlan';
 import { cx } from '@/lib/cx';
-import { dayCount, parseDayRange, shiftDay, type DayRange } from '@/lib/dayRange';
+import {
+  dayCount,
+  firstDay,
+  parseDayRange,
+  shiftDay,
+  withPlanHistory,
+  type DayRange,
+} from '@/lib/dayRange';
 import { numberLocale } from '@/lib/money';
 import {
   SALES_LIMITS,
@@ -77,7 +85,13 @@ export function SalesReportPage() {
     fromParam || toParam
       ? parseDayRange(fromParam, toParam, today, SALES_LIMITS)
       : { from: shiftDay(today, -(DEFAULT_DAYS - 1)), to: today };
-  const presets = salesPresets(today, branch.fiscalYears);
+  // Quick ranges within the package's History days.
+  const planDays = branch.plan?.limits.reportDays ?? null;
+  const planFirst =
+    planDays === null ? null : firstDay(today, withPlanHistory(undefined, planDays));
+  const presets = salesPresets(today, branch.fiscalYears).filter(
+    (p) => planFirst === null || p.range.from >= planFirst,
+  );
   const preset = presetOf(presets, range);
   const [custom, setCustom] = useState(false);
   const [printing, setPrinting] = useState(false);
@@ -95,7 +109,9 @@ export function SalesReportPage() {
   const reportBranches = (useAdminBranches().data ?? []).filter((b) =>
     b.permissions?.includes('reports.view'),
   );
-  const canCompare = reportBranches.length > 1;
+  // The advanced sales report: every branch side by side, export, PDF and print.
+  const advanced = hasFeature(branch, 'salesAdvanced');
+  const canCompare = advanced && reportBranches.length > 1;
   const view = canCompare && viewParam === 'branches' ? 'branches' : 'branch';
   const refusal = usePlanRefusal();
   const report = useSalesReport(isBackendEnabled() ? branch.id : undefined, range);
@@ -237,59 +253,65 @@ export function SalesReportPage() {
             </div>
           )}
         </div>
-        <div className={styles.actions}>
-          <Button
-            variant="secondary"
-            size="sm"
-            iconStart="list"
-            disabled={!data}
-            aria-label={t('adminSales.actions.exportLabel')}
-            onClick={() =>
-              data &&
-              exportReport(
-                data,
-                {
-                  period: period(range),
-                  compared: `${period(data.previous)} (${span})`,
-                },
-                view === 'branches' ? compare.data?.branches : undefined,
-              )
-            }
-          >
-            {t('adminSales.actions.export')}
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            iconStart="receipt"
-            disabled={!data}
-            loading={pdf.drawing}
-            aria-label={t('adminSales.actions.pdfLabel')}
-            onClick={() =>
-              void pdf
-                .download(
-                  () => {
-                    flushSync(() => setPdfSheet(true));
-                    return pdfRef.current;
+        {advanced && (
+          <div className={styles.actions}>
+            <Button
+              variant="secondary"
+              size="sm"
+              iconStart="list"
+              disabled={!data}
+              aria-label={t('adminSales.actions.exportLabel')}
+              onClick={() =>
+                data &&
+                exportReport(
+                  data,
+                  {
+                    period: period(range),
+                    compared: `${period(data.previous)} (${span})`,
                   },
-                  t('adminSales.pdf.file', { branch: filePrefix, from: range.from, to: range.to }),
+                  view === 'branches' ? compare.data?.branches : undefined,
                 )
-                .finally(() => setPdfSheet(false))
-            }
-          >
-            {t('adminSales.actions.pdf')}
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            iconStart="printer"
-            disabled={!data}
-            aria-label={t('adminSales.actions.printLabel')}
-            onClick={() => setPrinting(true)}
-          >
-            {t('adminSales.actions.print')}
-          </Button>
-        </div>
+              }
+            >
+              {t('adminSales.actions.export')}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              iconStart="receipt"
+              disabled={!data}
+              loading={pdf.drawing}
+              aria-label={t('adminSales.actions.pdfLabel')}
+              onClick={() =>
+                void pdf
+                  .download(
+                    () => {
+                      flushSync(() => setPdfSheet(true));
+                      return pdfRef.current;
+                    },
+                    t('adminSales.pdf.file', {
+                      branch: filePrefix,
+                      from: range.from,
+                      to: range.to,
+                    }),
+                  )
+                  .finally(() => setPdfSheet(false))
+              }
+            >
+              {t('adminSales.actions.pdf')}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              iconStart="printer"
+              disabled={!data}
+              aria-label={t('adminSales.actions.printLabel')}
+              onClick={() => setPrinting(true)}
+            >
+              {t('adminSales.actions.print')}
+            </Button>
+          </div>
+        )}
       </header>
 
       {canCompare && (
@@ -323,6 +345,7 @@ export function SalesReportPage() {
         {(custom || !preset) && (
           <DateRangeFilter
             id="sales-days"
+            planHistory
             range={range}
             today={today}
             limits={SALES_LIMITS}
@@ -411,8 +434,11 @@ function Report({
   amount: (value: number) => string;
 }) {
   const t = useContent('common');
-  const { region } = useAdminWorkspace();
+  const { region, branch } = useAdminWorkspace();
   const { methodName } = usePaymentText();
+  // The basic report (no advanced sales report in the package): the totals, the money, the
+  // dishes; no charts, ways of ordering or categories (the server sends none of them).
+  const advanced = hasFeature(branch, 'salesAdvanced');
   const months = t.get('adminSales.bsMonths') as readonly string[];
   const locale = numberLocale(region);
   const tick = (value: number) => compactAmount(value, locale, region.currency.symbol);
@@ -452,160 +478,166 @@ function Report({
         trend={buckets.map((b) => b.netSales)}
       />
 
-      <section className={cx(styles.card, styles.trendCard)} aria-labelledby="sales-trend">
-        <div className={styles.cardHead}>
-          <div>
-            <h2 id="sales-trend" className={styles.cardTitle}>
-              {t(`adminSales.trend.title.${grain}`)}
-            </h2>
-            <p className={styles.cardHint}>{t(`adminSales.trend.hint.${grain}`)}</p>
-            {average !== undefined && data.totals.orders > 0 && (
-              <AverageKey
-                label={`${t('adminSales.trend.average', { amount: amount(Math.round(average)) })} ${t(`adminSales.trend.averageHint.${grain}`)}`}
-              />
-            )}
-          </div>
-          {extremes && (
-            <dl className={styles.extremes}>
-              <div>
-                <dt>{t('adminSales.trend.best')}</dt>
-                <dd>
-                  <strong>{amount(extremes.best.netSales)}</strong>
-                  <span>{shortDay(extremes.best.day)}</span>
-                </dd>
-              </div>
-              <div>
-                <dt>{t('adminSales.trend.quiet')}</dt>
-                <dd>
-                  <strong>{amount(extremes.quiet.netSales)}</strong>
-                  <span>{shortDay(extremes.quiet.day)}</span>
-                </dd>
-              </div>
-            </dl>
-          )}
-        </div>
-        {data.totals.orders === 0 ? (
-          <p className={styles.empty}>{t('adminSales.trend.empty')}</p>
-        ) : (
-          <ColumnChart
-            caption={t(`adminSales.trend.title.${grain}`)}
-            tableHeads={[
-              t('adminSales.table.when'),
-              t('adminSales.table.netSales'),
-              t('adminSales.table.orders'),
-            ]}
-            formatTick={tick}
-            average={average !== undefined ? { value: average } : undefined}
-            columns={buckets.map((b, i) => ({
-              key: `${b.from}_${b.to}`,
-              value: b.netSales,
-              axis: axisLabel(b, i, buckets.length, grain),
-              title: bucketTitle(b),
-              valueText: amount(b.netSales),
-              detail: orders(b.orders),
-            }))}
-            onPick={(key) => {
-              const [from = '', to = ''] = key.split('_');
-              onPick({ from, to });
-            }}
-            pickLabel={() => t(`adminSales.trend.pick.${grain}`)}
-          />
-        )}
-      </section>
-
-      <div className={styles.grid} data-pdf-split="">
-        <section className={styles.card} aria-labelledby="sales-hours">
+      {advanced && (
+        <section className={cx(styles.card, styles.trendCard)} aria-labelledby="sales-trend">
           <div className={styles.cardHead}>
             <div>
-              <h2 id="sales-hours" className={styles.cardTitle}>
-                {t('adminSales.hours.title')}
+              <h2 id="sales-trend" className={styles.cardTitle}>
+                {t(`adminSales.trend.title.${grain}`)}
               </h2>
-              <p className={styles.cardHint}>
-                {first
-                  ? t('adminSales.hours.peak', {
-                      hours: second
-                        ? t('adminSales.hours.and', {
-                            first: hourWindow(first.hour),
-                            second: hourWindow(second.hour),
-                          })
-                        : hourWindow(first.hour),
-                    })
-                  : t('adminSales.hours.hint')}
-              </p>
+              <p className={styles.cardHint}>{t(`adminSales.trend.hint.${grain}`)}</p>
+              {average !== undefined && data.totals.orders > 0 && (
+                <AverageKey
+                  label={`${t('adminSales.trend.average', { amount: amount(Math.round(average)) })} ${t(`adminSales.trend.averageHint.${grain}`)}`}
+                />
+              )}
             </div>
+            {extremes && (
+              <dl className={styles.extremes}>
+                <div>
+                  <dt>{t('adminSales.trend.best')}</dt>
+                  <dd>
+                    <strong>{amount(extremes.best.netSales)}</strong>
+                    <span>{shortDay(extremes.best.day)}</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t('adminSales.trend.quiet')}</dt>
+                  <dd>
+                    <strong>{amount(extremes.quiet.netSales)}</strong>
+                    <span>{shortDay(extremes.quiet.day)}</span>
+                  </dd>
+                </div>
+              </dl>
+            )}
           </div>
-          {hours.length === 0 ? (
-            <p className={styles.empty}>{t('adminSales.hours.empty')}</p>
+          {data.totals.orders === 0 ? (
+            <p className={styles.empty}>{t('adminSales.trend.empty')}</p>
           ) : (
             <ColumnChart
-              height={150}
-              emphasis
-              caption={t('adminSales.hours.title')}
+              caption={t(`adminSales.trend.title.${grain}`)}
               tableHeads={[
                 t('adminSales.table.when'),
                 t('adminSales.table.netSales'),
                 t('adminSales.table.orders'),
               ]}
               formatTick={tick}
-              columns={hours.map((h) => ({
-                key: String(h.hour),
-                value: h.netSales,
-                axis: h.hour % hourStep(hours.length) === 0 ? hourLabel(h.hour) : '',
-                title: hourWindow(h.hour),
-                valueText: amount(h.netSales),
-                detail: orders(h.orders),
-                highlight: peakKeys.has(h.hour),
+              average={average !== undefined ? { value: average } : undefined}
+              columns={buckets.map((b, i) => ({
+                key: `${b.from}_${b.to}`,
+                value: b.netSales,
+                axis: axisLabel(b, i, buckets.length, grain),
+                title: bucketTitle(b),
+                valueText: amount(b.netSales),
+                detail: orders(b.orders),
               }))}
+              onPick={(key) => {
+                const [from = '', to = ''] = key.split('_');
+                onPick({ from, to });
+              }}
+              pickLabel={() => t(`adminSales.trend.pick.${grain}`)}
             />
           )}
-          {hours.length > 0 && (
-            <div className={styles.dayParts}>
-              <h3 className={styles.subTitle}>{t('adminSales.hours.parts.title')}</h3>
-              <MeterList
-                label={t('adminSales.hours.parts.title')}
-                compact
-                rows={dayParts(data.hours).map((part) => {
-                  const share = shareOf(part.netSales, data.totals.netSales);
-                  return {
-                    key: part.key,
-                    name: t(`adminSales.hours.parts.${part.key}`),
-                    valueText: amount(part.netSales),
-                    share,
-                    detail: `${hourWindowSpan(part.from, part.to)} · ${t('adminSales.share', { percent: share })}`,
-                    quiet: part.orders === 0,
-                  };
-                })}
-              />
-            </div>
-          )}
         </section>
+      )}
 
-        <section className={styles.card} aria-labelledby="sales-modes">
-          <div className={styles.cardHead}>
-            <div>
-              <h2 id="sales-modes" className={styles.cardTitle}>
-                {t('adminSales.modes.title')}
-              </h2>
-              <p className={styles.cardHint}>{t('adminSales.modes.hint')}</p>
-            </div>
-          </div>
-          <MeterList
-            label={t('adminSales.modes.title')}
-            rows={[...data.byMode]
-              .filter((m) => m.orders > 0 || data.totals.orders === 0)
-              .sort((a, b) => b.netSales - a.netSales)
-              .map((m) => {
-                const share = shareOf(m.netSales, modesTotal);
-                return {
-                  key: m.mode,
-                  name: t(`adminSales.modes.${m.mode}`),
-                  valueText: amount(m.netSales),
-                  share,
-                  detail: `${orders(m.orders)} · ${t('adminSales.share', { percent: share })}`,
-                };
-              })}
-          />
-        </section>
+      <div className={styles.grid} data-pdf-split="">
+        {advanced && (
+          <>
+            <section className={styles.card} aria-labelledby="sales-hours">
+              <div className={styles.cardHead}>
+                <div>
+                  <h2 id="sales-hours" className={styles.cardTitle}>
+                    {t('adminSales.hours.title')}
+                  </h2>
+                  <p className={styles.cardHint}>
+                    {first
+                      ? t('adminSales.hours.peak', {
+                          hours: second
+                            ? t('adminSales.hours.and', {
+                                first: hourWindow(first.hour),
+                                second: hourWindow(second.hour),
+                              })
+                            : hourWindow(first.hour),
+                        })
+                      : t('adminSales.hours.hint')}
+                  </p>
+                </div>
+              </div>
+              {hours.length === 0 ? (
+                <p className={styles.empty}>{t('adminSales.hours.empty')}</p>
+              ) : (
+                <ColumnChart
+                  height={150}
+                  emphasis
+                  caption={t('adminSales.hours.title')}
+                  tableHeads={[
+                    t('adminSales.table.when'),
+                    t('adminSales.table.netSales'),
+                    t('adminSales.table.orders'),
+                  ]}
+                  formatTick={tick}
+                  columns={hours.map((h) => ({
+                    key: String(h.hour),
+                    value: h.netSales,
+                    axis: h.hour % hourStep(hours.length) === 0 ? hourLabel(h.hour) : '',
+                    title: hourWindow(h.hour),
+                    valueText: amount(h.netSales),
+                    detail: orders(h.orders),
+                    highlight: peakKeys.has(h.hour),
+                  }))}
+                />
+              )}
+              {hours.length > 0 && (
+                <div className={styles.dayParts}>
+                  <h3 className={styles.subTitle}>{t('adminSales.hours.parts.title')}</h3>
+                  <MeterList
+                    label={t('adminSales.hours.parts.title')}
+                    compact
+                    rows={dayParts(data.hours).map((part) => {
+                      const share = shareOf(part.netSales, data.totals.netSales);
+                      return {
+                        key: part.key,
+                        name: t(`adminSales.hours.parts.${part.key}`),
+                        valueText: amount(part.netSales),
+                        share,
+                        detail: `${hourWindowSpan(part.from, part.to)} · ${t('adminSales.share', { percent: share })}`,
+                        quiet: part.orders === 0,
+                      };
+                    })}
+                  />
+                </div>
+              )}
+            </section>
+
+            <section className={styles.card} aria-labelledby="sales-modes">
+              <div className={styles.cardHead}>
+                <div>
+                  <h2 id="sales-modes" className={styles.cardTitle}>
+                    {t('adminSales.modes.title')}
+                  </h2>
+                  <p className={styles.cardHint}>{t('adminSales.modes.hint')}</p>
+                </div>
+              </div>
+              <MeterList
+                label={t('adminSales.modes.title')}
+                rows={[...data.byMode]
+                  .filter((m) => m.orders > 0 || data.totals.orders === 0)
+                  .sort((a, b) => b.netSales - a.netSales)
+                  .map((m) => {
+                    const share = shareOf(m.netSales, modesTotal);
+                    return {
+                      key: m.mode,
+                      name: t(`adminSales.modes.${m.mode}`),
+                      valueText: amount(m.netSales),
+                      share,
+                      detail: `${orders(m.orders)} · ${t('adminSales.share', { percent: share })}`,
+                    };
+                  })}
+              />
+            </section>
+          </>
+        )}
 
         <section className={styles.card} aria-labelledby="sales-methods">
           <div className={styles.cardHead}>
@@ -641,33 +673,35 @@ function Report({
 
       <div className={styles.split} data-pdf-split="">
         <DishRanking dishes={data.dishes} slow={data.slowDishes} amount={amount} />
-        <section className={styles.card} aria-labelledby="sales-categories">
-          <div className={styles.cardHead}>
-            <div>
-              <h2 id="sales-categories" className={styles.cardTitle}>
-                {t('adminSales.categories.title')}
-              </h2>
-              <p className={styles.cardHint}>{t('adminSales.categories.hint')}</p>
+        {advanced && (
+          <section className={styles.card} aria-labelledby="sales-categories">
+            <div className={styles.cardHead}>
+              <div>
+                <h2 id="sales-categories" className={styles.cardTitle}>
+                  {t('adminSales.categories.title')}
+                </h2>
+                <p className={styles.cardHint}>{t('adminSales.categories.hint')}</p>
+              </div>
             </div>
-          </div>
-          {data.categories.length === 0 ? (
-            <p className={styles.empty}>{t('adminSales.categories.empty')}</p>
-          ) : (
-            <MeterList
-              label={t('adminSales.categories.title')}
-              rows={data.categories.map((c) => {
-                const share = shareOf(c.sales, data.totals.itemSales);
-                return {
-                  key: c.name ?? 'removed',
-                  name: c.name ?? t('adminSales.categories.removed'),
-                  valueText: amount(c.sales),
-                  share,
-                  detail: `${t.plural('adminSales.dishes.sold', c.quantity)} · ${t.plural('adminSales.categories.dishes', c.dishes)} · ${t('adminSales.share', { percent: share })}`,
-                };
-              })}
-            />
-          )}
-        </section>
+            {data.categories.length === 0 ? (
+              <p className={styles.empty}>{t('adminSales.categories.empty')}</p>
+            ) : (
+              <MeterList
+                label={t('adminSales.categories.title')}
+                rows={data.categories.map((c) => {
+                  const share = shareOf(c.sales, data.totals.itemSales);
+                  return {
+                    key: c.name ?? 'removed',
+                    name: c.name ?? t('adminSales.categories.removed'),
+                    valueText: amount(c.sales),
+                    share,
+                    detail: `${t.plural('adminSales.dishes.sold', c.quantity)} · ${t.plural('adminSales.categories.dishes', c.dishes)} · ${t('adminSales.share', { percent: share })}`,
+                  };
+                })}
+              />
+            )}
+          </section>
+        )}
       </div>
 
       <MoneyStatement
