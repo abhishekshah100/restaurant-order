@@ -149,6 +149,13 @@ Delivery history, by phase:
   Restova; a banner as the trial or plan ends, in grace, ended or paused; "Your plan has ended" in
   place of locked pages; "Staff logins: 4 of 5" on Staff, Floor plan and Menu with Add off at the
   limit; Settings › My plan; guests on the Free package read the menu with "Ask staff".
+- **Client branches on the platform (2026-11-27):** a client's page has a Branches card (each
+  branch by its own name, with its city, when it was added, tables, dishes, its own staff and
+  orders; an empty menu flagged with Load menu, to the Dev setup tab), and the client list names
+  each branch with its city.
+- **Client branches on the platform (2026-11-27):** a client's page lists its branches (own name,
+  city, when added, tables, dishes, staff, orders; an empty menu flagged with Load menu → Dev
+  setup), and the client list names them with their cities.
 - **Plan features hidden, not locked (2026-11-26):** pages and settings of features the package
   leaves out are hidden from the nav, the phone bar and Settings for everyone (no lock or
   Upgrade screen); opened by their link they go back to the start page; My plan lists only

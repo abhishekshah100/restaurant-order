@@ -86,7 +86,11 @@ export function ClientList({
               <button type="button" className={styles.client} onClick={() => onOpen(c.id)}>
                 <span className={styles.tight}>
                   <span className={styles.clientName}>{c.name}</span>
-                  <span className={styles.muted}>{c.branches.map((b) => b.name).join(' · ')}</span>
+                  <span className={styles.muted}>
+                    {c.branches
+                      .map((b) => t('platform.branches.named', { branch: b.name, city: b.city }))
+                      .join(', ')}
+                  </span>
                 </span>
                 <span className={styles.tight}>
                   <span className={styles.row}>

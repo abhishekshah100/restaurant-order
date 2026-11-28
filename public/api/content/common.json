@@ -7334,6 +7334,37 @@
       "added": "{name} added",
       "removed": "{name} removed",
       "failed": "Couldn't do that. Try again."
+    },
+    "branches": {
+      "title": {
+        "one": "Branch",
+        "other": "Branches ({count})"
+      },
+      "count": {
+        "one": "1 branch",
+        "other": "{count} branches"
+      },
+      "hint": "Each branch by its own name, as set in its Settings › Restaurant info.",
+      "where": "{city} · added {date}",
+      "named": "{branch} ({city})",
+      "tables": {
+        "one": "1 table",
+        "other": "{count} tables"
+      },
+      "dishes": {
+        "one": "1 dish",
+        "other": "{count} dishes"
+      },
+      "staff": {
+        "one": "1 staff",
+        "other": "{count} staff"
+      },
+      "orders": {
+        "one": "1 order",
+        "other": "{count} orders"
+      },
+      "emptyMenu": "Empty menu",
+      "loadMenu": "Load menu"
     }
   }
 }

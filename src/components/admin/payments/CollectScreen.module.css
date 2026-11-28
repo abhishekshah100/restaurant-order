@@ -3,9 +3,12 @@
  * the right (one column on a phone: the payment, then the bill's options).
  */
 
-/* The dialog, wide enough for both columns on a desktop. */
+/*
+ * The dialog, wide enough for both columns on a desktop. Doubled so it outranks the Dialog's own
+ * 600px (`.adaptive`) whichever stylesheet the page loads last.
+ */
 @media (min-width: 1024px) {
-  .dialog {
+  .dialog.dialog {
     width: min(960px, calc(100vw - 48px));
   }
 }

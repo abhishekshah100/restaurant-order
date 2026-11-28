@@ -101,12 +101,30 @@ export interface ClientUsage {
   dishes: number;
 }
 
+/** One of a client's branches, with what it has. */
+export interface ClientBranch {
+  id: string;
+  /** Its own name ("Rooftop Cafe"), set in its Settings › Restaurant info. */
+  name: string;
+  city: string;
+  /** When it was added (ISO). */
+  createdAt: string;
+  tables: number;
+  /** Dishes on its menu (0: an empty menu, to load on the Dev setup tab). */
+  dishes: number;
+  /** Its own staff logins (the restaurant's owners count once, across its branches). */
+  staff: number;
+  /** Orders it has taken, ever. */
+  orders: number;
+}
+
 /** GET /platform/clients: one client in the list. */
 export interface ClientSummary {
   id: string;
   name: string;
   createdAt: string;
-  branches: { id: string; name: string }[];
+  /** Its live branches, oldest first. */
+  branches: ClientBranch[];
   plan: { code: string; name: string };
   billingCycle: BillingCycle;
   status: PlanStatus;

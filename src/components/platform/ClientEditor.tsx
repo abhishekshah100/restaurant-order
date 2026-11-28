@@ -29,6 +29,7 @@ import {
   type Downgrade,
 } from '@/lib/platform';
 import { ClientHistory } from './ClientHistory';
+import { ClientBranches } from './ClientBranches';
 import { ClientAddons } from './ClientAddons';
 import { ClientPayments } from './ClientPayments';
 import { RemindButton } from './RemindButton';
@@ -44,11 +45,14 @@ export function ClientEditor({
   by,
   clientId,
   onBack,
+  onLoadMenu,
 }: {
   platformKey: string;
   by: string;
   clientId: string;
   onBack: () => void;
+  /** To the Dev setup tab, to load a menu into one of its branches. */
+  onLoadMenu?: () => void;
 }) {
   const t = useContent('common');
   const client = usePlatformClient(platformKey, clientId);
@@ -77,6 +81,7 @@ export function ClientEditor({
           client={client.data}
           packages={packages.data}
           catalog={catalog.data}
+          onLoadMenu={onLoadMenu}
         />
       )}
     </div>
@@ -89,12 +94,14 @@ function ClientForm({
   client,
   packages,
   catalog,
+  onLoadMenu,
 }: {
   platformKey: string;
   by: string;
   client: ClientDetail;
   packages: PackagePlan[];
   catalog: FeatureInfo[];
+  onLoadMenu?: (() => void) | undefined;
 }) {
   const t = useContent('common');
   const { showToast } = useToast();
@@ -172,7 +179,7 @@ function ClientForm({
         <div className={styles.tight}>
           <h2 className={styles.title}>{client.name}</h2>
           <span className={styles.muted}>
-            {client.branches.map((b) => b.name).join(' · ')} ·{' '}
+            {t.plural('platform.branches.count', client.branches.length)} ·{' '}
             {t('platform.client.since', { date: date(client.createdAt) })}
           </span>
         </div>
@@ -192,6 +199,8 @@ function ClientForm({
           {t('platform.demo.warning')}
         </Banner>
       )}
+
+      <ClientBranches client={client} onLoadMenu={onLoadMenu} />
 
       <SettingsCard title={t('platform.package.title')} hint={t('platform.package.hint')}>
         <div className={styles.row} role="group" aria-label={t('platform.term.cycle')}>

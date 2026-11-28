@@ -179,6 +179,10 @@ export function PlatformConsole({ initialTab = 'overview' }: { initialTab?: Tab 
           by={by}
           clientId={clientId}
           onBack={() => setClientId(null)}
+          onLoadMenu={() => {
+            setClientId(null);
+            setTab('devSetup');
+          }}
         />
       ) : (
         <>
